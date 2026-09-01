@@ -1297,11 +1297,22 @@ describe('Matterbridge ' + NAME, () => {
     // Simulate operationalStatus becoming unreadable exactly when a completion handler re-reads the sibling axis
     // (see the `this.state` transaction-context comment in windowCoveringServer.ts): the handler falls back to
     // Stopped for that axis instead of propagating the missing value.
-    const getAttributeSpy = vi.spyOn(edgeCover, 'getAttribute');
+    //
+    // Nulling out every 'operationalStatus' read while nullOperationalStatus is true (instead of consuming a single
+    // mocked call) avoids depending on the exact order of getAttribute calls made during the movement, which was
+    // flaky: unrelated calls (e.g. currentPositionLiftPercent100ths) could consume a one-shot mock before the
+    // completion handler's own read did.
+    let nullOperationalStatus = false;
+    const originalGetAttribute = edgeCover.getAttribute.bind(edgeCover);
+    const getAttributeSpy = vi.spyOn(edgeCover, 'getAttribute').mockImplementation((cluster: unknown, attribute: unknown) => {
+      if (attribute === 'operationalStatus' && nullOperationalStatus) return null;
+      return originalGetAttribute(cluster as never, attribute as never);
+    });
     try {
       await edgeCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
-      getAttributeSpy.mockReturnValueOnce(null);
+      nullOperationalStatus = true;
       await new Promise((resolve) => setTimeout(resolve, 200));
+      nullOperationalStatus = false;
       expect(edgeCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
       expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
         global: WindowCovering.MovementStatus.Stopped,
@@ -1310,8 +1321,9 @@ describe('Matterbridge ' + NAME, () => {
       });
 
       await edgeCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
-      getAttributeSpy.mockReturnValueOnce(null);
+      nullOperationalStatus = true;
       await new Promise((resolve) => setTimeout(resolve, 200));
+      nullOperationalStatus = false;
       expect(edgeCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
       expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
         global: WindowCovering.MovementStatus.Stopped,

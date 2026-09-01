@@ -397,6 +397,7 @@
     "chip:test:generic": "node scripts/run-matterbridge-chip-tests.mjs --test Generic",
     "chip:test:basic-info": "node scripts/run-matterbridge-chip-tests.mjs --test TC_BINFO_",
     "chip:test:power-source": "node scripts/run-matterbridge-chip-tests.mjs --test TC_PS_",
+    "chip:test:root-node": "node scripts/run-matterbridge-chip-tests.mjs --test RootNode",
     "chip:test:power-topology": "node scripts/run-matterbridge-chip-tests.mjs --test TC_PWRTL_",
     "chip:test:electrical-power": "node scripts/run-matterbridge-chip-tests.mjs --test TC_EPM_",
     "chip:test:electrical-energy": "node scripts/run-matterbridge-chip-tests.mjs --test TC_EEM_",

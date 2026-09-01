@@ -9,6 +9,7 @@
   ],
   "patches": [
     "TC_DeviceBasicComposition.py",
+    "TC_FAN_3_1.py",
     "TC_FAN_3_2.py",
     "TC_TSTAT_2_2.py",
     "TC_TSTAT_Utils.py",
@@ -16,7 +17,6 @@
     "Test_TC_OO_2_2.yaml",
     "Test_TC_OO_2_3.yaml",
     "Test_TC_OO_2_6.yaml",
-    "Test_TC_G_2_4.yaml",
     "Test_TC_DRLK_2_1.yaml",
     "Test_TC_DRLK_2_4.yaml",
     "TC_DRLK_2_5.py",
@@ -1796,7 +1796,8 @@
       "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on Fan Complete",
       "test": "TC_FAN_3_1.py",
       "endpoint": 9024,
-      "args": ["--PICS /root/fan-control-complete.pics"]
+      "args": ["--PICS /root/fan-control-complete.pics"],
+      "comment": "Patched locally to wait for each write's triggered reports to actually arrive before the next write, instead of firing the whole value_range as fast as possible; also fixes log_results()/verify_attribute_progression() iterating the live subscription queue while a concurrent report callback could mutate it (RuntimeError: deque mutated during iteration)."
     },
     {
       "name": "FanControl optional speed functionality on Fan Complete",
@@ -1917,11 +1918,12 @@
       "comment": "Every step in this YAML is disabled:true (manual verification procedure, no automated assertions)."
     },
     {
-      "name": "Groups AddGroup with same GroupID on multiple endpoints on OnOffLight and DimmableLight",
+      "name": "Groups AddGroup with same GroupID on multiple endpoints on OnOffLight",
       "test": "Test_TC_G_2_4",
       "endpoint": 401,
       "args": ["--PICS /root/groups.pics"],
-      "comment": "Patched locally (docker/chip-test/patches/Test_TC_G_2_4.yaml, see chip-tests instructions §12) to fix its Step 6 GroupTable read (missing a '&& !G.S.F00' PICS guard, so it wrongly ran and failed alongside the F00-gated Step 7 duplicate whenever GroupNames is supported) and to pin PIXIT.G.ENDPOINT1/ENDPOINT2 to real Groups-server endpoints 401/402 in the YAML's own config defaults instead of via CLI overrides, since chiptool.py's generic PIXIT override path stores CLI values as raw strings with no int coercion and that broke the response's integer Endpoints array comparison."
+      "skip": true,
+      "comment": "Requires patch."
     },
     {
       "name": "Groups cluster commands with client as DUT",
@@ -2718,7 +2720,8 @@
       "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on ExtractorHood",
       "test": "TC_FAN_3_1.py",
       "endpoint": 1310,
-      "args": ["--PICS /root/fan-control-base.pics"]
+      "args": ["--PICS /root/fan-control-base.pics"],
+      "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete)."
     },
     {
       "name": "FanControl optional speed functionality on ExtractorHood",

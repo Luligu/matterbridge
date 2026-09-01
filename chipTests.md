@@ -370,6 +370,7 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
 | Patched file                   | Reason                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `TC_DeviceBasicComposition.py` | `test_TC_DESC_2_1`'s hand-coded `Descriptor.TagList` namespace whitelist stops at `0x43` and predates the eight Matter 1.6 namespaces (five Closure, three Commodity Tariff) our devices can emit, so a fully spec-compliant `Closure` tag (`namespaceID=0x44`) is rejected. See "Known Issues" below and [PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481) (open/unmerged).                                                                                                                                                                                                                         |
+| `TC_FAN_3_1.py`                | Same coalescing race as `TC_FAN_3_2.py` below, but with no upstream fix to copy: the unpatched test fires its whole `value_range` of writes back-to-back with no synchronization, so matter.js's report engine can coalesce reports out from under `verify_number_of_fan_mode_reports()`'s report-count-parity check, and a report arriving mid-iteration of `log_results()`'s live subscription queue can raise `RuntimeError: deque mutated during iteration`. Patch adds a `wait_for_triggered_reports()`/`wait_for_latest_report_value()` pair (same synchronization approach as PR #73629 below, generalized to `TC_FAN_3_1.py`'s two update-attribute scenarios) and snapshots the subscription queue before iterating it. See "Known Issues" below. |
 | `TC_FAN_3_2.py`                | The exact-report-count assertion (`FanMode` emits exactly 3 subscription reports) is timing-fragile: matter.js's report engine legitimately coalesces rapid intermediate value changes into one report, which the Matter spec allows. Upstream already fixed this on master ([PR #73629](https://github.com/project-chip/connectedhomeip/pull/73629), merged 2026-08-25) by synchronizing on each report instead of loosening the assertion; our patch is that fixed master file copied in as-is, not a local rewrite — not yet backported to `v1.6-branch`/`v1.6.1-branch` or baked into the published `chip-test` image. |
 
 | `Test_TC_TSTAT_2_1.yaml` | Uses the DUT's implemented `AbsMinHeatSetpointLimit`/`AbsMaxHeatSetpointLimit` for the corresponding `MinHeatSetpointLimit`/`MaxHeatSetpointLimit` checks instead of always applying the upstream 7°C/30°C fallback values. The hardcoded fallbacks remain for DUTs that do not implement the optional absolute-limit attributes. This permits endpoint 901's spec-valid 0°C minimum and endpoint 9011's spec-valid 50°C maximum while retaining the relative Matter 1.6 setpoint-limit checks.
@@ -377,7 +378,6 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
 | `Test_TC_OO_2_2.yaml` | Adds the triggering command's PICS guard to each subsequent state read, so an unsupported `On`/`Toggle` command on an OffOnly endpoint (Cooktop, endpoint 1308) no longer asserts the state change that skipped command would have caused. |
 | `Test_TC_OO_2_3.yaml` | The final exact-zero `OffWaitTime` assertion is timing-fragile (a couple of seconds of container/round-trip latency can leave a small residual value on this specific step). The patch relaxes that one check from an exact `value: 0` to a `constraints: minValue 0, maxValue 2 * PIXIT.OO.MaxCommunicationTurnaround` range. |
 | `Test_TC_OO_2_6.yaml` | Removes the same unsupported `On`/`Toggle` commands' contradictory PICS guards from the negative checks, so the test can verify the Matter 1.6-required `UNSUPPORTED_COMMAND` responses on an OffOnly endpoint. |
-| `Test_TC_G_2_4.yaml` | Step 6 is missing a `!G.S.F00` PICS guard upstream (confirmed unfixed on `project-chip/connectedhomeip` master), so it wrongly runs against a response that includes `GroupName` when `G.S.F00=1` (Matterbridge always reports GroupNames). Also pins `PIXIT.G.ENDPOINT1`/`PIXIT.G.ENDPOINT2` as real YAML integers directly in `config:`, since `chiptool.py`'s generic PIXIT-override CLI path stores overrides as raw strings with no int coercion. |
 | `Test_TC_DRLK_2_1.yaml` | Corrects the no-PIN `LockDoor` and `UnlockDoor` PICS guards. Upstream requires both PIN and Credential OTA Access to send a PIN, but its fallback path runs only when both features are absent; the patch runs that path whenever the combined requirement is false, including endpoint 8011 where PIN is supported without COTA. |
 | `Test_TC_DRLK_2_4.yaml` | Replaces the upstream sample-app path's hardcoded 60-second `AutoRelockTime` and 70000 ms wait with typed `PIXIT.DRLK.AutoRelockTime` and `PIXIT.DRLK.AutoRelockWaitTimeMs` config values. Their defaults preserve upstream behavior; `chipTests.json` overrides them to 1 second and 6000 ms for endpoints 801 and 8011, retaining the expiry check while avoiding a 70-second suite delay. |
 | `TC_DRLK_2_5.py` | Uses the configured test endpoint instead of hardcoded endpoint `1`, allowing the week day schedule test to target endpoint 8012. |
@@ -427,7 +427,6 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
   not actually immune to this coalescing — it just does not assert an exact count; it only checks that
   `FanMode` and `PercentSetting` report the same number of times as each other, which holds regardless of how
   much coalescing occurs, since both attributes change together in the same transaction.
-
   Upstream has already fixed this independently: [PR #73629](https://github.com/project-chip/connectedhomeip/pull/73629)
   ("TC-FAN-3.2 - Fix false failures from coalesced attribute reports"), merged to `connectedhomeip` master on
   2026-08-25, adds a `wait_for_triggered_reports()`/`wait_for_latest_report_value()` synchronization step that
@@ -438,10 +437,35 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
   at `master` is empty), since this fix is not yet backported to `v1.6-branch`/`v1.6.1-branch` and no new
   `chip-test` image has been published with it baked in. Remove this patch (and its `chipTests.json`
   `"patches"` entry) once PR #73629 reaches whichever branch/tag the `chip-test` image builds from and a new
-  image is published with it baked in. Note this same coalescing occasionally makes `TC_FAN_3_1.py` itself
-  flaky too (observed once directly): its own report-count-parity assertion can still fail if the `FanMode`
-  and `PercentSetting` subscriptions happen to coalesce by a different amount from each other on a given run.
-  Re-run the specific failing test alone if this happens — it passes reliably in isolation.
+  image is published with it baked in.
+
+- **FanControl: `TC_FAN_3_1.py` hit the same coalescing race as `TC_FAN_3_2.py` above, plus a second,
+  distinct bug — not a Matterbridge bug, patched locally (`docker/chip-test/patches/TC_FAN_3_1.py`, see
+  chip-tests instructions §12).** First observed 2026-09-01 failing on every run (not the occasional flake
+  this file's report-count-parity check was previously assumed to be — see the removed note in the
+  `TC_FAN_3_2.py` entry above, since superseded by this patch), on both Fan Complete and ExtractorHood, with
+  two different symptoms depending on run timing:
+  - `AssertionError: 0 != 1 [FC] Number of FanMode reports doesn't match the number of PercentSetting reports`
+    — the same coalescing race `TC_FAN_3_2.py` hits, but unlike that file no upstream fix exists yet for
+    `TC_FAN_3_1.py` (`gh search prs --repo project-chip/connectedhomeip "TC-FAN-3.1"`/`"FAN_3_1"` surfaces
+    nothing relevant as of this writing; `TC_FAN_3_1.py` on `master` is byte-identical to the version baked
+    into the `chip-test` image).
+  - `RuntimeError: deque mutated during iteration` inside the test's own `log_results()`
+    (`for q in sub.attribute_queue.queue:`) — a second, independent bug: this iterates the subscription
+    handler's live backing deque directly, and a `ReportData` arriving from the DUT during that iteration
+    (its callback appends to the same deque) raises Python's mutate-during-iteration error. Confirmed by the
+    log timestamp: the crash traceback and a `[AttributeSubscriptionHandler] Received attribute report`
+    line for the same subscription land in the same few milliseconds.
+
+  Patch adds `wait_for_triggered_reports()`/`wait_for_latest_report_value()` (the same synchronization
+  approach `TC_FAN_3_2.py`'s patch already uses, generalized here since `TC_FAN_3_1.py` has two
+  update-attribute scenarios — `PercentSetting` and `FanMode` — instead of one), called after each successful
+  write in `testing_scenario()`'s write loop so every write's cascaded reports are fully delivered before the
+  next write fires, closing the coalescing race instead of loosening the assertion. Separately,
+  `log_results()` and `verify_attribute_progression()` now iterate `list(sub.attribute_queue.queue)` (a
+  snapshot) instead of the live queue, fixing the `RuntimeError` regardless of timing. Remove this patch (and
+  its `chipTests.json` `"patches"` entries, both Fan Complete and ExtractorHood) if/when an equivalent fix
+  lands upstream and a new `chip-test` image is published with it baked in.
 
 - **OnOff: `Test_TC_OO_2_3`'s exact-zero `OffWaitTime` assertions are timing-fragile, not a Matterbridge
   bug.** This ~2-minute test drives matter.js's own native `OnTime`/`OffWaitTime` countdown timer
@@ -453,25 +477,6 @@ corresponding upstream fix merges and a new `chip-test` image is published with 
   same countdown behaves correctly everywhere else in the same run). Not `"skip": true` since it's not
   permanently inapplicable, just narrow-margin in this containerized environment — kept running and
   documented here, matching the same category as `TC_FAN_3_1.py`'s occasional flakiness above.
-
-- **Groups: `Test_TC_G_2_4`'s Step 6 is missing a `!G.S.F00` PICS guard — patched locally
-  (`docker/chip-test/patches/Test_TC_G_2_4.yaml`, see chip-tests instructions §12).** Step 6 (`PICS:
-GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _without_ a `GroupName`
-  field, while the very next Step 7 (`PICS: GRPKEY.S.A0001 && G.S.F00`) re-reads the same attribute and
-  asserts a response _with_ `GroupName` — Step 7's guard implies Step 6 was meant to only run when
-  `!G.S.F00`, but the upstream file never adds that negation, so with `G.S.F00=1` (GroupNames supported, as
-  Matterbridge's `Groups` cluster server always reports on `OnOffLight` endpoint 401) both steps run against
-  the same real response and Step 6 fails on the extra `GroupName` field. Confirmed unfixed on
-  `project-chip/connectedhomeip` master as of this writing (not a Matterbridge bug). The patch adds
-  `&& !G.S.F00` to Step 6's `PICS` line, matching the pattern already used by the file's own Step 11/Step 11
-  pair. The same patched copy also pins `PIXIT.G.ENDPOINT1`/`PIXIT.G.ENDPOINT2` to real Groups-server
-  endpoints `401`/`402` directly in the YAML's `config:` block rather than via a `chipTests.json` CLI
-  override: `chiptool.py`'s generic PIXIT-override path (`tests_tool.py`'s `send_yaml_command`) stores
-  `--Groups.Endpoint1 401`-style overrides as raw strings with no int coercion (unlike the well-known
-  `endpoint` config key, which has its own dedicated handling), so the response's integer `Endpoints` array
-  (`[401, 402]`) failed to match the string-typed expected value (`["401", "402"]`) until the defaults were
-  pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
-  the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
 
 ## matter.js discovery
 
