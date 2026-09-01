@@ -86,6 +86,10 @@ export interface OvenCabinetOptions {
   currentPhase?: number;
   /** Supported operational phase names. */
   phaseList?: string[];
+  /** Over-temperature critical alarm threshold, in hundredths of a degree Celsius. Enables the TemperatureAlarm OverTemperature feature when defined. */
+  criticalOverTemperatureThreshold?: number;
+  /** Under-temperature critical alarm threshold, in hundredths of a degree Celsius. Enables the TemperatureAlarm UnderTemperature feature when defined. */
+  criticalUnderTemperatureThreshold?: number;
 }
 
 /**
@@ -130,6 +134,8 @@ export class Oven extends MatterbridgeEndpoint {
    * @remarks
    * 13.4.1 A Temperature Controlled Cabinet Heater is a device that provides a heated space for warming food.
    * It is typically installed within an oven and can be used in conjunction with other heating elements.
+   * Passing `criticalOverTemperatureThreshold` and/or `criticalUnderTemperatureThreshold` adds a TemperatureAlarm
+   * cluster server to the cabinet (optional on this device type); omitting both leaves TemperatureAlarm absent.
    */
   addCabinet(name: string, options: OvenCabinetOptions): MatterbridgeEndpoint;
 
@@ -199,6 +205,9 @@ export class Oven extends MatterbridgeEndpoint {
       options.currentPhase,
       options.phaseList,
     );
+    if (options.criticalOverTemperatureThreshold !== undefined || options.criticalUnderTemperatureThreshold !== undefined) {
+      cabinet.createDefaultTemperatureAlarmClusterServer(options.criticalOverTemperatureThreshold, options.criticalUnderTemperatureThreshold);
+    }
     return cabinet;
   }
 

@@ -17,6 +17,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -32,6 +33,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
+import { MatterbridgeTemperatureAlarmServer } from '../../src/behaviors/temperatureAlarmServer.js';
 import { MatterbridgeRefrigeratorAlarmServer, MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
 import { refrigerator } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
@@ -101,6 +103,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.id).toBe('RefrigeratorTestCabinetTop');
     expect(cabinet1.hasClusterServer(RefrigeratorAndTemperatureControlledCabinetMode.id)).toBeFalsy();
     expect(cabinet1.hasClusterServer(RefrigeratorAlarm.id)).toBeFalsy();
+    expect(cabinet1.hasClusterServer(TemperatureAlarm.id)).toBeFalsy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement']);
 
     // oxlint-disable-next-line typescript/no-deprecated
@@ -134,12 +137,15 @@ describe('Matterbridge ' + NAME, () => {
       maxTemperature: 10 * 100,
       step: 10 * 100,
       currentTemperature: -18 * 100,
+      criticalUnderTemperatureThreshold: -25 * 100,
     });
 
     expect(configuredCabinet.id).toBe('ConfiguredCabinet');
     expect(configuredCabinet.number).toBe(EndpointNumber(13_02_1));
     expect(configuredCabinet.tagList).toEqual(tagList);
     expect(configuredCabinet.behaviors.optionsFor(TemperatureMeasurementServer)).toMatchObject({ measuredValue: -18 * 100 });
+    expect(configuredCabinet.hasClusterServer(TemperatureAlarm.id)).toBeTruthy();
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeTemperatureAlarmServer)).toMatchObject({ criticalUnderTemperatureThreshold: -25 * 100 });
   });
 
   test('add a refrigerator device', async () => {

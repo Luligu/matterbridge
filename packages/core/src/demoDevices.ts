@@ -817,6 +817,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
       minTemperature: -30 * 100,
       maxTemperature: 10 * 100,
       step: 10 * 100,
+      criticalUnderTemperatureThreshold: -25 * 100,
     })
     .addRequiredClusters();
   await registerDevice(refrigeratorDevice, 'Refrigerator', 'APPLIANCE-13-02');
@@ -894,6 +895,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
       id: 'OvenCabinetBottom',
       number: EndpointNumber(13_09_2),
       tagList: [getSemtag(CommonPositionTag.Bottom)],
+      criticalOverTemperatureThreshold: 260 * 100,
     })
     .addRequiredClusters();
   await registerDevice(ovenDevice, 'Oven', 'APPLIANCE-13-09');

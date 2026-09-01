@@ -18,6 +18,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -33,6 +34,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
+import { MatterbridgeTemperatureAlarmServer } from '../../src/behaviors/temperatureAlarmServer.js';
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from '../../src/devices/oven.js';
 import { oven } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
@@ -91,6 +93,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(cabinet1.id).toBe('OvenTestCabinetTop');
     expect(cabinet1.hasClusterServer(OvenMode.id)).toBeTruthy();
     expect(cabinet1.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
+    expect(cabinet1.hasClusterServer(TemperatureAlarm.id)).toBeFalsy();
     expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
 
     // oxlint-disable-next-line typescript/no-deprecated
@@ -136,6 +139,7 @@ describe('Matterbridge ' + NAME, () => {
       operationalState: OperationalState.OperationalStateEnum.Running,
       currentPhase: 0,
       phaseList: ['pre-heating'],
+      criticalOverTemperatureThreshold: 260 * 100,
     });
 
     expect(configuredCabinet.id).toBe('ConfiguredCabinet');
@@ -144,6 +148,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(configuredCabinet.behaviors.optionsFor(TemperatureMeasurementServer)).toMatchObject({ measuredValue: 25 * 100 });
     expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenModeServer)).toMatchObject({ currentMode: 1 });
     expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenCavityOperationalStateServer)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
+    expect(configuredCabinet.hasClusterServer(TemperatureAlarm.id)).toBeTruthy();
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeTemperatureAlarmServer)).toMatchObject({ criticalOverTemperatureThreshold: 260 * 100 });
   });
 
   test('add a oven device', async () => {

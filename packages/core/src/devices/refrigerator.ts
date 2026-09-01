@@ -75,6 +75,10 @@ export interface RefrigeratorCabinetOptions {
   step?: number;
   /** Current temperature in hundredths of a degree Celsius. Defaults to 1000 (10°C). */
   currentTemperature?: number;
+  /** Over-temperature critical alarm threshold, in hundredths of a degree Celsius. Enables the TemperatureAlarm OverTemperature feature when defined. */
+  criticalOverTemperatureThreshold?: number;
+  /** Under-temperature critical alarm threshold, in hundredths of a degree Celsius. Enables the TemperatureAlarm UnderTemperature feature when defined. */
+  criticalUnderTemperatureThreshold?: number;
 }
 
 /**
@@ -148,6 +152,9 @@ export class Refrigerator extends MatterbridgeEndpoint {
    *    { mfgCode: null, namespaceId: RefrigeratorTag.Freezer.namespaceId, tag: RefrigeratorTag.Freezer.tag, label: RefrigeratorTag.Freezer.label },
    *  ]);
    * ```
+   *
+   * Passing `criticalOverTemperatureThreshold` and/or `criticalUnderTemperatureThreshold` adds a TemperatureAlarm
+   * cluster server to the cabinet (optional on this device type); omitting both leaves TemperatureAlarm absent.
    */
   addCabinet(name: string, options: RefrigeratorCabinetOptions): MatterbridgeEndpoint;
 
@@ -188,6 +195,9 @@ export class Refrigerator extends MatterbridgeEndpoint {
       options.step ?? 1 * 100,
     );
     cabinet.createDefaultTemperatureMeasurementClusterServer(options.currentTemperature ?? 10 * 100);
+    if (options.criticalOverTemperatureThreshold !== undefined || options.criticalUnderTemperatureThreshold !== undefined) {
+      cabinet.createDefaultTemperatureAlarmClusterServer(options.criticalOverTemperatureThreshold, options.criticalUnderTemperatureThreshold);
+    }
     return cabinet;
   }
 
