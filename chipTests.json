@@ -66,7 +66,7 @@
       "endpoint": 0,
       "args": ["--PICS /root/matterbridge.pics"],
       "skip": true,
-      "comment": "Gated by @run_if_endpoint_matches(has_attribute(ProductAppearance)); Matterbridge doesn't implement ProductAppearance (BINFO.S.A0014=0 in matterbridge.pics), so it always skips."
+      "comment": "Requires ProductAppearance; Matterbridge doesn't implement ProductAppearance (BINFO.S.A0014=0 in matterbridge.pics), so it always skips."
     },
     {
       "name": "BasicInformation reboot count via app-pipe on RootNode",
