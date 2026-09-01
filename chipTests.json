@@ -1872,7 +1872,7 @@
       "endpoint": 401,
       "args": ["--PICS /root/on-off.pics"],
       "skip": true,
-      "comment": "Requires 6 real DUT reboots (StartUpOnOff=0/1/2) with the OnOff value re-verified after each one actually restarts Matterbridge; this harness's single spawned test process with pre-piped stdin can't synchronize a real 'docker restart' with the test pausing at its UserPrompt step, so the assertion would be checked against a device that never actually rebooted."
+      "comment": "Requires 6 real DUT reboots."
     },
     {
       "name": "OnOff scenes management interaction on OnOffLight",
@@ -1986,7 +1986,7 @@
       "endpoint": 402,
       "args": ["--PICS /root/dimmable-light.pics"],
       "skip": true,
-      "comment": "Requires the device to support LevelControl commands with the client as DUT."
+      "comment": "Requires the device to act as LevelControl client."
     },
     {
       "name": "LevelControl OnOff interaction on DimmableLight",
@@ -2106,7 +2106,7 @@
       "note": "Exercises CT: StartUpColorTemperatureMireds (A4010) applied to ColorTemperatureMireds on restart.",
       "args": ["--PICS /root/color-control-ct.pics"],
       "skip": true,
-      "comment": "Same class of limitation as Test_TC_OO_2_4: requires a real DUT reboot (request_device_reboot(), no restart flag file configured for this harness) with StartUpColorTemperatureMireds re-verified after it actually restarts Matterbridge. Verified directly: the test proceeds past the reboot request without error but ColorTemperatureMireds reads back as the pre-write default (250) instead of the written StartUpColorTemperatureMireds target (323) — the DUT never actually restarted, so startup behavior was never exercised."
+      "comment": "Requires a real DUT reboot."
     },
     {
       "name": "ColorControl Enhanced MoveToHue functionality on ExtendedColorLightEnhancedEHSXYCT",
@@ -2143,7 +2143,7 @@
       "note": "Exercises Stop (primary focus) across HS, CT and EHUE in-progress Move/MoveTo operations, plus the generic StopMoveStep command itself.",
       "args": ["--PICS /root/color-control-enhanced.pics"],
       "skip": true,
-      "comment": "The managedTransitionTimeHandling opt-in under MATTERBRIDGE_CHIP_TEST (packages/core/src/behaviors/colorControlServer.ts) fixed this test's original failure (step 9, HS Stop) and the CT/HS Stop sections that follow — the test now progresses from 10 successes/1 error to 60 successes/1 error. It still fails at step 37 (Step 5e, the EnhancedMoveHue section, second read 10s after Stop): StopMoveStep genuinely never stops an EnhancedCurrentHue transition on any Matterbridge ColorControl endpoint, because @matter/node's ColorControlServer.stopMoveStepLogic() only calls transitions.stop('enhancedCurrentHue') when 'this.state.colorLoopActive === ColorControl.ColorLoopActive.Inactive' (0) — but colorLoopActive is undefined (not 0) whenever the ColorLoop feature isn't included, which is every Matterbridge ColorControl endpoint (no createXxxColorControlClusterServer() helper enables ColorLoop), so the strict-equality guard is always false and the stop call is always skipped. Verified directly against the container with an isolated repro script: EnhancedCurrentHue keeps climbing at the full commanded rate for at least 10s after StopMoveStep is sent and acknowledged. This is a genuine @matter/node bug (an edge case the library's own guard doesn't account for), not Matterbridge code; needs a fix or workaround upstream before enabling."
+      "comment": "Matter.js bug: StopMoveStep never stops EnhancedCurrentHue because stopMoveStepLogic()'s guard checks colorLoopActive === Inactive, but it's undefined (not 0) on every Matterbridge ColorControl endpoint (ColorLoop feature never enabled). Fixed by PR #4336 (https://github.com/matter-js/matter.js/pull/4336), not yet published — remove this skip once a release with the fix is adopted."
     },
     {
       "name": "ColorControl ColorLoopSet Validation on ExtendedColorLightEnhancedEHSXYCT",

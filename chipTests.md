@@ -473,39 +473,6 @@ GRPKEY.S.A0001`) reads `GroupKeyManagement.GroupTable` and asserts a response _w
   pinned as real YAML integers instead. Remove this patch (and its `chipTests.json` `"patches"` entry) once
   the upstream Step 6 guard is fixed and a new `chip-test` image is published with it baked in.
 
-- **ColorControl: `Test_TC_CC_8_1`'s `EnhancedMoveHue` section fails because `StopMoveStep` never actually
-  stops an `EnhancedCurrentHue` transition on any Matterbridge ColorControl endpoint — a genuine
-  `@matter/node` bug.** `MatterbridgeColorControlServer` opts into `managedTransitionTimeHandling` under
-  `MATTERBRIDGE_CHIP_TEST` only (`packages/core/src/behaviors/colorControlServer.ts`, same mechanism as
-  LevelControl above, production behavior unchanged), which makes this test's HS `Stop` (step 9) and CT/HS
-  sections pass (60 successes/1 error, up from 10/1). It still fails at step 37 (Step 5e — the _second_
-  `EnhancedCurrentHue` read, 10s after `StopMoveStep`; the first read at step 5d, right after `Stop`, passes)
-  — the value keeps climbing at the full commanded rate for the entire post-`Stop` wait, as if `Stop` had no
-  effect at all. Root-caused directly against the container with an isolated repro script (start
-  `EnhancedMoveToHue`, `EnhancedMoveHue` at a fixed rate, `StopMoveStep`, then poll `EnhancedCurrentHue`
-  every second for 10s): `ColorControlServer.stopMoveStepLogic()`
-  (`@matter/node/dist/esm/behaviors/color-control/ColorControlServer.js`) only calls
-  `this.internal.transitions?.stop('enhancedCurrentHue')` when
-  `this.state.colorLoopActive === ColorControl.ColorLoopActive.Inactive` (`0`) — but `colorLoopActive` is
-  `undefined` (not `0`) whenever the `ColorLoop` feature isn't included in the cluster's feature set, which
-  is the case for every Matterbridge ColorControl endpoint (no `createXxxColorControlClusterServer()` helper
-  enables `ColorLoop`). `undefined === 0` is `false` in JavaScript, so this strict-equality guard is always
-  false when `ColorLoop` is absent, and the `enhancedCurrentHue` stop call is silently skipped every time —
-  the plain (non-enhanced) `Hue`/`Saturation`/`X`/`Y`/`ColorTemperature` stops right below it in the same
-  function are unconditional and work correctly, which is why the equivalent non-enhanced `Hue` `MoveHue`
-  `Stop` check earlier in this same test (step 2d/2e, `[221, 229]`) passes. This is inside `@matter/node`'s
-  own `ColorControlServer.stopMoveStepLogic()`, not Matterbridge code — the guard should presumably check for
-  `!== ColorControl.ColorLoopActive.Active` (or simply falsy) rather than requiring strict equality to
-  `Inactive`. `"skip": true` remains in `chipTests.json` for `Test_TC_CC_8_1`, pending an upstream fix.
-
-- **ColorControl: `TC_CC_6_5.py` (StartUpColorTemperatureMireds across a reboot) hits the same
-  `request_device_reboot()` synchronization gap as `Test_TC_OO_2_4`.** No restart flag file is configured for
-  this harness, so the test's reboot request silently falls through to a manual "reboot and press Enter"
-  prompt path instead of actually restarting Matterbridge — confirmed directly: the test proceeds without
-  error, but `ColorTemperatureMireds` reads back as the pre-write default (`250`) instead of the written
-  `StartUpColorTemperatureMireds` target (`323`), showing the DUT never actually restarted. `"skip": true` in
-  `chipTests.json`, same category as `Test_TC_OO_2_4`.
-
 ## matter.js discovery
 
 - **Refrigerator Alarm / Dishwasher Alarm: `@matter/node`'s generic Alarm Base cluster schema resolves `Mask`/

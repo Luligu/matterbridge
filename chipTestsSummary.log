@@ -1,16 +1,32 @@
-Chip tests run started at 2026-09-01T12:17:38.714Z
+Chip tests run started at 2026-09-01T12:42:53.714Z
 
-✅ LevelControl attributes on DimmableLight (Test_TC_LVL_2_1)
-✅ LevelControl attributes are writable on DimmableLight (Test_TC_LVL_2_2)
-✅ LevelControl RemainingTime functionality on DimmableLight (TC_LVL_2_3.py)
-✅ LevelControl MoveToLevel verification on DimmableLight (Test_TC_LVL_3_1)
-✅ LevelControl Move verification on DimmableLight (Test_TC_LVL_4_1)
-✅ LevelControl Step verification on DimmableLight (Test_TC_LVL_5_1)
-✅ LevelControl Stop verification on DimmableLight (Test_TC_LVL_6_1)
-✅ LevelControl MoveToClosestFrequency verification on DimmableLight (Test_TC_LVL_7_1)
-⏭️ LevelControl commands with client as DUT (Test_TC_LVL_8_1)
-   ↳ Every step in this YAML is disabled:true (manual verification procedure, no automated assertions).
-✅ LevelControl OnOff interaction on DimmableLight (TC_LVL_9_1.py)
+✅ ColorControl attributes on ExtendedColorLightEnhancedEHSXYCT (TC_CC_2_1.py)
+✅ ColorControl attributes writable and subscription reporting on ExtendedColorLightEnhancedEHSXYCT (TC_CC_2_2.py)
+✅ ColorControl Hue MoveTo functionality on ExtendedColorLightHSXYCT (Test_TC_CC_3_1)
+✅ ColorControl Hue Move functionality on ExtendedColorLightHSXYCT (Test_TC_CC_3_2)
+✅ ColorControl Hue Step functionality on ExtendedColorLightHSXYCT (Test_TC_CC_3_3)
+✅ ColorControl Saturation MoveTo functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_1)
+✅ ColorControl Saturation Move functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_2)
+✅ ColorControl Saturation Step functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_3)
+✅ ColorControl MoveToHueAndSaturation functionality on ExtendedColorLightHSXYCT (Test_TC_CC_4_4)
+✅ ColorControl Color MoveTo functionality on ExtendedColorLightXYCT (Test_TC_CC_5_1)
+✅ ColorControl Color Move functionality on ExtendedColorLightXYCT (Test_TC_CC_5_2)
+✅ ColorControl Color Step functionality on ExtendedColorLightXYCT (Test_TC_CC_5_3)
+✅ ColorControl Color Temperature MoveTo functionality on ColorTemperatureLight (Test_TC_CC_6_1)
+✅ ColorControl Color Temperature Move functionality on ColorTemperatureLight (Test_TC_CC_6_2)
+✅ ColorControl Color Temperature Step functionality on ColorTemperatureLight (Test_TC_CC_6_3)
+⏭️ ColorControl StartUpColorTemperatureMireds across a DUT reboot on ColorTemperatureLight (TC_CC_6_5.py)
+   ↳ Same class of limitation as Test_TC_OO_2_4: requires a real DUT reboot (request_device_reboot(), no restart flag file configured for this harness) with StartUpColorTemperatureMireds re-verified after it actually restarts Matterbridge. Verified directly: the test proceeds past the reboot request without error but ColorTemperatureMireds reads back as the pre-write default (250) instead of the written StartUpColorTemperatureMireds target (323) — the DUT never actually restarted, so startup behavior was never exercised.
+✅ ColorControl Enhanced MoveToHue functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_1)
+✅ ColorControl Enhanced MoveHue functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_2)
+✅ ColorControl Enhanced Step functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_3)
+✅ ColorControl MoveToEnhancedHueAndSaturation functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_4)
+⏭️ ColorControl StopMoveStep functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_8_1)
+   ↳ The managedTransitionTimeHandling opt-in under MATTERBRIDGE_CHIP_TEST (packages/core/src/behaviors/colorControlServer.ts) fixed this test's original failure (step 9, HS Stop) and the CT/HS Stop sections that follow — the test now progresses from 10 successes/1 error to 60 successes/1 error. It still fails at step 37 (Step 5e, the EnhancedMoveHue section, second read 10s after Stop): StopMoveStep genuinely never stops an EnhancedCurrentHue transition on any Matterbridge ColorControl endpoint, because @matter/node's ColorControlServer.stopMoveStepLogic() only calls transitions.stop('enhancedCurrentHue') when 'this.state.colorLoopActive === ColorControl.ColorLoopActive.Inactive' (0) — but colorLoopActive is undefined (not 0) whenever the ColorLoop feature isn't included, which is every Matterbridge ColorControl endpoint (no createXxxColorControlClusterServer() helper enables ColorLoop), so the strict-equality guard is always false and the stop call is always skipped. Verified directly against the container with an isolated repro script: EnhancedCurrentHue keeps climbing at the full commanded rate for at least 10s after StopMoveStep is sent and acknowledged. This is a genuine @matter/node bug (an edge case the library's own guard doesn't account for), not Matterbridge code; needs a fix or workaround upstream before enabling.
+✅ ColorControl ColorLoopSet Validation on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_9_1)
+✅ ColorControl ColorLoopSet Validation - change direction without stop on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_9_2)
+✅ ColorControl ColorLoopSet Validation - change time without stop on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_9_3)
+✅ ColorControl full feature conformance on ExtendedColorLightEnhancedEHSXYCT (TC_CC_10_1.py)
 
-Summary: 9/9 tests passed (1 skipped).
-Chip tests run ended at 2026-09-01T12:21:09.208Z (total duration 3m 30s)
+Summary: 23/23 tests passed (2 skipped).
+Chip tests run ended at 2026-09-01T13:02:37.860Z (total duration 19m 44s)
