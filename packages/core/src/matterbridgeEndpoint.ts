@@ -4857,6 +4857,10 @@ export class MatterbridgeEndpoint extends Endpoint {
       criticalOverTemperatureAlarm: criticalOverTemperatureThreshold !== undefined,
       criticalUnderTemperatureAlarm: criticalUnderTemperatureThreshold !== undefined,
     });
+    const initialMask = normalizeTemperatureAlarm(mask);
+    for (const alarm of Object.keys(supported) as (keyof TemperatureAlarm.Alarm)[]) {
+      initialMask[alarm] &&= supported[alarm];
+    }
     this.behaviors.require(
       MatterbridgeTemperatureAlarmServer.with(
         ...(criticalOverTemperatureThreshold !== undefined ? [TemperatureAlarm.Feature.OverTemperature] : []),
@@ -4864,7 +4868,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       ),
       {
         // Base attributes
-        mask: normalizeTemperatureAlarm(mask ?? supported),
+        mask: mask === undefined ? supported : initialMask,
         state: normalizeTemperatureAlarm(),
         supported,
         // Feature.OverTemperature

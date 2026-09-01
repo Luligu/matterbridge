@@ -1682,9 +1682,12 @@ describe('Server clusters and behaviors', () => {
     );
 
     // Requesting a bit that is not in the Supported attribute (e.g. MinorOverTemperature) is rejected.
+    const invalidRequestHandler = vi.fn();
+    temperatureCabinet.addCommandHandler('TemperatureAlarm.modifyEnabledAlarms', invalidRequestHandler);
     await expect(
       temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: { ...enabledMask, minorOverTemperatureAlarm: true } }),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(invalidRequestHandler).not.toHaveBeenCalled();
 
     // A sparse Mask (only the bits the caller cares about) is normalized to the full bitmap on both Mask and State.
     await temperatureCabinet.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', { mask: { criticalUnderTemperatureAlarm: true } });

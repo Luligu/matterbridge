@@ -131,6 +131,7 @@ export class MatterbridgeTemperatureAlarmServer extends MatterbridgeTemperatureA
   override async modifyEnabledAlarms(request: TemperatureAlarm.ModifyEnabledAlarmsRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeTemperatureAlarmServer: modifying enabled alarms (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.#assertMaskSupported(request.mask);
     await device.commandHandler.executeHandler('TemperatureAlarm.modifyEnabledAlarms', {
       command: 'modifyEnabledAlarms',
       request,
@@ -139,8 +140,6 @@ export class MatterbridgeTemperatureAlarmServer extends MatterbridgeTemperatureA
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.15.7.2.1: Reject with InvalidCommand a Mask that sets bits for alarms which are not supported.
-    this.#assertMaskSupported(request.mask);
     // Matter 1.6.0 § 1.15.7.2.2: On success, set the Mask attribute to the requested value.
     const mask = normalizeTemperatureAlarm(request.mask);
     this.state.mask = mask;

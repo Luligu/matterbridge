@@ -2516,6 +2516,19 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(expectedMask);
     expect(device.getAttribute(TemperatureAlarm.id, 'criticalOverTemperatureThreshold')).toBe(6000);
     expect(device.getAttribute(TemperatureAlarm.id, 'criticalUnderTemperatureThreshold')).toBe(200);
+
+    const unsupportedMask = { ...expectedMask, majorOverTemperatureAlarm: true };
+    const deviceWithoutThresholds = new MatterbridgeEndpoint(temperatureControlledCabinetCooler, { id: 'TemperatureAlarmWithoutThresholds' });
+    deviceWithoutThresholds.createDefaultTemperatureAlarmClusterServer(undefined, undefined, unsupportedMask);
+    await add(deviceWithoutThresholds);
+    expect(deviceWithoutThresholds.getAttribute(TemperatureAlarm.id, 'mask')).toEqual({
+      criticalOverTemperatureAlarm: false,
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: false,
+    });
   });
 
   test('createDefaultDeviceEnergyManagementClusterServer', async () => {
