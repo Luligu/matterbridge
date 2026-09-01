@@ -28,7 +28,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { contactSensor, onOffLight } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { featuresFor } from '../src/matterbridgeEndpointHelpers.js';
-import { camelCase, createClusterServer, getServerBehaviorFromClusterId, pascalCase, snakeCase } from '../src/matterbridgeFactory.js';
+import { camelCase, createClusterServer, getClientBehaviorFromClusterId, getServerBehaviorFromClusterId, pascalCase, snakeCase } from '../src/matterbridgeFactory.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -95,6 +95,15 @@ describe('Matterbridge ' + NAME, () => {
     expect(await getServerBehaviorFromClusterId(0xfff0 as ClusterId)).toBeUndefined();
   });
 
+  test('getClientBehaviorFromClusterId resolves the stock matter.js client', async () => {
+    const onOffType = await getClientBehaviorFromClusterId(OnOff.id);
+    expect(onOffType?.id).toBe('onOff');
+  });
+
+  test('getClientBehaviorFromClusterId returns undefined for an unknown cluster id', async () => {
+    expect(await getClientBehaviorFromClusterId(0xfff0 as ClusterId)).toBeUndefined();
+  });
+
   test('createClusterServer creates a state cluster without features', async () => {
     const device = new MatterbridgeEndpoint(contactSensor, { id: 'FactoryBooleanState' });
     expect(await createClusterServer(device, BooleanState.id, { attributes: { stateValue: false } })).toBe(device);
@@ -107,6 +116,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(Identify.id)).toBe(true);
     expect(device.hasAttributeServer(Identify, 'identifyTime')).toBe(true);
     expect(device.hasAttributeServer(Identify, 'identifyType')).toBe(true);
+    expect(featuresFor(device, Identify)).toEqual({});
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'booleanState', 'identify']);
 
     device.addRequiredClusterServers();
