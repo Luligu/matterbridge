@@ -3,7 +3,7 @@
  * @description Closure device class exposing the Matter 1.5 ClosureControl cluster.
  * @author Luca Liguori
  * @created 2026-03-02
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -348,6 +348,10 @@ export namespace MatterbridgeClosureControlServer {
     calibrationDuration = 0;
     /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Signature position. Default: 50_00 (50%). */
     signaturePosition = 50_00;
+    /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Ventilation position. Default: 50_00 (50%). */
+    ventilationPosition = 50_00;
+    /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Pedestrian position. Default: 50_00 (50%). */
+    pedestrianPosition = 50_00;
   }
 }
 /* v8 ignore stop */
@@ -379,6 +383,10 @@ export interface ClosureOptions {
   calibrationDuration?: number;
   /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Signature position. Default: 50_00 (50%). */
   signaturePosition?: number;
+  /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Ventilation position. Default: 50_00 (50%). */
+  ventilationPosition?: number;
+  /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Pedestrian position. Default: 50_00 (50%). */
+  pedestrianPosition?: number;
   /** Enable the ClosureControl MotionLatching feature. Defaults to false. */
   motionLatching?: boolean;
   /** Enable the ClosureControl Speed feature. Defaults to false. */
@@ -436,6 +444,8 @@ export class Closure extends MatterbridgeEndpoint {
       movementDuration = 0,
       calibrationDuration = 0,
       signaturePosition = 50_00,
+      ventilationPosition = 50_00,
+      pedestrianPosition = 50_00,
       motionLatching = false,
       speed = false,
       ventilation = false,
@@ -490,6 +500,8 @@ export class Closure extends MatterbridgeEndpoint {
       movementDuration,
       calibrationDuration,
       signaturePosition,
+      ventilationPosition,
+      pedestrianPosition,
     };
     this.behaviors.require(
       MatterbridgeClosureControlServer.with(
@@ -524,6 +536,26 @@ export class Closure extends MatterbridgeEndpoint {
   }
 
   /**
+   * Gets the simulated `ventilationPosition` value, in percent hundredths (0-10000), reached when the closure is
+   * moved to the Ventilation position.
+   *
+   * @returns {number | undefined} Current ventilation position.
+   */
+  getVentilationPosition(): number | undefined {
+    return this.getAttribute(MatterbridgeClosureControlServer, 'ventilationPosition');
+  }
+
+  /**
+   * Gets the simulated `pedestrianPosition` value, in percent hundredths (0-10000), reached when the closure is
+   * moved to the Pedestrian position.
+   *
+   * @returns {number | undefined} Current pedestrian position.
+   */
+  getPedestrianPosition(): number | undefined {
+    return this.getAttribute(MatterbridgeClosureControlServer, 'pedestrianPosition');
+  }
+
+  /**
    * Sets the ClosureControl state attributes with the supplied current and target states.
    *
    * @param {ClosureControl.OverallCurrentState} currentState - Current closure state to expose.
@@ -540,23 +572,27 @@ export class Closure extends MatterbridgeEndpoint {
     countdownTime = 0,
     currentErrorList: ClosureControl.ClosureError[] = [],
   ): Promise<void> {
-    const featureMap = this.getAttribute(ClosureControl.id, 'featureMap');
-    const supportsMotionLatching = featureMap?.motionLatching === true;
-    const supportsSpeed = featureMap?.speed === true;
+    const features = this.featuresOf(MatterbridgeClosureControlServer.id);
+    const supportsCurrentPosition =
+      (currentState.position !== ClosureControl.CurrentPosition.OpenedForVentilation || features.ventilation) &&
+      (currentState.position !== ClosureControl.CurrentPosition.OpenedForPedestrian || features.pedestrian);
+    const supportsTargetPosition =
+      (targetState.position !== ClosureControl.TargetPosition.MoveToVentilationPosition || features.ventilation) &&
+      (targetState.position !== ClosureControl.TargetPosition.MoveToPedestrianPosition || features.pedestrian);
 
     await this.setAttribute(ClosureControl, 'countdownTime', countdownTime);
     await this.setAttribute(ClosureControl, 'mainState', mainState);
     await this.setAttribute(ClosureControl, 'currentErrorList', currentErrorList);
     await this.setAttribute(ClosureControl, 'overallCurrentState', {
-      position: currentState.position,
-      ...(supportsMotionLatching ? { latch: currentState.latch } : null),
-      ...(supportsSpeed ? { speed: currentState.speed } : null),
+      ...(supportsCurrentPosition ? { position: currentState.position } : null),
+      ...(features.motionLatching ? { latch: currentState.latch } : null),
+      ...(features.speed ? { speed: currentState.speed } : null),
       secureState: currentState.secureState,
     });
     await this.setAttribute(ClosureControl, 'overallTargetState', {
-      position: targetState.position,
-      ...(supportsMotionLatching ? { latch: targetState.latch } : null),
-      ...(supportsSpeed ? { speed: targetState.speed } : null),
+      ...(supportsTargetPosition ? { position: targetState.position } : null),
+      ...(features.motionLatching ? { latch: targetState.latch } : null),
+      ...(features.speed ? { speed: targetState.speed } : null),
     });
   }
 
@@ -621,6 +657,97 @@ export class Closure extends MatterbridgeEndpoint {
         speed: ThreeLevelAuto.Auto,
       },
     );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to the Signature position, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setOpenedAtSignature(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.OpenedAtSignature,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToSignaturePosition,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to the Ventilation position, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setOpenedForVentilation(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.OpenedForVentilation,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToVentilationPosition,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to the Pedestrian position, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setOpenedForPedestrian(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.OpenedForPedestrian,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Convert a ClosureControl target position to its corresponding current position.
+   *
+   * @param {ClosureControl.TargetPosition} position Requested closure target position.
+   * @returns {ClosureControl.CurrentPosition} Matching reached position.
+   */
+  targetPositionToCurrentPosition(position: ClosureControl.TargetPosition): ClosureControl.CurrentPosition {
+    if (position === ClosureControl.TargetPosition.MoveToFullyClosed) return ClosureControl.CurrentPosition.FullyClosed;
+    if (position === ClosureControl.TargetPosition.MoveToFullyOpen) return ClosureControl.CurrentPosition.FullyOpened;
+    if (position === ClosureControl.TargetPosition.MoveToPedestrianPosition) return ClosureControl.CurrentPosition.OpenedForPedestrian;
+    if (position === ClosureControl.TargetPosition.MoveToVentilationPosition) return ClosureControl.CurrentPosition.OpenedForVentilation;
+    return ClosureControl.CurrentPosition.OpenedAtSignature;
+  }
+
+  /**
+   * Converts a ClosureControl target position to the corresponding closure panel percentage.
+   *
+   * @param {ClosureControl.TargetPosition} position Requested closure target position.
+   * @returns {number} Target closure panel position in percent hundredths (0-10000).
+   */
+  targetPositionToTargetPercent(position: ClosureControl.TargetPosition): number {
+    if (position === ClosureControl.TargetPosition.MoveToFullyOpen) return 0;
+    if (position === ClosureControl.TargetPosition.MoveToFullyClosed) return 100_00;
+    if (position === ClosureControl.TargetPosition.MoveToPedestrianPosition) return this.getPedestrianPosition() ?? 50_00;
+    if (position === ClosureControl.TargetPosition.MoveToVentilationPosition) return this.getVentilationPosition() ?? 50_00;
+    return this.getSignaturePosition() ?? 50_00;
   }
 
   /**

@@ -91,6 +91,47 @@ describe('Matterbridge ' + NAME, () => {
   test('check attributes after adding device to server', () => {
     expect(device.getMainState()).toBe(ClosureControl.MainState.Stopped);
     expect(device.getSignaturePosition()).toBe(50_00);
+    expect(device.getVentilationPosition()).toBe(50_00);
+    expect(device.getPedestrianPosition()).toBe(50_00);
+  });
+
+  test('get configured simulated positions at the supported boundaries', async () => {
+    const configuredClosure = new Closure('Closure Configured Positions Test Device', 'CLPOSITIONS', {
+      signaturePosition: 25_00,
+      ventilationPosition: 0,
+      pedestrianPosition: 100_00,
+    });
+    expect(await addDevice(server, configuredClosure)).toBeTruthy();
+
+    expect(configuredClosure.getSignaturePosition()).toBe(25_00);
+    expect(configuredClosure.getVentilationPosition()).toBe(0);
+    expect(configuredClosure.getPedestrianPosition()).toBe(100_00);
+    expect(configuredClosure.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToFullyOpen)).toBe(0);
+    expect(configuredClosure.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToFullyClosed)).toBe(100_00);
+    expect(configuredClosure.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToSignaturePosition)).toBe(25_00);
+    expect(configuredClosure.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToVentilationPosition)).toBe(0);
+    expect(configuredClosure.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToPedestrianPosition)).toBe(100_00);
+  });
+
+  test.each([
+    [ClosureControl.TargetPosition.MoveToFullyClosed, ClosureControl.CurrentPosition.FullyClosed],
+    [ClosureControl.TargetPosition.MoveToFullyOpen, ClosureControl.CurrentPosition.FullyOpened],
+    [ClosureControl.TargetPosition.MoveToPedestrianPosition, ClosureControl.CurrentPosition.OpenedForPedestrian],
+    [ClosureControl.TargetPosition.MoveToVentilationPosition, ClosureControl.CurrentPosition.OpenedForVentilation],
+    [ClosureControl.TargetPosition.MoveToSignaturePosition, ClosureControl.CurrentPosition.OpenedAtSignature],
+  ])('convert target position %s to current position %s', (targetPosition, currentPosition) => {
+    expect(device.targetPositionToCurrentPosition(targetPosition)).toBe(currentPosition);
+  });
+
+  test('use the default panel percentage when a stored special position is unavailable', () => {
+    vi.spyOn(device, 'getPedestrianPosition').mockImplementationOnce(() => {});
+    expect(device.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToPedestrianPosition)).toBe(50_00);
+
+    vi.spyOn(device, 'getVentilationPosition').mockImplementationOnce(() => {});
+    expect(device.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToVentilationPosition)).toBe(50_00);
+
+    vi.spyOn(device, 'getSignaturePosition').mockImplementationOnce(() => {});
+    expect(device.targetPositionToTargetPercent(ClosureControl.TargetPosition.MoveToSignaturePosition)).toBe(50_00);
   });
 
   test('create closure device with default optional features disabled', async () => {
@@ -326,6 +367,86 @@ describe('Matterbridge ' + NAME, () => {
     await gate.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
     expect(calibrateForwarded).toBe(2);
     expect(gate.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+  });
+
+  test('set closure to the Signature, Ventilation, and Pedestrian positions', async () => {
+    await gate.setOpenedAtSignature();
+    expect(gate.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.OpenedAtSignature,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+      secureState: false,
+    });
+    expect(gate.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToSignaturePosition,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    await gate.setOpenedForVentilation();
+    expect(gate.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.OpenedForVentilation,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+      secureState: false,
+    });
+    expect(gate.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToVentilationPosition,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+
+    await gate.setOpenedForPedestrian();
+    expect(gate.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
+      position: ClosureControl.CurrentPosition.OpenedForPedestrian,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+      secureState: false,
+    });
+    expect(gate.getAttribute(ClosureControl.id, 'overallTargetState')).toEqual({
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+      latch: false,
+      speed: ThreeLevelAuto.Auto,
+    });
+  });
+
+  test('include Signature and omit unsupported optional positions', async () => {
+    await device.setOpenedAtSignature();
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toMatchObject({
+      position: ClosureControl.CurrentPosition.OpenedAtSignature,
+    });
+
+    await device.setOpenedForVentilation();
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toMatchObject({ position: ClosureControl.CurrentPosition.OpenedAtSignature });
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({ position: ClosureControl.TargetPosition.MoveToSignaturePosition });
+
+    await device.setOpenedForPedestrian();
+    expect(device.getAttribute(ClosureControl.id, 'overallCurrentState')).toMatchObject({ position: ClosureControl.CurrentPosition.OpenedAtSignature });
+    expect(device.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({ position: ClosureControl.TargetPosition.MoveToSignaturePosition });
+  });
+
+  test('omit only the optional position whose feature is disabled', async () => {
+    const ventilationClosure = new Closure('Closure Ventilation Position Test Device', 'CLVENTPOSITION', { ventilation: true });
+    expect(await addDevice(server, ventilationClosure)).toBeTruthy();
+    await ventilationClosure.setOpenedForVentilation();
+    await ventilationClosure.setOpenedForPedestrian();
+    expect(ventilationClosure.getAttribute(ClosureControl.id, 'overallCurrentState')).toMatchObject({
+      position: ClosureControl.CurrentPosition.OpenedForVentilation,
+    });
+    expect(ventilationClosure.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+      position: ClosureControl.TargetPosition.MoveToVentilationPosition,
+    });
+
+    const pedestrianClosure = new Closure('Closure Pedestrian Position Test Device', 'CLPEDPOSITION', { pedestrian: true });
+    expect(await addDevice(server, pedestrianClosure)).toBeTruthy();
+    await pedestrianClosure.setOpenedForPedestrian();
+    await pedestrianClosure.setOpenedForVentilation();
+    expect(pedestrianClosure.getAttribute(ClosureControl.id, 'overallCurrentState')).toMatchObject({
+      position: ClosureControl.CurrentPosition.OpenedForPedestrian,
+    });
+    expect(pedestrianClosure.getAttribute(ClosureControl.id, 'overallTargetState')).toMatchObject({
+      position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+    });
   });
 
   test('reject moveTo with invalid field constraints', async () => {
