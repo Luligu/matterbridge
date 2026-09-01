@@ -24,6 +24,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 /* oxlint-disable typescript/no-namespace */
 
+import { Millis, Time, type Timer } from '@matter/general';
 import { WindowCoveringBaseServer, WindowCoveringServer } from '@matter/node/behaviors/window-covering';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 
@@ -134,34 +135,37 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * @param {number} targetPercent100ths - The lift target position, in percent hundredths (0-10000), to simulate reaching.
    */
   #startLiftMovement(targetPercent100ths: number): void {
-    clearTimeout(this.internal.liftMovementTimer);
+    this.internal.liftMovementTimer?.stop();
     this.internal.liftMovementTimer = undefined;
     if (this.state.movementDuration <= 0) return;
     const status = this.#computeMovementStatus(targetPercent100ths, this.state.currentPositionLiftPercent100ths);
     this.state.operationalStatus.lift = status;
     this.#updateGlobalOperationalStatus();
     if (status === WindowCovering.MovementStatus.Stopped) return;
-    this.internal.liftMovementTimer = setTimeout(() => {
-      this.internal.liftMovementTimer = undefined;
-      void this.#completeLiftMovement(targetPercent100ths);
-    }, this.state.movementDuration);
+    this.internal.liftMovementTarget = targetPercent100ths;
+    this.internal.liftMovementTimer = Time.getTimer(
+      'WindowCovering lift movement complete',
+      Millis(this.state.movementDuration),
+      // The reactor must be a real method, not an arrow function, so the framework can rebind `this` to a fresh,
+      // still-valid Behavior context when the timer fires well after the originating command's own context exited.
+      // oxlint-disable-next-line typescript/unbound-method
+      this.callback(this.#completeLiftMovement, { lock: true }),
+    ).start();
   }
 
   /**
-   * Simulates a lift movement completing: updates `currentPositionLiftPercent100ths` to the target reached, then
-   * sets `operationalStatus.lift` back to Stopped and recomputes `operationalStatus.global`.
-   *
-   * @param {number} targetPercent100ths - The lift target position, in percent hundredths (0-10000), that was reached.
-   * @returns {Promise<void>} Resolves once the resulting attributes have been updated.
+   * Reactor for {@link #startLiftMovement}: sets `currentPositionLiftPercent100ths` to `internal.liftMovementTarget`
+   * (the target that was being approached; a timer reactor takes no custom arguments), then sets
+   * `operationalStatus.lift` back to Stopped and recomputes `operationalStatus.global`. Runs under a fresh, locked
+   * Behavior context (see {@link #startLiftMovement}), so `this.state` can be read and written directly and both
+   * attributes settle within the same transaction.
    */
-  #completeLiftMovement = async (targetPercent100ths: number): Promise<void> => {
-    // `this.state` can no longer be read once this command's transaction context has exited, so the current tilt
-    // status (unaffected by this lift completion) is re-read from the endpoint rather than from `this.state`.
-    const windowCovering = this.endpoint as MatterbridgeEndpoint;
-    await windowCovering.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', targetPercent100ths);
-    const tilt: WindowCovering.MovementStatus = windowCovering.getAttribute(WindowCovering, 'operationalStatus')?.tilt ?? WindowCovering.MovementStatus.Stopped;
-    await windowCovering.setAttribute(WindowCovering, 'operationalStatus', { global: tilt, lift: WindowCovering.MovementStatus.Stopped, tilt });
-  };
+  #completeLiftMovement(): void {
+    this.internal.liftMovementTimer = undefined;
+    this.state.currentPositionLiftPercent100ths = this.internal.liftMovementTarget;
+    this.state.operationalStatus.lift = WindowCovering.MovementStatus.Stopped;
+    this.#updateGlobalOperationalStatus();
+  }
 
   /**
    * If `movementDuration` is positive, synchronously reflects the new tilt movement direction in
@@ -172,34 +176,35 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * @param {number} targetPercent100ths - The tilt target position, in percent hundredths (0-10000), to simulate reaching.
    */
   #startTiltMovement(targetPercent100ths: number): void {
-    clearTimeout(this.internal.tiltMovementTimer);
+    this.internal.tiltMovementTimer?.stop();
     this.internal.tiltMovementTimer = undefined;
     if (this.state.movementDuration <= 0) return;
     const status = this.#computeMovementStatus(targetPercent100ths, this.state.currentPositionTiltPercent100ths);
     this.state.operationalStatus.tilt = status;
     this.#updateGlobalOperationalStatus();
     if (status === WindowCovering.MovementStatus.Stopped) return;
-    this.internal.tiltMovementTimer = setTimeout(() => {
-      this.internal.tiltMovementTimer = undefined;
-      void this.#completeTiltMovement(targetPercent100ths);
-    }, this.state.movementDuration);
+    this.internal.tiltMovementTarget = targetPercent100ths;
+    this.internal.tiltMovementTimer = Time.getTimer(
+      'WindowCovering tilt movement complete',
+      Millis(this.state.movementDuration),
+      // oxlint-disable-next-line typescript/unbound-method
+      this.callback(this.#completeTiltMovement, { lock: true }),
+    ).start();
   }
 
   /**
-   * Simulates a tilt movement completing: updates `currentPositionTiltPercent100ths` to the target reached, then
-   * sets `operationalStatus.tilt` back to Stopped and recomputes `operationalStatus.global`.
-   *
-   * @param {number} targetPercent100ths - The tilt target position, in percent hundredths (0-10000), that was reached.
-   * @returns {Promise<void>} Resolves once the resulting attributes have been updated.
+   * Reactor for {@link #startTiltMovement}: sets `currentPositionTiltPercent100ths` to `internal.tiltMovementTarget`
+   * (the target that was being approached; a timer reactor takes no custom arguments), then sets
+   * `operationalStatus.tilt` back to Stopped and recomputes `operationalStatus.global`. Runs under a fresh, locked
+   * Behavior context (see {@link #startLiftMovement}), so `this.state` can be read and written directly and both
+   * attributes settle within the same transaction.
    */
-  #completeTiltMovement = async (targetPercent100ths: number): Promise<void> => {
-    // `this.state` can no longer be read once this command's transaction context has exited, so the current lift
-    // status (unaffected by this tilt completion) is re-read from the endpoint rather than from `this.state`.
-    const windowCovering = this.endpoint as MatterbridgeEndpoint;
-    await windowCovering.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', targetPercent100ths);
-    const lift: WindowCovering.MovementStatus = windowCovering.getAttribute(WindowCovering, 'operationalStatus')?.lift ?? WindowCovering.MovementStatus.Stopped;
-    await windowCovering.setAttribute(WindowCovering, 'operationalStatus', { global: lift, lift, tilt: WindowCovering.MovementStatus.Stopped });
-  };
+  #completeTiltMovement(): void {
+    this.internal.tiltMovementTimer = undefined;
+    this.state.currentPositionTiltPercent100ths = this.internal.tiltMovementTarget;
+    this.state.operationalStatus.tilt = WindowCovering.MovementStatus.Stopped;
+    this.#updateGlobalOperationalStatus();
+  }
 
   /**
    * Handles UpOrOpen for lift/tilt window coverings.
@@ -269,9 +274,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     // Cancel any lift/tilt movement simulation still in flight from a previous command, and settle target = current.
     // Gated on movementDuration, like #startLiftMovement/#startTiltMovement: with the simulation disabled (the
     // default), this does nothing, leaving target/operationalStatus entirely to the real device implementation.
-    clearTimeout(this.internal.liftMovementTimer);
+    this.internal.liftMovementTimer?.stop();
     this.internal.liftMovementTimer = undefined;
-    clearTimeout(this.internal.tiltMovementTimer);
+    this.internal.tiltMovementTimer?.stop();
     this.internal.tiltMovementTimer = undefined;
     if (this.state.movementDuration > 0) {
       if (this.features.positionAwareLift) this.state.targetPositionLiftPercent100ths = this.state.currentPositionLiftPercent100ths;
@@ -340,15 +345,30 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       `MatterbridgeWindowCoveringServer: goToTiltPercentage result target ${this.state.targetPositionTiltPercent100ths} current ${this.state.currentPositionTiltPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
+
+  /**
+   * Stops timers when the server is disposed.
+   */
+  override async [Symbol.asyncDispose](): Promise<void> {
+    this.internal.liftMovementTimer?.stop();
+    this.internal.liftMovementTimer = undefined;
+    this.internal.tiltMovementTimer?.stop();
+    this.internal.tiltMovementTimer = undefined;
+    await super[Symbol.asyncDispose]?.();
+  }
 }
 
 /* v8 ignore start */
 export namespace MatterbridgeWindowCoveringServer {
   export class Internal extends WindowCoveringBaseServer.Internal {
     /** Pending timer that simulates completion of an in-progress lift movement; cancelled by StopMotion or a new lift movement. */
-    liftMovementTimer?: NodeJS.Timeout;
+    liftMovementTimer?: Timer;
+    /** Lift target, in percent hundredths (0-10000), the pending lift movement timer will apply on completion. */
+    liftMovementTarget = 0;
     /** Pending timer that simulates completion of an in-progress tilt movement; cancelled by StopMotion or a new tilt movement. */
-    tiltMovementTimer?: NodeJS.Timeout;
+    tiltMovementTimer?: Timer;
+    /** Tilt target, in percent hundredths (0-10000), the pending tilt movement timer will apply on completion. */
+    tiltMovementTarget = 0;
   }
 
   /**
