@@ -70,6 +70,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils]: Add spec compliant `luxToMatter` and `matterToLux` utilities.
 - [WindowCovering]: Add `createDefaultTiltWindowCoveringClusterServer()` to `MatterbridgeEndpoint`, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring `createDefaultWindowCoveringClusterServer()`.
 - [WindowCovering]: `MatterbridgeWindowCoveringServer` can now simulate lift/tilt movement completion, opt-in via the new `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [temperatureAlarm]: Add `createDefaultTemperatureAlarmClusterServer()` to `MatterbridgeEndpoint`, backed by a new `MatterbridgeTemperatureAlarmServer` behavior implementing the base Mask/State/Supported attributes, the `ModifyEnabledAlarms` command, and the `Notify` event, with the optional OverTemperature/UnderTemperature critical thresholds enabled through the helper's parameters. `TemperatureAlarm` was already an optional server cluster on `temperatureControlledCabinetCooler`/`temperatureControlledCabinetHeater` (used by `Refrigerator`/`Oven`) but had no implementation. Support for this cluster is provisional in the Matter 1.6.0 specification.
 
 ### Changed
 
