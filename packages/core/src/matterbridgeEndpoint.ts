@@ -4149,7 +4149,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default Water Tank Level Monitoring Cluster Server with features Condition and ReplacementProductList.
+   * Creates a default Water Tank Level Monitoring Cluster Server with features Condition, Warning, and ReplacementProductList.
    * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
    *
    * @param {number} condition - The initial condition value (range 0-100). Default is 100.
@@ -4165,7 +4165,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * It provides information about the condition of the resource, whether it is in place, and the last time it was changed.
    * The change indication can be used to indicate if the water tank needs to be refilled or emptied.
    * The replacement product list can be used to provide a list of replacement products for the resource.
-   * The condition attribute is fixed at 100, indicating a full or empty tank as initially configured.
+   * The condition attribute defaults to 100, indicating a full or empty tank as initially configured.
    * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
    * The replacement product list is initialized as an empty array.
    */
