@@ -27,7 +27,7 @@
 /* oxlint-disable typescript/no-namespace */
 
 // @matter
-import type { MaybePromise } from '@matter/general';
+import { Millis, Time, type MaybePromise, type Timer } from '@matter/general';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { StatusResponse } from '@matter/types';
@@ -196,7 +196,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     if (matchesCurrentState) return;
 
     this.state.targetState = nextTarget;
-    this.scheduleMovement(nextTarget, currentState);
+    this.#scheduleMovement(nextTarget, currentState);
   };
 
   override step = async (request: ClosureDimension.StepRequest): Promise<void> => {
@@ -280,7 +280,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
       ...(this.features.speed && request.speed !== undefined ? { speed: request.speed } : null),
     };
     this.state.targetState = nextTarget;
-    this.scheduleMovement(nextTarget, currentState);
+    this.#scheduleMovement(nextTarget, currentState);
   };
 
   /**
@@ -299,30 +299,34 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
    * @param {ClosureDimension.DimensionState | null} currentState - The `currentState` read when the command was received.
    * @returns {void}
    */
-  private scheduleMovement(targetState: ClosureDimension.DimensionState, currentState: ClosureDimension.DimensionState | null): void {
+  #scheduleMovement(targetState: ClosureDimension.DimensionState, currentState: ClosureDimension.DimensionState | null): void {
     // Cancel any movement still in flight from a previous command before (re)scheduling.
-    clearTimeout(this.internal.movementTimer);
-    if (currentState === null || this.state.movementDuration <= 0) {
-      this.internal.movementTimer = undefined;
-      return;
-    }
-    // Captured now because `this.state` can no longer be read once this command's transaction context has exited.
-    const previousState = currentState;
-    this.internal.movementTimer = setTimeout(() => {
-      this.internal.movementTimer = undefined;
-      void this.completeMovement(targetState, previousState);
-    }, this.state.movementDuration);
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
+    if (currentState === null || this.state.movementDuration <= 0) return;
+    this.internal.movementTargetState = targetState;
+    this.internal.movementPreviousState = currentState;
+    this.internal.movementTimer = Time.getTimer(
+      'ClosureDimension movement complete',
+      Millis(this.state.movementDuration),
+      // The reactor must be a real method, not an arrow function, so the framework can rebind `this` to a
+      // fresh, still-valid Behavior context when the timer fires well after the originating command's own
+      // context exited.
+      // oxlint-disable-next-line typescript/unbound-method
+      this.callback(this.#completeMovement, { lock: true }),
+    ).start();
   }
 
   /**
-   * Simulates a SetTarget/Step movement completing: updates the `currentState` attribute to match `targetState`.
-   *
-   * @param {ClosureDimension.DimensionState} targetState - The target state the movement was simulating reaching.
-   * @param {ClosureDimension.DimensionState} previousState - The `currentState` captured when the movement was scheduled.
-   * @returns {Promise<void>} Resolves once the resulting attribute has been updated.
+   * Reactor for {@link #scheduleMovement}: updates the `currentState` attribute to match
+   * `internal.movementTargetState` (the target that was being approached; a timer reactor takes no custom
+   * arguments). Runs under a fresh, locked Behavior context (see {@link #scheduleMovement}), so `this.state` can
+   * be written directly within the same transaction.
    */
-  private completeMovement = async (targetState: ClosureDimension.DimensionState, previousState: ClosureDimension.DimensionState): Promise<void> => {
-    const endpoint = this.endpoint as MatterbridgeEndpoint;
+  #completeMovement(): void {
+    this.internal.movementTimer = undefined;
+    const targetState = this.internal.movementTargetState;
+    const previousState = this.internal.movementPreviousState;
     // setTarget()/step() always carry Position/Latch/Speed through to targetState explicitly (each inherited
     // from the constructor's own non-null defaults when a command omits it), so the `?? previousState.*`
     // fallbacks below are unreachable through the public command surface — kept only as a defensive guard
@@ -331,19 +335,32 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     const position = targetState.position ?? previousState.position;
     const latch = targetState.latch ?? previousState.latch;
     const speed = targetState.speed ?? previousState.speed;
-    await endpoint.setAttribute(ClosureDimensionServer, 'currentState', {
+    this.state.currentState = {
       position,
       ...(this.features.motionLatching ? { latch } : null),
       ...(this.features.speed ? { speed } : null),
-    });
-  };
+    };
+  }
+
+  /**
+   * Stops timers when the server is disposed.
+   */
+  override async [Symbol.asyncDispose](): Promise<void> {
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
+    await super[Symbol.asyncDispose]?.();
+  }
 }
 
 /* v8 ignore start */
 export namespace MatterbridgeClosureDimensionServer {
   export class Internal extends MatterbridgeClosureDimensionServerBase.Internal {
     /** Pending timer that simulates completion of an in-progress SetTarget/Step; cancelled by Stop or a new SetTarget/Step. */
-    movementTimer?: NodeJS.Timeout;
+    movementTimer?: Timer;
+    /** Target state the pending movement timer will apply on completion. */
+    movementTargetState: ClosureDimension.DimensionState = {};
+    /** `currentState` captured when the pending movement was scheduled. */
+    movementPreviousState: ClosureDimension.DimensionState = {};
   }
 
   /**
