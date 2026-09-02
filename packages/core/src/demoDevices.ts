@@ -498,15 +498,15 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   await registerDevice(ep, 'Door Lock Controller', 'ENTRY-08-02');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringLift', number: EndpointNumber(8_03) });
-  ep.createDefaultWindowCoveringClusterServer();
+  ep.createDefaultWindowCoveringClusterServer(100_00, undefined, undefined, 10_000);
   await registerDevice(ep, 'Window Covering Lift', 'ENTRY-08-03');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringTilt', number: EndpointNumber(8_03_1) });
-  ep.createDefaultTiltWindowCoveringClusterServer();
+  ep.createDefaultTiltWindowCoveringClusterServer(100_00, undefined, undefined, 10_000);
   await registerDevice(ep, 'Window Covering Tilt', 'ENTRY-08-03-1');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringLiftTilt', number: EndpointNumber(8_03_2) });
-  ep.createDefaultLiftTiltWindowCoveringClusterServer();
+  ep.createDefaultLiftTiltWindowCoveringClusterServer(100_00, 100_00, undefined, undefined, 10_000);
   await registerDevice(ep, 'Window Covering LiftTilt', 'ENTRY-08-03-2');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCoveringController')!, bridgedNode, powerSource], { id: 'WindowCoveringController', number: EndpointNumber(8_04) });
