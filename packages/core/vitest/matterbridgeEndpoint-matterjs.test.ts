@@ -138,6 +138,29 @@ import { getAttributeId, getClusterId } from '../src/matterbridgeEndpointHelpers
 // Setup the test environment
 await setupTest(NAME, false);
 
+/**
+ * Waits for a WindowCovering movement simulation to complete, then lets its transaction settle.
+ *
+ * The simulation completes on a real timer, so the tests below poll for the completion to become observable
+ * instead of sleeping for a fixed amount: on a loaded CI runner a fixed sleep can expire before the timer fires,
+ * and the late callback then collides with the next command, which takes the behavior lock synchronously. The
+ * final flush covers the same collision from the other side: the new value is published on commit, slightly
+ * before the completion callback releases the lock it holds.
+ *
+ * @param {() => boolean} condition - Predicate polled until it returns true.
+ * @param {number} timeout - Maximum time to wait, in milliseconds (default 15000).
+ * @param {number} interval - Delay between polls, in milliseconds (default 20).
+ * @returns {Promise<void>} Resolves once the condition holds and the completion transaction has settled.
+ */
+async function waitForMovementCompletion(condition: () => boolean, timeout = 15000, interval = 20): Promise<void> {
+  const start = Date.now();
+  while (!condition()) {
+    if (Date.now() - start >= timeout) throw new Error(`waitForMovementCompletion timed out after ${timeout}ms`);
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+  await flushAsync(3, 10, 100);
+}
+
 describe('Matterbridge ' + NAME, () => {
   let context: StorageContext;
   let light: MatterbridgeEndpoint;
@@ -1148,7 +1171,9 @@ describe('Matterbridge ' + NAME, () => {
 
   test('simulate WindowCovering movement completion via movementDuration', async () => {
     const timedCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTimed' });
-    timedCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 100);
+    // movementDuration must stay comfortably longer than a command round trip, so the mid-movement assertions below
+    // are not racing the completion timer on a slow runner.
+    timedCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 1000);
     timedCover.addRequiredClusterServers();
     expect(await server.add(timedCover)).toBeDefined();
 
@@ -1159,7 +1184,7 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(0);
 
-    await flushAsync();
+    await waitForMovementCompletion(() => timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000);
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
       global: WindowCovering.MovementStatus.Stopped,
@@ -1172,7 +1197,7 @@ describe('Matterbridge ' + NAME, () => {
       tilt: WindowCovering.MovementStatus.Closing,
     });
 
-    await flushAsync();
+    await waitForMovementCompletion(() => timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000);
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
       global: WindowCovering.MovementStatus.Stopped,
@@ -1257,7 +1282,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('WindowCovering movement simulation edge cases', async () => {
     const edgeCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverEdge' });
-    edgeCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 100);
+    edgeCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 1000);
     edgeCover.addRequiredClusterServers();
     expect(await server.add(edgeCover)).toBeDefined();
 
@@ -1311,7 +1336,7 @@ describe('Matterbridge ' + NAME, () => {
     try {
       await edgeCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
       nullOperationalStatus = true;
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await waitForMovementCompletion(() => originalGetAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000);
       nullOperationalStatus = false;
       expect(edgeCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
       expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
@@ -1322,7 +1347,7 @@ describe('Matterbridge ' + NAME, () => {
 
       await edgeCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
       nullOperationalStatus = true;
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await waitForMovementCompletion(() => originalGetAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000);
       nullOperationalStatus = false;
       expect(edgeCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
       expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
