@@ -44,6 +44,7 @@ describe('DevicesIcons', () => {
     expect(screen.getAllByText('Error')).toHaveLength(2);
     expectText('Oven');
     expectText('Fridge');
+    expectText('12');
     expectText('Cooktop');
     expectText('Position 50%');
     expectText('Closure');
@@ -61,6 +62,10 @@ describe('DevicesIcons', () => {
     expectText('Speed 45%');
     expectText('Free');
     expectText('Tank 75%');
+    expectText('Utility');
+    expectText('Reference');
+    expectText('Tariff');
+    expectText('Meter');
     expectText('HeatPump');
     expectText('Solar');
     expectText('Inverter');
@@ -628,7 +633,8 @@ function createFullDeviceClusters(): Cluster[] {
   add(0x0075, 'Dishwasher', [['OperationalState', 'operationalState', '0', 0]]);
   add(0x007b, 'Oven', [['BridgedDeviceBasicInformation', 'reachable', 'true', true]]);
   add(0x0070, 'Refrigerator', [['BridgedDeviceBasicInformation', 'reachable', 'true', true]]);
-  add(0x0071, 'TemperatureControlledCabinet', [['TemperatureControl', 'selectedTemperatureLevel', '2', 2]]);
+  add(0x0071, 'TemperatureControlledCabinetNumber', [['TemperatureControl', 'temperatureSetpoint', '1200', 1200]]);
+  add(0x0071, 'TemperatureControlledCabinetLevel', [['TemperatureControl', 'selectedTemperatureLevel', '2', 2]]);
   add(0x0079, 'MicrowaveOven', [['OperationalState', 'operationalState', '1', 1]]);
   add(0x007a, 'ExtractorHood', [['FanControl', 'fanMode', '3', 3]]);
   add(0x0078, 'CookSurface', [['BridgedDeviceBasicInformation', 'reachable', 'true', true]]);
@@ -674,6 +680,10 @@ function createFullDeviceClusters(): Cluster[] {
   ]);
   add(0x050c, 'Evse', [['EnergyEvse', 'state', '0', 0]]);
   add(0x050f, 'WaterHeater', [['WaterHeaterManagement', 'tankPercentage', '75', 75]]);
+  add(0x0511, 'ElectricalUtilityMeter', [['MeterIdentification', 'clusterRevision', '1', 1]]);
+  add(0x0512, 'MeterReferencePoint', [['MeterIdentification', 'clusterRevision', '1', 1]]);
+  add(0x0513, 'ElectricalEnergyTariff', [['Descriptor', 'clusterRevision', '1', 1]]);
+  add(0x0514, 'ElectricalMeter', [['Descriptor', 'clusterRevision', '1', 1]]);
   add(0x0309, 'HeatPump', [['PowerSource', 'featureMap', '{}', {}]]);
   add(0x0017, 'SolarPower', [['PowerSource', 'featureMap', '{}', {}]]);
   add(0x0018, 'BatteryStorage', [['ElectricalPowerMeasurement', 'featureMap', '{}', {}]]);
