@@ -34,7 +34,7 @@ function usage() {
     'Modes:',
     '  latest  Install @matter/main@latest',
     '  dev     Install @matter/main@dev',
-    '  loc     Install ../matter.js/packages/main',
+    '  loc     Install ../matter.js/packages/main and its sibling split packages (general, model, node, nodejs, protocol, types)',
     '',
     'Options:',
     '  --dry-run, -n  Print discovered consumers and commands without running them',
@@ -149,11 +149,17 @@ if (obsoleteConsumers.length > 0) {
   runCommand(repoRoot, dryRun, 'npm', [...selectionArgs(obsoleteConsumers), 'uninstall', ...OBSOLETE_MATTER_PACKAGES, '--no-fund', '--no-audit']);
 }
 
-const target = mode === 'loc' ? '../matter.js/packages/main' : `${MATTER_MAIN}@${mode}`;
+// @matter/main's package.json declares its split-package dependencies (@matter/general, @matter/node, etc.) as "*",
+// which only resolves inside the matter.js monorepo workspace. Installed standalone via a local file: path, those
+// packages are unpublished and unresolvable, so `loc` mode must also install them from their local sibling paths.
+const targets =
+  mode === 'loc'
+    ? ['../matter.js/packages/main', ...OBSOLETE_MATTER_PACKAGES.map((dependency) => `../matter.js/packages/${dependency.slice('@matter/'.length)}`)]
+    : [`${MATTER_MAIN}@${mode}`];
 for (const [field, saveArgs] of DEPENDENCY_FIELDS) {
   const fieldConsumers = consumers.filter((consumer) => consumer.field === field);
   if (fieldConsumers.length === 0) continue;
-  runCommand(repoRoot, dryRun, 'npm', [...selectionArgs(fieldConsumers), 'install', '--no-fund', '--no-audit', '--save-exact', ...saveArgs, target]);
+  runCommand(repoRoot, dryRun, 'npm', [...selectionArgs(fieldConsumers), 'install', '--no-fund', '--no-audit', '--save-exact', ...saveArgs, ...targets]);
 }
 
 runCommand(repoRoot, dryRun, 'npm', ['run', 'softReset']);
