@@ -139,18 +139,15 @@ import { getAttributeId, getClusterId } from '../src/matterbridgeEndpointHelpers
 await setupTest(NAME, false);
 
 /**
- * Waits for a WindowCovering movement simulation to complete, then lets its transaction settle.
+ * Waits for a WindowCovering movement simulation to complete.
  *
  * The simulation completes on a real timer, so the tests below poll for the completion to become observable
- * instead of sleeping for a fixed amount: on a loaded CI runner a fixed sleep can expire before the timer fires,
- * and the late callback then collides with the next command, which takes the behavior lock synchronously. The
- * final flush covers the same collision from the other side: the new value is published on commit, slightly
- * before the completion callback releases the lock it holds.
+ * instead of sleeping for a fixed amount, which on a loaded CI runner can expire before the timer has fired.
  *
  * @param {() => boolean} condition - Predicate polled until it returns true.
  * @param {number} timeout - Maximum time to wait, in milliseconds (default 15000).
  * @param {number} interval - Delay between polls, in milliseconds (default 20).
- * @returns {Promise<void>} Resolves once the condition holds and the completion transaction has settled.
+ * @returns {Promise<void>} Resolves once the condition holds.
  */
 async function waitForMovementCompletion(condition: () => boolean, timeout = 15000, interval = 20): Promise<void> {
   const start = Date.now();
@@ -158,7 +155,6 @@ async function waitForMovementCompletion(condition: () => boolean, timeout = 150
     if (Date.now() - start >= timeout) throw new Error(`waitForMovementCompletion timed out after ${timeout}ms`);
     await new Promise((resolve) => setTimeout(resolve, interval));
   }
-  await flushAsync(3, 10, 100);
 }
 
 describe('Matterbridge ' + NAME, () => {
@@ -1374,6 +1370,30 @@ describe('Matterbridge ' + NAME, () => {
     } finally {
       getAttributeSpy.mockRestore();
     }
+  });
+
+  test('a command invoked while the behavior lock is held waits for it instead of failing', async () => {
+    // The movement simulation completes in a timer callback that runs with `{ lock: true }`, so a command can
+    // legitimately arrive while another transaction holds the behavior lock. invokeBehaviorCommand mirrors the real
+    // invoke path and takes the lock asynchronously, so this waits instead of throwing a synchronous-transaction-conflict.
+    const lockCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLock' });
+    lockCover.createDefaultLiftTiltWindowCoveringClusterServer();
+    lockCover.addRequiredClusterServers();
+    expect(await server.add(lockCover)).toBeDefined();
+
+    // Hold the windowCovering behavior lock in a separate transaction for longer than the command needs to reach
+    // its first state write.
+    const holder = lockCover.act(async (agent) => {
+      const transaction = agent.context.transaction;
+      transaction.addResourcesSync((agent as unknown as Record<string, object>)['windowCovering']);
+      transaction.beginSync();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    });
+    await flushAsync(3, 10, 0);
+
+    await lockCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    await holder;
+    expect(lockCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
   });
 
   test('WindowCovering syncs currentPositionLift/TiltPercentage from the Percent100ths attributes, including back to null', async () => {

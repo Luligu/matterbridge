@@ -615,6 +615,16 @@ export async function invokeBehaviorCommand(
     // Without this, overriding behavior.context with a Proxy causes the reactor to create a duplicate RootReference.
     void behavior?.['state'];
 
+    // Mirror the real invoke path (matter.js ProtocolService): a behavior that locks on invoke takes its lock
+    // before the command runs, asynchronously, so a command issued while another transaction still holds that lock
+    // (e.g. a behavior timer callback scheduled with `{ lock: true }`) waits for it instead of failing with a
+    // synchronous-transaction-conflict on the first state write.
+    if ((endpoint.behaviors.supported[behaviorId] as ClusterBehavior.Type | undefined)?.lockOnInvoke) {
+      const transaction = agent.context.transaction;
+      await transaction.addResources(behavior as unknown as Parameters<typeof transaction.addResources>[0]);
+      await transaction.begin();
+    }
+
     // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
     const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
     /* v8 ignore next -- This is only used in Jest tests, so we don't need to cover it in production. */
