@@ -46,4 +46,5 @@ export * from './smokeCoAlarmServer.js';
 export * from './switchServer.js';
 export * from './thermostatServer.js';
 export * from './valveConfigurationAndControlServer.js';
+export * from './waterTankLevelMonitoringServer.js';
 export * from './windowCoveringServer.js';

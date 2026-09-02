@@ -85,6 +85,7 @@ import { ThermostatClient } from '@matter/node/behaviors/thermostat';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabelServer } from '@matter/node/behaviors/user-label';
+import { WaterTankLevelMonitoringServer } from '@matter/node/behaviors/water-tank-level-monitoring';
 import { WindowCoveringClient } from '@matter/node/behaviors/window-covering';
 // @matter types
 import { type ClusterType, getClusterNameById } from '@matter/types/cluster';
@@ -142,6 +143,7 @@ import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/the
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { type ClusterId, NodeId, type VendorId } from '@matter/types/datatype';
 import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/types/globals';
@@ -489,6 +491,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === AirQuality.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
   if (clusterId === HepaFilterMonitoring.id) return HepaFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
   if (clusterId === ActivatedCarbonFilterMonitoring.id) return ActivatedCarbonFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
+  if (clusterId === WaterTankLevelMonitoring.id) return WaterTankLevelMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
   if (clusterId === CarbonMonoxideConcentrationMeasurement.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === CarbonDioxideConcentrationMeasurement.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === NitrogenDioxideConcentrationMeasurement.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -755,6 +758,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(AirQuality.id)) endpoint.createDefaultAirQualityClusterServer();
   if (serverList.includes(HepaFilterMonitoring.id)) endpoint.createDefaultHepaFilterMonitoringClusterServer();
   if (serverList.includes(ActivatedCarbonFilterMonitoring.id)) endpoint.createDefaultActivatedCarbonFilterMonitoringClusterServer();
+  if (serverList.includes(WaterTankLevelMonitoring.id)) endpoint.createDefaultWaterTankLevelMonitoringClusterServer();
   if (serverList.includes(CarbonMonoxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
   if (serverList.includes(CarbonDioxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
   if (serverList.includes(NitrogenDioxideConcentrationMeasurement.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();

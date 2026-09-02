@@ -66,6 +66,7 @@ import type { TimeSynchronization } from '@matter/types/clusters/time-synchroniz
 import type { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import type { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import type { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import type { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import type { WindowCovering } from '@matter/types/clusters/window-covering';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 
@@ -1132,6 +1133,15 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'activatedCarbonFilterMonitoring';
     attributes: ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Water Tank Level Monitoring
+  'WaterTankLevelMonitoring.resetCondition': {
+    command: 'resetCondition';
+    request: {}; // TlvNoArguments
+    cluster: 'waterTankLevelMonitoring';
+    attributes: ClusterAttributeValues<(typeof WaterTankLevelMonitoring)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

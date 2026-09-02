@@ -122,6 +122,7 @@ import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.j
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
+import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
@@ -4136,6 +4137,51 @@ export class MatterbridgeEndpoint extends Endpoint {
         // Feature.Condition
         condition,
         degradationDirection: ResourceMonitoring.DegradationDirection.Down,
+        // Feature.ReplacementProductList
+        replacementProductList, // Fixed attribute
+        // Base attributes
+        changeIndication,
+        inPlaceIndicator,
+        lastChangedTime, // Writable and persistent across restarts
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default Water Tank Level Monitoring Cluster Server with features Condition, Warning, and ReplacementProductList.
+   * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
+   *
+   * @param {number} condition - The initial condition value (range 0-100). Default is 100.
+   * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
+   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is true.
+   * @param {number | null | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
+   * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The Water Tank Level Monitoring Cluster Server is used to monitor the status of a water tank, e.g. on a humidifier or dehumidifier.
+   * It provides information about the condition of the resource, whether it is in place, and the last time it was changed.
+   * The change indication can be used to indicate if the water tank needs to be refilled or emptied.
+   * The replacement product list can be used to provide a list of replacement products for the resource.
+   * The condition attribute defaults to 100, indicating a full or empty tank as initially configured.
+   * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
+   * The replacement product list is initialized as an empty array.
+   */
+  createDefaultWaterTankLevelMonitoringClusterServer(
+    condition: number = 100,
+    changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
+    inPlaceIndicator: boolean | undefined = true,
+    lastChangedTime: number | null | undefined = null,
+    replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
+  ): this {
+    this.behaviors.require(
+      MatterbridgeWaterTankLevelMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList),
+      {
+        // Feature.Condition
+        condition,
+        degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
         // Feature.ReplacementProductList
         replacementProductList, // Fixed attribute
         // Base attributes

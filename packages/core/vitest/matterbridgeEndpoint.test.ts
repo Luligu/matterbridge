@@ -87,6 +87,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurement,
   UserLabel,
   ValveConfigurationAndControl,
+  WaterTankLevelMonitoring,
   WindowCovering,
 } from '@matter/types/clusters';
 import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
@@ -756,6 +757,7 @@ describe('Matterbridge ' + NAME, () => {
       AirQuality.id,
       HepaFilterMonitoring.id,
       ActivatedCarbonFilterMonitoring.id,
+      WaterTankLevelMonitoring.id,
       CarbonMonoxideConcentrationMeasurement.id,
       CarbonDioxideConcentrationMeasurement.id,
       NitrogenDioxideConcentrationMeasurement.id,

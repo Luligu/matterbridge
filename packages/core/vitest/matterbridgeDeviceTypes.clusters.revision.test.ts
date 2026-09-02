@@ -113,6 +113,7 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
@@ -226,6 +227,7 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['WakeOnLan', WakeOnLan, 1],
     ['WaterHeaterManagement', WaterHeaterManagement, 2],
     ['WaterHeaterMode', WaterHeaterMode, 1],
+    ['WaterTankLevelMonitoring', WaterTankLevelMonitoring, 1],
     ['WebRtcTransportProvider', WebRtcTransportProvider, 2],
     ['WebRtcTransportRequestor', WebRtcTransportRequestor, 2],
     ['WindowCovering', WindowCovering, 8],

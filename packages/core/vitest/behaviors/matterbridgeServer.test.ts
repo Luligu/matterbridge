@@ -34,6 +34,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
+import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -120,6 +121,7 @@ describe('Server clusters and behaviors', () => {
   let contact: MatterbridgeEndpoint;
   let mode: MatterbridgeEndpoint;
   let purifier: MatterbridgeEndpoint;
+  let waterTank: MatterbridgeEndpoint;
   let energyManagement: MatterbridgeEndpoint;
   let washer: MatterbridgeEndpoint;
   let rvc: RoboticVacuumCleaner;
@@ -433,6 +435,16 @@ describe('Server clusters and behaviors', () => {
     purifier.addRequiredClusterServers();
     expect(purifier).toBeDefined();
     expect(await addDevice(aggregator, purifier)).toBeTruthy();
+  });
+
+  test('Device type: waterTank', async () => {
+    // Water Tank Level Monitoring is only optional on the Humidifier/Dehumidifier device type (Matter 1.7, not yet
+    // available in this SDK), so this endpoint is a plain scaffold for exercising the cluster server in isolation.
+    waterTank = new MatterbridgeEndpoint(onOffLight, { id: 'waterTank' });
+    waterTank.createDefaultWaterTankLevelMonitoringClusterServer(20);
+    waterTank.addRequiredClusterServers();
+    expect(waterTank).toBeDefined();
+    expect(await addDevice(aggregator, waterTank)).toBeTruthy();
   });
 
   test('Device type: deviceEnergyManagement', async () => {
@@ -1611,6 +1623,17 @@ describe('Server clusters and behaviors', () => {
       LogLevel.DEBUG,
       `MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`,
     );
+  });
+
+  test('WaterTankLevelMonitoring server', async () => {
+    expect(waterTank.getAttribute(WaterTankLevelMonitoring.id, 'condition')).toBe(20);
+    expect(waterTank.getAttribute(WaterTankLevelMonitoring.id, 'lastChangedTime')).toBeNull();
+
+    await waterTank.invokeBehaviorCommand(WaterTankLevelMonitoring, 'resetCondition');
+
+    expect(waterTank.getAttribute(WaterTankLevelMonitoring.id, 'condition')).toBe(100);
+    expect(typeof waterTank.getAttribute(WaterTankLevelMonitoring.id, 'lastChangedTime')).toBe('number');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeWaterTankLevelMonitoringServer: resetCondition called (endpoint ${waterTank.id}.${waterTank.number})`);
   });
 
   test('DeviceEnergyManagement server', async () => {
