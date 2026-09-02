@@ -191,6 +191,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypeFromClusterServerId(BridgedDeviceBasicInformation.id)?.id).toBe('bridgedDeviceBasicInformation');
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagement.id)?.id).toBe('deviceEnergyManagement');
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.id)?.id).toBe('deviceEnergyManagementMode');
+    expect(getBehaviourTypeFromClusterServerId(HepaFilterMonitoring.id)?.id).toBe('hepaFilterMonitoring');
+    expect(getBehaviourTypeFromClusterServerId(ActivatedCarbonFilterMonitoring.id)?.id).toBe('activatedCarbonFilterMonitoring');
+    expect(getBehaviourTypeFromClusterServerId(WaterTankLevelMonitoring.id)?.id).toBe('waterTankLevelMonitoring');
   });
 
   test('getBehaviourTypesFromClusterClientIds', () => {

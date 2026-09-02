@@ -125,7 +125,7 @@ import {
   temperatureSensor,
   thermostat,
 } from '../src/matterbridgeDeviceTypes.js';
-import { assertMatterbridgeEndpoint, MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { assertMatterbridgeEndpoint, isMatterbridgeEndpoint, MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { checkNotLatinCharacters, featuresFor, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from '../src/matterbridgeEndpointHelpers.js';
 
 // Setup the test environment
@@ -349,6 +349,33 @@ describe('Matterbridge ' + NAME, () => {
     expect(() => assertMatterbridgeEndpoint({})).toThrow();
 
     await add(device);
+  });
+
+  test('isMatterbridgeEndpoint and assertMatterbridgeEndpoint', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightGuard' });
+
+    // Not an object.
+    expect(isMatterbridgeEndpoint(null)).toBe(false);
+    expect(isMatterbridgeEndpoint(void 0)).toBe(false);
+    expect(isMatterbridgeEndpoint(0)).toBe(false);
+    expect(isMatterbridgeEndpoint('MatterbridgeEndpoint')).toBe(false);
+
+    // An object without the brand.
+    expect(isMatterbridgeEndpoint({})).toBe(false);
+
+    // An object with the brand but not a MatterbridgeEndpoint instance.
+    const symbols = Object.getOwnPropertySymbols(device);
+    expect(symbols.map((symbol) => symbol.description)).toContain('MatterbridgeEndpoint.brand');
+    const branded: Record<symbol, unknown> = {};
+    for (const symbol of symbols) branded[symbol] = true;
+    expect(isMatterbridgeEndpoint(branded)).toBe(false);
+
+    // A real MatterbridgeEndpoint instance.
+    expect(isMatterbridgeEndpoint(device)).toBe(true);
+
+    expect(() => assertMatterbridgeEndpoint(device)).not.toThrow();
+    expect(() => assertMatterbridgeEndpoint({})).toThrow(new TypeError('Invalid MatterbridgeEndpoint received'));
+    expect(() => assertMatterbridgeEndpoint({}, 'unit test')).toThrow(new TypeError('Invalid MatterbridgeEndpoint received in unit test'));
   });
 
   test('constructor with id', async () => {

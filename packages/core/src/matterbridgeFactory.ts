@@ -142,6 +142,7 @@ export async function getServerBehaviorFromClusterId(clusterId: ClusterId, featu
   /* v8 ignore next -- Defensive: every stock matter.js behavior module that resolves exposes a cluster-behavior <Name>Server. */
   if (!base || !ClusterBehavior.isType(base) || isClientBehavior(base)) return undefined;
 
+  /* v8 ignore next -- Defensive: every stock matter.js cluster defines a features record (empty when the cluster has no features). */
   const knownFeatureNames = new Set(Object.keys(base.cluster.features ?? {}).map((key) => pascalCase(key)));
   const featureNames = (
     Array.isArray(features)
