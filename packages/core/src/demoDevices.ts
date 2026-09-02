@@ -491,7 +491,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLockUserPinSchedules', number: EndpointNumber(8_01_2) });
   ep.createDefaultPowerSourceBatteryClusterServer();
-  ep.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 3, 4);
+  ep.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 3, 4, 10);
   await registerDevice(ep, 'Door Lock User PIN Schedules', 'ENTRY-08-01-2');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLockController')!, bridgedNode, powerSource], { id: 'DoorLockController', number: EndpointNumber(8_02) });

@@ -1,5 +1,5 @@
 # To run tests on DoorLock --PICS is required
-# Matches createUserPinDoorLockClusterServer() with all schedule features on CHIP DoorLock endpoint 8012.
+# Matches createUserPinDoorLockClusterServer() with all schedule features and expiringUserTimeout on CHIP DoorLock endpoint 8012.
 PICS_USER_PROMPT=0
 PICS_SKIP_SAMPLE_APP=1
 DRLK.S=1
@@ -33,10 +33,12 @@ DRLK.S.A0025=1 # OperatingMode
 DRLK.S.A0026=1 # SupportedOperatingModes
 DRLK.S.A0030=1 # WrongCodeEntryLimit
 DRLK.S.A0031=1 # UserCodeTemporaryDisableTime
+DRLK.S.A0035=1 # ExpiringUserTimeout
 DRLK.S.M.AutoRelockTimeAttributeWritable=1
 DRLK.S.M.OperatingModeAttributeWritable=1
 DRLK.S.M.WrongCodeEntryLimitAttributeWritable=1
 DRLK.S.M.UserCodedTemporaryDisableTimeAttributeWritable=1
+DRLK.S.M.ExpiringUserTimeOutAttributeWritable=1
 DRLK.S.E00=1 # DoorLockAlarm
 DRLK.S.E02=1 # LockOperation
 DRLK.S.E03=1 # LockOperationError
