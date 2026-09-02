@@ -4336,7 +4336,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [numberOfWeekDaySchedulesSupportedPerUser] - Number of week day schedules supported per user; enables the feature when defined.
    * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - Number of year day schedules supported per user; enables the feature when defined.
    * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
-   * @param {number} [expiringUserTimeout] - Number of minutes a credential of a User.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
+   * @param {number} [expiringUserTimeout] - Number of minutes a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
