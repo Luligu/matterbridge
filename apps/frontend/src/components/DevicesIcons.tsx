@@ -392,7 +392,11 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {deviceType===0x70 && clusters.filter(cluster => cluster.clusterName === 'BridgedDeviceBasicInformation' && cluster.attributeName === 'reachable').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<KitchenIcon/>} cluster={cluster} value='Fridge' />
       ))}
-      {/* TemperatureControlledCabinet */}
+      {/* TemperatureControlledCabinet TemperatureNumber */}
+      {deviceType===0x71 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'temperatureSetpoint').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiThermostatBox} size='40px' color='var(--primary-color)' />} cluster={cluster} value={(cluster.attributeLocalValue as number ?? 0)/100} unit='°C' />
+      ))}
+      {/* TemperatureControlledCabinet TemperatureLevel */}
       {deviceType===0x71 && clusters.filter(cluster => cluster.clusterName === 'TemperatureControl' && cluster.attributeName === 'selectedTemperatureLevel').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiThermostatBox} size='40px' color='var(--primary-color)' />} cluster={cluster} value={cluster.attributeLocalValue as number} unit='mode' prefix={true} />
       ))}
@@ -502,6 +506,22 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       {/* Water Heater */}
       {deviceType===0x050f && clusters.filter(cluster => cluster.clusterName === 'WaterHeaterManagement' && cluster.attributeName === 'tankPercentage').map(cluster => (
         <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiWaterBoiler} size='40px' color='var(--primary-color)' />} cluster={cluster} value={'Tank ' + ((cluster.attributeLocalValue ?? 0) as number) + '%'}/>
+      ))}
+      {/* Electrical Utility Meter */}
+      {deviceType===0x0511 && clusters.filter(cluster => cluster.clusterName === 'MeterIdentification' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiMeterElectricOutline} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Utility' />
+      ))}
+      {/* Meter Reference Point */}
+      {deviceType===0x0512 && clusters.filter(cluster => cluster.clusterName === 'MeterIdentification' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiMeterElectricOutline} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Reference' />
+      ))}
+      {/* Electrical Energy Tariff */}
+      {deviceType===0x0513 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiMeterElectricOutline} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Tariff' />
+      ))}
+      {/* Electrical Meter */}
+      {deviceType===0x0514 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<Icon path={mdiMeterElectricOutline} size='40px' color='var(--primary-color)' />} cluster={cluster} value='Meter' />
       ))}
       {/* Heat Pump */}
       {deviceType===0x0309 && clusters.filter(cluster => cluster.clusterName === 'PowerSource' && cluster.attributeName === 'featureMap').map(cluster => (
