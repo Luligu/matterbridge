@@ -75,6 +75,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [WindowCovering]: Add `createDefaultTiltWindowCoveringClusterServer()` to `MatterbridgeEndpoint`, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring `createDefaultWindowCoveringClusterServer()`.
 - [WindowCovering]: `MatterbridgeWindowCoveringServer` can now simulate lift/tilt movement completion, opt-in via the new `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
 - [DoorLock]: `createUserPinDoorLockClusterServer()` accepts a new optional `expiringUserTimeout` parameter that creates the `ExpiringUserTimeout` attribute (Matter 1.6.0 § 5.2.6.18.8), enabling support for `DoorLock.UserType.ExpiringUser` temporary PIN credentials.
+- [DoorLock]: `createUserPinDoorLockClusterServer()` re-enables the `CredentialOverTheAirAccess` (COTA) feature and accepts a new optional `requirePinForRemoteOperation` parameter (default `false`) to opt in to enforcing it. The feature is advertised so controllers that send a PIN in LockDoor/UnlockDoor/UnlockWithTimeout get it verified server-side, but enforcement stays off by default since some controllers omit the PIN even when required, which would otherwise leave the lock unusable from them.
 
 ### Changed
 

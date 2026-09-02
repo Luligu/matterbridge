@@ -34,12 +34,16 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 /**
  * DoorLock server that forwards lock, user, credential, and schedule commands to the Matterbridge command handler.
  *
- * DoorLock.Feature.CredentialOverTheAirAccess has been removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
+ * The features enabled below are only the defaults inherited when this class is used as-is; every
+ * `create...DoorLockClusterServer()` helper on `MatterbridgeEndpoint` re-specifies its own feature set via
+ * `MatterbridgeDoorLockServer.with(...)`, so this list mainly documents the class's baseline. In particular
+ * `DoorLock.Feature.CredentialOverTheAirAccess` (COTA) is opt-in: `createUserPinDoorLockClusterServer()` enables
+ * it and exposes `requirePinForRemoteOperation` as a parameter (default `false`) because some controllers omit
+ * the PIN in remote lock/unlock commands even when that attribute requires it.
  */
 export class MatterbridgeDoorLockServer extends DoorLockServer.with(
   DoorLock.Feature.User,
   DoorLock.Feature.PinCredential,
-  // DoorLock.Feature.CredentialOverTheAirAccess,
   DoorLock.Feature.WeekDayAccessSchedules,
   DoorLock.Feature.YearDayAccessSchedules,
   DoorLock.Feature.HolidaySchedules,

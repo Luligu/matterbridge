@@ -4337,6 +4337,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - Number of year day schedules supported per user; enables the feature when defined.
    * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
    * @param {number} [expiringUserTimeout] - Number of minutes a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
+   * @param {boolean} [requirePinForRemoteOperation] - Whether the lock requires the PIN Credential Over-The-Air Access (COTA) feature: PINs sent in the LockDoor, UnlockDoor, and UnlockWithTimeout commands are verified server-side (default: false).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4344,6 +4345,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    *
    * @remarks
    * The Apple Home works with this.
+   *
+   * @remarks
+   * `requirePinForRemoteOperation` defaults to false because some controllers omit the PIN in remote lock/unlock
+   * commands even when this attribute requires it, which would otherwise leave the lock unusable from them. The
+   * CredentialOverTheAirAccess feature is still advertised so controllers that do send a PIN get it verified;
+   * pass `true` only when every controller you support is known to send it.
    */
   createUserPinDoorLockClusterServer(
     lockState: DoorLock.LockState = DoorLock.LockState.Locked,
@@ -4355,11 +4362,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     numberOfYearDaySchedulesSupportedPerUser?: number,
     numberOfHolidaySchedulesSupported?: number,
     expiringUserTimeout?: number,
+    requirePinForRemoteOperation: boolean = false,
   ): this {
     this.behaviors.require(
       MatterbridgeDoorLockServer.with(
         DoorLock.Feature.User,
-        DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/,
+        DoorLock.Feature.PinCredential,
+        DoorLock.Feature.CredentialOverTheAirAccess,
         ...(numberOfWeekDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.WeekDayAccessSchedules] : []),
         ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.YearDayAccessSchedules] : []),
         ...(numberOfHolidaySchedulesSupported !== undefined ? [DoorLock.Feature.HolidaySchedules] : []),
@@ -4399,8 +4408,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         wrongCodeEntryLimit: 5,
         userCodeTemporaryDisableTime: 60,
         // PinCredential and CredentialOverTheAirAccess features attributes
-        /* Removed cause some controllers cannot send the pinCode in the request, even if the DoorLock cluster is configured to require it for remote operations.
-        requirePinForRemoteOperation: true,*/
+        requirePinForRemoteOperation,
         // User feature attributes
         numberOfTotalUsersSupported: 10,
         credentialRulesSupport: { single: true },

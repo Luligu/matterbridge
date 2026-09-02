@@ -2130,7 +2130,47 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
+    // CredentialOverTheAirAccess (COTA) is advertised by default, but not enforced.
+    expect(device.getAttribute(DoorLock.id, 'requirePinForRemoteOperation')).toBe(false);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createUserPinDoorLockClusterServer with requirePinForRemoteOperation', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinRequirePinLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, true);
+
+    expect(device.hasAttributeServer(DoorLock, 'requirePinForRemoteOperation')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'requirePinForRemoteOperation')).toBe(true);
+
+    await expect(device.invokeBehaviorCommand(DoorLock, 'unlockDoor', {})).rejects.toThrow();
+    expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
+
+    await device.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1234,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    await device.invokeBehaviorCommand(DoorLock, 'setCredential', {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+      credentialData: Buffer.from('1234'),
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    });
+
+    await expect(device.invokeBehaviorCommand(DoorLock, 'unlockDoor', { pinCode: Buffer.from('0000') })).rejects.toThrow();
+    expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
+
+    await device.invokeBehaviorCommand(DoorLock, 'unlockDoor', { pinCode: Buffer.from('1234') });
+    expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Unlocked);
   });
 
   test('createUserPinDoorLockClusterServer with access schedules', async () => {
