@@ -74,6 +74,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils]: Add spec compliant `luxToMatter` and `matterToLux` utilities.
 - [WindowCovering]: Add `createDefaultTiltWindowCoveringClusterServer()` to `MatterbridgeEndpoint`, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring `createDefaultWindowCoveringClusterServer()`.
 - [WindowCovering]: `MatterbridgeWindowCoveringServer` can now simulate lift/tilt movement completion, opt-in via the new `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [DoorLock]: `createUserPinDoorLockClusterServer()` accepts a new optional `expiringUserTimeout` parameter that creates the `ExpiringUserTimeout` attribute (Matter 1.6.0 § 5.2.6.18.8), enabling support for `User.UserType.ExpiringUser` temporary PIN credentials.
 
 ### Changed
 

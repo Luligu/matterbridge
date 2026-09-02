@@ -2126,6 +2126,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(false);
     expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(false);
     expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'expiringUserTimeout')).toBe(false);
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
@@ -2145,6 +2146,17 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(DoorLock.id, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(2);
     expect(device.getAttribute(DoorLock.id, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(3);
     expect(device.getAttribute(DoorLock.id, 'numberOfHolidaySchedulesSupported')).toBe(4);
+  });
+
+  test('createUserPinDoorLockClusterServer with expiring user timeout', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinExpiringUserLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, 30);
+
+    expect(device.hasAttributeServer(DoorLock, 'expiringUserTimeout')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'expiringUserTimeout')).toBe(30);
   });
 
   test('createDefaultModeSelectClusterServer', async () => {
