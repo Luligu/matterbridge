@@ -683,7 +683,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(0);
     expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({
       global: WindowCovering.MovementStatus.Stopped,
-      lift: WindowCovering.MovementStatus.Stopped,
       tilt: WindowCovering.MovementStatus.Stopped,
     });
 
@@ -695,6 +694,17 @@ describe('Matterbridge ' + NAME, () => {
     await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Closing);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 2`));
     expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
+
+    await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to 50 and operationalStatus to Stopped.`),
+    );
+    expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths'));
+    expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 

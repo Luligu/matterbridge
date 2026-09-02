@@ -1273,7 +1273,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
       global: WindowCovering.MovementStatus.Stopped,
       lift: WindowCovering.MovementStatus.Stopped,
-      tilt: WindowCovering.MovementStatus.Stopped,
     });
 
     const tiltOnlyTimed = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTiltOnlyTimed' });
@@ -1287,7 +1286,6 @@ describe('Matterbridge ' + NAME, () => {
     expect(tiltOnlyTimed.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBe(0);
     expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
       global: WindowCovering.MovementStatus.Stopped,
-      lift: WindowCovering.MovementStatus.Stopped,
       tilt: WindowCovering.MovementStatus.Stopped,
     });
   });

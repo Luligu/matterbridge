@@ -3046,14 +3046,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       configStatus: {
         // persisted
         operational: true,
-        onlineReserved: false,
+        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: true,
         tiltPositionAware: false,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      // No tilt field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support feature Lift
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
       targetPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed
@@ -3099,7 +3100,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         configStatus: {
           // persisted
           operational: true,
-          onlineReserved: false,
+          // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
           liftMovementReversed: false,
           liftPositionAware: true,
           tiltPositionAware: true,
@@ -3146,14 +3147,15 @@ export class MatterbridgeEndpoint extends Endpoint {
       configStatus: {
         // persisted
         operational: true,
-        onlineReserved: false,
+        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: false,
         tiltPositionAware: true,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      // No lift field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support features Lift and Tilt
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
       targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
@@ -3165,32 +3167,36 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Sets the window covering lift target position as the current position and stops the movement.
+   * Sets the window covering lift and/or tilt target position (whichever axis the server supports) as the current position and stops the movement.
    *
    */
   async setWindowCoveringTargetAsCurrentAndStopped(): Promise<void> {
-    const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
-    if (isValidNumber(position, 0, 10000)) {
-      await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
-      await this.setAttribute(
-        WindowCovering,
-        'operationalStatus',
-        {
-          global: WindowCovering.MovementStatus.Stopped,
-          lift: WindowCovering.MovementStatus.Stopped,
-          tilt: WindowCovering.MovementStatus.Stopped,
-        },
-        this.log,
-      );
+    const { lift, tilt } = featuresFor(this, WindowCovering);
+    if (lift) {
+      const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
+      if (isValidNumber(position, 0, 10000)) {
+        await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
+      }
+      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
-    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
-    if (this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+    if (tilt) {
       const position = this.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths', this.log);
       if (isValidNumber(position, 0, 10000)) {
         await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', position, this.log);
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    await this.setAttribute(
+      WindowCovering,
+      'operationalStatus',
+      {
+        global: WindowCovering.MovementStatus.Stopped,
+        ...(lift ? { lift: WindowCovering.MovementStatus.Stopped } : {}),
+        ...(tilt ? { tilt: WindowCovering.MovementStatus.Stopped } : {}),
+      },
+      this.log,
+    );
   }
 
   /**
@@ -3203,13 +3209,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus): Promise<void> {
     await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
     await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
+    const { lift, tilt } = featuresFor(this, WindowCovering);
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
       {
         global: status,
-        lift: status,
-        tilt: status,
+        ...(lift ? { lift: status } : {}),
+        ...(tilt ? { tilt: status } : {}),
       },
       this.log,
     );
@@ -3222,13 +3230,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus): Promise<void> {
+    const { lift, tilt } = featuresFor(this, WindowCovering);
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
       {
         global: status,
-        lift: status,
-        tilt: status,
+        ...(lift ? { lift: status } : {}),
+        ...(tilt ? { tilt: status } : {}),
       },
       this.log,
     );
@@ -3259,7 +3269,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', liftPosition, this.log);
     await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', liftPosition, this.log);
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${liftPosition} and targetPositionLiftPercent100ths: ${liftPosition}.`);
-    if (tiltPosition && this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+    if (tiltPosition && featuresFor(this, WindowCovering).tilt) {
       await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
       await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${tiltPosition} and targetPositionTiltPercent100ths: ${tiltPosition}.`);

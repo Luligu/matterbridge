@@ -103,7 +103,7 @@ describe('Client clusters and behaviors', () => {
     expect(device.stateOf(MatterbridgeIdentifyServer).identifyTime).toBe(5);
     expect(device.stateOf(DescriptorServer).clientList).toContain(Identify.id);
     expect(device.stateOf(DescriptorServer).clientList).toContain(OnOff.id);
-    await device.setStateOf(MatterbridgeBindingServer, { binding: [{ node: NodeId(1), endpoint: EndpointNumber(1) }] });
+    await device.setStateOf(MatterbridgeBindingServer, { binding: [{ node: NodeId(1), endpoint: EndpointNumber(1), fabricIndex: FabricIndex(1) }] });
 
     Logger.get('client').notice('Device behaviors:\n', device);
   });

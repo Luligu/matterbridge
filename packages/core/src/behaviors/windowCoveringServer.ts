@@ -281,7 +281,12 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     if (this.state.movementDuration > 0) {
       if (this.features.positionAwareLift) this.state.targetPositionLiftPercent100ths = this.state.currentPositionLiftPercent100ths;
       if (this.features.positionAwareTilt) this.state.targetPositionTiltPercent100ths = this.state.currentPositionTiltPercent100ths;
-      this.state.operationalStatus = { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped };
+      // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+      this.state.operationalStatus = {
+        global: WindowCovering.MovementStatus.Stopped,
+        ...(this.features.lift ? { lift: WindowCovering.MovementStatus.Stopped } : {}),
+        ...(this.features.tilt ? { tilt: WindowCovering.MovementStatus.Stopped } : {}),
+      };
     }
     device.log.debug(
       `MatterbridgeWindowCoveringServer: stopMotion result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
