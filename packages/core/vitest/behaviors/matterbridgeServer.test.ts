@@ -111,6 +111,7 @@ describe('Server clusters and behaviors', () => {
   let button: MatterbridgeEndpoint;
   let coverLift: MatterbridgeEndpoint;
   let coverLiftTilt: MatterbridgeEndpoint;
+  let coverTilt: MatterbridgeEndpoint;
   let lock: MatterbridgeEndpoint;
   let vent: MatterbridgeEndpoint;
   let thermo: MatterbridgeEndpoint;
@@ -365,6 +366,15 @@ describe('Server clusters and behaviors', () => {
     coverLiftTilt.addRequiredClusterServers();
     expect(coverLiftTilt).toBeDefined();
     expect(await addDevice(aggregator, coverLiftTilt)).toBeTruthy();
+  });
+
+  test('Device type: coverTilt', async () => {
+    // movementDuration > 0 enables the built-in movement simulation, so operationalStatus reflects the direction while moving.
+    coverTilt = new MatterbridgeEndpoint(windowCovering, { id: 'coverTilt' });
+    coverTilt.createDefaultTiltWindowCoveringClusterServer(5000, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.InteriorVenetianBlind, 60_000);
+    coverTilt.addRequiredClusterServers();
+    expect(coverTilt).toBeDefined();
+    expect(await addDevice(aggregator, coverTilt)).toBeTruthy();
   });
 
   test('Device type: doorLock', async () => {
@@ -901,6 +911,65 @@ describe('Server clusters and behaviors', () => {
       currentPositionLiftPercent100ths: 0,
       targetPositionLiftPercent100ths: 5000,
       currentPositionTiltPercent100ths: 0,
+      targetPositionTiltPercent100ths: 5000,
+    });
+  });
+
+  test('TiltWindowCovering server', async () => {
+    // A Tilt-only server has no lift field in operationalStatus (Matter 1.6.0 Application Cluster Spec 5.3.5.3.2),
+    // and global must still track the tilt movement while the covering is moving.
+    // Each command is invoked once: expectCommand registers a handler per call and only the first handler
+    // registered for a command name is executed.
+    const expectTiltCoverAttributes = (expected: {
+      operationalStatus: { global: number; tilt: number };
+      currentPositionTiltPercent100ths: number;
+      targetPositionTiltPercent100ths: number;
+    }) => {
+      expect(coverTilt.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual(expected.operationalStatus);
+      expect(coverTilt.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(expected.currentPositionTiltPercent100ths);
+      expect(coverTilt.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(expected.targetPositionTiltPercent100ths);
+    };
+
+    expectTiltCoverAttributes({
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      currentPositionTiltPercent100ths: 5000,
+      targetPositionTiltPercent100ths: 5000,
+    });
+
+    await expectCommand(coverTilt, WindowCovering, 'upOrOpen', undefined, (data) => {
+      expect(data.cluster).toBe('windowCovering');
+    });
+    expectTiltCoverAttributes({
+      operationalStatus: { global: WindowCovering.MovementStatus.Opening, tilt: WindowCovering.MovementStatus.Opening },
+      currentPositionTiltPercent100ths: 5000,
+      targetPositionTiltPercent100ths: 0,
+    });
+
+    await expectCommand(coverTilt, WindowCovering, 'downOrClose', undefined, (data) => {
+      expect(data.cluster).toBe('windowCovering');
+    });
+    expectTiltCoverAttributes({
+      operationalStatus: { global: WindowCovering.MovementStatus.Closing, tilt: WindowCovering.MovementStatus.Closing },
+      currentPositionTiltPercent100ths: 5000,
+      targetPositionTiltPercent100ths: 10000,
+    });
+
+    await expectCommand(coverTilt, WindowCovering, 'goToTiltPercentage', { tiltPercent100thsValue: 2000 }, (data) => {
+      expect(data.cluster).toBe('windowCovering');
+    });
+    expectTiltCoverAttributes({
+      operationalStatus: { global: WindowCovering.MovementStatus.Opening, tilt: WindowCovering.MovementStatus.Opening },
+      currentPositionTiltPercent100ths: 5000,
+      targetPositionTiltPercent100ths: 2000,
+    });
+
+    // StopMotion also cancels the pending movement simulation, so no timer outlives the test.
+    await expectCommand(coverTilt, WindowCovering, 'stopMotion', undefined, (data) => {
+      expect(data.cluster).toBe('windowCovering');
+    });
+    expectTiltCoverAttributes({
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      currentPositionTiltPercent100ths: 5000,
       targetPositionTiltPercent100ths: 5000,
     });
   });
