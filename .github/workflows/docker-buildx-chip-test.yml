@@ -56,20 +56,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Pull previous ${{ matrix.platform }} image for cache
-        continue-on-error: true
-        run: docker pull luligu/matterbridge:chip-test
-
       - name: Build and push ${{ matrix.platform }} image for version ${{ steps.meta.outputs.VERSION }}
         env:
           DOCKER_BUILDKIT: 1
         run: |
           docker build \
             --pull \
-            --cache-from luligu/matterbridge:chip-test \
+            --no-cache \
             -f docker/Dockerfile.chip-test \
             -t luligu/matterbridge:chip-test-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.suffix }} \
-            --build-arg BUILDKIT_INLINE_CACHE=1 \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
             --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
