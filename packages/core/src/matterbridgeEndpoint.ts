@@ -4357,6 +4357,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - Number of year day schedules supported per user; enables the feature when defined.
    * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
    * @param {number} [expiringUserTimeout] - Number of minutes (1 to 2880) a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
+   * @param {number} [numberOfRfidUsersSupported] - Number of RFID users supported; enables the RfidCredential (RID) feature when defined.
+   * @param {number} [minRfidCodeLength] - The minimum length in bytes of a RFID code (default: 8, i.e. a 4-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
+   * @param {number} [maxRfidCodeLength] - The maximum length in bytes of a RFID code (default: 20, i.e. a 10-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4375,6 +4378,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     numberOfYearDaySchedulesSupportedPerUser?: number,
     numberOfHolidaySchedulesSupported?: number,
     expiringUserTimeout?: number,
+    numberOfRfidUsersSupported?: number,
+    minRfidCodeLength: number = 8,
+    maxRfidCodeLength: number = 20,
   ): this {
     this.behaviors.require(
       MatterbridgeDoorLockServer.with(
@@ -4383,6 +4389,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(numberOfWeekDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.WeekDayAccessSchedules] : []),
         ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.YearDayAccessSchedules] : []),
         ...(numberOfHolidaySchedulesSupported !== undefined ? [DoorLock.Feature.HolidaySchedules] : []),
+        ...(numberOfRfidUsersSupported !== undefined ? [DoorLock.Feature.RfidCredential] : []),
       ).enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
@@ -4438,6 +4445,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? { numberOfYearDaySchedulesSupportedPerUser } : {}),
         // HolidaySchedules feature attributes
         ...(numberOfHolidaySchedulesSupported !== undefined ? { numberOfHolidaySchedulesSupported } : {}),
+        // RfidCredential feature attributes
+        ...(numberOfRfidUsersSupported !== undefined ? { numberOfRfidUsersSupported, minRfidCodeLength, maxRfidCodeLength } : {}),
       },
     );
     return this;
