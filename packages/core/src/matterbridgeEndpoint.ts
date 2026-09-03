@@ -4336,7 +4336,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [numberOfWeekDaySchedulesSupportedPerUser] - Number of week day schedules supported per user; enables the feature when defined.
    * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - Number of year day schedules supported per user; enables the feature when defined.
    * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
-   * @param {number} [expiringUserTimeout] - Number of minutes a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
+   * @param {number} [expiringUserTimeout] - Number of minutes (1 to 2880) a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4409,7 +4409,7 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Indicates the number of minutes a PIN, RFID, Fingerprint, or other credential associated with a user of
          * type ExpiringUser shall remain valid after its first use before expiring. When the credential expires,
          * the UserStatus for the corresponding user record shall be set to OccupiedDisabled.
-         * Matter 1.6.0 § 5.2.6.18.8.
+         * Matter 1.6.0 § 5.2.9.36. Constraint 1 to 2880 minutes.
          */
         ...(expiringUserTimeout !== undefined ? { expiringUserTimeout } : {}),
         // WeekDayAccessSchedules feature attributes
