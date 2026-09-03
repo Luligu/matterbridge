@@ -27,18 +27,6 @@ jobs:
       - name: Checkout code to main branch
         uses: actions/checkout@v7
 
-      - name: Setup Node.js 24.x
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24.x'
-          cache: npm
-
-      - name: Verify Node.js version
-        run: node -v
-
-      - name: Verify Npm version
-        run: npm -v
-
       - name: Set metadata
         id: meta
         run: |
