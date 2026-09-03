@@ -9,7 +9,7 @@ const MATTER_PORT = 11800;
 const MATTER_CREATE_ONLY = true;
 
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -24,6 +24,7 @@ import { LogLevel } from 'node-ansi-logger';
 
 import { deviceEnergyManagement } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { expectCommand } from '../vitestUtils.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -248,5 +249,53 @@ describe('Client clusters and behaviors', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('Matterbridge command handler forwarding', () => {
+    let energyManagement: MatterbridgeEndpoint;
+
+    test('Device type: deviceEnergyManagement', async () => {
+      energyManagement = new MatterbridgeEndpoint(deviceEnergyManagement, { id: 'deviceEnergyManagementHandler' });
+      energyManagement.createDefaultDeviceEnergyManagementClusterServer(DeviceEnergyManagement.EsaType.Other, false, DeviceEnergyManagement.EsaState.Online, -3000, 2000);
+      energyManagement.createDefaultDeviceEnergyManagementModeClusterServer();
+      energyManagement.addRequiredClusterServers();
+      expect(energyManagement).toBeDefined();
+      expect(await addDevice(aggregator, energyManagement)).toBeTruthy();
+    });
+
+    test('DeviceEnergyManagement server', async () => {
+      const powerAdjustRequest = { power: 500, duration: 60, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization };
+      const cancelCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: unknown }> = [];
+
+      energyManagement.addCommandHandler('cancelPowerAdjustRequest', (data) => {
+        cancelCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
+      });
+
+      expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'esaType')).toBe(DeviceEnergyManagement.EsaType.Other);
+      expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
+      expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMinPower')).toBe(-3000);
+      expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(2000);
+      expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+
+      // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6 Application
+      // Cluster Spec § 9.2.9.1.1/§ 9.2.9.1.2), so a capability entry covering the request must exist first.
+      await energyManagement.setAttribute(DeviceEnergyManagement.id, 'powerAdjustmentCapability', {
+        powerAdjustCapability: [{ minPower: 0, maxPower: 1000, minDuration: 10, maxDuration: 120 }],
+        cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment,
+      });
+
+      await expectCommand(energyManagement, DeviceEnergyManagement, 'powerAdjustRequest', powerAdjustRequest, (data) => {
+        expect(data.cluster).toBe('deviceEnergyManagement');
+      });
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${powerAdjustRequest.power} duration ${powerAdjustRequest.duration} cause ${powerAdjustRequest.cause}`,
+      );
+
+      await energyManagement.invokeBehaviorCommand('deviceEnergyManagement', 'cancelPowerAdjustRequest');
+      expect(cancelCalls[0]).toEqual({ cluster: 'deviceEnergyManagement', endpoint: energyManagement, request: {} });
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called');
+      expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
+    });
   });
 });

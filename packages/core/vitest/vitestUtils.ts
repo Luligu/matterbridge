@@ -32,6 +32,8 @@ import { MdnsService } from '@matter/protocol';
 import { flushAsync } from '@matterbridge/vitest-utils';
 
 import type { Matterbridge } from '../src/matterbridge.js';
+import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import type { CommandHandlers } from '../src/matterbridgeEndpointCommandHandler.js';
 
 /**
  * Destroy the Matterbridge instance.
@@ -76,4 +78,50 @@ export async function closeRuntimeInstance(matterbridge: Matterbridge): Promise<
   const environment = (matterbridge as unknown as { environment: Environment }).environment;
   const runtime = environment.maybeGet(RuntimeService);
   await runtime?.close();
+}
+
+/**
+ * Invoke a behavior command and assert that the endpoint forwards it to the registered Matterbridge command handler.
+ *
+ * The handler is registered before the command is invoked and the returned promise settles only once the handler ran,
+ * so the assertions in `check` observe the attribute values as the handler saw them.
+ *
+ * Only the first handler registered for a given command name is executed, so a command must be invoked at most once
+ * per endpoint through this helper.
+ *
+ * @param {MatterbridgeEndpoint} endpoint The endpoint owning the cluster.
+ * @param {any} cluster The cluster to invoke the command on.
+ * @param {CommandHandlers} command The command name to invoke.
+ * @param {object} [expectedRequest] The expected request payload, or undefined for a command without payload.
+ * @param {(data: any) => void} [check] Additional assertions on the data passed to the command handler.
+ * @returns {Promise<void>} A promise that resolves when the command has been invoked and the handler ran.
+ */
+export async function expectCommand(
+  endpoint: MatterbridgeEndpoint,
+  // oxlint-disable-next-line typescript/no-explicit-any, typescript/explicit-module-boundary-types
+  cluster: any,
+  command: CommandHandlers,
+  expectedRequest?: object,
+  // oxlint-disable-next-line typescript/no-explicit-any
+  check?: (data: any) => void,
+): Promise<void> {
+  let invoke: Promise<void>;
+
+  await new Promise((resolve, reject) => {
+    endpoint.addCommandHandler(command, (data) => {
+      try {
+        expect(data.endpoint).toBe(endpoint);
+        if (expectedRequest === undefined) expect(data.request).toEqual({});
+        else expect(data.request).toEqual(expectedRequest);
+        check?.(data);
+        resolve(true);
+      } catch (error) {
+        reject(error);
+      }
+    });
+    invoke = expectedRequest === undefined ? endpoint.invokeBehaviorCommand(cluster, command) : endpoint.invokeBehaviorCommand(cluster, command, expectedRequest);
+  });
+
+  // @ts-expect-error Typescript doesn't know that the command handler will be executed before this line
+  await invoke;
 }

@@ -27,6 +27,8 @@ import { LogLevel } from 'node-ansi-logger';
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
 import { doorLock } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
+import { expectCommand } from '../vitestUtils.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -560,6 +562,45 @@ describe('Client clusters and behaviors', () => {
     ).toMatchObject({
       credentialExists: false,
       userIndex: null,
+    });
+  });
+
+  describe('Matterbridge command handler forwarding', () => {
+    let lock: MatterbridgeEndpoint;
+
+    test('Device type: doorLock', async () => {
+      lock = new MatterbridgeEndpoint(doorLock, { id: 'doorLock' });
+      lock.addRequiredClusterServers();
+      expect(lock).toBeDefined();
+      expect(await addDevice(aggregator, lock)).toBeTruthy();
+      // Disable timeout for testing, to avoid flaky tests
+      const internal = await internalFor(lock, MatterbridgeDoorLockServer);
+      expect(internal).toBeDefined();
+      if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
+      if ((internal as any).enableTimeout !== undefined) (internal as any).enableTimeout = false;
+    });
+
+    test('DoorLock server', async () => {
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Locked);
+      expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('lockDoor')).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockDoor')).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockWithTimeout')).toBeTruthy();
+
+      await expectCommand(lock, DoorLock, 'DoorLock.unlockDoor', {}, (data) => {
+        expect(data.cluster).toBe('doorLock');
+      });
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+      await expectCommand(lock, DoorLock, 'DoorLock.lockDoor', {}, (data) => {
+        expect(data.cluster).toBe('doorLock');
+      });
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Locked);
+
+      await expectCommand(lock, DoorLock, 'DoorLock.unlockWithTimeout', { timeout: 5 }, (data) => {
+        expect(data.cluster).toBe('doorLock');
+      });
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Unlocked);
     });
   });
 });
