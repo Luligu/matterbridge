@@ -2876,6 +2876,7 @@ export const supportedClusters: ClusterType[] = [
   SoilMeasurement,
   Switch,
   TargetNavigator,
+  TemperatureAlarm,
   TemperatureControl,
   TemperatureMeasurement,
   Thermostat,

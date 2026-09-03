@@ -5,7 +5,7 @@
  */
 
 const NAME = 'Factory';
-const MATTER_PORT = 11280;
+const MATTER_PORT = 12600;
 const MATTER_CREATE_ONLY = true;
 
 import { BooleanState } from '@matter/types/clusters/boolean-state';

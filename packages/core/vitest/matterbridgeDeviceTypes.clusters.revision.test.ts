@@ -216,6 +216,7 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['Switch', Switch, 2],
     ['TargetNavigator', TargetNavigator, 2],
     ['TemperatureAlarm', TemperatureAlarm, 1],
+    ['TemperatureAlarm', TemperatureAlarm, 1],
     ['TemperatureControl', TemperatureControl, 1],
     ['TemperatureMeasurement', TemperatureMeasurement, 6],
     ['Thermostat', Thermostat, 11],

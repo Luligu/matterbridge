@@ -87,6 +87,7 @@ import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configu
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Switch } from '@matter/types/clusters/switch';
+import type { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
@@ -120,6 +121,7 @@ import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js'
 import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
+import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
@@ -4155,6 +4157,58 @@ export class MatterbridgeEndpoint extends Endpoint {
         lastChangedTime, // Writable and persistent across restarts
       },
     );
+    return this;
+  }
+
+  /**
+   * Creates a default Temperature Alarm Cluster Server with features Reset, OverTemperature, and UnderTemperature.
+   *
+   * @param {number} criticalOverTemperatureThreshold - The threshold over which CriticalOverTemperature is active, in 0.01 °C. Default is 6000 (60 °C).
+   * @param {number} criticalUnderTemperatureThreshold - The threshold under which CriticalUnderTemperature is active, in 0.01 °C. Default is -1000 (-10 °C).
+   * @param {TemperatureAlarm.Alarm} supported - The supported alarms. Default is the two critical alarms. It is a fixed attribute.
+   * @param {TemperatureAlarm.Alarm} mask - The enabled alarms. Default is the supported alarms.
+   * @param {TemperatureAlarm.Alarm} latch - The latched alarms. Default is none. It is a fixed attribute.
+   * @param {TemperatureAlarm.Alarm} state - The initially active alarms. Default is none.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * Matter 1.6.0 § 2.17.4 gives OverTemperature and UnderTemperature the choice conformance `O.a+`, so at least one of the
+   * two SHALL be supported. Both are enabled here, which is why the two critical thresholds are always present.
+   * The MajorThreshold and MinorThreshold features are not enabled, so the four major/minor alarm bits are always false:
+   * Matter 1.6.0 § 1.15.6.4 requires the Mask, Latch, and State bits of an unsupported alarm to be false.
+   * The Notify event is emitted automatically whenever the State attribute changes, so a plugin that raises or clears an
+   * alarm only has to update State. The thresholds are read-only over the wire: the plugin owns the temperature evaluation.
+   */
+  createDefaultTemperatureAlarmClusterServer(
+    criticalOverTemperatureThreshold: number = 60 * 100,
+    criticalUnderTemperatureThreshold: number = -10 * 100,
+    supported: TemperatureAlarm.Alarm = { criticalOverTemperatureAlarm: true, criticalUnderTemperatureAlarm: true },
+    mask: TemperatureAlarm.Alarm = supported,
+    latch: TemperatureAlarm.Alarm = {},
+    state: TemperatureAlarm.Alarm = {},
+  ): this {
+    const bitmap = (alarm: TemperatureAlarm.Alarm): Required<TemperatureAlarm.Alarm> => ({
+      criticalOverTemperatureAlarm: Boolean(alarm.criticalOverTemperatureAlarm),
+      // Matter 1.6.0 § 1.15.6.4: The bits of an unsupported alarm are false, and MajorThreshold/MinorThreshold are not enabled.
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: Boolean(alarm.criticalUnderTemperatureAlarm),
+    });
+    this.behaviors.require(MatterbridgeTemperatureAlarmServer, {
+      // Feature.OverTemperature
+      criticalOverTemperatureThreshold,
+      // Feature.UnderTemperature
+      criticalUnderTemperatureThreshold,
+      // Feature.Reset
+      latch: bitmap(latch), // Fixed attribute
+      // Base attributes
+      supported: bitmap(supported), // Fixed attribute
+      mask: bitmap(mask),
+      state: bitmap(state),
+    });
     return this;
   }
 

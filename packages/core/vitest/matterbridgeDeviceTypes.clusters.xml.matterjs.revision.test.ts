@@ -260,6 +260,7 @@ if (!hasXmlDir) {
       ['Switch', Switch],
       ['TargetNavigator', TargetNavigator],
       ['TemperatureAlarm', TemperatureAlarm],
+      ['TemperatureAlarm', TemperatureAlarm],
       ['TemperatureControl', TemperatureControl],
       ['TemperatureMeasurement', TemperatureMeasurement],
       ['Thermostat', Thermostat],

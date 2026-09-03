@@ -70,6 +70,7 @@ import {
   SmokeCoAlarm,
   SoilMeasurement,
   Switch,
+  TemperatureAlarm,
   TemperatureMeasurement,
   Thermostat,
   ThermostatUserInterfaceConfiguration,
@@ -194,6 +195,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypeFromClusterServerId(HepaFilterMonitoring.id)?.id).toBe('hepaFilterMonitoring');
     expect(getBehaviourTypeFromClusterServerId(ActivatedCarbonFilterMonitoring.id)?.id).toBe('activatedCarbonFilterMonitoring');
     expect(getBehaviourTypeFromClusterServerId(WaterTankLevelMonitoring.id)?.id).toBe('waterTankLevelMonitoring');
+    expect(getBehaviourTypeFromClusterServerId(TemperatureAlarm.id)?.id).toBe('temperatureAlarm');
   });
 
   test('getBehaviourTypesFromClusterClientIds', () => {
@@ -2040,6 +2042,43 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(WaterTankLevelMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
+  });
+
+  test('createDefaultTemperatureAlarmClusterServer', async () => {
+    // Temperature Alarm is provisional in Matter 1.6.0 (§ 2.17.3) and no device type lists it yet, so temperatureSensor
+    // is used here as a plain scaffold for the cluster server itself.
+    const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TempAlarm' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultTemperatureAlarmClusterServer();
+    expect(device.hasAttributeServer(TemperatureAlarm, 'mask')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'latch')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'state')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'supported')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalOverTemperatureThreshold')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalUnderTemperatureThreshold')).toBe(true);
+    // MajorThreshold and MinorThreshold are not enabled, so their thresholds are absent.
+    expect(device.hasAttributeServer(TemperatureAlarm, 'majorOverTemperatureThreshold')).toBe(false);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'minorUnderTemperatureThreshold')).toBe(false);
+
+    await add(device);
+    const noAlarm = {
+      criticalOverTemperatureAlarm: false,
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: false,
+    };
+    const criticalAlarms = { ...noAlarm, criticalOverTemperatureAlarm: true, criticalUnderTemperatureAlarm: true };
+    expect(device.getAttribute(TemperatureAlarm.id, 'criticalOverTemperatureThreshold')).toBe(6000);
+    expect(device.getAttribute(TemperatureAlarm.id, 'criticalUnderTemperatureThreshold')).toBe(-1000);
+    // Matter 1.6.0 § 1.15.6.4: the Mask, Latch and State bits of an unsupported alarm are false.
+    expect(device.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(criticalAlarms);
+    expect(device.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(criticalAlarms);
+    expect(device.getAttribute(TemperatureAlarm.id, 'latch')).toEqual(noAlarm);
+    expect(device.getAttribute(TemperatureAlarm.id, 'state')).toEqual(noAlarm);
+    expect(device.getAttribute(TemperatureAlarm.id, 'acceptedCommandList')).toEqual([0, 1]);
   });
 
   test('createDefaultDoorLockClusterServer', async () => {

@@ -37,6 +37,7 @@ import type { CommodityPrice } from '@matter/types/clusters/commodity-price';
 import type { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import type { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import type { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import type { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import type { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import type { DoorLock } from '@matter/types/clusters/door-lock';
 import type { EnergyEvse } from '@matter/types/clusters/energy-evse';
@@ -59,6 +60,7 @@ import type { RvcOperationalState } from '@matter/types/clusters/rvc-operational
 import type { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import type { ServiceArea } from '@matter/types/clusters/service-area';
 import type { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import type { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import type { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import type { Thermostat } from '@matter/types/clusters/thermostat';
 import type { ThreadNetworkDiagnostics } from '@matter/types/clusters/thread-network-diagnostics';
@@ -783,6 +785,38 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'smokeCoAlarm';
     attributes: ClusterAttributeValues<(typeof SmokeCoAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Dishwasher Alarm
+  'DishwasherAlarm.reset': {
+    command: 'reset';
+    request: DishwasherAlarm.ResetRequest;
+    cluster: 'dishwasherAlarm';
+    attributes: ClusterAttributeValues<(typeof DishwasherAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DishwasherAlarm.modifyEnabledAlarms': {
+    command: 'modifyEnabledAlarms';
+    request: DishwasherAlarm.ModifyEnabledAlarmsRequest;
+    cluster: 'dishwasherAlarm';
+    attributes: ClusterAttributeValues<(typeof DishwasherAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Temperature Alarm
+  'TemperatureAlarm.reset': {
+    command: 'reset';
+    request: TemperatureAlarm.ResetRequest;
+    cluster: 'temperatureAlarm';
+    attributes: ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'TemperatureAlarm.modifyEnabledAlarms': {
+    command: 'modifyEnabledAlarms';
+    request: TemperatureAlarm.ModifyEnabledAlarmsRequest;
+    cluster: 'temperatureAlarm';
+    attributes: ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

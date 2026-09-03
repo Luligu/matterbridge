@@ -1571,6 +1571,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'activatedCarbonFilterMonitoring' && attributeName === 'condition') attributes += `Carbon filter: ${attributeValue}% `;
       if (clusterName === 'waterTankLevelMonitoring' && attributeName === 'condition') attributes += `Water tank: ${attributeValue}% `;
 
+      if (clusterName === 'temperatureAlarm' && attributeName === 'state' && isValidObject(attributeValue)) attributes += `Temp alarm: ${stringify(attributeValue)} `;
+
       if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;

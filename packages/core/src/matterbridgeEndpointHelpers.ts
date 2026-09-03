@@ -137,6 +137,7 @@ import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
@@ -171,6 +172,7 @@ import { MatterbridgeOperationalStateServer } from './behaviors/operationalState
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
 import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
@@ -478,6 +480,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OperationalState.id) return MatterbridgeOperationalStateServer;
   if (clusterId === BooleanState.id) return BooleanStateServer.enable({ events: { stateChange: true } });
   if (clusterId === BooleanStateConfiguration.id) return MatterbridgeBooleanStateConfigurationServer;
+  if (clusterId === TemperatureAlarm.id) return MatterbridgeTemperatureAlarmServer;
   if (clusterId === PowerTopology.id) return PowerTopologyServer.with('TreeTopology');
   if (clusterId === ElectricalPowerMeasurement.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
   if (clusterId === ElectricalEnergyMeasurement.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
@@ -755,6 +758,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(OperationalState.id)) endpoint.createDefaultOperationalStateClusterServer();
   if (serverList.includes(BooleanState.id)) endpoint.createDefaultBooleanStateClusterServer();
   if (serverList.includes(BooleanStateConfiguration.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
+  if (serverList.includes(TemperatureAlarm.id)) endpoint.createDefaultTemperatureAlarmClusterServer();
   if (serverList.includes(PowerTopology.id)) endpoint.createDefaultPowerTopologyClusterServer();
   if (serverList.includes(ElectricalPowerMeasurement.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
   if (serverList.includes(ElectricalEnergyMeasurement.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
