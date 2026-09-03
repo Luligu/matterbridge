@@ -1267,7 +1267,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(await server.add(liftOnlyTimed)).toBeDefined();
     await liftOnlyTimed.setAttribute(MatterbridgeWindowCoveringServer, 'movementDuration', 1000);
     await liftOnlyTimed.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
-    expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({ lift: WindowCovering.MovementStatus.Closing });
+    expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Closing,
+      lift: WindowCovering.MovementStatus.Closing,
+    });
     await liftOnlyTimed.invokeBehaviorCommand('windowCovering', 'stopMotion');
     expect(liftOnlyTimed.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(0);
     expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
@@ -1281,7 +1284,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(await server.add(tiltOnlyTimed)).toBeDefined();
     await tiltOnlyTimed.setAttribute(MatterbridgeWindowCoveringServer, 'movementDuration', 1000);
     await tiltOnlyTimed.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
-    expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({ tilt: WindowCovering.MovementStatus.Closing });
+    expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Closing,
+      tilt: WindowCovering.MovementStatus.Closing,
+    });
     await tiltOnlyTimed.invokeBehaviorCommand('windowCovering', 'stopMotion');
     expect(tiltOnlyTimed.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBe(0);
     expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toEqual({

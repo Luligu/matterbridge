@@ -120,9 +120,13 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * Recomputes `operationalStatus.global` from `operationalStatus.lift`/`tilt`: global tracks lift while it's
    * moving, otherwise it follows tilt — mirrors the base server's own operational-status sync, which this server
    * does not receive because `disableOperationalModeHandling` is set.
+   *
+   * On a Lift-only or Tilt-only server the unsupported field is absent (Matter 1.6.0 Application Cluster Spec
+   * §5.3.5.3.2/§5.3.5.3.3), so it is read as Stopped and global follows the axis the server actually has.
    */
   #updateGlobalOperationalStatus(): void {
-    const { lift, tilt } = this.state.operationalStatus;
+    const lift = this.state.operationalStatus.lift ?? WindowCovering.MovementStatus.Stopped;
+    const tilt = this.state.operationalStatus.tilt ?? WindowCovering.MovementStatus.Stopped;
     this.state.operationalStatus.global = lift === WindowCovering.MovementStatus.Stopped ? tilt : lift;
   }
 
