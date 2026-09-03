@@ -371,7 +371,8 @@ describe('MatterbridgeWindowCoveringServer', () => {
     // StopMotion cancels an in-flight simulation before it completes and settles target = current.
     await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 0 });
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({ lift: WindowCovering.MovementStatus.Opening });
-    await timedCover.invokeBehaviorCommand('windowCovering', 'stopMotion', undefined, () => timedCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths') === 10000);
+    await timedCover.invokeBehaviorCommand('windowCovering', 'stopMotion');
+    await flushAsync();
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
