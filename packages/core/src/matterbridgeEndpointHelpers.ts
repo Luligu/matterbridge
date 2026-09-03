@@ -152,6 +152,7 @@ import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray } from '@matterbridge/utils/validate';
+import { waiter } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
 
@@ -583,6 +584,7 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
  * @param {CommandHandlers} command - The command to invoke.
  * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
+ * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
  *
@@ -593,6 +595,7 @@ export async function invokeBehaviorCommand(
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   command: CommandHandlers,
   params?: Record<string, boolean | number | bigint | string | object | null>,
+  waiterCondition?: () => boolean,
 ): Promise<boolean> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
   if (!behaviorId) {
@@ -641,6 +644,7 @@ export async function invokeBehaviorCommand(
       delete (behavior as unknown as Record<string, unknown>).context;
     }
   });
+  if (invoked && waiterCondition) return await waiter(`invokeBehaviorCommand ${command}`, waiterCondition, false, 1000, 50);
   return invoked;
 }
 

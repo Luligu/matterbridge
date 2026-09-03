@@ -1581,36 +1581,55 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(cluster: T, command: C, params?: BehaviorCommandParams<T, C>): Promise<void>;
+  async invokeBehaviorCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(
+    cluster: T,
+    command: C,
+    params?: BehaviorCommandParams<T, C>,
+    waiterCondition?: () => boolean,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {ClusterType} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, params?: ClusterCommandParams<T, C>): Promise<void>;
+  async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(
+    cluster: T,
+    command: C,
+    params?: ClusterCommandParams<T, C>,
+    waiterCondition?: () => boolean,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand(cluster: ClusterId | string, command: CommandHandlers, params?: Record<string, boolean | number | bigint | string | object | null>): Promise<void>;
+  async invokeBehaviorCommand(
+    cluster: ClusterId | string,
+    command: CommandHandlers,
+    params?: Record<string, boolean | number | bigint | string | object | null>,
+    waiterCondition?: () => boolean,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
@@ -1618,8 +1637,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     command: CommandHandlers,
     params?: Record<string, boolean | number | bigint | string | object | null>,
+    waiterCondition?: () => boolean,
   ): Promise<void> {
-    await invokeBehaviorCommand(this, cluster, command, params);
+    await invokeBehaviorCommand(this, cluster, command, params, waiterCondition);
   }
 
   /**
