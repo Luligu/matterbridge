@@ -2504,7 +2504,7 @@
       "test": "Test_TC_REFALM_2_3",
       "endpoint": 1302,
       "skip": true,
-      "comment": "Not applicable: the Refrigerator endpoint does not expose a local mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false.",
+      "comment": "Not applicable: the Refrigerator endpoint exposes no local (on-device) mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false. Enabling it would also be pointless here: every step that exercises the suppression (steps 5-11) is gated on PICS_USER_PROMPT, which is 0 for this CI-only setup, so only the two door-closed reads of State and Mask would run and the test would execute no suppression check at all.",
       "args": ["--PICS /root/refrigerator.pics"]
     },
     {
