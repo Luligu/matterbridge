@@ -2127,6 +2127,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(false);
     expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(false);
     expect(device.hasAttributeServer(DoorLock, 'expiringUserTimeout')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfRfidUsersSupported')).toBe(false);
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
@@ -2157,6 +2158,33 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'expiringUserTimeout')).toBe(30);
+  });
+
+  test('createUserPinDoorLockClusterServer with RFID credential support', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinRfidLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 10);
+
+    expect(device.hasAttributeServer(DoorLock, 'numberOfRfidUsersSupported')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'minRfidCodeLength')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'maxRfidCodeLength')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfRfidUsersSupported')).toBe(10);
+    expect(device.getAttribute(DoorLock.id, 'minRfidCodeLength')).toBe(8);
+    expect(device.getAttribute(DoorLock.id, 'maxRfidCodeLength')).toBe(20);
+    // See doorLockServer.test.ts "User RFID set and clear credential" for the SetCredential/GetCredentialStatus/ClearCredential round trip.
+  });
+
+  test('createUserPinDoorLockClusterServer with custom RFID code length', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinRfidCodeLengthLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 5, 4, 10);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfRfidUsersSupported')).toBe(5);
+    expect(device.getAttribute(DoorLock.id, 'minRfidCodeLength')).toBe(4);
+    expect(device.getAttribute(DoorLock.id, 'maxRfidCodeLength')).toBe(10);
   });
 
   test('createDefaultModeSelectClusterServer', async () => {

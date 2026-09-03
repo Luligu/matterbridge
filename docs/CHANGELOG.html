@@ -187,7 +187,7 @@
 </li>
 <li><p>[chip]: WindowCoveringLiftTilt endpoint 8032 CHIP conformance is green ✅ for the automated harness tests covering the <code>WindowCovering</code> cluster.</p>
 </li>
-<li><p>[endpoint]: Clarify <code>addCommandHandler()</code> JSDoc after <a href="https://github.com/Luligu/matterbridge/issues/617">#617</a>: command handlers run before the Matter behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use <code>subscribeAttribute()</code> when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.</p>
+<li><p>[endpoint]: Clarify <code>addCommandHandler()</code> JSDoc after <a href="https://github.com/Luligu/matterbridge/issues/617">#617</a>: command handlers run before the Matterbridge behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use <code>subscribeAttribute()</code> when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.</p>
 </li>
 </ul>
 <h3 id="added">Added</h3>
@@ -212,6 +212,7 @@
 <li>[WindowCovering]: <code>MatterbridgeWindowCoveringServer</code> can now simulate lift/tilt movement completion, opt-in via the new <code>state.movementDuration</code> (disabled by default; automatically enabled under <code>MATTERBRIDGE_CHIP_TEST</code>).</li>
 <li>[doorlock]: <code>createUserPinDoorLockClusterServer()</code> accepts a new optional <code>expiringUserTimeout</code> parameter that creates the <code>ExpiringUserTimeout</code> attribute (Matter 1.6.0 § 5.2.9.36, constraint 1 to 2880 minutes), enabling support for <code>DoorLock.UserType.ExpiringUser</code> temporary PIN credentials. Thanks Ludovic BOUÉ.</li>
 <li>[chip]: Add the DoorLockUserPINExpiring demo device on endpoint 8013, a User/PIN door lock with <code>expiringUserTimeout</code> set, with its own <code>door-lock-user-pin-expiring.pics</code> and a TC_DRLK_2_1 run, so steps 34a-34c (read, write, read-back of <code>ExpiringUserTimeout</code>) are executed instead of skipped. Thanks Ludovic BOUÉ.</li>
+<li>[DoorLock]: <code>createUserPinDoorLockClusterServer()</code> accepts a new optional <code>numberOfRfidUsersSupported</code> parameter that enables the <code>RfidCredential</code> (RID) feature (Matter 1.6.0 § 5.2.4), creating the <code>NumberOfRFIDUsersSupported</code>, <code>MaxRFIDCodeLength</code>, and <code>MinRFIDCodeLength</code> attributes; the last two are also exposed as optional <code>minRfidCodeLength</code>/<code>maxRfidCodeLength</code> parameters (defaults 8/20 bytes, matching 4/10-byte ISO 14443A UIDs when represented as ASCII hex, per the spec recommendation). <code>SetCredential</code>/<code>GetCredentialStatus</code>/<code>ClearCredential</code> already handle <code>DoorLock.CredentialType.Rfid</code> generically in <code>MatterbridgeDoorLockServer</code>, so no command-handler changes were needed. Thanks Ludovic BOUÉ.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

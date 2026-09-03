@@ -377,6 +377,48 @@ describe('Client clusters and behaviors', () => {
     });
   });
 
+  test('User RFID set and clear credential', async () => {
+    const rfidDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'rfidDoorLock' });
+    rfidDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 5);
+    rfidDoorLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, rfidDoorLock)).toBeDefined();
+
+    const rfidDoorLockServer = rfidDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+    expect(rfidDoorLock.getAttribute(DoorLock, 'numberOfRfidUsersSupported')).toBe(5);
+    expect(rfidDoorLock.getAttribute(DoorLock, 'minRfidCodeLength')).toBe(8);
+    expect(rfidDoorLock.getAttribute(DoorLock, 'maxRfidCodeLength')).toBe(20);
+
+    const rfidTag = Buffer.from('04A224B21C6E80', 'ascii'); // 14-byte ASCII-hex representation of a 7-byte ISO 14443A UID; within the default [8, 20] range.
+
+    await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'RFID User',
+      userUniqueId: 100,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 },
+      credentialData: rfidTag,
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    });
+    const createdCredential = await rfidDoorLock.act(async (agent) =>
+      agent.get(rfidDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } }),
+    );
+    expect(createdCredential).toMatchObject({ credentialExists: true, userIndex: 1 });
+
+    await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } });
+    const clearedCredential = await rfidDoorLock.act(async (agent) =>
+      agent.get(rfidDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } }),
+    );
+    expect(clearedCredential).toMatchObject({ credentialExists: false, userIndex: null });
+  });
+
   test('User PIN returns duplicate and occupied credential statuses', async () => {
     const credential = { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 };
     const request = {
