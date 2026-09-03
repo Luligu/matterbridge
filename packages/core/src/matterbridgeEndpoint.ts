@@ -4358,8 +4358,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
    * @param {number} [expiringUserTimeout] - Number of minutes (1 to 2880) a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
    * @param {number} [numberOfRfidUsersSupported] - Number of RFID users supported; enables the RfidCredential (RID) feature when defined.
-   * @param {number} [minRfidCodeLength] - The minimum length in bytes of a RFID code (default: 8, i.e. a 4-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
-   * @param {number} [maxRfidCodeLength] - The maximum length in bytes of a RFID code (default: 20, i.e. a 10-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
+   * @param {number} [minRfidCodeLength] - The minimum length in bytes of an RFID code (default: 8 bytes, i.e. an 8-character ASCII-hex encoding of a 4-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
+   * @param {number} [maxRfidCodeLength] - The maximum length in bytes of an RFID code (default: 20 bytes, i.e. a 20-character ASCII-hex encoding of a 10-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks

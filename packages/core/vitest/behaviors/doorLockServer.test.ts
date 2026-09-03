@@ -388,7 +388,7 @@ describe('Client clusters and behaviors', () => {
     expect(rfidDoorLock.getAttribute(DoorLock, 'minRfidCodeLength')).toBe(8);
     expect(rfidDoorLock.getAttribute(DoorLock, 'maxRfidCodeLength')).toBe(20);
 
-    const rfidTag = Buffer.from('04A224B21C6E80'); // 14 bytes, an ISO 14443A UID within the default [8, 20] range.
+    const rfidTag = Buffer.from('04A224B21C6E80', 'ascii'); // 14-byte ASCII-hex representation of a 7-byte ISO 14443A UID; within the default [8, 20] range.
 
     await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Add,
