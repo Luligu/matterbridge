@@ -1033,6 +1033,13 @@
       "args": ["--PICS /root/door-lock-user-pin-schedules.pics"]
     },
     {
+      "name": "DoorLock User, PIN, and expiring user timeout attributes on DoorLockUserPINExpiring",
+      "test": "Test_TC_DRLK_2_1",
+      "endpoint": 8013,
+      "args": ["--PICS /root/door-lock-user-pin-expiring.pics"],
+      "comment": "Endpoint 8013 is the only DoorLock endpoint exposing ExpiringUserTimeout, so it runs steps 34a-34c (read, write 10, read-back) instead of skipping them."
+    },
+    {
       "name": "WindowCovering attributes on WindowCovering Lift",
       "test": "Test_TC_WNCV_2_1",
       "endpoint": 803,
