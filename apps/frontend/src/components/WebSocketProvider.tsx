@@ -31,6 +31,8 @@ export interface WebSocketMessagesContextType {
   logFilterSearch: string;
   logAutoScroll: React.RefObject<boolean>;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
+  setLogLength: (value: number) => void;
+  setLogAutoScroll: (value: boolean) => void;
   setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
   setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
   filterLogMessages: (level: string, search: string) => void;
@@ -42,6 +44,8 @@ export interface WebSocketContextType {
   logFilterSearch: string;
   logAutoScroll: React.RefObject<boolean>;
   setMessages: React.Dispatch<React.SetStateAction<WsLogMessage[]>>;
+  setLogLength: (value: number) => void;
+  setLogAutoScroll: (value: boolean) => void;
   setLogFilterLevel: React.Dispatch<React.SetStateAction<string>>;
   setLogFilterSearch: React.Dispatch<React.SetStateAction<string>>;
   filterLogMessages: (level: string, search: string) => void;
@@ -95,6 +99,20 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const messagesCounterIntervalRef = useRef<IntervalHandle | null>(null);
   const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
   const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) !== 'false'); // default true
+
+  /*
+    logLength and logAutoScroll stay refs on purpose: the WebSocket log handler reads them for every
+    incoming log line, and holding them as state would re-render this provider, and with it the whole
+    message stream, on every change. These setters exist so consumers never write to the refs handed
+    out through the context. Both are useCallback with no dependencies, so their identity never
+    changes and adding them to the context values below cannot invalidate those memos.
+  */
+  const setLogLength = useCallback((value: number) => {
+    logLength.current = value;
+  }, []);
+  const setLogAutoScroll = useCallback((value: boolean) => {
+    logAutoScroll.current = value;
+  }, []);
 
   // Memos
   const wssHost = useMemo(() => window.location.href.replace(/^http/, 'ws'), []); // Replace "http" or "https" with "ws" or "wss" and memoize
@@ -333,7 +351,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             if (listener) {
               listener.listener(msg); // Notify the specific listener
             } else {
-              /*if (debug)*/ console.warn(`WebSocket no listener found for message id ${msg.id}:`, msg);
+              if (debug) console.warn(`WebSocket no listener found for message id ${msg.id}:`, msg);
             }
           }
           return;
@@ -415,11 +433,13 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       logFilterLevel,
       logFilterSearch,
       setMessages,
+      setLogLength,
+      setLogAutoScroll,
       setLogFilterLevel,
       setLogFilterSearch,
       filterLogMessages,
     }),
-    [messages, logLength, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogFilterLevel, setLogFilterSearch, filterLogMessages],
+    [messages, logLength, logAutoScroll, logFilterLevel, logFilterSearch, setMessages, setLogLength, setLogAutoScroll, setLogFilterLevel, setLogFilterSearch, filterLogMessages],
   );
 
   const contextValue = useMemo(
@@ -429,6 +449,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       logFilterLevel,
       logFilterSearch,
       setMessages,
+      setLogLength,
+      setLogAutoScroll,
       setLogFilterLevel,
       setLogFilterSearch,
       filterLogMessages,
@@ -441,7 +463,21 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       logMessage,
     }),
     // oxlint-disable-next-line react-hooks/exhaustive-deps
-    [logLength, logAutoScroll, setMessages, setLogFilterLevel, setLogFilterSearch, online, retry, addListener, removeListener, sendMessage, logMessage],
+    [
+      logLength,
+      logAutoScroll,
+      setMessages,
+      setLogLength,
+      setLogAutoScroll,
+      setLogFilterLevel,
+      setLogFilterSearch,
+      online,
+      retry,
+      addListener,
+      removeListener,
+      sendMessage,
+      logMessage,
+    ],
   );
 
   return (

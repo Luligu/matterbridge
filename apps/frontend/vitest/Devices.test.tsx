@@ -257,7 +257,7 @@ describe('Devices', () => {
   });
 
   it('restores saved filters and saved table view, then switches back to icon view', async () => {
-    localStorage.setItem(MbfLsk.devicesFilterPlugins, 'All plugins');
+    localStorage.setItem(MbfLsk.devicesFilterPlugins, 'PluginB');
     localStorage.setItem(MbfLsk.devicesFilterDevices, 'saved-filter');
     localStorage.setItem(MbfLsk.devicesViewMode, 'table');
 
@@ -299,8 +299,12 @@ describe('Devices', () => {
     expect(screen.getByTestId('devices-table')).toBeInTheDocument();
     expect(screen.queryByTestId('devices-icons')).not.toBeInTheDocument();
 
+    // 'PluginB' is not the default, so this distinguishes a real restore from the fallback value.
     const combobox = document.querySelector('[role="combobox"]');
-    expect(combobox?.textContent).toContain('All plugins');
+    expect(combobox?.textContent).toContain('PluginB');
+
+    // The restored values must actually reach the child view.
+    expect(lastTableProps).toMatchObject({ filterPlugins: 'PluginB', filterDevices: 'saved-filter' });
 
     act(() => {
       fireEvent.click(screen.getByRole('button', { name: 'Icon View' }));
@@ -308,6 +312,92 @@ describe('Devices', () => {
 
     expect(screen.getByTestId('devices-icons')).toBeInTheDocument();
     expect(localStorage.getItem(MbfLsk.devicesViewMode)).toBe('icon');
+  });
+
+  it('ignores a locked refresh_required for plugins', async () => {
+    const sendMessage = vi.fn();
+    let listener: ((msg: any) => void) | undefined;
+    const addListener = vi.fn((fn: (msg: any) => void) => {
+      listener = fn;
+    });
+    const ctx = { online: true, sendMessage, addListener, removeListener: vi.fn(), getUniqueId: () => 'uid-lock' };
+
+    render(
+      <WebSocketContext.Provider value={ctx as any}>
+        <Devices />
+      </WebSocketContext.Provider>,
+    );
+
+    await waitFor(() => expect(sendMessage).toHaveBeenCalledTimes(1));
+    sendMessage.mockClear();
+
+    act(() => {
+      listener!({ method: 'refresh_required', response: { changed: 'plugins', lock: true } });
+    });
+
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('clears the plugin options and requests them again when the connection comes back', async () => {
+    const sendMessage = vi.fn();
+    let listener: ((msg: any) => void) | undefined;
+    const addListener = vi.fn((fn: (msg: any) => void) => {
+      listener = fn;
+    });
+    const online = { online: true, sendMessage, addListener, removeListener: vi.fn(), getUniqueId: () => 'uid-reconnect' };
+    const offline = { ...online, online: false };
+
+    const { rerender } = render(
+      <WebSocketContext.Provider value={online as any}>
+        <Devices />
+      </WebSocketContext.Provider>,
+    );
+
+    act(() => {
+      listener!({ method: '/api/plugins', id: 'uid-reconnect', response: [{ name: 'PluginA' }, { name: 'PluginB' }] });
+    });
+
+    const openSelect = async () => {
+      const combobox = document.querySelector<HTMLElement>('[role="combobox"]');
+      mockElementRect(combobox!);
+      act(() => {
+        fireEvent.mouseDown(combobox!);
+      });
+      return screen.findByRole('option', { name: 'All plugins' }).catch(async () => screen.findByRole('menuitem', { name: 'All plugins' }));
+    };
+
+    await openSelect();
+    expect(screen.queryByRole('option', { name: 'PluginA' })).toBeInTheDocument();
+    act(() => {
+      fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' });
+    });
+
+    // Drop the connection, then bring it back.
+    rerender(
+      <WebSocketContext.Provider value={offline as any}>
+        <Devices />
+      </WebSocketContext.Provider>,
+    );
+    expect(screen.getByTestId('connecting')).toBeInTheDocument();
+
+    sendMessage.mockClear();
+    rerender(
+      <WebSocketContext.Provider value={online as any}>
+        <Devices />
+      </WebSocketContext.Provider>,
+    );
+
+    // The stale plugin list from the previous connection is gone and the data is requested again.
+    await openSelect();
+    expect(screen.queryByRole('option', { name: 'PluginA' })).not.toBeInTheDocument();
+    expect(sendMessage).toHaveBeenCalledWith({
+      id: 'uid-reconnect',
+      sender: 'Devices',
+      method: '/api/plugins',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: {},
+    });
   });
 
   it('renders Connecting when offline', () => {

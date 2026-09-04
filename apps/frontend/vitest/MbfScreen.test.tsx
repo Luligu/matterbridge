@@ -15,7 +15,7 @@ import { MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD } from '../src/viewport
 
 // Mock WebSocketContext used by MbfScreen (logAutoScroll ref)
 vi.mock('../src/components/WebSocketProvider', () => ({
-  WebSocketContext: React.createContext({ logAutoScroll: { current: true } } as any),
+  WebSocketContext: React.createContext({ logAutoScroll: { current: true }, setLogAutoScroll: () => {} } as any),
 }));
 
 // Mock App debug and enableMobile with a factory so we can control per test
@@ -56,14 +56,20 @@ describe('MbfScreen', () => {
     setInstallAutoExit: vi.fn() as React.Dispatch<React.SetStateAction<boolean>>,
   });
 
-  const renderWithContext = (mobile: boolean, children: React.ReactNode = <div>child</div>, setMobileFn = vi.fn(), logAutoScroll = { current: true }) =>
-    render(
-      <WebSocketContext.Provider value={{ logAutoScroll } as any}>
+  // The provider owns the ref and exposes a setter; this mirrors that contract so the assertions on
+  // logAutoScroll.current keep checking the effect the component actually produces.
+  const renderWithContext = (mobile: boolean, children: React.ReactNode = <div>child</div>, setMobileFn = vi.fn(), logAutoScroll = { current: true }) => {
+    const setLogAutoScroll = vi.fn((value: boolean) => {
+      logAutoScroll.current = value;
+    });
+    return render(
+      <WebSocketContext.Provider value={{ logAutoScroll, setLogAutoScroll } as any}>
         <UiContext.Provider value={getMockUiContext(mobile, setMobileFn)}>
           <MbfScreen>{children}</MbfScreen>
         </UiContext.Provider>
       </WebSocketContext.Provider>,
     );
+  };
 
   const originalViewport = {
     innerWidth: window.innerWidth,

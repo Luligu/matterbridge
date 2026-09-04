@@ -32,9 +32,8 @@ function Test() {
   const [_uptime, setUptime] = useState<{ systemUptime: string; processUptime: string }>({ systemUptime: '', processUptime: '' });
   const uniqueId = useRef(getUniqueId());
 
-  if (debug) console.log('Test uniqueId:', uniqueId);
-
   useEffect(() => {
+    if (debug) console.log(`Test uniqueId: ${uniqueId.current}`);
     if (debug) console.log('Test useEffect WebSocketMessage mounting');
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (msg.method === 'restart_required') {

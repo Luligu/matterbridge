@@ -34,14 +34,14 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
   // Context
   const { mobile, setMobile } = useContext(UiContext);
   // Contexts
-  const { logAutoScroll } = useContext(WebSocketContext);
+  const { setLogAutoScroll } = useContext(WebSocketContext);
 
   // Resize effect
   useEffect(() => {
     function handleResize() {
       const mobile = isMobile();
       if (mobile) {
-        logAutoScroll.current = false;
+        setLogAutoScroll(false);
         localStorage.setItem(MbfLsk.logAutoScroll, 'false');
       }
       setMobile(mobile);
@@ -49,7 +49,7 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
     window.addEventListener('resize', handleResize);
     setMobile(isMobile());
     return () => window.removeEventListener('resize', handleResize);
-  }, [logAutoScroll, setMobile]);
+  }, [setLogAutoScroll, setMobile]);
 
   if (debug) console.log('MbfScreen rendering... mobile %s', mobile);
 

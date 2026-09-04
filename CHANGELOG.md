@@ -33,6 +33,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.9] - Dev branch
 
+### Added
+
+- [frontend]: Add a full test suite for the `Logs` page covering the level and text filters, the auto scroll and log length controls, and the clear action.
+- [frontend]: Extend the `Settings` tests to cover every control of both settings panels, the change password and network configuration dialogs, and the debounced Matter fields.
+- [frontend]: Extend the `Home` tests to cover the refresh and update notifications, the changelog and browser refresh prompts, and the childbridge store selection.
+- [frontend]: Extend the `Devices` tests to cover the restored filters and view mode, the locked refresh notification, and the reconnection reset.
+- [frontend]: Extend the `App` tests to cover the automatic login when no password is required.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.9.
@@ -42,7 +50,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxlint` to v.1.81.0.
 - [matterbridge]: Bump `vitest` to v.5.0.0.
 - [thread]: Bump `@zip.js/zip.js` to v.2.10.0.
-- [frontend]: Bump `frontend` version to v.3.5.11.
+- [frontend]: Bump `frontend` version to v.3.6.0.
 - [frontend]: Bump `react-router` to v.8.3.1.
 - [frontend]: Bump `@types/node` to v.26.4.1.
 - [frontend]: Bump `@types/react-dom` to v.19.2.7.
@@ -57,6 +65,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [frontend]: Replace deprecated MUI props, the React form event type, and test-only document writing with their supported equivalents.
 - [frontend]: Restore the theme color of the Select dropdown arrow.
+- [frontend]: Settings: an update notification arriving in the background no longer discards the values you are editing.
+- [frontend]: Devices: the saved view mode is applied on the first render, so the other view is no longer mounted and immediately discarded.
+- [frontend]: Devices: the device filter no longer trails one keystroke behind what you type.
+- [frontend]: Home: the QR code and the plugin and device panels show the selected store already on the first render.
+- [frontend]: Logs: the log length and auto scroll controls now update the shared state through the WebSocket provider.
+- [frontend]: Login: the automatic login request is aborted when the login form is closed.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

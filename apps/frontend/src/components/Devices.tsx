@@ -34,33 +34,14 @@ function Devices(): React.JSX.Element {
 
   // Filter and view mode states
   const [plugins, setPlugins] = useState<string[]>(['All plugins']); // Start with 'All plugins' as the only option until we fetch the real list
-  const [filterPlugins, setFilterPlugins] = useState('All plugins'); // Default to 'All plugins'
-  const [filterDevices, setFilterDevices] = useState(''); // No filter by default
-  const [viewMode, setViewMode] = useState('icon'); // Default to icon view
+  // Restored from localStorage during the initial render, so the first paint already shows the saved
+  // filters and view mode instead of the defaults.
+  const [filterPlugins, setFilterPlugins] = useState(() => localStorage.getItem(MbfLsk.devicesFilterPlugins) || 'All plugins'); // Default to 'All plugins'
+  const [filterDevices, setFilterDevices] = useState(() => localStorage.getItem(MbfLsk.devicesFilterDevices) || ''); // No filter by default
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem(MbfLsk.devicesViewMode) || 'icon'); // Default to icon view
 
   // Refs
   const uniqueId = useRef(getUniqueId());
-
-  useEffect(() => {
-    const savedPlugin = localStorage.getItem(MbfLsk.devicesFilterPlugins);
-    if (savedPlugin) {
-      setFilterPlugins(savedPlugin);
-    }
-  }, []);
-
-  useEffect(() => {
-    const savedFilter = localStorage.getItem(MbfLsk.devicesFilterDevices);
-    if (savedFilter) {
-      setFilterDevices(savedFilter);
-    }
-  }, []);
-
-  useEffect(() => {
-    const savedViewMode = localStorage.getItem(MbfLsk.devicesViewMode);
-    if (savedViewMode) {
-      setViewMode(savedViewMode);
-    }
-  }, []);
 
   // WebSocket message handler effect
   useEffect(() => {
@@ -87,7 +68,14 @@ function Devices(): React.JSX.Element {
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      // Recreate child views on reconnect to clear stale local websocket/data state.
+      /*
+        Clears the plugin filter options left over from the previous connection, so the dropdown
+        cannot offer plugins that may no longer exist, until /api/plugins answers below. The React
+        Compiler reports set-state-in-effect here, but this is the case the rule exempts: the effect
+        synchronizes with an external system (the WebSocket connection) and runs only when `online`
+        actually flips, never as part of a render cycle, so it cannot cascade.
+      */
+      /// oxlint-disable-next-line react/set-state-in-effect -- reset tied to the WebSocket connection; see the comment above
       setPlugins(['All plugins']);
       if (debug || localDebug) console.log(`Devices sending /api/plugins request with id ${uniqueId.current}`);
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });

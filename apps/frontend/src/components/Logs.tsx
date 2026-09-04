@@ -26,6 +26,8 @@ function Logs(): React.JSX.Element {
     logLength,
     logAutoScroll,
     setMessages,
+    setLogLength,
+    setLogAutoScroll,
     setLogFilterLevel: setContextLogFilterLevel,
     setLogFilterSearch: setContextLogFilterSearch,
     online,
@@ -58,7 +60,7 @@ function Logs(): React.JSX.Element {
   const handleLogAutoScrollChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const checked = event.target.checked;
     setLocalLogAutoScroll(checked);
-    logAutoScroll.current = checked;
+    setLogAutoScroll(checked);
     filterLogMessages(logFilterLevel, logFilterSearch);
     localStorage.setItem(MbfLsk.logAutoScroll, checked ? 'true' : 'false');
     if (debug) console.log('handleAutoScrollChange called with value:', checked);
@@ -67,7 +69,7 @@ function Logs(): React.JSX.Element {
   const handleLogLengthChange = (event: SelectChangeEvent) => {
     const newValue = event.target.value;
     setLocalLogLength(newValue);
-    logLength.current = Number(newValue);
+    setLogLength(Number(newValue));
     localStorage.setItem(MbfLsk.logLength, newValue);
     if (debug) console.log('handleLogLengthChange called with value:', newValue);
   };

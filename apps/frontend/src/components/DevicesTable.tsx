@@ -3,7 +3,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 // @mui/material
 import IconButton from '@mui/material/IconButton';
 // React
-import { useContext, useEffect, useState, useRef, memo, useCallback } from 'react';
+import { useContext, useEffect, useMemo, useState, useRef, memo, useCallback } from 'react';
 
 import { debug } from '../appState';
 import { type ApiDevice, type Cluster, type WsMessageApiResponse, type WsMessageApiStateUpdate } from '../utils/backendShared';
@@ -125,7 +125,6 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   // Local states
   const [devices, setDevices] = useState<ApiDevice[]>([]);
-  const [filteredDevices, setFilteredDevices] = useState(devices);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
 
@@ -135,8 +134,26 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [selectedDeviceUniqueId, setSelectedDeviceUniqueId] = useState<string | null>(null);
 
+  // Devices matching the current plugin and text filters. Derived during render: it is a pure
+  // function of the devices and of the two filter props.
+  const filteredDevices = useMemo(() => {
+    const normalizedPlugin = filterPlugins?.trim().toLowerCase();
+    const filterByPlugin = normalizedPlugin && normalizedPlugin !== 'all plugins';
+
+    let next = devices;
+    if (filterByPlugin) {
+      next = next.filter((device) => device.pluginName.toLowerCase() === normalizedPlugin);
+    }
+    if (filterDevices !== '') {
+      next = next.filter((device) => device.name.toLowerCase().includes(filterDevices.toLowerCase()) || device.serial.toLowerCase().includes(filterDevices.toLowerCase()));
+    }
+    return next;
+  }, [devices, filterPlugins, filterDevices]);
+
   // Refs
   const uniqueId = useRef(getUniqueId());
+  // Mirror of filteredDevices read by updateDevices, which must stay referentially stable so the
+  // WebSocket listener is not re-registered whenever a filter changes.
   const filteredDevicesRef = useRef(filteredDevices);
 
   const updateDevices = useCallback(
@@ -243,20 +260,8 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
 
   useEffect(() => {
-    const normalizedPlugin = filterPlugins?.trim().toLowerCase();
-    const filterByPlugin = normalizedPlugin && normalizedPlugin !== 'all plugins';
-
-    let next = devices;
-    if (filterByPlugin) {
-      next = next.filter((device) => device.pluginName.toLowerCase() === normalizedPlugin);
-    }
-    if (filterDevices !== '') {
-      next = next.filter((device) => device.name.toLowerCase().includes(filterDevices.toLowerCase()) || device.serial.toLowerCase().includes(filterDevices.toLowerCase()));
-    }
-
-    setFilteredDevices(next);
-    filteredDevicesRef.current = next;
-  }, [devices, filterPlugins, filterDevices]);
+    filteredDevicesRef.current = filteredDevices;
+  }, [filteredDevices]);
 
   const handleDeviceClick = (row: ApiDevice) => {
     if (row.uniqueId === selectedDeviceUniqueId) {

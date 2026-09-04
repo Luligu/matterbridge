@@ -25,6 +25,16 @@ import { WebSocketContext } from './WebSocketProvider';
 
 const widthPx = 330;
 
+/**
+ * Uppercases the first character of a logger level, matching the labels of the level Select options.
+ *
+ * @param {string | undefined} value - The logger level as reported by the backend.
+ * @returns {string | undefined} The capitalized level, or undefined when there is no value.
+ */
+function capitalize(value: string | undefined): string | undefined {
+  return value ? value.charAt(0).toUpperCase() + value.slice(1) : undefined;
+}
+
 function Settings(): React.JSX.Element {
   // Context
   const { mobile } = useContext(UiContext);
@@ -33,6 +43,13 @@ function Settings(): React.JSX.Element {
   // State variables
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
+  /*
+    Bumped only when a fresh /api/settings response arrives, and used as the key of the two settings
+    forms below so they re-initialize from the new server values. update_required deliberately does
+    not bump it: it rewrites matterbridgeInfo only to refresh the version fields that MatterbridgeInfo
+    displays, and must not discard what the user is currently editing in those forms.
+  */
+  const [settingsRevision, setSettingsRevision] = useState(0);
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -54,6 +71,7 @@ function Settings(): React.JSX.Element {
         if (debug) console.log('Settings received /api/settings:', msg.response);
         setMatterbridgeInfo(msg.response.matterbridgeInformation);
         setSystemInfo(msg.response.systemInformation);
+        setSettingsRevision((revision) => revision + 1);
       }
     };
 
@@ -79,8 +97,8 @@ function Settings(): React.JSX.Element {
   return (
     <MbfPage name="Settings">
       <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: enableMobile && mobile ? '10px' : '20px' }}>
-        <MatterbridgeSettings matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo} />
-        <MatterSettings matterbridgeInfo={matterbridgeInfo} />
+        <MatterbridgeSettings key={`matterbridge-${settingsRevision}`} matterbridgeInfo={matterbridgeInfo} systemInfo={systemInfo} />
+        <MatterSettings key={`matter-${settingsRevision}`} matterbridgeInfo={matterbridgeInfo} />
         <MatterbridgeInfo matterbridgeInfo={matterbridgeInfo} />
         <SystemInfo systemInfo={systemInfo} />
       </div>
@@ -93,13 +111,18 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   const { sendMessage, getUniqueId } = useContext(WebSocketContext);
 
   // State variables
-  const [selectedBridgeMode, setSelectedBridgeMode] = useState('bridge');
-  const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState('Info');
-  const [logOnFileMb, setLogOnFileMb] = useState(false);
-  const [frontendTheme, setFrontendTheme] = useState('dark');
+  /*
+    Initialized from the server values during the first render. The parent keys this component on its
+    settings revision, so a fresh /api/settings response remounts it and these run again with the new
+    values; nothing needs to be synchronized in an effect afterwards.
+  */
+  const [selectedBridgeMode, setSelectedBridgeMode] = useState(() => (matterbridgeInfo?.bridgeMode === 'bridge' ? 'bridge' : 'childbridge'));
+  const [selectedMbLoggerLevel, setSelectedMbLoggerLevel] = useState(() => capitalize(matterbridgeInfo?.loggerLevel) ?? 'Info');
+  const [logOnFileMb, setLogOnFileMb] = useState(() => matterbridgeInfo?.fileLogger ?? false);
+  const [frontendTheme, setFrontendTheme] = useState(() => localStorage.getItem(MbfLsk.frontendTheme) || 'dark');
   const [homePagePlugins, setHomePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
   const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
-  const [virtualMode, setVirtualMode] = useState(localStorage.getItem(MbfLsk.virtualMode) ?? 'outlet'); // default outlet
+  const [virtualMode, setVirtualMode] = useState(() => matterbridgeInfo?.virtualMode ?? localStorage.getItem(MbfLsk.virtualMode) ?? 'outlet'); // default outlet
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -120,22 +143,6 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
     sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/config', src: 'Frontend', dst: 'Matterbridge', params: { name: 'setpassword', value: password } });
     setWssPassword(password);
   };
-
-  useEffect(() => {
-    if (!matterbridgeInfo) return;
-    setSelectedBridgeMode(matterbridgeInfo.bridgeMode === 'bridge' ? 'bridge' : 'childbridge');
-    setSelectedMbLoggerLevel(matterbridgeInfo.loggerLevel.charAt(0).toUpperCase() + matterbridgeInfo.loggerLevel.slice(1));
-    setLogOnFileMb(matterbridgeInfo.fileLogger);
-    setVirtualMode(matterbridgeInfo.virtualMode);
-  }, [matterbridgeInfo]);
-
-  // Retrieve the saved theme value from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem(MbfLsk.frontendTheme);
-    if (savedTheme) {
-      setFrontendTheme(savedTheme);
-    }
-  }, []);
 
   // Define a function to handle change bridge mode
   const handleChangeBridgeMode = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,14 +316,19 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
   const { sendMessage, getUniqueId } = useContext(WebSocketContext);
 
   // State variables
-  const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState('Info');
-  const [logOnFileMj, setLogOnFileMj] = useState(false);
-  const [mdnsInterface, setmdnsInterface] = useState('');
-  const [ipv4Address, setIpv4Address] = useState('');
-  const [ipv6Address, setIpv6Address] = useState('');
-  const [matterPort, setMatterPort] = useState('');
-  const [matterDiscriminator, setMatterDiscriminator] = useState('');
-  const [matterPasscode, setMatterPasscode] = useState('');
+  /*
+    Initialized from the server values during the first render. The parent keys this component on its
+    settings revision, so a fresh /api/settings response remounts it and these run again with the new
+    values; nothing needs to be synchronized in an effect afterwards.
+  */
+  const [selectedMjLoggerLevel, setSelectedMjLoggerLevel] = useState(() => capitalize(matterbridgeInfo?.matterLoggerLevel) ?? 'Info');
+  const [logOnFileMj, setLogOnFileMj] = useState(() => matterbridgeInfo?.matterFileLogger ?? false);
+  const [mdnsInterface, setmdnsInterface] = useState(() => matterbridgeInfo?.matterMdnsInterface || '');
+  const [ipv4Address, setIpv4Address] = useState(() => matterbridgeInfo?.matterIpv4Address || '');
+  const [ipv6Address, setIpv6Address] = useState(() => matterbridgeInfo?.matterIpv6Address || '');
+  const [matterPort, setMatterPort] = useState(() => (matterbridgeInfo?.matterPort ? matterbridgeInfo.matterPort.toString() : ''));
+  const [matterDiscriminator, setMatterDiscriminator] = useState(() => (matterbridgeInfo?.matterDiscriminator ? matterbridgeInfo.matterDiscriminator.toString() : ''));
+  const [matterPasscode, setMatterPasscode] = useState(() => (matterbridgeInfo?.matterPasscode ? matterbridgeInfo.matterPasscode.toString() : ''));
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -327,18 +339,6 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
   const matterPortDebounce = useMemo(() => createDebouncer(1000), []);
   const discriminatorDebounce = useMemo(() => createDebouncer(1000), []);
   const passcodeDebounce = useMemo(() => createDebouncer(1000), []);
-
-  useEffect(() => {
-    if (!matterbridgeInfo) return;
-    setSelectedMjLoggerLevel(matterbridgeInfo.matterLoggerLevel.charAt(0).toUpperCase() + matterbridgeInfo.matterLoggerLevel.slice(1));
-    setLogOnFileMj(matterbridgeInfo.matterFileLogger);
-    setmdnsInterface(matterbridgeInfo.matterMdnsInterface || '');
-    setIpv4Address(matterbridgeInfo.matterIpv4Address || '');
-    setIpv6Address(matterbridgeInfo.matterIpv6Address || '');
-    setMatterPort(matterbridgeInfo.matterPort ? matterbridgeInfo.matterPort.toString() : '');
-    setMatterDiscriminator(matterbridgeInfo.matterDiscriminator ? matterbridgeInfo.matterDiscriminator.toString() : '');
-    setMatterPasscode(matterbridgeInfo.matterPasscode ? matterbridgeInfo.matterPasscode.toString() : '');
-  }, [matterbridgeInfo]);
 
   // Cleanup debounce timers on unmount
   useEffect(() => () => mdnsDebounce.cancel(), [mdnsDebounce]);

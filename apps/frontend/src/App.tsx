@@ -59,15 +59,17 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
   };
 
   const logIn = useCallback(
-    async (password: string) => {
+    async (password: string, signal?: AbortSignal) => {
       try {
         const response = await fetch('./api/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password }),
+          signal,
         });
         if (response.ok) {
           const { valid } = await response.json();
+          if (signal?.aborted) return;
           if (valid) {
             setLoggedIn(true);
             if (password !== '') setWssPassword(password);
@@ -78,6 +80,7 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
           console.error('Failed to log in:', response.statusText);
         }
       } catch (error) {
+        if (signal?.aborted) return; // The auto login was aborted because the form unmounted first.
         console.error('Failed to log in:', error);
       }
     },
@@ -90,7 +93,21 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
   };
 
   useEffect(() => {
-    void logIn(''); // Auto login if no password is required
+    const controller = new AbortController();
+    /*
+      The React Compiler reports set-state-in-effect here because logIn transitively calls
+      setLoggedIn and setErrorMessage. It is a false positive: logIn is async and its first
+      statement suspends on `await fetch(...)`, so no setState can run synchronously while the
+      effect body executes and no render cascade is possible. Probing the server for whether a
+      password is required is a network round-trip, which is the "synchronize with an external
+      system" case that effects exist for. The controller below aborts that probe if the form
+      unmounts before it settles, so the state is never set after unmount.
+    */
+    /// oxlint-disable-next-line react/set-state-in-effect -- async auto login probe; see the comment above
+    void logIn('', controller.signal); // Auto login if no password is required
+    return () => {
+      controller.abort();
+    };
   }, [logIn]);
 
   return (

@@ -18,7 +18,7 @@ import FormGroup from '@mui/material/FormGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 // React
-import { useMemo, useRef, useState, memo } from 'react';
+import { useMemo, useState, memo } from 'react';
 
 import { debug } from '../appState';
 import { ConditionalTooltip } from './ConditionalTooltip';
@@ -75,10 +75,6 @@ interface MbfTableProps<T extends object> {
 }
 
 function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, footerLeft, footerRight, onRowClick }: MbfTableProps<T>) {
-  // Stable key fallback for rows without a natural id
-  const rowKeyMapRef = useRef<WeakMap<T, string>>(new WeakMap());
-  const nextRowKeySeqRef = useRef(1);
-
   const getStableRowKey = (row: T): string | number => {
     if (typeof getRowKey === 'string') {
       // oxlint-disable-next-line typescript/no-explicit-any
@@ -92,12 +88,8 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     // oxlint-disable-next-line typescript/no-explicit-any
     if (firstColId && row && (row as any)[firstColId] != null) return (row as any)[firstColId] as string | number;
     console.warn(`MbfTable(${name}): using fallback stable row key; consider providing getRowKey prop for better React performance`);
-    let k = rowKeyMapRef.current.get(row);
-    if (!k) {
-      k = `rk_${nextRowKeySeqRef.current++}`;
-      rowKeyMapRef.current.set(row, k);
-    }
-    return k;
+    // Position in the unsorted `rows` prop: stable across sorting, and pure - no render-time mutation.
+    return `rk_${rows.indexOf(row)}`;
   };
 
   // Local states for column sorting and visibility
