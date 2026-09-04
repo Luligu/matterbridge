@@ -64,7 +64,7 @@ CODEOWNERS
 tsconfig*.json
 packages/**/tsconfig*.json
 **/package-lock.json
-vite.config.ts
+vitest.config.ts
 docker-downloads-history.json
 **/tmp/
 **/temp/

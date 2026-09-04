@@ -9,7 +9,7 @@ applyTo: '**/*.test.ts, **/*.spec.ts, **/test/**/*.ts, **/vitest/**/*.ts, **/bun
 ## 1. Test Framework
 
 - Jest is available in the repository when the file `jest.config.js` exists.
-- Vitest is available in the repository when the file `vite.config.ts` exists.
+- Vitest is available in the repository when the file `vitest.config.ts` exists.
 - Bun test is available in the repository when the file `bunfig.toml` exists.
 - Jest tests live in `test` folders. Follow the existing convention in the repository for test file placement.
 - Vitest tests live in `vitest` folders. Follow the existing convention in the repository for test file placement.
