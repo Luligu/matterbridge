@@ -28,6 +28,7 @@ import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-ala
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
 import type { EndpointNumber, Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import type { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { fireAndForget } from '@matterbridge/utils/wait';
 
@@ -249,6 +250,9 @@ export class Refrigerator extends MatterbridgeEndpoint {
    *
    * @param {boolean} doorOpen - Indicates if the door is open.
    * @returns {MatterbridgeEndpoint} The updated MatterbridgeEndpoint instance.
+   *
+   * @deprecated Use `setDoorOpenState()` instead. `MatterbridgeRefrigeratorAlarmServer` now emits `Notify` automatically
+   * whenever `State` changes, so this method only duplicates the event without updating `State`.
    */
   async triggerDoorOpenState(doorOpen: boolean): Promise<MatterbridgeEndpoint> {
     if (doorOpen) {
@@ -331,14 +335,57 @@ const MatterbridgeRefrigeratorAlarmSchema = RefrigeratorAlarmServer.schema.exten
 );
 
 /**
+ * A Refrigerator Alarm `AlarmBitmap` with every bit of Matter 1.6.0 § 8.8.5.1 set to an explicit value.
+ *
+ * @remarks
+ * The `doorOpen` bit of {@link RefrigeratorAlarm.Alarm} is optional, so a bitmap literal that forgets it still compiles and
+ * silently reads back as `false`. Building the bitmaps of this server as `RefrigeratorAlarmBitmap` makes TypeScript require it.
+ */
+type RefrigeratorAlarmBitmap = Required<RefrigeratorAlarm.Alarm>;
+
+/**
  * Refrigerator Alarm server with the inherited alarm attributes bound to the Refrigerator-specific AlarmBitmap.
  *
  * @remarks
- * Matter 1.6 Application Cluster Specification §8.8.6.1 and Alarm Base §1.15.6.3, §1.15.6.4, and §1.15.8.1
- * define `DoorOpen` as bit 0 of `Mask`, `State`, `Supported`, and the `Notify` event's bitmap fields. Redeclaring
- * these inherited elements makes their wire schema resolve the Refrigerator Alarm cluster's `AlarmBitmap`, rather
- * than the empty base-cluster bitmap.
+ * Matter 1.6.0 § 8.8.5.1 and Alarm Base § 1.15.6.3, § 1.15.6.4, and § 1.15.8.1 define `DoorOpen` as bit 0 of `Mask`,
+ * `State`, `Supported`, and the `Notify` event's bitmap fields. Redeclaring these inherited elements makes their wire
+ * schema resolve the Refrigerator Alarm cluster's `AlarmBitmap`, rather than the empty base-cluster bitmap.
+ *
+ * Unlike {@link MatterbridgeDishwasherAlarmServer}, this cluster exposes no commands at all: Matter 1.6.0 § 8.8.4 marks the
+ * Alarm Base `RESET` feature as disallowed (`X`), which also removes the `Reset` command and the `Latch` attribute, and
+ * § 8.8.7 marks `ModifyEnabledAlarms` as disallowed (`X`). Only the mandatory `Notify` event remains to be implemented,
+ * since matter.js ships no implementation for the Alarm Base cluster.
+ *
+ * `Notify` is emitted automatically whenever the `State` attribute changes, so {@link Refrigerator.setDoorOpenState} alone
+ * raises and clears the alarm. Per § 8.8.6.1 the `DoorOpen` alarm is cleared only when the door is closed (a manual
+ * action), which is why no command is offered to clear it remotely.
  */
 export class MatterbridgeRefrigeratorAlarmServer extends RefrigeratorAlarmServer {
   static override readonly schema = MatterbridgeRefrigeratorAlarmSchema;
+
+  /**
+   * Registers the reaction that emits the Notify event when the State attribute changes.
+   *
+   * @returns {MaybePromise} Nothing when initialization completes synchronously.
+   */
+  override initialize(): MaybePromise {
+    // oxlint-disable-next-line typescript/unbound-method
+    this.reactTo(this.events.state$Changed, this.#emitNotify);
+  }
+
+  /**
+   * Emits the Notify event with the alarms that became active, the alarms that became inactive, and the resulting state.
+   *
+   * @param {RefrigeratorAlarm.Alarm} state - The new value of the State attribute.
+   * @param {RefrigeratorAlarm.Alarm} oldState - The previous value of the State attribute.
+   * @returns {void}
+   */
+  #emitNotify(state: RefrigeratorAlarm.Alarm, oldState: RefrigeratorAlarm.Alarm): void {
+    // Matter 1.6.0 § 1.15.8.1.1: Active indicates those alarms that have become active.
+    const active: RefrigeratorAlarmBitmap = { doorOpen: Boolean(state.doorOpen && !oldState.doorOpen) };
+    // Matter 1.6.0 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
+    const inactive: RefrigeratorAlarmBitmap = { doorOpen: Boolean(!state.doorOpen && oldState.doorOpen) };
+    // Matter 1.6.0 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
+    this.events.notify.emit({ active, inactive, state, mask: this.state.mask }, this.context);
+  }
 }

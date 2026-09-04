@@ -1,0 +1,27 @@
+# To run tests on WindowCovering --PICS is required
+# Matches the WindowCovering server on CHIP WindowCoveringLiftTilt endpoint 8032: Lift,
+# Tilt, PositionAwareLift and PositionAwareTilt features (createDefaultLiftTiltWindowCoveringClusterServer()).
+# See window-covering-lift.pics (endpoint 803) and window-covering-tilt.pics (endpoint
+# 8031) for the Lift-only and Tilt-only device variants.
+PICS_SDK_CI_ONLY=1
+WNCV.S=1
+WNCV.S.F00=1 # Lift
+WNCV.S.F01=1 # Tilt
+WNCV.S.F02=1 # PositionAwareLift
+WNCV.S.F04=1 # PositionAwareTilt
+WNCV.S.A0000=1 # Type
+WNCV.S.A0005=1 # NumberOfActuationsLift
+WNCV.S.A0006=1 # NumberOfActuationsTilt
+WNCV.S.A0007=1 # ConfigStatus
+WNCV.S.A000A=1 # OperationalStatus
+WNCV.S.A000B=1 # TargetPositionLiftPercent100ths
+WNCV.S.A000C=1 # TargetPositionTiltPercent100ths
+WNCV.S.A000D=1 # EndProductType
+WNCV.S.A000E=1 # CurrentPositionLiftPercent100ths
+WNCV.S.A000F=1 # CurrentPositionTiltPercent100ths
+WNCV.S.A0017=1 # Mode
+WNCV.S.C00.Rsp=1 # UpOrOpen
+WNCV.S.C01.Rsp=1 # DownOrClose
+WNCV.S.C02.Rsp=1 # StopMotion
+WNCV.S.C05.Rsp=1 # GoToLiftPercentage
+WNCV.S.C08.Rsp=1 # GoToTiltPercentage

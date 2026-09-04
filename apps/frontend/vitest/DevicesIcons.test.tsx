@@ -44,6 +44,7 @@ describe('DevicesIcons', () => {
     expect(screen.getAllByText('Error')).toHaveLength(2);
     expectText('Oven');
     expectText('Fridge');
+    expectText('12');
     expectText('Cooktop');
     expectText('Position 50%');
     expectText('Closure');
@@ -61,6 +62,10 @@ describe('DevicesIcons', () => {
     expectText('Speed 45%');
     expectText('Free');
     expectText('Tank 75%');
+    expectText('Utility');
+    expectText('Reference');
+    expectText('Tariff');
+    expectText('Meter');
     expectText('HeatPump');
     expectText('Solar');
     expectText('Inverter');
@@ -174,7 +179,7 @@ describe('DevicesIcons', () => {
     expect(screen.queryByText('Level 128')).toBeNull();
   });
 
-  it('should render Closure and WindowCovering position names with N/A for invalid values', async () => {
+  it('should render Closure, ClosurePanel, and WindowCovering position names with N/A for invalid values', async () => {
     const socket = createSocket();
     const device = createDevice({ name: 'Position Test', serial: 'POSITION-001', uniqueId: 'position-test' });
     const clusters = [
@@ -186,6 +191,8 @@ describe('DevicesIcons', () => {
       createCluster('6', 'WindowOpen', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '10000', 10_000),
       createCluster('7', 'WindowPartial', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '5000', 5000),
       createCluster('8', 'WindowInvalid', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '-1', -1),
+      createCluster('9', 'ClosurePanelClosed', 0x0231, 'ClosureDimension', 'currentState', '{ position: 0 }', { position: 0 }),
+      createCluster('10', 'ClosurePanelInvalid', 0x0231, 'ClosureDimension', 'currentState', '{}', {}),
     ];
 
     render(
@@ -196,10 +203,10 @@ describe('DevicesIcons', () => {
     await socket.ready();
     loadDevice(socket, device, clusters);
 
-    expect(await screen.findAllByText('Closed')).toHaveLength(2);
+    expect(await screen.findAllByText('Closed')).toHaveLength(3);
     expect(screen.getAllByText('Open')).toHaveLength(2);
     expect(screen.getAllByText('Partial')).toHaveLength(2);
-    expect(screen.getAllByText('N/A')).toHaveLength(2);
+    expect(screen.getAllByText('N/A')).toHaveLength(3);
   });
 
   it('should send refresh requests and ignore empty cluster responses', async () => {
@@ -241,7 +248,6 @@ describe('DevicesIcons', () => {
     loadDevice(socket, device, clusters);
     expect(await screen.findByText('Off')).toBeInTheDocument();
 
-    await waitFor(() => expect(socket.removeListener).toHaveBeenCalled());
     socket.emit({
       id: 0,
       src: 'Matterbridge',
@@ -279,7 +285,6 @@ describe('DevicesIcons', () => {
     loadDevice(socket, device, clusters);
     expect(await screen.findByText('Off')).toBeInTheDocument();
 
-    await waitFor(() => expect(socket.removeListener).toHaveBeenCalled());
     socket.emit(createStateUpdate({ serialNumber: device.serial, attribute: 'missingAttribute', value: true }));
 
     expect(screen.getByText('Off')).toBeInTheDocument();
@@ -340,6 +345,40 @@ describe('DevicesIcons', () => {
 
     rendered.unmount();
 
+    expect(socket.removeListener).toHaveBeenCalledTimes(1);
+  });
+
+  it('should register the websocket listener only once across devices/clusters/state_update churn', async () => {
+    // Regression test: stateUpdate used to be a useCallback memoized on [clusters, devices], so
+    // every /api/devices, /api/clusters, or state_update message that changed that state gave it
+    // a new identity, which re-ran the listener useEffect (removeListener + addListener) on every
+    // single message instead of once for the component's lifetime.
+    const socket = createSocket();
+    const device = createDevice({ name: 'Churn Device', serial: 'CHURN-001' });
+    const clusters = [createCluster('1', 'Light', 0x0100, 'OnOff', 'onOff', 'false', false)];
+
+    const rendered = render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    loadDevice(socket, device, clusters);
+    expect(await screen.findByText('Off')).toBeInTheDocument();
+
+    socket.emit(
+      createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'Light', cluster: 'OnOff', attribute: 'onOff', value: true }),
+    );
+    expect(await screen.findByText('On')).toBeInTheDocument();
+    socket.emit(
+      createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'Light', cluster: 'OnOff', attribute: 'onOff', value: false }),
+    );
+    expect(await screen.findByText('Off')).toBeInTheDocument();
+
+    expect(socket.addListenerCallCount()).toBe(1);
+    expect(socket.removeListener).not.toHaveBeenCalled();
+
+    rendered.unmount();
     expect(socket.removeListener).toHaveBeenCalledTimes(1);
   });
 
@@ -413,7 +452,6 @@ describe('DevicesIcons', () => {
       expect(await screen.findByText('Low')).toBeInTheDocument();
       expect(screen.getByText('Speed 10%')).toBeInTheDocument();
 
-      await waitFor(() => expect(socket.removeListener).toHaveBeenCalled());
       socket.emit(
         createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'main', cluster: 'FanControl', attribute: 'fanMode', value: 3 }),
       );
@@ -444,6 +482,7 @@ interface TestSocket {
   ready: () => Promise<void>;
   emit: (message: WsMessageApiResponse) => void;
   emitBatch: (messages: WsMessageApiResponse[]) => void;
+  addListenerCallCount: () => number;
 }
 
 function expectText(text: string): void {
@@ -452,6 +491,7 @@ function expectText(text: string): void {
 
 function createSocket(online = true): TestSocket {
   let listener: ((msg: WsMessageApiResponse) => void) | undefined;
+  let addListenerCalls = 0;
   const sendMessage = vi.fn();
   const removeListener = vi.fn();
   const context: WebSocketContextType = {
@@ -467,6 +507,7 @@ function createSocket(online = true): TestSocket {
     retry: 1,
     getUniqueId: () => 1,
     addListener: (handler) => {
+      addListenerCalls++;
       listener = handler;
     },
     removeListener,
@@ -491,6 +532,7 @@ function createSocket(online = true): TestSocket {
         for (const message of messages) listener?.(message);
       });
     },
+    addListenerCallCount: () => addListenerCalls,
   };
 }
 
@@ -591,7 +633,8 @@ function createFullDeviceClusters(): Cluster[] {
   add(0x0075, 'Dishwasher', [['OperationalState', 'operationalState', '0', 0]]);
   add(0x007b, 'Oven', [['BridgedDeviceBasicInformation', 'reachable', 'true', true]]);
   add(0x0070, 'Refrigerator', [['BridgedDeviceBasicInformation', 'reachable', 'true', true]]);
-  add(0x0071, 'TemperatureControlledCabinet', [['TemperatureControl', 'selectedTemperatureLevel', '2', 2]]);
+  add(0x0071, 'TemperatureControlledCabinetNumber', [['TemperatureControl', 'temperatureSetpoint', '1200', 1200]]);
+  add(0x0071, 'TemperatureControlledCabinetLevel', [['TemperatureControl', 'selectedTemperatureLevel', '2', 2]]);
   add(0x0079, 'MicrowaveOven', [['OperationalState', 'operationalState', '1', 1]]);
   add(0x007a, 'ExtractorHood', [['FanControl', 'fanMode', '3', 3]]);
   add(0x0078, 'CookSurface', [['BridgedDeviceBasicInformation', 'reachable', 'true', true]]);
@@ -637,6 +680,10 @@ function createFullDeviceClusters(): Cluster[] {
   ]);
   add(0x050c, 'Evse', [['EnergyEvse', 'state', '0', 0]]);
   add(0x050f, 'WaterHeater', [['WaterHeaterManagement', 'tankPercentage', '75', 75]]);
+  add(0x0511, 'ElectricalUtilityMeter', [['MeterIdentification', 'clusterRevision', '1', 1]]);
+  add(0x0512, 'MeterReferencePoint', [['MeterIdentification', 'clusterRevision', '1', 1]]);
+  add(0x0513, 'ElectricalEnergyTariff', [['Descriptor', 'clusterRevision', '1', 1]]);
+  add(0x0514, 'ElectricalMeter', [['Descriptor', 'clusterRevision', '1', 1]]);
   add(0x0309, 'HeatPump', [['PowerSource', 'featureMap', '{}', {}]]);
   add(0x0017, 'SolarPower', [['PowerSource', 'featureMap', '{}', {}]]);
   add(0x0018, 'BatteryStorage', [['ElectricalPowerMeasurement', 'featureMap', '{}', {}]]);
@@ -683,6 +730,7 @@ function createFullDeviceClusters(): Cluster[] {
     ['FixedLabel', 'labelList', '[]', []],
     ['Identify', 'identifyTime', '0', 0],
     ['Groups', 'nameSupport', '0', 0],
+    ['ScenesManagement', 'sceneTableSize', '0', 0],
     ['PowerTopology', 'availableEndpoints', '[]', []],
   ]);
 

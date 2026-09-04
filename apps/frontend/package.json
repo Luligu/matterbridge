@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.5.9",
+  "version": "3.5.10",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -94,18 +94,18 @@
   },
   "devDependencies": {
     "@testing-library/jest-dom": "7.0.1",
-    "@testing-library/react": "16.3.2",
-    "@types/node": "26.2.0",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "26.4.0",
     "@types/react": "19.2.18",
-    "@types/react-dom": "19.2.4",
-    "@vitejs/plugin-react": "6.1.0",
+    "@types/react-dom": "19.2.5",
+    "@vitejs/plugin-react": "6.1.1",
     "globals": "17.11.0",
     "jsdom": "30.0.1",
     "vite": "8.2.2",
     "vitest": "4.1.11",
     "typescript": "7.0.2",
-    "oxfmt": "0.64.0",
-    "oxlint": "1.79.0",
+    "oxfmt": "0.65.0",
+    "oxlint": "1.80.0",
     "oxlint-tsgolint": "7.0.2001"
   }
 }

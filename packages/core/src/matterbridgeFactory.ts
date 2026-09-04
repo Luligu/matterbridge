@@ -3,7 +3,7 @@
  * @description This file contains a generic, data-driven factory to create cluster servers on a MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2026-06-10
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -22,7 +22,7 @@
  */
 
 // @matter
-import { type Behavior, ClusterBehavior } from '@matter/node';
+import { type Behavior, ClusterBehavior, isClientBehavior } from '@matter/node';
 import { getClusterNameById } from '@matter/types/cluster';
 import type { ClusterId } from '@matter/types/datatype';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -140,17 +140,59 @@ export async function getServerBehaviorFromClusterId(clusterId: ClusterId, featu
   // oxlint-disable-next-line typescript/no-unsafe-type-assertion
   const base = mod[`${name}Server`] as Behavior.Type | undefined;
   /* v8 ignore next -- Defensive: every stock matter.js behavior module that resolves exposes a cluster-behavior <Name>Server. */
-  if (!base || !ClusterBehavior.isType(base)) return undefined;
+  if (!base || !ClusterBehavior.isType(base) || isClientBehavior(base)) return undefined;
 
+  /* v8 ignore next -- Defensive: every stock matter.js cluster defines a features record (empty when the cluster has no features). */
+  const knownFeatureNames = new Set(Object.keys(base.cluster.features ?? {}).map((key) => pascalCase(key)));
   const featureNames = (
     Array.isArray(features)
       ? features
       : Object.entries(features ?? {})
           .filter(([, enabled]) => enabled)
           .map(([key]) => key)
-  ).map((key) => pascalCase(key));
+  )
+    .map((key) => pascalCase(key))
+    .filter((key) => knownFeatureNames.has(key));
 
-  return featureNames.length > 0 ? base.with(...featureNames) : base;
+  return features === undefined ? base : base.with(...featureNames);
+}
+
+/**
+ * Lazily resolves the stock matter.js client behavior for a given cluster id.
+ *
+ * Only the single matter.js client module for the requested cluster is dynamically imported, so the
+ * whole `@matter/node/behaviors` barrel is never eagerly loaded. Unknown or non-client cluster ids
+ * resolve to `undefined`.
+ *
+ * @param {ClusterId} clusterId - The cluster id to resolve the client behavior for.
+ * @returns {Promise<Behavior.Type | undefined>} The resolved client behavior, or `undefined` if no matter.js client exists for the cluster id.
+ *
+ * @example
+ *
+ * ```typescript
+ * const onOffClient = await getClientBehaviorFromClusterId(OnOff.id);
+ * ```
+ */
+export async function getClientBehaviorFromClusterId(clusterId: ClusterId): Promise<Behavior.Type | undefined> {
+  // getClusterNameById returns "Unknown cluster 0x..." for ids that are not in the Matter model.
+  const name = getClusterNameById(clusterId);
+  if (name.includes('Unknown cluster')) return undefined;
+
+  let mod: Record<string, unknown>;
+  try {
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    mod = (await import(`@matter/node/behaviors/${snakeCase(name)}`)) as Record<string, unknown>;
+  } catch {
+    /* v8 ignore next -- Defensive: every known matter.js cluster resolves to a behavior module. */
+    return undefined;
+  }
+
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  const base = mod[`${name}Client`] as Behavior.Type | undefined;
+  /* v8 ignore next -- Defensive: every stock matter.js behavior module that resolves exposes a cluster-behavior <Name>Client. */
+  if (!base || !ClusterBehavior.isType(base) || !isClientBehavior(base)) return undefined;
+
+  return base;
 }
 
 /**

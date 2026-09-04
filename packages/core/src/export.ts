@@ -49,6 +49,8 @@ export * from './behaviors/smokeCoAlarmServer.js';
 export * from './behaviors/switchServer.js';
 export * from './behaviors/thermostatServer.js';
 export * from './behaviors/valveConfigurationAndControlServer.js';
+export * from './behaviors/temperatureAlarmServer.js';
+export * from './behaviors/waterTankLevelMonitoringServer.js';
 export * from './behaviors/windowCoveringServer.js';
 export { addVirtualDevice } from './helpers.js';
 export * from './matterbridgeAccessoryPlatform.js';

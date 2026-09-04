@@ -1,6 +1,6 @@
 /**
  * publish-workspaces.mjs
- * Version: 1.1.0
+ * Version: 1.2.0
  *
  * Publishes all workspace packages to npm.
  *
@@ -14,10 +14,14 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { fileURLToPath } from 'node:url';
 
 const ANSI_GREEN = '\x1b[32m';
 const ANSI_RESET = '\x1b[0m';
+
+// Backoff before each publish retry. One entry per retry, so N entries means N + 1 attempts.
+const PUBLISH_RETRY_DELAYS_MS = [15000, 45000];
 
 function shouldUseColor() {
   if (process.env.NO_COLOR) return false;
@@ -40,6 +44,7 @@ function usage() {
     '  3) Runs npm run buildProduction',
     '  4) Temporarily removes devDependencies, scripts, workspaces, and bundledDependencies from all package.json files',
     '  5) Publishes each workspace with npm publish (or --dry-run publish), skipping versions already on the registry',
+    '     A failed publish is retried (unless --dry-run), but only after confirming the version did not land',
     '  6) Publishes the root package with npm publish (or --dry-run publish), skipping it when already on the registry',
     '  7) Restores original package.json files from the in-memory backup',
     '',
@@ -173,13 +178,18 @@ function runPublish(repoRoot, publishDryRun, args) {
     shell: false,
   });
 
-  if (typeof res.status === 'number' && res.status !== 0) {
-    throw new Error(`Publish failed (exit ${res.status}): npm ${withDryRun.join(' ')}`);
-  }
-
+  // A spawn-level failure (npm missing, EACCES, ...) is an environment problem, never a transient
+  // registry one: it stays fatal.
   if (res.error) {
     throw res.error;
   }
+
+  // A non-zero exit is returned rather than thrown so the caller can decide whether to retry.
+  if (typeof res.status === 'number' && res.status !== 0) {
+    return new Error(`Publish failed (exit ${res.status}): npm ${withDryRun.join(' ')}`);
+  }
+
+  return null;
 }
 
 function isVersionPublished(repoRoot, name, version) {
@@ -214,6 +224,18 @@ function isVersionPublished(repoRoot, name, version) {
   throw new Error(`Registry check failed (exit ${res.status}) for ${name}@${version}: npm ${viewArgs.join(' ')}\n${output.trim()}`);
 }
 
+function registryHasVersion(repoRoot, name, version) {
+  try {
+    return isVersionPublished(repoRoot, name, version);
+  } catch (err) {
+    // A failing registry check must not mask the publish failure. Assuming "not published" only ever
+    // costs one redundant attempt: the registry rejects a duplicate version with E403, it never
+    // publishes the same version twice.
+    console.error(`Warning: registry re-check failed for ${name}@${version} (${err instanceof Error ? err.message : String(err)})`);
+    return false;
+  }
+}
+
 async function publishIfNeeded(repoRoot, dir, dryRun, publishTag) {
   const packageJsonPath = path.join(dir, 'package.json');
   const pkg = readJson(await fs.readFile(packageJsonPath, 'utf8'), packageJsonPath);
@@ -223,8 +245,28 @@ async function publishIfNeeded(repoRoot, dir, dryRun, publishTag) {
     return false;
   }
 
-  runPublish(dir, dryRun, ['publish', '--tag', publishTag]);
-  return true;
+  // npm's publish endpoint intermittently rejects a request the registry has already accepted
+  // (seen as E401 "Failed to generate Web Auth URLs" during npm publish incidents), so a failed
+  // publish is retried - but only after confirming the version did not actually land.
+  // --dry-run publishes nothing, so there is nothing to retry and nothing to re-check.
+  const retryDelays = dryRun ? [] : PUBLISH_RETRY_DELAYS_MS;
+
+  for (let attempt = 0; ; attempt++) {
+    const failure = runPublish(dir, dryRun, ['publish', '--tag', publishTag]);
+    if (!failure) return true;
+
+    if (!dryRun && registryHasVersion(repoRoot, pkg.name, pkg.version)) {
+      console.log(green(`published: ${pkg.name}@${pkg.version} landed on the registry despite the reported failure`));
+      return true;
+    }
+
+    if (attempt >= retryDelays.length) throw failure;
+
+    const delayMs = retryDelays[attempt];
+    console.error(`${pkg.name}@${pkg.version}: ${failure.message}`);
+    console.error(`retrying in ${delayMs / 1000}s (attempt ${attempt + 2} of ${retryDelays.length + 1})`);
+    await sleep(delayMs);
+  }
 }
 
 function stripPublishOnlyFields(pkg) {

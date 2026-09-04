@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 // @matter
 import { DishwasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
-import { TlvOfModel } from '@matter/types';
+import { Status, TlvOfModel } from '@matter/types';
 import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { Identify } from '@matter/types/clusters/identify';
@@ -36,7 +36,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 import { Dishwasher, MatterbridgeDishwasherAlarmServer, MatterbridgeDishwasherModeServer } from '../../src/devices/dishwasher.js';
 import { MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { dishwasher } from '../../src/matterbridgeDeviceTypes.js';
-import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -142,11 +142,12 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
         'descriptor(0x1d).serverList(0x1)=[ 3, 6, 29, 47, 86, 89, 93, 96 ]',
-        'dishwasherAlarm(0x5d).acceptedCommandList(0xfff9)=[  ]',
-        'dishwasherAlarm(0x5d).attributeList(0xfffb)=[ 0, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'dishwasherAlarm(0x5d).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'dishwasherAlarm(0x5d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'dishwasherAlarm(0x5d).clusterRevision(0xfffd)=1',
-        'dishwasherAlarm(0x5d).featureMap(0xfffc)={ reset: false }',
+        'dishwasherAlarm(0x5d).featureMap(0xfffc)={ reset: true }',
         'dishwasherAlarm(0x5d).generatedCommandList(0xfff8)=[  ]',
+        'dishwasherAlarm(0x5d).latch(0x1)={ inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
         'dishwasherAlarm(0x5d).mask(0x0)={ inflowError: false, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
         'dishwasherAlarm(0x5d).state(0x2)={ inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
         'dishwasherAlarm(0x5d).supported(0x3)={ inflowError: false, drainError: false, doorError: true, tempTooLow: false, tempTooHigh: false, waterLevelError: false }',
@@ -223,13 +224,28 @@ describe('Matterbridge ' + NAME, () => {
 
   test('encode DishwasherAlarm attributes with the cluster-specific bitmap', () => {
     const alarms = { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true };
-    for (const attributeName of ['Mask', 'State', 'Supported']) {
+    for (const attributeName of ['Mask', 'Latch', 'State', 'Supported']) {
       const attribute = [...MatterbridgeDishwasherAlarmServer.schema.conformant.attributes].find(({ name }) => name === attributeName);
       expect(attribute).toBeDefined();
       if (!attribute) continue;
       const schema = TlvOfModel(attribute);
       expect(schema.decode(schema.encode(alarms))).toEqual(alarms);
     }
+  });
+
+  test('encode the DishwasherAlarm Reset and ModifyEnabledAlarms command fields with the cluster-specific bitmap', () => {
+    const alarms = { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true };
+    const reset = [...MatterbridgeDishwasherAlarmServer.schema.conformant.commands].find(({ name }) => name === 'Reset');
+    const modifyEnabledAlarms = [...MatterbridgeDishwasherAlarmServer.schema.conformant.commands].find(({ name }) => name === 'ModifyEnabledAlarms');
+    expect(reset).toBeDefined();
+    expect(modifyEnabledAlarms).toBeDefined();
+    if (!reset || !modifyEnabledAlarms) return;
+
+    const resetSchema = TlvOfModel(reset);
+    expect(resetSchema.decode(resetSchema.encode({ alarms }))).toEqual({ alarms });
+
+    const modifySchema = TlvOfModel(modifyEnabledAlarms);
+    expect(modifySchema.decode(modifySchema.encode({ mask: alarms }))).toEqual({ mask: alarms });
   });
 
   test('encode the DishwasherAlarm Notify event with the cluster-specific bitmap', () => {
@@ -241,6 +257,72 @@ describe('Matterbridge ' + NAME, () => {
     const inactive = { inflowError: false, drainError: true, doorError: false, tempTooLow: true, tempTooHigh: false, waterLevelError: true };
     const schema = TlvOfModel(notifyEvent);
     expect(schema.decode(schema.encode({ active, inactive, state: active, mask: active }))).toEqual({ active, inactive, state: active, mask: active });
+  });
+
+  test('invoke MatterbridgeDishwasherAlarmServer commands and emit the Notify event', async () => {
+    const noAlarm = { inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false };
+    const allAlarms = { inflowError: true, drainError: true, doorError: true, tempTooLow: true, tempTooHigh: true, waterLevelError: true };
+    const waterAlarms = { ...noAlarm, inflowError: true, drainError: true, waterLevelError: true };
+    const otherAlarms = { ...noAlarm, doorError: true, tempTooLow: true, tempTooHigh: true };
+
+    // The stock Dishwasher only supports the DoorError alarm, so use a device that supports every bit.
+    const alarmDevice = new MatterbridgeEndpoint(dishwasher, { id: 'DishwasherAlarms' }).createDefaultBasicInformationClusterServer(
+      'Dishwasher Alarms',
+      'DWALARM123456',
+      0xfff1,
+      'Matterbridge',
+      0x8000,
+      'Dishwasher',
+    );
+    alarmDevice.behaviors.require(MatterbridgeDishwasherAlarmServer, { mask: allAlarms, latch: noAlarm, state: noAlarm, supported: allAlarms });
+    alarmDevice.addRequiredClusterServers();
+    expect(await addDevice(server, alarmDevice)).toBeTruthy();
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'acceptedCommandList')).toEqual([0, 1]);
+
+    const notifyEvents: unknown[] = [];
+    alarmDevice.eventsOf(MatterbridgeDishwasherAlarmServer).notify.on((event) => {
+      notifyEvents.push(event);
+    });
+
+    // Every alarm becomes active at once.
+    await alarmDevice.setAttribute(DishwasherAlarm.id, 'state', allAlarms);
+    expect(notifyEvents.at(-1)).toEqual({ active: allAlarms, inactive: noAlarm, state: allAlarms, mask: allAlarms });
+
+    // Resetting every alarm makes them all inactive.
+    await alarmDevice.invokeBehaviorCommand(DishwasherAlarm, 'reset', { alarms: allAlarms });
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'state')).toEqual(noAlarm);
+    expect(notifyEvents.at(-1)).toEqual({ active: noAlarm, inactive: allAlarms, state: noAlarm, mask: allAlarms });
+
+    // A Mask that enables every alarm leaves an all-active State untouched.
+    await alarmDevice.setAttribute(DishwasherAlarm.id, 'state', allAlarms);
+    await alarmDevice.invokeBehaviorCommand(DishwasherAlarm, 'modifyEnabledAlarms', { mask: allAlarms });
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'state')).toEqual(allAlarms);
+
+    // Resetting only the water alarms leaves the other ones active.
+    await alarmDevice.invokeBehaviorCommand(DishwasherAlarm, 'reset', { alarms: waterAlarms });
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'state')).toEqual(otherAlarms);
+
+    // Disabling the remaining alarms in the Mask clears them from State.
+    await alarmDevice.invokeBehaviorCommand(DishwasherAlarm, 'modifyEnabledAlarms', { mask: waterAlarms });
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'mask')).toEqual(waterAlarms);
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'state')).toEqual(noAlarm);
+
+    // Resetting alarms that are already inactive is a no-op.
+    await alarmDevice.invokeBehaviorCommand(DishwasherAlarm, 'reset', { alarms: allAlarms });
+    expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'state')).toEqual(noAlarm);
+  });
+
+  test('MatterbridgeDishwasherAlarmServer rejects unsupported alarms', async () => {
+    const noAlarm = { inflowError: false, drainError: false, doorError: false, tempTooLow: false, tempTooHigh: false, waterLevelError: false };
+
+    // The stock Dishwasher supports only DoorError, so every other bit is rejected.
+    await expect(device.invokeBehaviorCommand(DishwasherAlarm, 'reset', { alarms: { ...noAlarm, tempTooHigh: true } })).rejects.toMatchObject({
+      code: Status.Failure,
+    });
+    await expect(device.invokeBehaviorCommand(DishwasherAlarm, 'modifyEnabledAlarms', { mask: { ...noAlarm, drainError: true } })).rejects.toMatchObject({
+      code: Status.InvalidCommand,
+    });
+    expect(device.getAttribute(DishwasherAlarm.id, 'mask')).toEqual({ ...noAlarm, doorError: true });
   });
 
   test('remove the laundry washer device', async () => {

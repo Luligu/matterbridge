@@ -35,6 +35,7 @@ import '@matter/nodejs';
 import EventEmitter from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // @matter
 import {
@@ -692,10 +693,28 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
+    let rootEndpoint;
+    if (hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.log.warn(' ****************************************************************************************');
+      this.log.warn(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+      this.log.warn(' ****************************************************************************************');
+      rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    } else {
+      rootEndpoint = ServerNode.RootEndpoint;
+    }
+    // v8 ignore if - No test cause is just chip test entry point for the TestEventTrigger on GeneralDiagnostics.
+    if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
+      this.log.warn(' ****************************************************************************************');
+      this.log.warn(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running TestEventTrigger server. *');
+      this.log.warn(' ****************************************************************************************');
+      const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
+      rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);
+    }
+
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
      */
-    const serverNode = await ServerNode.create(ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired)), {
+    const serverNode = await ServerNode.create(rootEndpoint, {
       // Required: Give the Node a unique ID which is used to store the state of this node
       id: storeId,
 
@@ -755,13 +774,17 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         reachable: true,
       },
 
-      powerSource: {
-        status: PowerSource.PowerSourceStatus.Active,
-        order: 0,
-        description: 'AC Power',
-        endpointList: [],
-        wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-      },
+      ...(hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST
+        ? {
+            powerSource: {
+              status: PowerSource.PowerSourceStatus.Active,
+              order: 0,
+              description: 'AC Power',
+              endpointList: [],
+              wiredCurrentType: PowerSource.WiredCurrentType.Ac,
+            },
+          }
+        : {}),
     });
 
     /**

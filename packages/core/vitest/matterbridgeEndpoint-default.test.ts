@@ -70,11 +70,13 @@ import {
   SmokeCoAlarm,
   SoilMeasurement,
   Switch,
+  TemperatureAlarm,
   TemperatureMeasurement,
   Thermostat,
   ThermostatUserInterfaceConfiguration,
   UserLabel,
   ValveConfigurationAndControl,
+  WaterTankLevelMonitoring,
   WindowCovering,
 } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
@@ -190,6 +192,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(getBehaviourTypeFromClusterServerId(BridgedDeviceBasicInformation.id)?.id).toBe('bridgedDeviceBasicInformation');
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagement.id)?.id).toBe('deviceEnergyManagement');
     expect(getBehaviourTypeFromClusterServerId(DeviceEnergyManagementMode.id)?.id).toBe('deviceEnergyManagementMode');
+    expect(getBehaviourTypeFromClusterServerId(HepaFilterMonitoring.id)?.id).toBe('hepaFilterMonitoring');
+    expect(getBehaviourTypeFromClusterServerId(ActivatedCarbonFilterMonitoring.id)?.id).toBe('activatedCarbonFilterMonitoring');
+    expect(getBehaviourTypeFromClusterServerId(WaterTankLevelMonitoring.id)?.id).toBe('waterTankLevelMonitoring');
+    expect(getBehaviourTypeFromClusterServerId(TemperatureAlarm.id)?.id).toBe('temperatureAlarm');
   });
 
   test('getBehaviourTypesFromClusterClientIds', () => {
@@ -459,6 +465,14 @@ describe('Matterbridge ' + NAME, () => {
     colorCapabilities.colorTemperature = false;
     expect(await device.updateAttribute('colorControl', 'colorCapabilities', colorCapabilities)).toBe(true);
 
+    loggerLogSpy.mockClear();
+    const newColorCapabilities = { ...colorCapabilities, hueSaturation: !colorCapabilities.hueSaturation };
+    expect(await device.updateAttribute('colorControl', 'colorCapabilities', newColorCapabilities, device.log)).toBe(true);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      expect.stringContaining(`${db}Update endpoint ${or}${device.id}${db}:${or}${device.number}${db} attribute ${hk}ColorControl${db}.${hk}colorCapabilities${db}`),
+    );
+
     await device.configureColorControlMode(ColorControl.ColorMode.CurrentHueAndCurrentSaturation);
     // (matterbridge as any).frontend.getClusterTextFromDevice(device);
 
@@ -651,6 +665,78 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(50);
     expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(50);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultTiltWindowCoveringClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(windowCovering, { id: 'TiltOnlyScreen' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultTiltWindowCoveringClusterServer();
+    expect(device.hasAttributeServer('WindowCovering', 'type')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'operationalStatus')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'mode')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionLiftPercent100ths')).toBe(false);
+    expect(device.hasAttributeServer('WindowCovering', 'targetPositionTiltPercent100ths')).toBe(true);
+    expect(device.hasAttributeServer('WindowCovering', 'currentPositionTiltPercent100ths')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(WindowCovering.id, 'type')).toBe(WindowCovering.WindowCoveringType.TiltBlindTiltOnly);
+    expect(device.getAttribute(WindowCovering.id, 'endProductType')).toBe(WindowCovering.EndProductType.InteriorVenetianBlind);
+    expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(0);
+    expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(0);
+    expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+
+    await device.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', 50, device.log);
+    await device.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', 50, device.log);
+    expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(50);
+    expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(50);
+
+    await device.setWindowCoveringStatus(WindowCovering.MovementStatus.Closing);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Set WindowCovering operationalStatus: 2`));
+    expect(device.getWindowCoveringStatus()).toBe(WindowCovering.MovementStatus.Closing);
+
+    await device.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to 50 and operationalStatus to Stopped.`),
+    );
+    expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths'));
+    expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+    // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultWindowCoveringClusterServer, createDefaultLiftTiltWindowCoveringClusterServer and createDefaultTiltWindowCoveringClusterServer with a null initial position', async () => {
+    const liftDevice = new MatterbridgeEndpoint(windowCovering, { id: 'LiftScreenNull' });
+    liftDevice.createDefaultWindowCoveringClusterServer(null);
+    await add(liftDevice);
+    expect(liftDevice.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(liftDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBeNull();
+    expect(liftDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercentage')).toBeNull();
+
+    const liftTiltDevice = new MatterbridgeEndpoint(windowCovering, { id: 'TiltScreenNull' });
+    liftTiltDevice.createDefaultLiftTiltWindowCoveringClusterServer(null, null);
+    await add(liftTiltDevice);
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionLiftPercentage')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBeNull();
+    expect(liftTiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercentage')).toBeNull();
+
+    const tiltDevice = new MatterbridgeEndpoint(windowCovering, { id: 'TiltOnlyScreenNull' });
+    tiltDevice.createDefaultTiltWindowCoveringClusterServer(null);
+    await add(tiltDevice);
+    expect(tiltDevice.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(tiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBeNull();
+    expect(tiltDevice.getAttribute(WindowCovering.id, 'currentPositionTiltPercentage')).toBeNull();
   });
 
   test('createDefaultThermostatClusterServer', async () => {
@@ -1945,6 +2031,56 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createDefaultWaterTankLevelMonitoringClusterServer', async () => {
+    // Water Tank Level Monitoring is only optional on the Humidifier/Dehumidifier device type (Matter 1.7, not yet
+    // available in this SDK), so onOffLight is used here as a plain scaffold for the cluster server itself.
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'WaterTank' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultWaterTankLevelMonitoringClusterServer();
+    expect(device.hasAttributeServer(WaterTankLevelMonitoring, 'changeIndication')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(WaterTankLevelMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
+  });
+
+  test('createDefaultTemperatureAlarmClusterServer', async () => {
+    // Temperature Alarm is provisional in Matter 1.6.0 (§ 2.17.3) and no device type lists it yet, so temperatureSensor
+    // is used here as a plain scaffold for the cluster server itself.
+    const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TempAlarm' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultTemperatureAlarmClusterServer();
+    expect(device.hasAttributeServer(TemperatureAlarm, 'mask')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'latch')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'state')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'supported')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalOverTemperatureThreshold')).toBe(true);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'criticalUnderTemperatureThreshold')).toBe(true);
+    // MajorThreshold and MinorThreshold are not enabled, so their thresholds are absent.
+    expect(device.hasAttributeServer(TemperatureAlarm, 'majorOverTemperatureThreshold')).toBe(false);
+    expect(device.hasAttributeServer(TemperatureAlarm, 'minorUnderTemperatureThreshold')).toBe(false);
+
+    await add(device);
+    const noAlarm = {
+      criticalOverTemperatureAlarm: false,
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: false,
+    };
+    const criticalAlarms = { ...noAlarm, criticalOverTemperatureAlarm: true, criticalUnderTemperatureAlarm: true };
+    expect(device.getAttribute(TemperatureAlarm.id, 'criticalOverTemperatureThreshold')).toBe(6000);
+    expect(device.getAttribute(TemperatureAlarm.id, 'criticalUnderTemperatureThreshold')).toBe(-1000);
+    // Matter 1.6.0 § 1.15.6.4: the Mask, Latch and State bits of an unsupported alarm are false.
+    expect(device.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(criticalAlarms);
+    expect(device.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(criticalAlarms);
+    expect(device.getAttribute(TemperatureAlarm.id, 'latch')).toEqual(noAlarm);
+    expect(device.getAttribute(TemperatureAlarm.id, 'state')).toEqual(noAlarm);
+    expect(device.getAttribute(TemperatureAlarm.id, 'acceptedCommandList')).toEqual([0, 1]);
+  });
+
   test('createDefaultDoorLockClusterServer', async () => {
     const device = new MatterbridgeEndpoint(doorLock, { id: 'Lock' });
     expect(device).toBeDefined();
@@ -1954,10 +2090,28 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'actuatorEnabled')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(false);
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createDefaultDoorLockClusterServer with access schedules', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'ScheduleLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 2, 3, 4);
+
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(2);
+    expect(device.getAttribute(DoorLock.id, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(3);
+    expect(device.getAttribute(DoorLock.id, 'numberOfHolidaySchedulesSupported')).toBe(4);
   });
 
   test('createUserPinDoorLockClusterServer', async () => {
@@ -1969,10 +2123,68 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(DoorLock, 'lockState')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'lockType')).toBe(true);
     expect(device.hasAttributeServer(DoorLock, 'actuatorEnabled')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'expiringUserTimeout')).toBe(false);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfRfidUsersSupported')).toBe(false);
 
     await add(device);
     expect(device.getAttribute(DoorLock.id, 'lockState')).toBe(DoorLock.LockState.Locked);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+
+  test('createUserPinDoorLockClusterServer with access schedules', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinScheduleLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 3, 4);
+
+    expect(device.hasAttributeServer(DoorLock, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'numberOfHolidaySchedulesSupported')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfWeekDaySchedulesSupportedPerUser')).toBe(2);
+    expect(device.getAttribute(DoorLock.id, 'numberOfYearDaySchedulesSupportedPerUser')).toBe(3);
+    expect(device.getAttribute(DoorLock.id, 'numberOfHolidaySchedulesSupported')).toBe(4);
+  });
+
+  test('createUserPinDoorLockClusterServer with expiring user timeout', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinExpiringUserLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, 30);
+
+    expect(device.hasAttributeServer(DoorLock, 'expiringUserTimeout')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'expiringUserTimeout')).toBe(30);
+  });
+
+  test('createUserPinDoorLockClusterServer with RFID credential support', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinRfidLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 10);
+
+    expect(device.hasAttributeServer(DoorLock, 'numberOfRfidUsersSupported')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'minRfidCodeLength')).toBe(true);
+    expect(device.hasAttributeServer(DoorLock, 'maxRfidCodeLength')).toBe(true);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfRfidUsersSupported')).toBe(10);
+    expect(device.getAttribute(DoorLock.id, 'minRfidCodeLength')).toBe(8);
+    expect(device.getAttribute(DoorLock.id, 'maxRfidCodeLength')).toBe(20);
+    // See doorLockServer.test.ts "User RFID set and clear credential" for the SetCredential/GetCredentialStatus/ClearCredential round trip.
+  });
+
+  test('createUserPinDoorLockClusterServer with custom RFID code length', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'UserPinRfidCodeLengthLock' });
+    device.createDefaultIdentifyClusterServer();
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 5, 4, 10);
+
+    await add(device);
+    expect(device.getAttribute(DoorLock.id, 'numberOfRfidUsersSupported')).toBe(5);
+    expect(device.getAttribute(DoorLock.id, 'minRfidCodeLength')).toBe(4);
+    expect(device.getAttribute(DoorLock.id, 'maxRfidCodeLength')).toBe(10);
   });
 
   test('createDefaultModeSelectClusterServer', async () => {
@@ -2432,11 +2644,22 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('power source wired with Dc current type', async () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'PowerSourceWiredDc' });
+    expect(device).toBeDefined();
+    device.createDefaultPowerSourceWiredClusterServer(PowerSource.WiredCurrentType.Dc);
+    expect(device.hasClusterServer(PowerSource.id)).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(PowerSource.id, 'description')).toBe('DC Power');
+  });
+
   test('energy measurements for electricalSensor', async () => {
     const device = new MatterbridgeEndpoint([electricalSensor], { id: 'ElectricalSensor' });
     expect(device).toBeDefined();
     device.createDefaultPowerTopologyClusterServer();
-    device.createDefaultElectricalEnergyMeasurementClusterServer();
+    device.createDefaultElectricalEnergyMeasurementClusterServer(500);
     device.createDefaultElectricalPowerMeasurementClusterServer();
     expect(device.hasClusterServer(PowerTopology.id)).toBe(true);
     expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'cumulativeEnergyReset')).toBe(true);
@@ -2449,7 +2672,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await add(device);
 
-    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toBe(null);
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toEqual({ energy: 500 });
     expect(device.getAttribute(ElectricalPowerMeasurement.id, 'voltage')).toBe(null);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -2526,6 +2749,11 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toEqual({ energy: 2000 });
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+
+    const deviceNull = new MatterbridgeEndpoint([electricalSensor], { id: 'ExportedElectricalSensorNull' });
+    deviceNull.createExportedElectricalEnergyMeasurementClusterServer();
+    await add(deviceNull);
+    expect(deviceNull.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(null);
   });
 
   test('createDefaultTemperatureMeasurementClusterServer', async () => {

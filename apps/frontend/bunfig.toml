@@ -2,4 +2,4 @@
 
 [install]
 # installation strategy: "hoisted" or "isolated"
-linker = "isolated"
+# linker = "isolated"

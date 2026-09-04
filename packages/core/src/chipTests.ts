@@ -55,7 +55,6 @@ import type { AnsiLogger } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { cliEmitter } from './cliEmitter.js';
-import { MatterbridgeRefrigeratorAlarmServer } from './devices/refrigerator.js';
 import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -1377,19 +1376,8 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       return;
     case 'SetRefrigeratorDoorStatus': {
       const doorOpen = Boolean(command.DoorOpen);
-      const wasDoorOpen = Boolean(endpoint.stateOf(MatterbridgeRefrigeratorAlarmServer).state.doorOpen);
+      // MatterbridgeRefrigeratorAlarmServer emits the Notify event itself whenever State changes, so this must only write State.
       await endpoint.setCluster(RefrigeratorAlarm, { state: { doorOpen } }, matterbridge.log);
-      await endpoint.triggerEvent(
-        'RefrigeratorAlarm',
-        'notify',
-        {
-          active: { doorOpen: doorOpen && !wasDoorOpen },
-          inactive: { doorOpen: !doorOpen && wasDoorOpen },
-          state: { doorOpen },
-          mask: endpoint.stateOf(MatterbridgeRefrigeratorAlarmServer).mask,
-        },
-        matterbridge.log,
-      );
       matterbridge.log.info(`CHIP test app pipe set RefrigeratorAlarm.State.DoorOpen to ${doorOpen} on endpoint ${endpointId}`);
       return;
     }

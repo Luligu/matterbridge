@@ -1,10 +1,9 @@
-Chip tests run started at 2026-08-28T07:03:32.971Z
+Chip tests run started at 2026-09-03T21:40:04.295Z
 
-✅ OperationalState attributes on IrrigationSystem (TC_OPSTATE_2_1.py)
-✅ OperationalState Start/Stop on IrrigationSystem (TC_OPSTATE_2_2.py)
-✅ OperationalState Pause/Resume on IrrigationSystem (TC_OPSTATE_2_3.py)
-✅ OperationalState OperationalError event on IrrigationSystem (TC_OPSTATE_2_4.py)
-✅ OperationalState OperationCompletion event on IrrigationSystem (TC_OPSTATE_2_5.py)
-✅ OperationalState CountdownTime reporting on IrrigationSystem (TC_OPSTATE_2_6.py)
+✅ Generic device basic composition (TC_DeviceBasicComposition.py)
+✅ Generic device conformance (TC_DeviceConformance.py)
+✅ Generic device default warnings (TC_DefaultWarnings.py)
+✅ Generic TestEventTrigger command (TC_TestEventTrigger.py)
 
-Summary: 6/6 tests passed.
+Summary: 4/4 tests passed.
+Chip tests run ended at 2026-09-03T21:41:04.046Z (total duration 1m 00s)

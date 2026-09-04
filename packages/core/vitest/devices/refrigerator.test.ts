@@ -148,16 +148,48 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized`);
   });
 
+  test('the RefrigeratorAlarm cluster exposes no commands', () => {
+    // Matter 1.6.0 § 8.8.4 marks the RESET feature as disallowed (which removes the Reset command and the Latch attribute)
+    // and § 8.8.7 marks ModifyEnabledAlarms as disallowed, so this cluster accepts no commands at all.
+    expect(device.getAttribute(RefrigeratorAlarm.id, 'acceptedCommandList')).toEqual([]);
+    expect(device.getAttribute(RefrigeratorAlarm.id, 'generatedCommandList')).toEqual([]);
+    expect(device.behaviors.elementsOf(MatterbridgeRefrigeratorAlarmServer).commands.size).toBe(0);
+    expect(device.hasAttributeServer(RefrigeratorAlarm.id, 'latch')).toBeFalsy();
+  });
+
+  test('a DoorOpen state change emits the Notify event', async () => {
+    const notifyEvents: unknown[] = [];
+    device.eventsOf(MatterbridgeRefrigeratorAlarmServer).notify.on((event) => {
+      notifyEvents.push(event);
+    });
+
+    // The door opens: DoorOpen becomes active.
+    await device.setDoorOpenState(true);
+    expect(notifyEvents).toHaveLength(1);
+    expect(notifyEvents[0]).toEqual({ active: { doorOpen: true }, inactive: { doorOpen: false }, state: { doorOpen: true }, mask: { doorOpen: true } });
+
+    // The door closes: DoorOpen becomes inactive, the manual action of Matter 1.6.0 § 8.8.6.1.
+    await device.setDoorOpenState(false);
+    expect(notifyEvents).toHaveLength(2);
+    expect(notifyEvents[1]).toEqual({ active: { doorOpen: false }, inactive: { doorOpen: true }, state: { doorOpen: false }, mask: { doorOpen: true } });
+
+    // Setting the same value again is not a state change, so no further Notify is generated.
+    await device.setDoorOpenState(false);
+    expect(notifyEvents).toHaveLength(2);
+  });
+
   test('cabinet1 open door', async () => {
     expect(await device.setDoorOpenState(true)).toBeDefined();
     expect(device.getAttribute('RefrigeratorAlarm', 'state')).toEqual({ doorOpen: true });
   });
 
   test('cabinet1 trigger alert on open door', async () => {
+    // oxlint-disable-next-line typescript/no-deprecated -- covers the deprecated manual trigger, kept for backwards compatibility.
     expect(await device.triggerDoorOpenState(true)).toBeDefined();
   });
 
   test('cabinet1 trigger alert on close door', async () => {
+    // oxlint-disable-next-line typescript/no-deprecated -- covers the deprecated manual trigger, kept for backwards compatibility.
     expect(await device.triggerDoorOpenState(false)).toBeDefined();
   });
 
@@ -167,10 +199,12 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('cabinet2 trigger alert on open door', async () => {
+    // oxlint-disable-next-line typescript/no-deprecated -- covers the deprecated manual trigger, kept for backwards compatibility.
     expect(await device.triggerDoorOpenState(true)).toBeDefined();
   });
 
   test('cabinet2 trigger alert on close door', async () => {
+    // oxlint-disable-next-line typescript/no-deprecated -- covers the deprecated manual trigger, kept for backwards compatibility.
     expect(await device.triggerDoorOpenState(false)).toBeDefined();
   });
 

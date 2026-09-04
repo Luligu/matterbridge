@@ -285,8 +285,14 @@ describe('Matterbridge Water Heater', () => {
     expect(occupiedHeatingSetpoint).toBeDefined();
     if (!occupiedHeatingSetpoint) return;
     await device.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Heat} (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeThermostatServer: setpointRaiseLower called with mode: Heat amount: 0.5');
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeThermostatServer: setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Heat} (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeThermostatServer: setpointRaiseLower called with mode: Heat amount: 0.5 (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint).toBe(occupiedHeatingSetpoint + 50);
   });
 

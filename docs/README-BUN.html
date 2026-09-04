@@ -230,12 +230,36 @@ built and served. See the TODO list below for the known limitations.</p>
 <hr>
 <h2 id="known-issue-with-release-140">Known issue with release 1.4.0</h2>
 <ul>
-<li><input disabled="" type="checkbox"> <strong>Bun docker image cannot resolve the container user name.</strong> In the official Bun images,
+<li><p><input disabled="" type="checkbox"> <strong>Bun docker image cannot resolve the container user name.</strong> In the official Bun images,
 both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>
 from <code>os.userInfo()</code>, even though they correctly return the UID, GID, and home
 directory. Consequently, Matterbridge sends <code>User: unknown</code> to the frontend
 system-information view instead of the container account (for example, <code>root</code>).
-Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.</li>
+Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.
+</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong>The <code>ws</code> package client ignores top-level TLS options under Bun.</strong> Under Node, both the
+global <code>WebSocket</code> and the <code>ws</code> package client accept the TLS material (<code>ca</code>, <code>cert</code>, <code>key</code>,
+<code>rejectUnauthorized</code>) as top-level constructor options, the same way <code>https.request</code> does:
+<code>new WebSocket(url, { ca, cert, key, rejectUnauthorized })</code>. Under Bun, the <code>ws</code> package
+delegates to Bun&#39;s native <code>WebSocket</code> implementation, which only reads TLS options nested
+under a <code>tls</code> field (<code>new WebSocket(url, { tls: { ca, cert, key, rejectUnauthorized } })</code>).
+Passing the Node-style top-level options under Bun does not throw — it silently falls back
+to Bun&#39;s default TLS settings, so the handshake fails against a self-signed/mTLS server with
+a <code>close</code> event, code 1015 (&quot;TLS handshake failed&quot;), or the connection is torn down entirely
+(code 1006) if the server also requires a client certificate. This bit <code>matterbridge-hass</code>&#39;s
+<code>HomeAssistant.connect()</code>, which opens an outbound <code>wss://</code> connection to Home Assistant with
+a custom CA and/or <code>rejectUnauthorized: false</code> and previously passed those fields top-level
+only.
+Workaround (works identically on both Node and Bun, no runtime detection needed): pass the
+TLS fields <strong>both</strong> top-level and nested under <code>tls</code> in the same options object — each
+runtime reads the shape it understands and ignores the other.
+Reproduced and asserted by <a href="./buntest/wssTest.test.ts">buntest/wssTest.test.ts</a>.
+Reported upstream: <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a> (open,
+&quot;WebSocket npm fails TLS handshake with self signed certificates&quot;), with a fix proposed in
+<a href="https://github.com/oven-sh/bun/pull/31397">oven-sh/bun#31397</a> (open, not yet merged) —
+revisit dropping the workaround once that lands in a release.</p>
+</li>
 </ul>
   <script>
     const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';

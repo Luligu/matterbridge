@@ -31,6 +31,87 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.8] - 2026-09-04
+
+### Development News
+
+- [chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster.
+- [chip]: ThermostatHeating endpoint 9011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster.
+- [chip]: ThermostatCooling endpoint 9012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster.
+- [chip]: ThermostatPresets endpoint 9013 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `Presets` feature (`TC_TSTAT_4_2.py`).
+- [chip]: ThermostatSchedules endpoint 9014 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `MatterScheduleConfiguration` feature.
+- [chip]: ThermostatSuggestions endpoint 9015 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `ThermostatSuggestions` feature (`TC_TSTAT_4_3.py`).
+- [chip]: DoorLock endpoint 801 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
+- [chip]: DoorLockUserPINSchedules endpoint 8012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `DoorLock` cluster.
+- [chip]: Closure endpoint 805 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.
+- [chip]: ClosureComplete endpoint 8054 CHIP conformance is green ✅ for the automated harness tests covering the `ClosureControl` cluster.
+- [chip]: ClosureDimension endpoint 8062 (Closure Panel Roller, Translation shape) CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
+- [chip]: ClusurePanelVenetian endpoint 8064 (Closure Panel Venetian, Rotation shape) CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
+- [chip]: ClosurePanelSmartGlass endpoint 8066 (Closure Panel Smart-Glass, Modulation shape) CHIP conformance is green ✅ for the automated harness tests covering the `ClosureDimension` cluster.
+- [chip]: WindowCoveringLift endpoint 803 CHIP conformance is green ✅ for the automated harness tests covering the `WindowCovering` cluster.
+- [chip]: WindowCoveringTilt endpoint 8031 CHIP conformance is green ✅ for the automated harness tests covering the `WindowCovering` cluster.
+- [chip]: WindowCoveringLiftTilt endpoint 8032 CHIP conformance is green ✅ for the automated harness tests covering the `WindowCovering` cluster.
+
+- [endpoint]: Clarify `addCommandHandler()` JSDoc after [#617](https://github.com/Luligu/matterbridge/issues/617): command handlers run before the Matterbridge behavior command implementation starts its cluster-specific validation and state checks, so handlers with real side effects must validate the relevant Matter preconditions and current cluster state before acting; use `subscribeAttribute()` when actions should run only after Matterbridge accepts a command and updates the corresponding attributes.
+
+### Added
+
+- [closureControl]: Add `motionLatching` and `speed` options to `ClosureOptions` to opt in to the optional MotionLatching and Speed features. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/622).
+- [closureDimension]: Add `motionLatching` and `speed` options to `ClosurePanelOptions` to opt in to the optional MotionLatching and Speed features per panel. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/618).
+- [closureControl]: `MatterbridgeClosureControlServer` can now simulate MoveTo/Calibrate completion, opt-in via the new `state.movementDuration`/`state.calibrationDuration` (both disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [closureDimension]: Add the `movementDuration` option to `ClosurePanelOptions`; `MatterbridgeClosureDimensionServer` can now simulate SetTarget/Step completion (`CurrentState` converging to `TargetState`), opt-in via `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [doorlock]: Add Week Day Access Schedules (WDSCH), Year Day Access Schedules (YDSCH), and Holiday Schedules (HDSCH) feature support. Thanks Ludovic BOUÉ.
+- [ElectricalUtilityMeter]: Add the option to expose an Electrical Energy Tariff on the same meter endpoint. Thanks Ludovic BOUÉ.
+- [ElectricalUtilityMeter]: Add the full `CommodityTariff` day/tariff schedule fields (`startDate`, `dayEntries`, `dayPatterns`, `calendarPeriods`, `individualDays`, `currentDay`, `nextDay`, `currentDayEntry`, `currentDayEntryDate`, `nextDayEntry`, `nextDayEntryDate`, `tariffComponents`, `tariffPeriods`, `currentTariffComponents`, `nextTariffComponents`) to `ElectricalEnergyTariffOptions`, so `addElectricalMeter()`/`addElectricalEnergyTariff()` can seed a real schedule at construction time instead of leaving it null. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/625).
+- [matterbridge]: Add the `--root-power-source` param to opt in to a wired AC PowerSource cluster on the Root endpoint (disabled by default, since it was found to break ElectricalPowerMeasurement rendering in Apple Home).
+- [endpoint]: Add typed overloads for the `getClusterServerOptions()` typed surface when called with `Behavior.Type` or `ClusterType`.
+- [endpoint]: Add `createDefaultWaterTankLevelMonitoringClusterServer()` to `MatterbridgeEndpoint`, creating a default `WaterTankLevelMonitoring` cluster server (Condition, Warning, and ReplacementProductList features) with a `resetCondition` command handler, following the existing HepaFilterMonitoring/ActivatedCarbonFilterMonitoring pattern. The `MatterbridgeWaterTankLevelMonitoringServer` behavior is exported like the other two monitoring behaviors, and the frontend device tooltip now shows `Water tank: <condition>%`. No Matterbridge device type declares this cluster yet, as the only Matter device type that lists it (Humidifier/Dehumidifier) is planned for Matter 1.7. Thanks Ludovic BOUÉ.
+- [temperatureAlarm]: Add `MatterbridgeTemperatureAlarmServer`, implementing the derived `TemperatureAlarm` cluster (Matter 1.6.0 § 2.17) with the Alarm Base `Reset` feature and the `OverTemperature`/`UnderTemperature` features, so the `CriticalOverTemperatureThreshold` and `CriticalUnderTemperatureThreshold` attributes, the base `Reset` and `ModifyEnabledAlarms` commands and the mandatory `Notify` event are all supported. matter.js has no Alarm Base implementation and only a bare `TemperatureAlarm` behavior, so the commands and the event are implemented here, and the cluster schema is extended to bind the inherited Alarm Base elements to the `TemperatureAlarm` `AlarmBitmap` (same fix already applied to `MatterbridgeRefrigeratorAlarmServer` and `MatterbridgeDishwasherAlarmServer`). `Notify` is emitted automatically whenever the `State` attribute changes. No Matterbridge device type declares this cluster yet.
+- [temperatureAlarm]: Add `createDefaultTemperatureAlarmClusterServer()` to `MatterbridgeEndpoint`, creating a default `TemperatureAlarm` cluster server (Reset, OverTemperature and UnderTemperature features) with sensible critical thresholds, following the existing main-cluster pattern. `TemperatureAlarm` is registered in `supportedClusters`, in `getBehaviourTypeFromClusterServerId()` and in `addClusterServers()`, so `addRequiredClusterServers()`/`addOptionalClusterServers()` create it automatically, `MatterbridgeTemperatureAlarmServer` is exported like the other main-cluster behaviors, and the frontend device tooltip now shows `Temp alarm: <state>`. No Matterbridge device type declares this cluster yet, as it is provisional in Matter 1.6.0 (§ 2.17.3).
+- [dishwasherAlarm]: `MatterbridgeDishwasherAlarmServer` now implements the Alarm Base `Reset` and `ModifyEnabledAlarms` commands and the mandatory `Notify` event, which matter.js does not provide (it ships no Alarm Base implementation and only a bare `DishwasherAlarm` behavior). The Alarm Base `RESET` feature is enabled, so the cluster now reports `FeatureMap={reset:true}`, adds the fixed `Latch` attribute and accepts commands `0x00`/`0x01`. The cluster schema is also extended to bind `Latch` and the `Reset`/`ModifyEnabledAlarms` command fields to the Dishwasher `AlarmBitmap`, alongside the attributes and the `Notify` event fixed previously. `Notify` is emitted automatically whenever `State` changes.
+- [refrigeratorAlarm]: `MatterbridgeRefrigeratorAlarmServer` now implements the mandatory `Notify` event, emitted automatically whenever `State` changes, so `Refrigerator.setDoorOpenState()` alone raises and clears the alarm. No command is added: Matter 1.6.0 § 8.8.4 marks the Alarm Base `RESET` feature as disallowed (`X`), which also removes the `Reset` command and the `Latch` attribute, and § 8.8.7 marks `ModifyEnabledAlarms` as disallowed (`X`), so the cluster correctly accepts no commands at all. `Refrigerator.triggerDoorOpenState()` is deprecated in favour of `setDoorOpenState()`, since it only duplicates the event without updating `State`.
+- [buntest]: Add `wssTest.test.ts`, auditing a `wss` (WebSocket over TLS) mTLS handshake under Bun with both the global `WebSocket` and the `ws` package client, documenting that the `ws` client silently ignores top-level TLS options under Bun and requires them nested under `tls` (see [README-BUN.md](./README-BUN.md) known issues, and upstream [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396)).
+- [utils]: Add spec compliant `luxToMatter` and `matterToLux` utilities.
+- [WindowCovering]: Add `createDefaultTiltWindowCoveringClusterServer()` to `MatterbridgeEndpoint`, creating a tilt-only WindowCovering cluster server (Tilt and PositionAwareTilt features), mirroring `createDefaultWindowCoveringClusterServer()`.
+- [WindowCovering]: `MatterbridgeWindowCoveringServer` can now simulate lift/tilt movement completion, opt-in via the new `state.movementDuration` (disabled by default; automatically enabled under `MATTERBRIDGE_CHIP_TEST`).
+- [doorlock]: `createUserPinDoorLockClusterServer()` accepts a new optional `expiringUserTimeout` parameter that creates the `ExpiringUserTimeout` attribute (Matter 1.6.0 § 5.2.9.36, constraint 1 to 2880 minutes), enabling support for `DoorLock.UserType.ExpiringUser` temporary PIN credentials. Thanks Ludovic BOUÉ.
+- [chip]: Add the DoorLockUserPINExpiring demo device on endpoint 8013, a User/PIN door lock with `expiringUserTimeout` set, with its own `door-lock-user-pin-expiring.pics` and a TC_DRLK_2_1 run, so steps 34a-34c (read, write, read-back of `ExpiringUserTimeout`) are executed instead of skipped. Thanks Ludovic BOUÉ.
+- [DoorLock]: `createUserPinDoorLockClusterServer()` accepts a new optional `numberOfRfidUsersSupported` parameter that enables the `RfidCredential` (RID) feature (Matter 1.6.0 § 5.2.4), creating the `NumberOfRFIDUsersSupported`, `MaxRFIDCodeLength`, and `MinRFIDCodeLength` attributes; the last two are also exposed as optional `minRfidCodeLength`/`maxRfidCodeLength` parameters (defaults 8/20 bytes, matching 4/10-byte ISO 14443A UIDs when represented as ASCII hex, per the spec recommendation). `SetCredential`/`GetCredentialStatus`/`ClearCredential` already handle `DoorLock.CredentialType.Rfid` generically in `MatterbridgeDoorLockServer`, so no command-handler changes were needed. Thanks Ludovic BOUÉ.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.8.
+- [matterbridge]: Bump `@types/node` to v.26.4.0.
+- [matterbridge]: Bump `marked` to v.18.0.11.
+- [matterbridge]: Bump `oxfmt` to v.0.65.0.
+- [matterbridge]: Bump `oxlint` to v.1.80.0.
+- [matterbridge]: Bump `node-ansi-logger` to v.3.3.1.
+- [matterbridge]: Bump `node-persist-manager` to v.2.1.1.
+- [matterbridge]: Bump `express-rate-limit` to v.8.7.0.
+- [matterbridge]: Bump `multer` to v.2.3.0.
+- [matterbridge]: Bump `@zip.js/zip.js` to v.2.8.61.
+- [frontend]: Bump `frontend` version to v.3.5.10.
+- [frontend]: Bump `@testing-library/react` to v.16.3.3.
+- [frontend]: Bump `@types/node` to v.26.4.0.
+- [frontend]: Bump `@types/react-dom` to v.19.2.5.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.1.1.
+- [frontend]: Bump `oxfmt` to v.0.65.0.
+- [frontend]: Bump `oxlint` to v.1.80.0.
+- [closureDimension]: Change `ClosurePanelOptions` defaults for `resolution` and `stepValue` to advertise whole-percent (1%) granularity by default instead of 0.01%, matching typical real closure APIs. Thanks Ludovic BOUÉ (https://github.com/Luligu/matterbridge/issues/620).
+
+### Fixed
+
+- [Closure]: Fix Calibration slipping into the default ClosureControl feature map and command list; the Calibration feature and Calibrate command are now advertised only when the `calibration` option is enabled. Thanks Ludovic BOUÉ.
+- [Closure]: Fix `secureState` staying frozen at its initial value on `MoveTo` completion for a Closure without the MotionLatching feature; it now tracks `Position` (secure only when FullyClosed) as required by the Application Cluster Specification, and `SecureStateChanged` fires accordingly.
+- [frontend]: Fix `HomeDevices` remixing the whole devices/selectDevices list (and rendering twice) on every single device reachability `state_update`; a reachable-only update now patches the affected row in `mixedDevices` directly instead of rebuilding the merged list.
+- [frontend]: Fix `DevicesIcons` tearing down and re-registering its WebSocket listener on every single `state_update`; `stateUpdate` now reads the current `devices`/`clusters` state through refs instead of closing over them, keeping its identity stable so the listener effect no longer remounts on every message.
+- [scripts]: Fix `update-matter.mjs loc` (`npm run updateMatter:loc`) only installing `../matter.js/packages/main` from the local matter.js checkout; `@matter/main`'s own `package.json` declares its split-package dependencies (`@matter/general`, `@matter/model`, `@matter/node`, `@matter/nodejs`, `@matter/protocol`, `@matter/types`) as `"*"`, which only resolves inside the matter.js monorepo workspace, so those packages were left unresolved and broke the `tsc` build. `loc` mode now also installs all six sibling packages from their local paths alongside `main`.
+- [WindowCovering]: Fix `operationalStatus` always including the `lift`/`tilt` bits regardless of the endpoint's supported features; the Matter 1.6.0 Application Cluster Specification §5.3.5.3.2/§5.3.5.3.3 conditions those bits on the LF/TL features. `createDefaultWindowCoveringClusterServer()` (Lift-only) no longer sets `tilt`, `createDefaultTiltWindowCoveringClusterServer()` (Tilt-only) no longer sets `lift`, and `setWindowCoveringTargetAsCurrentAndStopped()`, `setWindowCoveringCurrentTargetStatus()`, `setWindowCoveringStatus()`, `setWindowCoveringTargetAndCurrentPosition()`, and `MatterbridgeWindowCoveringServer.stopMotion()` now include only the bit(s) the endpoint actually supports. Also fixes `setWindowCoveringTargetAsCurrentAndStopped()` silently doing nothing at all (no target sync, no `operationalStatus` update) when called on a Tilt-only server.
+- [WindowCovering]: Fix `operationalStatus.global` staying Stopped while a Tilt-only covering was moving, failing `Test_TC_WNCV_3_1`/`Test_TC_WNCV_3_2` on a Tilt-only endpoint. `MatterbridgeWindowCoveringServer` derives `global` from the `lift`/`tilt` bits, but on a Tilt-only server `lift` is now absent, so the derivation assigned `global` an undefined value that encoded as Stopped. An absent axis is now read as Stopped and `global` follows the axis the server actually supports.
+- [matterbridgeFactory]: Fix `createClusterServer()` throwing when `options.features` names a feature the target cluster doesn't have (e.g. an `OnOff`-only feature name passed for `BooleanState`); unknown feature names are now silently ignored instead of raising `ImplementationError`, matching the documented "ignore unsupported features" behavior.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.7] - 2026-08-28
 
 ### Development Breaking Changes

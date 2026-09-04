@@ -2,13 +2,13 @@ name: Codecov
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths-ignore:
       - 'docs/**' # any file under docs/
       - 'screenshots/**' # any file under screenshots/
       - '**/*.md' # any .md anywhere
   pull_request:
-    branches: [main]
+    branches: [main, dev]
     paths-ignore:
       - 'docs/**' # any file under docs/
       - 'screenshots/**' # any file under screenshots/

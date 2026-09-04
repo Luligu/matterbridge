@@ -101,7 +101,7 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   npm ci --no-fund --no-audit && npm link matterbridge --no-fund --no-audit && npm run buildProduction && npm pkg delete devDependencies scripts && rm -rf node_modules package-lock.json npm-shrinkwrap.json && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap && npm pack
 
 WORKDIR /matterbridge-example-camera
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-example-camera.git . && \
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-camera.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(node -p "require('./package.json').version.split('-')[0]") && \
   npm pkg set version="${BASE_VERSION}-git-${SHA7}" && \

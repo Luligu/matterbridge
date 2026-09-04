@@ -35,6 +35,7 @@ export * from './githubVersion.js';
 export * from './hex.js';
 export * from './inspector.js';
 export * from './loader.js';
+export * from './measurementUtils.js';
 export * from './network.js';
 export * from './npmPrefix.js';
 export * from './npmVersion.js';

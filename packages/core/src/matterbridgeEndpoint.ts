@@ -87,6 +87,7 @@ import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configu
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Switch } from '@matter/types/clusters/switch';
+import type { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
@@ -120,8 +121,10 @@ import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js'
 import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
 import { MatterbridgeSwitchServer } from './behaviors/switchServer.js';
+import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
+import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
@@ -528,9 +531,73 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Retrieves the initial options for the provided cluster server.
    *
-   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to get options for.
-   * @returns {Record<string, boolean | number | bigint | string | object | null> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   * @param {Behavior.Type} cluster - The cluster to get options for.
+   * @returns {Partial<Behavior.StateOf<T>> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the options for the 'Descriptor' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getClusterServerOptions(DescriptorServer)
+   * device.getClusterServerOptions(Descriptor)
+   * ```
+   * Not typed overload:
+   * ```typescript
+   * device.getClusterServerOptions(Descriptor.id)
+   * device.getClusterServerOptions('Descriptor')
+   * ```
+   * The last has the advantage of being able to retrieve cluster options without imports. Just use the names found in the Matter specs.
    */
+  getClusterServerOptions<T extends Behavior.Type>(cluster: T): Partial<Behavior.StateOf<T>> | undefined;
+  /**
+   * Retrieves the initial options for the provided cluster server.
+   *
+   * @param {ClusterType} cluster - The cluster to get options for.
+   * @returns {Partial<ClusterAttributesOf<T>> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the options for the 'Descriptor' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getClusterServerOptions(DescriptorServer)
+   * device.getClusterServerOptions(Descriptor)
+   * ```
+   * Not typed overload:
+   * ```typescript
+   * device.getClusterServerOptions(Descriptor.id)
+   * device.getClusterServerOptions('Descriptor')
+   * ```
+   * The last has the advantage of being able to retrieve cluster options without imports. Just use the names found in the Matter specs.
+   */
+  getClusterServerOptions<T extends ClusterType>(cluster: T): Partial<ClusterAttributesOf<T>> | undefined;
+  /**
+   * Retrieves the initial options for the provided cluster server.
+   *
+   * @param {ClusterId | string} cluster - The cluster to get options for.
+   * @returns {Record<string, boolean | number | bigint | string | object | null> | undefined} The options for the provided cluster server, or undefined if the cluster is not supported.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to retrieve the options for the 'Descriptor' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.getClusterServerOptions(DescriptorServer)
+   * device.getClusterServerOptions(Descriptor)
+   * ```
+   * Not typed overload:
+   * ```typescript
+   * device.getClusterServerOptions(Descriptor.id)
+   * device.getClusterServerOptions('Descriptor')
+   * ```
+   * The last has the advantage of being able to retrieve cluster options without imports. Just use the names found in the Matter specs.
+   */
+  getClusterServerOptions(cluster: ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined;
+
   getClusterServerOptions(cluster: Behavior.Type | ClusterType | ClusterId | string): Record<string, boolean | number | bigint | string | object | null> | undefined {
     const behavior = getBehavior(this, cluster);
     if (!behavior) return undefined;
@@ -1430,7 +1497,13 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Adds a command handler for the specified command.
    *
-   * The handler function will be called when the specified command is received on the endpoint before the default behavior is executed.
+   * The handler function will be called when the specified command is received on the endpoint before the default
+   * Matter behavior command implementation starts its cluster-specific validation and state checks. A handler can
+   * therefore receive a request that Matterbridge later rejects with a Matter status error. Handlers that perform real
+   * side effects, such as sending commands to hardware, cloud APIs, or other external systems, must validate the
+   * relevant Matter preconditions and current cluster state themselves before acting.
+   *
+   * Use `subscribeAttribute()` instead when the action should run only after Matterbridge accepts the command and updates the corresponding attributes.
    *
    * The handler function is called with await and shall return immediately.
    *
@@ -1457,9 +1530,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * - `attributes`: The current writable attributes of the cluster that received the command (i.e. { onOff: true}).
    * > Be aware that this is the actual cluster state but is typed as a complete instance of the cluster.
    * > You can use this directly to access and change the current state of the cluster inside the handler function.
-   * > The behavior servers will manage the attributes updates themself and make sure to trigger the necessary events and actions (for windowCovering cluster the implmentation shall update the current position).
-   * > YOU CANNOT CALL enpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
-   * > A transaction is alreaady in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
+   * > The behavior servers will manage the attributes updates themself and make sure to trigger the necessary events and actions (for windowCovering cluster the implementation shall update the current position).
+   * > YOU CANNOT CALL endpoint.setAttribute() OR endpoint.setCluster() INSIDE THE HANDLER FUNCTION, OTHERWISE IT WILL CAUSE DEADLOCKS.
+   * > A transaction is already in place when the handler function is called, so the changes will be applied at the end of the handler function execution.
    * - `endpoint`: The MatterbridgeEndpoint instance that received the command.
    * - `context`: The optional Matter action context for behavior-driven commands.
    */
@@ -1508,36 +1581,55 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {Behavior.Type} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(cluster: T, command: C, params?: BehaviorCommandParams<T, C>): Promise<void>;
+  async invokeBehaviorCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(
+    cluster: T,
+    command: C,
+    params?: BehaviorCommandParams<T, C>,
+    waiterCondition?: () => boolean,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {ClusterType} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, params?: ClusterCommandParams<T, C>): Promise<void>;
+  async invokeBehaviorCommand<T extends ClusterType, C extends ClusterCommandName<T>>(
+    cluster: T,
+    command: C,
+    params?: ClusterCommandParams<T, C>,
+    waiterCondition?: () => boolean,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
-  async invokeBehaviorCommand(cluster: ClusterId | string, command: CommandHandlers, params?: Record<string, boolean | number | bigint | string | object | null>): Promise<void>;
+  async invokeBehaviorCommand(
+    cluster: ClusterId | string,
+    command: CommandHandlers,
+    params?: Record<string, boolean | number | bigint | string | object | null>,
+    waiterCondition?: () => boolean,
+  ): Promise<void>;
   /**
    * Invokes a behavior command on the specified cluster. Used ONLY in Jest tests.
    *
    * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
    * @param {string} command - The command to invoke.
    * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The optional parameters to pass to the command.
+   * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
    *
    * @deprecated Used ONLY in Jest tests.
    */
@@ -1545,8 +1637,9 @@ export class MatterbridgeEndpoint extends Endpoint {
     cluster: Behavior.Type | ClusterType | ClusterId | string,
     command: CommandHandlers,
     params?: Record<string, boolean | number | bigint | string | object | null>,
+    waiterCondition?: () => boolean,
   ): Promise<void> {
-    await invokeBehaviorCommand(this, cluster, command, params);
+    await invokeBehaviorCommand(this, cluster, command, params, waiterCondition);
   }
 
   /**
@@ -2953,9 +3046,10 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default window covering cluster server with feature Lift and PositionAwareLift.
    *
-   * @param {number} positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionPercent100ths - The position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.Rollershade). Must support feature Lift.
    * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.RollerShade). Must support feature Lift.
+   * @param {number} movementDuration - Duration in milliseconds of the built-in lift movement simulation. Defaults to 0, which disables the simulation: `currentPositionLiftPercent100ths`/`operationalStatus` then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging `currentPositionLiftPercent100ths` to the target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks mode attributes is writable and persists across restarts.
@@ -2963,27 +3057,32 @@ export class MatterbridgeEndpoint extends Endpoint {
    * configStatus attributes persists across restarts.
    */
   createDefaultWindowCoveringClusterServer(
-    positionPercent100ths?: number,
+    positionPercent100ths: number | null = 0,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
+    movementDuration: number = 0,
   ): this {
     this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
       type, // Must support feature Lift
-      numberOfActuationsLift: 0,
+      numberOfActuationsLift: 0, // persisted
       configStatus: {
+        // persisted
         operational: true,
-        onlineReserved: false,
+        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: true,
         tiltPositionAware: false,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      // No tilt field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support feature Lift
-      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-      targetPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-      currentPositionLiftPercent100ths: positionPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+      targetPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed
+      currentPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed, persisted
+      currentPositionLiftPercentage: positionPercent100ths === null ? null : Math.floor(positionPercent100ths / 100), // Mirror of currentPositionLiftPercent100ths, persisted
+      movementDuration,
     });
     return this;
   }
@@ -2991,10 +3090,11 @@ export class MatterbridgeEndpoint extends Endpoint {
   /**
    * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
    *
-   * @param {number} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
-   * @param {number} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionLiftPercent100ths - The lift position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {number | null} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
    * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
    * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
+   * @param {number} movementDuration - Duration in milliseconds of the built-in lift/tilt movement simulation. Defaults to 0, which disables the simulation: the current position/`operationalStatus` attributes then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging the current lift/tilt position to the respective target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks mode attributes is writable and persists across restarts.
@@ -3002,10 +3102,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * configStatus attributes persists across restarts.
    */
   createDefaultLiftTiltWindowCoveringClusterServer(
-    positionLiftPercent100ths?: number,
-    positionTiltPercent100ths?: number,
+    positionLiftPercent100ths: number | null = 0,
+    positionTiltPercent100ths: number | null = 0,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindLift,
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
+    movementDuration: number = 0,
   ): this {
     this.behaviors.require(
       MatterbridgeWindowCoveringServer.with(
@@ -3016,11 +3117,12 @@ export class MatterbridgeEndpoint extends Endpoint {
       ),
       {
         type, // Must support features Lift and Tilt
-        numberOfActuationsLift: 0,
-        numberOfActuationsTilt: 0,
+        numberOfActuationsLift: 0, // persisted
+        numberOfActuationsTilt: 0, // persisted
         configStatus: {
+          // persisted
           operational: true,
-          onlineReserved: false,
+          // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
           liftMovementReversed: false,
           liftPositionAware: true,
           tiltPositionAware: true,
@@ -3029,43 +3131,94 @@ export class MatterbridgeEndpoint extends Endpoint {
         },
         operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
         endProductType, // Must support features Lift and Tilt
-        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false },
-        targetPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        currentPositionLiftPercent100ths: positionLiftPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        targetPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
-        currentPositionTiltPercent100ths: positionTiltPercent100ths ?? 0, // 0 Fully open 10000 fully closed
+        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+        targetPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed
+        currentPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed, persisted
+        currentPositionLiftPercentage: positionLiftPercent100ths === null ? null : Math.floor(positionLiftPercent100ths / 100), // Mirror of currentPositionLiftPercent100ths, persisted
+        targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
+        currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
+        currentPositionTiltPercentage: positionTiltPercent100ths === null ? null : Math.floor(positionTiltPercent100ths / 100), // Mirror of currentPositionTiltPercent100ths, persisted
+        movementDuration,
       },
     );
     return this;
   }
 
   /**
-   * Sets the window covering lift target position as the current position and stops the movement.
+   * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
+   *
+   * @param {number | null} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
+   * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
+   * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
+   * @param {number} movementDuration - Duration in milliseconds of the built-in tilt movement simulation. Defaults to 0, which disables the simulation: `currentPositionTiltPercent100ths`/`operationalStatus` then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging `currentPositionTiltPercent100ths` to the target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks mode attributes is writable and persists across restarts.
+   * currentPositionTiltPercent100ths persists across restarts.
+   * configStatus attributes persists across restarts.
+   */
+  createDefaultTiltWindowCoveringClusterServer(
+    positionTiltPercent100ths: number | null = 0,
+    type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
+    endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorVenetianBlind,
+    movementDuration: number = 0,
+  ): this {
+    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
+      type, // Must support features Lift and Tilt
+      numberOfActuationsTilt: 0, // persisted
+      configStatus: {
+        // persisted
+        operational: true,
+        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+        liftMovementReversed: false,
+        liftPositionAware: false,
+        tiltPositionAware: true,
+        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+      },
+      // No lift field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+      endProductType, // Must support features Lift and Tilt
+      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+      targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
+      currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
+      currentPositionTiltPercentage: positionTiltPercent100ths === null ? null : Math.floor(positionTiltPercent100ths / 100), // Mirror of currentPositionTiltPercent100ths, persisted
+      movementDuration,
+    });
+    return this;
+  }
+
+  /**
+   * Sets the window covering lift and/or tilt target position (whichever axis the server supports) as the current position and stops the movement.
    *
    */
   async setWindowCoveringTargetAsCurrentAndStopped(): Promise<void> {
-    const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
-    if (isValidNumber(position, 0, 10000)) {
-      await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
-      await this.setAttribute(
-        WindowCovering,
-        'operationalStatus',
-        {
-          global: WindowCovering.MovementStatus.Stopped,
-          lift: WindowCovering.MovementStatus.Stopped,
-          tilt: WindowCovering.MovementStatus.Stopped,
-        },
-        this.log,
-      );
+    const { lift, tilt } = featuresFor(this, WindowCovering);
+    if (lift) {
+      const position = this.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths', this.log);
+      if (isValidNumber(position, 0, 10000)) {
+        await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', position, this.log);
+      }
+      this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
-    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths and targetPositionLiftPercent100ths to ${position} and operationalStatus to Stopped.`);
-    if (this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+    if (tilt) {
       const position = this.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths', this.log);
       if (isValidNumber(position, 0, 10000)) {
         await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', position, this.log);
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    await this.setAttribute(
+      WindowCovering,
+      'operationalStatus',
+      {
+        global: WindowCovering.MovementStatus.Stopped,
+        ...(lift ? { lift: WindowCovering.MovementStatus.Stopped } : {}),
+        ...(tilt ? { tilt: WindowCovering.MovementStatus.Stopped } : {}),
+      },
+      this.log,
+    );
   }
 
   /**
@@ -3078,13 +3231,15 @@ export class MatterbridgeEndpoint extends Endpoint {
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus): Promise<void> {
     await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
     await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
+    const { lift, tilt } = featuresFor(this, WindowCovering);
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
       {
         global: status,
-        lift: status,
-        tilt: status,
+        ...(lift ? { lift: status } : {}),
+        ...(tilt ? { tilt: status } : {}),
       },
       this.log,
     );
@@ -3097,13 +3252,15 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {WindowCovering.MovementStatus} status - The movement status to set.
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus): Promise<void> {
+    const { lift, tilt } = featuresFor(this, WindowCovering);
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
       {
         global: status,
-        lift: status,
-        tilt: status,
+        ...(lift ? { lift: status } : {}),
+        ...(tilt ? { tilt: status } : {}),
       },
       this.log,
     );
@@ -3134,7 +3291,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', liftPosition, this.log);
     await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', liftPosition, this.log);
     this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${liftPosition} and targetPositionLiftPercent100ths: ${liftPosition}.`);
-    if (tiltPosition && this.hasAttributeServer(WindowCovering, 'currentPositionTiltPercent100ths')) {
+    if (tiltPosition && featuresFor(this, WindowCovering).tilt) {
       await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', tiltPosition, this.log);
       await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', tiltPosition, this.log);
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths: ${tiltPosition} and targetPositionTiltPercent100ths: ${tiltPosition}.`);
@@ -4024,12 +4181,112 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Creates a default door lock cluster server with no additional features.
+   * Creates a default Temperature Alarm Cluster Server with features Reset, OverTemperature, and UnderTemperature.
+   *
+   * @param {number} criticalOverTemperatureThreshold - The threshold over which CriticalOverTemperature is active, in 0.01 °C. Default is 6000 (60 °C).
+   * @param {number} criticalUnderTemperatureThreshold - The threshold under which CriticalUnderTemperature is active, in 0.01 °C. Default is -1000 (-10 °C).
+   * @param {TemperatureAlarm.Alarm} supported - The supported alarms. Default is the two critical alarms. It is a fixed attribute.
+   * @param {TemperatureAlarm.Alarm} mask - The enabled alarms. Default is the supported alarms.
+   * @param {TemperatureAlarm.Alarm} latch - The latched alarms. Default is none. It is a fixed attribute.
+   * @param {TemperatureAlarm.Alarm} state - The initially active alarms. Default is none.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * Matter 1.6.0 § 2.17.4 gives OverTemperature and UnderTemperature the choice conformance `O.a+`, so at least one of the
+   * two SHALL be supported. Both are enabled here, which is why the two critical thresholds are always present.
+   * The MajorThreshold and MinorThreshold features are not enabled, so the four major/minor alarm bits are always false:
+   * Matter 1.6.0 § 1.15.6.4 requires the Mask, Latch, and State bits of an unsupported alarm to be false.
+   * The Notify event is emitted automatically whenever the State attribute changes, so a plugin that raises or clears an
+   * alarm only has to update State. The thresholds are read-only over the wire: the plugin owns the temperature evaluation.
+   */
+  createDefaultTemperatureAlarmClusterServer(
+    criticalOverTemperatureThreshold: number = 60 * 100,
+    criticalUnderTemperatureThreshold: number = -10 * 100,
+    supported: TemperatureAlarm.Alarm = { criticalOverTemperatureAlarm: true, criticalUnderTemperatureAlarm: true },
+    mask: TemperatureAlarm.Alarm = supported,
+    latch: TemperatureAlarm.Alarm = {},
+    state: TemperatureAlarm.Alarm = {},
+  ): this {
+    const bitmap = (alarm: TemperatureAlarm.Alarm): Required<TemperatureAlarm.Alarm> => ({
+      criticalOverTemperatureAlarm: Boolean(alarm.criticalOverTemperatureAlarm),
+      // Matter 1.6.0 § 1.15.6.4: The bits of an unsupported alarm are false, and MajorThreshold/MinorThreshold are not enabled.
+      majorOverTemperatureAlarm: false,
+      minorOverTemperatureAlarm: false,
+      minorUnderTemperatureAlarm: false,
+      majorUnderTemperatureAlarm: false,
+      criticalUnderTemperatureAlarm: Boolean(alarm.criticalUnderTemperatureAlarm),
+    });
+    this.behaviors.require(MatterbridgeTemperatureAlarmServer, {
+      // Feature.OverTemperature
+      criticalOverTemperatureThreshold,
+      // Feature.UnderTemperature
+      criticalUnderTemperatureThreshold,
+      // Feature.Reset
+      latch: bitmap(latch), // Fixed attribute
+      // Base attributes
+      supported: bitmap(supported), // Fixed attribute
+      mask: bitmap(mask),
+      state: bitmap(state),
+    });
+    return this;
+  }
+
+  /**
+   * Creates a default Water Tank Level Monitoring Cluster Server with features Condition, Warning, and ReplacementProductList.
+   * It supports ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, and ResourceMonitoring.Feature.ReplacementProductList.
+   *
+   * @param {number} condition - The initial condition value (range 0-100). Default is 100.
+   * @param {ResourceMonitoring.ChangeIndication} changeIndication - The initial change indication. Default is ResourceMonitoring.ChangeIndication.Ok.
+   * @param {boolean | undefined} inPlaceIndicator - The in-place indicator. Default is true.
+   * @param {number | null | undefined} lastChangedTime - The last changed time (EpochS). Default is null.
+   * @param {ResourceMonitoring.ReplacementProduct[]} replacementProductList - The list of replacement products. Default is an empty array. It is a fixed attribute.
+   *
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * The Water Tank Level Monitoring Cluster Server is used to monitor the status of a water tank, e.g. on a humidifier or dehumidifier.
+   * It provides information about the condition of the resource, whether it is in place, and the last time it was changed.
+   * The change indication can be used to indicate if the water tank needs to be refilled or emptied.
+   * The replacement product list can be used to provide a list of replacement products for the resource.
+   * The condition attribute defaults to 100, indicating a full or empty tank as initially configured.
+   * The degradation direction is fixed at ResourceMonitoring.DegradationDirection.Down, indicating that a lower value indicates a worse condition.
+   * The replacement product list is initialized as an empty array.
+   */
+  createDefaultWaterTankLevelMonitoringClusterServer(
+    condition: number = 100,
+    changeIndication: ResourceMonitoring.ChangeIndication = ResourceMonitoring.ChangeIndication.Ok,
+    inPlaceIndicator: boolean | undefined = true,
+    lastChangedTime: number | null | undefined = null,
+    replacementProductList: ResourceMonitoring.ReplacementProduct[] = [],
+  ): this {
+    this.behaviors.require(
+      MatterbridgeWaterTankLevelMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList),
+      {
+        // Feature.Condition
+        condition,
+        degradationDirection: ResourceMonitoring.DegradationDirection.Down, // Fixed attribute
+        // Feature.ReplacementProductList
+        replacementProductList, // Fixed attribute
+        // Base attributes
+        changeIndication,
+        inPlaceIndicator,
+        lastChangedTime, // Writable and persistent across restarts
+      },
+    );
+    return this;
+  }
+
+  /**
+   * Creates a default door lock cluster server with optional access schedule features.
    * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
    * @param {DoorLock.LockType} [lockType] - The type of the lock (default: DeadBolt).
    * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
+   * @param {number} [numberOfWeekDaySchedulesSupportedPerUser] - Number of week day schedules supported per user; enables the feature when defined.
+   * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - Number of year day schedules supported per user; enables the feature when defined.
+   * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4039,9 +4296,16 @@ export class MatterbridgeEndpoint extends Endpoint {
     lockState: DoorLock.LockState = DoorLock.LockState.Locked,
     lockType: DoorLock.LockType = DoorLock.LockType.DeadBolt,
     autoRelockTime: number = 0,
+    numberOfWeekDaySchedulesSupportedPerUser?: number,
+    numberOfYearDaySchedulesSupportedPerUser?: number,
+    numberOfHolidaySchedulesSupported?: number,
   ): this {
     this.behaviors.require(
-      MatterbridgeDoorLockServer.with().enable({
+      MatterbridgeDoorLockServer.with(
+        ...(numberOfWeekDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.WeekDayAccessSchedules] : []),
+        ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.YearDayAccessSchedules] : []),
+        ...(numberOfHolidaySchedulesSupported !== undefined ? [DoorLock.Feature.HolidaySchedules] : []),
+      ).enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -4069,13 +4333,19 @@ export class MatterbridgeEndpoint extends Endpoint {
          */
         supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
         autoRelockTime, // 0=disabled
+        // WeekDayAccessSchedules feature attributes
+        ...(numberOfWeekDaySchedulesSupportedPerUser !== undefined ? { numberOfWeekDaySchedulesSupportedPerUser } : {}),
+        // YearDayAccessSchedules feature attributes
+        ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? { numberOfYearDaySchedulesSupportedPerUser } : {}),
+        // HolidaySchedules feature attributes
+        ...(numberOfHolidaySchedulesSupported !== undefined ? { numberOfHolidaySchedulesSupported } : {}),
       },
     );
     return this;
   }
 
   /**
-   * Creates a door lock cluster server with feature User (USR) and PinCredential (PIN).
+   * Creates a door lock cluster server with User (USR), PinCredential (PIN), and optional access schedule features.
    * It enables the lockDoor, unlockDoor, and unlockWithTimeout commands, and the doorLockAlarm, lockOperation, and lockOperationError events.
    *
    * @param {DoorLock.LockState} [lockState] - The initial state of the lock (default: Locked).
@@ -4083,6 +4353,13 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} [autoRelockTime] - The auto relock time in seconds (default: 0 = disabled).
    * @param {number} [minPinCodeLength] - The minimum length of the PIN code (default: 4).
    * @param {number} [maxPinCodeLength] - The maximum length of the PIN code (default: 10).
+   * @param {number} [numberOfWeekDaySchedulesSupportedPerUser] - Number of week day schedules supported per user; enables the feature when defined.
+   * @param {number} [numberOfYearDaySchedulesSupportedPerUser] - Number of year day schedules supported per user; enables the feature when defined.
+   * @param {number} [numberOfHolidaySchedulesSupported] - Number of holiday schedules supported; enables the feature when defined.
+   * @param {number} [expiringUserTimeout] - Number of minutes (1 to 2880) a credential of a DoorLock.UserType.ExpiringUser shall remain valid after its first use before expiring; the attribute is only created when defined.
+   * @param {number} [numberOfRfidUsersSupported] - Number of RFID users supported; enables the RfidCredential (RID) feature when defined.
+   * @param {number} [minRfidCodeLength] - The minimum length in bytes of an RFID code (default: 8 bytes, i.e. an 8-character ASCII-hex encoding of a 4-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
+   * @param {number} [maxRfidCodeLength] - The maximum length in bytes of an RFID code (default: 20 bytes, i.e. a 20-character ASCII-hex encoding of a 10-byte ISO 14443A UID). Only applied when `numberOfRfidUsersSupported` is defined.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -4097,9 +4374,23 @@ export class MatterbridgeEndpoint extends Endpoint {
     autoRelockTime: number = 0,
     minPinCodeLength: number = 4,
     maxPinCodeLength: number = 10,
+    numberOfWeekDaySchedulesSupportedPerUser?: number,
+    numberOfYearDaySchedulesSupportedPerUser?: number,
+    numberOfHolidaySchedulesSupported?: number,
+    expiringUserTimeout?: number,
+    numberOfRfidUsersSupported?: number,
+    minRfidCodeLength: number = 8,
+    maxRfidCodeLength: number = 20,
   ): this {
     this.behaviors.require(
-      MatterbridgeDoorLockServer.with(DoorLock.Feature.User, DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/).enable({
+      MatterbridgeDoorLockServer.with(
+        DoorLock.Feature.User,
+        DoorLock.Feature.PinCredential /* , DoorLock.Feature.CredentialOverTheAirAccess*/,
+        ...(numberOfWeekDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.WeekDayAccessSchedules] : []),
+        ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? [DoorLock.Feature.YearDayAccessSchedules] : []),
+        ...(numberOfHolidaySchedulesSupported !== undefined ? [DoorLock.Feature.HolidaySchedules] : []),
+        ...(numberOfRfidUsersSupported !== undefined ? [DoorLock.Feature.RfidCredential] : []),
+      ).enable({
         events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
         commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
       }),
@@ -4141,6 +4432,21 @@ export class MatterbridgeEndpoint extends Endpoint {
         numberOfTotalUsersSupported: 10,
         credentialRulesSupport: { single: true },
         numberOfCredentialsSupportedPerUser: 10,
+        /**
+         * Indicates the number of minutes a PIN, RFID, Fingerprint, or other credential associated with a user of
+         * type ExpiringUser shall remain valid after its first use before expiring. When the credential expires,
+         * the UserStatus for the corresponding user record shall be set to OccupiedDisabled.
+         * Matter 1.6.0 § 5.2.9.36. Constraint 1 to 2880 minutes.
+         */
+        ...(expiringUserTimeout !== undefined ? { expiringUserTimeout } : {}),
+        // WeekDayAccessSchedules feature attributes
+        ...(numberOfWeekDaySchedulesSupportedPerUser !== undefined ? { numberOfWeekDaySchedulesSupportedPerUser } : {}),
+        // YearDayAccessSchedules feature attributes
+        ...(numberOfYearDaySchedulesSupportedPerUser !== undefined ? { numberOfYearDaySchedulesSupportedPerUser } : {}),
+        // HolidaySchedules feature attributes
+        ...(numberOfHolidaySchedulesSupported !== undefined ? { numberOfHolidaySchedulesSupported } : {}),
+        // RfidCredential feature attributes
+        ...(numberOfRfidUsersSupported !== undefined ? { numberOfRfidUsersSupported, minRfidCodeLength, maxRfidCodeLength } : {}),
       },
     );
     return this;

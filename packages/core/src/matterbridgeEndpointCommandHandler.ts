@@ -22,6 +22,7 @@
  */
 
 /* oxlint-disable typescript/no-empty-object-type */
+/* oxlint-disable max-lines */
 
 // TODO: analyze each rule
 
@@ -36,6 +37,7 @@ import type { CommodityPrice } from '@matter/types/clusters/commodity-price';
 import type { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import type { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import type { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import type { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import type { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import type { DoorLock } from '@matter/types/clusters/door-lock';
 import type { EnergyEvse } from '@matter/types/clusters/energy-evse';
@@ -58,6 +60,7 @@ import type { RvcOperationalState } from '@matter/types/clusters/rvc-operational
 import type { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import type { ServiceArea } from '@matter/types/clusters/service-area';
 import type { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import type { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import type { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import type { Thermostat } from '@matter/types/clusters/thermostat';
 import type { ThreadNetworkDiagnostics } from '@matter/types/clusters/thread-network-diagnostics';
@@ -65,6 +68,7 @@ import type { TimeSynchronization } from '@matter/types/clusters/time-synchroniz
 import type { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import type { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import type { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import type { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import type { WindowCovering } from '@matter/types/clusters/window-covering';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 
@@ -549,6 +553,69 @@ export type CommandHandlerDataMap = {
     attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
+  'DoorLock.setWeekDaySchedule': {
+    command: 'setWeekDaySchedule'; // WDSCH
+    request: DoorLock.SetWeekDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getWeekDaySchedule': {
+    command: 'getWeekDaySchedule'; // WDSCH
+    request: DoorLock.GetWeekDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearWeekDaySchedule': {
+    command: 'clearWeekDaySchedule'; // WDSCH
+    request: DoorLock.ClearWeekDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setYearDaySchedule': {
+    command: 'setYearDaySchedule'; // YDSCH
+    request: DoorLock.SetYearDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getYearDaySchedule': {
+    command: 'getYearDaySchedule'; // YDSCH
+    request: DoorLock.GetYearDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearYearDaySchedule': {
+    command: 'clearYearDaySchedule'; // YDSCH
+    request: DoorLock.ClearYearDayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.setHolidaySchedule': {
+    command: 'setHolidaySchedule'; // HDSCH
+    request: DoorLock.SetHolidayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.getHolidaySchedule': {
+    command: 'getHolidaySchedule'; // HDSCH
+    request: DoorLock.GetHolidayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DoorLock.clearHolidaySchedule': {
+    command: 'clearHolidaySchedule'; // HDSCH
+    request: DoorLock.ClearHolidayScheduleRequest;
+    cluster: 'doorLock';
+    attributes: ClusterAttributeValues<(typeof DoorLock)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
 
   // Thermostat
   'setpointRaiseLower': CommandHandlerData<'Thermostat.setpointRaiseLower'>;
@@ -718,6 +785,38 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'smokeCoAlarm';
     attributes: ClusterAttributeValues<(typeof SmokeCoAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Dishwasher Alarm
+  'DishwasherAlarm.reset': {
+    command: 'reset';
+    request: DishwasherAlarm.ResetRequest;
+    cluster: 'dishwasherAlarm';
+    attributes: ClusterAttributeValues<(typeof DishwasherAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'DishwasherAlarm.modifyEnabledAlarms': {
+    command: 'modifyEnabledAlarms';
+    request: DishwasherAlarm.ModifyEnabledAlarmsRequest;
+    cluster: 'dishwasherAlarm';
+    attributes: ClusterAttributeValues<(typeof DishwasherAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Temperature Alarm
+  'TemperatureAlarm.reset': {
+    command: 'reset';
+    request: TemperatureAlarm.ResetRequest;
+    cluster: 'temperatureAlarm';
+    attributes: ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'TemperatureAlarm.modifyEnabledAlarms': {
+    command: 'modifyEnabledAlarms';
+    request: TemperatureAlarm.ModifyEnabledAlarmsRequest;
+    cluster: 'temperatureAlarm';
+    attributes: ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 
@@ -1071,6 +1170,15 @@ export type CommandHandlerDataMap = {
     endpoint: MatterbridgeEndpoint;
   };
 
+  // Water Tank Level Monitoring
+  'WaterTankLevelMonitoring.resetCondition': {
+    command: 'resetCondition';
+    request: {}; // TlvNoArguments
+    cluster: 'waterTankLevelMonitoring';
+    attributes: ClusterAttributeValues<(typeof WaterTankLevelMonitoring)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
   // Commodity Price
   'CommodityPrice.getDetailedPriceRequest': {
     command: 'getDetailedPriceRequest';
@@ -1103,6 +1211,9 @@ export type CommandHandlerDataMap = {
  */
 export type CommandHandlerResponseMap = {
   'DoorLock.getUser': DoorLock.GetUserResponse;
+  'DoorLock.getWeekDaySchedule': DoorLock.GetWeekDayScheduleResponse;
+  'DoorLock.getYearDaySchedule': DoorLock.GetYearDayScheduleResponse;
+  'DoorLock.getHolidaySchedule': DoorLock.GetHolidayScheduleResponse;
 };
 
 type CommandHandlerEntry = {
@@ -1136,7 +1247,7 @@ export class CommandHandler {
    */
   addHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    this.handler.push({ command, handler } as CommandHandlerEntry);
+    this.handler.push({ command, handler } as unknown as CommandHandlerEntry);
   }
 
   /**
@@ -1153,7 +1264,7 @@ export class CommandHandler {
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === command) {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        return await (handler as CommandHandlerFunction<K>)(...args);
+        return await (handler as unknown as CommandHandlerFunction<K>)(...args);
       }
     }
 
@@ -1164,7 +1275,7 @@ export class CommandHandler {
     for (const { command: registeredCommand, handler } of this.handler) {
       if (registeredCommand === fallbackCommand) {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        return await (handler as CommandHandlerFunction<K>)(...args);
+        return await (handler as unknown as CommandHandlerFunction<K>)(...args);
       }
     }
 
@@ -1180,7 +1291,7 @@ export class CommandHandler {
    */
   removeHandler<K extends CommandHandlers>(command: K, handler: CommandHandlerFunction<K>): void {
     this.handler = this.handler.filter(({ command: registeredCommand, handler: registeredHandler }) => {
-      return registeredCommand !== command || registeredHandler !== handler;
+      return registeredCommand !== command || registeredHandler !== (handler as unknown);
     });
   }
 }

@@ -1,19 +1,16 @@
 # To run tests on ClosureControl --PICS is required
-# Matches the default ClosureControl server on CHIP Closure endpoint 805 (no Ventilation/Pedestrian/
-# Calibration). See closure-control-pedestrian.pics (endpoint 8051), closure-control-ventilation.pics
-# (endpoint 8052), and closure-control-calibration.pics (endpoint 8053) for one optional feature enabled at
-# a time, and closure-control-complete.pics (endpoint 8054) for all three enabled together.
+# Matches the default ClosureControl server on CHIP Closure endpoint 805 with no optional features enabled.
+# See closure-control-pedestrian.pics (endpoint 8051), closure-control-ventilation.pics (endpoint 8052),
+# closure-control-calibration.pics (endpoint 8053), and closure-control-complete.pics (endpoint 8054) for
+# optional feature coverage.
 PICS_SDK_CI_ONLY=1
 CLCTRL.S=1
 CLCTRL.S.F00=1 # Positioning
-CLCTRL.S.F01=1 # MotionLatching
-CLCTRL.S.F03=1 # Speed
 CLCTRL.S.A0000=1 # CountdownTime
 CLCTRL.S.A0001=1 # MainState
 CLCTRL.S.A0002=1 # CurrentErrorList
 CLCTRL.S.A0003=1 # OverallCurrentState
 CLCTRL.S.A0004=1 # OverallTargetState
-CLCTRL.S.A0005=1 # LatchControlModes
 CLCTRL.S.C00.Rsp=1 # Stop
 CLCTRL.S.C01.Rsp=1 # MoveTo
 CLCTRL.S.E00=1 # OperationalError

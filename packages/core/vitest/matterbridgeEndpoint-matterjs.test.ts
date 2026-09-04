@@ -138,6 +138,25 @@ import { getAttributeId, getClusterId } from '../src/matterbridgeEndpointHelpers
 // Setup the test environment
 await setupTest(NAME, false);
 
+/**
+ * Waits for a WindowCovering movement simulation to complete.
+ *
+ * The simulation completes on a real timer, so the tests below poll for the completion to become observable
+ * instead of sleeping for a fixed amount, which on a loaded CI runner can expire before the timer has fired.
+ *
+ * @param {() => boolean} condition - Predicate polled until it returns true.
+ * @param {number} timeout - Maximum time to wait, in milliseconds (default 15000).
+ * @param {number} interval - Delay between polls, in milliseconds (default 20).
+ * @returns {Promise<void>} Resolves once the condition holds.
+ */
+async function waitForMovementCompletion(condition: () => boolean, timeout = 15000, interval = 20): Promise<void> {
+  const start = Date.now();
+  while (!condition()) {
+    if (Date.now() - start >= timeout) throw new Error(`waitForMovementCompletion timed out after ${timeout}ms`);
+    await new Promise((resolve) => setTimeout(resolve, interval));
+  }
+}
+
 describe('Matterbridge ' + NAME, () => {
   let context: StorageContext;
   let light: MatterbridgeEndpoint;
@@ -155,6 +174,7 @@ describe('Matterbridge ' + NAME, () => {
   let rvc: RoboticVacuumCleaner;
   let heater: MatterbridgeEndpoint;
   let evse: MatterbridgeEndpoint;
+  let waterTank: MatterbridgeEndpoint;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -345,6 +365,17 @@ describe('Matterbridge ' + NAME, () => {
     expect(vent).toBeDefined();
     expect(vent.id).toBe('Fan');
     expect(vent.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'activatedCarbonFilterMonitoring', 'hepaFilterMonitoring', 'identify', 'groups', 'fanControl']);
+  });
+
+  test('create a water tank device', () => {
+    // Water Tank Level Monitoring is only optional on the Humidifier/Dehumidifier device type (Matter 1.7, not yet
+    // available in this SDK), so onOffLight is used here as a plain scaffold for the cluster server itself.
+    waterTank = new MatterbridgeEndpoint(onOffLight, { id: 'WaterTank' });
+    waterTank.createDefaultWaterTankLevelMonitoringClusterServer();
+    waterTank.addRequiredClusterServers();
+    expect(waterTank).toBeDefined();
+    expect(waterTank.id).toBe('WaterTank');
+    expect(waterTank.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'waterTankLevelMonitoring', 'identify', 'groups', 'scenesManagement', 'onOff']);
   });
 
   test('create a thermostat device', () => {
@@ -570,6 +601,10 @@ describe('Matterbridge ' + NAME, () => {
   test('add fan device to serverNode', async () => {
     expect(await server.add(vent)).toBeDefined();
     // (matterbridge as any).frontend.getClusterTextFromDevice(vent);
+  });
+
+  test('add water tank device to serverNode', async () => {
+    expect(await server.add(waterTank)).toBeDefined();
   });
 
   test('add thermostat device to serverNode', async () => {
@@ -1103,10 +1138,13 @@ describe('Matterbridge ' + NAME, () => {
     await coverLift.invokeBehaviorCommand('windowCovering', 'downOrClose');
     await coverLift.invokeBehaviorCommand('windowCovering', 'stopMotion');
     await coverLift.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLift.id}.${coverLift.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLift.id}.${coverLift.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLift.id}.${coverLift.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: opening cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: closing cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: stopping cover (endpoint ${coverLift.id}.${coverLift.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`,
+    );
   });
 
   test('invoke MatterbridgeWindowCoveringServer with tilt commands', async () => {
@@ -1130,11 +1168,253 @@ describe('Matterbridge ' + NAME, () => {
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'stopMotion');
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
     await coverLiftTilt.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: opening cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: closing cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: stopping cover (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover lift percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover tilt percentage to 5000 (endpoint ${coverLiftTilt.id}.${coverLiftTilt.number})`,
+    );
+  });
+
+  test('simulate WindowCovering movement completion via movementDuration', async () => {
+    const timedCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTimed' });
+    // movementDuration must stay comfortably longer than a command round trip, so the mid-movement assertions below
+    // are not racing the completion timer on a slow runner.
+    timedCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 1000);
+    timedCover.addRequiredClusterServers();
+    expect(await server.add(timedCover)).toBeDefined();
+
+    await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
+    expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Closing,
+      lift: WindowCovering.MovementStatus.Closing,
+    });
+    expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(0);
+
+    await waitForMovementCompletion(() => timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000);
+    expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
+    expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+    });
+
+    await timedCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
+    expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Closing,
+      tilt: WindowCovering.MovementStatus.Closing,
+    });
+
+    await waitForMovementCompletion(() => timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000);
+    expect(timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
+    expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+
+    // StopMotion cancels an in-flight simulation before it completes and settles target = current.
+    await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 0 });
+    expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({ lift: WindowCovering.MovementStatus.Opening });
+    await timedCover.invokeBehaviorCommand('windowCovering', 'stopMotion');
+    await flushAsync();
+    expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
+    expect(timedCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(10000);
+    expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+    });
+  });
+
+  test('invoke MatterbridgeWindowCoveringServer with tilt-only commands', async () => {
+    const coverTiltOnly = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTiltOnly' });
+    coverTiltOnly.createDefaultTiltWindowCoveringClusterServer();
+    coverTiltOnly.addRequiredClusterServers();
+    expect(await server.add(coverTiltOnly)).toBeDefined();
+
+    const coverTiltOnlyServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt);
+    expect(coverTiltOnly.behaviors.has(coverTiltOnlyServer)).toBeTruthy();
+    expect(coverTiltOnly.behaviors.elementsOf(coverTiltOnlyServer).commands.has('upOrOpen')).toBeTruthy();
+    expect(coverTiltOnly.behaviors.elementsOf(coverTiltOnlyServer).commands.has('downOrClose')).toBeTruthy();
+    expect(coverTiltOnly.behaviors.elementsOf(coverTiltOnlyServer).commands.has('stopMotion')).toBeTruthy();
+    expect(coverTiltOnly.behaviors.elementsOf(coverTiltOnlyServer).commands.has('goToLiftPercentage')).toBeFalsy();
+    expect(coverTiltOnly.behaviors.elementsOf(coverTiltOnlyServer).commands.has('goToTiltPercentage')).toBeTruthy();
+
+    // upOrOpen/downOrClose on a tilt-only server (no Lift feature) exercise the lift-feature-absent branch of the
+    // per-axis movement simulation gate, since only the tilt half of each command applies here.
+    await coverTiltOnly.invokeBehaviorCommand('windowCovering', 'upOrOpen');
+    await coverTiltOnly.invokeBehaviorCommand('windowCovering', 'downOrClose');
+    await coverTiltOnly.invokeBehaviorCommand('windowCovering', 'stopMotion');
+    await coverTiltOnly.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 5000 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: opening cover (endpoint ${coverTiltOnly.id}.${coverTiltOnly.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: closing cover (endpoint ${coverTiltOnly.id}.${coverTiltOnly.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWindowCoveringServer: stopping cover (endpoint ${coverTiltOnly.id}.${coverTiltOnly.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeWindowCoveringServer: setting cover tilt percentage to 5000 (endpoint ${coverTiltOnly.id}.${coverTiltOnly.number})`,
+    );
+  });
+
+  test('WindowCovering stopMotion resets only the axis the server supports when movementDuration is enabled', async () => {
+    // A lift-only server (no Tilt feature) exercises the tilt-feature-absent branch of stopMotion's per-axis
+    // reset; a tilt-only server (no Lift feature) exercises the lift-feature-absent branch.
+    const liftOnlyTimed = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLiftOnlyTimed' });
+    liftOnlyTimed.createDefaultWindowCoveringClusterServer();
+    liftOnlyTimed.addRequiredClusterServers();
+    expect(await server.add(liftOnlyTimed)).toBeDefined();
+    await liftOnlyTimed.setAttribute(MatterbridgeWindowCoveringServer, 'movementDuration', 1000);
+    await liftOnlyTimed.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
+    expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Closing,
+      lift: WindowCovering.MovementStatus.Closing,
+    });
+    await liftOnlyTimed.invokeBehaviorCommand('windowCovering', 'stopMotion');
+    expect(liftOnlyTimed.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(0);
+    expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+    });
+
+    const tiltOnlyTimed = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTiltOnlyTimed' });
+    tiltOnlyTimed.createDefaultTiltWindowCoveringClusterServer();
+    tiltOnlyTimed.addRequiredClusterServers();
+    expect(await server.add(tiltOnlyTimed)).toBeDefined();
+    await tiltOnlyTimed.setAttribute(MatterbridgeWindowCoveringServer, 'movementDuration', 1000);
+    await tiltOnlyTimed.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
+    expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
+      global: WindowCovering.MovementStatus.Closing,
+      tilt: WindowCovering.MovementStatus.Closing,
+    });
+    await tiltOnlyTimed.invokeBehaviorCommand('windowCovering', 'stopMotion');
+    expect(tiltOnlyTimed.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBe(0);
+    expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+  });
+
+  test('WindowCovering movement simulation edge cases', async () => {
+    const edgeCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverEdge' });
+    edgeCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 1000);
+    edgeCover.addRequiredClusterServers();
+    expect(await server.add(edgeCover)).toBeDefined();
+
+    // Already-at-target: goToLiftPercentage/goToTiltPercentage to the current position (0) computes Stopped and
+    // never schedules a completion timer.
+    await edgeCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 0 });
+    expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+    await edgeCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 0 });
+    expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+
+    // A null target (an out-of-band value the real Matter command flow never produces, since both fields are
+    // mandatory non-nullable numbers, but invokeBehaviorCommand's loosely-typed test-only overload allows forcing
+    // it) leaves the simulation untouched: neither #startLiftMovement nor #startTiltMovement is invoked.
+    await edgeCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: null });
+    expect(edgeCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+    await edgeCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: null });
+    expect(edgeCover.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+
+    // Simulate operationalStatus becoming unreadable exactly when a completion handler re-reads the sibling axis
+    // (see the `this.state` transaction-context comment in windowCoveringServer.ts): the handler falls back to
+    // Stopped for that axis instead of propagating the missing value.
+    //
+    // Nulling out every 'operationalStatus' read while nullOperationalStatus is true (instead of consuming a single
+    // mocked call) avoids depending on the exact order of getAttribute calls made during the movement, which was
+    // flaky: unrelated calls (e.g. currentPositionLiftPercent100ths) could consume a one-shot mock before the
+    // completion handler's own read did.
+    let nullOperationalStatus = false;
+    const originalGetAttribute = edgeCover.getAttribute.bind(edgeCover);
+    const getAttributeSpy = vi.spyOn(edgeCover, 'getAttribute').mockImplementation((cluster: unknown, attribute: unknown) => {
+      if (attribute === 'operationalStatus' && nullOperationalStatus) return null;
+      return originalGetAttribute(cluster as never, attribute as never);
+    });
+    try {
+      await edgeCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
+      nullOperationalStatus = true;
+      await waitForMovementCompletion(() => originalGetAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000);
+      nullOperationalStatus = false;
+      expect(edgeCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
+      expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+        global: WindowCovering.MovementStatus.Stopped,
+        lift: WindowCovering.MovementStatus.Stopped,
+        tilt: WindowCovering.MovementStatus.Stopped,
+      });
+
+      await edgeCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
+      nullOperationalStatus = true;
+      await waitForMovementCompletion(() => originalGetAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000);
+      nullOperationalStatus = false;
+      expect(edgeCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
+      expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+        global: WindowCovering.MovementStatus.Stopped,
+        lift: WindowCovering.MovementStatus.Stopped,
+        tilt: WindowCovering.MovementStatus.Stopped,
+      });
+    } finally {
+      getAttributeSpy.mockRestore();
+    }
+  });
+
+  test('a command invoked while the behavior lock is held waits for it instead of failing', async () => {
+    // The movement simulation completes in a timer callback that runs with `{ lock: true }`, so a command can
+    // legitimately arrive while another transaction holds the behavior lock. invokeBehaviorCommand mirrors the real
+    // invoke path and takes the lock asynchronously, so this waits instead of throwing a synchronous-transaction-conflict.
+    const lockCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLock' });
+    lockCover.createDefaultLiftTiltWindowCoveringClusterServer();
+    lockCover.addRequiredClusterServers();
+    expect(await server.add(lockCover)).toBeDefined();
+
+    // Hold the windowCovering behavior lock in a separate transaction for longer than the command needs to reach
+    // its first state write.
+    const holder = lockCover.act(async (agent) => {
+      const transaction = agent.context.transaction;
+      transaction.addResourcesSync((agent as unknown as Record<string, object>)['windowCovering']);
+      transaction.beginSync();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    });
+    await flushAsync(3, 10, 0);
+
+    await lockCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    await holder;
+    expect(lockCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
+  });
+
+  test('WindowCovering syncs currentPositionLift/TiltPercentage from the Percent100ths attributes, including back to null', async () => {
+    const percentageCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverPercentage' });
+    percentageCover.createDefaultLiftTiltWindowCoveringClusterServer();
+    percentageCover.addRequiredClusterServers();
+    expect(await server.add(percentageCover)).toBeDefined();
+
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', 5000);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionLiftPercentage')).toBe(50);
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', null);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionLiftPercentage')).toBeNull();
+
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', 5000);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionTiltPercentage')).toBe(50);
+    await percentageCover.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', null);
+    expect(percentageCover.getAttribute(WindowCovering, 'currentPositionTiltPercentage')).toBeNull();
   });
 
   test('invoke MatterbridgeModeSelectServer commands', async () => {
@@ -1174,6 +1454,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeActivatedCarbonFilterMonitoringServer: resetting condition (endpoint ${vent.id}.${vent.number})`);
   });
 
+  test('invoke MatterbridgeWaterTankLevelMonitoringServer commands', async () => {
+    vi.clearAllMocks();
+    await waterTank.invokeBehaviorCommand('WaterTankLevelMonitoring', 'resetCondition', {});
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterTankLevelMonitoringServer: resetting condition (endpoint ${waterTank.id}.${waterTank.number})`);
+  });
+
   test('invoke MatterbridgeThermostatServer commands', async () => {
     // expect(thermo.behaviors.has(ThermostatServer)).toBeTruthy();
     const thermostatServer = MatterbridgeThermostatServer.with(Thermostat.Feature.Cooling, Thermostat.Feature.Heating, Thermostat.Feature.AutoMode);
@@ -1182,7 +1468,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((thermo.stateOf(thermostatServer) as any).acceptedCommandList).toEqual([0]);
     expect((thermo.stateOf(thermostatServer) as any).generatedCommandList).toEqual([]);
     await thermo.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermo.id}.${thermo.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeThermostatServer: setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Both} (endpoint ${thermo.id}.${thermo.number})`,
+    );
   });
 
   test('invoke MatterbridgeValveConfigurationAndControlServer commands', async () => {

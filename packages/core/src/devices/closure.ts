@@ -3,7 +3,7 @@
  * @description Closure device class exposing the Matter 1.5 ClosureControl cluster.
  * @author Luca Liguori
  * @created 2026-03-02
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -27,6 +27,7 @@
 /* oxlint-disable typescript/no-namespace */
 
 // @matter
+import { Millis, Time, type MaybePromise, type Timer } from '@matter/general';
 import { ClosureTag } from '@matter/node';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { type EndpointNumber, StatusResponse } from '@matter/types';
@@ -61,10 +62,36 @@ const MatterbridgeClosureControlServerBase = ClosureControlServer.with(
 
 /**
  * ClosureControl server that forwards MoveTo/Stop/Calibrate commands to the Matterbridge command handler.
+ *
+ * @remarks
+ * There is no real motor to wait on in the base implementation, so the two built-in simulation timers that
+ * drive MoveTo/Calibrate completion (`state.movementDuration`/`state.calibrationDuration`, both in
+ * milliseconds) are disabled (`0`) by default — see the `MatterbridgeClosureControlServer.State` remarks.
+ *
+ * `initialize()` sets both knobs to CHIP-test-friendly values (`movementDuration = 2000`,
+ * `calibrationDuration = 2000`) under `MATTERBRIDGE_CHIP_TEST` only; production behavior (both disabled) is
+ * otherwise unaffected. A real device implementation may also opt into either simulation directly by setting
+ * the same `state` values.
  */
 export class MatterbridgeClosureControlServer extends MatterbridgeClosureControlServerBase {
   declare readonly state: MatterbridgeClosureControlServer.State;
   declare protected internal: MatterbridgeClosureControlServer.Internal;
+
+  /**
+   * Enables the built-in MoveTo/Calibrate movement simulation under MATTERBRIDGE_CHIP_TEST only; production
+   * behavior is unaffected (`movementDuration`/`calibrationDuration` stay 0, i.e. disabled, unless overridden
+   * by the real device implementation).
+   *
+   * @returns {MaybePromise} The result of the superclass initializer.
+   */
+  override initialize(): MaybePromise {
+    // v8 ignore next 3 - only enabled under MATTERBRIDGE_CHIP_TEST
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.state.movementDuration = 2000;
+      this.state.calibrationDuration = 2000;
+    }
+    return super.initialize();
+  }
 
   override moveTo = async (request: ClosureControl.MoveToRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -77,7 +104,6 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ClosureControl)['attributes']>,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
-
     // General Interaction Model requirement (not specific to ClosureControl): a command field constraint
     // violation, such as an enum field carrying a value outside its defined range or a field carrying the
     // wrong data type, SHALL be rejected with CONSTRAINT_ERROR ahead of any other command- or cluster-specific
@@ -87,12 +113,6 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     if (request.position !== undefined && !(request.position in targetToCurrentPosition)) {
       throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Position is not a valid TargetPositionEnum value');
     }
-    if (request.latch !== undefined && typeof request.latch !== 'boolean') {
-      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Latch is not a boolean value');
-    }
-    if (request.speed !== undefined && !(request.speed in ThreeLevelAuto)) {
-      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Speed is not a valid ThreeLevelAutoEnum value');
-    }
 
     // 5.4.8.2. MoveTo Command
     // The Position, Latch, and Speed fields are all O.a+ (choice group 'a', at least one required): a MoveTo with
@@ -100,6 +120,20 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
       throw new StatusResponse.InvalidCommandError('ClosureControl.moveTo requires at least one of position, latch, or speed to be present');
     }
+
+    // 5.4.8.2.1. Position Field
+    if (request.position === undefined && (!this.features.motionLatching || request.latch === undefined) && (!this.features.speed || request.speed === undefined)) return;
+
+    // 5.4.8.2.2. Latch Field
+    if (this.features.motionLatching && request.latch !== undefined && typeof request.latch !== 'boolean') {
+      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Latch is not a boolean value');
+    }
+
+    // 5.4.8.2.3. Speed Field
+    if (this.features.speed && request.speed !== undefined && !(request.speed in ThreeLevelAuto)) {
+      throw new StatusResponse.ConstraintErrorError('ClosureControl.moveTo Speed is not a valid ThreeLevelAutoEnum value');
+    }
+
     // 5.4.8.2.4. Effect on Receipt
     // If this command is received in any state other than Moving, WaitingForMotion, or Stopped, a status code of INVALID_IN_STATE SHALL be returned.
     if (![ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Stopped].includes(this.state.mainState)) {
@@ -109,7 +143,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     // If this command requests a position change while the Latch field of the OverallCurrentState attribute is True (Latched),
     // and the Latch field of this command is not set to False (Unlatched), a status code of INVALID_IN_STATE SHALL be returned.
     let currentState = this.state.overallCurrentState;
-    if (currentState?.latch === true && request.position !== undefined && request.latch !== false) {
+    if (this.features.motionLatching && currentState?.latch === true && request.position !== undefined && request.latch !== false) {
       throw new StatusResponse.InvalidInStateError('ClosureControl.moveTo position changes require latch false while the closure is latched');
     }
 
@@ -119,14 +153,14 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       // 5.4.8.2.1. Position Field
       ...(request?.position !== undefined ? { position: request.position } : null),
       // 5.4.8.2.2. Latch Field
-      ...(request?.latch !== undefined ? { latch: request.latch } : null),
+      ...(this.features.motionLatching && request?.latch !== undefined ? { latch: request.latch } : null),
       // 5.4.8.2.3. Speed Field
-      speed: request?.speed ?? ThreeLevelAuto.Auto,
+      ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
     this.state.overallTargetState = nextTarget;
 
     // If the closure supports the Speed(SP) feature, it SHALL set the Speed field of the OverallCurrentState attribute to the new speed.
-    if (currentState !== null) {
+    if (this.features.speed && currentState !== null) {
       currentState = { ...currentState, speed: nextTarget.speed };
       this.state.overallCurrentState = currentState;
     }
@@ -138,43 +172,48 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     const isAtTarget =
       currentState !== null &&
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
-      (nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
-      nextTarget.speed === currentState.speed;
+      (!this.features.motionLatching || nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
+      (!this.features.speed || nextTarget.speed === currentState.speed);
     this.state.mainState = isAtTarget ? ClosureControl.MainState.Stopped : ClosureControl.MainState.Moving;
 
     // Cancel any movement/calibration still in flight from a previous command before (re)scheduling.
-    clearTimeout(this.internal.movementTimer);
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
     if (isAtTarget) {
-      this.internal.movementTimer = undefined;
       this.state.countdownTime = 0;
     } else if (currentState === null || this.state.movementDuration <= 0) {
       // Gate: with no OverallCurrentState to converge from, or a non-positive movementDuration, this server
       // does not simulate movement completion at all — MainState stays Moving/WaitingForMotion and it's left
       // entirely to the real device implementation (via the command handler forwarded above) to eventually
       // report completion through setState()/triggerMovementCompleted().
-      this.internal.movementTimer = undefined;
     } else {
       this.state.countdownTime = this.state.movementDuration / 1000;
-      // Captured now because `this.state` can no longer be read once this command's transaction context has exited.
-      const previousState = currentState;
-      this.internal.movementTimer = setTimeout(() => {
-        this.internal.movementTimer = undefined;
-        void this.completeMoveTo(nextTarget, previousState);
-      }, this.state.movementDuration);
+      this.internal.movementTargetState = nextTarget;
+      this.internal.movementPreviousState = currentState;
+      this.internal.movementTimer = Time.getTimer(
+        'ClosureControl movement complete',
+        Millis(this.state.movementDuration),
+        // The reactor must be a real method, not an arrow function, so the framework can rebind `this` to a
+        // fresh, still-valid Behavior context when the timer fires well after the originating command's own
+        // context exited.
+        // oxlint-disable-next-line typescript/unbound-method
+        this.callback(this.#completeMoveTo, { lock: true }),
+      ).start();
     }
   };
 
   /**
-   * Simulates a MoveTo operation completing: updates `overallCurrentState` to match `targetState`, sets
-   * `mainState` back to Stopped, clears `countdownTime`, and emits the MovementCompleted event (plus
-   * SecureStateChanged when the latch-derived secure state changed).
-   *
-   * @param {ClosureControl.OverallTargetState} targetState - The target state the movement was simulating reaching.
-   * @param {ClosureControl.OverallCurrentState} previousState - The `overallCurrentState` captured when the movement was scheduled (the behavior's own `this.state` is no longer readable by the time this timer fires).
-   * @returns {Promise<void>} Resolves once the resulting attributes and events have been updated/emitted.
+   * Reactor for {@link moveTo}: updates `overallCurrentState`/`overallTargetState` to match
+   * `internal.movementTargetState` (the target that was being approached; a timer reactor takes no custom
+   * arguments), sets `mainState` back to Stopped, clears `countdownTime`, resets `currentErrorList`, and emits
+   * the MovementCompleted event (plus SecureStateChanged when the latch-derived secure state changed). Runs
+   * under a fresh, locked Behavior context (see {@link moveTo}), so `this.state` can be read and written
+   * directly and every attribute/event settles within the same transaction.
    */
-  private completeMoveTo = async (targetState: ClosureControl.OverallTargetState, previousState: ClosureControl.OverallCurrentState): Promise<void> => {
-    const closure = this.endpoint as Closure;
+  #completeMoveTo(): void {
+    this.internal.movementTimer = undefined;
+    const targetState = this.internal.movementTargetState;
+    const previousState = this.internal.movementPreviousState;
 
     let position = previousState.position;
     if (targetState.position !== undefined && targetState.position !== null) {
@@ -185,15 +224,37 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       if (mappedPosition !== undefined) position = mappedPosition;
     }
     const latch = targetState.latch ?? previousState.latch;
-    // The MotionLatching feature is always enabled on this server, so the secure state always follows the latch.
-    const secureState = latch === true;
+    // Application Cluster Specification § 5.4.6.3: a closure without MotionLatching is secure exactly when
+    // fully closed — unlike the MotionLatching case, this must track Position, not stay frozen at whatever
+    // secureState was previously (TC_CLCTRL_6_1 §7 exercises exactly this: MoveTo FullyOpen/FullyClosed on a
+    // Positioning-only, non-MotionLatching closure expects SecureStateChanged(false)/SecureStateChanged(true)).
+    const secureState = this.features.motionLatching ? latch === true : position === ClosureControl.CurrentPosition.FullyClosed;
 
-    await closure.setState({ position, latch, speed: targetState.speed, secureState }, targetState, ClosureControl.MainState.Stopped, 0);
+    // Unlike Closure.setState() (which can also be called directly, e.g. by setOpenedForVentilation()/
+    // setOpenedForPedestrian(), on a closure that doesn't support that feature), `targetState.position` here was
+    // already written to `overallTargetState` unconditionally when moveTo() received the command — an
+    // unsupported enum value would have failed conformance validation right there, before this timer was ever
+    // scheduled — so it's always safe to carry `position` through to both attributes without gating it.
+    this.state.countdownTime = 0;
+    this.state.mainState = ClosureControl.MainState.Stopped;
+    this.state.currentErrorList = [];
+    this.state.overallCurrentState = {
+      position,
+      ...(this.features.motionLatching ? { latch } : null),
+      ...(this.features.speed ? { speed: targetState.speed } : null),
+      secureState,
+    };
+    this.state.overallTargetState = {
+      position: targetState.position,
+      ...(this.features.motionLatching ? { latch: targetState.latch } : null),
+      ...(this.features.speed ? { speed: targetState.speed } : null),
+    };
+
     if (secureState !== previousState.secureState) {
-      await closure.triggerSecureStateChanged(secureState);
+      this.events.secureStateChanged.emit({ secureValue: secureState }, this.context);
     }
-    await closure.triggerMovementCompleted();
-  };
+    this.events.movementCompleted.emit(undefined, this.context);
+  }
 
   override stop = async (): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -211,9 +272,9 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     // If MainState has one of Moving, WaitingForMotion, or Calibrating, any motions SHALL be stopped and MainState
     // SHALL be set to Stopped. A status code of SUCCESS SHALL always be returned, regardless of MainState.
     // Cancel the simulated movement/calibration completion so OverallCurrentState stays wherever it was interrupted.
-    clearTimeout(this.internal.movementTimer);
+    this.internal.movementTimer?.stop();
     this.internal.movementTimer = undefined;
-    clearTimeout(this.internal.calibrateTimer);
+    this.internal.calibrateTimer?.stop();
     this.internal.calibrateTimer = undefined;
     if ([ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Calibrating].includes(this.state.mainState)) {
       this.state.mainState = ClosureControl.MainState.Stopped;
@@ -246,7 +307,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     // Otherwise the MainState attribute SHALL be set to Calibrating.
     this.state.mainState = ClosureControl.MainState.Calibrating;
 
-    clearTimeout(this.internal.calibrateTimer);
+    this.internal.calibrateTimer?.stop();
     if (this.state.calibrationDuration <= 0) {
       // Gate: a non-positive calibrationDuration means this server does not simulate calibration completion
       // at all — MainState stays Calibrating and it's left entirely to the real device implementation (via
@@ -254,32 +315,49 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       this.internal.calibrateTimer = undefined;
     } else {
       this.state.countdownTime = this.state.calibrationDuration / 1000;
-      this.internal.calibrateTimer = setTimeout(() => {
-        this.internal.calibrateTimer = undefined;
-        void this.completeCalibrate();
-      }, this.state.calibrationDuration);
+      this.internal.calibrateTimer = Time.getTimer(
+        'ClosureControl calibrate complete',
+        Millis(this.state.calibrationDuration),
+        // oxlint-disable-next-line typescript/unbound-method
+        this.callback(this.#completeCalibrate, { lock: true }),
+      ).start();
     }
   };
 
   /**
-   * Simulates a Calibrate operation completing: sets `mainState` back to Stopped and clears `countdownTime`.
-   *
-   * @returns {Promise<void>} Resolves once the resulting attributes have been updated.
+   * Reactor for {@link calibrate}: sets `mainState` back to Stopped and clears `countdownTime`. Runs under a
+   * fresh, locked Behavior context (see {@link calibrate}), so `this.state` can be written directly and both
+   * attributes settle within the same transaction.
    */
-  private completeCalibrate = async (): Promise<void> => {
-    const closure = this.endpoint as Closure;
-    await closure.setAttribute(ClosureControl, 'countdownTime', 0);
-    await closure.setAttribute(ClosureControl, 'mainState', ClosureControl.MainState.Stopped);
-  };
+  #completeCalibrate(): void {
+    this.internal.calibrateTimer = undefined;
+    this.state.countdownTime = 0;
+    this.state.mainState = ClosureControl.MainState.Stopped;
+  }
+
+  /**
+   * Stops timers when the server is disposed.
+   */
+  override async [Symbol.asyncDispose](): Promise<void> {
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
+    this.internal.calibrateTimer?.stop();
+    this.internal.calibrateTimer = undefined;
+    await super[Symbol.asyncDispose]?.();
+  }
 }
 
 /* v8 ignore start */
 export namespace MatterbridgeClosureControlServer {
   export class Internal extends MatterbridgeClosureControlServerBase.Internal {
     /** Pending timer that simulates completion of an in-progress MoveTo; cancelled by Stop or a new MoveTo. */
-    movementTimer?: NodeJS.Timeout;
+    movementTimer?: Timer;
+    /** Target state the pending MoveTo movement timer will apply on completion. */
+    movementTargetState: ClosureControl.OverallTargetState = {};
+    /** `overallCurrentState` captured when the pending MoveTo movement was scheduled. */
+    movementPreviousState: ClosureControl.OverallCurrentState = { position: ClosureControl.CurrentPosition.FullyClosed, secureState: true };
     /** Pending timer that simulates completion of an in-progress Calibrate; cancelled by Stop or a new Calibrate. */
-    calibrateTimer?: NodeJS.Timeout;
+    calibrateTimer?: Timer;
   }
 
   /**
@@ -299,6 +377,12 @@ export namespace MatterbridgeClosureControlServer {
     movementDuration = 0;
     /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation. Default: 0 (disabled). */
     calibrationDuration = 0;
+    /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Signature position. Default: 50_00 (50%). */
+    signaturePosition = 50_00;
+    /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Ventilation position. Default: 50_00 (50%). */
+    ventilationPosition = 50_00;
+    /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Pedestrian position. Default: 50_00 (50%). */
+    pedestrianPosition = 50_00;
   }
 }
 /* v8 ignore stop */
@@ -328,6 +412,16 @@ export interface ClosureOptions {
   movementDuration?: number;
   /** Simulated duration, in milliseconds, that a Calibrate operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
   calibrationDuration?: number;
+  /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Signature position. Default: 50_00 (50%). */
+  signaturePosition?: number;
+  /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Ventilation position. Default: 50_00 (50%). */
+  ventilationPosition?: number;
+  /** Simulated position, in percent hundredths (0-10000), reached when the closure is moved to the Pedestrian position. Default: 50_00 (50%). */
+  pedestrianPosition?: number;
+  /** Enable the ClosureControl MotionLatching feature. Defaults to false. */
+  motionLatching?: boolean;
+  /** Enable the ClosureControl Speed feature. Defaults to false. */
+  speed?: boolean;
   /** Enable the ClosureControl Ventilation feature. Defaults to false. */
   ventilation?: boolean;
   /** Enable the ClosureControl Pedestrian feature. Defaults to false. */
@@ -375,20 +469,16 @@ export class Closure extends MatterbridgeEndpoint {
       countdownTime = 0,
       mainState = ClosureControl.MainState.Stopped,
       currentErrorList = [],
-      overallCurrentState = {
-        position: ClosureControl.CurrentPosition.FullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
-        secureState: true,
-      },
-      overallTargetState = {
-        position: ClosureControl.TargetPosition.MoveToFullyClosed,
-        latch: true,
-        speed: ThreeLevelAuto.Auto,
-      },
-      latchControlModes = { remoteLatching: true, remoteUnlatching: true },
+      overallCurrentState,
+      overallTargetState,
+      latchControlModes,
       movementDuration = 0,
       calibrationDuration = 0,
+      signaturePosition = 50_00,
+      ventilationPosition = 50_00,
+      pedestrianPosition = 50_00,
+      motionLatching = false,
+      speed = false,
       ventilation = false,
       pedestrian = false,
       calibration = false,
@@ -426,23 +516,33 @@ export class Closure extends MatterbridgeEndpoint {
       countdownTime,
       mainState,
       currentErrorList,
-      overallCurrentState,
-      overallTargetState,
-      latchControlModes,
+      overallCurrentState: {
+        position: overallCurrentState?.position ?? ClosureControl.CurrentPosition.FullyClosed,
+        ...(motionLatching ? { latch: overallCurrentState?.latch ?? true } : null),
+        ...(speed ? { speed: overallCurrentState?.speed ?? ThreeLevelAuto.Auto } : null),
+        secureState: overallCurrentState?.secureState ?? true,
+      },
+      overallTargetState: {
+        position: overallTargetState?.position ?? ClosureControl.TargetPosition.MoveToFullyClosed,
+        ...(motionLatching ? { latch: overallTargetState?.latch ?? true } : null),
+        ...(speed ? { speed: overallTargetState?.speed ?? ThreeLevelAuto.Auto } : null),
+      },
+      ...(motionLatching ? { latchControlModes: latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : null),
       movementDuration,
       calibrationDuration,
+      signaturePosition,
+      ventilationPosition,
+      pedestrianPosition,
     };
     this.behaviors.require(
-      calibration || ventilation || pedestrian
-        ? MatterbridgeClosureControlServer.with(
-            ClosureControl.Feature.Positioning,
-            ClosureControl.Feature.MotionLatching,
-            ClosureControl.Feature.Speed,
-            ...(calibration ? [ClosureControl.Feature.Calibration] : []),
-            ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
-            ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
-          )
-        : MatterbridgeClosureControlServer,
+      MatterbridgeClosureControlServer.with(
+        ClosureControl.Feature.Positioning,
+        ...(motionLatching ? [ClosureControl.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureControl.Feature.Speed] : []),
+        ...(calibration ? [ClosureControl.Feature.Calibration] : []),
+        ...(ventilation ? [ClosureControl.Feature.Ventilation] : []),
+        ...(pedestrian ? [ClosureControl.Feature.Pedestrian] : []),
+      ),
       closureControlOptions,
     );
   }
@@ -454,6 +554,36 @@ export class Closure extends MatterbridgeEndpoint {
    */
   getMainState(): ClosureControl.MainState | undefined {
     return this.getAttribute(ClosureControlServer, 'mainState');
+  }
+
+  /**
+   * Gets the simulated `signaturePosition` value, in percent hundredths (0-10000), reached when the closure is
+   * moved to the Signature position.
+   *
+   * @returns {number | undefined} Current signature position.
+   */
+  getSignaturePosition(): number | undefined {
+    return this.getAttribute(MatterbridgeClosureControlServer, 'signaturePosition');
+  }
+
+  /**
+   * Gets the simulated `ventilationPosition` value, in percent hundredths (0-10000), reached when the closure is
+   * moved to the Ventilation position.
+   *
+   * @returns {number | undefined} Current ventilation position.
+   */
+  getVentilationPosition(): number | undefined {
+    return this.getAttribute(MatterbridgeClosureControlServer, 'ventilationPosition');
+  }
+
+  /**
+   * Gets the simulated `pedestrianPosition` value, in percent hundredths (0-10000), reached when the closure is
+   * moved to the Pedestrian position.
+   *
+   * @returns {number | undefined} Current pedestrian position.
+   */
+  getPedestrianPosition(): number | undefined {
+    return this.getAttribute(MatterbridgeClosureControlServer, 'pedestrianPosition');
   }
 
   /**
@@ -473,11 +603,28 @@ export class Closure extends MatterbridgeEndpoint {
     countdownTime = 0,
     currentErrorList: ClosureControl.ClosureError[] = [],
   ): Promise<void> {
+    const features = this.featuresOf(MatterbridgeClosureControlServer.id);
+    const supportsCurrentPosition =
+      (currentState.position !== ClosureControl.CurrentPosition.OpenedForVentilation || features.ventilation) &&
+      (currentState.position !== ClosureControl.CurrentPosition.OpenedForPedestrian || features.pedestrian);
+    const supportsTargetPosition =
+      (targetState.position !== ClosureControl.TargetPosition.MoveToVentilationPosition || features.ventilation) &&
+      (targetState.position !== ClosureControl.TargetPosition.MoveToPedestrianPosition || features.pedestrian);
+
     await this.setAttribute(ClosureControl, 'countdownTime', countdownTime);
     await this.setAttribute(ClosureControl, 'mainState', mainState);
     await this.setAttribute(ClosureControl, 'currentErrorList', currentErrorList);
-    await this.setAttribute(ClosureControl, 'overallCurrentState', currentState);
-    await this.setAttribute(ClosureControl, 'overallTargetState', targetState);
+    await this.setAttribute(ClosureControl, 'overallCurrentState', {
+      ...(supportsCurrentPosition ? { position: currentState.position } : null),
+      ...(features.motionLatching ? { latch: currentState.latch } : null),
+      ...(features.speed ? { speed: currentState.speed } : null),
+      secureState: currentState.secureState,
+    });
+    await this.setAttribute(ClosureControl, 'overallTargetState', {
+      ...(supportsTargetPosition ? { position: targetState.position } : null),
+      ...(features.motionLatching ? { latch: targetState.latch } : null),
+      ...(features.speed ? { speed: targetState.speed } : null),
+    });
   }
 
   /**
@@ -544,6 +691,97 @@ export class Closure extends MatterbridgeEndpoint {
   }
 
   /**
+   * Sets the ClosureControl attributes to the Signature position, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setOpenedAtSignature(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.OpenedAtSignature,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToSignaturePosition,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to the Ventilation position, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setOpenedForVentilation(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.OpenedForVentilation,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToVentilationPosition,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Sets the ClosureControl attributes to the Pedestrian position, unlatched, and unsecured state.
+   *
+   * @returns {Promise<void>} Resolves when all required ClosureControl attributes have been updated.
+   */
+  async setOpenedForPedestrian(): Promise<void> {
+    await this.setState(
+      {
+        position: ClosureControl.CurrentPosition.OpenedForPedestrian,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+        secureState: false,
+      },
+      {
+        position: ClosureControl.TargetPosition.MoveToPedestrianPosition,
+        latch: false,
+        speed: ThreeLevelAuto.Auto,
+      },
+    );
+  }
+
+  /**
+   * Convert a ClosureControl target position to its corresponding current position.
+   *
+   * @param {ClosureControl.TargetPosition} position Requested closure target position.
+   * @returns {ClosureControl.CurrentPosition} Matching reached position.
+   */
+  targetPositionToCurrentPosition(position: ClosureControl.TargetPosition): ClosureControl.CurrentPosition {
+    if (position === ClosureControl.TargetPosition.MoveToFullyClosed) return ClosureControl.CurrentPosition.FullyClosed;
+    if (position === ClosureControl.TargetPosition.MoveToFullyOpen) return ClosureControl.CurrentPosition.FullyOpened;
+    if (position === ClosureControl.TargetPosition.MoveToPedestrianPosition) return ClosureControl.CurrentPosition.OpenedForPedestrian;
+    if (position === ClosureControl.TargetPosition.MoveToVentilationPosition) return ClosureControl.CurrentPosition.OpenedForVentilation;
+    return ClosureControl.CurrentPosition.OpenedAtSignature;
+  }
+
+  /**
+   * Converts a ClosureControl target position to the corresponding closure panel percentage.
+   *
+   * @param {ClosureControl.TargetPosition} position Requested closure target position.
+   * @returns {number} Target closure panel position in percent hundredths (0-10000).
+   */
+  targetPositionToTargetPercent(position: ClosureControl.TargetPosition): number {
+    if (position === ClosureControl.TargetPosition.MoveToFullyOpen) return 0;
+    if (position === ClosureControl.TargetPosition.MoveToFullyClosed) return 100_00;
+    if (position === ClosureControl.TargetPosition.MoveToPedestrianPosition) return this.getPedestrianPosition() ?? 50_00;
+    if (position === ClosureControl.TargetPosition.MoveToVentilationPosition) return this.getVentilationPosition() ?? 50_00;
+    return this.getSignaturePosition() ?? 50_00;
+  }
+
+  /**
    * Sets the `mainState`/`currentErrorList` attributes to Error and emits a ClosureControl OperationalError event.
    *
    * @remarks
@@ -605,11 +843,11 @@ export class Closure extends MatterbridgeEndpoint {
    * @param {string} name - Human-readable name of the panel endpoint.
    * @param {Semtag[]} tagList - The Closure Panel tagList (0x45) used to disambiguate the panel (e.g. `ClosurePanelTag.Lift`, `ClosurePanelTag.Tilt`, `ClosurePanelTag.Sliding`, `ClosurePanelTag.Rotate`).
    * @param {ClosureDimensionType} dimensionType - Which mutually exclusive motion feature the panel supports: `lift` (ClosureDimension.Feature.Translation), `tilt` (ClosureDimension.Feature.Rotation) or `modulation` (ClosureDimension.Feature.Modulation).
-   * @param {ClosurePanelOptions} [options] - Optional initial ClosureDimension cluster state values.
+   * @param {ClosurePanelOptions} [options] - Optional endpoint number and initial ClosureDimension cluster state values.
    * @returns {MatterbridgeEndpoint} The created closure panel endpoint.
    */
   addPanel(name: string, tagList: Semtag[], dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}): MatterbridgeEndpoint {
-    const panel = this.addChildDeviceType(name, closurePanel, { tagList });
+    const panel = this.addChildDeviceType(name, closurePanel, { number: options.number, tagList });
 
     createClosureDimensionClusterServer(panel, dimensionType, options);
 

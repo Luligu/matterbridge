@@ -315,6 +315,7 @@ function help(): void {
       --nosudo:                force not to use sudo to install or update packages if the internal logic fails
       --norestore:             force not to automatically restore the matterbridge node storage and the matter storage from backup if it is corrupted
       --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
+      --root-power-source:     add a Power Source cluster for the mains power feed on the Root endpoint
       --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
       --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
       --vendorId:              override the default vendorId 0xfff1

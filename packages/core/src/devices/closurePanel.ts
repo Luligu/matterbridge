@@ -24,13 +24,16 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 /* oxlint-disable unicorn/no-negated-condition */
 /* oxlint-disable typescript/no-misused-spread */
+/* oxlint-disable typescript/no-namespace */
 
 // @matter
+import { Millis, Time, type MaybePromise, type Timer } from '@matter/general';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { StatusResponse } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
+import type { EndpointNumber } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
@@ -44,21 +47,55 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
  * @remarks
  * The Matter ClosureDimension cluster requires exactly one of these features when Positioning is supported
  * (Application Cluster Specification § 5.5.5, conformance group `[PS].b` on Translation/Rotation/Modulation).
- * A lift panel (e.g. a blind sliding up/down) uses `'lift'`, a tilt panel (e.g. slats rotating) uses `'tilt'`,
- * and any other panel that modulates a flow level without translating or rotating (e.g. an opacity or
- * ventilation panel) uses `'modulation'`.
+ *
+ * A lift panel translates along a path, for example a roller blind, curtain, sliding shutter or garage door
+ * moving up/down or left/right.
+ *
+ * A tilt panel rotates around an axis, for example venetian blind slats, louver blades or a tilt-only shutter.
+ *
+ * A modulation panel is controlled as a 0-100% effect/opening level without exposing a linear travel distance
+ * or rotation angle, for example an air damper, ventilation grille, electrochromic smart-glass tint/privacy
+ * panel, or similar flow/opacity panel.
  */
 export type ClosureDimensionType = 'lift' | 'tilt' | 'modulation';
 
-/**
- * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler. Supports
- * Positioning, MotionLatching and Speed.
- */
-export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.with(
+const MatterbridgeClosureDimensionServerBase = ClosureDimensionServer.with(
   ClosureDimension.Feature.Positioning,
   ClosureDimension.Feature.MotionLatching,
   ClosureDimension.Feature.Speed,
-) {
+);
+
+/**
+ * ClosureDimension server that forwards SetTarget/Step commands to the Matterbridge command handler.
+ *
+ * @remarks
+ * There is no real motor to wait on in the base implementation, so the built-in simulation timer that drives
+ * SetTarget/Step completion (`state.movementDuration`, in milliseconds) is disabled (`0`) by default — see the
+ * `MatterbridgeClosureDimensionServer.State` remarks.
+ *
+ * `initialize()` sets this knob to a CHIP-test-friendly value (`movementDuration = 2000`) under
+ * `MATTERBRIDGE_CHIP_TEST` only; production behavior (disabled) is otherwise unaffected. A real device
+ * implementation may also opt into the simulation directly by setting the same `state` value.
+ */
+export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimensionServerBase {
+  declare readonly state: MatterbridgeClosureDimensionServer.State;
+  declare protected internal: MatterbridgeClosureDimensionServer.Internal;
+
+  /**
+   * Enables the built-in SetTarget/Step movement simulation under MATTERBRIDGE_CHIP_TEST only; production
+   * behavior is unaffected (`movementDuration` stays 0, i.e. disabled, unless overridden by the real device
+   * implementation).
+   *
+   * @returns {MaybePromise} The result of the superclass initializer.
+   */
+  override initialize(): MaybePromise {
+    // v8 ignore next 2 - only enabled under MATTERBRIDGE_CHIP_TEST
+    if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.state.movementDuration = 2000;
+    }
+    return super.initialize();
+  }
+
   override setTarget = async (request: ClosureDimension.SetTargetRequest): Promise<void> => {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`SetTarget (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -77,12 +114,14 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
       throw new StatusResponse.InvalidCommandError('ClosureDimension.setTarget requires at least one of position, latch, or speed to be present');
     }
-
     // 5.5.8.1.1. Position Field
     // percent100ths is constrained to the range 0-10000: a Position field outside that range SHALL return CONSTRAINT_ERROR.
     if (request.position !== undefined && (request.position < 0 || request.position > 10000)) {
       throw new StatusResponse.ConstraintErrorError('ClosureDimension.setTarget position must be between 0 and 10000');
     }
+    const hasSupportedField =
+      request.position !== undefined || (this.features.motionLatching && request.latch !== undefined) || (this.features.speed && request.speed !== undefined);
+    if (!hasSupportedField) return;
 
     // 5.5.8.1.2. Latch Field
     // The Latch field is a bool, so every decoded value is within constraints: no CONSTRAINT_ERROR is possible for this field.
@@ -90,13 +129,17 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // TargetState.Latch, or - if the LatchControlModes attribute specifies that manual intervention is required to
     // latch - respond with INVALID_IN_STATE and remain in its current state.
     const latchControlModes = this.state.latchControlModes;
-    if (request.latch !== undefined && ((request.latch && !latchControlModes?.remoteLatching) || (!request.latch && !latchControlModes?.remoteUnlatching))) {
+    if (
+      this.features.motionLatching &&
+      request.latch !== undefined &&
+      ((request.latch && !latchControlModes?.remoteLatching) || (!request.latch && !latchControlModes?.remoteUnlatching))
+    ) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.setTarget latch change requires manual intervention per LatchControlModes');
     }
 
     // 5.5.8.1.3. Speed Field
     // ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
-    if (request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
+    if (this.features.speed && request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
       throw new StatusResponse.ConstraintErrorError('ClosureDimension.setTarget speed must be a valid ThreeLevelAutoEnum value');
     }
 
@@ -128,7 +171,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // in this command is either not present or not explicitly set to False (Unlatched), a status code of
     // INVALID_IN_STATE SHALL be returned.
     const currentState = this.state.currentState;
-    if (request.position !== undefined && currentState?.latch === true && request.latch !== false) {
+    if (this.features.motionLatching && request.position !== undefined && currentState?.latch === true && request.latch !== false) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.setTarget position changes require latch false while the closure is latched');
     }
 
@@ -139,8 +182,8 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
       // If a new position value is requested, the closure SHALL set the Position field of the TargetState attribute
       // to the nearest valid position, i.e. an integer multiple of the Resolution attribute.
       ...(request?.position !== undefined ? { position: Math.round(request.position / resolution) * resolution } : null),
-      ...(request?.latch !== undefined ? { latch: request.latch } : null),
-      speed: request?.speed ?? ThreeLevelAuto.Auto,
+      ...(this.features.motionLatching && request?.latch !== undefined ? { latch: request.latch } : null),
+      ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
 
     // If all field values in the command match the corresponding field values in CurrentState, the command SHALL
@@ -148,11 +191,12 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     const matchesCurrentState =
       currentState !== null &&
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
-      (nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
-      nextTarget.speed === currentState.speed;
+      (!this.features.motionLatching || nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
+      (!this.features.speed || nextTarget.speed === currentState.speed);
     if (matchesCurrentState) return;
 
     this.state.targetState = nextTarget;
+    this.#scheduleMovement(nextTarget, currentState);
   };
 
   override step = async (request: ClosureDimension.StepRequest): Promise<void> => {
@@ -181,7 +225,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
 
     // 5.5.8.2.3. Speed Field
     // ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
-    if (request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
+    if (this.features.speed && request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
       throw new StatusResponse.ConstraintErrorError('ClosureDimension.step speed must be a valid ThreeLevelAutoEnum value');
     }
 
@@ -189,7 +233,7 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     // If this command is received while the Latch field of the CurrentState attribute is True (Latched), a status
     // code of INVALID_IN_STATE SHALL be returned.
     const currentState = this.state.currentState;
-    if (currentState?.latch === true) {
+    if (this.features.motionLatching && currentState?.latch === true) {
       throw new StatusResponse.InvalidInStateError('ClosureDimension.step is not allowed while the closure is latched');
     }
 
@@ -230,25 +274,132 @@ export class MatterbridgeClosureDimensionServer extends ClosureDimensionServer.w
     nextPosition = Math.max(0, Math.min(10000, nextPosition));
 
     const previousTarget = this.state.targetState ?? {};
-    this.state.targetState = {
+    const nextTarget = {
       ...previousTarget,
       position: nextPosition,
-      ...(request.speed !== undefined ? { speed: request.speed } : null),
+      ...(this.features.speed && request.speed !== undefined ? { speed: request.speed } : null),
     };
+    this.state.targetState = nextTarget;
+    this.#scheduleMovement(nextTarget, currentState);
   };
+
+  /**
+   * Schedules (or cancels a pending, then schedules) the simulated convergence of `currentState` to
+   * `targetState`, per `movementDuration`.
+   *
+   * @remarks
+   * There is no real motor to wait on, so completion of a SetTarget/Step movement can optionally be simulated
+   * by `movementDuration`: `TargetState` is set synchronously on command receipt (by the caller), and
+   * `CurrentState` is updated this many milliseconds later, as if the panel had finished moving. A
+   * non-positive `movementDuration`, or no `currentState` to converge from, gates this off entirely — the
+   * server does nothing further, leaving completion (`CurrentState`) to whatever real device integration is
+   * wired up through the command handler forwarded at the top of `setTarget()`/`step()`.
+   *
+   * @param {ClosureDimension.DimensionState} targetState - The target state to converge `currentState` to.
+   * @param {ClosureDimension.DimensionState | null} currentState - The `currentState` read when the command was received.
+   * @returns {void}
+   */
+  #scheduleMovement(targetState: ClosureDimension.DimensionState, currentState: ClosureDimension.DimensionState | null): void {
+    // Cancel any movement still in flight from a previous command before (re)scheduling.
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
+    if (currentState === null || this.state.movementDuration <= 0) return;
+    this.internal.movementTargetState = targetState;
+    this.internal.movementPreviousState = currentState;
+    this.internal.movementTimer = Time.getTimer(
+      'ClosureDimension movement complete',
+      Millis(this.state.movementDuration),
+      // The reactor must be a real method, not an arrow function, so the framework can rebind `this` to a
+      // fresh, still-valid Behavior context when the timer fires well after the originating command's own
+      // context exited.
+      // oxlint-disable-next-line typescript/unbound-method
+      this.callback(this.#completeMovement, { lock: true }),
+    ).start();
+  }
+
+  /**
+   * Reactor for {@link #scheduleMovement}: updates the `currentState` attribute to match
+   * `internal.movementTargetState` (the target that was being approached; a timer reactor takes no custom
+   * arguments). Runs under a fresh, locked Behavior context (see {@link #scheduleMovement}), so `this.state` can
+   * be written directly within the same transaction.
+   */
+  #completeMovement(): void {
+    this.internal.movementTimer = undefined;
+    const targetState = this.internal.movementTargetState;
+    const previousState = this.internal.movementPreviousState;
+    // setTarget()/step() always carry Position/Latch/Speed through to targetState explicitly (each inherited
+    // from the constructor's own non-null defaults when a command omits it), so the `?? previousState.*`
+    // fallbacks below are unreachable through the public command surface — kept only as a defensive guard
+    // against a manually-cleared state.
+    /* v8 ignore next 3 */
+    const position = targetState.position ?? previousState.position;
+    const latch = targetState.latch ?? previousState.latch;
+    const speed = targetState.speed ?? previousState.speed;
+    this.state.currentState = {
+      position,
+      ...(this.features.motionLatching ? { latch } : null),
+      ...(this.features.speed ? { speed } : null),
+    };
+  }
+
+  /**
+   * Stops timers when the server is disposed.
+   */
+  override async [Symbol.asyncDispose](): Promise<void> {
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
+    await super[Symbol.asyncDispose]?.();
+  }
 }
 
+/* v8 ignore start */
+export namespace MatterbridgeClosureDimensionServer {
+  export class Internal extends MatterbridgeClosureDimensionServerBase.Internal {
+    /** Pending timer that simulates completion of an in-progress SetTarget/Step; cancelled by Stop or a new SetTarget/Step. */
+    movementTimer?: Timer;
+    /** Target state the pending movement timer will apply on completion. */
+    movementTargetState: ClosureDimension.DimensionState = {};
+    /** `currentState` captured when the pending movement was scheduled. */
+    movementPreviousState: ClosureDimension.DimensionState = {};
+  }
+
+  /**
+   * Simulated timing knob for `setTarget()`/`step()`, in addition to the standard ClosureDimension attributes.
+   *
+   * @remarks
+   * There is no real motor to wait on, so completion of a movement can optionally be simulated by this fixed
+   * delay: `TargetState` is set synchronously on command receipt, and `CurrentState` is updated this many
+   * milliseconds later, as if the panel had finished moving. A non-positive value (the default) gates the
+   * handler off entirely — the server does nothing further after setting TargetState, leaving completion
+   * (`CurrentState`) to whatever real device integration is wired up through the command handler forwarded at
+   * the top of `setTarget()`/`step()`.
+   */
+  export class State extends MatterbridgeClosureDimensionServerBase.State {
+    /** Simulated duration, in milliseconds, that a SetTarget/Step operation takes to complete. A non-positive value disables the built-in simulation. Default: 0 (disabled). */
+    movementDuration = 0;
+  }
+}
+/* v8 ignore stop */
+
 export interface ClosurePanelOptions {
+  /** Child endpoint number. */
+  number?: EndpointNumber;
   /** Initial current state. Defaults to latched and fully closed. */
   currentState?: ClosureDimension.DimensionState;
   /** Initial target state. Defaults to latched and fully closed. */
   targetState?: ClosureDimension.DimensionState;
-  /** Position resolution of the ClosureDimension cluster. Constrained by the specs to a minimum of 1 (0.01%). Defaults to 1. */
+  /** Position resolution of the ClosureDimension cluster, expressed in percent100ths. Defaults to 100 (1%). */
   resolution?: number;
-  /** Number of units moved for each Step command. Constrained by the specs to a minimum of 1 (0.01%). Defaults to 1. */
+  /** Number of units moved for each Step command, expressed in percent100ths. Defaults to 100 (1%). */
   stepValue?: number;
+  /** Enable the ClosureDimension MotionLatching feature. Defaults to false. */
+  motionLatching?: boolean;
+  /** Enable the ClosureDimension Speed feature. Defaults to false. */
+  speed?: boolean;
   /** Supported remote latch control modes. Defaults to latching and unlatching enabled. */
   latchControlModes?: ClosureDimension.LatchControlModes;
+  /** Simulated duration, in milliseconds, that a SetTarget/Step operation takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled). */
+  movementDuration?: number;
   /** Direction of the translation. Only used when `dimensionType` is `'lift'`. Defaults to Downward. */
   translationDirection?: ClosureDimension.TranslationDirection;
   /** Axis of the rotation. Only used when `dimensionType` is `'tilt'`. Defaults to CenteredHorizontal. */
@@ -269,22 +420,33 @@ export interface ClosurePanelOptions {
  * @returns {MatterbridgeEndpoint} The current MatterbridgeEndpoint instance for chaining.
  */
 export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoint, dimensionType: ClosureDimensionType, options: ClosurePanelOptions): MatterbridgeEndpoint {
+  const motionLatching = options.motionLatching ?? false;
+  const speed = options.speed ?? false;
   const commonOptions = {
-    currentState: options.currentState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
-    targetState: options.targetState ?? { position: 0, latch: true, speed: ThreeLevelAuto.Auto },
+    currentState: {
+      position: options.currentState?.position ?? 0,
+      ...(motionLatching ? { latch: options.currentState?.latch ?? true } : null),
+      ...(speed ? { speed: options.currentState?.speed ?? ThreeLevelAuto.Auto } : null),
+    },
+    targetState: {
+      position: options.targetState?.position ?? 0,
+      ...(motionLatching ? { latch: options.targetState?.latch ?? true } : null),
+      ...(speed ? { speed: options.targetState?.speed ?? ThreeLevelAuto.Auto } : null),
+    },
     // Resolution and StepValue are percent100ths with a specs constraint of "min 0.01%" (i.e. a minimum value of 1).
-    resolution: Math.max(1, options.resolution ?? 1),
-    stepValue: Math.max(1, options.stepValue ?? 1),
-    latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true },
+    // Default to whole-percent granularity to match the 0%-100% precision exposed by most real closure APIs.
+    resolution: Math.max(1, options.resolution ?? 100),
+    stepValue: Math.max(1, options.stepValue ?? 100),
+    ...(motionLatching ? { latchControlModes: options.latchControlModes ?? { remoteLatching: true, remoteUnlatching: true } } : null),
+    movementDuration: options.movementDuration ?? 0,
   };
-
   if (dimensionType === 'lift') {
     endpoint.behaviors.require(
       MatterbridgeClosureDimensionServer.with(
         ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
         ClosureDimension.Feature.Translation,
+        ...(motionLatching ? [ClosureDimension.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureDimension.Feature.Speed] : []),
       ),
       {
         ...commonOptions,
@@ -295,9 +457,9 @@ export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoi
     endpoint.behaviors.require(
       MatterbridgeClosureDimensionServer.with(
         ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
         ClosureDimension.Feature.Rotation,
+        ...(motionLatching ? [ClosureDimension.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureDimension.Feature.Speed] : []),
       ),
       {
         ...commonOptions,
@@ -306,12 +468,13 @@ export function createClosureDimensionClusterServer(endpoint: MatterbridgeEndpoi
       },
     );
   } else {
+    // this branch handles modulation
     endpoint.behaviors.require(
       MatterbridgeClosureDimensionServer.with(
         ClosureDimension.Feature.Positioning,
-        ClosureDimension.Feature.MotionLatching,
-        ClosureDimension.Feature.Speed,
         ClosureDimension.Feature.Modulation,
+        ...(motionLatching ? [ClosureDimension.Feature.MotionLatching] : []),
+        ...(speed ? [ClosureDimension.Feature.Speed] : []),
       ),
       {
         ...commonOptions,

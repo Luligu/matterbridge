@@ -22,6 +22,7 @@ import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
 import type { ClusterId } from '@matter/types/datatype';
 import { log, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -38,7 +39,7 @@ import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from '../src/behaviors/doorLockServer.js';
-import { closureController, doorLock, irrigationSystem, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
+import { closureController, doorLock, irrigationSystem, temperatureSensor, windowCovering } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -61,6 +62,7 @@ import {
   getSemtag,
   getSnapshot,
   internalFor,
+  invokeBehaviorCommand,
   setCluster,
 } from '../src/matterbridgeEndpointHelpers.js';
 
@@ -138,6 +140,9 @@ describe('Options helpers', () => {
     expect(getDefaultPowerSourceBatteryClusterServer()).toBeDefined();
     expect(getDefaultPowerSourceReplaceableBatteryClusterServer()).toBeDefined();
     expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).toBeDefined();
+    expect(getDefaultPowerSourceBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    expect(getDefaultPowerSourceReplaceableBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer(null).batPercentRemaining).toBe(null);
     expect(getDefaultElectricalEnergyMeasurementClusterServer()).toBeDefined();
     expect(getDefaultElectricalPowerMeasurementClusterServer()).toBeDefined();
     expect(getApparentElectricalPowerMeasurementClusterServer()).toBeDefined();
@@ -421,6 +426,15 @@ describe('Options helpers', () => {
     expect(clientList.filter((id) => id === ClosureControl.id)).toHaveLength(1);
   });
 
+  test('addClusterClients merges into existing options with no clientList', async () => {
+    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsNoList' });
+    device.behaviors.require(MatterbridgeBindingServer, {});
+    device.addClusterClients([ClosureControl.id]);
+    await addDevice(aggregator, device);
+    const clientList = device.stateOf(DescriptorServer).clientList;
+    expect(clientList).toContain(ClosureControl.id);
+  });
+
   test('addRequiredClusterClients requires MatterbridgeBindingServer for device types with required client clusters', async () => {
     device = new MatterbridgeEndpoint(closureController, { id: 'ClusterClientsRequired' });
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
@@ -437,5 +451,32 @@ describe('Options helpers', () => {
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
     await addDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toContain(FlowMeasurement.id);
+  });
+
+  test('invokeBehaviorCommand with a waiterCondition resolves true once the condition becomes true', async () => {
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandWaiterTrue' });
+    device.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 200);
+    device.addRequiredClusterServers();
+    await addDevice(aggregator, device);
+
+    const invoked = await invokeBehaviorCommand(
+      device,
+      WindowCovering,
+      'goToLiftPercentage',
+      { liftPercent100thsValue: 10000 },
+      () => device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000,
+    );
+    expect(invoked).toBe(true);
+    expect(device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
+  });
+
+  test('invokeBehaviorCommand with a waiterCondition resolves false if the condition never becomes true', async () => {
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandWaiterFalse' });
+    device.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 200);
+    device.addRequiredClusterServers();
+    await addDevice(aggregator, device);
+
+    const invoked = await invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 10000 }, () => false);
+    expect(invoked).toBe(false);
   });
 });

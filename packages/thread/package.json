@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/thread",
-  "version": "3.10.7",
+  "version": "3.10.8",
   "description": "Matterbridge thread library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -75,15 +75,15 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matterbridge/types": "3.10.7",
-    "@matterbridge/utils": "3.10.7",
-    "@zip.js/zip.js": "2.8.54",
-    "node-ansi-logger": "3.3.0"
+    "@matterbridge/types": "3.10.8",
+    "@matterbridge/utils": "3.10.8",
+    "@zip.js/zip.js": "2.8.61",
+    "node-ansi-logger": "3.3.1"
   },
   "devDependencies": {
-    "@matterbridge/types": "3.10.7",
-    "@matterbridge/vitest-utils": "3.10.7",
-    "@types/node": "26.2.0",
+    "@matterbridge/types": "3.10.8",
+    "@matterbridge/vitest-utils": "3.10.8",
+    "@types/node": "26.4.0",
     "vitest": "4.1.11"
   }
 }

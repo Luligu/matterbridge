@@ -22,12 +22,13 @@ import type { ActionContext } from '@matter/node';
 import { BooleanStateBehavior, BooleanStateServer, IdentifyBehavior, IdentifyServer, PowerSourceBehavior, SwitchServer } from '@matter/node/behaviors';
 import { OnOffBehavior } from '@matter/node/behaviors/on-off';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
-import { EndpointNumber } from '@matter/types';
+import { type ClusterId, EndpointNumber } from '@matter/types';
 import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { setupTest } from '@matterbridge/vitest-utils';
 import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from '@matterbridge/vitest-utils/matter';
 
+import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { genericSwitch, onOffPlugInUnit, rainSensor, thermostat } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { internalFor } from '../src/matterbridgeEndpointHelpers.js';
@@ -89,6 +90,41 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       void invalidStateType;
       void invalidServerStateType;
       void invalidClusterStateType;
+    } finally {
+      await deleteDevice(aggregator, device);
+    }
+  });
+
+  test('getClusterServerOptions type checks', async () => {
+    const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorClusterOptionsTypeCheck', number: EndpointNumber(909) }, true);
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createDefaultBooleanStateClusterServer(true);
+    device.createDefaultBindingClusterServer([Identify.id]);
+    expect(await addDevice(aggregator, device)).toBe(true);
+    try {
+      const behaviorOptions: { clientList?: ClusterId[] } | undefined = device.getClusterServerOptions(MatterbridgeBindingServer);
+      const clusterOptions: { stateValue?: boolean } | undefined = device.getClusterServerOptions(BooleanState);
+      const idOptions = device.getClusterServerOptions(BooleanState.id);
+      const stringOptions = device.getClusterServerOptions('BooleanState');
+
+      expect(behaviorOptions?.clientList).toContain(Identify.id);
+      expect(clusterOptions?.stateValue).toBe(true);
+      expect(idOptions?.stateValue).toBe(true);
+      expect(stringOptions?.stateValue).toBe(true);
+
+      if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
+        // @ts-expect-error intentional type-check guard for Behavior.Type option key
+        void device.getClusterServerOptions(MatterbridgeBindingServer)?.stateValue;
+        // @ts-expect-error intentional type-check guard for ClusterType option key
+        void device.getClusterServerOptions(BooleanState)?.clientList;
+        // @ts-expect-error intentional type-check guard for Behavior.Type typed return value
+        const invalidBehaviorOptions: { clientList?: string[] } | undefined = device.getClusterServerOptions(MatterbridgeBindingServer);
+        // @ts-expect-error intentional type-check guard for ClusterType typed return value
+        const invalidClusterOptions: { stateValue?: string } | undefined = device.getClusterServerOptions(BooleanState);
+        void invalidBehaviorOptions;
+        void invalidClusterOptions;
+      }
     } finally {
       await deleteDevice(aggregator, device);
     }

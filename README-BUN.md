@@ -106,3 +106,25 @@ built and served. See the TODO list below for the known limitations.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
+
+- [ ] **The `ws` package client ignores top-level TLS options under Bun.** Under Node, both the
+      global `WebSocket` and the `ws` package client accept the TLS material (`ca`, `cert`, `key`,
+      `rejectUnauthorized`) as top-level constructor options, the same way `https.request` does:
+      `new WebSocket(url, { ca, cert, key, rejectUnauthorized })`. Under Bun, the `ws` package
+      delegates to Bun's native `WebSocket` implementation, which only reads TLS options nested
+      under a `tls` field (`new WebSocket(url, { tls: { ca, cert, key, rejectUnauthorized } })`).
+      Passing the Node-style top-level options under Bun does not throw — it silently falls back
+      to Bun's default TLS settings, so the handshake fails against a self-signed/mTLS server with
+      a `close` event, code 1015 ("TLS handshake failed"), or the connection is torn down entirely
+      (code 1006) if the server also requires a client certificate. This bit `matterbridge-hass`'s
+      `HomeAssistant.connect()`, which opens an outbound `wss://` connection to Home Assistant with
+      a custom CA and/or `rejectUnauthorized: false` and previously passed those fields top-level
+      only.
+      Workaround (works identically on both Node and Bun, no runtime detection needed): pass the
+      TLS fields **both** top-level and nested under `tls` in the same options object — each
+      runtime reads the shape it understands and ignores the other.
+      Reproduced and asserted by [buntest/wssTest.test.ts](./buntest/wssTest.test.ts).
+      Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396) (open,
+      "WebSocket npm fails TLS handshake with self signed certificates"), with a fix proposed in
+      [oven-sh/bun#31397](https://github.com/oven-sh/bun/pull/31397) (open, not yet merged) —
+      revisit dropping the workaround once that lands in a release.

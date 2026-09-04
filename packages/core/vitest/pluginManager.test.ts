@@ -56,6 +56,8 @@ process.argv = [
 ];
 process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
 process.env.npm_config_cache = NPM_CONFIG_CACHE;
+process.env.npm_config_audit = 'false';
+process.env.npm_config_fund = 'false';
 await fs.rm(NPM_CONFIG_PREFIX, { recursive: true, force: true });
 await fs.mkdir(NPM_CONFIG_PREFIX, { recursive: true });
 await fs.mkdir(NPM_CONFIG_CACHE, { recursive: true });
@@ -195,7 +197,7 @@ describe('PluginManager', () => {
   test('BroadcastServer from local path', async () => {
     const pluginPath = path.join('.', 'packages', 'core', 'src', 'mock', 'plugin1');
     expect((await testServer.fetch({ type: 'plugins_install', src: testServer.name, dst: 'plugins', params: { packageName: pluginPath } }, 5000)).result.packageName).toBeDefined();
-    execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
@@ -270,7 +272,7 @@ describe('PluginManager', () => {
     expect(
       (await testServer.fetch({ type: 'plugins_uninstall', src: testServer.name, dst: 'plugins', params: { packageName: 'matterbridge-mock1' } }, 5000)).result.packageName,
     ).toBeDefined();
-    execSync(`npm uninstall matterbridge-mock1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm uninstall matterbridge-mock1 --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
     });
@@ -289,7 +291,7 @@ describe('PluginManager', () => {
     // oxfmt-ignore
     {
       // await setDebug(true);
-      execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, { stdio: 'inherit', env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE }});
+      execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, { stdio: 'inherit', env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE }});
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: true, packageCommand: 'install', packageName: 'matterbridge-mock1.tgz' } } as any);
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'install', packageName: 'matterbridge-mock1' } } as any);
@@ -302,7 +304,7 @@ describe('PluginManager', () => {
       await (plugins as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'plugins', result: { success: false, packageCommand: 'uninstall', packageName: 'matterbridge-mock1' } } as any);
       // await setDebug(false);
       expect(plugins.has('matterbridge-mock1')).toBe(false);
-      execSync(`npm uninstall matterbridge-mock1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      execSync(`npm uninstall matterbridge-mock1 --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
         stdio: 'inherit',
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
@@ -1431,25 +1433,25 @@ describe('PluginManager', () => {
     let output;
     try {
       // console.log(`Installing matterbridge with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
-      output = execSync(`npm install . --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      output = execSync(`npm install . --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
         stdio: 'inherit',
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
     } catch (error) {
       // console.log(`Installing matterbridge with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
-      output = execSync(`sudo npm install . --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      output = execSync(`sudo npm install . --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
         stdio: 'inherit',
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
     }
     try {
       // console.log(`Installing plugin1 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
-      output = execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      output = execSync(`npm install ./packages/core/src/mock/plugin1 --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
         stdio: 'inherit',
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
       // console.log(`Installing plugin4 with prefix ${NPM_CONFIG_PREFIX} and cache ${NPM_CONFIG_CACHE}`, output?.toString());
-      output = execSync(`npm install ./packages/core/src/mock/plugin4 --omit=dev --silent --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
+      output = execSync(`npm install ./packages/core/src/mock/plugin4 --omit=dev --silent --no-audit --no-fund --cache=${NPM_CONFIG_CACHE} --prefix=${NPM_CONFIG_PREFIX}`, {
         stdio: 'inherit',
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
@@ -2193,15 +2195,15 @@ describe('PluginManager', () => {
   // Useless test to uninstall matterbridge globally and mocked plugins
   /*
   test('uninstall matterbridge globally and mocked plugins', async () => {
-    execSync(`npm uninstall matterbridge --silent --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm uninstall matterbridge --silent --no-audit --no-fund --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
     });
-    execSync(`npm uninstall ./src/mock/plugin1 --silent --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm uninstall ./src/mock/plugin1 --silent --no-audit --no-fund --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
     });
-    execSync(`npm uninstall ./src/mock/plugin4 --silent --prefix=${NPM_CONFIG_PREFIX}`, {
+    execSync(`npm uninstall ./src/mock/plugin4 --silent --no-audit --no-fund --prefix=${NPM_CONFIG_PREFIX}`, {
       stdio: 'inherit',
       env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX },
     });

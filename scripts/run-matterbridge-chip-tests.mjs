@@ -106,12 +106,19 @@
  * reference that same test without the extension. Applied once by start(), right after the container comes
  * up — not reapplied by resetContainerState()'s restart, since that only restarts the matterbridge process
  * and never touches the container's filesystem.
+ *
+ * start() also copies every docker/chip-test/*.pics file over the same-named file under /root/ in the
+ * container, right alongside applying "patches" — the image already bakes in its own copy of each file at
+ * build time (see §1 of the CHIP-test harness rules), but rebuilding and republishing the image is far more
+ * expensive than a local .pics edit, so this keeps a freshly-started container always in sync with whatever
+ * is checked in locally, the same way "patches" does for test files, without needing a manual `docker cp`
+ * after every --start.
  */
 
 /* eslint-disable no-console */
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -127,6 +134,9 @@ const summaryLogFile = resolve(root, 'chipTestsSummary.log');
 // remotePythonTestingDir/remoteCertificationDir in the container by applyPatches() — see the "patches" doc
 // comment above.
 const patchesDir = resolve(root, 'docker/chip-test/patches');
+// Local source of the hand-verified PICS files (see §1 of the CHIP-test harness rules), copied over the
+// same-named file under /root/ in the container by copyPicsFiles() — see the "patches" doc comment above.
+const picsDir = resolve(root, 'docker/chip-test');
 const remotePythonTestingDir = '/root/connectedhomeip/src/python_testing';
 const remoteCertificationDir = '/root/connectedhomeip/src/app/tests/suites/certification';
 // Node storage for the bridged endpoints; only stateful cluster attributes that get written during a
@@ -257,6 +267,7 @@ function start() {
 
   waitForContainerReady(startedAt);
   applyPatches();
+  copyPicsFiles();
   console.log('Chip-test container ready.');
 }
 
@@ -269,6 +280,18 @@ function applyPatches() {
     const localPath = join(patchesDir, patch);
     const remoteDir = patch.endsWith('.py') ? remotePythonTestingDir : remoteCertificationDir;
     runOrFail('docker', ['cp', localPath, `${containerName}:${remoteDir}/${patch}`]);
+  }
+}
+
+// Copies every docker/chip-test/*.pics file over the same-named file under /root/ in the container, so a
+// freshly-started container always picks up local .pics edits without a separate manual `docker cp` step —
+// see the "patches" doc comment above.
+function copyPicsFiles() {
+  const picsFiles = readdirSync(picsDir).filter((name) => name.endsWith('.pics'));
+  for (const picsFile of picsFiles) {
+    console.log(`Copying PICS file ${picsFile}...`);
+    const localPath = join(picsDir, picsFile);
+    runOrFail('docker', ['cp', localPath, `${containerName}:/root/${picsFile}`]);
   }
 }
 
@@ -520,9 +543,23 @@ function formatResultLines(result) {
   return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
 }
 
+// Formats a millisecond duration as "1h 02m 03s", omitting leading zero-valued units.
+function formatDuration(ms) {
+  const totalSeconds = Math.round(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = [];
+  if (hours > 0) parts.push(`${hours}h`);
+  if (hours > 0 || minutes > 0) parts.push(`${minutes.toString().padStart(hours > 0 ? 2 : 1, '0')}m`);
+  parts.push(`${seconds.toString().padStart(hours > 0 || minutes > 0 ? 2 : 1, '0')}s`);
+  return parts.join(' ');
+}
+
 function runTests(nameFilter) {
   const tests = filterTests(allTests, nameFilter);
-  const startedAt = `Chip tests run started at ${new Date().toISOString()}\n\n`;
+  const startTime = Date.now();
+  const startedAt = `Chip tests run started at ${new Date(startTime).toISOString()}\n\n`;
   writeFileSync(logFile, startedAt);
   // Written incrementally (header now, one result appended as each test finishes, final status appended last)
   // rather than only at the end, so a run that's killed or times out partway through still leaves a readable,
@@ -612,8 +649,9 @@ function runTests(nameFilter) {
   const resultLines = results.flatMap(formatResultLines);
   const summary = `Summary: ${passedCount}/${executedResults.length} tests passed${skippedCount ? ` (${skippedCount} skipped)` : ''}.`;
 
-  appendFileSync(logFile, `${resultLines.join('\n')}\n\n${summary}\n`);
-  appendFileSync(summaryLogFile, `\n${summary}\n`);
+  const endedAt = `Chip tests run ended at ${new Date().toISOString()} (total duration ${formatDuration(Date.now() - startTime)})\n`;
+  appendFileSync(logFile, `${resultLines.join('\n')}\n\n${summary}\n${endedAt}`);
+  appendFileSync(summaryLogFile, `\n${summary}\n${endedAt}`);
   console.log(resultLines.join('\n'));
   console.log(summary);
 

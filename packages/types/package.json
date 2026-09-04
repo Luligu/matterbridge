@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/types",
-  "version": "3.10.7",
+  "version": "3.10.8",
   "description": "Matterbridge types library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -68,10 +68,10 @@
   },
   "dependencies": {
     "@matter/main": "0.17.9",
-    "node-ansi-logger": "3.3.0"
+    "node-ansi-logger": "3.3.1"
   },
   "devDependencies": {
-    "@types/node": "26.2.0",
+    "@types/node": "26.4.0",
     "vitest": "4.1.11"
   }
 }

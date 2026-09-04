@@ -121,7 +121,7 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
 
   WORKDIR /matterbridge-example-camera
 # ADD https://api.github.com/repos/Luligu/matterbridge-example-camera/commits/main /tmp/matterbridge-example-camera-main-head.json
-RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-example-camera.git . && \
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-camera.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \

@@ -29,6 +29,8 @@ import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import {
+  ClosureCoveringTag,
+  ClosurePanelTag,
   ClosureTag,
   ClosureWindowTag,
   CommodityTariffChronologyTag,
@@ -39,14 +41,18 @@ import {
   ElectricalMeasurementTag,
   PowerSourceTag,
   RefrigeratorTag,
+  SwitchesTag,
 } from '@matter/node';
 import { AirQuality } from '@matter/types/clusters/air-quality';
+import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
+import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { Thermostat } from '@matter/types/clusters/thermostat';
 import { EndpointNumber } from '@matter/types/datatype';
 import type { PlatformConfig, PlatformSchema } from '@matterbridge/types';
 import { getErrorMessage } from '@matterbridge/utils/error';
@@ -189,7 +195,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     type: demoPluginType,
     version: demoPluginVersion,
     description: 'Matterbridge demo devices',
-    author: 'Matterbridge',
+    author: 'https://github.com/Luligu',
     enabled: false,
     private: true,
     registeredDevices: 0,
@@ -357,8 +363,35 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultPowerSourceWiredClusterServer();
   await registerDevice(ep, 'Pump Controller', 'SWITCH-06-05');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
   ep.createDefaultPowerSourceBatteryClusterServer();
+  await ep.addFixedLabel('composed', 'GenericSwitch');
+  // Each button combines a Switches-domain function tag with a Common Number position tag, per the Generic
+  // Switch device type section's guidance on applying tags from multiple namespaces (Matter spec § 21).
+  ep.addChildDeviceType('Button1', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_1),
+    tagList: [getSemtag(SwitchesTag.On), getSemtag(CommonNumberTag.One)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
+  ep.addChildDeviceType('Button2', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_2),
+    tagList: [getSemtag(SwitchesTag.Off), getSemtag(CommonNumberTag.Two)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
+  ep.addChildDeviceType('Button3', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_3),
+    tagList: [getSemtag(SwitchesTag.Up), getSemtag(CommonNumberTag.Three)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
+  ep.addChildDeviceType('Button4', getSupportedDeviceType('GenericSwitch')!, {
+    number: EndpointNumber(6_06_4),
+    tagList: [getSemtag(SwitchesTag.Down), getSemtag(CommonNumberTag.Four)],
+  })
+    .createDefaultMomentarySwitchClusterServer()
+    .addRequiredClusters();
   await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06');
 
   // Chapter 7 - Sensor Devices
@@ -451,20 +484,44 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultPowerSourceBatteryClusterServer();
   await registerDevice(ep, 'Door Lock', 'ENTRY-08-01');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLockUserPin', number: EndpointNumber(8_01_1) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createUserPinDoorLockClusterServer();
+  await registerDevice(ep, 'Door Lock User PIN', 'ENTRY-08-01-1');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLockUserPinSchedules', number: EndpointNumber(8_01_2) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 3, 4);
+  await registerDevice(ep, 'Door Lock User PIN Schedules', 'ENTRY-08-01-2');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLock')!, bridgedNode, powerSource], { id: 'DoorLockUserPinExpiring', number: EndpointNumber(8_01_3) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, 10);
+  await registerDevice(ep, 'Door Lock User PIN Expiring', 'ENTRY-08-01-3');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DoorLockController')!, bridgedNode, powerSource], { id: 'DoorLockController', number: EndpointNumber(8_02) });
   await registerDevice(ep, 'Door Lock Controller', 'ENTRY-08-02');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCovering', number: EndpointNumber(8_03) });
-  await registerDevice(ep, 'Window Covering', 'ENTRY-08-03');
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringLift', number: EndpointNumber(8_03) });
+  ep.createDefaultWindowCoveringClusterServer(100_00, undefined, undefined, 10_000);
+  await registerDevice(ep, 'Window Covering Lift', 'ENTRY-08-03');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringTilt', number: EndpointNumber(8_03_1) });
-  ep.createDefaultLiftTiltWindowCoveringClusterServer();
+  ep.createDefaultTiltWindowCoveringClusterServer(100_00, undefined, undefined, 10_000);
   await registerDevice(ep, 'Window Covering Tilt', 'ENTRY-08-03-1');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCovering')!, bridgedNode, powerSource], { id: 'WindowCoveringLiftTilt', number: EndpointNumber(8_03_2) });
+  ep.createDefaultLiftTiltWindowCoveringClusterServer(100_00, 100_00, undefined, undefined, 10_000);
+  await registerDevice(ep, 'Window Covering LiftTilt', 'ENTRY-08-03-2');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('WindowCoveringController')!, bridgedNode, powerSource], { id: 'WindowCoveringController', number: EndpointNumber(8_04) });
   await registerDevice(ep, 'Window Covering Controller', 'ENTRY-08-04');
 
-  ep = new Closure('Closure', 'ENTRY-08-05', { id: 'Closure', number: EndpointNumber(8_05), movementDuration: 2000, calibrationDuration: 2000 });
+  ep = new Closure('Closure', 'ENTRY-08-05', {
+    id: 'Closure',
+    number: EndpointNumber(8_05),
+    movementDuration: 2000,
+  });
   await registerDevice(ep, 'Closure', 'ENTRY-08-05');
 
   ep = new Closure('Closure Pedestrian', 'ENTRY-08-05-1', {
@@ -472,6 +529,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_1),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     pedestrian: true,
     tagList: [getSemtag(ClosureTag.Gate)],
   });
@@ -482,6 +541,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_2),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     ventilation: true,
     tagList: [getSemtag(ClosureTag.Window), getSemtag(ClosureWindowTag.Facade)],
   });
@@ -492,6 +553,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_3),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     calibration: true,
     tagList: [getSemtag(ClosureTag.GarageDoor)],
   });
@@ -502,6 +565,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(8_05_4),
     movementDuration: 2000,
     calibrationDuration: 2000,
+    motionLatching: true,
+    speed: true,
     ventilation: true,
     pedestrian: true,
     calibration: true,
@@ -509,21 +574,51 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   });
   await registerDevice(ep, 'Closure Complete', 'ENTRY-08-05-4');
 
+  const closurePanelRoller = new Closure('Closure Panel Roller', 'ENTRY-08-06-1', {
+    id: 'ClosurePanelRoller',
+    number: EndpointNumber(8_06_1),
+    movementDuration: 2000,
+    signaturePosition: 50_00,
+    tagList: [getSemtag(ClosureTag.Covering)],
+  });
+  closurePanelRoller.addPanel('Roller', [getSemtag(ClosurePanelTag.Lift)], 'lift', { number: EndpointNumber(8_06_2), movementDuration: 2000 });
+  ep = closurePanelRoller;
+  await registerDevice(ep, 'Closure Panel Roller', 'ENTRY-08-06-1');
+
+  const closurePanelVenetian = new Closure('Closure Panel Venetian', 'ENTRY-08-06-3', {
+    id: 'ClosurePanelVenetian',
+    number: EndpointNumber(8_06_3),
+    movementDuration: 2000,
+    signaturePosition: 20_00,
+    tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],
+  });
+  closurePanelVenetian.addPanel('Venetian', [getSemtag(ClosurePanelTag.Tilt)], 'tilt', { number: EndpointNumber(8_06_4), movementDuration: 2000 });
+  ep = closurePanelVenetian;
+  await registerDevice(ep, 'Closure Panel Venetian', 'ENTRY-08-06-3');
+
+  const closurePanelSmartGlass = new Closure('Closure Panel Smart-Glass', 'ENTRY-08-06-5', {
+    id: 'ClosurePanelSmartGlass',
+    number: EndpointNumber(8_06_5),
+    movementDuration: 2000,
+    signaturePosition: 10_00,
+    tagList: [getSemtag(ClosureTag.Window)],
+  });
+  closurePanelSmartGlass.addPanel('Smart-Glass', [getSemtag(ClosurePanelTag.Lift, 'Opacity')], 'modulation', {
+    number: EndpointNumber(8_06_6),
+    modulationType: ClosureDimension.ModulationType.Opacity,
+    movementDuration: 2000,
+  });
+  ep = closurePanelSmartGlass;
+  await registerDevice(ep, 'Closure Panel Smart-Glass', 'ENTRY-08-06-5');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('ClosureController')!, bridgedNode, powerSource], { id: 'ClosureController', number: EndpointNumber(8_07) });
   await registerDevice(ep, 'Closure Controller', 'ENTRY-08-07');
 
   // Chapter 9 - HVAC Device Types
-  //
-  // The base Thermostat/Fan/AirPurifier/ThermostatController endpoints below rely entirely on
-  // addRequiredClusters()'s default automated helper (invoked via registerDevice()) to create their
-  // required Thermostat/FanControl server clusters with sensible defaults, so no explicit
-  // createDefault*ClusterServer() call is needed for those. The five extra Thermostat endpoints exercise
-  // the other Thermostat feature-set helpers (Heating-only, Cooling-only, Presets, MatterScheduleConfiguration,
-  // ThermostatSuggestions) that createDefaultThermostatClusterServer()'s Heating+Cooling+AutoMode default
-  // doesn't cover, so those call the matching explicit helper before registerDevice() runs.
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'Thermostat', number: EndpointNumber(9_01) });
-  await registerDevice(ep, 'Thermostat', 'HVAC-09-01');
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatAuto', number: EndpointNumber(9_01) });
+  ep.createDefaultThermostatClusterServer(23, 21, 25, 2, 0, 47, 3, 50);
+  await registerDevice(ep, 'Thermostat Auto', 'HVAC-09-01');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatHeating', number: EndpointNumber(9_01_1) });
   ep.createDefaultHeatingThermostatClusterServer();
@@ -542,7 +637,30 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   await registerDevice(ep, 'Thermostat Schedules', 'HVAC-09-01-4');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Thermostat')!, bridgedNode, powerSource], { id: 'ThermostatSuggestions', number: EndpointNumber(9_01_5) });
-  ep.createDefaultThermostatSuggestionsClusterServer();
+  ep.createDefaultThermostatSuggestionsClusterServer(
+    23,
+    21,
+    25,
+    0,
+    0,
+    50,
+    0,
+    50,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    null,
+    [
+      { presetHandle: Uint8Array.from([0]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: true },
+      { presetHandle: Uint8Array.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: true },
+    ],
+    // numberOfPresets per scenario left at 4 (above the 2 built-in presets above) so TC_TSTAT_4_2.py's AtomicRequest/Presets-write steps have room to add a preset on top of the pre-populated ones.
+    [
+      { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 4, presetTypeFeatures: { automatic: false, supportsNames: true } },
+      { presetScenario: Thermostat.PresetScenario.Unoccupied, numberOfPresets: 4, presetTypeFeatures: { automatic: false, supportsNames: true } },
+    ],
+  );
   await registerDevice(ep, 'Thermostat Suggestions', 'HVAC-09-01-5');
 
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('Fan')!, bridgedNode, powerSource], { id: 'Fan', number: EndpointNumber(9_02) });

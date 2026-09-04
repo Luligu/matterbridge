@@ -1,5 +1,5 @@
 ---
-description: 'Testing standards for unit tests in the project v.1.0.4'
+description: 'Testing standards for unit tests in the project v.1.0.5'
 paths:
   - '**/*.test.ts'
   - '**/*.spec.ts'
@@ -45,11 +45,12 @@ paths:
 
 ## 7. Running Tests
 
+- HARD RULE: never invoke `vitest` (or `tsc`/`oxlint`/`oxfmt` for the typecheck/lint/format side of validation) directly via `npx` or `node node_modules/...`. Always go through the matching `npm run` script or `tasks.json` task.
 - Run the relevant full test unit from start to finish rather than assuming isolated single-test execution is reliable.
 - If only one test framework is installed, use `npm run test -- yourTest.test.ts` or `npm run test:coverage -- yourTest.test.ts` when the touched area can be validated by running the full relevant test file.
 - When both Jest and Vitest are installed, use `npm run test -- yourTest.test.ts` for Jest or `npm run test:vitest -- yourTest.test.ts` for Vitest.
 - When Bun test is installed, use `bun test yourTest.test.ts`.
-- Use the existing `tasks.json` test tasks for areas that require grouped test files, custom coverage targets, or custom ignore-pattern handling.
+- Use the existing `tasks.json` test tasks for areas that require grouped test files, custom coverage targets, or custom ignore-pattern handling — this is required, not optional, when such a task exists for the touched area.
 - Avoid running all tests unnecessarily to save time and tokens.
 
 ## 8. Test Assertions

@@ -1507,8 +1507,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && isValidObject(attributeValue)) {
         const overallCurrentState = attributeValue as ClosureControl.OverallCurrentState;
         attributes += `Position: ${getEnumDescription(ClosureControl.CurrentPosition, overallCurrentState.position, { fallback: 'unknown' })} `;
-        attributes += `Latch: ${overallCurrentState.latch ?? 'unknown'} `;
-        attributes += `Speed: ${getEnumDescription(ThreeLevelAuto, overallCurrentState.speed, { fallback: 'unknown' })} `;
+        if (overallCurrentState.latch !== undefined) attributes += `Latch: ${overallCurrentState.latch} `;
+        if (overallCurrentState.speed !== undefined) attributes += `Speed: ${getEnumDescription(ThreeLevelAuto, overallCurrentState.speed)} `;
         attributes += `SecureState: ${overallCurrentState.secureState ?? 'unknown'} `;
       }
       if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
@@ -1569,6 +1569,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
       if (clusterName === 'hepaFilterMonitoring' && attributeName === 'condition') attributes += `Hepa filter: ${attributeValue}% `;
       if (clusterName === 'activatedCarbonFilterMonitoring' && attributeName === 'condition') attributes += `Carbon filter: ${attributeValue}% `;
+      if (clusterName === 'waterTankLevelMonitoring' && attributeName === 'condition') attributes += `Water tank: ${attributeValue}% `;
+
+      if (clusterName === 'temperatureAlarm' && attributeName === 'state' && isValidObject(attributeValue)) attributes += `Temp alarm: ${stringify(attributeValue)} `;
 
       if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion

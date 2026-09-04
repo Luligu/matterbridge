@@ -17,6 +17,7 @@ describe('main.tsx', () => {
     const root = document.createElement('div');
     root.id = 'root';
     document.body.appendChild(root);
+    vi.resetModules();
     let error;
     try {
       await import('../src/main');
@@ -26,5 +27,18 @@ describe('main.tsx', () => {
     expect(error).toBeUndefined();
     cleanup();
     document.body.removeChild(root);
+  });
+
+  it('throws when the root element is missing', async () => {
+    // No #root element appended to document.body
+    vi.resetModules();
+    let error: unknown;
+    try {
+      await import('../src/main');
+    } catch (e) {
+      error = e;
+    }
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe('Root element not found');
   });
 });

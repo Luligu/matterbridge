@@ -10,10 +10,12 @@
 # Not needed by the local build (saves ~150 MB of context)
 .agents
 .claude
+.codex
 .devcontainer
 .env
 .git
 .github
+**/buntest
 chip
 docker
 !docker/Dockerfile.local.node
@@ -26,6 +28,7 @@ scripts
 systemd
 **/vitest
 *.md
+temp
 
 # Dependencies
 **/node_modules/

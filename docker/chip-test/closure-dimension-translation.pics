@@ -1,0 +1,16 @@
+# To run tests on ClosureDimension --PICS is required
+# Matches the ClosureDimension server on the Closure Panel Roller panel, endpoint 8062 (lift/Translation shape:
+# Positioning + Translation features, no MotionLatching, no Speed) — see closure-dimension-rotation.pics
+# (endpoint 8064, tilt/Rotation shape) and closure-dimension-modulation.pics (endpoint 8066, Modulation shape)
+# for the other two panel shapes, all likewise with no MotionLatching and no Speed.
+PICS_SDK_CI_ONLY=1
+CLDIM.S=1
+CLDIM.S.F00=1 # Positioning
+CLDIM.S.F05=1 # Translation
+CLDIM.S.A0000=1 # CurrentState
+CLDIM.S.A0001=1 # TargetState
+CLDIM.S.A0002=1 # Resolution
+CLDIM.S.A0003=1 # StepValue
+CLDIM.S.A0007=1 # TranslationDirection
+CLDIM.S.C00.Rsp=1 # SetTarget
+CLDIM.S.C01.Rsp=1 # Step

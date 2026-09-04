@@ -85,6 +85,7 @@ import { ThermostatClient } from '@matter/node/behaviors/thermostat';
 import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabelServer } from '@matter/node/behaviors/user-label';
+import { WaterTankLevelMonitoringServer } from '@matter/node/behaviors/water-tank-level-monitoring';
 import { WindowCoveringClient } from '@matter/node/behaviors/window-covering';
 // @matter types
 import { type ClusterType, getClusterNameById } from '@matter/types/cluster';
@@ -136,12 +137,14 @@ import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { Switch } from '@matter/types/clusters/switch';
+import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import { TotalVolatileOrganicCompoundsConcentrationMeasurement } from '@matter/types/clusters/total-volatile-organic-compounds-concentration-measurement';
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { type ClusterId, NodeId, type VendorId } from '@matter/types/datatype';
 import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/types/globals';
@@ -149,6 +152,7 @@ import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray } from '@matterbridge/utils/validate';
+import { waiter } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
 
@@ -169,6 +173,7 @@ import { MatterbridgeOperationalStateServer } from './behaviors/operationalState
 import { MatterbridgePowerSourceServer } from './behaviors/powerSourceServer.js';
 import { MatterbridgePumpConfigurationAndControlServer } from './behaviors/pumpConfigurationAndControlServer.js';
 import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.js';
+import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
@@ -331,7 +336,7 @@ export function featuresFor(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
   const supportedBehavior = endpoint.behaviors.supported[lowercaseFirstLetter(behaviorId)];
   /* v8 ignore next -- This should never happen as the supported behavior is checked in getBehavior. */
   if (!supportedBehavior || !ClusterBehavior.isType(supportedBehavior)) return {};
-  return supportedBehavior.features ?? {};
+  return supportedBehavior.features;
 }
 
 /**
@@ -476,6 +481,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OperationalState.id) return MatterbridgeOperationalStateServer;
   if (clusterId === BooleanState.id) return BooleanStateServer.enable({ events: { stateChange: true } });
   if (clusterId === BooleanStateConfiguration.id) return MatterbridgeBooleanStateConfigurationServer;
+  if (clusterId === TemperatureAlarm.id) return MatterbridgeTemperatureAlarmServer;
   if (clusterId === PowerTopology.id) return PowerTopologyServer.with('TreeTopology');
   if (clusterId === ElectricalPowerMeasurement.id) return ElectricalPowerMeasurementServer.with('AlternatingCurrent');
   if (clusterId === ElectricalEnergyMeasurement.id) return ElectricalEnergyMeasurementServer.with('ImportedEnergy', 'ExportedEnergy', 'CumulativeEnergy');
@@ -489,6 +495,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === AirQuality.id) return AirQualityServer.with('Fair', 'Moderate', 'VeryPoor', 'ExtremelyPoor');
   if (clusterId === HepaFilterMonitoring.id) return HepaFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
   if (clusterId === ActivatedCarbonFilterMonitoring.id) return ActivatedCarbonFilterMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
+  if (clusterId === WaterTankLevelMonitoring.id) return WaterTankLevelMonitoringServer.with('Condition', 'Warning', 'ReplacementProductList');
   if (clusterId === CarbonMonoxideConcentrationMeasurement.id) return CarbonMonoxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === CarbonDioxideConcentrationMeasurement.id) return CarbonDioxideConcentrationMeasurementServer.with('NumericMeasurement');
   if (clusterId === NitrogenDioxideConcentrationMeasurement.id) return NitrogenDioxideConcentrationMeasurementServer.with('NumericMeasurement');
@@ -577,6 +584,7 @@ export function getBehavior(endpoint: MatterbridgeEndpoint, cluster: Behavior.Ty
  * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to invoke the command on.
  * @param {CommandHandlers} command - The command to invoke.
  * @param {Record<string, boolean | number | bigint | string | object | null>} [params] - The parameters to pass to the command.
+ * @param {() => boolean} [waiterCondition] - The condition to wait for after invoking the command.
  *
  * @returns {Promise<boolean>} A promise that resolves to true if the command was invoked successfully, false otherwise.
  *
@@ -587,6 +595,7 @@ export async function invokeBehaviorCommand(
   cluster: Behavior.Type | ClusterType | ClusterId | string,
   command: CommandHandlers,
   params?: Record<string, boolean | number | bigint | string | object | null>,
+  waiterCondition?: () => boolean,
 ): Promise<boolean> {
   const behaviorId = getBehavior(endpoint, cluster)?.id;
   if (!behaviorId) {
@@ -612,6 +621,16 @@ export async function invokeBehaviorCommand(
     // Without this, overriding behavior.context with a Proxy causes the reactor to create a duplicate RootReference.
     void behavior?.['state'];
 
+    // Mirror the real invoke path (matter.js ProtocolService): a behavior that locks on invoke takes its lock
+    // before the command runs, asynchronously, so a command issued while another transaction still holds that lock
+    // (e.g. a behavior timer callback scheduled with `{ lock: true }`) waits for it instead of failing with a
+    // synchronous-transaction-conflict on the first state write.
+    if ((endpoint.behaviors.supported[behaviorId] as ClusterBehavior.Type | undefined)?.lockOnInvoke) {
+      const transaction = agent.context.transaction;
+      await transaction.addResources(behavior as unknown as Parameters<typeof transaction.addResources>[0]);
+      await transaction.begin();
+    }
+
     // Inject fabric=1 and a node subject so behaviors that read context.fabric / context.subject (e.g. DoorLockServer) don't throw "Fabric required".
     const injectedSubject = { kind: 'node' as const, id: NodeId(100) };
     /* v8 ignore next -- This is only used in Jest tests, so we don't need to cover it in production. */
@@ -625,6 +644,7 @@ export async function invokeBehaviorCommand(
       delete (behavior as unknown as Record<string, unknown>).context;
     }
   });
+  if (invoked && waiterCondition) return await waiter(`invokeBehaviorCommand ${command}`, waiterCondition, false, 1000, 50);
   return invoked;
 }
 
@@ -742,6 +762,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(OperationalState.id)) endpoint.createDefaultOperationalStateClusterServer();
   if (serverList.includes(BooleanState.id)) endpoint.createDefaultBooleanStateClusterServer();
   if (serverList.includes(BooleanStateConfiguration.id)) endpoint.createDefaultBooleanStateConfigurationClusterServer();
+  if (serverList.includes(TemperatureAlarm.id)) endpoint.createDefaultTemperatureAlarmClusterServer();
   if (serverList.includes(PowerTopology.id)) endpoint.createDefaultPowerTopologyClusterServer();
   if (serverList.includes(ElectricalPowerMeasurement.id)) endpoint.createDefaultElectricalPowerMeasurementClusterServer();
   if (serverList.includes(ElectricalEnergyMeasurement.id)) endpoint.createDefaultElectricalEnergyMeasurementClusterServer();
@@ -755,6 +776,7 @@ export function addClusterServers(endpoint: MatterbridgeEndpoint, serverList: Cl
   if (serverList.includes(AirQuality.id)) endpoint.createDefaultAirQualityClusterServer();
   if (serverList.includes(HepaFilterMonitoring.id)) endpoint.createDefaultHepaFilterMonitoringClusterServer();
   if (serverList.includes(ActivatedCarbonFilterMonitoring.id)) endpoint.createDefaultActivatedCarbonFilterMonitoringClusterServer();
+  if (serverList.includes(WaterTankLevelMonitoring.id)) endpoint.createDefaultWaterTankLevelMonitoringClusterServer();
   if (serverList.includes(CarbonMonoxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonMonoxideConcentrationMeasurementClusterServer();
   if (serverList.includes(CarbonDioxideConcentrationMeasurement.id)) endpoint.createDefaultCarbonDioxideConcentrationMeasurementClusterServer();
   if (serverList.includes(NitrogenDioxideConcentrationMeasurement.id)) endpoint.createDefaultNitrogenDioxideConcentrationMeasurementClusterServer();

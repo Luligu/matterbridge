@@ -8,6 +8,7 @@ const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
+import { Status } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { wait } from '@matterbridge/utils/wait';
 import { setupTest } from '@matterbridge/vitest-utils';
@@ -26,6 +27,8 @@ import { LogLevel } from 'node-ansi-logger';
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
 import { doorLock } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
+import { expectCommand } from '../vitestUtils.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -33,9 +36,14 @@ await setupTest(NAME, false);
 describe('Client clusters and behaviors', () => {
   let lock: MatterbridgeEndpoint;
   let userPinDoorLock: MatterbridgeEndpoint;
+  let scheduleDoorLock: MatterbridgeEndpoint;
 
   function supportedDoorLockServer(): typeof MatterbridgeDoorLockServer {
     return userPinDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+  }
+
+  function supportedScheduleDoorLockServer(): typeof MatterbridgeDoorLockServer {
+    return scheduleDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
   }
 
   beforeAll(async () => {
@@ -140,6 +148,104 @@ describe('Client clusters and behaviors', () => {
     expect(userPinDoorLock.behaviors.has(userPinDoorLock.behaviors.supported.doorLock)).toBe(true);
     expect(userPinDoorLock.getAttribute(DoorLock, 'requirePinForRemoteOperation')).toBe(undefined);
     expect(userPinDoorLock.getAttribute(DoorLock, 'numberOfTotalUsersSupported')).toBe(10);
+  });
+
+  test('DoorLock forwards week day, year day, and holiday schedule commands', async () => {
+    scheduleDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'scheduleDoorLock' });
+    scheduleDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 2, 2);
+    scheduleDoorLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, scheduleDoorLock)).toBeDefined();
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Scheduled User',
+      userUniqueId: 100,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+
+    const weekDayRequest: DoorLock.SetWeekDayScheduleRequest = {
+      weekDayIndex: 1,
+      userIndex: 1,
+      daysMask: new DoorLock.DaysMask({ monday: true }),
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+    };
+    const yearDayRequest: DoorLock.SetYearDayScheduleRequest = {
+      yearDayIndex: 1,
+      userIndex: 1,
+      localStartTime: 1_000,
+      localEndTime: 2_000,
+    };
+    const holidayRequest: DoorLock.SetHolidayScheduleRequest = {
+      holidayIndex: 1,
+      localStartTime: 3_000,
+      localEndTime: 4_000,
+      operatingMode: DoorLock.OperatingMode.Vacation,
+    };
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', weekDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', yearDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', holidayRequest);
+
+    const scheduleServer = supportedScheduleDoorLockServer();
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getWeekDaySchedule({ weekDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.Success,
+      startHour: 8,
+      endHour: 17,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getYearDaySchedule({ yearDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.Success,
+      localStartTime: 1_000,
+      localEndTime: 2_000,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getHolidaySchedule({ holidayIndex: 1 }))).toMatchObject({
+      status: Status.Success,
+      operatingMode: DoorLock.OperatingMode.Vacation,
+    });
+
+    const handlers = {
+      setWeekDay: vi.fn(),
+      getWeekDay: vi.fn(() => ({ weekDayIndex: 1, userIndex: 1, status: Status.NotFound })),
+      clearWeekDay: vi.fn(),
+      setYearDay: vi.fn(),
+      getYearDay: vi.fn(() => ({ yearDayIndex: 1, userIndex: 1, status: Status.NotFound })),
+      clearYearDay: vi.fn(),
+      setHoliday: vi.fn(),
+      getHoliday: vi.fn(() => ({ holidayIndex: 1, status: Status.NotFound })),
+      clearHoliday: vi.fn(),
+    };
+    scheduleDoorLock.addCommandHandler('DoorLock.setWeekDaySchedule', handlers.setWeekDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.getWeekDaySchedule', handlers.getWeekDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.clearWeekDaySchedule', handlers.clearWeekDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.setYearDaySchedule', handlers.setYearDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.getYearDaySchedule', handlers.getYearDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.clearYearDaySchedule', handlers.clearYearDay);
+    scheduleDoorLock.addCommandHandler('DoorLock.setHolidaySchedule', handlers.setHoliday);
+    scheduleDoorLock.addCommandHandler('DoorLock.getHolidaySchedule', handlers.getHoliday);
+    scheduleDoorLock.addCommandHandler('DoorLock.clearHolidaySchedule', handlers.clearHoliday);
+
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', weekDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', yearDayRequest);
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', holidayRequest);
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getWeekDaySchedule({ weekDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.NotFound,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getYearDaySchedule({ yearDayIndex: 1, userIndex: 1 }))).toMatchObject({
+      status: Status.NotFound,
+    });
+    expect(await scheduleDoorLock.act(async (agent) => agent.get(scheduleServer).getHolidaySchedule({ holidayIndex: 1 }))).toMatchObject({
+      status: Status.NotFound,
+    });
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', { weekDayIndex: 1, userIndex: 1 });
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', { yearDayIndex: 1, userIndex: 1 });
+    await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', { holidayIndex: 1 });
+
+    for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalledTimes(1);
   });
 
   test('User PIN set and modify user', async () => {
@@ -269,6 +375,71 @@ describe('Client clusters and behaviors', () => {
       sourceNode: null,
       dataIndex: 0xfffe,
     });
+  });
+
+  test('User RFID set and clear credential', async () => {
+    const rfidDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'rfidDoorLock' });
+    rfidDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 5);
+    rfidDoorLock.addRequiredClusterServers();
+    expect(await addDevice(aggregator, rfidDoorLock)).toBeDefined();
+
+    const rfidDoorLockServer = rfidDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+    expect(rfidDoorLock.getAttribute(DoorLock, 'numberOfRfidUsersSupported')).toBe(5);
+    expect(rfidDoorLock.getAttribute(DoorLock, 'minRfidCodeLength')).toBe(8);
+    expect(rfidDoorLock.getAttribute(DoorLock, 'maxRfidCodeLength')).toBe(20);
+
+    const rfidTag = Buffer.from('04A224B21C6E80', 'ascii'); // 14-byte ASCII-hex representation of a 7-byte ISO 14443A UID; within the default [8, 20] range.
+
+    await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'RFID User',
+      userUniqueId: 100,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 },
+      credentialData: rfidTag,
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    });
+    const createdCredential = await rfidDoorLock.act(async (agent) =>
+      agent.get(rfidDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } }),
+    );
+    expect(createdCredential).toMatchObject({ credentialExists: true, userIndex: 1 });
+
+    await rfidDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } });
+    const clearedCredential = await rfidDoorLock.act(async (agent) =>
+      agent.get(rfidDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } }),
+    );
+    expect(clearedCredential).toMatchObject({ credentialExists: false, userIndex: null });
+  });
+
+  test('User PIN returns duplicate and occupied credential statuses', async () => {
+    const credential = { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 };
+    const request = {
+      operationType: DoorLock.DataOperationType.Add,
+      credential,
+      credentialData: Buffer.from('1234'),
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    };
+
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', request);
+
+    await expect(
+      userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).setCredential({ ...request, credential: { ...credential, credentialIndex: 2 } })),
+    ).rejects.toMatchObject({ code: Status.Failure, clusterCode: DoorLock.StatusCode.Duplicate });
+    await expect(
+      userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).setCredential({ ...request, credentialData: Buffer.from('5678') })),
+    ).rejects.toMatchObject({ code: Status.Failure, clusterCode: DoorLock.StatusCode.Occupied });
+
+    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: null });
   });
 
   test('User PIN clear user', async () => {
@@ -433,6 +604,45 @@ describe('Client clusters and behaviors', () => {
     ).toMatchObject({
       credentialExists: false,
       userIndex: null,
+    });
+  });
+
+  describe('Matterbridge command handler forwarding', () => {
+    let lock: MatterbridgeEndpoint;
+
+    test('Device type: doorLock', async () => {
+      lock = new MatterbridgeEndpoint(doorLock, { id: 'doorLock' });
+      lock.addRequiredClusterServers();
+      expect(lock).toBeDefined();
+      expect(await addDevice(aggregator, lock)).toBeTruthy();
+      // Disable timeout for testing, to avoid flaky tests
+      const internal = await internalFor(lock, MatterbridgeDoorLockServer);
+      expect(internal).toBeDefined();
+      if (!internal) throw new Error('MatterbridgeDoorLockServer internal state not found');
+      if ((internal as any).enableTimeout !== undefined) (internal as any).enableTimeout = false;
+    });
+
+    test('DoorLock server', async () => {
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Locked);
+      expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('lockDoor')).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockDoor')).toBeTruthy();
+      expect(lock.behaviors.elementsOf(MatterbridgeDoorLockServer.with()).commands.has('unlockWithTimeout')).toBeTruthy();
+
+      await expectCommand(lock, DoorLock, 'DoorLock.unlockDoor', {}, (data) => {
+        expect(data.cluster).toBe('doorLock');
+      });
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Unlocked);
+
+      await expectCommand(lock, DoorLock, 'DoorLock.lockDoor', {}, (data) => {
+        expect(data.cluster).toBe('doorLock');
+      });
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Locked);
+
+      await expectCommand(lock, DoorLock, 'DoorLock.unlockWithTimeout', { timeout: 5 }, (data) => {
+        expect(data.cluster).toBe('doorLock');
+      });
+      expect(lock.getCluster(DoorLock)?.lockState).toBe(DoorLock.LockState.Unlocked);
     });
   });
 });

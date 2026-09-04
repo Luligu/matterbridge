@@ -2034,7 +2034,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         await this.nodeContext?.set('lastShutdownAt', this.shutdownAt);
         this.log.info(`Matterbridge has run ${CYAN}${this.runningTimes}${nf} times for a total of ${CYAN}${this.runningDays}${nf} days`);
         this.log.info(
-          `Matterbridge last started at  ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf} and shut down at ${CYAN}${new Date(this.shutdownAt).toLocaleString()}${nf}`,
+          `Matterbridge last started at ${CYAN}${new Date(this.startupAt).toLocaleString()}${nf} and shut down at ${CYAN}${new Date(this.shutdownAt).toLocaleString()}${nf}`,
         );
       }
 
@@ -3005,7 +3005,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
-    let rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    let rootEndpoint;
+    if (hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST) {
+      this.log.warn(' ****************************************************************************************');
+      this.log.warn(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+      this.log.warn(' ****************************************************************************************');
+      rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+    } else {
+      rootEndpoint = ServerNode.RootEndpoint;
+    }
     // v8 ignore if - No test cause is just chip test entry point for the TestEventTrigger on GeneralDiagnostics.
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
       this.log.warn(' ****************************************************************************************');
@@ -3076,13 +3084,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         reachable: true,
       },
 
-      powerSource: {
-        status: PowerSource.PowerSourceStatus.Active,
-        order: 0,
-        description: 'AC Power',
-        endpointList: [],
-        wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-      },
+      ...(hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST
+        ? {
+            powerSource: {
+              status: PowerSource.PowerSourceStatus.Active,
+              order: 0,
+              description: 'AC Power',
+              endpointList: [],
+              wiredCurrentType: PowerSource.WiredCurrentType.Ac,
+            },
+          }
+        : {}),
     });
 
     /**

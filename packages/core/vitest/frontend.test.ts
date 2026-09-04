@@ -564,6 +564,12 @@ describe('Matterbridge frontend', () => {
     expect(text).toContain('ESA state: Online');
     expect(text).toContain('Mode: No Energy Management');
 
+    const defaultClosureControlText = runTuples([['closureControl', 0x104, 'overallCurrentState', 0, { position: 0, secureState: true }]]);
+    expect(defaultClosureControlText).toContain('Position: FullyClosed');
+    expect(defaultClosureControlText).not.toContain('Latch:');
+    expect(defaultClosureControlText).not.toContain('Speed:');
+    expect(defaultClosureControlText).toContain('SecureState: true');
+
     const nullMeasurements = runTuples([
       ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],
       ['closureControl', 0x104, 'overallCurrentState', 0, null],

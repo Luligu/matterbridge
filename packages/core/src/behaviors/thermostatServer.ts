@@ -25,7 +25,7 @@
 
 import { Bytes } from '@matter/general';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
-import { StatusResponse } from '@matter/types';
+import { Status, StatusResponseError } from '@matter/types';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -90,21 +90,25 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     const currentSuggestions = [...this.state.thermostatSuggestions];
     const remainingSuggestions = currentSuggestions.filter((s) => !removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
     const currentSuggestion = this.state.currentThermostatSuggestion;
-    // Point 1 of the spec's "Effect on Receipt" nulls CurrentThermostatSuggestion whenever its own PresetHandle was
-    // removed, independently of whether any ThermostatSuggestions entry was removed (e.g. the list is already empty,
-    // or none of its entries reference the removed preset).
+    // Matter 1.6.0 § 4.3.11.50: on commit of a Presets removal, CurrentThermostatSuggestion is nulled whenever its own
+    // PresetHandle was removed, independently of whether any ThermostatSuggestions entry was removed (e.g. the list is
+    // already empty, or none of its entries reference the removed preset).
     const clearCurrentSuggestion = currentSuggestion !== null && removedPresetHandles.has(Bytes.toHex(currentSuggestion.presetHandle));
     if (remainingSuggestions.length === currentSuggestions.length && !clearCurrentSuggestion) return;
 
     const device = this.endpoint.stateOf(MatterbridgeServer);
     if (remainingSuggestions.length !== currentSuggestions.length) {
       device.log.info(
-        `Removing ${currentSuggestions.length - remainingSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        `MatterbridgeThermostatServer: removing ${currentSuggestions.length - remainingSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
+      // Matter 1.6.0 § 4.3.11.50: on commit of a Presets removal, delete any ThermostatSuggestions entries whose PresetHandle matches the removed preset.
       this.state.thermostatSuggestions = remainingSuggestions;
     }
     if (clearCurrentSuggestion) {
-      device.log.info(`Clearing current thermostat suggestion referencing a removed preset (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      device.log.info(
+        `MatterbridgeThermostatServer: clearing current thermostat suggestion referencing a removed preset (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
+      // Matter 1.6.0 § 4.3.11.50: on commit of a Presets removal, set CurrentThermostatSuggestion to null when its PresetHandle matches the removed preset.
       this.state.currentThermostatSuggestion = null;
       this.state.thermostatSuggestionNotFollowingReason = null;
     }
@@ -117,7 +121,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
    */
   override async setpointRaiseLower(request: Thermostat.SetpointRaiseLowerRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeThermostatServer: setting setpoint by ${request.amount} in mode ${request.mode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.setpointRaiseLower', {
       command: 'setpointRaiseLower',
       request,
@@ -127,7 +131,9 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       context: this.context,
     });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
-    device.log.debug(`MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10}`);
+    device.log.debug(
+      `MatterbridgeThermostatServer: setpointRaiseLower called with mode: ${lookupSetpointAdjustMode[request.mode]} amount: ${request.amount / 10} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.setpointRaiseLower(request);
   }
 
@@ -139,7 +145,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   override async setActivePresetRequest(request: Thermostat.SetActivePresetRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const presetHandle = request.presetHandle ? `0x${Buffer.from(request.presetHandle).toString('hex')}` : 'null';
-    device.log.info(`Setting preset to ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeThermostatServer: setting preset to ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.setActivePresetRequest', {
       command: 'setActivePresetRequest',
       request,
@@ -148,11 +154,13 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle}`);
+    device.log.debug(
+      `MatterbridgeThermostatServer: setActivePresetRequest called with presetHandle: ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.setActivePresetRequest(request);
     const activePresetHandle = this.state.activePresetHandle ? `0x${Buffer.from(this.state.activePresetHandle).toString('hex')}` : 'null';
     device.log.debug(
-      `MatterbridgeThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint}`,
+      `MatterbridgeThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -168,7 +176,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   override async setActiveScheduleRequest(request: Thermostat.SetActiveScheduleRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const scheduleHandle = `0x${Buffer.from(request.scheduleHandle).toString('hex')}`;
-    device.log.info(`Setting schedule to ${scheduleHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeThermostatServer: setting schedule to ${scheduleHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.setActiveScheduleRequest', {
       command: 'setActiveScheduleRequest',
       request,
@@ -178,11 +186,18 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       context: this.context,
     });
     const schedule = this.state.schedules.find((s) => s.scheduleHandle !== null && Bytes.areEqual(s.scheduleHandle, request.scheduleHandle));
+    // Matter 1.6.0 § 4.3.12.2.2: reject with INVALID_COMMAND if no Schedules entry has a ScheduleHandle matching the request.
     if (schedule === undefined) {
-      throw new StatusResponse.InvalidCommandError('Requested ScheduleHandle not found');
+      throw new StatusResponseError(
+        `MatterbridgeThermostatServer: requested ScheduleHandle not found (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidCommand,
+      );
     }
+    // Matter 1.6.0 § 4.3.12.2.2: set ActiveScheduleHandle to the value of the matching ScheduleHandle field.
     this.state.activeScheduleHandle = Uint8Array.from(request.scheduleHandle);
-    device.log.debug(`MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle}`);
+    device.log.debug(
+      `MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
   }
 
   /**
@@ -230,7 +245,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   override async addThermostatSuggestion(request: Thermostat.AddThermostatSuggestionRequest): Promise<Thermostat.AddThermostatSuggestionResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const presetHandle = `0x${Buffer.from(request.presetHandle).toString('hex')}`;
-    device.log.info(`Adding thermostat suggestion for preset ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeThermostatServer: adding thermostat suggestion for preset ${presetHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.addThermostatSuggestion', {
       command: 'addThermostatSuggestion',
       request,
@@ -239,34 +254,50 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
+    // Matter 1.6.0 § 4.3.12.4.4: reject with NOT_FOUND if the PresetHandle does not match an entry in Presets.
     if (this.state.presets.find((p) => p.presetHandle !== null && Bytes.areEqual(p.presetHandle, request.presetHandle)) === undefined) {
-      throw new StatusResponse.NotFoundError('Requested PresetHandle not found');
+      throw new StatusResponseError(
+        `MatterbridgeThermostatServer: requested PresetHandle not found (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.NotFound,
+      );
     }
     // Remove expired suggestions before checking capacity, so a list full of stale entries does not block a valid add.
     // Re-evaluate immediately after pruning so CurrentThermostatSuggestion/ActivePresetHandle stay consistent even if a
     // later validation (capacity, EffectiveTime) rejects this command.
     this.removeExpiredThermostatSuggestions();
     this.reEvaluateCurrentThermostatSuggestion();
+    // Matter 1.6.0 § 4.3.12.4.4: reject with RESOURCE_EXHAUSTED if ThermostatSuggestions already holds MaxThermostatSuggestions entries.
     if (this.state.thermostatSuggestions.length >= this.state.maxThermostatSuggestions) {
-      throw new StatusResponse.ResourceExhaustedError('Maximum number of thermostat suggestions reached');
+      throw new StatusResponseError(
+        `MatterbridgeThermostatServer: maximum number of thermostat suggestions reached (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.ResourceExhausted,
+      );
     }
     const currentTime = Math.floor(Date.now() / 1000);
+    // Matter 1.6.0 § 4.3.12.4.4: default EffectiveTime to the current time in UTC when the request field is null.
     const effectiveTime = request.effectiveTime ?? currentTime;
+    // Matter 1.6.0 § 4.3.12.4.4: reject with INVALID_COMMAND if EffectiveTime is more than 24 hours in the future.
     if (effectiveTime > currentTime + 24 * 60 * 60) {
-      throw new StatusResponse.InvalidCommandError('EffectiveTime cannot be more than 24 hours in the future');
+      throw new StatusResponseError(
+        `MatterbridgeThermostatServer: requested EffectiveTime is more than 24 hours in the future (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidCommand,
+      );
     }
     const usedUniqueIds = new Set(this.state.thermostatSuggestions.map((s) => s.uniqueId));
     let uniqueId = 0;
+    // Matter 1.6.0 § 4.3.12.4.4: generate a UniqueID distinct from every existing ThermostatSuggestions entry.
     while (usedUniqueIds.has(uniqueId)) uniqueId++;
     const suggestion: Thermostat.ThermostatSuggestion = {
       uniqueId,
       presetHandle: Uint8Array.from(request.presetHandle),
       effectiveTime,
+      // Matter 1.6.0 § 4.3.12.4.4: set ExpirationTime to EffectiveTime plus ExpirationInMinutes converted to seconds.
       expirationTime: effectiveTime + request.expirationInMinutes * 60,
     };
+    // Matter 1.6.0 § 4.3.12.4.4: append the new entry to the ThermostatSuggestions attribute.
     this.state.thermostatSuggestions = [...this.state.thermostatSuggestions, suggestion];
     this.reEvaluateCurrentThermostatSuggestion();
-    device.log.debug(`MatterbridgeThermostatServer: addThermostatSuggestion completed with uniqueId: ${uniqueId}`);
+    device.log.debug(`MatterbridgeThermostatServer: addThermostatSuggestion completed with uniqueId: ${uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     return { uniqueId };
   }
 
@@ -282,7 +313,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
    */
   override async removeThermostatSuggestion(request: Thermostat.RemoveThermostatSuggestionRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Removing thermostat suggestion ${request.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeThermostatServer: removing thermostat suggestion ${request.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Thermostat.removeThermostatSuggestion', {
       command: 'removeThermostatSuggestion',
       request,
@@ -292,12 +323,16 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       context: this.context,
     });
     const suggestion = this.state.thermostatSuggestions.find((s) => s.uniqueId === request.uniqueId);
+    // Matter 1.6.0 § 4.3.12.6.2: reject with NOT_FOUND if no ThermostatSuggestions entry matches the requested UniqueID.
     if (suggestion === undefined) {
-      throw new StatusResponse.NotFoundError('Requested UniqueID not found');
+      throw new StatusResponseError(`MatterbridgeThermostatServer: requested UniqueID not found (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.NotFound);
     }
+    // Matter 1.6.0 § 4.3.12.6.2: remove the matching entry from the ThermostatSuggestions attribute.
     this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => s.uniqueId !== request.uniqueId);
     this.removeExpiredThermostatSuggestions();
     this.reEvaluateCurrentThermostatSuggestion();
-    device.log.debug(`MatterbridgeThermostatServer: removeThermostatSuggestion completed for uniqueId: ${request.uniqueId}`);
+    device.log.debug(
+      `MatterbridgeThermostatServer: removeThermostatSuggestion completed for uniqueId: ${request.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
   }
 }

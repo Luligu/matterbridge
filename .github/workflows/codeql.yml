@@ -2,7 +2,7 @@ name: CodeQL
 
 on:
   push:
-    branches: [main]
+    branches: [main, dev]
     paths-ignore:
       - 'docs/**' # any file under docs/
       - 'screenshots/**' # any file under screenshots/
@@ -15,7 +15,7 @@ on:
       - '**/*.test.ts' # any .test.ts anywhere
       - '**/__test__/*.ts' # any .ts under __test__
   pull_request:
-    branches: [main]
+    branches: [main, dev]
     paths-ignore:
       - 'docs/**' # any file under docs/
       - 'screenshots/**' # any file under screenshots/

@@ -231,6 +231,8 @@ describe('Matterbridge', () => {
     clearInterval((matterbridge as any).checkUpdateInterval);
 
     expect(matterbridge.serverNode).toBeDefined();
+    // Without --root-power-source, the Root endpoint SHALL NOT expose a Power Source cluster.
+    expect(matterbridge.serverNode?.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBeFalsy();
     expect(matterbridge.aggregatorNode).toBeDefined();
     expect(matterbridge.matterStorageManager).toBeDefined();
     expect(matterbridge.matterStorageService).toBeDefined();
@@ -417,7 +419,9 @@ describe('Matterbridge', () => {
     expect(matterbridge.matterbridgeContext).toBeDefined();
     if (!matterbridge.matterbridgeContext) return;
 
+    process.argv.push('--root-power-source');
     const invalidServerNode = await (matterbridge as any).createServerNode(matterbridge.matterbridgeContext, MATTER_PORT + 1, -1, 0x1000);
+    process.argv.splice(process.argv.indexOf('--root-power-source'), 1);
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
@@ -426,6 +430,7 @@ describe('Matterbridge', () => {
     expect(invalidServerNode.state.powerSource.order).toBe(0);
     expect(invalidServerNode.state.powerSource.endpointList).toEqual([]);
     expect(invalidServerNode.state.powerSource.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(' * Adding the PowerSource cluster server to the root endpoint.                           *');
     expect(loggerWarnSpy).toHaveBeenCalledWith('Invalid passcode -1 for server node Matterbridge. Passcode must be between 0 and 99999999. Generating a random passcode...');
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid discriminator 4096 for server node Matterbridge. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...',
