@@ -155,6 +155,8 @@ function QRDiv({ id }: QRDivProps) {
         document.body.appendChild(textarea);
         textarea.focus();
         textarea.select();
+        // Retain execCommand only as a legacy fallback for browsers or non-secure contexts where the async Clipboard API is unavailable.
+        // oxlint-disable-next-line typescript/no-deprecated
         document.execCommand('copy');
         document.body.removeChild(textarea);
       }

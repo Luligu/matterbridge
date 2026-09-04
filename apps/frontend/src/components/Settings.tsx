@@ -476,11 +476,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             size="small"
             variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
-            InputProps={{
-              readOnly: matterbridgeInfo.readOnly,
-              style: {
-                height: '30px',
-                padding: '0',
+            slotProps={{
+              input: {
+                readOnly: matterbridgeInfo.readOnly,
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
               },
             }}
           />
@@ -493,11 +495,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             size="small"
             variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
-            InputProps={{
-              readOnly: matterbridgeInfo.readOnly,
-              style: {
-                height: '30px',
-                padding: '0',
+            slotProps={{
+              input: {
+                readOnly: matterbridgeInfo.readOnly,
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
               },
             }}
           />
@@ -510,11 +514,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             size="small"
             variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
-            InputProps={{
-              readOnly: matterbridgeInfo.readOnly,
-              style: {
-                height: '30px',
-                padding: '0',
+            slotProps={{
+              input: {
+                readOnly: matterbridgeInfo.readOnly,
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
               },
             }}
           />
@@ -527,11 +533,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             size="small"
             variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
-            InputProps={{
-              readOnly: matterbridgeInfo.readOnly,
-              style: {
-                height: '30px',
-                padding: '0',
+            slotProps={{
+              input: {
+                readOnly: matterbridgeInfo.readOnly,
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
               },
             }}
           />
@@ -544,11 +552,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             size="small"
             variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
-            InputProps={{
-              readOnly: matterbridgeInfo.readOnly,
-              style: {
-                height: '30px',
-                padding: '0',
+            slotProps={{
+              input: {
+                readOnly: matterbridgeInfo.readOnly,
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
               },
             }}
           />
@@ -561,11 +571,13 @@ function MatterSettings({ matterbridgeInfo }: { matterbridgeInfo: MatterbridgeIn
             size="small"
             variant="outlined"
             style={{ height: '30px', flexGrow: 1 }}
-            InputProps={{
-              readOnly: matterbridgeInfo.readOnly,
-              style: {
-                height: '30px',
-                padding: '0',
+            slotProps={{
+              input: {
+                readOnly: matterbridgeInfo.readOnly,
+                style: {
+                  height: '30px',
+                  padding: '0',
+                },
               },
             }}
           />

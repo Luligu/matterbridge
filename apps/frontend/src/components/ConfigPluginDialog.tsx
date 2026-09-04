@@ -625,11 +625,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         <Dialog
           open={dialogDeviceOpen}
           onClose={handleDialogDeviceToggle}
-          PaperProps={{
-            sx: {
-              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-              overflow: 'auto', // Allow scrolling for overflowing content
+          slotProps={{
+            paper: {
+              sx: {
+                maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+                maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+                overflow: 'auto', // Allow scrolling for overflowing content
+              },
             },
           }}
         >
@@ -665,8 +667,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                     <ListItemText
                       primary={value.name}
                       secondary={value.serial}
-                      primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
-                      secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                      slotProps={{ primary: { style: listItemTextPrimaryStyle }, secondary: { style: listItemTextSecondaryStyle } }}
                     />
                   </ListItemButton>
                 ))}
@@ -681,11 +682,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         <Dialog
           open={dialogEntityOpen}
           onClose={handleDialogEntityToggle}
-          PaperProps={{
-            sx: {
-              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-              overflow: 'auto', // Allow scrolling for overflowing content
+          slotProps={{
+            paper: {
+              sx: {
+                maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+                maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+                overflow: 'auto', // Allow scrolling for overflowing content
+              },
             },
           }}
         >
@@ -731,8 +734,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                     <ListItemText
                       primary={value.name}
                       secondary={value.description}
-                      primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
-                      secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                      slotProps={{ primary: { style: listItemTextPrimaryStyle }, secondary: { style: listItemTextSecondaryStyle } }}
                     />
                   </ListItemButton>
                 ))}
@@ -747,11 +749,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         <Dialog
           open={dialogDeviceEntityOpen}
           onClose={handleDialogDeviceEntityToggle}
-          PaperProps={{
-            sx: {
-              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-              overflow: 'auto', // Allow scrolling for overflowing content
+          slotProps={{
+            paper: {
+              sx: {
+                maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+                maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+                overflow: 'auto', // Allow scrolling for overflowing content
+              },
             },
           }}
         >
@@ -798,8 +802,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                         <ListItemText
                           primary={entity.name}
                           secondary={entity.description}
-                          primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
-                          secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                          slotProps={{ primary: { style: listItemTextPrimaryStyle }, secondary: { style: listItemTextSecondaryStyle } }}
                         />
                       </ListItemButton>
                     ));
@@ -916,11 +919,13 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         <Dialog
           open={dialogDeviceOpen}
           onClose={handleDialogDeviceToggle}
-          PaperProps={{
-            sx: {
-              maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
-              maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
-              overflow: 'auto', // Allow scrolling for overflowing content
+          slotProps={{
+            paper: {
+              sx: {
+                maxHeight: '50vh', // Set the maximum height to 50% of the viewport height
+                maxWidth: '50vw', // Set the maximum width to 50% of the viewport width
+                overflow: 'auto', // Allow scrolling for overflowing content
+              },
             },
           }}
         >
@@ -955,8 +960,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
                     <ListItemText
                       primary={value.name}
                       secondary={value.serial}
-                      primaryTypographyProps={{ style: listItemTextPrimaryStyle }}
-                      secondaryTypographyProps={{ style: listItemTextSecondaryStyle }}
+                      slotProps={{ primary: { style: listItemTextPrimaryStyle }, secondary: { style: listItemTextSecondaryStyle } }}
                     />
                   </ListItemButton>
                 ))}

@@ -84,7 +84,7 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
     [setLoggedIn],
   );
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     void logIn(password);
   };

@@ -565,7 +565,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Home page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Home page" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {enableMobile && mobile && (
@@ -573,7 +573,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Devices page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Devices page" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {enableMobile && mobile && (
@@ -581,7 +581,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Logs page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Logs page" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {enableMobile && mobile && (
@@ -589,7 +589,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Settings page" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Settings page" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
@@ -597,7 +597,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Install latest stable" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Install latest stable" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
@@ -605,7 +605,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Install latest dev" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Install latest dev" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && !settings.matterbridgeInformation.readOnly && (
@@ -613,7 +613,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Check for updates" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Check for updates" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate && (
@@ -621,7 +621,7 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Shelly system update" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Shelly system update" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate && (
@@ -629,21 +629,21 @@ function Header() {
               <ListItemIcon>
                 <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Shelly software update" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Shelly software update" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           <MenuItem onClick={() => handleMenuCloseConfirm('restart')}>
             <ListItemIcon>
               <RestartAltIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary="Restart" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Restart" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
           </MenuItem>
           {settings.matterbridgeInformation.restartMode === 'none' ? (
             <MenuItem onClick={() => handleMenuCloseConfirm('shutdown')}>
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Shutdown" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Shutdown" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           ) : null}
           {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -655,7 +655,7 @@ function Header() {
               <ListItemIcon>
                 <RestartAltIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Reboot..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reboot..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
           <Divider />
@@ -664,7 +664,7 @@ function Header() {
             <ListItemIcon>
               <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary="View" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="View" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
           </MenuItem>
           <Menu
             id="sub-menu-view"
@@ -685,7 +685,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Desktop site" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Desktop site" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -698,7 +698,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Mobile site" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Mobile site" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -709,7 +709,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -720,7 +720,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matter log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matter log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -731,7 +731,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge diagnostic log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge diagnostic log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -742,7 +742,7 @@ function Header() {
               <ListItemIcon>
                 <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge system history" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge system history" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
               <MenuItem
@@ -754,7 +754,7 @@ function Header() {
                 <ListItemIcon>
                   <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary="Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Shelly system log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
               </MenuItem>
             )}
           </Menu>
@@ -764,7 +764,7 @@ function Header() {
             <ListItemIcon>
               <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary="Download" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Download" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
           </MenuItem>
           <Menu
             id="sub-menu-download"
@@ -783,7 +783,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge storage" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -794,7 +794,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge plugins storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge plugins storage" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -805,7 +805,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge plugins config" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge plugins config" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -816,7 +816,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -827,7 +827,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matter storage" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matter storage" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -838,7 +838,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matter log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matter log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -849,7 +849,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge diagnostic log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge diagnostic log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -860,7 +860,7 @@ function Header() {
               <ListItemIcon>
                 <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Matterbridge system history" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Matterbridge system history" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
 
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -873,7 +873,7 @@ function Header() {
                 <ListItemIcon>
                   <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary="Create Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Create Shelly system log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
               </MenuItem>
             )}
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -886,7 +886,7 @@ function Header() {
                 <ListItemIcon>
                   <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary="Download Shelly system log" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Download Shelly system log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
               </MenuItem>
             )}
           </Menu>
@@ -900,7 +900,7 @@ function Header() {
             <ListItemIcon>
               <SaveIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary="Backup" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Backup" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
           </MenuItem>
 
           <Divider />
@@ -908,7 +908,7 @@ function Header() {
             <ListItemIcon>
               <ReportProblemIcon style={{ color: 'var(--main-icon-color)' }} />
             </ListItemIcon>
-            <ListItemText primary="Reset" primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+            <ListItemText primary="Reset" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
           </MenuItem>
           <Menu
             id="sub-menu-reset"
@@ -933,7 +933,7 @@ function Header() {
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Reset the frontend UI..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reset the frontend UI..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -950,7 +950,7 @@ function Header() {
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Reset all devices..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reset all devices..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             <MenuItem
               onClick={() => {
@@ -967,7 +967,7 @@ function Header() {
               <ListItemIcon>
                 <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
               </ListItemIcon>
-              <ListItemText primary="Reset commissioning..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+              <ListItemText primary="Reset commissioning..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
             {!settings.matterbridgeInformation.readOnly && (
               <MenuItem
@@ -985,7 +985,7 @@ function Header() {
                 <ListItemIcon>
                   <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary="Factory reset..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Factory reset..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
               </MenuItem>
             )}
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -1004,7 +1004,7 @@ function Header() {
                 <ListItemIcon>
                   <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary="Reset network..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Reset network..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
               </MenuItem>
             )}
             {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
@@ -1023,7 +1023,7 @@ function Header() {
                 <ListItemIcon>
                   <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
                 </ListItemIcon>
-                <ListItemText primary="Factory reset..." primaryTypographyProps={{ style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } }} />
+                <ListItemText primary="Factory reset..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
               </MenuItem>
             )}
           </Menu>
