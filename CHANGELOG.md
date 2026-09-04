@@ -31,6 +31,26 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.9] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.9.
+- [matterbridge]: Bump `@types/node` to v.26.4.1.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.0.
+- [matterbridge]: Bump `oxfmt` to v.0.66.0.
+- [matterbridge]: Bump `oxlint` to v.1.81.0.
+- [matterbridge]: Bump `vitest` to v.5.0.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.10.0.
+- [frontend]: Bump `frontend` version to v.3.5.11.
+- [frontend]: Bump `react-router` to v.8.3.1.
+- [frontend]: Bump `@types/node` to v.26.4.1.
+- [frontend]: Bump `@types/react-dom` to v.19.2.7.
+- [frontend]: Bump `globals` to v.17.12.0.
+- [frontend]: Bump `vitest` to v.5.0.0.
+- [frontend]: Bump `oxfmt` to v.0.66.0.
+- [frontend]: Bump `oxlint` to v.1.81.0.
+
 ## [3.10.8] - 2026-09-04
 
 ### Development News

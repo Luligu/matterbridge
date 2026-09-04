@@ -330,9 +330,9 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             listenersRef.current.forEach((listener) => listener.listener(msg)); // Notify all listeners for broadcast messages
           } else {
             const listener = listenersRef.current.find((l) => l.id === msg.id);
-            if (listener)
+            if (listener) {
               listener.listener(msg); // Notify the specific listener
-            else {
+            } else {
               /*if (debug)*/ console.warn(`WebSocket no listener found for message id ${msg.id}:`, msg);
             }
           }

@@ -83,6 +83,8 @@ export default defineConfig({
         'src/vitest-utils/export.ts', // Root package entrypoint re-export file
         'src/vitest-utils/matter.ts', // Root package entrypoint re-export file
         'packages/core/src/behaviors/export.ts', // Core behavior barrel re-export file
+        'packages/core/src/clusters/export.ts', // Root package entrypoint re-export file
+        'packages/thread/src/export.ts', // Root package entrypoint re-export file
         'packages/core/src/matterbridgeEndpointTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
@@ -95,12 +97,14 @@ export default defineConfig({
       thresholds: {
         'perFile': true,
         'packages/{utils,dgram,types,thread}/src/**/*.{ts,mts,cts}': {
+          perFile: true,
           statements: 100,
           branches: 100,
           functions: 100,
           lines: 100,
         },
         'packages/core/src/{behaviors,clusters,devices}/**/*.{ts,mts,cts}': {
+          perFile: true,
           statements: 100,
           branches: 100,
           functions: 100,
@@ -108,12 +112,14 @@ export default defineConfig({
         },
         'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory}.ts':
           {
+            perFile: true,
             statements: 100,
             branches: 100,
             functions: 100,
             lines: 100,
           },
         'packages/core/src/{frontend,matterbridge,matterbridgeEndpoint}.ts': {
+          perFile: true,
           statements: 98,
           branches: 80,
           functions: 100,

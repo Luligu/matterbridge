@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.10.8",
+  "version": "3.10.9",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -455,28 +455,28 @@
     "pack:latest:monorepo": "node scripts/pack-monorepo.mjs --scope \"@matterbridge\" --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.10.8",
-    "@matterbridge/dgram": "3.10.8",
-    "@matterbridge/jest-utils": "3.10.8",
-    "@matterbridge/test-utils": "3.10.8",
-    "@matterbridge/thread": "3.10.8",
-    "@matterbridge/types": "3.10.8",
-    "@matterbridge/utils": "3.10.8",
-    "@matterbridge/vitest-utils": "3.10.8",
+    "@matterbridge/core": "3.10.9",
+    "@matterbridge/dgram": "3.10.9",
+    "@matterbridge/jest-utils": "3.10.9",
+    "@matterbridge/test-utils": "3.10.9",
+    "@matterbridge/thread": "3.10.9",
+    "@matterbridge/types": "3.10.9",
+    "@matterbridge/utils": "3.10.9",
+    "@matterbridge/vitest-utils": "3.10.9",
     "node-ansi-logger": "3.3.1",
     "node-persist-manager": "2.1.1"
   },
   "devDependencies": {
     "@matter/main": "0.17.9",
     "@types/bun": "1.4.0",
-    "@types/node": "26.4.0",
-    "@vitest/coverage-v8": "4.1.11",
+    "@types/node": "26.4.1",
+    "@vitest/coverage-v8": "5.0.0",
     "cross-spawn": "7.0.6",
     "marked": "18.0.11",
-    "oxfmt": "0.65.0",
-    "oxlint": "1.80.0",
+    "oxfmt": "0.66.0",
+    "oxlint": "1.81.0",
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "7.0.2",
-    "vitest": "4.1.11"
+    "vitest": "5.0.0"
   }
 }

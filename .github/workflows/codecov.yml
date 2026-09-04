@@ -49,20 +49,16 @@ jobs:
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Lint frontend
-        run: npm run lint
-        working-directory: apps/frontend
-
       - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
 
+      - name: Test matterbridge
+        run: npm run test:coverage -- --testTimeout=30000
+
       - name: Test frontend
         run: npm run test
         working-directory: apps/frontend
-
-      - name: Test matterbridge
-        run: npm run test:coverage -- --testTimeout=30000
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v7

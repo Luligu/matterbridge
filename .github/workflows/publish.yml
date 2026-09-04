@@ -55,12 +55,19 @@ jobs:
       - name: Lint matterbridge
         run: npm run lint
 
+      - name: Check matterbridge formatting
+        run: npm run format:check
+
       - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
       - name: Lint frontend
         run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check frontend formatting
+        run: npm run format:check
         working-directory: apps/frontend
 
       - name: Build frontend
@@ -95,7 +102,7 @@ jobs:
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest
 
       - name: Wait for npm registry propagation
-        run: sleep 60
+        run: sleep 600
 
       - name: Trigger Matterbridge Docker Build Latest
         uses: actions/github-script@v9
@@ -266,12 +273,19 @@ jobs:
       - name: Lint matterbridge
         run: npm run lint
 
+      - name: Check matterbridge formatting
+        run: npm run format:check
+
       - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
       - name: Lint frontend
         run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check frontend formatting
+        run: npm run format:check
         working-directory: apps/frontend
 
       - name: Build frontend
@@ -349,10 +363,6 @@ jobs:
         run: |
           npm version "${{ steps.meta.outputs.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev
-
-      - name: Wait for npm registry propagation
-        if: steps.check_new.outputs.should_publish == 'true'
-        run: sleep 60
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'

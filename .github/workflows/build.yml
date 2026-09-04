@@ -63,24 +63,31 @@ jobs:
       - name: Lint matterbridge
         run: npm run lint
 
+      - name: Check matterbridge formatting
+        run: npm run format:check
+
       - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
-        working-directory: apps/frontend
-
-      - name: Lint frontend
-        run: npm run lint
         working-directory: apps/frontend
 
       - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Test frontend
-        run: npm run test -- --testTimeout=30000
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check frontend formatting
+        run: npm run format:check
         working-directory: apps/frontend
 
       - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
+
+      - name: Test frontend
+        run: npm run test -- --testTimeout=30000
+        working-directory: apps/frontend
 
       - name: List, audit, fix outdated dependencies and build again
         # Informational only: every command is `|| true`. `npm audit` can hang rather than fail,
