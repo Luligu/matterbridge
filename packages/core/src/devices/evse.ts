@@ -273,7 +273,7 @@ export class Evse extends MatterbridgeEndpoint {
    */
   async triggerRfidEvent(uid: Uint8Array, log?: AnsiLogger): Promise<boolean> {
     if (![4, 7, 10].includes(uid.length)) {
-      this.log.warn(`triggerRfidEvent: invalid RFID uid length ${uid.length} (expected 4, 7 or 10 bytes)`);
+      (log ?? this.log).warn(`triggerRfidEvent: invalid RFID uid length ${uid.length} (expected 4, 7 or 10 bytes)`);
       return false;
     }
     return this.triggerEvent(EnergyEvseServer.with(EnergyEvse.Feature.Rfid), 'rfid', { uid }, log);
