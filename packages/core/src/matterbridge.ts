@@ -3084,7 +3084,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         reachable: true,
       },
 
-      ...(hasParameter('root-power-source')
+      ...(hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST
         ? {
             powerSource: {
               status: PowerSource.PowerSourceStatus.Active,

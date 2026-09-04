@@ -35,6 +35,7 @@ import '@matter/nodejs';
 import EventEmitter from 'node:events';
 import fs from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // @matter
 import {
@@ -701,6 +702,14 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     } else {
       rootEndpoint = ServerNode.RootEndpoint;
     }
+    // v8 ignore if - No test cause is just chip test entry point for the TestEventTrigger on GeneralDiagnostics.
+    if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
+      this.log.warn(' ****************************************************************************************');
+      this.log.warn(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running TestEventTrigger server. *');
+      this.log.warn(' ****************************************************************************************');
+      const { MatterbridgeGeneralDiagnosticsServer } = await import('./chipTests.js');
+      rootEndpoint = rootEndpoint.with(MatterbridgeGeneralDiagnosticsServer);
+    }
 
     /**
      * Create a Matter ServerNode, which contains the Root Endpoint and all relevant data and configuration
@@ -765,7 +774,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         reachable: true,
       },
 
-      ...(hasParameter('root-power-source')
+      ...(hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST
         ? {
             powerSource: {
               status: PowerSource.PowerSourceStatus.Active,
