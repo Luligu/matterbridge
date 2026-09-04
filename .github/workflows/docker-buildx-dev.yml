@@ -1,4 +1,6 @@
-name: Build Docker Image dev with buildx
+# Build amd64 and arm64 images on native runners, then merge them into
+# multi-platform Docker manifests.
+name: Build Docker Image dev (native + manifest)
 
 on:
   # Use in other repository workflows with:
@@ -23,26 +25,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.platform }}
+    strategy:
+      matrix:
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-26.04
+            suffix: amd64
+          - platform: linux/arm64
+            runner: ubuntu-26.04-arm
+            suffix: arm64
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Checkout code to dev branch
         uses: actions/checkout@v7
         with:
           ref: dev
-
-      - name: Setup Node.js 24.x
-        uses: actions/setup-node@v6
-        with:
-          node-version: '24.x'
-          cache: npm
-
-      - name: Verify Node.js version
-        run: node -v
-
-      - name: Verify Npm version
-        run: npm -v
 
       - name: Set metadata
         id: meta
@@ -73,30 +73,54 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v4
-        with:
-          platforms: all
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v4
-        with:
-          version: latest
-
-      - name: Run Docker Buildx with Dockerfile.dev for version ${{ steps.meta.outputs.VERSION }}
+      - name: Build and push ${{ matrix.platform }} image for version ${{ steps.meta.outputs.VERSION }}
         run: |
-          docker buildx build \
-            --no-cache \
+          docker build \
             --pull \
-            --platform linux/amd64,linux/arm64 \
+            --no-cache \
             -f docker/Dockerfile.dev \
-            -t luligu/matterbridge:dev \
-            -t luligu/matterbridge:dev-${{ steps.meta.outputs.VERSION }} \
+            -t luligu/matterbridge:dev-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.suffix }} \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
             --build-arg VCS_REF=${{ steps.meta.outputs.VCS_REF }} \
             --build-arg BUILD_DATE=${{ steps.meta.outputs.BUILD_DATE }} \
-            --push .
+            .
+          docker push luligu/matterbridge:dev-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.suffix }}
         timeout-minutes: 60
 
-      - name: Inspect pushed manifest
-        run: docker manifest inspect luligu/matterbridge:dev
+  create-manifest:
+    name: Create multi-platform manifest
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code to dev branch
+        uses: actions/checkout@v7
+        with:
+          ref: dev
+
+      - name: Set version
+        id: meta
+        run: echo "VERSION=$(jq -r '.version' package.json)" >> $GITHUB_OUTPUT
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v4
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Create and push manifests for version ${{ steps.meta.outputs.VERSION }}
+        env:
+          AMD64_IMAGE: luligu/matterbridge:dev-${{ github.run_id }}-${{ github.run_attempt }}-amd64
+          ARM64_IMAGE: luligu/matterbridge:dev-${{ github.run_id }}-${{ github.run_attempt }}-arm64
+        run: |
+          docker manifest create luligu/matterbridge:dev \
+            $AMD64_IMAGE \
+            $ARM64_IMAGE
+          docker manifest push luligu/matterbridge:dev
+
+          docker manifest create luligu/matterbridge:dev-${{ steps.meta.outputs.VERSION }} \
+            $AMD64_IMAGE \
+            $ARM64_IMAGE
+          docker manifest push luligu/matterbridge:dev-${{ steps.meta.outputs.VERSION }}
+
+          docker manifest inspect luligu/matterbridge:dev

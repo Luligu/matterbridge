@@ -129,6 +129,7 @@ ENV PATH="/root/connectedhomeip/out/host:${VIRTUAL_ENV}/bin:${PATH}"
 # Setup Matterbridge
 WORKDIR /root/matterbridge
 COPY --from=builder /root/matterbridge /root/matterbridge
+COPY ./.dockerbuild.json ./
 RUN npm link
 
 # Setup pairing state for Matterbridge CHIP tests
