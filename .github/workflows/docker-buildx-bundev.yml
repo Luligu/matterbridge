@@ -78,6 +78,7 @@ jobs:
           docker build \
             --pull \
             --no-cache \
+            --provenance=false \
             -f docker/Dockerfile.bundev \
             -t luligu/matterbridge:bundev-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.suffix }} \
             --build-arg VERSION=${{ steps.meta.outputs.VERSION }} \
