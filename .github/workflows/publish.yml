@@ -236,6 +236,18 @@ jobs:
               ref: 'main'
             })
 
+      - name: Trigger Matterbridge Docker Build chip-test
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-chip-test.yml',
+              ref: 'dev'
+            })
+
   publish-dev:
     name: Publish daily dev to npm and trigger docker builds dev and bundev
     if: github.event_name != 'release'
