@@ -69,7 +69,11 @@ export interface EvseOptions {
   energy?: number | bigint | null;
   absMinPower?: number;
   absMaxPower?: number;
-  /** Enables the DeviceEnergyManagement `EsaCanGenerate` flag. Set `true` together with a negative {@link absMinPower} for a V2X-capable (export-capable) EVSE. Defaults to `false`. */
+  /**
+   * Enables the DeviceEnergyManagement `EsaCanGenerate` flag. Set `true` together with a negative {@link absMinPower}
+   * for a V2X-capable (export-capable) EVSE. Independent of {@link v2x}: this constructor does not set one from the
+   * other, so a bidirectional EVSE should normally enable both. Defaults to `false`.
+   */
   esaCanGenerate?: boolean;
   /** Enables the EnergyEvse `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). A `null` value means the feature is supported but no vehicle is currently reporting its state of charge. Omit to leave the feature disabled. */
   stateOfCharge?: number | null;
@@ -79,7 +83,11 @@ export interface EvseOptions {
   vehicleId?: string | null;
   /** Enables the EnergyEvse `Rfid` (RFID) feature, which adds the `Rfid` event. Defaults to `false`. */
   rfid?: boolean;
-  /** Enables the EnergyEvse `V2X` feature (bidirectional charging), which adds the `EnableDischarging` command. Defaults to `false`. */
+  /**
+   * Enables the EnergyEvse `V2X` feature (bidirectional charging), which adds the `EnableDischarging` command.
+   * Independent of {@link esaCanGenerate}: enable that flag too for a real bidirectional (export-capable) EVSE.
+   * Defaults to `false`.
+   */
   v2x?: boolean;
 }
 

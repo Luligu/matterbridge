@@ -574,6 +574,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(featureDevice.getAttribute(EnergyEvseMode.id, 'supportedModes')).toEqual(
       expect.arrayContaining([expect.objectContaining({ mode: 4, modeTags: [{ mfgCode: undefined, value: EnergyEvseMode.ModeTag.V2X }] })]),
     );
+    // Matter 1.6.0 § 9.3.6: EnableDischarging (command id 3) is only in AcceptedCommandList when V2X is supported.
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'acceptedCommandList')).toEqual([1, 2, 3, 4, 5, 6, 7]);
 
     const dem = featureDevice.getChildEndpointById('DeviceEnergyManagement');
     expect(dem).toBeDefined();
@@ -588,10 +590,14 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil')).toBeFalsy();
   });
 
-  test('SoCReporting without batteryCapacity defaults it to null', () => {
+  test('SoCReporting without batteryCapacity defaults it to null', async () => {
     const socOnlyDevice = new Evse('SoC Only', 'SOC-ONLY', { stateOfCharge: 50 });
     expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeTruthy();
     expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
+
+    // The endpoint must be added (and thus constructed) before its live attribute state can be read.
+    expect(await addDevice(server, socOnlyDevice)).toBeTruthy();
+    expect(socOnlyDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBeNull();
   });
 
   test('triggerRfidEvent', async () => {
