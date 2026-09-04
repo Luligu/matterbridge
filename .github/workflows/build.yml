@@ -83,6 +83,11 @@ jobs:
         run: npm run test -- --testTimeout=30000
 
       - name: List, audit, fix outdated dependencies and build again
+        # Informational only: every command is `|| true`. `npm audit` can hang rather than fail,
+        # so the step is bounded and its outcome must never fail the job.
+        # Normal duration is 34-83s across ubuntu/macos/windows, so 3 minutes is ample.
+        timeout-minutes: 3
+        continue-on-error: true
         run: |
           npm outdated || true
           npm audit || true
