@@ -49,11 +49,8 @@ RUN apt-get update \
     echo '#!/bin/sh'; \
     echo '# npm shim: this image only ships Bun. Forward "npm" calls to bun,'; \
     echo '# which understands "npm run <script>" and most common npm subcommands.'; \
-    echo '# "prune" and "shrinkwrap" are skipped: bun reserves these subcommands'; \
-    echo '# for future use and'; \
-    echo '# exits with an error, but "bun install" already keeps node_modules in'; \
-    echo '# sync with the lockfile, so npm prune has nothing left to do.'; \
-    echo 'if [ "$1" = "prune" ] || [ "$1" = "shrinkwrap" ]; then'; \
+    echo '# "shrinkwrap" is skipped because Bun reserves this subcommand.'; \
+    echo 'if [ "$1" = "shrinkwrap" ]; then'; \
     echo '  printf "%s\\n" "npm shim: skipping npm $1" >&2'; \
     echo '  exit 0'; \
     echo 'fi'; \
