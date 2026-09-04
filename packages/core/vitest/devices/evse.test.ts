@@ -588,6 +588,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil')).toBeFalsy();
   });
 
+  test('SoCReporting without batteryCapacity defaults it to null', () => {
+    const socOnlyDevice = new Evse('SoC Only', 'SOC-ONLY', { stateOfCharge: 50 });
+    expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeTruthy();
+    expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
+  });
+
   test('triggerRfidEvent', async () => {
     const rfid = vi.fn();
     (featureDevice.events as any).energyEvse.rfid.on(rfid);
@@ -659,6 +665,32 @@ describe('Matterbridge ' + NAME, () => {
       );
     } finally {
       vi.useRealTimers();
+    }
+  });
+
+  test('discharging expiry while charging remains active only stops the discharge direction', async () => {
+    vi.useFakeTimers();
+    try {
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      // Charging is already active, so enabling discharging on top moves SupplyState to Enabled without changing
+      // State (it only transitions away from PluggedInDemand, which charging already claimed).
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+        dischargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        maximumDischargeCurrent: 16_000,
+      });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Enabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      await vi.advanceTimersByTimeAsync(5_000);
+      // Only the discharge direction stops; charging remains enabled and State stays PluggedInCharging.
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.ChargingEnabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+    } finally {
+      vi.useRealTimers();
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
     }
   });
 

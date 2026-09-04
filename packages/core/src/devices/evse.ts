@@ -104,9 +104,9 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {boolean} [esaCanGenerate] - Indicate whether the ESA can also generate/export power. Defaults to `false`.
-   * @param {number} [stateOfCharge] - Enables the `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). Omit to leave the feature disabled.
-   * @param {number} [batteryCapacity] - Initial `BatteryCapacity` in mWh, only meaningful when `stateOfCharge` is also provided. Defaults to `null`.
-   * @param {string} [vehicleId] - Enables the `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. Omit to leave the feature disabled.
+   * @param {number | null} [stateOfCharge] - Enables the `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). A `null` value means the feature is supported but no vehicle is currently reporting its state of charge. Omit to leave the feature disabled.
+   * @param {number | bigint | null} [batteryCapacity] - Initial `BatteryCapacity` in mWh, only meaningful when `stateOfCharge` is also provided. Defaults to `null`.
+   * @param {string | null} [vehicleId] - Enables the `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. A `null` value means the feature is supported but no vehicle is currently identified. Omit to leave the feature disabled.
    * @param {boolean} [rfid] - Enables the `Rfid` (RFID) feature. Defaults to `false`.
    * @param {boolean} [v2x] - Enables the `V2X` feature (bidirectional charging). Defaults to `false`.
    */
@@ -189,9 +189,9 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {EnergyEvse.State} [state] - The initial state of the EnergyEvse cluster. Defaults to EnergyEvse.State.NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The initial supply state of the EnergyEvse cluster. Defaults to EnergyEvse.SupplyState.ChargingEnabled.
    * @param {EnergyEvse.FaultState} [faultState] - The initial fault state of the EnergyEvse cluster. Defaults to EnergyEvse.FaultState.NoError.
-   * @param {number} [stateOfCharge] - Enables the `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). Omit to leave the feature disabled.
-   * @param {number} [batteryCapacity] - Initial `BatteryCapacity` in mWh, only meaningful when `stateOfCharge` is also provided. Defaults to `null`.
-   * @param {string} [vehicleId] - Enables the `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. Omit to leave the feature disabled.
+   * @param {number | null} [stateOfCharge] - Enables the `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). A `null` value means the feature is supported but no vehicle is currently reporting its state of charge. Omit to leave the feature disabled.
+   * @param {number | bigint | null} [batteryCapacity] - Initial `BatteryCapacity` in mWh, only meaningful when `stateOfCharge` is also provided. Defaults to `null`.
+   * @param {string | null} [vehicleId] - Enables the `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. A `null` value means the feature is supported but no vehicle is currently identified. Omit to leave the feature disabled.
    * @param {boolean} [rfid] - Enables the `Rfid` (RFID) feature, which adds the `Rfid` event. Defaults to `false`.
    * @param {boolean} [v2x] - Enables the `V2X` feature (bidirectional charging), which adds the `EnableDischarging` command. Defaults to `false`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
