@@ -1,4 +1,4 @@
-Chip tests run started at 2026-09-01T15:36:19.968Z
+Chip tests run started at 2026-09-04T16:53:44.101Z
 
 ✅ Generic device basic composition (TC_DeviceBasicComposition.py)
 ✅ Generic device conformance (TC_DeviceConformance.py)
@@ -187,6 +187,7 @@ Chip tests run started at 2026-09-01T15:36:19.968Z
 ⏭️ DoorLock Aliro functionality on DoorLockUserPINSchedules (TC_DRLK_2_13.py)
    ↳ Requires the Aliro Provisioning feature; endpoint 8012 does not implement it. The Python test unconditionally sends ClearAliroReaderConfig when ClearCredential is supported, even when DRLK.S.F0d=0.
 ✅ DoorLock client commands on DoorLockUserPINSchedules (Test_TC_DRLK_3_2)
+✅ DoorLock User, PIN, and expiring user timeout attributes on DoorLockUserPINExpiring (Test_TC_DRLK_2_1)
 ✅ WindowCovering attributes on WindowCovering Lift (Test_TC_WNCV_2_1)
 ✅ WindowCovering ConfigStatus attribute on WindowCovering Lift (Test_TC_WNCV_2_2)
 ✅ WindowCovering Mode attribute on WindowCovering Lift (Test_TC_WNCV_2_3)
@@ -436,7 +437,7 @@ Chip tests run started at 2026-09-01T15:36:19.968Z
 ✅ RefrigeratorAlarm attributes on Refrigerator (Test_TC_REFALM_2_1)
 ✅ RefrigeratorAlarm primary functionality on Refrigerator (TC_REFALM_2_2.py)
 ⏭️ RefrigeratorAlarm local suppression on Refrigerator (Test_TC_REFALM_2_3)
-   ↳ Not applicable: the Refrigerator endpoint does not expose a local mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false.
+   ↳ Not applicable: the Refrigerator endpoint exposes no local (on-device) mechanism that suppresses the door-open alarm, so REFALM.S.M.LocalSuppress is false. Enabling it would also be pointless here: every step that exercises the suppression (steps 5-11) is gated on PICS_USER_PROMPT, which is 0 for this CI-only setup, so only the two door-closed reads of State and Mask would run and the test would execute no suppression check at all.
 ✅ DishwasherMode attributes on Dishwasher (TC_DISHM_1_2.py)
 ✅ DishwasherMode ChangeToMode on Dishwasher (TC_DISHM_2_1.py)
 ✅ DishwasherAlarm attributes on Dishwasher (TC_DISHALM_2_1.py)
@@ -522,5 +523,5 @@ Chip tests run started at 2026-09-01T15:36:19.968Z
 ✅ CommodityTariff primary functionality on Electrical Energy Tariff (TC_SETRF_2_3.py)
 ✅ CommodityTariff subscription report verification on Electrical Energy Tariff (TC_SETRF_3_1.py)
 
-Summary: 367/368 tests passed (76 skipped).
-Chip tests run ended at 2026-09-01T16:33:35.528Z (total duration 57m 16s)
+Summary: 368/369 tests passed (76 skipped).
+Chip tests run ended at 2026-09-04T17:51:30.928Z (total duration 57m 47s)
