@@ -50,10 +50,13 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `vitest` to v.5.0.0.
 - [frontend]: Bump `oxfmt` to v.0.66.0.
 - [frontend]: Bump `oxlint` to v.1.81.0.
+- [frontend]: Bump `@mui/material` to v.9.4.0.
+- [frontend]: Bump `@mui/icons-material` to v.9.4.0.
 
 ### Fixed
 
 - [frontend]: Replace deprecated MUI props, the React form event type, and test-only document writing with their supported equivalents.
+- [frontend]: Restore the theme color of the Select dropdown arrow.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

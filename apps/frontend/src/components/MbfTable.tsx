@@ -222,10 +222,9 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
           if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
           toggleConfigureVisibilityDialog();
         }}
-        disableEscapeKeyDown
         disableRestoreFocus
       >
-        <DialogTitle gap={'20px'}>
+        <DialogTitle>
           <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
             <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
             <h4 style={{ margin: 0 }}>{`Configure ${name} columns`}</h4>

@@ -59,7 +59,6 @@ export const ChangePasswordDialog = ({ open, onClose, onSave }: ChangePasswordDi
       }}
       maxWidth="sm"
       style={{ maxWidth: '500px', margin: 'auto' }}
-      disableEscapeKeyDown
     >
       <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>

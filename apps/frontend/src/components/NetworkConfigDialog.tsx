@@ -60,7 +60,7 @@ export const NetworkConfigDialog = ({ open, ip, onClose, onSave }: NetworkConfig
       maxWidth="sm"
       style={{ maxWidth: '550px', margin: 'auto' }}
     >
-      <DialogTitle gap={'20px'}>
+      <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
           <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>Network Configuration</h4>

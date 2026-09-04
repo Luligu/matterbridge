@@ -31,7 +31,7 @@ export function ConfirmCancelForm({ open, title, message, onConfirm, onCancel }:
 
   return (
     <Dialog open={open}>
-      <DialogTitle gap={'20px'}>
+      <DialogTitle>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '20px' }}>
           <img src="matterbridge.svg" alt="Matterbridge Logo" style={{ height: '32px', width: '32px' }} />
           <h4 style={{ margin: 0 }}>{title}</h4>

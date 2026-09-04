@@ -140,9 +140,6 @@ function Devices(): React.JSX.Element {
                   '& .MuiSelect-select': {
                     backgroundColor: 'var(--main-bg-color)',
                   },
-                  '& .MuiSelect-icon': {
-                    color: 'var(--main-label-color)',
-                  },
                 }}
                 input={<OutlinedInput sx={{ backgroundColor: 'var(--main-bg-color)' }} />}
               >

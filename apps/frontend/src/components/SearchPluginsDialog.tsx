@@ -37,7 +37,7 @@
 */
 
 // @mui/icons-material
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlineOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 // @mui/material

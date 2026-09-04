@@ -261,11 +261,6 @@ function HomeInstallAddPlugins() {
                     value={selectedPluginVersion}
                     label="Tag or version"
                     onChange={(event) => setSelectedPluginVersion(event.target.value ?? '')}
-                    sx={{
-                      '& .MuiSelect-icon': {
-                        color: 'var(--main-label-color)',
-                      },
-                    }}
                   >
                     {pluginVersions.map((v) => (
                       <MenuItem key={v} value={v}>
