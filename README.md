@@ -432,6 +432,10 @@ Matterbridge plugin that exposes Litetouch 2000 lighting loads as Matter devices
 
 Matterbridge plugin that connects iRobot Roomba robot vacuums to the Matter fabric via their local MQTT broker and APIs.
 
+### [Elgato](https://github.com/passtas/matterbridge-elgato)
+
+Matterbridge dynamic platform plugin that exposes Elgato Key Light, Key Light Air and Light Strip to Matter using the local HTTP API with mDNS discovery.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
