@@ -1,10 +1,7 @@
-/* eslint-disable n/no-unpublished-import */
-/* eslint-disable n/no-missing-import */
 import { onOffPlugInUnit } from '../../matterbridgeDeviceTypes.js';
 import { MatterbridgeDynamicPlatform } from '../../matterbridgeDynamicPlatform.js';
 import { MatterbridgeEndpoint } from '../../matterbridgeEndpoint.js';
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }
@@ -12,8 +9,8 @@ export default function initializePlugin(matterbridge, log, config) {
 class MockPlatform extends MatterbridgeDynamicPlatform {
   constructor(matterbridge, log, config) {
     super(matterbridge, log, config);
-    if (!config.whitelist) config.whitelist = [];
-    if (!config.blackList) config.blackList = [];
+    config.whitelist ??= [];
+    config.blackList ??= [];
   }
   async onStart(reason) {
     await this.ready;
