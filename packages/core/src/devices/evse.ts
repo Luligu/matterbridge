@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-27
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -40,7 +40,7 @@ import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import type { Semtag } from '@matter/types/globals';
 import { fireAndForget } from '@matterbridge/utils/wait';
-import { debugStringify } from 'node-ansi-logger';
+import { debugStringify, type AnsiLogger } from 'node-ansi-logger';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
@@ -69,6 +69,26 @@ export interface EvseOptions {
   energy?: number | bigint | null;
   absMinPower?: number;
   absMaxPower?: number;
+  /**
+   * Enables the DeviceEnergyManagement `EsaCanGenerate` flag. Set `true` together with a negative {@link absMinPower}
+   * for a V2X-capable (export-capable) EVSE. Independent of {@link v2x}: this constructor does not set one from the
+   * other, so a bidirectional EVSE should normally enable both. Defaults to `false`.
+   */
+  esaCanGenerate?: boolean;
+  /** Enables the EnergyEvse `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). A `null` value means the feature is supported but no vehicle is currently reporting its state of charge. Omit to leave the feature disabled. */
+  stateOfCharge?: number | null;
+  /** Initial `BatteryCapacity` in mWh, only meaningful when {@link stateOfCharge} is also provided. Defaults to `null`. */
+  batteryCapacity?: number | bigint | null;
+  /** Enables the EnergyEvse `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. A `null` value means the feature is supported but no vehicle is currently identified. Omit to leave the feature disabled. */
+  vehicleId?: string | null;
+  /** Enables the EnergyEvse `Rfid` (RFID) feature, which adds the `Rfid` event. Defaults to `false`. */
+  rfid?: boolean;
+  /**
+   * Enables the EnergyEvse `V2X` feature (bidirectional charging), which adds the `EnableDischarging` command.
+   * Independent of {@link esaCanGenerate}: enable that flag too for a real bidirectional (export-capable) EVSE.
+   * Defaults to `false`.
+   */
+  v2x?: boolean;
 }
 
 /**
@@ -91,6 +111,12 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {number} [energy] - The total consumption value in mW/h. Defaults to null if not provided.
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @param {boolean} [esaCanGenerate] - Indicate whether the ESA can also generate/export power. Defaults to `false`.
+   * @param {number | null} [stateOfCharge] - Enables the `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). A `null` value means the feature is supported but no vehicle is currently reporting its state of charge. Omit to leave the feature disabled.
+   * @param {number | bigint | null} [batteryCapacity] - Initial `BatteryCapacity` in mWh, only meaningful when `stateOfCharge` is also provided. Defaults to `null`.
+   * @param {string | null} [vehicleId] - Enables the `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. A `null` value means the feature is supported but no vehicle is currently identified. Omit to leave the feature disabled.
+   * @param {boolean} [rfid] - Enables the `Rfid` (RFID) feature. Defaults to `false`.
+   * @param {boolean} [v2x] - Enables the `V2X` feature (bidirectional charging). Defaults to `false`.
    */
   constructor(name: string, serial: string, options?: EvseOptions);
 
@@ -133,8 +159,17 @@ export class Evse extends MatterbridgeEndpoint {
     super([evse], { id: options.id ?? `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, number: options.number, tagList: options.tagList, mode: options.mode });
     this.createDefaultIdentifyClusterServer()
       .createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Evse')
-      .createDefaultEnergyEvseClusterServer(options.state, options.supplyState, options.faultState)
-      .createDefaultEnergyEvseModeClusterServer(options.currentMode, options.supportedModes)
+      .createDefaultEnergyEvseClusterServer(
+        options.state,
+        options.supplyState,
+        options.faultState,
+        options.stateOfCharge,
+        options.batteryCapacity,
+        options.vehicleId,
+        options.rfid,
+        options.v2x,
+      )
+      .createDefaultEnergyEvseModeClusterServer(options.currentMode, options.supportedModes, options.v2x)
       .createDefaultTemperatureMeasurementClusterServer(24_00) // Internal temperature 24°C in centi-degrees
       .addRequiredClusterServers();
     fireAndForget(this.addFixedLabel('composed', 'EVSE'), this.log, 'Error adding composed label to EVSE');
@@ -147,7 +182,7 @@ export class Evse extends MatterbridgeEndpoint {
     this.addChildDeviceType('DeviceEnergyManagement', deviceEnergyManagement)
       .createDefaultDeviceEnergyManagementClusterServer(
         DeviceEnergyManagement.EsaType.Evse,
-        false,
+        options.esaCanGenerate ?? false,
         DeviceEnergyManagement.EsaState.Online,
         options.absMinPower,
         options.absMaxPower,
@@ -162,22 +197,53 @@ export class Evse extends MatterbridgeEndpoint {
    * @param {EnergyEvse.State} [state] - The initial state of the EnergyEvse cluster. Defaults to EnergyEvse.State.NotPluggedIn.
    * @param {EnergyEvse.SupplyState} [supplyState] - The initial supply state of the EnergyEvse cluster. Defaults to EnergyEvse.SupplyState.ChargingEnabled.
    * @param {EnergyEvse.FaultState} [faultState] - The initial fault state of the EnergyEvse cluster. Defaults to EnergyEvse.FaultState.NoError.
+   * @param {number | null} [stateOfCharge] - Enables the `SoCReporting` (SOC) feature and sets the initial `StateOfCharge` (0-100%). A `null` value means the feature is supported but no vehicle is currently reporting its state of charge. Omit to leave the feature disabled.
+   * @param {number | bigint | null} [batteryCapacity] - Initial `BatteryCapacity` in mWh, only meaningful when `stateOfCharge` is also provided. Defaults to `null`.
+   * @param {string | null} [vehicleId] - Enables the `PlugAndCharge` (PNC) feature and sets the initial `VehicleID`. A `null` value means the feature is supported but no vehicle is currently identified. Omit to leave the feature disabled.
+   * @param {boolean} [rfid] - Enables the `Rfid` (RFID) feature, which adds the `Rfid` event. Defaults to `false`.
+   * @param {boolean} [v2x] - Enables the `V2X` feature (bidirectional charging), which adds the `EnableDischarging` command. Defaults to `false`.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultEnergyEvseClusterServer(state?: EnergyEvse.State, supplyState?: EnergyEvse.SupplyState, faultState?: EnergyEvse.FaultState): this {
-    this.behaviors.require(MatterbridgeEnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), {
-      state: state !== undefined ? state : EnergyEvse.State.NotPluggedIn,
-      supplyState: supplyState !== undefined ? supplyState : EnergyEvse.SupplyState.ChargingEnabled,
-      faultState: faultState !== undefined ? faultState : EnergyEvse.FaultState.NoError,
-      chargingEnabledUntil: null, // Persistent attribute. A null value indicates the EVSE is always enabled for charging.
-      circuitCapacity: 32_000, // Persistent attribute in mA. 32A in mA.
-      minimumChargeCurrent: 6_000, // Persistent attribute in mA. 6A in mA.
-      maximumChargeCurrent: 32_000, // Persistent attribute in mA. 32A in mA.
-      userMaximumChargeCurrent: 32_000, // Persistent attribute in mA. 32A in mA.
-      sessionId: null, // Persistent attribute
-      sessionDuration: null, // Persistent attribute
-      sessionEnergyCharged: null, // Persistent attribute
-    });
+  createDefaultEnergyEvseClusterServer(
+    state?: EnergyEvse.State,
+    supplyState?: EnergyEvse.SupplyState,
+    faultState?: EnergyEvse.FaultState,
+    stateOfCharge?: number | null,
+    batteryCapacity?: number | bigint | null,
+    vehicleId?: string | null,
+    rfid?: boolean,
+    v2x?: boolean,
+  ): this {
+    const evseServer = MatterbridgeEnergyEvseServer.with(
+      EnergyEvse.Feature.ChargingPreferences,
+      ...(stateOfCharge !== undefined ? [EnergyEvse.Feature.SoCReporting] : []),
+      ...(vehicleId !== undefined ? [EnergyEvse.Feature.PlugAndCharge] : []),
+      ...(rfid ? [EnergyEvse.Feature.Rfid] : []),
+      ...(v2x ? [EnergyEvse.Feature.V2X] : []),
+    );
+    this.behaviors.require(
+      // The `rfid` event only exists on the cluster schema when the Rfid feature is part of the selected set.
+      rfid ? evseServer.enable({ events: { rfid: true } }) : evseServer,
+      {
+        state: state !== undefined ? state : EnergyEvse.State.NotPluggedIn,
+        supplyState: supplyState !== undefined ? supplyState : EnergyEvse.SupplyState.ChargingEnabled,
+        faultState: faultState !== undefined ? faultState : EnergyEvse.FaultState.NoError,
+        chargingEnabledUntil: null, // Persistent attribute. A null value indicates the EVSE is always enabled for charging.
+        circuitCapacity: 32_000, // Persistent attribute in mA. 32A in mA.
+        minimumChargeCurrent: 6_000, // Persistent attribute in mA. 6A in mA.
+        maximumChargeCurrent: 32_000, // Persistent attribute in mA. 32A in mA.
+        userMaximumChargeCurrent: 32_000, // Persistent attribute in mA. 32A in mA.
+        sessionId: null, // Persistent attribute
+        sessionDuration: null, // Persistent attribute
+        sessionEnergyCharged: null, // Persistent attribute
+        // SoCReporting feature attributes
+        ...(stateOfCharge !== undefined ? { stateOfCharge, batteryCapacity: batteryCapacity ?? null } : {}),
+        // PlugAndCharge feature attribute
+        ...(vehicleId !== undefined ? { vehicleId } : {}),
+        // V2X feature attributes
+        ...(v2x ? { dischargingEnabledUntil: null, maximumDischargeCurrent: 0, sessionEnergyDischarged: null } : {}),
+      },
+    );
     return this;
   }
 
@@ -186,33 +252,61 @@ export class Evse extends MatterbridgeEndpoint {
    *
    * @param {number} [currentMode] - The current mode of the EnergyEvseMode cluster. Defaults to mode 1 (EnergyEvseMode.ModeTag.Manual).
    * @param {EnergyEvseMode.ModeOption[]} [supportedModes] - The supported modes for the EnergyEvseMode cluster. Defaults all EnergyEvseMode cluster modes.
+   * @param {boolean} [v2x] - When `supportedModes` is not provided, includes the V2X mode (mode 4) in the default modes. Ignored when `supportedModes` is provided. Defaults to `false`.
    *
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultEnergyEvseModeClusterServer(currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[]): this {
+  createDefaultEnergyEvseModeClusterServer(currentMode?: number, supportedModes?: EnergyEvseMode.ModeOption[], v2x?: boolean): this {
     this.behaviors.require(MatterbridgeEnergyEvseModeServer, {
       supportedModes: supportedModes ?? [
         { label: 'On demand', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] },
         { label: 'Scheduled', mode: 2, modeTags: [{ value: EnergyEvseMode.ModeTag.TimeOfUse }] },
         { label: 'Solar charging', mode: 3, modeTags: [{ value: EnergyEvseMode.ModeTag.SolarCharging }] },
-        // { label: 'Home to vehicle and Vehicle to home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] }, // This mode is not valid in charging only EVSEs
+        // This mode is not valid in charging only EVSEs, so it's only included when the V2X feature is enabled.
+        ...(v2x ? [{ label: 'Home to vehicle and Vehicle to home', mode: 4, modeTags: [{ value: EnergyEvseMode.ModeTag.V2X }] }] : []),
       ], // FixedAttribute
       currentMode: currentMode ?? 1, // Persistent attribute
     });
     return this;
+  }
+
+  /**
+   * Triggers the EnergyEvse `Rfid` event (Matter 1.6.0 § 9.3.10.6) for a badge scan detected by the physical RFID
+   * reader, e.g. from a plugin driving real hardware. Requires the `Rfid` feature to have been enabled via the
+   * `rfid` option of the constructor or {@link createDefaultEnergyEvseClusterServer}.
+   *
+   * @param {Uint8Array} uid - The ISO/IEC 14443A UID read from the RFID card. Must be 4, 7, or 10 bytes long.
+   * @param {AnsiLogger} [log] - Optional logger for logging information.
+   * @returns {Promise<boolean>} Resolves to `true` if the event was triggered, `false` if the UID length is invalid.
+   */
+  async triggerRfidEvent(uid: Uint8Array, log?: AnsiLogger): Promise<boolean> {
+    if (![4, 7, 10].includes(uid.length)) {
+      (log ?? this.log).warn(`triggerRfidEvent: invalid RFID uid length ${uid.length} (expected 4, 7 or 10 bytes)`);
+      return false;
+    }
+    return this.triggerEvent(EnergyEvseServer.with(EnergyEvse.Feature.Rfid), 'rfid', { uid }, log);
   }
 }
 
 /**
  * Energy EVSE server that forwards charging commands and applies the validation and state-update mandates from
  * Matter 1.6 Application Cluster Specification §§ 9.3.8 and 9.3.9.
+ *
+ * Only `ChargingPreferences` is declared here, matching the default {@link Evse} instance, so
+ * `behaviors.has(MatterbridgeEnergyEvseServer)` keeps matching every instance regardless of which additional
+ * optional features (SoCReporting/PlugAndCharge/Rfid/V2X) a given call site narrows in via `.with(...)`; see
+ * {@link Evse.createDefaultEnergyEvseClusterServer}. `state` is declared with the full attribute set below purely
+ * for compile-time convenience in the feature-conditional code paths (`enableDischarging`, `disable`, etc.); the
+ * attributes are only actually present on an instance when its selected features include them.
  */
 export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences) {
   declare protected internal: MatterbridgeEnergyEvseServer.Internal;
+  declare state: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
 
   override async initialize(): Promise<void> {
     await super.initialize();
     this.internal.requestedMaximumChargeCurrent = Number(this.state.maximumChargeCurrent);
+    this.internal.requestedMaximumDischargeCurrent = 0;
     this.internal.chargingTargetSchedules = [];
     // Matter 1.6.0 §§ 9.3.8.8 and 9.3.8.10: a consumer preference write changes the actual maximum current
     // offered by the EVSE, while the last EnableCharging command limit remains in force.
@@ -234,13 +328,18 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'disable',
       request: {},
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: disable called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 9.3.9.1.1: Set ChargingEnabledUntil to a past timestamp and stop any active energy transfer.
     this.state.chargingEnabledUntil = MATTER_EPOCH_OFFSET_S;
     this.#stopCharging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
+    // Matter 1.6.0 § 9.3.9.1.1: Disable also stops any active discharging when the V2X feature is supported.
+    if (this.features.v2X) {
+      this.state.dischargingEnabledUntil = MATTER_EPOCH_OFFSET_S;
+      this.#stopDischarging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
+    }
     // super.disable();
     // disable is not implemented in matter.js
   }
@@ -262,7 +361,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'enableCharging',
       request,
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: enableCharging called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -274,8 +373,9 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     }
     this.internal.chargingExpiryTimer?.stop();
     this.internal.chargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.9.2.4: Set SupplyState to ChargingEnabled on success.
-    this.state.supplyState = EnergyEvse.SupplyState.ChargingEnabled;
+    // Matter 1.6.0 § 9.3.9.2.4: Set SupplyState to ChargingEnabled on success, or to Enabled if discharging
+    // (V2X feature) is concurrently active.
+    this.state.supplyState = this.#isDischargingActive() ? EnergyEvse.SupplyState.Enabled : EnergyEvse.SupplyState.ChargingEnabled;
     // Matter 1.6.0 § 9.3.9.2.4: Update ChargingEnabledUntil to the timestamp of the ChargingEnabledUntil field.
     this.state.chargingEnabledUntil = request.chargingEnabledUntil;
     this.state.minimumChargeCurrent = request.minimumChargeCurrent;
@@ -304,6 +404,65 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   }
 
   /**
+   * Forwards an EnergyEvse `EnableDischarging` request and updates the effective discharging limits.
+   *
+   * Matter 1.6 Application Cluster Specification § 9.3.9.3 mirrors § 9.3.8.8's `EnableCharging` behavior for the
+   * discharge direction: `MaximumDischargeCurrent` represents the actual offered maximum and this implementation
+   * derives it as the minimum of `CircuitCapacity` and the request.
+   *
+   * @param {EnergyEvse.EnableDischargingRequest} request - Discharging enable request payload.
+   * @returns {Promise<void>} Resolves after forwarding the command and applying the required state updates.
+   */
+  // Not `override`: the class only declares `ChargingPreferences` (see the class JSDoc above), so `enableDischarging`
+  // isn't part of its statically-known base interface even though it's only ever dispatched on V2X-enabled instances.
+  async enableDischarging(request: EnergyEvse.EnableDischargingRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeEnergyEvseServer: enableDischarging (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    await device.commandHandler.executeHandler('EnergyEvse.enableDischarging', {
+      command: 'enableDischarging',
+      request,
+      cluster: EnergyEvseServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint as MatterbridgeEndpoint,
+    });
+    device.log.debug(`MatterbridgeEnergyEvseServer: enableDischarging called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 9.3.9.2.4-equivalent: Reject EnableDischarging with FAILURE while diagnostics are active.
+    if (this.state.supplyState === EnergyEvse.SupplyState.DisabledDiagnostics) {
+      throw new StatusResponse.FailureError(
+        `MatterbridgeEnergyEvseServer: cannot enable discharging while diagnostics are active (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
+    }
+    this.internal.dischargingExpiryTimer?.stop();
+    this.internal.dischargingExpiryTimer = undefined;
+    // Matter 1.6.0 § 9.3.9.3: Set SupplyState to DischargingEnabled on success, or to Enabled if charging is
+    // concurrently active.
+    this.state.supplyState = this.#isChargingActive() ? EnergyEvse.SupplyState.Enabled : EnergyEvse.SupplyState.DischargingEnabled;
+    // Matter 1.6.0 § 9.3.9.3.1: Update DischargingEnabledUntil to the timestamp of the DischargingEnabledUntil field.
+    this.state.dischargingEnabledUntil = request.dischargingEnabledUntil;
+    this.internal.requestedMaximumDischargeCurrent = Number(request.maximumDischargeCurrent);
+    // Matter 1.6.0 § 9.3.9.3.2: MaximumDischargeCurrent SHALL be the minimum of every applicable discharging limit.
+    this.#updateMaximumDischargeCurrent();
+    if (this.state.state === EnergyEvse.State.PluggedInDemand) {
+      this.state.state = EnergyEvse.State.PluggedInDischarging;
+      this.events.energyTransferStarted.emit(
+        { sessionId: this.state.sessionId ?? 0, state: EnergyEvse.State.PluggedInDischarging, maximumCurrent: 0, maximumDischargeCurrent: this.state.maximumDischargeCurrent },
+        this.context,
+      );
+    }
+    if (request.dischargingEnabledUntil !== null) {
+      const remainingSeconds = Math.max(0, Math.ceil(request.dischargingEnabledUntil - Time.nowMs / 1000));
+      this.internal.dischargingExpiryTimer = Time.getTimer(
+        'EnergyEvse discharging expiry',
+        Seconds(remainingSeconds),
+        // oxlint-disable-next-line typescript/unbound-method
+        this.callback(this.#expireDischarging, { lock: true }),
+      ).start();
+    }
+    // super.enableDischarging();
+    // enableDischarging is not implemented in matter.js
+  }
+
+  /**
    * Starts EVSE self-diagnostics when charging is disabled.
    *
    * @returns {Promise<void>} Resolves after entering diagnostics mode.
@@ -315,7 +474,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'startDiagnostics',
       request: {},
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: startDiagnostics called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -333,6 +492,29 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   #expireCharging(): void {
     this.internal.chargingExpiryTimer = undefined;
     this.#stopCharging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
+  }
+
+  #expireDischarging(): void {
+    this.internal.dischargingExpiryTimer = undefined;
+    this.#stopDischarging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
+  }
+
+  /**
+   * Whether charging is currently enabled.
+   *
+   * @returns {boolean} `true` if `SupplyState` is `ChargingEnabled` or `Enabled`.
+   */
+  #isChargingActive(): boolean {
+    return this.state.supplyState === EnergyEvse.SupplyState.ChargingEnabled || this.state.supplyState === EnergyEvse.SupplyState.Enabled;
+  }
+
+  /**
+   * Whether discharging is currently enabled.
+   *
+   * @returns {boolean} `true` if `SupplyState` is `DischargingEnabled` or `Enabled`.
+   */
+  #isDischargingActive(): boolean {
+    return this.state.supplyState === EnergyEvse.SupplyState.DischargingEnabled || this.state.supplyState === EnergyEvse.SupplyState.Enabled;
   }
 
   /**
@@ -359,6 +541,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     this.state.maximumChargeCurrent = Math.min(Number(this.state.circuitCapacity), this.internal.requestedMaximumChargeCurrent, Number(this.state.userMaximumChargeCurrent));
   }
 
+  /** Applies the Matter 1.6 § 9.3.9.3.2 effective-current state-update mandate for the discharge direction. */
+  #updateMaximumDischargeCurrent(): void {
+    this.state.maximumDischargeCurrent = Math.min(Number(this.state.circuitCapacity), this.internal.requestedMaximumDischargeCurrent);
+  }
+
   #stopCharging(reason: EnergyEvse.EnergyTransferStoppedReason): void {
     this.internal.chargingExpiryTimer?.stop();
     this.internal.chargingExpiryTimer = undefined;
@@ -366,8 +553,20 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       this.events.energyTransferStopped.emit({ sessionId: this.state.sessionId ?? 0, state: this.state.state, reason, energyTransferred: 0 }, this.context);
       this.state.state = EnergyEvse.State.PluggedInDemand;
     }
-    this.state.supplyState = EnergyEvse.SupplyState.Disabled;
+    // Matter 1.6.0 § 9.3.9.1.1/9.3.9.2.4: only clear SupplyState down to Disabled if discharging (V2X) isn't still active.
+    this.state.supplyState = this.#isDischargingActive() ? EnergyEvse.SupplyState.DischargingEnabled : EnergyEvse.SupplyState.Disabled;
     this.#clearNextChargeTarget();
+  }
+
+  #stopDischarging(reason: EnergyEvse.EnergyTransferStoppedReason): void {
+    this.internal.dischargingExpiryTimer?.stop();
+    this.internal.dischargingExpiryTimer = undefined;
+    if (this.state.state === EnergyEvse.State.PluggedInDischarging) {
+      this.events.energyTransferStopped.emit({ sessionId: this.state.sessionId ?? 0, state: this.state.state, reason, energyTransferred: 0, energyDischarged: 0 }, this.context);
+      this.state.state = EnergyEvse.State.PluggedInDemand;
+    }
+    // Matter 1.6.0 § 9.3.9.3: only clear SupplyState down to Disabled if charging isn't still active.
+    this.state.supplyState = this.#isChargingActive() ? EnergyEvse.SupplyState.ChargingEnabled : EnergyEvse.SupplyState.Disabled;
   }
 
   /**
@@ -389,7 +588,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'setTargets',
       request,
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     let updatedDays = 0;
@@ -435,7 +634,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'getTargets',
       request: {},
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     return { chargingTargetSchedules: structuredClone(this.internal.chargingTargetSchedules) };
@@ -456,7 +655,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       command: 'clearTargets',
       request: {},
       cluster: EnergyEvseServer.id,
-      attributes: this.state as unknown as ClusterAttributeValues<(typeof EnergyEvse)['attributes']>,
+      attributes: this.state,
       endpoint: this.endpoint as MatterbridgeEndpoint,
     });
     // Matter 1.6.0 § 9.3.9.8.1: Clear all stored charging targets and their derived NextCharge* attributes.
@@ -493,7 +692,8 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /** Updates the next scheduled charge attributes from the stored weekly schedule. */
   #updateNextChargeTarget(): void {
     this.#clearNextChargeTarget();
-    if (this.state.supplyState !== EnergyEvse.SupplyState.ChargingEnabled || this.state.state === EnergyEvse.State.NotPluggedIn) return;
+    // Charging may be active alongside discharging (V2X SupplyState.Enabled), so check both charging states.
+    if (!this.#isChargingActive() || this.state.state === EnergyEvse.State.NotPluggedIn) return;
 
     const now = new Date(Time.nowMs);
     for (let dayOffset = 0; dayOffset <= 7; dayOffset++) {
@@ -534,9 +734,11 @@ export namespace MatterbridgeEnergyEvseServer {
   /** Internal timer state for the Energy EVSE server. */
   export class Internal {
     chargingExpiryTimer: Timer | undefined;
+    dischargingExpiryTimer: Timer | undefined;
     chargingTargetSchedules: EnergyEvse.ChargingTargetSchedule[] = [];
     maximumChargeCurrentUpdateTimer: Timer | undefined;
     requestedMaximumChargeCurrent = 0;
+    requestedMaximumDischargeCurrent = 0;
   }
 }
 /* v8 ignore stop */

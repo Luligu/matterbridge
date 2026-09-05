@@ -51,6 +51,7 @@ await setupTest(NAME, false);
 
 describe('Matterbridge ' + NAME, () => {
   let device: Evse;
+  let featureDevice: Evse;
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -544,6 +545,159 @@ describe('Matterbridge ' + NAME, () => {
       LogLevel.DEBUG,
       `MatterbridgeEnergyEvseModeServer: changeToMode called with newMode 1 => On demand (endpoint ${device.id}.${device.number})`,
     );
+  });
+
+  test('create an Evse with SoCReporting, PlugAndCharge, Rfid and V2X features', async () => {
+    featureDevice = new Evse('EVSE Features', 'EVSE-FEATURES', {
+      id: 'EvseFeatures',
+      rfid: true,
+      v2x: true,
+      stateOfCharge: 80,
+      batteryCapacity: 40_000_000,
+      vehicleId: null,
+      esaCanGenerate: true,
+      absMinPower: -7_400_000,
+      absMaxPower: 7_400_000,
+    });
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'vehicleId')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'maximumDischargeCurrent')).toBeTruthy();
+
+    // The endpoint must be added (and thus constructed) before its live attribute state can be read.
+    expect(await addDevice(server, featureDevice)).toBeTruthy();
+
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'stateOfCharge')).toBe(80);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBe(40_000_000);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'vehicleId')).toBeNull();
+    expect(featureDevice.getAttribute(EnergyEvseMode.id, 'supportedModes')).toEqual(
+      expect.arrayContaining([expect.objectContaining({ mode: 4, modeTags: [{ mfgCode: undefined, value: EnergyEvseMode.ModeTag.V2X }] })]),
+    );
+    // Matter 1.6.0 § 9.3.6: EnableDischarging (command id 3) is only in AcceptedCommandList when V2X is supported.
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'acceptedCommandList')).toEqual([1, 2, 3, 4, 5, 6, 7]);
+
+    const dem = featureDevice.getChildEndpointById('DeviceEnergyManagement');
+    expect(dem).toBeDefined();
+    expect(dem?.getAttribute(DeviceEnergyManagement.id, 'esaCanGenerate')).toBe(true);
+    expect(dem?.getAttribute(DeviceEnergyManagement.id, 'absMinPower')).toBe(-7_400_000);
+    expect(dem?.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(7_400_000);
+  });
+
+  test('a default Evse has none of the SoCReporting/PlugAndCharge/V2X attributes', () => {
+    expect(device.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeFalsy();
+    expect(device.hasAttributeServer(EnergyEvse.id, 'vehicleId')).toBeFalsy();
+    expect(device.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil')).toBeFalsy();
+  });
+
+  test('SoCReporting without batteryCapacity defaults it to null', async () => {
+    const socOnlyDevice = new Evse('SoC Only', 'SOC-ONLY', { stateOfCharge: 50 });
+    expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeTruthy();
+    expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
+
+    // The endpoint must be added (and thus constructed) before its live attribute state can be read.
+    expect(await addDevice(server, socOnlyDevice)).toBeTruthy();
+    expect(socOnlyDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBeNull();
+  });
+
+  test('triggerRfidEvent', async () => {
+    const rfid = vi.fn();
+    (featureDevice.events as any).energyEvse.rfid.on(rfid);
+
+    await expect(featureDevice.triggerRfidEvent(new Uint8Array(7))).resolves.toBeTruthy();
+    expect(rfid).toHaveBeenCalledWith(expect.objectContaining({ uid: expect.anything() }), expect.anything());
+
+    vi.clearAllMocks();
+    await expect(featureDevice.triggerRfidEvent(new Uint8Array(5))).resolves.toBeFalsy();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('invalid RFID uid length 5'));
+    vi.clearAllMocks();
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer enableDischarging rejected while diagnostics are active', async () => {
+    await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Disabled);
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics');
+    await expect(
+      featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', { dischargingEnabledUntil: null, maximumDischargeCurrent: 16_000 }),
+    ).rejects.toThrow('cannot enable discharging while diagnostics are active');
+    // Reset to a clean, fully-disabled baseline for the following tests.
+    await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Disabled);
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer enableDischarging and the charging/discharging interplay', async () => {
+    await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+      dischargingEnabledUntil: null,
+      maximumDischargeCurrent: 16_000,
+    });
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDischarging);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.DischargingEnabled);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'maximumDischargeCurrent')).toBe(16_000);
+
+    // Enabling charging while discharging is active moves SupplyState to Enabled (both directions).
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 });
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Enabled);
+
+    // Disabling stops both directions.
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+  });
+
+  test('stop discharging and emit EnergyTransferStopped when DischargingEnabledUntil expires', async () => {
+    vi.useFakeTimers();
+    try {
+      const energyTransferStopped = vi.fn();
+      (featureDevice.events as any).energyEvse.energyTransferStopped.on(energyTransferStopped);
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.setAttribute('energyEvse', 'sessionId', 9);
+
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+        dischargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        maximumDischargeCurrent: 16_000,
+      });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDischarging);
+
+      await vi.advanceTimersByTimeAsync(5_000);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+      expect(energyTransferStopped).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 9,
+          state: EnergyEvse.State.PluggedInDischarging,
+          reason: EnergyEvse.EnergyTransferStoppedReason.EvseStopped,
+          energyDischarged: 0,
+        }),
+        expect.anything(),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('discharging expiry while charging remains active only stops the discharge direction', async () => {
+    vi.useFakeTimers();
+    try {
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      // Charging is already active, so enabling discharging on top moves SupplyState to Enabled without changing
+      // State (it only transitions away from PluggedInDemand, which charging already claimed).
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+        dischargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        maximumDischargeCurrent: 16_000,
+      });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Enabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      await vi.advanceTimersByTimeAsync(5_000);
+      // Only the discharge direction stops; charging remains enabled and State stays PluggedInCharging.
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.ChargingEnabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+    } finally {
+      vi.useRealTimers();
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    }
   });
 
   test('start the server node', async () => {
