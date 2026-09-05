@@ -1,7 +1,7 @@
 # Codex config v.1.0.3
 
 approval_policy = "on-request"
-approvals_reviewer = "user"
+approvals_reviewer = "auto_review"
 
 web_search = "live"
 
@@ -12,6 +12,23 @@ inherit = "core"
 
 [windows]
 sandbox = "elevated"
+
+[permissions.matterbridge_unsafe]
+description = "Workspace access with sensitive files denied and network enabled."
+extends = ":workspace"
+
+[permissions.matterbridge_unsafe.network]
+enabled = true
+
+[permissions.matterbridge_unsafe.filesystem]
+glob_scan_max_depth = 4
+
+[permissions.matterbridge_unsafe.filesystem.":workspace_roots"]
+".env" = "deny"
+".env.*" = "deny"
+"**/.env" = "deny"
+"**/.env.*" = "deny"
+"**/secrets/**" = "deny"
 
 [permissions.matterbridge_safe]
 description = "Workspace access with sensitive files denied and network disabled."

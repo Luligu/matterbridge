@@ -41,7 +41,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
    */
   override async changeToMode(request: ModeSelect.ChangeToModeRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeModeSelectServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ModeSelect.changeToMode', {
       command: 'changeToMode',
       request,
@@ -50,7 +50,8 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode: ${request.newMode}`);
+    device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.9.7.1: Set CurrentMode to NewMode when it is a valid mode in SupportedModes, otherwise respond with INVALID_COMMAND.
     await super.changeToMode(request);
   }
 }

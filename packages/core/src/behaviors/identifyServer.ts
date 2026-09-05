@@ -40,7 +40,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
    */
   override async identify(request: Identify.IdentifyRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Identifying device for ${request.identifyTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeIdentifyServer: identifying device for ${request.identifyTime} seconds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('Identify.identify', {
       command: 'identify',
       request,
@@ -49,7 +49,8 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeIdentifyServer: identify called`);
+    device.log.debug(`MatterbridgeIdentifyServer: identify called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.2.6.1.1: Set the IdentifyTime attribute to the IdentifyTime field, starting, continuing or stopping the identification state.
     await super.identify(request);
   }
 
@@ -60,7 +61,9 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
    */
   override async triggerEffect(request: Identify.TriggerEffectRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Triggering effect ${request.effectIdentifier} variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeIdentifyServer: triggering effect ${request.effectIdentifier} variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('Identify.triggerEffect', {
       command: 'triggerEffect',
       request,
@@ -69,7 +72,8 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called`);
+    device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.2.6.2.3: Execute the effect indicated by EffectIdentifier and EffectVariant, falling back to the default variant when unsupported.
     await super.triggerEffect(request);
   }
 }

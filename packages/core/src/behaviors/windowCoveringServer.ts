@@ -1,6 +1,6 @@
 /**
  * @file packages/core/src/behaviors/windowCoveringServer.ts
- * @description This file contains the MatterbridgeWindowCoveringServer, MatterbridgeLiftWindowCoveringServer, and MatterbridgeLiftTiltWindowCoveringServer classes of Matterbridge.
+ * @description This file contains the MatterbridgeWindowCoveringServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
  * @version 1.0.0
@@ -90,6 +90,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * @param {number | null} percent100ths - The new lift position, in percent hundredths (0-10000), or null.
    */
   #syncLiftCurrentPositionPercentage(percent100ths: number | null): void {
+    // Matter 1.6.0 § 5.3.6.8: CurrentPositionLiftPercentage is equal to the CurrentPositionLiftPercent100ths attribute divided by 100.
     this.state.currentPositionLiftPercentage = percent100ths === null ? percent100ths : Math.floor(percent100ths / 100);
   }
 
@@ -99,6 +100,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * @param {number | null} percent100ths - The new tilt position, in percent hundredths (0-10000), or null.
    */
   #syncTiltCurrentPositionPercentage(percent100ths: number | null): void {
+    // Matter 1.6.0 § 5.3.6.9: CurrentPositionTiltPercentage is equal to the CurrentPositionTiltPercent100ths attribute divided by 100.
     this.state.currentPositionTiltPercentage = percent100ths === null ? percent100ths : Math.floor(percent100ths / 100);
   }
 
@@ -112,7 +114,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    * @returns {WindowCovering.MovementStatus} The derived movement status.
    */
   #computeMovementStatus(target: number | null, current: number | null): WindowCovering.MovementStatus {
+    // Matter 1.6.0 § 5.3.5.3.2 and § 5.3.5.3.3: The Lift and Tilt bits indicate that the covering has stopped when there is no known movement towards a different position.
     if (current === null || target === null || current === target) return WindowCovering.MovementStatus.Stopped;
+    // Matter 1.6.0 § 5.3.5.3.2 and § 5.3.5.3.3: The Lift and Tilt bits indicate in which direction the covering is currently moving, closing towards a higher percentage and opening towards a lower one.
     return current < target ? WindowCovering.MovementStatus.Closing : WindowCovering.MovementStatus.Opening;
   }
 
@@ -127,6 +131,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
   #updateGlobalOperationalStatus(): void {
     const lift = this.state.operationalStatus.lift ?? WindowCovering.MovementStatus.Stopped;
     const tilt = this.state.operationalStatus.tilt ?? WindowCovering.MovementStatus.Stopped;
+    // Matter 1.6.0 § 5.3.5.3.1: The Global bits of OperationalStatus always reflect the overall motion of the device.
     this.state.operationalStatus.global = lift === WindowCovering.MovementStatus.Stopped ? tilt : lift;
   }
 
@@ -143,7 +148,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     this.internal.liftMovementTimer = undefined;
     if (this.state.movementDuration <= 0) return;
     const status = this.#computeMovementStatus(targetPercent100ths, this.state.currentPositionLiftPercent100ths);
+    // Matter 1.6.0 § 5.3.5.3.2: The Lift bits of OperationalStatus indicate in which direction the covering's lift is currently moving or if it has stopped.
     this.state.operationalStatus.lift = status;
+    // Matter 1.6.0 § 5.3.5.3.1: The Global bits of OperationalStatus always reflect the overall motion of the device.
     this.#updateGlobalOperationalStatus();
     if (status === WindowCovering.MovementStatus.Stopped) return;
     this.internal.liftMovementTarget = targetPercent100ths;
@@ -166,8 +173,11 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   #completeLiftMovement(): void {
     this.internal.liftMovementTimer = undefined;
+    // Matter 1.6.0 § 5.3.6.6: CurrentPositionLiftPercent100ths indicates the actual lift position reached at the end of the movement, with a minimal step of 0.01%.
     this.state.currentPositionLiftPercent100ths = this.internal.liftMovementTarget;
+    // Matter 1.6.0 § 5.3.5.3.2: The Lift bits of OperationalStatus indicate that the covering's lift has stopped once the movement is complete.
     this.state.operationalStatus.lift = WindowCovering.MovementStatus.Stopped;
+    // Matter 1.6.0 § 5.3.5.3.1: The Global bits of OperationalStatus always reflect the overall motion of the device.
     this.#updateGlobalOperationalStatus();
   }
 
@@ -184,7 +194,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     this.internal.tiltMovementTimer = undefined;
     if (this.state.movementDuration <= 0) return;
     const status = this.#computeMovementStatus(targetPercent100ths, this.state.currentPositionTiltPercent100ths);
+    // Matter 1.6.0 § 5.3.5.3.3: The Tilt bits of OperationalStatus indicate in which direction the covering's tilt is currently moving or if it has stopped.
     this.state.operationalStatus.tilt = status;
+    // Matter 1.6.0 § 5.3.5.3.1: The Global bits of OperationalStatus always reflect the overall motion of the device.
     this.#updateGlobalOperationalStatus();
     if (status === WindowCovering.MovementStatus.Stopped) return;
     this.internal.tiltMovementTarget = targetPercent100ths;
@@ -205,8 +217,11 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
    */
   #completeTiltMovement(): void {
     this.internal.tiltMovementTimer = undefined;
+    // Matter 1.6.0 § 5.3.6.7: CurrentPositionTiltPercent100ths indicates the actual tilt position reached at the end of the movement, with a minimal step of 0.01%.
     this.state.currentPositionTiltPercent100ths = this.internal.tiltMovementTarget;
+    // Matter 1.6.0 § 5.3.5.3.3: The Tilt bits of OperationalStatus indicate that the covering's tilt has stopped once the movement is complete.
     this.state.operationalStatus.tilt = WindowCovering.MovementStatus.Stopped;
+    // Matter 1.6.0 § 5.3.5.3.1: The Global bits of OperationalStatus always reflect the overall motion of the device.
     this.#updateGlobalOperationalStatus();
   }
 
@@ -226,8 +241,11 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 5.3.7.1: Move to the maximum open position, setting TargetPositionLiftPercent100ths and TargetPositionTiltPercent100ths to 0.00% when the PositionAware feature is supported.
     await super.upOrOpen();
+    // Matter 1.6.0 § 5.3.5.3.2: The Lift bits of OperationalStatus follow the lift movement towards TargetPositionLiftPercent100ths.
     if (this.features.positionAwareLift && this.state.targetPositionLiftPercent100ths !== null) this.#startLiftMovement(this.state.targetPositionLiftPercent100ths);
+    // Matter 1.6.0 § 5.3.5.3.3: The Tilt bits of OperationalStatus follow the tilt movement towards TargetPositionTiltPercent100ths.
     if (this.features.positionAwareTilt && this.state.targetPositionTiltPercent100ths !== null) this.#startTiltMovement(this.state.targetPositionTiltPercent100ths);
     device.log.debug(
       `MatterbridgeWindowCoveringServer: upOrOpen result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -250,8 +268,11 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 5.3.7.2: Move to the maximum closed position, setting TargetPositionLiftPercent100ths and TargetPositionTiltPercent100ths to 100.00% when the PositionAware feature is supported.
     await super.downOrClose();
+    // Matter 1.6.0 § 5.3.5.3.2: The Lift bits of OperationalStatus follow the lift movement towards TargetPositionLiftPercent100ths.
     if (this.features.positionAwareLift && this.state.targetPositionLiftPercent100ths !== null) this.#startLiftMovement(this.state.targetPositionLiftPercent100ths);
+    // Matter 1.6.0 § 5.3.5.3.3: The Tilt bits of OperationalStatus follow the tilt movement towards TargetPositionTiltPercent100ths.
     if (this.features.positionAwareTilt && this.state.targetPositionTiltPercent100ths !== null) this.#startTiltMovement(this.state.targetPositionTiltPercent100ths);
     device.log.debug(
       `MatterbridgeWindowCoveringServer: downOrClose result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -274,6 +295,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 5.3.7.3: Stop any lift and tilt adjustment currently occurring.
     await super.stopMotion();
     // Cancel any lift/tilt movement simulation still in flight from a previous command, and settle target = current.
     // Gated on movementDuration, like #startLiftMovement/#startTiltMovement: with the simulation disabled (the
@@ -283,9 +305,12 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     this.internal.tiltMovementTimer?.stop();
     this.internal.tiltMovementTimer = undefined;
     if (this.state.movementDuration > 0) {
+      // Matter 1.6.0 § 5.3.7.3: Set TargetPositionLiftPercent100ths to the CurrentPositionLiftPercent100ths attribute value.
       if (this.features.positionAwareLift) this.state.targetPositionLiftPercent100ths = this.state.currentPositionLiftPercent100ths;
+      // Matter 1.6.0 § 5.3.7.3: Set TargetPositionTiltPercent100ths to the CurrentPositionTiltPercent100ths attribute value.
       if (this.features.positionAwareTilt) this.state.targetPositionTiltPercent100ths = this.state.currentPositionTiltPercent100ths;
-      // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+      // The lift/tilt fields are included only when the server supports the matching LF/TL feature.
+      // Matter 1.6.0 § 5.3.5.3.1, § 5.3.5.3.2 and § 5.3.5.3.3: The Global, Lift and Tilt bits of OperationalStatus indicate that the covering has stopped.
       this.state.operationalStatus = {
         global: WindowCovering.MovementStatus.Stopped,
         ...(this.features.lift ? { lift: WindowCovering.MovementStatus.Stopped } : {}),
@@ -319,7 +344,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: goToLiftPercentage with ${request.liftPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    // Matter 1.6.0 § 5.3.7.4: Set TargetPositionLiftPercent100ths to the LiftPercent100thsValue field and LiftPercentageValue to that value divided by 100.
     await super.goToLiftPercentage(request);
+    // Matter 1.6.0 § 5.3.5.3.2: The Lift bits of OperationalStatus follow the lift movement towards TargetPositionLiftPercent100ths.
     if (this.state.targetPositionLiftPercent100ths !== null) this.#startLiftMovement(this.state.targetPositionLiftPercent100ths);
     device.log.debug(
       `MatterbridgeWindowCoveringServer: goToLiftPercentage result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -348,7 +375,9 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: goToTiltPercentage with ${request.tiltPercent100thsValue} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    // Matter 1.6.0 § 5.3.7.5: Set TargetPositionTiltPercent100ths to the TiltPercent100thsValue field and TiltPercentageValue to that value divided by 100.
     await super.goToTiltPercentage(request);
+    // Matter 1.6.0 § 5.3.5.3.3: The Tilt bits of OperationalStatus follow the tilt movement towards TargetPositionTiltPercent100ths.
     if (this.state.targetPositionTiltPercent100ths !== null) this.#startTiltMovement(this.state.targetPositionTiltPercent100ths);
     device.log.debug(
       `MatterbridgeWindowCoveringServer: goToTiltPercentage result target ${this.state.targetPositionTiltPercent100ths} current ${this.state.currentPositionTiltPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

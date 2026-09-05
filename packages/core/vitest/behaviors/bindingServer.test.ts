@@ -194,16 +194,16 @@ describe('Client clusters and behaviors', () => {
     // OccupancySensing must have been appended to the Descriptor clientList
     expect(sw.getAttribute(DescriptorServer, 'clientList')).toContain(OccupancySensing.id);
     // Logs must include initialization with the clientList, adding client clusters, and active binding
-    expect(loggerInfoSpy).toHaveBeenCalledWith(`Initializing MatterbridgeBindingServer (endpoint ${sw.maybeId}.${sw.maybeNumber}) with clientList: ${OccupancySensing.id}`);
-    expect(loggerInfoSpy).toHaveBeenCalledWith(`Adding client clusters to endpoint ${sw.maybeId}.${sw.maybeNumber}: ${OccupancySensing.id}`);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`MatterbridgeBindingServer: initializing with clientList ${OccupancySensing.id} (endpoint ${sw.maybeId}.${sw.maybeNumber})`);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`MatterbridgeBindingServer: adding client clusters ${OccupancySensing.id} (endpoint ${sw.maybeId}.${sw.maybeNumber})`);
     expect(loggerInfoSpy).toHaveBeenCalledWith(
-      `Active binding for endpoint ${sw.maybeId}.${sw.maybeNumber}: target ${debugStringify({
+      `MatterbridgeBindingServer: active binding target ${debugStringify({
         node: NodeId(99),
         group: undefined,
         endpoint: EndpointNumber(99),
         cluster: OccupancySensing.id,
         fabricIndex: FabricIndex(1),
-      })}`,
+      })} (endpoint ${sw.maybeId}.${sw.maybeNumber})`,
     );
   });
 

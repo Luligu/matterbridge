@@ -291,13 +291,16 @@ describe('Matterbridge ' + NAME, () => {
     expect((dem as any).state['deviceEnergyManagementMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand(DeviceEnergyManagementModeServer, 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with unsupported newMode 0 (endpoint ${dem.id}.${dem.number})`,
+    );
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand(DeviceEnergyManagementModeServer, 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer: changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode 1 => No Energy Management (Forecast reporting only) (endpoint ${dem.id}.${dem.number})`,
     );
   });
 

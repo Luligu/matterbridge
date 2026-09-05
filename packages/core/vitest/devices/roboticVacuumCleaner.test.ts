@@ -550,13 +550,13 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect((device.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [1, 2, 3, 4]`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [0, 5] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas [0, 5] (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [0, 5]`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [0, 5] (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [0, 5] (endpoint ${device.id}.${device.number})`);
   });
 
   test('start the server node', async () => {

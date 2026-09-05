@@ -42,7 +42,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
    */
   override async selectAreas(request: ServiceArea.SelectAreasRequest): Promise<ServiceArea.SelectAreasResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Selecting areas [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeServiceAreaServer: selecting areas [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ServiceArea.selectAreas', {
       command: 'selectAreas',
       request,
@@ -51,7 +51,8 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeServiceAreaServer selectAreas called with: [${request.newAreas.join(', ')}]`);
+    device.log.debug(`MatterbridgeServiceAreaServer: selectAreas called with [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.17.7.1.2: Reject the request with UnsupportedArea, InvalidSet or InvalidInMode as applicable, otherwise respond Success and set SelectedAreas to the NewAreas value.
     return await super.selectAreas(request);
   }
 }
