@@ -23,6 +23,7 @@
 
 import os from 'node:os';
 
+import { getBunLatestVersion, getBunVersion, isBun } from '@matterbridge/utils/bun';
 import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
@@ -53,17 +54,26 @@ export default new WorkerWrapper('SystemCheck', async (worker) => {
         0,
         'error',
       );
-    const nodeVersion = process.versions.node;
-    const [versionMajor, versionMinor, versionPatch] = nodeVersion.split('.').map(Number);
-    worker.logger(LogLevel.DEBUG, `Node.js Version: ${versionMajor}.${versionMinor}.${versionPatch}`);
-    if (versionMajor === 20 && versionMinor < 19)
-      logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 20.19.0 is not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
-    if (versionMajor === 22 && versionMinor < 13)
-      logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
-    if (versionMajor === 21 || versionMajor === 23 || versionMajor === 25 || versionMajor === 27)
-      logSnackBarError(LogLevel.ERROR, `System Check: Node.js odd major versions are not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
-    if (versionMajor !== 24)
-      worker.logger(LogLevel.NOTICE, `You are running Node.js ${versionMajor}.${versionMinor}.${versionPatch}. Please consider using the Node.js LTS version (24.x).`);
+    if (isBun()) {
+      const current = getBunVersion();
+      const latest = await getBunLatestVersion();
+      worker.logger(LogLevel.INFO, `You are running Bun version: ${current}`);
+      if (current && latest && current !== latest) {
+        worker.logger(LogLevel.WARN, `Latest Bun version available: ${latest}. You are running an outdated version of Bun.`);
+      }
+    } else {
+      const nodeVersion = process.versions.node;
+      const [versionMajor, versionMinor, versionPatch] = nodeVersion.split('.').map(Number);
+      worker.logger(LogLevel.INFO, `You are running Node.js version: ${versionMajor}.${versionMinor}.${versionPatch}`);
+      if (versionMajor === 20 && versionMinor < 19)
+        logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 20.19.0 is not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
+      if (versionMajor === 22 && versionMinor < 13)
+        logSnackBarError(LogLevel.ERROR, `System Check: Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
+      if (versionMajor === 21 || versionMajor === 23 || versionMajor === 25 || versionMajor === 27)
+        logSnackBarError(LogLevel.ERROR, `System Check: Node.js odd major versions are not supported. Please upgrade to Node.js LTS version (24.x).`, 0, 'error');
+      if (versionMajor !== 24)
+        worker.logger(LogLevel.NOTICE, `You are running Node.js ${versionMajor}.${versionMinor}.${versionPatch}. Please consider using the Node.js LTS version (24.x).`);
+    }
 
     /* Check network interface */
     const networkInterfaces = os.networkInterfaces();

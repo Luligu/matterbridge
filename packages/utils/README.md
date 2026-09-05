@@ -22,3 +22,5 @@
 ---
 
 [Matterbridge](https://matterbridge.io) internal package (not intended for direct use).
+
+`getBunLatestVersion()` from `@matterbridge/utils/bun` fetches the latest stable Bun version from GitHub and returns a string such as `1.4.0`. It works on Node.js and Bun, uses a 10-second request timeout, and returns `undefined` on request failures or invalid release tags. `getBunVersion()` returns the currently running Bun version.

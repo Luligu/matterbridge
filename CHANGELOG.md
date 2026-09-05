@@ -35,6 +35,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [thread]: Add Bun runtime detection to the system check, logging the Bun version and skipping Node.js version warnings when running on Bun.
+- [thread]: Add a check for the latest stable Bun version during the system check, warning when the running version differs from the latest release.
+- [utils]: Add `getBunLatestVersion()` to fetch the latest stable Bun version from GitHub, returning `undefined` if the request fails or the release tag is invalid.
 - [frontend]: Add a full test suite for the `Logs` page covering the level and text filters, the auto scroll and log length controls, and the clear action.
 - [frontend]: Extend the `Settings` tests to cover every control of both settings panels, the change password and network configuration dialogs, and the debounced Matter fields.
 - [frontend]: Extend the `Home` tests to cover the refresh and update notifications, the changelog and browser refresh prompts, and the childbridge store selection.
