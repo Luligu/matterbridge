@@ -45,6 +45,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.9.
+- [workflows]: Upgrade `actions/checkout` and `actions/setup-node` from v6 to v7.
 - [matterbridge]: Bump `@types/node` to v.26.4.1.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.0.
 - [matterbridge]: Bump `oxfmt` to v.0.66.0.
