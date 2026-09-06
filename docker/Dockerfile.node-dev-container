@@ -32,6 +32,7 @@ RUN apt-get update \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/node/.bash-cache \
   && mkdir -p /home/node/.vscode-server/extensions \
+  && sed -i '/^HISTSIZE=/d; /^HISTFILESIZE=/d' /home/node/.bashrc \
   && { \
     echo ''; \
     echo '# Keep Bash history synced across terminals.'; \
