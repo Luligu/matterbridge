@@ -111,11 +111,21 @@ On a first create the workspace volumes are empty, so the recursion is instant; 
 
 ## Requirements — Docker VMM high-performance VM
 
-This setup targets **Docker Desktop on Windows using Docker VMM** (the libkrun-based VM). Tested on Docker Desktop 4.89.0.
+This setup targets **Docker Desktop on Windows or macOS using Docker VMM** (the libkrun-based VM).
+Tested on Docker Desktop 4.89.0.
+
+> **On macOS there is nothing to configure.** Docker Desktop already selects Docker VMM by default
+> (rather than the Apple Virtualization framework) and shares `/Users` itself during installation, so
+> requirements 1–3 are satisfied out of the box — skip to requirement 4. Verified on a real macOS host.
+>
+> **Requirements 1–3 are Windows-only.** Windows defaults to the WSL2 backend, shares no directory
+> until you add one, and enables WSL service forwarding — so all three need attention there.
 
 ### 1. Enable Docker VMM
 
-Docker Desktop → **Settings → General → Choose how to run Docker containers → Docker VMM**
+**macOS: already the default, nothing to do.**
+
+Windows — Docker Desktop → **Settings → General → Choose how to run Docker containers → Docker VMM**
 (the alternatives are WSL2 and Hyper-V).
 
 Docker still marks this option **BETA**, and describes the trade-off as: Docker VMM is the fastest
@@ -135,7 +145,11 @@ docker info | grep -i kernel    # Kernel Version: ...-linuxkit
 
 **This is the setting that matters most, and getting it wrong breaks git silently.**
 
-Docker Desktop → **Settings → Resources → File sharing**. Add your repositories' parent folder (e.g. `C:\Users\<you>\GitHub`) under **Virtual file shares**, and make sure it is **not** covered by a **Synchronized file share**.
+**macOS: nothing to do** — the installer shares `/Users` for you, through the passthrough filesystem. The
+warning below still matters if you ever create a Synchronized file share over your repository by hand; you
+just will not get one by accident.
+
+Windows — Docker Desktop → **Settings → Resources → File sharing**. Add your repositories' parent folder (e.g. `C:\Users\<you>\GitHub`) under **Virtual file shares**, and make sure it is **not** covered by a **Synchronized file share**.
 
 Under Docker VMM a host path must be shared explicitly — there is no implicit bind mount — so one of the two mechanisms must cover the repository:
 
@@ -164,6 +178,8 @@ Expect `virtiofs` and a real file list. If you see `selfowner`, you are on a syn
 The performance cost of choosing VirtioFS here is small, because `node_modules`, the frontend `node_modules` and `.cache` are all ext4 volumes — the share only ever carries the source tree and `.git`.
 
 ### 3. Disable WSL service forwarding in VS Code
+
+**macOS: not applicable** — the setting has no effect off Windows, by its own definition.
 
 `dev.containers.forwardWSLServices` defaults to `true`, and on Windows it makes the Dev Containers extension connect to your default WSL distro on every start to look for an SSH agent and X display to forward. With Docker VMM there is no WSL in the picture at all, and if a distro is installed this costs ~3.4 s of cold boot for nothing.
 
