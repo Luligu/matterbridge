@@ -32,7 +32,15 @@ RUN apt-get update \
   && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/bun/.bash-cache \
-  && mkdir -p /home/bun/.vscode-server/extensions \
+    /home/bun/.vscode-server/extensions \
+    /home/bun/Matterbridge \
+    /home/bun/.matterbridge \
+    /home/bun/.mattercert \
+    /home/bun/.claude \
+    /home/bun/.codex \
+    /home/bun/.agents \
+    /home/bun/.npm \
+    /home/bun/.bun/install/cache \
   && sed -i '/^HISTSIZE=/d; /^HISTFILESIZE=/d' /home/bun/.bashrc \
   && { \
     echo ''; \

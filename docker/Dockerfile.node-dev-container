@@ -31,7 +31,15 @@ RUN apt-get update \
   && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/node/.bash-cache \
-  && mkdir -p /home/node/.vscode-server/extensions \
+    /home/node/.vscode-server/extensions \
+    /home/node/Matterbridge \
+    /home/node/.matterbridge \
+    /home/node/.mattercert \
+    /home/node/.claude \
+    /home/node/.codex \
+    /home/node/.agents \
+    /home/node/.npm \
+    /home/node/.bun/install/cache \
   && sed -i '/^HISTSIZE=/d; /^HISTFILESIZE=/d' /home/node/.bashrc \
   && { \
     echo ''; \
