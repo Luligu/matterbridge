@@ -6,7 +6,19 @@
 
 set -euo pipefail
 
-echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "Running Matterbridge Bun Dev Container post-create.sh..."
+echo "Welcome to Matterbridge Dev Container (post-create.sh)"
+DISTRO=$(awk -F= '/^PRETTY_NAME=/{gsub(/"/, "", $2); print $2}' /etc/os-release)
+CODENAME=$(awk -F= '/^VERSION_CODENAME=/{print $2}' /etc/os-release)
+echo "Distro: $DISTRO ($CODENAME)"
+echo "User: $(whoami)"
+echo "Hostname: $(hostname)"
+echo "Architecture: $(uname -m)"
+echo "Kernel Version: $(uname -r)"
+echo "Uptime: $(uptime -p || echo 'unavailable')"
+echo "Date: $(date)"
+echo "Bun version: $(bun -v)"
+echo "Bun global cache: ${HOME}/.bun/install/cache"
+echo ""
 
 # Ensure required directories exist and are owned by the current user
 workspace_paths=("$PWD/node_modules" "$PWD/apps/frontend/node_modules" "$PWD/.cache")
