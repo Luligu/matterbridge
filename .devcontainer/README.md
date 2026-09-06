@@ -39,13 +39,13 @@ calls only `docker`, so the host needs no interpreter — see requirement 4. The
 The workspace is bind-mounted from the host, but every directory with heavy or churn-prone I/O is a **named volume** backed by the VM's own ext4 disk. Host file sharing is never in the path for dependency installs or builds.
 
 ```
-/workspaces/matterbridge                      → host bind mount (source + .git only)
-/workspaces/matterbridge/node_modules         → volume (ext4)
-/workspaces/matterbridge/apps/frontend/node_modules → volume (ext4)
-/workspaces/matterbridge/.cache               → volume (ext4)
+/workspaces/matterbridge                              → host bind mount (source + .git)
+/workspaces/matterbridge/node_modules                 → volume (ext4)
+/workspaces/matterbridge/apps/frontend/node_modules   → volume (ext4)
+/workspaces/matterbridge/.cache                       → volume (ext4)
 ```
 
-This is why `npm install`, `tsc` and `vite build` complete in well under a second each even though the source tree is shared from Windows.
+This is why `npm install`, `tsc` and `vite build` complete in well under a second each even though the source tree is shared from Windows or macOS.
 
 ### The VS Code server is cached once and reused everywhere
 
@@ -213,8 +213,7 @@ the container start).
 
 The pull is unconditional by design. It costs ~0.9 s, hides almost entirely behind the network check
 running alongside it, and removes the failure mode where a developer silently runs a months-old image
-because nothing ever told them to refresh it. Measured end to end this is _faster_ than the previous
-Node-based script, which spent ~350 ms on `cmd.exe` plus Node start-up before doing any work.
+because nothing ever told them to refresh it.
 
 > **The pull refreshes the image, not an existing container.** A container keeps the image it was created
 > from for its whole life, and the Dev Containers extension reuses containers by label without ever
@@ -275,11 +274,11 @@ Both images are `Debian 13 (trixie)` and share an identical package set, install
 
 ### Runtimes
 
-| | Node image | Bun image |
-| --- | --- | --- |
-| Base | `node:24-trixie-slim` | `oven/bun:slim` |
-| Runtime | Node.js 24.20.0, npm 11.19.0 | Bun 1.4.2 |
-| User | `node` (uid/gid 1000) | `bun` (uid/gid 1000) |
+|         | Node image                   | Bun image            |
+| ------- | ---------------------------- | -------------------- |
+| Base    | `node:24-trixie-slim`        | `oven/bun:slim`      |
+| Runtime | Node.js 24.20.0, npm 11.19.0 | Bun 1.4.2            |
+| User    | `node` (uid/gid 1000)        | `bun` (uid/gid 1000) |
 
 The Bun image also ships an `npm` shim at `/usr/local/bin/npm` that forwards to `bun`, and Bun's own Node
 fallback at `/usr/local/bun-node-fallback-bin/node`, so tooling that shells out to `npm` or `node` keeps
@@ -287,28 +286,28 @@ working.
 
 ### Packages
 
-| Package | Version | Why it is there |
-| --- | --- | --- |
-| `avahi-utils` | 0.8 | `avahi-browse`, `avahi-resolve`, `avahi-publish` — mDNS debugging for Matter pairing |
-| `bubblewrap` | 0.12.0 | `bwrap` — sandboxing, required by some agent CLIs |
-| `btop` | 1.3.2 | process/resource monitor |
-| `ca-certificates` | 20250419 | TLS trust store for HTTPS |
-| `curl` | 8.14.1 | HTTP client |
-| `dnsutils` | — | `dig`, `nslookup`, `host` — DNS debugging |
-| `fd-find` | 10.2.0 | fast file finder, symlinked to `fd` at `/usr/local/bin/fd` |
-| `fzf` | 0.60.3 | fuzzy finder |
-| `git` | 2.47.3 | version control |
-| `iproute2` | 6.15.0 | `ip` — network interface and route inspection |
-| `iputils-ping` | 20240905 | `ping` |
-| `jq` | 1.7.1 | JSON processing |
-| `nano` | 8.4 | in-terminal editor |
-| `openssh-client` | — | `ssh`, `ssh-keygen`, `ssh-add`, `scp`, `sftp` — SSH git remotes, forwarded agent, SSH commit signing. Agent forwarding also needs an agent running on the host: macOS starts one by default, Windows does not |
-| `procps` | 4.0.4 | `ps`, `top`, `free` |
-| `ripgrep` | 14.1.1 | fast recursive search (`rg`) |
-| `shellcheck` | 0.10.0 | shell script linting — used on the lifecycle scripts |
-| `shfmt` | 3.8.0 | shell script formatting |
-| `sudo` | 1.9.16p2 | passwordless sudo for the container user, via `/etc/sudoers.d/<user>` |
-| `unzip` | 6.0 | archive extraction |
+| Package           | Version  | Why it is there                                                                                                                                                                                               |
+| ----------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `avahi-utils`     | 0.8      | `avahi-browse`, `avahi-resolve`, `avahi-publish` — mDNS debugging for Matter pairing                                                                                                                          |
+| `bubblewrap`      | 0.12.0   | `bwrap` — sandboxing, required by some agent CLIs                                                                                                                                                             |
+| `btop`            | 1.3.2    | process/resource monitor                                                                                                                                                                                      |
+| `ca-certificates` | 20250419 | TLS trust store for HTTPS                                                                                                                                                                                     |
+| `curl`            | 8.14.1   | HTTP client                                                                                                                                                                                                   |
+| `dnsutils`        | —        | `dig`, `nslookup`, `host` — DNS debugging                                                                                                                                                                     |
+| `fd-find`         | 10.2.0   | fast file finder, symlinked to `fd` at `/usr/local/bin/fd`                                                                                                                                                    |
+| `fzf`             | 0.60.3   | fuzzy finder                                                                                                                                                                                                  |
+| `git`             | 2.47.3   | version control                                                                                                                                                                                               |
+| `iproute2`        | 6.15.0   | `ip` — network interface and route inspection                                                                                                                                                                 |
+| `iputils-ping`    | 20240905 | `ping`                                                                                                                                                                                                        |
+| `jq`              | 1.7.1    | JSON processing                                                                                                                                                                                               |
+| `nano`            | 8.4      | in-terminal editor                                                                                                                                                                                            |
+| `openssh-client`  | —        | `ssh`, `ssh-keygen`, `ssh-add`, `scp`, `sftp` — SSH git remotes, forwarded agent, SSH commit signing. Agent forwarding also needs an agent running on the host: macOS starts one by default, Windows does not |
+| `procps`          | 4.0.4    | `ps`, `top`, `free`                                                                                                                                                                                           |
+| `ripgrep`         | 14.1.1   | fast recursive search (`rg`)                                                                                                                                                                                  |
+| `shellcheck`      | 0.10.0   | shell script linting — used on the lifecycle scripts                                                                                                                                                          |
+| `shfmt`           | 3.8.0    | shell script formatting                                                                                                                                                                                       |
+| `sudo`            | 1.9.16p2 | passwordless sudo for the container user, via `/etc/sudoers.d/<user>`                                                                                                                                         |
+| `unzip`           | 6.0      | archive extraction                                                                                                                                                                                            |
 
 ### Deliberately not installed
 
@@ -318,7 +317,7 @@ want signed commits, SSH signing via the already-present `ssh-keygen` is the bet
 `gpgconf: not found` appears in the log — a negative capability probe, not an error.
 
 **`docker` / `oras` / `skopeo`** — the container has no Docker CLI and no socket. The extension probes for
-one to pull dev container *Features* from a registry; this setup uses none, so the probe failing is
+one to pull dev container _Features_ from a registry; this setup uses none, so the probe failing is
 expected.
 
 ### Image conventions
