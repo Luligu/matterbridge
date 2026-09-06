@@ -268,6 +268,69 @@ Purely cosmetic: nothing about the container changes, only the log gets readable
 
 ---
 
+## What is in the images
+
+Both images are `Debian 13 (trixie)` and share an identical package set, installed with
+`--no-install-recommends` to keep them lean.
+
+### Runtimes
+
+| | Node image | Bun image |
+| --- | --- | --- |
+| Base | `node:24-trixie-slim` | `oven/bun:slim` |
+| Runtime | Node.js 24.20.0, npm 11.19.0 | Bun 1.4.2 |
+| User | `node` (uid/gid 1000) | `bun` (uid/gid 1000) |
+
+The Bun image also ships an `npm` shim at `/usr/local/bin/npm` that forwards to `bun`, and Bun's own Node
+fallback at `/usr/local/bun-node-fallback-bin/node`, so tooling that shells out to `npm` or `node` keeps
+working.
+
+### Packages
+
+| Package | Version | Why it is there |
+| --- | --- | --- |
+| `avahi-utils` | 0.8 | `avahi-browse`, `avahi-resolve`, `avahi-publish` — mDNS debugging for Matter pairing |
+| `bubblewrap` | 0.12.0 | `bwrap` — sandboxing, required by some agent CLIs |
+| `btop` | 1.3.2 | process/resource monitor |
+| `ca-certificates` | 20250419 | TLS trust store for HTTPS |
+| `curl` | 8.14.1 | HTTP client |
+| `dnsutils` | — | `dig`, `nslookup`, `host` — DNS debugging |
+| `fd-find` | 10.2.0 | fast file finder, symlinked to `fd` at `/usr/local/bin/fd` |
+| `fzf` | 0.60.3 | fuzzy finder |
+| `git` | 2.47.3 | version control |
+| `iproute2` | 6.15.0 | `ip` — network interface and route inspection |
+| `iputils-ping` | 20240905 | `ping` |
+| `jq` | 1.7.1 | JSON processing |
+| `nano` | 8.4 | in-terminal editor |
+| `openssh-client` | — | `ssh`, `ssh-keygen`, `ssh-add`, `scp`, `sftp` — SSH git remotes, forwarded agent, SSH commit signing. Agent forwarding also needs an agent running on the host: macOS starts one by default, Windows does not |
+| `procps` | 4.0.4 | `ps`, `top`, `free` |
+| `ripgrep` | 14.1.1 | fast recursive search (`rg`) |
+| `shellcheck` | 0.10.0 | shell script linting — used on the lifecycle scripts |
+| `shfmt` | 3.8.0 | shell script formatting |
+| `sudo` | 1.9.16p2 | passwordless sudo for the container user, via `/etc/sudoers.d/<user>` |
+| `unzip` | 6.0 | archive extraction |
+
+### Deliberately not installed
+
+**`gnupg`** — only needed to forward a GPG agent for signed commits. It pulls 15 packages (~7 MB) for a
+feature this setup does not use, and GPG agent forwarding from a Windows host is the fragile path. If you
+want signed commits, SSH signing via the already-present `ssh-keygen` is the better route. This is why
+`gpgconf: not found` appears in the log — a negative capability probe, not an error.
+
+**`docker` / `oras` / `skopeo`** — the container has no Docker CLI and no socket. The extension probes for
+one to pull dev container *Features* from a registry; this setup uses none, so the probe failing is
+expected.
+
+### Image conventions
+
+- Bash history is synced across terminals (`shopt -s histappend` plus a `PROMPT_COMMAND` hook) and stored
+  on the `bash-cache` volume, with `HISTSIZE=100000` / `HISTFILESIZE=200000`. Debian's stock `.bashrc`
+  assignments are stripped at build time so those `ENV` values actually survive into interactive shells.
+- Every fixed `$HOME` volume mount point is pre-created and owned by the container user, so fresh volumes
+  are seeded correctly instead of coming up `root`-owned.
+
+---
+
 ## Volumes
 
 Thirteen volumes are declared per variant, plus the external `vscode` volume injected by the Dev
@@ -380,8 +443,6 @@ variants co-mount eleven volumes, including `matterbridge-storage`, `matterbridg
 `matterbridge-cert` and `vscode-extensions`. The port collision is effectively a safety interlock
 against running two Matterbridge instances against the same storage.
 
-**`Permission denied` creating `~/.vscode-server/bin` or `/data`** — a volume was created before its mount point existed in the image. Rebuild and push the image, then `docker volume rm` the affected volume so it is re-seeded; Docker only seeds _empty_ volumes.
-
 **Extensions reinstall on every rebuild** — the `vscode-extensions` volume was removed, or the two variants are fighting over it because both are running.
 
 **Startup pauses ~3 s before the Docker check** — `dev.containers.forwardWSLServices` is still enabled. See requirement 3.
@@ -392,4 +453,5 @@ against running two Matterbridge instances against the same storage.
 docker exec matterbridge-node sudo rm -f /vscode/vscode-server/extensionsCache/<old-entry>
 ```
 
-**`gpgconf: not found` / `ssh not found` in the log** — capability probes, not errors. Neither GnuPG nor an SSH client ships in the images, and no agent is forwarded. Harmless unless you want signed commits or SSH remotes inside the container; add `gnupg` / `openssh-client` to the Dockerfile if so.
+**`gpgconf: not found` in the log** — a capability probe, not an error. GnuPG is deliberately not installed;
+see "Deliberately not installed". Harmless unless you want GPG-signed commits from inside the container.
