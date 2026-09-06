@@ -28,7 +28,7 @@ LABEL org.opencontainers.image.title="matterbridge:node-dev-container" \
   org.opencontainers.image.created=$BUILD_DATE
 
 RUN apt-get update \
-  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
+  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano openssh-client procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/node/.bash-cache \
     /home/node/.vscode-server/extensions \
