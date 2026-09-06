@@ -278,7 +278,7 @@
     "version:patch": "npm version patch --no-git-tag-version",
     "version:minor": "npm version minor --no-git-tag-version",
     "version:major": "npm version major --no-git-tag-version",
-    "git:status": "git status && git branch -vv && git --no-pager diff dev origin/dev && git stash list && git fsck --full --no-reflogs",
+    "git:status": "git status && git branch -vv && git --no-pager diff dev origin/dev && git stash list && git fsck --full --no-reflogs && git worktree list",
     "git:remote": "git remote -v && git remote show origin",
     "git:prune": "git fetch --prune --prune-tags",
     "git:hardreset:main": "git fetch origin && git checkout main && git reset --hard origin/main",
