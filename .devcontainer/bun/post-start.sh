@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# .devcontainer/bun/post-start.sh v.2.0.0
+# .devcontainer/bun/post-start.sh v.2.1.0
 
 # This script runs after the Dev Container is started to set up the dev container environment.
 
