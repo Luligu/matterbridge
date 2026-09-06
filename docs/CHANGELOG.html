@@ -153,8 +153,14 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="3109-dev-branch">[3.10.9] - Dev branch</h2>
+<h3 id="development-news">Development News</h3>
+<ul>
+<li>[chip]: EVSE Complete endpoint 14011 CHIP conformance is green ✅ for all automated harness tests covering the <code>EnergyEvse</code> and <code>EnergyEvseMode</code> clusters, including the optional <code>SoCReporting</code>, <code>PlugAndCharge</code>, <code>Rfid</code>, and <code>V2X</code> features.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[Evse]: <code>Evse</code>/<code>EvseOptions</code> accept new optional constructor options enabling the remaining <code>EnergyEvse</code> cluster features: <code>stateOfCharge</code>/<code>batteryCapacity</code> (SoCReporting), <code>vehicleId</code> (PlugAndCharge), <code>rfid</code> (Rfid, adds the <code>Rfid</code> event and the new <code>triggerRfidEvent()</code> helper), and <code>v2x</code> (V2X, adds the <code>EnableDischarging</code> command). <code>esaCanGenerate</code> is also now exposed to the child <code>DeviceEnergyManagement</code> endpoint for V2X-capable (export-capable) EVSEs. All features are opt-in and disabled by default, matching the existing <code>ChargingPreferences</code>-only behavior. Thanks Ludovic BOUÉ.</li>
+<li>[Evse]: <code>MatterbridgeEnergyEvseServer</code> now implements <code>enableDischarging()</code> (Matter 1.6.0 § 9.3.9.3), mirroring <code>enableCharging()</code>&#39;s validation and state-update mandates for the discharge direction, and <code>enableCharging()</code>/<code>disable()</code> now correctly interoperate with a concurrently active discharge (<code>SupplyState.Enabled</code>) on V2X-capable instances. Thanks Ludovic BOUÉ.</li>
 <li>[thread]: Add Bun runtime detection to the system check, logging the Bun version and skipping Node.js version warnings when running on Bun.</li>
 <li>[thread]: Add a check for the latest stable Bun version during the system check, warning when the running version differs from the latest release.</li>
 <li>[utils]: Add <code>getBunLatestVersion()</code> to fetch the latest stable Bun version from GitHub, returning <code>undefined</code> if the request fails or the release tag is invalid.</li>
@@ -198,7 +204,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3108-2026-09-04">[3.10.8] - 2026-09-04</h2>
-<h3 id="development-news">Development News</h3>
+<h3 id="development-news-1">Development News</h3>
 <ul>
 <li><p>[chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
 </li>
@@ -317,7 +323,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="development-news-1">Development News</h3>
+<h3 id="development-news-2">Development News</h3>
 <ul>
 <li>[chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>EnergyEvse</code> cluster.</li>
 <li>[chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the <code>EnergyEvseMode</code> cluster.</li>
@@ -404,7 +410,7 @@
 <ul>
 <li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
 </ul>
-<h3 id="development-news-2">Development News</h3>
+<h3 id="development-news-3">Development News</h3>
 <ul>
 <li>[chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the <code>RootNode</code> device type and <code>BasicInformation</code>, <code>PowerSource</code>, <code>AccessControl</code>, <code>GeneralDiagnostics</code>, <code>GroupKeyManagement</code>, <code>OperationalCredentials</code> and <code>GeneralCommissioning</code> clusters.</li>
 <li>[chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the <code>Aggregator</code> device type.</li>
@@ -475,7 +481,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3105-2026-08-14">[3.10.5] - 2026-08-14</h2>
-<h3 id="development-news-3">Development news</h3>
+<h3 id="development-news-4">Development news</h3>
 <ul>
 <li>[closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass). So far fully supported by SmartThings and partially by Matter Server dashboard.</li>
 </ul>

@@ -26,6 +26,7 @@
     "Test_TC_WASHERCTRL_2_2.yaml",
     "Test_TC_DRYERCTRL_2_1.yaml",
     "TC_MWOCTRL_2_2.py",
+    "Test_TC_EEVSE_2_1.yaml",
     "TC_EEVSE_2_2.py"
   ],
   "tests": [
@@ -2889,6 +2890,79 @@
       "name": "EnergyEvseMode change mode on EVSE",
       "test": "Test_TC_EEVSEM_2_1",
       "endpoint": 1401,
+      "args": ["--PICS /root/energy-evse-mode.pics"]
+    },
+    {
+      "name": "EnergyEvse attributes on EVSE Complete",
+      "test": "Test_TC_EEVSE_2_1",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics"]
+    },
+    {
+      "name": "EnergyEvse primary functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_2.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"],
+      "comment": "Patched locally so the UserMaximumChargeCurrent write uses the configured EVSE endpoint instead of the upstream test's hardcoded endpoint 1."
+    },
+    {
+      "name": "EnergyEvse charging preferences functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_3.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse fault functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_4.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse diagnostics functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_5.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse reporting functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_6.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse state-of-charge functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_7.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse vehicle identification functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_8.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse RFID event functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_9.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvse bidirectional functionality on EVSE Complete",
+      "test": "TC_EEVSE_2_10.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-complete.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "EnergyEvseMode attributes on EVSE Complete",
+      "test": "TC_EEVSEM_1_2.py",
+      "endpoint": 14011,
+      "args": ["--PICS /root/energy-evse-mode.pics"]
+    },
+    {
+      "name": "EnergyEvseMode change mode on EVSE Complete",
+      "test": "Test_TC_EEVSEM_2_1",
+      "endpoint": 14011,
       "args": ["--PICS /root/energy-evse-mode.pics"]
     },
     {

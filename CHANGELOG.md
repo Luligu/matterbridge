@@ -31,8 +31,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.9] - Dev branch
 
+### Development News
+
+- [chip]: EVSE Complete endpoint 14011 CHIP conformance is green ✅ for all automated harness tests covering the `EnergyEvse` and `EnergyEvseMode` clusters, including the optional `SoCReporting`, `PlugAndCharge`, `Rfid`, and `V2X` features.
+
 ### Added
 
+- [Evse]: `Evse`/`EvseOptions` accept new optional constructor options enabling the remaining `EnergyEvse` cluster features: `stateOfCharge`/`batteryCapacity` (SoCReporting), `vehicleId` (PlugAndCharge), `rfid` (Rfid, adds the `Rfid` event and the new `triggerRfidEvent()` helper), and `v2x` (V2X, adds the `EnableDischarging` command). `esaCanGenerate` is also now exposed to the child `DeviceEnergyManagement` endpoint for V2X-capable (export-capable) EVSEs. All features are opt-in and disabled by default, matching the existing `ChargingPreferences`-only behavior. Thanks Ludovic BOUÉ.
+- [Evse]: `MatterbridgeEnergyEvseServer` now implements `enableDischarging()` (Matter 1.6.0 § 9.3.9.3), mirroring `enableCharging()`'s validation and state-update mandates for the discharge direction, and `enableCharging()`/`disable()` now correctly interoperate with a concurrently active discharge (`SupplyState.Enabled`) on V2X-capable instances. Thanks Ludovic BOUÉ.
 - [thread]: Add Bun runtime detection to the system check, logging the Bun version and skipping Node.js version warnings when running on Bun.
 - [thread]: Add a check for the latest stable Bun version during the system check, warning when the running version differs from the latest release.
 - [utils]: Add `getBunLatestVersion()` to fetch the latest stable Bun version from GitHub, returning `undefined` if the request fails or the release tag is invalid.

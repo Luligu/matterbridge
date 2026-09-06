@@ -944,6 +944,21 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   });
   await registerDevice(ep, 'EVSE', 'ENERGY-14-01');
 
+  ep = new Evse('EVSE Complete', 'ENERGY-14-01-1', {
+    id: 'EvseComplete',
+    number: EndpointNumber(14_01_1),
+    tagList: [getSemtag(CommonNumberTag.Two)],
+    stateOfCharge: 80,
+    batteryCapacity: 70_000_000,
+    vehicleId: null,
+    rfid: true,
+    v2x: true,
+    esaCanGenerate: true,
+    absMinPower: -7_400_000,
+    absMaxPower: 7_400_000,
+  });
+  await registerDevice(ep, 'EVSE Complete', 'ENERGY-14-01-1');
+
   ep = new WaterHeater('Water Heater', 'ENERGY-14-02', {
     id: 'WaterHeater',
     number: EndpointNumber(14_02),

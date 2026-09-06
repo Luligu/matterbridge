@@ -11,6 +11,7 @@
     "chip/**",
     "**/coverage/**",
     "**/dist/**",
+    "docker/chip-test/**",
     "**/temp/**",
     "**/node_modules/**",
     "**/out/**",
