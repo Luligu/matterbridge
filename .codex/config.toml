@@ -1,4 +1,4 @@
-# Codex config v.1.0.3
+# Codex config v.1.0.5
 
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
