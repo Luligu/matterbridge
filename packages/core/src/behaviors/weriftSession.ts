@@ -47,36 +47,34 @@ export interface WeriftOfferOptions {
   /** Whether to add a sendonly audio transceiver to the offer. */
   audio: boolean;
   /**
-   * Video source corresponding to MATTERBRIDGE_CAMERA_VIDEO_SOURCE: no injected track (`none`), a synthetic
-   * pattern (`test`), a local capture device (`webcam`), or an RTSP stream (`rtsp`). The environment default is `none`.
+   * Video source: no injected track (`none`), a synthetic
+   * pattern (`test`), a local capture device (`webcam`), or an RTSP stream (`rtsp`). Use `none` to disable source injection.
    */
   videoSource: VideoSource;
   /**
-   * Webcam device identifier or RTSP URL corresponding to MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE.
+   * Webcam device identifier or RTSP URL.
    * Webcam identifiers are a device path on Linux, an avfoundation index on macOS, or a dshow name on Windows.
    * A missing device for webcam or RTSP capture currently falls back to the synthetic test pattern.
    */
   videoSourceDevice?: string;
   /**
-   * Preferred capture resolution (e.g. "1280x720") for this session, typically the allocated video stream's
-   * resolution from a real client's CameraAvStreamManagement.VideoStreamAllocate request. Supported resolutions
-   * are 640x480, 1280x720, and 1920x1080. A fixed MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION overrides this preference;
-   * when the environment variable is unset or `auto`, this preference is used, falling back to 640x480.
+   * Capture resolution for this session: 640x480, 1280x720, or 1920x1080. When unset, `auto`, or unsupported,
+   * the resolution falls back to 640x480.
    * Applies to webcam and RTSP sources; ignored for the synthetic test pattern.
    */
   videoResolution?: string;
   /**
-   * Target video encoder bitrate in kbps corresponding to MATTERBRIDGE_CAMERA_VIDEO_BITRATE.
-   * Must be a finite positive number. The environment default and synthetic test pattern bitrate are 1000 kbps.
+   * Target video encoder bitrate in kbps.
+   * Must be a finite positive number. The default and synthetic test pattern bitrate are 1000 kbps.
    */
   videoBitrate?: number;
   /**
-   * Audio source corresponding to MATTERBRIDGE_CAMERA_AUDIO_SOURCE: no injected track (`none`), the recorded
-   * voice clip (`test`), a local capture device (`microphone`), or an RTSP stream (`rtsp`). The environment default is `none`.
+   * Audio source: no injected track (`none`), the recorded
+   * voice clip (`test`), a local capture device (`microphone`), or an RTSP stream (`rtsp`). Use `none` to disable source injection.
    */
   audioSource: AudioSource;
   /**
-   * Microphone device identifier or RTSP URL corresponding to MATTERBRIDGE_CAMERA_AUDIO_SOURCE_DEVICE.
+   * Microphone device identifier or RTSP URL.
    * Microphone identifiers are an ALSA device on Linux, an avfoundation index on macOS, or a dshow name on Windows.
    * A missing device for microphone or RTSP capture currently falls back to the recorded test voice clip.
    */
@@ -90,17 +88,17 @@ export interface WeriftOfferOptions {
  *
  * In addition to SDP/ICE negotiation, this session can inject a video source using werift/nonstandard + ffmpeg so an
  * end-to-end media path can be validated without a real camera capture pipeline. The source is a synthetic moving
- * test pattern when `MATTERBRIDGE_CAMERA_VIDEO_SOURCE=test`, a local webcam capture device when the source is
+ * test pattern when `options.videoSource=test`, a local webcam capture device when the source is
  * `webcam`, a real RTSP camera stream when the source is `rtsp`, or no injected track when the source is unset or
- * `none`. MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE identifies the webcam device (e.g. /dev/video0 on Linux, an
+ * `none`. options.videoSourceDevice identifies the webcam device (e.g. /dev/video0 on Linux, an
  * avfoundation index on macOS, or a dshow device name on Windows) for `webcam`, or the RTSP url (e.g.
  * rtsp://user:password@host:554/path) for `rtsp`. The webcam capture resolution defaults to 640x480 and can be set
- * to 1280x720 or 1920x1080 with MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION.
+ * to 1280x720 or 1920x1080 with options.videoResolution.
  *
  * Similarly, the audio track can inject a recorded test-voice clip (e.g. for an Intercom's "Listen" live view) when
- * `MATTERBRIDGE_CAMERA_AUDIO_SOURCE=test`, capture from a local microphone when the source is `microphone`, or pull
+ * `options.audioSource=test`, capture from a local microphone when the source is `microphone`, or pull
  * the audio from a real RTSP camera stream when the source is `rtsp`; unset or `none` negotiates the audio
- * transceiver without attaching a track. MATTERBRIDGE_CAMERA_AUDIO_SOURCE_DEVICE identifies the microphone device
+ * transceiver without attaching a track. options.audioSourceDevice identifies the microphone device
  * (e.g. a hw:X,Y ALSA device on Linux, an avfoundation audio index on macOS, or a dshow device name on Windows) for
  * `microphone`, or the RTSP url for `rtsp`.
  */
@@ -122,6 +120,9 @@ export class WeriftWebRtcSession {
 
   /** The WebRtcTransportProvider session identifier this instance backs. */
   private readonly webRtcSessionId: number;
+
+  /** Media negotiation and source options for this session. */
+  private readonly options: WeriftOfferOptions;
 
   private testVideoGenerator?: ChildProcess;
 
@@ -167,9 +168,11 @@ export class WeriftWebRtcSession {
    * Creates a new werift RTCPeerConnection configured with the codecs this session can negotiate and inject.
    *
    * @param {number} webRtcSessionId - The WebRtcTransportProvider session identifier this instance backs, used as this session's log name.
+   * @param {WeriftOfferOptions} options - The media negotiation and source options to store for this session.
    */
-  constructor(webRtcSessionId: number) {
+  constructor(webRtcSessionId: number, options: WeriftOfferOptions) {
     this.webRtcSessionId = webRtcSessionId;
+    this.options = options;
     this.peerConnection = new RTCPeerConnection({ codecs: { audio: [useOPUS(), usePCMU()], video: [useH264(), useVP8()] } });
     this.log = new AnsiLogger({ logName: `WebRTC session ${webRtcSessionId}`, logLevel: LogLevel.DEBUG, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS });
     // Log when local ICE candidate discovery starts or completes.
@@ -296,69 +299,55 @@ export class WeriftWebRtcSession {
     return undefined;
   }
 
-  /** Webcam capture resolutions supported via MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION; falls back to the first entry. */
+  /** Webcam capture resolutions supported via options.videoResolution; falls back to the first entry. */
   private static readonly SUPPORTED_VIDEO_RESOLUTIONS = ['640x480', '1280x720', '1920x1080'];
 
   /**
    * Default target encoder bitrate (kbps), used for the test pattern and as the fallback when
-   * MATTERBRIDGE_CAMERA_VIDEO_BITRATE is unset or invalid. Without an explicit -b:v, ffmpeg falls back to a generic
+   * options.videoBitrate is unset or invalid. Without an explicit -b:v, ffmpeg falls back to a generic
    * ~200kbps default that is far too low even at 640x480 and produces heavy blocking artifacts.
    */
   private static readonly DEFAULT_BITRATE_KBPS = 1000;
 
   /**
-   * Resolves the configured encoder bitrate (kbps) from MATTERBRIDGE_CAMERA_VIDEO_BITRATE, applied regardless of the
+   * Resolves the configured encoder bitrate (kbps) from options.videoBitrate, applied regardless of the
    * capture resolution; falls back to {@link DEFAULT_BITRATE_KBPS} (with a warning) if unset or not a positive
    * number.
    *
    * @returns {number} The target encoder bitrate in kbps.
    */
   private getConfiguredVideoBitrate(): number {
-    const configured = process.env.MATTERBRIDGE_CAMERA_VIDEO_BITRATE;
-    if (!configured) return WeriftWebRtcSession.DEFAULT_BITRATE_KBPS;
-    const bitrateKbps = Number(configured);
+    const configured = this.options.videoBitrate;
+    if (configured === undefined) return WeriftWebRtcSession.DEFAULT_BITRATE_KBPS;
+    const bitrateKbps = configured;
     if (!Number.isFinite(bitrateKbps) || bitrateKbps <= 0) {
-      this.log.warn(`Invalid MATTERBRIDGE_CAMERA_VIDEO_BITRATE "${configured}"; falling back to ${WeriftWebRtcSession.DEFAULT_BITRATE_KBPS}kbps`);
+      this.log.warn(`Invalid options.videoBitrate "${configured}"; falling back to ${WeriftWebRtcSession.DEFAULT_BITRATE_KBPS}kbps`);
       return WeriftWebRtcSession.DEFAULT_BITRATE_KBPS;
     }
     return bitrateKbps;
   }
 
   /**
-   * Resolves the capture/output resolution to use. When MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION names a supported fixed
-   * resolution, that value always wins, regardless of what the controller requested. When it is unset or `auto`,
-   * the requested per-session resolution (typically the client's allocated video stream resolution) is used when it
-   * names a supported resolution, falling back (with a warning) to 640x480 otherwise.
+   * Resolves the capture/output resolution to use. When options.videoResolution names a supported fixed
+   * resolution, that value is used. Unset, `auto`, or unsupported values fall back to 640x480.
    *
-   * @param {string} [requestedResolution] - The per-session preferred resolution, e.g. "1280x720".
    * @returns {string} The resolution to use, e.g. "1280x720".
    */
-  private getConfiguredVideoResolution(requestedResolution?: string): string {
+  private getConfiguredVideoResolution(): string {
     const [defaultResolution] = WeriftWebRtcSession.SUPPORTED_VIDEO_RESOLUTIONS;
-    const configured = process.env.MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION;
+    const configured = this.options.videoResolution;
 
     if (configured && configured !== 'auto') {
       if (WeriftWebRtcSession.SUPPORTED_VIDEO_RESOLUTIONS.includes(configured)) {
-        this.log.debug(`Using configured MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION ${configured}`);
+        this.log.debug(`Using configured options.videoResolution ${configured}`);
         return configured;
       }
       this.log.warn(
-        `Unsupported MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION "${configured}" (supported: ${WeriftWebRtcSession.SUPPORTED_VIDEO_RESOLUTIONS.join(', ')}, auto); falling back to ${defaultResolution}`,
+        `Unsupported options.videoResolution "${configured}" (supported: ${WeriftWebRtcSession.SUPPORTED_VIDEO_RESOLUTIONS.join(', ')}, auto); falling back to ${defaultResolution}`,
       );
       return defaultResolution;
     }
 
-    if (requestedResolution) {
-      if (WeriftWebRtcSession.SUPPORTED_VIDEO_RESOLUTIONS.includes(requestedResolution)) {
-        this.log.debug(`Using requested video stream resolution ${requestedResolution} (MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION=auto)`);
-        return requestedResolution;
-      }
-      this.log.warn(
-        `Requested video stream resolution "${requestedResolution}" is not supported (supported: ${WeriftWebRtcSession.SUPPORTED_VIDEO_RESOLUTIONS.join(', ')}); falling back to ${defaultResolution}`,
-      );
-      return defaultResolution;
-    }
-    this.log.debug(`No requested video stream resolution available; using default ${defaultResolution} (MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION=auto)`);
     return defaultResolution;
   }
 
@@ -368,7 +357,7 @@ export class WeriftWebRtcSession {
    * @returns {VideoSource} `none` by default, or the configured `test`/`webcam`/`rtsp` source.
    */
   private getConfiguredVideoSource(): VideoSource {
-    const source = process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE?.trim().toLowerCase() ?? 'none';
+    const source = this.options.videoSource?.trim().toLowerCase() ?? 'none';
     switch (source) {
       case 'none':
       case 'test':
@@ -376,7 +365,7 @@ export class WeriftWebRtcSession {
       case 'rtsp':
         return source;
       default:
-        this.log.warn(`Unsupported MATTERBRIDGE_CAMERA_VIDEO_SOURCE "${source}" (supported: test, webcam, rtsp, none); falling back to none`);
+        this.log.warn(`Unsupported options.videoSource "${source}" (supported: test, webcam, rtsp, none); falling back to none`);
         return 'none';
     }
   }
@@ -384,21 +373,19 @@ export class WeriftWebRtcSession {
   /**
    * Resolves the ffmpeg input arguments and a human-readable description for the configured video source.
    *
-   * Uses the synthetic moving test pattern for `test`, or MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE for `webcam`/`rtsp`
+   * Uses the synthetic moving test pattern for `test`, or options.videoSourceDevice for `webcam`/`rtsp`
    * (the RTSP url for `rtsp`); falls back to the test pattern (logging a warning) if the device/url is missing or
    * webcam capture isn't supported on this platform. The output resolution is resolved via
-   * {@link getConfiguredVideoResolution}: a fixed MATTERBRIDGE_CAMERA_VIDEO_RESOLUTION (640x480, 1280x720, or
-   * 1920x1080) always wins, while `auto` (or unset) uses the per-session requestedResolution, typically the
-   * controller's allocated video stream resolution. For `webcam` this selects the capture resolution directly; for
+   * {@link getConfiguredVideoResolution}: a fixed options.videoResolution (640x480, 1280x720, or
+   * 1920x1080) is used, while `auto` (or unset) falls back to 640x480. For `webcam` this selects the capture resolution directly; for
    * `rtsp` the camera streams at its own native resolution and is scaled to the resolved resolution with a `scale`
    * filter. The encoder bitrate defaults to {@link DEFAULT_BITRATE_KBPS} and can be overridden with
-   * MATTERBRIDGE_CAMERA_VIDEO_BITRATE, regardless of resolution.
+   * options.videoBitrate, regardless of resolution.
    *
    * @param {'test' | 'webcam' | 'rtsp'} videoSource - The configured video source after `none` has been handled by the caller.
-   * @param {string} [requestedResolution] - The per-session preferred resolution; see {@link getConfiguredVideoResolution}.
    * @returns {{ args: string[]; description: string; bitrateKbps: number }} The ffmpeg input arguments, a description of the source for logging, and the target encoder bitrate.
    */
-  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp', requestedResolution?: string): { args: string[]; description: string; bitrateKbps: number } {
+  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number } {
     const testPatternInput = {
       args: ['-re', '-f', 'lavfi', '-i', 'testsrc=size=640x480:rate=10'],
       description: 'synthetic moving test pattern',
@@ -409,13 +396,13 @@ export class WeriftWebRtcSession {
       return testPatternInput;
     }
 
-    const device = process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE;
+    const device = this.options.videoSourceDevice;
     if (!device) {
-      this.log.warn(`MATTERBRIDGE_CAMERA_VIDEO_SOURCE=${videoSource} requires MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE to be set; falling back to the synthetic test video`);
+      this.log.warn(`options.videoSource=${videoSource} requires options.videoSourceDevice to be set; falling back to the synthetic test video`);
       return testPatternInput;
     }
 
-    const resolution = this.getConfiguredVideoResolution(requestedResolution);
+    const resolution = this.getConfiguredVideoResolution();
     const bitrateKbps = this.getConfiguredVideoBitrate();
 
     if (videoSource === 'rtsp') {
@@ -446,18 +433,17 @@ export class WeriftWebRtcSession {
    * since the offer/answer exchange should still proceed without video.
    *
    * @param {RTCRtpCodecParameters} [codec] - The negotiated codec to encode into, from {@link getPreferredInjectableVideoCodec}; defaults to VP8.
-   * @param {string} [videoResolution] - The per-session preferred webcam resolution; see {@link buildFfmpegVideoInputArgs}.
    * @returns {Promise<void>} Resolves once the attach attempt (successful or not) has completed.
    */
-  private async generateVideoTrack(codec?: RTCRtpCodecParameters, videoResolution?: string): Promise<void> {
+  private async generateVideoTrack(codec?: RTCRtpCodecParameters): Promise<void> {
     if (this.testVideoAttached) return;
     const videoSource = this.getConfiguredVideoSource();
     if (videoSource === 'none') {
-      this.log.debug('Video injection disabled by MATTERBRIDGE_CAMERA_VIDEO_SOURCE=none');
+      this.log.debug('Video injection disabled by options.videoSource=none');
       return;
     }
 
-    const videoInput = this.buildFfmpegVideoInputArgs(videoSource, videoResolution);
+    const videoInput = this.buildFfmpegVideoInputArgs(videoSource);
     this.log.debug(`Attempting to attach ${videoInput.description} video track at ${videoInput.bitrateKbps}kbps`);
 
     if (!hasFfmpeg()) {
@@ -571,7 +557,7 @@ export class WeriftWebRtcSession {
    * @returns {AudioSource} `none` by default, or the configured `test`/`microphone`/`rtsp` source.
    */
   private getConfiguredAudioSource(): AudioSource {
-    const source = process.env.MATTERBRIDGE_CAMERA_AUDIO_SOURCE?.trim().toLowerCase() ?? 'none';
+    const source = this.options.audioSource?.trim().toLowerCase() ?? 'none';
     switch (source) {
       case 'none':
       case 'test':
@@ -579,7 +565,7 @@ export class WeriftWebRtcSession {
       case 'rtsp':
         return source;
       default:
-        this.log.warn(`Unsupported MATTERBRIDGE_CAMERA_AUDIO_SOURCE "${source}" (supported: test, microphone, rtsp, none); falling back to none`);
+        this.log.warn(`Unsupported options.audioSource "${source}" (supported: test, microphone, rtsp, none); falling back to none`);
         return 'none';
     }
   }
@@ -587,7 +573,7 @@ export class WeriftWebRtcSession {
   /**
    * Resolves the ffmpeg input arguments and a human-readable description for the configured audio source.
    *
-   * Uses the recorded test-voice clip (looped) for `test`, or MATTERBRIDGE_CAMERA_AUDIO_SOURCE_DEVICE for
+   * Uses the recorded test-voice clip (looped) for `test`, or options.audioSourceDevice for
    * `microphone`/`rtsp` (the RTSP url for `rtsp`); falls back to the test-voice clip (logging a warning) if the
    * device/url is missing or microphone capture isn't supported on this platform.
    *
@@ -602,9 +588,9 @@ export class WeriftWebRtcSession {
     };
     if (audioSource === 'test') return testVoiceInput;
 
-    const device = process.env.MATTERBRIDGE_CAMERA_AUDIO_SOURCE_DEVICE;
+    const device = this.options.audioSourceDevice;
     if (!device) {
-      this.log.warn(`MATTERBRIDGE_CAMERA_AUDIO_SOURCE=${audioSource} requires MATTERBRIDGE_CAMERA_AUDIO_SOURCE_DEVICE to be set; falling back to the recorded test-voice clip`);
+      this.log.warn(`options.audioSource=${audioSource} requires options.audioSourceDevice to be set; falling back to the recorded test-voice clip`);
       return testVoiceInput;
     }
 
@@ -634,7 +620,7 @@ export class WeriftWebRtcSession {
    * {@link buildFfmpegAudioInputArgs}) to the peer connection by spawning ffmpeg to encode into it over a local
    * UDP/RTP loop, so an end-to-end audio path (e.g. an Intercom's "Listen" live view) can be verified without a
    * real microphone capture pipeline. Mirrors {@link generateVideoTrack}; only injects when
-   * MATTERBRIDGE_CAMERA_AUDIO_SOURCE is `test`, `microphone`, or `rtsp`.
+   * options.audioSource is `test`, `microphone`, or `rtsp`.
    *
    * @param {RTCRtpCodecParameters} codec - The negotiated Opus codec parameters to encode and send as.
    * @returns {Promise<void>} Resolves once the track is attached, or once injection is skipped/failed (logged, not thrown).
@@ -643,7 +629,7 @@ export class WeriftWebRtcSession {
     if (this.testAudioAttached) return;
     const audioSource = this.getConfiguredAudioSource();
     if (audioSource === 'none') {
-      this.log.debug('Audio injection disabled by MATTERBRIDGE_CAMERA_AUDIO_SOURCE=none');
+      this.log.debug('Audio injection disabled by options.audioSource=none');
       return;
     }
 
@@ -743,10 +729,10 @@ export class WeriftWebRtcSession {
   /**
    * Adds a sendonly transceiver for each requested media kind and creates a real local SDP offer.
    *
-   * @param {WeriftOfferOptions} options - Which media kinds to add a sendonly transceiver for.
    * @returns {Promise<string>} The generated local SDP offer.
    */
-  async createOffer(options: WeriftOfferOptions): Promise<string> {
+  async createOffer(): Promise<string> {
+    const options = this.options;
     this.log.debug(`CreateOffer requested (video=${options.video}, audio=${options.audio}, videoResolution=${options.videoResolution ?? 'undefined'})`);
     if (options.video) {
       const preferredCodec = this.getPreferredInjectableVideoCodec();
@@ -755,7 +741,7 @@ export class WeriftWebRtcSession {
       } else {
         this.log.warn('No injectable video codec available on negotiated transceivers (supported: VP8, H264)');
       }
-      await this.generateVideoTrack(preferredCodec, options.videoResolution);
+      await this.generateVideoTrack(preferredCodec);
       if (!this.testVideoAttached) this.peerConnection.addTransceiver('video', { direction: 'sendonly' });
     }
     if (options.audio) this.peerConnection.addTransceiver('audio', { direction: 'sendonly' });
@@ -774,11 +760,10 @@ export class WeriftWebRtcSession {
    * Applies a remote SDP offer and creates a real local SDP answer for it.
    *
    * @param {string} offerSdp - The remote SDP offer to answer.
-   * @param {string} [videoResolution] - Preferred webcam capture resolution for this session; see {@link WeriftOfferOptions.videoResolution}.
    * @returns {Promise<string>} The generated local SDP answer.
    */
-  async createAnswer(offerSdp: string, videoResolution?: string): Promise<string> {
-    this.log.debug(`CreateAnswer requested for remote offer (${this.summarizeSdp(offerSdp)}, videoResolution=${videoResolution ?? 'undefined'})`);
+  async createAnswer(offerSdp: string): Promise<string> {
+    this.log.debug(`CreateAnswer requested for remote offer (${this.summarizeSdp(offerSdp)}, videoResolution=${this.options.videoResolution ?? 'undefined'})`);
     await this.peerConnection.setRemoteDescription({ type: 'offer', sdp: offerSdp });
     const hasVideoTransceiver = this.peerConnection.getTransceivers().some((transceiver) => transceiver.kind === 'video');
     this.log.debug(`Remote offer created video transceiver: ${hasVideoTransceiver}`);
@@ -793,7 +778,7 @@ export class WeriftWebRtcSession {
         this.log.warn('No injectable video codec available on negotiated transceivers (supported: VP8, H264)');
       }
       /* v8 ignore stop */
-      await this.generateVideoTrack(preferredCodec, videoResolution);
+      await this.generateVideoTrack(preferredCodec);
     }
     const hasAudioTransceiver = this.peerConnection.getTransceivers().some((transceiver) => transceiver.kind === 'audio');
     this.log.debug(`Remote offer created audio transceiver: ${hasAudioTransceiver}`);
