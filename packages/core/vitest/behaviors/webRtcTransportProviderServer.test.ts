@@ -40,8 +40,6 @@ import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
 await setupTest(NAME);
 
 describe('MatterbridgeWebRtcTransportProviderServer', () => {
-  const originalVideoSource = process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE;
-
   let device: Camera;
   let testExistingSessionId: number;
 
@@ -65,7 +63,6 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
-    process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE = 'none';
   });
 
   afterEach(() => {
@@ -73,7 +70,6 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
-    process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE = originalVideoSource;
   });
 
   afterAll(async () => {
@@ -528,11 +524,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(() => allocateWebRtcSessionId(0, allSessionIds)).toThrow('No WebRTC session identifier is available');
   });
 
-  it('should use the allocated video stream resolution for the injected webcam capture, matching a real client resolution/quality picker', async () => {
-    const originalVideoSource = process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE;
-    const originalVideoSourceDevice = process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE;
-    process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE = 'webcam';
-    process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE = 'test-webcam-device';
+  it('should use state video resolution for webcam capture instead of the allocated stream resolution', async () => {
+    const originalOptions = device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions;
+    await device.setStateOf(MatterbridgeWebRtcTransportProviderServer, {
+      weriftOfferOptions: { ...originalOptions, videoSource: 'webcam', videoSourceDevice: 'test-webcam-device', videoResolution: '1280x720' },
+    });
 
     try {
       // maxResolution must bracket the device's default rateDistortionTradeOffPoints entry (1920x1080, Matter 1.6 §11.2.8.4.8).
@@ -558,7 +554,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
         }),
       ).resolves.toBeUndefined();
 
-      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('local webcam (test-webcam-device, 1920x1080)'));
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('local webcam (test-webcam-device, 1280x720)'));
       clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
 
       const currentSessions = device.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
@@ -566,12 +562,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       await device.invokeBehaviorCommand(WebRtcTransportProvider, 'endSession', { webRtcSessionId, reason: WebRtcTransportDefinitions.WebRtcEndReason.UserHangup });
       await device.invokeBehaviorCommand(CameraAvStreamManagement, 'videoStreamDeallocate', { videoStreamId });
     } finally {
-      process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE = originalVideoSource;
-      process.env.MATTERBRIDGE_CAMERA_VIDEO_SOURCE_DEVICE = originalVideoSourceDevice;
+      await device.setStateOf(MatterbridgeWebRtcTransportProviderServer, { weriftOfferOptions: originalOptions });
     }
   });
 
-  it('should resolve no webcam resolution when the requested video stream id has no matching allocated stream', async () => {
+  it('should still solicit an offer when the requested video stream id has no matching allocated stream', async () => {
     await expect(
       device.invokeBehaviorCommand(WebRtcTransportProvider, 'solicitOffer', { streamUsage: StreamUsage.LiveView, originatingEndpointId: EndpointNumber(1), videoStreams: [999] }),
     ).resolves.toBeUndefined();

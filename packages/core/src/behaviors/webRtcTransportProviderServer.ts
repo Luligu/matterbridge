@@ -33,7 +33,7 @@ import type { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-tra
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeCameraAvStreamManagementServer } from './cameraAvStreamManagementServer.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
-import { WeriftWebRtcSession } from './weriftSession.js';
+import { type WeriftOfferOptions, WeriftWebRtcSession } from './weriftSession.js';
 
 /**
  * Delay before firing a deferred Offer/Answer invoke on the peer's WebRtcTransportRequestor (see
@@ -121,6 +121,8 @@ interface RemoteActorSessionContext {
  *
  */
 export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportProviderServer {
+  declare state: MatterbridgeWebRtcTransportProviderServer.State;
+
   /**
    * Behaviors are ephemeral (matter.js constructs a new instance per Agent), so the werift peer connection wrappers
    * must live in `internal` state, which is backed by the endpoint rather than the instance, to survive from the
@@ -293,10 +295,15 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    * quality picker in its UI, which allocates a video stream with a given maxResolution before soliciting/providing
    * an offer) is reflected in the injected webcam capture.
    *
+   * This only fills the gap: an explicit resolution configured in
+   * {@link MatterbridgeWebRtcTransportProviderServer.State.weriftOfferOptions} takes precedence, and the allocated
+   * stream is consulted only when that is unset. When no allocated stream matches either, this returns undefined and
+   * the werift session falls back to its own default resolution.
+   *
    * @param {number[]} [videoStreams] - The resolved videoStreams ids for the request (see {@link #resolveStreamLists}).
    * @returns {string | undefined} The "widthxheight" resolution of the first matching allocated video stream, or undefined if none is found.
    */
-  #resolveVideoResolution(videoStreams?: number[]): string | undefined {
+  #resolveVideoResolution(videoStreams?: readonly number[]): string | undefined {
     const videoStreamId = videoStreams?.[0];
     if (videoStreamId === undefined) return undefined;
     if (!this.endpoint.behaviors.has(MatterbridgeCameraAvStreamManagementServer)) return undefined;
@@ -648,9 +655,17 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
       return { webRtcSessionId, deferredOffer: false, ...this.#echoDeprecatedStreamIds(request, videoStreams, audioStreams) };
     }
 
-    const webRtcPeer = new WeriftWebRtcSession(webRtcSessionId);
+    const webRtcPeer = new WeriftWebRtcSession(webRtcSessionId, this.state.weriftOfferOptions);
     this.internal.sessions.set(webRtcSessionId, webRtcPeer);
-    const sdp = await webRtcPeer.createOffer({ video: !!videoStreams?.length, audio: !!audioStreams?.length, videoResolution: this.#resolveVideoResolution(videoStreams) });
+    // The media kinds are per request, not per configuration: only the streams the client actually asked for (or that
+    // were auto-assigned for it above) get a sendonly transceiver, so the offer never advertises media the client did
+    // not request. The resolution follows the client's allocated video stream only when none is configured. They are
+    // stored on the session so the later track injection sees the same values.
+    const sdp = await webRtcPeer.createOffer({
+      video: !!videoStreams?.length,
+      audio: !!audioStreams?.length,
+      videoResolution: this.state.weriftOfferOptions.videoResolution ?? this.#resolveVideoResolution(videoStreams),
+    });
 
     /* v8 ignore next 6 -- requires a real connectable peer node, which this project's vitest harness has no
      * infrastructure to set up (no remote peer test helpers exist). */
@@ -749,9 +764,15 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
 
     // oxlint-disable-next-line typescript/no-non-null-assertion -- the session was just created or found above.
     const session = this.state.currentSessions.find((s) => s.id === webRtcSessionId)!;
-    const webRtcPeer = this.internal.sessions.get(webRtcSessionId) ?? new WeriftWebRtcSession(webRtcSessionId);
+    const webRtcPeer = this.internal.sessions.get(webRtcSessionId) ?? new WeriftWebRtcSession(webRtcSessionId, this.state.weriftOfferOptions);
     this.internal.sessions.set(webRtcSessionId, webRtcPeer);
-    const sdp = await webRtcPeer.createAnswer(request.sdp, this.#resolveVideoResolution(session.videoStreams));
+    // The remote offer drives which transceivers exist here, so the kinds are recorded on the session rather than used
+    // to add transceivers; the capture resolution is applied the same way as in #solicitOffer above.
+    const sdp = await webRtcPeer.createAnswer(request.sdp, {
+      video: !!session.videoStreams?.length,
+      audio: !!session.audioStreams?.length,
+      videoResolution: this.state.weriftOfferOptions.videoResolution ?? this.#resolveVideoResolution(session.videoStreams),
+    });
 
     const requestorEndpoint = await this.#resolvePeerRequestorEndpoint(session.peerNodeId, session.fabricIndex, session.peerEndpointId);
     /* v8 ignore next 6 -- requires a real connectable peer node, which this project's vitest harness has no
@@ -918,6 +939,12 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
  */
 // oxlint-disable-next-line typescript-eslint/no-namespace
 export namespace MatterbridgeWebRtcTransportProviderServer {
+  /** Configuration and cluster attributes for the WebRTC transport provider. */
+  export class State extends WebRtcTransportProviderServer.State {
+    /** Media negotiation and source options for WebRTC sessions; source injection is disabled by default. */
+    weriftOfferOptions: WeriftOfferOptions = { video: true, audio: true, videoSource: 'none', audioSource: 'none' };
+  }
+
   /**
    * Internal (endpoint-scoped, not instance-scoped) state for {@link MatterbridgeWebRtcTransportProviderServer}.
    */
@@ -939,9 +966,13 @@ export namespace MatterbridgeWebRtcTransportProviderServer {
  * Creates a default WebRtcTransportProvider cluster server on the given endpoint.
  *
  * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the WebRtcTransportProvider cluster server on.
+ * @param {WeriftOfferOptions} [weriftOfferOptions] - The media negotiation and source options; defaults to both media kinds with source injection disabled.
  * @returns {MatterbridgeEndpoint} The endpoint with the WebRtcTransportProvider cluster server created.
  */
-export function createDefaultWebRtcTransportProviderClusterServer(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
-  endpoint.behaviors.require(MatterbridgeWebRtcTransportProviderServer, { currentSessions: [] });
+export function createDefaultWebRtcTransportProviderClusterServer(
+  endpoint: MatterbridgeEndpoint,
+  weriftOfferOptions: WeriftOfferOptions = { video: true, audio: true, videoSource: 'none', audioSource: 'none' },
+): MatterbridgeEndpoint {
+  endpoint.behaviors.require(MatterbridgeWebRtcTransportProviderServer, { currentSessions: [], weriftOfferOptions });
   return endpoint;
 }

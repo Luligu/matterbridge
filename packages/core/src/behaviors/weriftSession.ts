@@ -42,9 +42,9 @@ type AudioSource = 'none' | 'test' | 'microphone' | 'rtsp';
  * Media kinds to negotiate when creating a real WebRTC offer for a WebRtcTransportProvider session.
  */
 export interface WeriftOfferOptions {
-  /** Whether to add a sendonly video transceiver to the offer. */
+  /** Whether to add a sendonly video transceiver to the offer. Overridden per request with the client's requested video streams. */
   video: boolean;
-  /** Whether to add a sendonly audio transceiver to the offer. */
+  /** Whether to add a sendonly audio transceiver to the offer. Overridden per request with the client's requested audio streams. */
   audio: boolean;
   /**
    * Video source: no injected track (`none`), a synthetic
@@ -80,6 +80,13 @@ export interface WeriftOfferOptions {
    */
   audioSourceDevice?: string;
 }
+
+/**
+ * Per-session overrides applied on top of a session's stored {@link WeriftOfferOptions}, so values that are only known
+ * per request (e.g. which media kinds the client actually asked for) can be supplied at
+ * {@link WeriftWebRtcSession.createOffer} / {@link WeriftWebRtcSession.createAnswer} time instead of at construction.
+ */
+export type WeriftOfferOverrides = Partial<WeriftOfferOptions>;
 
 /**
  * Wraps a werift RTCPeerConnection for a single WebRtcTransportProvider session (see
@@ -121,7 +128,7 @@ export class WeriftWebRtcSession {
   /** The WebRtcTransportProvider session identifier this instance backs. */
   private readonly webRtcSessionId: number;
 
-  /** Media negotiation and source options for this session. */
+  /** Media negotiation and source options for this session, updated by {@link applyOptionOverrides}. */
   private readonly options: WeriftOfferOptions;
 
   private testVideoGenerator?: ChildProcess;
@@ -172,7 +179,9 @@ export class WeriftWebRtcSession {
    */
   constructor(webRtcSessionId: number, options: WeriftOfferOptions) {
     this.webRtcSessionId = webRtcSessionId;
-    this.options = options;
+    // Cloned so the per-session overrides applied by applyOptionOverrides never write back into the caller's object,
+    // which is the endpoint's (immutable outside a transaction) behavior state.
+    this.options = { ...options };
     this.peerConnection = new RTCPeerConnection({ codecs: { audio: [useOPUS(), usePCMU()], video: [useH264(), useVP8()] } });
     this.log = new AnsiLogger({ logName: `WebRTC session ${webRtcSessionId}`, logLevel: LogLevel.DEBUG, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS });
     // Log when local ICE candidate discovery starts or completes.
@@ -727,11 +736,29 @@ export class WeriftWebRtcSession {
   }
 
   /**
+   * Merges per-session overrides into this session's stored options, so a value known only at offer/answer time (e.g.
+   * the media kinds the client actually requested) replaces the one configured at construction and stays in effect for
+   * the rest of the session, including the later track injection that reads the same options.
+   *
+   * Entries whose value is `undefined` are skipped, so a partially populated override object cannot clear a configured
+   * option (e.g. passing only `video`/`audio` leaves `videoResolution` as configured).
+   *
+   * @param {WeriftOfferOverrides} [overrides] - The per-session overrides to store, or `undefined` to keep the stored options as they are.
+   * @returns {void}
+   */
+  private applyOptionOverrides(overrides?: WeriftOfferOverrides): void {
+    if (!overrides) return;
+    Object.assign(this.options, Object.fromEntries(Object.entries(overrides).filter(([, value]) => value !== undefined)));
+  }
+
+  /**
    * Adds a sendonly transceiver for each requested media kind and creates a real local SDP offer.
    *
+   * @param {WeriftOfferOverrides} [overrides] - Per-session overrides stored via {@link applyOptionOverrides} before the offer is built.
    * @returns {Promise<string>} The generated local SDP offer.
    */
-  async createOffer(): Promise<string> {
+  async createOffer(overrides?: WeriftOfferOverrides): Promise<string> {
+    this.applyOptionOverrides(overrides);
     const options = this.options;
     this.log.debug(`CreateOffer requested (video=${options.video}, audio=${options.audio}, videoResolution=${options.videoResolution ?? 'undefined'})`);
     if (options.video) {
@@ -760,9 +787,11 @@ export class WeriftWebRtcSession {
    * Applies a remote SDP offer and creates a real local SDP answer for it.
    *
    * @param {string} offerSdp - The remote SDP offer to answer.
+   * @param {WeriftOfferOverrides} [overrides] - Per-session overrides stored via {@link applyOptionOverrides} before the answer is built.
    * @returns {Promise<string>} The generated local SDP answer.
    */
-  async createAnswer(offerSdp: string): Promise<string> {
+  async createAnswer(offerSdp: string, overrides?: WeriftOfferOverrides): Promise<string> {
+    this.applyOptionOverrides(overrides);
     this.log.debug(`CreateAnswer requested for remote offer (${this.summarizeSdp(offerSdp)}, videoResolution=${this.options.videoResolution ?? 'undefined'})`);
     await this.peerConnection.setRemoteDescription({ type: 'offer', sdp: offerSdp });
     const hasVideoTransceiver = this.peerConnection.getTransceivers().some((transceiver) => transceiver.kind === 'video');
