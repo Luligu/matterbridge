@@ -22,7 +22,10 @@ import {
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
 
-import { MatterbridgeCameraAvSettingsUserLevelManagementServer } from '../../src/behaviors/cameraAvSettingsUserLevelManagementServer.js';
+import {
+  createDefaultCameraAvSettingsUserLevelManagementClusterServer,
+  MatterbridgeCameraAvSettingsUserLevelManagementServer,
+} from '../../src/behaviors/cameraAvSettingsUserLevelManagementServer.js';
 import { Camera } from '../../src/devices/camera.js';
 
 await setupTest(NAME);
@@ -81,25 +84,25 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
 
   it('should reject an absolute position request with pan, tilt and zoom all omitted', async () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', {})).rejects.toThrow(
-      'MPTZSetPosition requires at least one of pan, tilt or zoom to be present',
+      'mptzSetPosition requires at least one of pan, tilt or zoom to be present',
     );
   });
 
   it('should reject setting an absolute pan position outside of the supported range', async () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 200 })).rejects.toThrow(
-      'Pan 200 is outside of the supported range [-170, 170]',
+      'pan 200 is outside of the supported range [-170, 170]',
     );
   });
 
   it('should reject setting an absolute tilt position outside of the supported range', async () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { tilt: 100 })).rejects.toThrow(
-      'Tilt 100 is outside of the supported range [-20, 90]',
+      'tilt 100 is outside of the supported range [-20, 90]',
     );
   });
 
   it('should reject setting an absolute zoom position outside of the supported range', async () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { zoom: 11 })).rejects.toThrow(
-      'Zoom 11 is outside of the supported range [1, 10]',
+      'zoom 11 is outside of the supported range [1, 10]',
     );
   });
 
@@ -107,7 +110,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 45, tilt: 10, zoom: 5 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 45, tilt: 10, zoom: 5 });
-    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Set mechanical PTZ position to pan 45°, tilt 10°, zoom 5'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('set mechanical PTZ position to pan 45°, tilt 10°, zoom 5'));
   });
 
   it('should leave fields not present in the request unchanged', async () => {
@@ -120,7 +123,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -5, tiltDelta: 5, zoomDelta: 3 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 40, tilt: 15, zoom: 5 });
-    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Moved mechanical PTZ position by pan -5°, tilt 5°, zoom 3 to pan 40°, tilt 15°, zoom 5'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan -5°, tilt 5°, zoom 3 to pan 40°, tilt 15°, zoom 5'));
   });
 
   it('should clamp a relative move at the pan, tilt and zoom limits', async () => {
@@ -135,19 +138,19 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -10 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 160, tilt: 90, zoom: 1 });
-    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Moved mechanical PTZ position by pan -10°, tilt 0°, zoom 0 to pan 160°, tilt 90°, zoom 1'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan -10°, tilt 0°, zoom 0 to pan 160°, tilt 90°, zoom 1'));
   });
 
   it('should move by a relative tilt delta only, leaving pan and zoom unchanged', async () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { tiltDelta: -10 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 160, tilt: 80, zoom: 1 });
-    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Moved mechanical PTZ position by pan 0°, tilt -10°, zoom 0 to pan 160°, tilt 80°, zoom 1'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan 0°, tilt -10°, zoom 0 to pan 160°, tilt 80°, zoom 1'));
   });
 
   it('should reject a relative move request with panDelta, tiltDelta and zoomDelta all omitted', async () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', {})).rejects.toThrow(
-      'MPTZRelativeMove requires at least one of panDelta, tiltDelta or zoomDelta to be present',
+      'mptzRelativeMove requires at least one of panDelta, tiltDelta or zoomDelta to be present',
     );
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 160, tilt: 80, zoom: 1 });
@@ -157,5 +160,20 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: -170 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: -170, tilt: 80, zoom: 1 });
+  });
+
+  it('should add createDefaultCameraAvSettingsUserLevelManagementClusterServer to an endpoint', () => {
+    const device = new Camera('Camera Ptz Helper', 'CAMERA-PTZ-HELPER', { ptz: true });
+    // The constructor already creates the CameraAvSettingsUserLevelManagement cluster server; calling the helper again should return the same endpoint.
+    expect(
+      createDefaultCameraAvSettingsUserLevelManagementClusterServer(device, {
+        panMin: -170,
+        panMax: 170,
+        tiltMin: -20,
+        tiltMax: 90,
+        zoomMax: 10,
+        mptzPosition: { pan: 0, tilt: 0, zoom: 1 },
+      }),
+    ).toBe(device);
   });
 });

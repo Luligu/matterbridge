@@ -26,13 +26,14 @@ import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { MatterbridgeCameraAvStreamManagementServer } from '../behaviors/cameraAvStreamManagementServer.js';
+import { createDefaultAudioCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addChimeClient, addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
 // Matterbridge
 import { audioDoorbell, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
 /**
  * Options for configuring an {@link AudioDoorbell} instance.
@@ -56,6 +57,9 @@ export interface AudioDoorbellOptions extends MatterbridgeEndpointOptions {
   streamUsagePriorities?: StreamUsage[];
   /** Indicates the audio capabilities of the microphone in terms of the codec used, supported sample rates and the number of channels */
   microphoneCapabilities?: CameraAvStreamManagement.AudioCapabilities;
+
+  /** Options for the werift WebRTC peer connection used by the WebRtcTransportProvider cluster. Default: both media kinds enabled with source injection disabled */
+  weriftOfferOptions?: WeriftOfferOptions;
 }
 
 /**
@@ -87,6 +91,7 @@ export class AudioDoorbell extends MatterbridgeEndpoint {
    *  - supportedStreamUsages: [StreamUsage.LiveView]
    *  - streamUsagePriorities: same as supportedStreamUsages
    *  - microphoneCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
+   *  - weriftOfferOptions: { video: true, audio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {AudioDoorbell} The AudioDoorbell instance.
    */
@@ -100,6 +105,7 @@ export class AudioDoorbell extends MatterbridgeEndpoint {
       supportedStreamUsages = [StreamUsage.LiveView],
       streamUsagePriorities = supportedStreamUsages,
       microphoneCapabilities = { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] },
+      weriftOfferOptions,
       id,
       number,
       tagList,
@@ -138,52 +144,9 @@ export class AudioDoorbell extends MatterbridgeEndpoint {
       streamUsagePriorities,
       microphoneCapabilities,
     });
-    createDefaultWebRtcTransportProviderClusterServer(this);
+    createDefaultWebRtcTransportProviderClusterServer(this, weriftOfferOptions);
     addChimeClient(this);
     addWebRtcTransportRequestorClient(this);
     this.addRequiredClusters();
   }
-}
-
-/**
- * Initial state accepted by {@link createDefaultAudioCameraAvStreamManagementClusterServer}.
- */
-export interface AudioCameraAvStreamManagementClusterOptions {
-  /** Indicates the maximum size, in bytes, of the content buffer used for pre-roll, queued transmissions and metadata */
-  maxContentBufferSize: number;
-  /** Indicates the maximum network bandwidth, in bits per second, that the device would consume for the transmission of its media streams */
-  maxNetworkBandwidth: number;
-  /** Indicates the list of stream usages that are supported by the audio doorbell */
-  supportedStreamUsages: StreamUsage[];
-  /** Indicates the ranked stream usage priorities; only usages found in supportedStreamUsages can be included */
-  streamUsagePriorities: StreamUsage[];
-  /** Indicates the audio capabilities of the microphone in terms of the codec used, supported sample rates and the number of channels */
-  microphoneCapabilities: CameraAvStreamManagement.AudioCapabilities;
-}
-
-/**
- * Creates a default CameraAvStreamManagement cluster server, specialized for the Audio feature only, on the given
- * endpoint. The Video, Snapshot and ImageControl features are not enabled, as required by the Matter specification
- * for the Audio Doorbell device type.
- *
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the CameraAvStreamManagement cluster server on.
- * @param {AudioCameraAvStreamManagementClusterOptions} options - The initial state of the CameraAvStreamManagement cluster server.
- * @returns {MatterbridgeEndpoint} The endpoint with the CameraAvStreamManagement cluster server created.
- */
-export function createDefaultAudioCameraAvStreamManagementClusterServer(
-  endpoint: MatterbridgeEndpoint,
-  options: AudioCameraAvStreamManagementClusterOptions,
-): MatterbridgeEndpoint {
-  endpoint.behaviors.require(MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Audio), {
-    ...options,
-    hardPrivacyModeOn: false,
-    statusLightEnabled: false,
-    allocatedAudioStreams: [],
-    microphoneMuted: false,
-    microphoneVolumeLevel: 128,
-    microphoneMaxLevel: 254,
-    microphoneMinLevel: 0,
-    microphoneAgcEnabled: false,
-  });
-  return endpoint;
 }

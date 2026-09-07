@@ -26,7 +26,11 @@ import { ChimeServer } from '@matter/node/behaviors/chime';
 import { Status, StatusResponseError } from '@matter/types';
 import type { Chime } from '@matter/types/clusters/chime';
 
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
+
+/** Id of a chime sound in the InstalledChimeSounds list. */
+export type ChimeId = number;
 
 /**
  * ChimeServer base with the ChimeStartedPlaying event enabled.
@@ -51,13 +55,12 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
 
   /**
    * Rejects writes to SelectedChime that are not present in installedChimeSounds.
-   * Per Matter 1.6 Application Cluster spec §11.8.5.2, an attempt to write a value not contained
-   * within InstalledChimeSounds SHALL be failed with a NOT_FOUND response.
    *
    * @param {number} chimeId - The chimeId value being written to SelectedChime.
    * @throws {StatusResponseError} With status NotFound if chimeId is not present in installedChimeSounds.
    */
   #assertSelectedChime(chimeId: number): void {
+    // Matter 1.6.0 § 11.8.5.2: Fail a write of SelectedChime with NOT_FOUND if the value is not contained within InstalledChimeSounds.
     if (!this.state.installedChimeSounds.some((chimeSound) => chimeSound.chimeId === chimeId)) {
       throw new StatusResponseError(
         `MatterbridgeChimeServer: chime sound ${chimeId} is not present in installedChimeSounds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -77,11 +80,13 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
   // oxlint-disable-next-line typescript/require-await
   override async playChimeSound(request: Chime.PlayChimeSoundRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Matter 1.6.0 § 11.8.6.1.2: Respond to PlayChimeSound with SUCCESS and no other side effects while Enabled is false.
     if (!this.state.enabled) {
       device.log.debug(`MatterbridgeChimeServer: playChimeSound called but chime is disabled (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
     const chimeId = request.chimeId ?? this.state.selectedChime;
+    // Matter 1.6.0 § 11.8.6.1.2: Respond to PlayChimeSound with NOT_FOUND if the passed in ChimeID has no entry in InstalledChimeSounds.
     if (!this.state.installedChimeSounds.some((chimeSound) => chimeSound.chimeId === chimeId)) {
       throw new StatusResponseError(
         `MatterbridgeChimeServer: chime sound ${chimeId} is not present in installedChimeSounds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -89,19 +94,30 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
       );
     }
     device.log.info(`MatterbridgeChimeServer: playing chime sound ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // TODO: Add Chime.playChimeSound in matterbridge
-    /*
-    await device.commandHandler.executeHandler('Chime.playChimeSound', {
-      command: 'playChimeSound',
-      request,
-      cluster: ChimeServer.id,
-      attributes: this.state,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-      context: this.context,
-    });
-    */
     device.log.debug(`MatterbridgeChimeServer: playChimeSound called with chimeId ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 11.8.7.1: Generate the ChimeStartedPlaying event when the chime sound starts playing.
     this.events.chimeStartedPlaying.emit({ chimeId }, this.context);
   }
+}
+
+/**
+ *  Creates a default Chime cluster server on the given endpoint.
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the Chime cluster server on.
+ * @param {Chime.ChimeSound[]} installedChimeSounds - The list of installed chime sounds.
+ * @param {ChimeId} selectedChime - The id of the currently selected chime sound.
+ * @param {boolean} enabled - Whether the Chime cluster server is enabled.
+ * @returns {MatterbridgeEndpoint} The endpoint with the Chime cluster server created.
+ */
+export function createDefaultChimeClusterServer(
+  endpoint: MatterbridgeEndpoint,
+  installedChimeSounds: Chime.ChimeSound[],
+  selectedChime: ChimeId,
+  enabled: boolean = true,
+): MatterbridgeEndpoint {
+  endpoint.behaviors.require(MatterbridgeChimeServer, {
+    installedChimeSounds,
+    selectedChime,
+    enabled,
+  });
+  return endpoint;
 }

@@ -22,16 +22,14 @@
  * limitations under the License.
  */
 
-import { type Chime as ChimeCluster } from '@matter/types/clusters/chime';
+import type { Chime as ChimeCluster } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { MatterbridgeChimeServer } from '../behaviors/chimeServer.js';
+import { type ChimeId, createDefaultChimeClusterServer } from '../behaviors/chimeServer.js';
 // Matterbridge
 import { chime, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
-
-export type ChimeId = number;
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
 /**
  * Options for configuring an {@link Chime} instance.
@@ -123,26 +121,4 @@ export class Chime extends MatterbridgeEndpoint {
     createDefaultChimeClusterServer(this, installedChimeSounds, selectedChime, enabled);
     this.addRequiredClusters();
   }
-}
-
-/**
- *  Creates a default Chime cluster server on the given endpoint.
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the Chime cluster server on.
- * @param {ChimeCluster.ChimeSound[]} installedChimeSounds - The list of installed chime sounds.
- * @param {ChimeId} selectedChime - The id of the currently selected chime sound.
- * @param {boolean} enabled - Whether the Chime cluster server is enabled.
- * @returns {MatterbridgeEndpoint} The endpoint with the Chime cluster server created.
- */
-export function createDefaultChimeClusterServer(
-  endpoint: MatterbridgeEndpoint,
-  installedChimeSounds: ChimeCluster.ChimeSound[],
-  selectedChime: ChimeId,
-  enabled: boolean = true,
-): MatterbridgeEndpoint {
-  endpoint.behaviors.require(MatterbridgeChimeServer, {
-    installedChimeSounds,
-    selectedChime,
-    enabled,
-  });
-  return endpoint;
 }

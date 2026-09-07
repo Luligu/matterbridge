@@ -333,7 +333,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       }),
     ).resolves.toBeUndefined();
 
-    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/Could not resolve peer WebRtcTransportRequestor endpoint.*boom/));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/could not resolve peer WebRtcTransportRequestor endpoint.*boom/));
     clearExpectedWarnings();
 
     await device.invokeBehaviorCommand(WebRtcTransportProvider, 'endSession', {
@@ -344,7 +344,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
 
   it('should reject provideOffer for an unknown session', async () => {
     await expect(device.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: 99, sdp: 'v=0 o=- offer' })).rejects.toThrow(
-      'WebRTC session 99 is not present in currentSessions',
+      'webRTC session 99 is not present in currentSessions',
     );
   });
 
@@ -449,7 +449,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       await vi.advanceTimersByTimeAsync(5000);
 
       await expect(invocation).resolves.toBeUndefined();
-      expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('ICE candidate apply timeout after 5000ms'));
+      expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('timed out applying an ICE candidate after 5000ms'));
       loggerWarnSpy.mockClear();
     } finally {
       vi.useRealTimers();
@@ -693,7 +693,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
 
     await expect(
       endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'solicitOffer', { streamUsage: StreamUsage.LiveView, originatingEndpointId: EndpointNumber(1) }),
-    ).rejects.toThrow('solicitOffer requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically');
+    ).rejects.toThrow('solicitOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically');
   });
 
   it('should reject provideOffer without videoStreams or audioStreams when the endpoint has no CameraAvStreamManagement cluster', async () => {
@@ -703,7 +703,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: null, sdp: 'v=0 o=- offer' })).rejects.toThrow(
-      'provideOffer requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically',
+      'provideOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically',
     );
   });
 
@@ -791,7 +791,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
 
     await expect(
       endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'solicitOffer', { streamUsage: StreamUsage.LiveView, originatingEndpointId: EndpointNumber(1) }),
-    ).rejects.toThrow('solicitOffer requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically');
+    ).rejects.toThrow('solicitOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically');
   });
 
   it('should reject solicitOffer with no stream fields at all when MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1', async () => {
@@ -803,7 +803,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
 
       await expect(
         endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'solicitOffer', { streamUsage: StreamUsage.LiveView, originatingEndpointId: EndpointNumber(1) }),
-      ).rejects.toThrow('solicitOffer requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present');
+      ).rejects.toThrow('solicitOffer: requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present');
     } finally {
       if (originalStrict === undefined) delete process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT;
       else process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT = originalStrict;
@@ -818,7 +818,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
       await expect(endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: null, sdp: 'v=0 o=- offer' })).rejects.toThrow(
-        'provideOffer requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present',
+        'provideOffer: requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present',
       );
     } finally {
       if (originalStrict === undefined) delete process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT;

@@ -28,12 +28,14 @@ import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-strea
 import { Identify } from '@matter/types/clusters/identify';
 import { fireAndForget } from '@matterbridge/utils';
 
+import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addChimeClient, addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
+import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
 // Matterbridge
 import { camera, doorbell, powerSource, videoDoorbell } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
-import { type CameraOptions, createDefaultCameraAvStreamManagementClusterServer, createDefaultWebRtcTransportProviderClusterServer } from './camera.js';
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+import type { CameraOptions } from './camera.js';
 
 /**
  * Options for the mandatory Camera child endpoint created by {@link VideoDoorbell}. Same fields as
@@ -152,6 +154,7 @@ export class VideoDoorbell extends MatterbridgeEndpoint {
         { resolution: { width: 1280, height: 720 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
         { resolution: { width: 1920, height: 1080 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
       ],
+      weriftOfferOptions,
     } = cameraOptions;
 
     const cameraChild = this.addChildDeviceType('Camera', camera, {});
@@ -174,7 +177,7 @@ export class VideoDoorbell extends MatterbridgeEndpoint {
       microphoneCapabilities,
       snapshotCapabilities,
     });
-    createDefaultWebRtcTransportProviderClusterServer(cameraChild);
+    createDefaultWebRtcTransportProviderClusterServer(cameraChild, weriftOfferOptions);
     addWebRtcTransportRequestorClient(cameraChild);
     cameraChild.addRequiredClusters();
 

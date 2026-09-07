@@ -29,7 +29,9 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
-import { Camera, createDefaultCameraAvSettingsUserLevelManagementClusterServer, createDefaultCameraAvStreamManagementClusterServer } from '../../src/devices/camera.js';
+import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
+import { Camera } from '../../src/devices/camera.js';
 
 await setupTest(NAME);
 
@@ -129,28 +131,6 @@ describe('Camera', () => {
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView]);
   });
 
-  it('should add createDefaultCameraAvStreamManagementClusterServer to an endpoint', () => {
-    const device = new Camera('Camera Helper', 'CAMERA-HELPER');
-    // The constructor already creates the CameraAvStreamManagement cluster server; calling the helper again should return the same endpoint.
-    expect(
-      createDefaultCameraAvStreamManagementClusterServer(device, {
-        maxContentBufferSize: 4_194_304,
-        maxNetworkBandwidth: 10_000_000,
-        supportedStreamUsages: [StreamUsage.LiveView],
-        streamUsagePriorities: [StreamUsage.LiveView],
-        maxConcurrentEncoders: 1,
-        maxEncodedPixelRate: 1920 * 1080 * 30,
-        videoSensorParams: { sensorWidth: 1920, sensorHeight: 1080, maxFps: 30 },
-        minViewportResolution: { width: 640, height: 360 },
-        rateDistortionTradeOffPoints: [{ codec: CameraAvStreamManagement.VideoCodec.H264, resolution: { width: 1920, height: 1080 }, minBitRate: 1_000_000 }],
-        currentFrameRate: 30,
-        viewport: { x1: 0, y1: 0, x2: 1920, y2: 1080 },
-        microphoneCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] },
-        snapshotCapabilities: [{ resolution: { width: 1280, height: 720 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false }],
-      }),
-    ).toBe(device);
-  });
-
   it('should create a camera device with default snapshot capabilities', async () => {
     const device = new Camera('Camera Snapshot Defaults', 'CAMERA-SNAPSHOT-DEFAULTS');
 
@@ -205,18 +185,18 @@ describe('Camera', () => {
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 
-  it('should add createDefaultCameraAvSettingsUserLevelManagementClusterServer to an endpoint', () => {
-    const device = new Camera('Camera Ptz Helper', 'CAMERA-PTZ-HELPER', { ptz: true });
-    // The constructor already creates the CameraAvSettingsUserLevelManagement cluster server; calling the helper again should return the same endpoint.
-    expect(
-      createDefaultCameraAvSettingsUserLevelManagementClusterServer(device, {
-        panMin: -170,
-        panMax: 170,
-        tiltMin: -20,
-        tiltMax: 90,
-        zoomMax: 10,
-        mptzPosition: { pan: 0, tilt: 0, zoom: 1 },
-      }),
-    ).toBe(device);
+  it('should create a camera device with custom werift offer options', async () => {
+    const weriftOfferOptions: WeriftOfferOptions = { video: true, audio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
+    const device = new Camera('Camera Werift', 'CAMERA-WERIFT', { weriftOfferOptions });
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
+  });
+
+  it('should create a camera device with the default werift offer options', async () => {
+    const device = new Camera('Camera Werift Defaults', 'CAMERA-WERIFT-DEFAULTS');
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual({ video: true, audio: true, videoSource: 'none', audioSource: 'none' });
   });
 });

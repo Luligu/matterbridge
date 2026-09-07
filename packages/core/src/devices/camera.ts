@@ -22,20 +22,21 @@
  * limitations under the License.
  */
 
-import { StreamUsage, ThreeLevelAuto } from '@matter/types';
+import { StreamUsage } from '@matter/types';
 import type { Viewport } from '@matter/types';
-import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
+import type { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { MatterbridgeCameraAvSettingsUserLevelManagementServer } from '../behaviors/cameraAvSettingsUserLevelManagementServer.js';
-import { MatterbridgeCameraAvStreamManagementServer } from '../behaviors/cameraAvStreamManagementServer.js';
+import { createDefaultCameraAvSettingsUserLevelManagementClusterServer } from '../behaviors/cameraAvSettingsUserLevelManagementServer.js';
+import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
-import { MatterbridgeWebRtcTransportProviderServer } from '../behaviors/webRtcTransportProviderServer.js';
+import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
 // Matterbridge
 import { camera, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
 /**
  * Options for configuring a {@link Camera} instance.
@@ -95,6 +96,9 @@ export interface CameraOptions extends MatterbridgeEndpointOptions {
   zoomMax?: number;
   /** Indicates the initial mechanical pan, tilt and zoom position */
   mptzPosition?: CameraAvSettingsUserLevelManagement.Mptz;
+
+  /** Options for the werift WebRTC peer connection used by the WebRtcTransportProvider cluster. Default: both media kinds enabled with source injection disabled */
+  weriftOfferOptions?: WeriftOfferOptions;
 }
 
 /**
@@ -137,6 +141,7 @@ export class Camera extends MatterbridgeEndpoint {
    *  - tiltMin: -20, tiltMax: 90 (angular degrees)
    *  - zoomMax: 10
    *  - mptzPosition: { pan: 0, tilt: 0, zoom: 1 }
+   *  - weriftOfferOptions: { video: true, audio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {Camera} The Camera instance.
    */
@@ -173,6 +178,7 @@ export class Camera extends MatterbridgeEndpoint {
       tiltMax = 90,
       zoomMax = 10,
       mptzPosition = { pan: 0, tilt: 0, zoom: 1 },
+      weriftOfferOptions,
       id,
       number,
       tagList,
@@ -217,139 +223,8 @@ export class Camera extends MatterbridgeEndpoint {
       snapshotCapabilities,
     });
     if (ptz) createDefaultCameraAvSettingsUserLevelManagementClusterServer(this, { panMin, panMax, tiltMin, tiltMax, zoomMax, mptzPosition });
-    createDefaultWebRtcTransportProviderClusterServer(this);
+    createDefaultWebRtcTransportProviderClusterServer(this, weriftOfferOptions);
     addWebRtcTransportRequestorClient(this);
     this.addRequiredClusters();
   }
-}
-
-/**
- * Initial state accepted by {@link createDefaultCameraAvStreamManagementClusterServer}.
- */
-export interface CameraAvStreamManagementClusterOptions {
-  /** Indicates the maximum size, in bytes, of the content buffer used for pre-roll, queued transmissions and metadata */
-  maxContentBufferSize: number;
-  /** Indicates the maximum network bandwidth, in bits per second, that the device would consume for the transmission of its media streams */
-  maxNetworkBandwidth: number;
-  /** Indicates the list of stream usages that are supported by the camera */
-  supportedStreamUsages: StreamUsage[];
-  /** Indicates the ranked stream usage priorities; only usages found in supportedStreamUsages can be included */
-  streamUsagePriorities: StreamUsage[];
-  /** Indicates the maximum number of concurrent encoders supported by the camera */
-  maxConcurrentEncoders: number;
-  /** Indicates the maximum data rate, in encoded pixels per second, that the camera can produce */
-  maxEncodedPixelRate: number;
-  /** Indicates the video sensor parameters for the camera */
-  videoSensorParams: CameraAvStreamManagement.VideoSensorParams;
-  /** Indicates the minimum resolution, in pixels, that the camera allows for its viewport */
-  minViewportResolution: CameraAvStreamManagement.VideoResolution;
-  /** Indicates the rate distortion trade-off points between resolution, frame rate and bitrate for each supported hardware encoder */
-  rateDistortionTradeOffPoints: CameraAvStreamManagement.RateDistortionTradeOffPoints[];
-  /** Indicates the current logical frame rate of the sensor in frames per second */
-  currentFrameRate: number;
-  /** Indicates the viewport to apply to all streams */
-  viewport: Viewport;
-  /** Indicates the audio capabilities of the microphone in terms of the codec used, supported sample rates and the number of channels */
-  microphoneCapabilities: CameraAvStreamManagement.AudioCapabilities;
-  /** Indicates the list of supported snapshot capabilities */
-  snapshotCapabilities: CameraAvStreamManagement.SnapshotCapabilities[];
-}
-
-/**
- * Creates a default CameraAvStreamManagement cluster server, with the Video, Audio, Snapshot and ImageControl features
- * enabled, on the given endpoint.
- *
- * The ImageControl feature is required here (even though it doesn't implement any real image-processing logic) so
- * that this endpoint's registered behavior matches {@link MatterbridgeCameraAvStreamManagementServer}'s own declared
- * feature set (Video, Audio, Snapshot, ImageControl): `webRtcTransportProviderServer.ts`'s automatic stream
- * assignment gates on `endpoint.behaviors.has(MatterbridgeCameraAvStreamManagementServer)`, which requires an exact
- * match against that base class, not just a compatible subset. Removing ImageControl here would make that check
- * fail and break WebRTC SolicitOffer/ProvideOffer automatic stream selection for this device.
- *
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the CameraAvStreamManagement cluster server on.
- * @param {CameraAvStreamManagementClusterOptions} options - The initial state of the CameraAvStreamManagement cluster server.
- * @returns {MatterbridgeEndpoint} The endpoint with the CameraAvStreamManagement cluster server created.
- */
-export function createDefaultCameraAvStreamManagementClusterServer(endpoint: MatterbridgeEndpoint, options: CameraAvStreamManagementClusterOptions): MatterbridgeEndpoint {
-  endpoint.behaviors.require(
-    MatterbridgeCameraAvStreamManagementServer.with(
-      CameraAvStreamManagement.Feature.Video,
-      CameraAvStreamManagement.Feature.Audio,
-      CameraAvStreamManagement.Feature.Snapshot,
-      CameraAvStreamManagement.Feature.ImageControl,
-    ),
-    {
-      ...options,
-      hardPrivacyModeOn: false,
-      statusLightEnabled: false,
-      statusLightBrightness: ThreeLevelAuto.Auto,
-      allocatedVideoStreams: [],
-      allocatedAudioStreams: [],
-      allocatedSnapshotStreams: [],
-      microphoneMuted: false,
-      microphoneVolumeLevel: 128,
-      microphoneMaxLevel: 254,
-      microphoneMinLevel: 0,
-      microphoneAgcEnabled: false,
-      imageRotation: 0,
-      imageFlipVertical: false,
-      imageFlipHorizontal: false,
-    },
-  );
-  return endpoint;
-}
-
-/**
- * Initial state accepted by {@link createDefaultCameraAvSettingsUserLevelManagementClusterServer}.
- */
-export interface CameraAvSettingsUserLevelManagementClusterOptions {
-  /** Indicates the minimum value for the mechanical pan, in angular degrees */
-  panMin: number;
-  /** Indicates the maximum value for the mechanical pan, in angular degrees */
-  panMax: number;
-  /** Indicates the minimum value for the mechanical tilt, in angular degrees */
-  tiltMin: number;
-  /** Indicates the maximum value for the mechanical tilt, in angular degrees */
-  tiltMax: number;
-  /** Indicates the maximum value for the mechanical zoom */
-  zoomMax: number;
-  /** Indicates the initial mechanical pan, tilt and zoom position */
-  mptzPosition: CameraAvSettingsUserLevelManagement.Mptz;
-}
-
-/**
- * Creates a default CameraAvSettingsUserLevelManagement cluster server, with the MechanicalPan, MechanicalTilt and
- * MechanicalZoom features enabled, on the given endpoint.
- *
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the CameraAvSettingsUserLevelManagement cluster server on.
- * @param {CameraAvSettingsUserLevelManagementClusterOptions} options - The initial state of the CameraAvSettingsUserLevelManagement cluster server.
- * @returns {MatterbridgeEndpoint} The endpoint with the CameraAvSettingsUserLevelManagement cluster server created.
- */
-export function createDefaultCameraAvSettingsUserLevelManagementClusterServer(
-  endpoint: MatterbridgeEndpoint,
-  options: CameraAvSettingsUserLevelManagementClusterOptions,
-): MatterbridgeEndpoint {
-  endpoint.behaviors.require(
-    MatterbridgeCameraAvSettingsUserLevelManagementServer.with(
-      CameraAvSettingsUserLevelManagement.Feature.MechanicalPan,
-      CameraAvSettingsUserLevelManagement.Feature.MechanicalTilt,
-      CameraAvSettingsUserLevelManagement.Feature.MechanicalZoom,
-    ),
-    {
-      ...options,
-      movementState: CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle,
-    },
-  );
-  return endpoint;
-}
-
-/**
- * Creates a default WebRtcTransportProvider cluster server on the given endpoint.
- *
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the WebRtcTransportProvider cluster server on.
- * @returns {MatterbridgeEndpoint} The endpoint with the WebRtcTransportProvider cluster server created.
- */
-export function createDefaultWebRtcTransportProviderClusterServer(endpoint: MatterbridgeEndpoint): MatterbridgeEndpoint {
-  endpoint.behaviors.require(MatterbridgeWebRtcTransportProviderServer, { currentSessions: [] });
-  return endpoint;
 }

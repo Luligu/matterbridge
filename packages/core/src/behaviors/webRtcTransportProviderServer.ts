@@ -141,13 +141,18 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    * @param {() => void | PromiseLike<void>} action - Invokes the command on the peer's WebRtcTransportRequestor.
    * @param {string} description - Human-readable description of the invoke, for the error log on failure.
    */
-  /* v8 ignore next 8 -- only reachable once a real peer WebRtcTransportRequestor can be reached; see the v8 ignore
+  /* v8 ignore next 12 -- only reachable once a real peer WebRtcTransportRequestor can be reached; see the v8 ignore
    * comments at this method's call sites. */
   #invokeDeferred(action: () => void | PromiseLike<void>, description: string): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Captured now, for the same reason as in provideIceCandidates below: this behavior instance is ephemeral (see
+    // this class's doc comment) and may no longer be valid by the time the deferred callback runs.
+    const endpointLabel = `${this.endpoint.maybeId}.${this.endpoint.maybeNumber}`;
     setTimeout(() => {
       Promise.resolve(action()).catch((error: unknown) => {
-        device.log.error(`Failed to invoke ${description} on the peer's WebRtcTransportRequestor: ${error instanceof Error ? error.message : String(error)}`);
+        device.log.error(
+          `MatterbridgeWebRtcTransportProviderServer: failed to invoke ${description} on the peer's WebRtcTransportRequestor: ${error instanceof Error ? error.message : String(error)} (endpoint ${endpointLabel})`,
+        );
       });
     }, DEFERRED_INVOKE_DELAY_MS);
   }
@@ -179,7 +184,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
       this.endpoint
         .stateOf(MatterbridgeServer)
         .log.debug(
-          `Could not resolve peer WebRtcTransportRequestor endpoint (peerNodeId=${peerNodeId}, fabricIndex=${fabricIndex}, peerEndpointId=${peerEndpointId}): ${error instanceof Error ? error.message : String(error)}`,
+          `MatterbridgeWebRtcTransportProviderServer: could not resolve peer WebRtcTransportRequestor endpoint (peerNodeId=${peerNodeId}, fabricIndex=${fabricIndex}, peerEndpointId=${peerEndpointId}): ${error instanceof Error ? error.message : String(error)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         );
       return undefined;
     }
@@ -263,9 +268,10 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    * @throws {StatusResponseError} With status InvalidCommand if both the deprecated and modern fields are present for video and/or audio.
    */
   #validateNoConflictingStreamFields(request: { videoStreams?: number[]; audioStreams?: number[]; videoStreamId?: number | null; audioStreamId?: number | null }): void {
+    // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with INVALID_COMMAND if the VideoStreams or AudioStreams fields are present together with the deprecated VideoStreamID or AudioStreamID fields.
     if ((request.videoStreams !== undefined && request.videoStreamId !== undefined) || (request.audioStreams !== undefined && request.audioStreamId !== undefined)) {
       throw new StatusResponseError(
-        'MatterbridgeWebRtcTransportProviderServer: videoStreams/audioStreams and the deprecated videoStreamId/audioStreamId fields are mutually exclusive',
+        `MatterbridgeWebRtcTransportProviderServer: videoStreams/audioStreams and the deprecated videoStreamId/audioStreamId fields are mutually exclusive (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidCommand,
       );
     }
@@ -445,15 +451,27 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     const state = this.endpoint.stateOf(MatterbridgeCameraAvStreamManagementServer);
     const attributeName = kind === 'video' ? 'AllocatedVideoStreams' : 'AllocatedAudioStreams';
     const allocatedIds = kind === 'video' ? state.allocatedVideoStreams.map((stream) => stream.videoStreamId) : state.allocatedAudioStreams.map((stream) => stream.audioStreamId);
+    // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with INVALID_IN_STATE if the corresponding allocated-streams attribute is empty.
     if (allocatedIds.length === 0) {
-      throw new StatusResponseError(`MatterbridgeWebRtcTransportProviderServer: no ${kind} stream is allocated (${attributeName} is empty)`, Status.InvalidInState);
+      throw new StatusResponseError(
+        `MatterbridgeWebRtcTransportProviderServer: no ${kind} stream is allocated (${attributeName} is empty) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidInState,
+      );
     }
+    // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with ALREADY_EXISTS if the requested stream list contains duplicate entries.
     if (new Set(ids).size !== ids.length) {
-      throw new StatusResponseError(`MatterbridgeWebRtcTransportProviderServer: duplicate ${kind} stream id in the request`, Status.AlreadyExists);
+      throw new StatusResponseError(
+        `MatterbridgeWebRtcTransportProviderServer: duplicate ${kind} stream id in the request (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.AlreadyExists,
+      );
     }
+    // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with DYNAMIC_CONSTRAINT_ERROR if a requested stream id is not found in the allocated-streams attribute.
     for (const id of ids) {
       if (!allocatedIds.includes(id)) {
-        throw new StatusResponseError(`MatterbridgeWebRtcTransportProviderServer: ${kind} stream ${id} is not present in ${attributeName}`, Status.DynamicConstraintError);
+        throw new StatusResponseError(
+          `MatterbridgeWebRtcTransportProviderServer: ${kind} stream ${id} is not present in ${attributeName} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+          Status.DynamicConstraintError,
+        );
       }
     }
   }
@@ -474,9 +492,10 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     const streamUsagePriorities = this.endpoint.behaviors.has(MatterbridgeCameraAvStreamManagementServer)
       ? this.endpoint.stateOf(MatterbridgeCameraAvStreamManagementServer).streamUsagePriorities
       : [];
+    // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with DYNAMIC_CONSTRAINT_ERROR if StreamUsage is not found in StreamUsagePriorities.
     if (!streamUsagePriorities.includes(streamUsage)) {
       throw new StatusResponseError(
-        `MatterbridgeWebRtcTransportProviderServer: stream usage ${streamUsage} is not present in streamUsagePriorities`,
+        `MatterbridgeWebRtcTransportProviderServer: stream usage ${streamUsage} is not present in streamUsagePriorities (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.DynamicConstraintError,
       );
     }
@@ -565,6 +584,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
   #evictIfOverCapacity(webRtcSessionId: number, requestorEndpoint: Endpoint | undefined): boolean {
     if (this.state.currentSessions.length <= MAX_CONCURRENT_SESSIONS) return false;
 
+    // Matter 1.6.0 § 11.4.5.2: Drop a session the provider cannot sustain and signal WebRTCEndReasonEnum.OutOfResources to the peer.
     this.state.currentSessions = this.state.currentSessions.filter((session) => session.id !== webRtcSessionId);
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.notice(
@@ -605,13 +625,16 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     let videoStreams: number[] | undefined;
     let audioStreams: number[] | undefined;
     if (this.#isStrictWebRtcTransport()) {
+      // Matter 1.6.0 § 11.5.6.1: Reject with INVALID_COMMAND; from cluster revision 2 the VideoStreams and AudioStreams fields carry a choice conformance, so at least one stream field SHALL be present.
       if (this.#hasNoStreamFields(request)) {
         throw new StatusResponseError(
-          'MatterbridgeWebRtcTransportProviderServer.solicitOffer requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present',
+          `MatterbridgeWebRtcTransportProviderServer.solicitOffer: requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
           Status.InvalidCommand,
         );
       }
+      // Matter 1.6.0 § 11.5.6.1.10: Fail SolicitOffer with DYNAMIC_CONSTRAINT_ERROR if StreamUsage is not found in StreamUsagePriorities.
       this.#validateStreamUsage(request.streamUsage);
+      // Matter 1.6.0 § 11.5.6.1.10: Resolve the requested stream lists, failing with INVALID_IN_STATE, ALREADY_EXISTS or DYNAMIC_CONSTRAINT_ERROR as the allocated-streams checks require.
       ({ videoStreams, audioStreams } = this.#resolveStrictStreamLists(request, request.streamUsage));
     } else {
       ({ videoStreams, audioStreams } = this.#resolveStreamLists(request));
@@ -621,13 +644,15 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     }
     if (!videoStreams?.length && !audioStreams?.length) {
       throw new StatusResponseError(
-        'MatterbridgeWebRtcTransportProviderServer.solicitOffer requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically',
+        `MatterbridgeWebRtcTransportProviderServer.solicitOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Matter 1.6.0 § 11.5.6.1.10: Create a new WebRTCSessionID for the session.
     const webRtcSessionId = this.#allocateWebRtcSessionId();
     const { peerNodeId, fabricIndex } = this.#getPeerInfo();
+    // Matter 1.6.0 § 11.5.6.1.10: Create a WebRTCSessionStruct associated with the accessing fabric, using OriginatingEndpointID as PeerEndpointID and the Secure Session Context's peer node id as PeerNodeID.
     this.state.currentSessions = [
       ...this.state.currentSessions,
       {
@@ -711,13 +736,16 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
       let videoStreams: number[] | undefined;
       let audioStreams: number[] | undefined;
       if (this.#isStrictWebRtcTransport()) {
+        // Matter 1.6.0 § 11.5.6.3: Reject with INVALID_COMMAND; from cluster revision 2 the VideoStreams and AudioStreams fields carry a choice conformance, so at least one stream field SHALL be present.
         if (this.#hasNoStreamFields(request)) {
           throw new StatusResponseError(
-            'MatterbridgeWebRtcTransportProviderServer.provideOffer requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present',
+            `MatterbridgeWebRtcTransportProviderServer.provideOffer: requires at least one of videoStreams, audioStreams, videoStreamId or audioStreamId to be present (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
             Status.InvalidCommand,
           );
         }
+        // Matter 1.6.0 § 11.5.6.3.12: Fail ProvideOffer with DYNAMIC_CONSTRAINT_ERROR if StreamUsage is not found in StreamUsagePriorities.
         this.#validateStreamUsage(request.streamUsage ?? StreamUsage.LiveView);
+        // Matter 1.6.0 § 11.5.6.3.12: Resolve the requested stream lists, failing with INVALID_IN_STATE, ALREADY_EXISTS or DYNAMIC_CONSTRAINT_ERROR as the allocated-streams checks require.
         ({ videoStreams, audioStreams } = this.#resolveStrictStreamLists(request, request.streamUsage ?? StreamUsage.LiveView));
       } else {
         ({ videoStreams, audioStreams } = this.#resolveStreamLists(request));
@@ -727,12 +755,14 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
       }
       if (!videoStreams?.length && !audioStreams?.length) {
         throw new StatusResponseError(
-          'MatterbridgeWebRtcTransportProviderServer.provideOffer requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically',
+          `MatterbridgeWebRtcTransportProviderServer.provideOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
           Status.ConstraintError,
         );
       }
+      // Matter 1.6.0 § 11.5.6.3.12: Create a new WebRTCSessionID when the command carries a null WebRTCSessionID.
       webRtcSessionId = this.#allocateWebRtcSessionId();
       const { peerNodeId, fabricIndex } = this.#getPeerInfo();
+      // Matter 1.6.0 § 11.5.6.3.12: Create a WebRTCSessionStruct associated with the accessing fabric, using OriginatingEndpointID as PeerEndpointID and the Secure Session Context's peer node id as PeerNodeID.
       this.state.currentSessions = [
         ...this.state.currentSessions,
         {
@@ -754,13 +784,19 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
       if (this.#evictIfOverCapacity(webRtcSessionId, requestorEndpointForCapacityCheck)) {
         return { webRtcSessionId, ...this.#echoDeprecatedStreamIds(request, videoStreams, audioStreams) };
       }
+      // Matter 1.6.0 § 11.5.6.3.12: Respond with NOT_FOUND if a non-null WebRTCSessionID does not match a value in CurrentSessions.
     } else if (!this.state.currentSessions.some((session) => session.id === webRtcSessionId)) {
-      throw new StatusResponseError(`WebRTC session ${webRtcSessionId} is not present in currentSessions`, Status.NotFound);
+      throw new StatusResponseError(
+        `MatterbridgeWebRtcTransportProviderServer.provideOffer: webRTC session ${webRtcSessionId} is not present in currentSessions (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.NotFound,
+      );
     }
     device.log.info(
       `MatterbridgeWebRtcTransportProviderServer.provideOffer: received an SDP offer for session ${webRtcSessionId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.log.debug(`MatterbridgeWebRtcTransportProviderServer.provideOffer: received an SDP offer for session ${webRtcSessionId}:\n${request.sdp}`);
+    device.log.debug(
+      `MatterbridgeWebRtcTransportProviderServer.provideOffer: received an SDP offer for session ${webRtcSessionId}:\n${request.sdp}\n(endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
 
     // oxlint-disable-next-line typescript/no-non-null-assertion -- the session was just created or found above.
     const session = this.state.currentSessions.find((s) => s.id === webRtcSessionId)!;
@@ -805,16 +841,19 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    */
   override async provideAnswer(request: WebRtcTransportProvider.ProvideAnswerRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Matter 1.6.0 § 11.5.6.5: Respond with NOT_FOUND if WebRTCSessionID does not match an entry in CurrentSessions.
     if (!this.state.currentSessions.some((session) => session.id === request.webRtcSessionId)) {
       throw new StatusResponseError(
-        `MatterbridgeWebRtcTransportProviderServer.provideAnswer: webRTC session ${request.webRtcSessionId} is not present in currentSessions`,
+        `MatterbridgeWebRtcTransportProviderServer.provideAnswer: webRTC session ${request.webRtcSessionId} is not present in currentSessions (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
     device.log.info(
       `MatterbridgeWebRtcTransportProviderServer.provideAnswer: received an SDP answer for session ${request.webRtcSessionId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    device.log.debug(`MatterbridgeWebRtcTransportProviderServer.provideAnswer: received SDP answer for session ${request.webRtcSessionId}:\n${request.sdp}`);
+    device.log.debug(
+      `MatterbridgeWebRtcTransportProviderServer.provideAnswer: received SDP answer for session ${request.webRtcSessionId}:\n${request.sdp}\n(endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
 
     const webRtcPeer = this.internal.sessions.get(request.webRtcSessionId);
     if (webRtcPeer) {
@@ -849,9 +888,10 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
   // oxlint-disable-next-line typescript/require-await
   override async provideIceCandidates(request: WebRtcTransportProvider.ProvideIceCandidatesRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Matter 1.6.0 § 11.5.6.6: Respond with NOT_FOUND if WebRTCSessionID does not match an entry in CurrentSessions.
     if (!this.state.currentSessions.some((session) => session.id === request.webRtcSessionId)) {
       throw new StatusResponseError(
-        `MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: webRTC session ${request.webRtcSessionId} is not present in currentSessions`,
+        `MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: webRTC session ${request.webRtcSessionId} is not present in currentSessions (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
@@ -882,7 +922,11 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
                 new Promise<void>((resolve, reject) => {
                   timeout = setTimeout(
                     () =>
-                      reject(new Error(`MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: ICE candidate apply timeout after ${ICE_CANDIDATE_APPLY_TIMEOUT_MS}ms`)),
+                      // No endpoint fragment here: this Error never surfaces on its own, it is only ever stringified into
+                      // the warn below, which appends the fragment itself.
+                      reject(
+                        new Error(`MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: timed out applying an ICE candidate after ${ICE_CANDIDATE_APPLY_TIMEOUT_MS}ms`),
+                      ),
                     ICE_CANDIDATE_APPLY_TIMEOUT_MS,
                   );
                 }),
@@ -897,7 +941,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
           } catch (error) {
             device.log.warn(
               `MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: failed ICE candidate ${index + 1}/${request.iceCandidates.length} for session ${request.webRtcSessionId} after ${Date.now() - startedAt}ms ` +
-                `(endpoint ${endpointLabel}): ${String(error)}`,
+                `with ${String(error)} (endpoint ${endpointLabel})`,
             );
           }
         }),
@@ -915,12 +959,14 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    */
   override async endSession(request: WebRtcTransportProvider.EndSessionRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Matter 1.6.0 § 11.5.6.7.3: Fail EndSession with NOT_FOUND if WebRTCSessionID does not match a value in CurrentSessions.
     if (!this.state.currentSessions.some((session) => session.id === request.webRtcSessionId)) {
       throw new StatusResponseError(
-        `MatterbridgeWebRtcTransportProviderServer.endSession: webRTC session ${request.webRtcSessionId} is not present in currentSessions`,
+        `MatterbridgeWebRtcTransportProviderServer.endSession: webRTC session ${request.webRtcSessionId} is not present in currentSessions (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
+    // Matter 1.6.0 § 11.5.6.7.3: Remove the entry for WebRTCSessionID from CurrentSessions.
     this.state.currentSessions = this.state.currentSessions.filter((session) => session.id !== request.webRtcSessionId);
     const webRtcPeer = this.internal.sessions.get(request.webRtcSessionId);
     if (webRtcPeer) {

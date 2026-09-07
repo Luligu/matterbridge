@@ -26,14 +26,15 @@ import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { MatterbridgeCameraAvStreamManagementServer } from '../behaviors/cameraAvStreamManagementServer.js';
+import { createDefaultIntercomCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addChimeClient, addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
 import { createDefaultWebRtcTransportRequestorClusterServer } from '../behaviors/webRtcTransportRequestorServer.js';
+import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
 // Matterbridge
 import { intercom, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
 /**
  * Options for configuring an {@link Intercom} instance.
@@ -61,6 +62,9 @@ export interface IntercomOptions extends MatterbridgeEndpointOptions {
   speakerCapabilities?: CameraAvStreamManagement.AudioCapabilities;
   /** Indicates the type of two-way talk support the device has. Default: FullDuplex */
   twoWayTalkSupport?: CameraAvStreamManagement.TwoWayTalkSupportType;
+
+  /** Options for the werift WebRTC peer connection used by the WebRtcTransportProvider cluster. Default: both media kinds enabled with source injection disabled */
+  weriftOfferOptions?: WeriftOfferOptions;
 }
 
 /**
@@ -98,6 +102,7 @@ export class Intercom extends MatterbridgeEndpoint {
    *  - microphoneCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
    *  - speakerCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
    *  - twoWayTalkSupport: CameraAvStreamManagement.TwoWayTalkSupportType.FullDuplex
+   *  - weriftOfferOptions: { video: true, audio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {Intercom} The Intercom instance.
    */
@@ -113,6 +118,7 @@ export class Intercom extends MatterbridgeEndpoint {
       microphoneCapabilities = { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] },
       speakerCapabilities = { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] },
       twoWayTalkSupport = CameraAvStreamManagement.TwoWayTalkSupportType.FullDuplex,
+      weriftOfferOptions,
       id,
       number,
       tagList,
@@ -154,64 +160,11 @@ export class Intercom extends MatterbridgeEndpoint {
       speakerCapabilities,
       twoWayTalkSupport,
     });
-    createDefaultWebRtcTransportProviderClusterServer(this);
+    createDefaultWebRtcTransportProviderClusterServer(this, weriftOfferOptions);
     createDefaultWebRtcTransportRequestorClusterServer(this);
     addWebRtcTransportProviderClient(this);
     addWebRtcTransportRequestorClient(this);
     addChimeClient(this);
     this.addRequiredClusters();
   }
-}
-
-/**
- * Initial state accepted by {@link createDefaultIntercomCameraAvStreamManagementClusterServer}.
- */
-export interface IntercomCameraAvStreamManagementClusterOptions {
-  /** Indicates the maximum size, in bytes, of the content buffer used for pre-roll, queued transmissions and metadata */
-  maxContentBufferSize: number;
-  /** Indicates the maximum network bandwidth, in bits per second, that the device would consume for the transmission of its media streams */
-  maxNetworkBandwidth: number;
-  /** Indicates the list of stream usages that are supported by the intercom */
-  supportedStreamUsages: StreamUsage[];
-  /** Indicates the ranked stream usage priorities; only usages found in supportedStreamUsages can be included */
-  streamUsagePriorities: StreamUsage[];
-  /** Indicates the audio capabilities of the microphone in terms of the codec used, supported sample rates and the number of channels */
-  microphoneCapabilities: CameraAvStreamManagement.AudioCapabilities;
-  /** Indicates the audio capabilities of the speaker in terms of the codec used, supported sample rates and the number of channels */
-  speakerCapabilities: CameraAvStreamManagement.AudioCapabilities;
-  /** Indicates the type of two-way talk support the device has */
-  twoWayTalkSupport: CameraAvStreamManagement.TwoWayTalkSupportType;
-}
-
-/**
- * Creates a default CameraAvStreamManagement cluster server, specialized for the Audio and Speaker features, on the
- * given endpoint. The Video, Snapshot and ImageControl features are not enabled, as required by the Matter
- * specification for the Intercom device type. Unlike {@link createDefaultAudioCameraAvStreamManagementClusterServer}
- * in `src/devices/audioDoorbell.ts` (Audio only, one-way from the visitor to the resident), the Intercom needs the
- * Speaker feature too so it can both capture and play back audio for genuine two-way communication.
- *
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the CameraAvStreamManagement cluster server on.
- * @param {IntercomCameraAvStreamManagementClusterOptions} options - The initial state of the CameraAvStreamManagement cluster server.
- * @returns {MatterbridgeEndpoint} The endpoint with the CameraAvStreamManagement cluster server created.
- */
-export function createDefaultIntercomCameraAvStreamManagementClusterServer(
-  endpoint: MatterbridgeEndpoint,
-  options: IntercomCameraAvStreamManagementClusterOptions,
-): MatterbridgeEndpoint {
-  endpoint.behaviors.require(MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Audio, CameraAvStreamManagement.Feature.Speaker), {
-    ...options,
-    hardPrivacyModeOn: false,
-    statusLightEnabled: false,
-    allocatedAudioStreams: [],
-    microphoneMuted: false,
-    microphoneVolumeLevel: 128,
-    microphoneMaxLevel: 254,
-    microphoneMinLevel: 0,
-    microphoneAgcEnabled: false,
-    speakerMuted: false,
-    speakerVolumeLevel: 128,
-    speakerMaxLevel: 254,
-    speakerMinLevel: 0,
-  });
-  return endpoint;
 }

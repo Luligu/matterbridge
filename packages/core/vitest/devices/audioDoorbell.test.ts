@@ -31,7 +31,9 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
-import { AudioDoorbell, createDefaultAudioCameraAvStreamManagementClusterServer } from '../../src/devices/audioDoorbell.js';
+import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
+import { AudioDoorbell } from '../../src/devices/audioDoorbell.js';
 
 await setupTest(NAME);
 
@@ -148,17 +150,11 @@ describe('AudioDoorbell', () => {
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
   });
 
-  it('should add createDefaultAudioCameraAvStreamManagementClusterServer to an endpoint', () => {
-    const device = new AudioDoorbell('Audio Doorbell Helper', 'AUDIO-DOORBELL-HELPER');
-    // The constructor already creates the CameraAvStreamManagement cluster server; calling the helper again should return the same endpoint.
-    expect(
-      createDefaultAudioCameraAvStreamManagementClusterServer(device, {
-        maxContentBufferSize: 65_536,
-        maxNetworkBandwidth: 128_000,
-        supportedStreamUsages: [StreamUsage.LiveView],
-        streamUsagePriorities: [StreamUsage.LiveView],
-        microphoneCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] },
-      }),
-    ).toBe(device);
+  it('should create an audio doorbell device with custom werift offer options', async () => {
+    const weriftOfferOptions: WeriftOfferOptions = { video: false, audio: true, videoSource: 'none', audioSource: 'test' };
+    const device = new AudioDoorbell('Audio Doorbell Werift', 'AUDIO-DOORBELL-WERIFT', { weriftOfferOptions });
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });
 });

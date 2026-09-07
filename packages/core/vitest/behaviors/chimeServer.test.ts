@@ -22,7 +22,7 @@ import {
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
 
-import { MatterbridgeChimeServer } from '../../src/behaviors/chimeServer.js';
+import { createDefaultChimeClusterServer, MatterbridgeChimeServer } from '../../src/behaviors/chimeServer.js';
 import { Chime } from '../../src/devices/chime.js';
 
 await setupTest(NAME);
@@ -118,5 +118,11 @@ describe('MatterbridgeChimeServer', () => {
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeChimeServer: playChimeSound called but chime is disabled'));
 
     await device.setAttribute(ChimeCluster, 'enabled', true, device.log);
+  });
+
+  it('should add createDefaultChimeClusterServer to an endpoint', () => {
+    const device = new Chime('Chime Helper', 'CHIME-HELPER', { powerSourceType: 'None' });
+    // The constructor already creates the Chime cluster server; calling the helper again should return the same endpoint.
+    expect(createDefaultChimeClusterServer(device, [{ chimeId: 0, name: 'Default Chime' }], 0)).toBe(device);
   });
 });

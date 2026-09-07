@@ -10,10 +10,16 @@ Scope:
 
 Checks:
 
-- Verify every textual log and throw message in scope starts with the exact name of its enclosing server class followed by a colon and one space, and that the first letter of the text immediately following that prefix is lowercase. For example:
+- Verify every textual log and throw message in scope starts with the exact name of its enclosing server class, optionally followed by a dot and the exact name of the enclosing command handler or method, then a colon and one space, and that the first letter of the text immediately following that prefix is lowercase. For example:
 
   ```typescript
   MatterbridgeBooleanStateConfigurationServer: requested;
+  ```
+
+  The optional method segment is intended for clusters whose handlers emit similar messages about the same subject, where the bare class name alone does not identify which command produced the line. For example:
+
+  ```typescript
+  MatterbridgeWebRtcTransportProviderServer.provideOffer: received;
   ```
 
 - Verify every textual log and throw message in scope ends with this exact fragment:
@@ -25,7 +31,7 @@ Checks:
 - Treat calls to every log level as logs, including `debug`, `info`, `notice`, `warn`, `error`, and `fatal`, whether the logger is accessed through `device.log`, `this.state.log`, `this.log`, or another local reference.
 - Verify every error message created by a `throw` statement in scope follows the same prefix and suffix rules, including errors constructed directly in the `throw` and errors assigned to a variable before being thrown.
 - Follow local variables and simple helper methods when needed so multiline calls, template literals, and indirectly constructed error messages are not missed.
-- Do not accept a missing or abbreviated server name, text before the server name, a prefix that does not match the enclosing server class name exactly, or an uppercase first letter immediately after the prefix's colon and space (for example `MatterbridgeEnergyEvseServer: Disable charging` is a violation; `MatterbridgeEnergyEvseServer: disable charging` is compliant).
+- Do not accept a missing or abbreviated server name, text before the server name, a prefix that does not match the enclosing server class name exactly, a method segment that does not match the enclosing method name exactly, a method segment not separated from the server name by a single dot, a prefix whose colon and space separator is missing so the prefix runs into the message text, or an uppercase first letter immediately after the prefix's colon and space (for example `MatterbridgeEnergyEvseServer: Disable charging` is a violation; `MatterbridgeEnergyEvseServer: disable charging` is compliant, and `MatterbridgeWebRtcTransportProviderServer.solicitOffer requires at least one stream` is a violation because it has no colon and space separator; `MatterbridgeWebRtcTransportProviderServer.solicitOffer: requires at least one stream` is compliant).
 - Do not accept alternate endpoint formats, missing parentheses, a colon separator, `endpoint.id`, `endpoint.number`, messages containing only one endpoint component, or any text after the endpoint fragment's closing parenthesis.
 - Do not require the fragment in a log or thrown value that has no textual message, but report that case separately for manual review.
 - Ignore comments, JSDoc examples, tests, generated output, and imported server implementations.

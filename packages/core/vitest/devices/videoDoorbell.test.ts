@@ -32,6 +32,8 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
+import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { VideoDoorbell } from '../../src/devices/videoDoorbell.js';
 
 await setupTest(NAME);
@@ -179,5 +181,14 @@ describe('VideoDoorbell', () => {
     expect(await addDevice(aggregator, device)).toBeTruthy();
     expect(cameraChild?.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView]);
     expect(cameraChild?.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView]);
+  });
+
+  it('should create a video doorbell device with custom werift offer options on the camera child', async () => {
+    const weriftOfferOptions: WeriftOfferOptions = { video: true, audio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
+    const device = new VideoDoorbell('Video Doorbell Werift', 'VIDEO-DOORBELL-WERIFT', { cameraOptions: { weriftOfferOptions } });
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    const cameraChild = device.getChildEndpointById('Camera');
+    expect(cameraChild?.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });
 });

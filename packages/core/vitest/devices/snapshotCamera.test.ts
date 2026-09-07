@@ -26,7 +26,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { MatterbridgeCameraAvStreamManagementServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
-import { SnapshotCamera, createDefaultSnapshotCameraAvStreamManagementClusterServer } from '../../src/devices/snapshotCamera.js';
+import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
 
 await setupTest(NAME);
 
@@ -144,21 +144,5 @@ describe('SnapshotCamera', () => {
     expect(device.getAttribute(CameraAvStreamManagement, 'maxNetworkBandwidth')).toBe(20000);
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.Recording, StreamUsage.LiveView]);
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
-  });
-
-  it('should add the default Camera AV Stream Management behavior to an endpoint', () => {
-    const device = new SnapshotCamera('Snapshot Camera Helper', 'CAMERA-HELPER', { powerSourceType: 'None' });
-
-    expect(
-      createDefaultSnapshotCameraAvStreamManagementClusterServer(device, {
-        maxConcurrentEncoders: 1,
-        maxEncodedPixelRate: 10000000,
-        maxContentBufferSize: 1024,
-        snapshotCapabilities: [{ resolution: { width: 1280, height: 720 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false }],
-        maxNetworkBandwidth: 10000,
-        supportedStreamUsages: [StreamUsage.Recording],
-        streamUsagePriorities: [StreamUsage.Recording],
-      }),
-    ).toBe(device);
   });
 });

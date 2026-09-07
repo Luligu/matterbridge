@@ -24,7 +24,7 @@ import {
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
 
-import { Chime, createDefaultChimeClusterServer } from '../../src/devices/chime.js';
+import { Chime } from '../../src/devices/chime.js';
 
 await setupTest(NAME);
 
@@ -132,11 +132,5 @@ describe('Chime', () => {
     ]);
     expect(device.getAttribute(ChimeCluster, 'selectedChime')).toBe(1);
     expect(device.getAttribute(ChimeCluster, 'enabled')).toBe(false);
-  });
-
-  it('should add createDefaultChimeClusterServer to an endpoint', () => {
-    const device = new Chime('Chime Helper', 'CHIME-HELPER', { powerSourceType: 'None' });
-    // The constructor already creates the Chime cluster server; calling the helper again should return the same endpoint.
-    expect(createDefaultChimeClusterServer(device, [{ chimeId: 0, name: 'Default Chime' }], 0)).toBe(device);
   });
 });

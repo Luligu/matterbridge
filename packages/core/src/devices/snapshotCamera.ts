@@ -26,11 +26,11 @@ import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { MatterbridgeCameraAvStreamManagementServer } from '../behaviors/cameraAvStreamManagementServer.js';
+import { createDefaultSnapshotCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { powerSource, snapshotCamera } from '../matterbridgeDeviceTypes.js';
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
 /**
  * Options for configuring a {@link SnapshotCamera} instance.
@@ -153,39 +153,4 @@ export class SnapshotCamera extends MatterbridgeEndpoint {
     });
     this.addRequiredClusters();
   }
-}
-
-export interface SnapshotCameraAvStreamManagementClusterOptions {
-  maxConcurrentEncoders: number;
-  maxEncodedPixelRate: number;
-  maxContentBufferSize: number;
-  snapshotCapabilities: CameraAvStreamManagement.SnapshotCapabilities[];
-  maxNetworkBandwidth: number;
-  supportedStreamUsages: StreamUsage[];
-  streamUsagePriorities: StreamUsage[];
-}
-
-/**
- *  Creates a default CameraAvStreamManagement cluster server, specialized for the Snapshot feature, on the given endpoint.
- * @param {MatterbridgeEndpoint} endpoint - The endpoint to create the CameraAvStreamManagement cluster server on.
- * @param {SnapshotCameraAvStreamManagementClusterOptions} options - The options for configuring the CameraAvStreamManagement cluster server.
- * @returns {MatterbridgeEndpoint} The endpoint with the CameraAvStreamManagement cluster server created.
- */
-export function createDefaultSnapshotCameraAvStreamManagementClusterServer(
-  endpoint: MatterbridgeEndpoint,
-  options: SnapshotCameraAvStreamManagementClusterOptions,
-): MatterbridgeEndpoint {
-  endpoint.behaviors.require(MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Snapshot), {
-    // mandatory attributes
-    maxContentBufferSize: options.maxContentBufferSize, // M
-    maxNetworkBandwidth: options.maxNetworkBandwidth, // M
-    supportedStreamUsages: options.supportedStreamUsages, // M
-    streamUsagePriorities: options.streamUsagePriorities, // M
-    // CameraAvStreamManagement.Feature.Snapshot
-    maxConcurrentEncoders: options.maxConcurrentEncoders, // VDO | SNP
-    maxEncodedPixelRate: options.maxEncodedPixelRate, // VDO | SNP
-    snapshotCapabilities: options.snapshotCapabilities, // SNP
-    allocatedSnapshotStreams: [], // SNP, persisted by matter.js — never seeded from options
-  });
-  return endpoint;
 }

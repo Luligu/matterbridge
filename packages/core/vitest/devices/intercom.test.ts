@@ -32,6 +32,8 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
+import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { Intercom } from '../../src/devices/intercom.js';
 
 await setupTest(NAME);
@@ -149,5 +151,13 @@ describe('Intercom', () => {
     expect(await addDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
+  });
+
+  it('should create an intercom device with custom werift offer options', async () => {
+    const weriftOfferOptions: WeriftOfferOptions = { video: false, audio: true, videoSource: 'none', audioSource: 'test' };
+    const device = new Intercom('Intercom Werift', 'INTERCOM-WERIFT', { weriftOfferOptions });
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });
 });

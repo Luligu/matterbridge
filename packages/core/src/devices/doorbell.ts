@@ -28,7 +28,7 @@ import { addChimeClient } from '../behaviors/clients.js';
 // Matterbridge
 import { doorbell, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { type MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
 /**
  * Options for configuring a {@link Doorbell} instance.
