@@ -323,7 +323,21 @@ describe('Matterbridge ' + NAME, () => {
   test('createDefaultBridgedDeviceBasicInformationClusterServer with a valid productId', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11-productId', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
-    device.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light', 1, '1.0.0', 1, '1.0.0', 'Light', 'https://matterbridge.io', 1, 0x8000);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer(
+      'OnOffLight',
+      '1234',
+      0xfff1,
+      'Matterbridge',
+      'Light',
+      1,
+      '1.0.0',
+      1,
+      '1.0.0',
+      'Light',
+      'https://matterbridge.io',
+      1,
+      0x8000,
+    );
     expect(device.productId).toBe(0x8000);
 
     await add(device);
@@ -333,7 +347,21 @@ describe('Matterbridge ' + NAME, () => {
   test('createDefaultBridgedDeviceBasicInformationClusterServer with an out of range productId', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11-invalidProductId', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
-    device.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light', 1, '1.0.0', 1, '1.0.0', 'Light', 'https://matterbridge.io', 1, 0x10000);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer(
+      'OnOffLight',
+      '1234',
+      0xfff1,
+      'Matterbridge',
+      'Light',
+      1,
+      '1.0.0',
+      1,
+      '1.0.0',
+      'Light',
+      'https://matterbridge.io',
+      1,
+      0x10000,
+    );
     expect(device.productId).toBe(0x10000);
 
     await add(device);
