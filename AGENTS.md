@@ -42,7 +42,7 @@ The following workflows are available as skills in [.agents/skills](./.agents/sk
 
 - `$matterjs-pr-workflow` for opening a PR against matter.js from the local fork when a change belongs upstream rather than in matterbridge.
 - `$verify-agent-context` for verifying which coding agent is running and that it loaded the shared instructions, rules and skills from AGENTS.md and `.agents/`.
-- `$verify-npm-alignement` for verifying that matterbridge and all the workspace packages published on npm are aligned on the `latest` and `dev` dist-tags.
+- `$verify-npm-alignment` for verifying that matterbridge and all the workspace packages published on npm are aligned on the `latest` and `dev` dist-tags.
 - `$verify-server-endpoint-context` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates.
 - `$verify-version-alignment` for verifying package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version.
 

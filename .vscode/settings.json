@@ -41,6 +41,8 @@
   "git.autoRepositoryDetection": false,
   // VS Code's Copilot Chat extension settings
   "chat.useCustomizationsInParentRepositories": true, // Default false.
+  "chat.useAgentsMdFile": true, // Load AGENTS.md at the workspace root as always-on instructions.
+  "chat.useNestedAgentsMdFiles": true, // Also load nested AGENTS.md files in subfolders. Experimental.
   "chat.tools.terminal.autoApprove": {
     "npx tsc": true,
     "npx oxlint": true,

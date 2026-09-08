@@ -1,5 +1,5 @@
 ---
-name: verify-npm-alignement
+name: verify-npm-alignment
 description: Verify that matterbridge and all Matterbridge workspace packages are aligned on the npm latest and dev tags. v.1.0.0
 ---
 

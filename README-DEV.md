@@ -146,7 +146,7 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 | `.agents/rules/testing.instructions.md`                  | Testing and validation expectations                        |
 | `.agents/skills/verify-agent-context/SKILL.md`           | Verify the agent instructions, rules and skills are loaded |
 | `.agents/skills/matterjs-pr-workflow/SKILL.md`           | Open a PR against matter.js from the local fork            |
-| `.agents/skills/verify-npm-alignement/SKILL.md`          | Verify the npm `latest` and `dev` tag alignment            |
+| `.agents/skills/verify-npm-alignment/SKILL.md`           | Verify the npm `latest` and `dev` tag alignment            |
 | `.agents/skills/verify-server-endpoint-context/SKILL.md` | Verify server endpoint context and forwarding order        |
 | `.agents/skills/verify-version-alignment/SKILL.md`       | Verify the version alignment across the repo               |
 | `.codex/config.toml`                                     | Codex project permissions, approvals, and profile          |

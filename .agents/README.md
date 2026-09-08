@@ -42,7 +42,7 @@ Multi-step workflows a user asks for by name, rather than background reference m
 | -------------------------------- | ---------------------------------------------------------- |
 | `verify-agent-context`           | Check which agent is running and that it loaded this setup |
 | `matterjs-pr-workflow`           | Open a PR against matter.js from the local fork            |
-| `verify-npm-alignement`          | Check the published npm `latest` and `dev` tags line up    |
+| `verify-npm-alignment`           | Check the published npm `latest` and `dev` tags line up    |
 | `verify-server-endpoint-context` | Check server endpoint context and plugin forwarding order  |
 | `verify-version-alignment`       | Check versions match across packages, Docker and docs      |
 
@@ -60,11 +60,11 @@ Optional `scripts/`, `references/` and `assets/` subfolders are supported alongs
 
 ## How each agent reaches these files
 
-|             | Codex                                      | Claude Code                                         | Copilot                                                       |
-| ----------- | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------- |
-| Entry point | `AGENTS.md`                                | `CLAUDE.md` → `@AGENTS.md`                          | `.github/copilot-instructions.md` → link                      |
-| Rules       | listed in `AGENTS.md`, read on demand      | `.claude/rules/*` pointers, auto-loaded by `paths:` | `.github/instructions/*` pointers, auto-applied by `applyTo:` |
-| Skills      | discovered automatically, run with `$name` | `.claude/commands/*` → `/name`                      | `.github/prompts/*` → `/name`                                 |
+|             | Codex                                      | Claude Code                                         | Copilot                                                                  |
+| ----------- | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
+| Entry point | `AGENTS.md`                                | `CLAUDE.md` → `@AGENTS.md`                          | `AGENTS.md` natively, plus a link from `.github/copilot-instructions.md` |
+| Rules       | listed in `AGENTS.md`, read on demand      | `.claude/rules/*` pointers, auto-loaded by `paths:` | `.github/instructions/*` pointers, auto-applied by `applyTo:`            |
+| Skills      | discovered automatically, run with `$name` | `.claude/commands/*` → `/name`                      | `.github/prompts/*` → `/name`                                            |
 
 Codex is the only one that reads `.agents/` natively — it scans `.agents/skills` from the working directory
 up to the repository root. Claude Code and Copilot have no such convention, so each keeps a small mirror in

@@ -3,6 +3,6 @@ description: Verify that matterbridge and all Matterbridge workspace packages ar
 argument-hint: '[optional package subset, tag, or notes]'
 ---
 
-@../../.agents/skills/verify-npm-alignement/SKILL.md
+@../../.agents/skills/verify-npm-alignment/SKILL.md
 
 $ARGUMENTS
