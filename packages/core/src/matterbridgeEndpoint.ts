@@ -2207,6 +2207,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           serializedDevice.productLabel,
           serializedDevice.productUrl,
           serializedDevice.configurationVersion,
+          serializedDevice.productId,
         );
       else if (clusterId === BasicInformation.id)
         device.createDefaultBasicInformationClusterServer(
@@ -2411,10 +2412,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} [productLabel] - The product label of the device. Default is 'Matter Bridged Endpoint'.
    * @param {string} [productUrl] - The product URL of the device. Default is 'https://matterbridge.io'.
    * @param {number} [configurationVersion] - The configuration version of the device. Default is 1.
+   * @param {number} [productId] - The product ID of the device. Optional: the ProductId attribute has "desc" conformance on BridgedDeviceBasicInformation, so it is only reported when explicitly provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * - The productId doesn't exist on the BridgedDeviceBasicInformation cluster.
    * - The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
    * - The product URL must follow RFC 1738 syntax, use the HTTPS scheme and contain at most 256 ASCII characters.
    */
@@ -2431,12 +2432,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     productLabel: string = 'Matter Bridged Endpoint',
     productUrl: string = 'https://matterbridge.io',
     configurationVersion: number = 1,
+    productId?: number,
   ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = createUniqueId(deviceName, serialNumber, vendorName, productName);
-    this.productId = undefined;
+    this.productId = productId;
     this.productName = productName;
     this.productLabel = productLabel;
     this.productUrl = productUrl;
@@ -2466,6 +2468,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         hardwareVersionString: isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0',
         configurationVersion: isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1,
         reachable: true,
+        ...(productId !== undefined && isValidInteger(productId, 0, UINT16_MAX) ? { productId } : {}),
       },
     );
     return this;
