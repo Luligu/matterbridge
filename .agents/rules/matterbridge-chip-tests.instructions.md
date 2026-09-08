@@ -1,4 +1,8 @@
-# CHIP Conformance Test Harness (v.2.1.0)
+---
+description: 'How the CHIP conformance test harness works for the Matterbridge repo itself v.2.1.0'
+---
+
+# CHIP Conformance Test Harness
 
 Matterbridge itself (not a plugin — there is no plugin under test here) can be validated against the Matter
 CHIP certification test suite — both the Python test scripts and the YAML certification tests used by the

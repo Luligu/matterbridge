@@ -1,11 +1,16 @@
+---
+name: verify-server-endpoint-context
+description: Verify server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates. v.1.0.0
+---
+
 # Verify server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates
 
 Verify endpoint context in Matterbridge behavior server implementations.
 
 Scope:
 
-- Inspect all server implementations in [packages/core/src/behaviors](../packages/core/src/behaviors).
-- Inspect all server classes declared in files under [packages/core/src/devices](../packages/core/src/devices), including files that also contain device classes or helper code.
+- Inspect all server implementations in [packages/core/src/behaviors](../../../packages/core/src/behaviors).
+- Inspect all server classes declared in files under [packages/core/src/devices](../../../packages/core/src/devices), including files that also contain device classes or helper code.
 - In device files, limit the check to server class bodies. Do not report logs or throws belonging only to device classes or unrelated helpers.
 
 Checks:
@@ -55,7 +60,7 @@ Matter specification comments:
   // Matter 1.6.0 § <paragraph>: <short description of the normative rule enforced by this code>.
   ```
 
-- Use the applicable paragraph from the authoritative Matter 1.6.0 specifications under [chip/1.6.0/specs](../chip/1.6.0/specs). Do not guess a paragraph number or copy a reference from unrelated code.
+- Use the applicable paragraph from the authoritative Matter 1.6.0 specifications under [chip/1.6.0/specs](../../../chip/1.6.0/specs). Do not guess a paragraph number or copy a reference from unrelated code.
 - Keep each comment concise and specific to the validation or state update immediately below it. State the observable requirement, including the required status code for validation failures when the specification defines one.
 - Add separate comments when adjacent state assignments enforce different normative requirements. Do not use one generic comment to cover multiple assignments with distinct effects.
 - Place validation and state-update comments both where the rule is implemented and immediately before each call to a helper that performs the validation or state update. At each call site, use the paragraph for that specific command rather than a combined reference covering other callers.
@@ -63,7 +68,7 @@ Matter specification comments:
 - Do not accept method-level JSDoc, a distant block comment, a bare paragraph number, a comment without `Matter 1.6.0`, or a comment that describes implementation mechanics without explaining the specification rule.
 - Report a missing, misplaced, inaccurate, or incomplete specification comment as a Matter specification comment violation.
 
-Compliant examples from [booleanStateConfigurationServer.ts](../packages/core/src/behaviors/booleanStateConfigurationServer.ts):
+Compliant examples from [booleanStateConfigurationServer.ts](../../../packages/core/src/behaviors/booleanStateConfigurationServer.ts):
 
 ```typescript
 // Matter 1.6.0 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.

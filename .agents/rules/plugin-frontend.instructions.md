@@ -1,4 +1,8 @@
-# Matterbridge Plugin Frontend Guide (v.1.0.0)
+---
+description: 'How a plugin serves its own frontend SPA and custom REST API via onFetch v.1.0.0'
+---
+
+# Matterbridge Plugin Frontend Guide
 
 Use this guide when writing plugin code that interacts with a plugin's own frontend SPA: bundling and serving that SPA and its custom REST API.
 

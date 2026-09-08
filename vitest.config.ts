@@ -1,4 +1,4 @@
-// vitest.config.ts 2.0.6
+// vitest.config.ts v.2.0.6
 
 // This Vitest configuration is designed for a TypeScript project.
 

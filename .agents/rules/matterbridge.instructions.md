@@ -1,4 +1,8 @@
-# Matterbridge Endpoint Guide (v.1.0.0)
+---
+description: 'How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package v.1.0.2'
+---
+
+# Matterbridge Endpoint Guide
 
 Use this guide when writing Matterbridge code in this repository or when authoring a plugin that consumes Matterbridge.
 
@@ -19,7 +23,9 @@ import {
   onOffLight,
   powerSource,
   setAttribute,
+  setCluster,
   subscribeAttribute,
+  subscribeCommand,
   updateAttribute,
 } from 'matterbridge';
 
@@ -188,6 +194,8 @@ Common helpers on the endpoint instance:
 - `setAttribute(cluster, attribute, value)`
 - `updateAttribute(cluster, attribute, value)`
 - `subscribeAttribute(cluster, attribute, listener)`
+- `subscribeCommand(cluster, command, listener)`
+- `setCluster(cluster, value)`
 - `addRequiredClusterServers()`
 - `addOptionalClusterServers()`
 - `addRequiredClusters()`

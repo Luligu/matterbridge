@@ -1,4 +1,8 @@
-# Testing Standards for Unit Tests (v.1.0.5)
+---
+description: 'Testing standards for unit tests in the project v.1.0.5'
+---
+
+# Testing Standards for Unit Tests
 
 ## 1. Test Framework
 

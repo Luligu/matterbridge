@@ -1,7 +1,12 @@
+---
+name: matterjs-pr-workflow
+description: Sync the matter.js fork, implement and test a fix or a new feature/enhancement, format, lint, commit, push, and open a PR against matter-js/matter.js. v.1.0.0
+---
+
 # Open a PR against matter.js from the local fork
 
 Use this when a change belongs upstream in matter.js rather than in matterbridge — a bug fix found while working
-in matterbridge (e.g. during [verify-server-endpoint-context](./verify-server-endpoint-context.md), or any other
+in matterbridge (e.g. during [verify-server-endpoint-context](../verify-server-endpoint-context/SKILL.md), or any other
 investigation), or a new feature/enhancement the user wants added to matter.js directly.
 
 Fork location: `../matter.js` (sibling of the matterbridge repo). Remotes:

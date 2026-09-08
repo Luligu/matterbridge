@@ -137,15 +137,20 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 
 ## Codex/Agents instructions
 
-| File                                 | Notes                                             |
-| ------------------------------------ | ------------------------------------------------- |
-| `AGENTS.md`                          | Main project instructions                         |
-| `.agents/matterbridge-chip-tests.md` | CHIP conformance test harness                     |
-| `.agents/matterbridge.md`            | Matterbridge endpoint guide                       |
-| `.agents/plugin-frontend.md`         | Plugin frontend SPA and custom REST API guide     |
-| `.agents/testing.md`                 | Testing and validation expectations               |
-| `.codex/config.toml`                 | Codex project permissions, approvals, and profile |
-| `.codex/rules/default.rules`         | Codex command allow, prompt, and deny rules       |
+| File                                                     | Notes                                                      |
+| -------------------------------------------------------- | ---------------------------------------------------------- |
+| `AGENTS.md`                                              | Main project instructions                                  |
+| `.agents/rules/matterbridge-chip-tests.instructions.md`  | CHIP conformance test harness                              |
+| `.agents/rules/matterbridge.instructions.md`             | Matterbridge endpoint guide                                |
+| `.agents/rules/plugin-frontend.instructions.md`          | Plugin frontend SPA and custom REST API guide              |
+| `.agents/rules/testing.instructions.md`                  | Testing and validation expectations                        |
+| `.agents/skills/verify-agent-context/SKILL.md`           | Verify the agent instructions, rules and skills are loaded |
+| `.agents/skills/matterjs-pr-workflow/SKILL.md`           | Open a PR against matter.js from the local fork            |
+| `.agents/skills/verify-npm-alignement/SKILL.md`          | Verify the npm `latest` and `dev` tag alignment            |
+| `.agents/skills/verify-server-endpoint-context/SKILL.md` | Verify server endpoint context and forwarding order        |
+| `.agents/skills/verify-version-alignment/SKILL.md`       | Verify the version alignment across the repo               |
+| `.codex/config.toml`                                     | Codex project permissions, approvals, and profile          |
+| `.codex/rules/default.rules`                             | Codex command allow, prompt, and deny rules                |
 
 ## Guidelines on imports/exports
 
