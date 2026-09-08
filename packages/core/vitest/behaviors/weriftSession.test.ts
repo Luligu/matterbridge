@@ -5,6 +5,10 @@
  * @contributor Ludovic BOUÉ
  */
 
+// These tests raise the suite timeout because werift always gathers ICE against stun.l.google.com, even when
+// iceServers is set to []; a dropped STUN response stalls an offer/answer for werift's full 5s gathering timeout.
+// See https://github.com/shinyoshiaki/werift-webrtc/issues/691
+
 const NAME = 'WeriftSession';
 
 import { spawn, type ChildProcess } from 'node:child_process';
@@ -111,6 +115,9 @@ async function createRemoteAnswerSdp(offerSdp: string): Promise<string> {
   await remote.close();
   return sdp;
 }
+
+// Timeout raised for the STUN gathering stall described in the file header above.
+vi.setConfig({ testTimeout: 30_000 });
 
 describe('WeriftWebRtcSession', () => {
   let options: WeriftOfferOptions;
