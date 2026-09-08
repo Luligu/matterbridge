@@ -2412,10 +2412,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} [productLabel] - The product label of the device. Default is 'Matter Bridged Endpoint'.
    * @param {string} [productUrl] - The product URL of the device. Default is 'https://matterbridge.io'.
    * @param {number} [configurationVersion] - The configuration version of the device. Default is 1.
-   * @param {number} [productId] - The product ID of the device. Optional: the ProductId attribute has "desc" conformance on BridgedDeviceBasicInformation, so it is only reported when explicitly provided.
+   * @param {number} [productId] - The product ID of the device. Optional: not set by default, so it is only reported when explicitly provided here.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
+   * - ProductId had disallowConform on BridgedDeviceBasicInformation up to Matter 1.3. Matter 1.4 (cluster revision 4) changed it to describedConform (optional, "optional when bridging Matter devices"), so it is safe to report when the caller provides one.
    * - The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
    * - The product URL must follow RFC 1738 syntax, use the HTTPS scheme and contain at most 256 ASCII characters.
    */
