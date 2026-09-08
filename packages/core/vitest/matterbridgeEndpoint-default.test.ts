@@ -280,42 +280,66 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultBridgedDeviceBasicInformationClusterServer', async () => {
-    const productLabel = `Matterbridge ${'P'.repeat(70)}`;
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
-    expect(device).toBeDefined();
-    device.createDefaultBridgedDeviceBasicInformationClusterServer(
-      'OnOffLight',
-      '1234',
-      0xfff1,
-      'Matterbridge',
-      'Light',
-      1.5,
-      '',
-      1.5,
-      '',
-      productLabel,
-      'http://matterbridge.io/device',
-      1.5,
-    );
-    expect(device.hasClusterServer(BasicInformation)).toBe(false);
-    expect(device.hasClusterServer(BridgedDeviceBasicInformation)).toBe(true);
-    expect(device.softwareVersion).toBe(1.5);
-    expect(device.softwareVersionString).toBe('');
-    expect(device.hardwareVersion).toBe(1.5);
-    expect(device.hardwareVersionString).toBe('');
-    expect(device.productLabel).toBe(productLabel);
-    expect(device.productUrl).toBe('http://matterbridge.io/device');
-    expect(device.configurationVersion).toBe(1.5);
+        const productLabel = `Matterbridge ${'P'.repeat(70)}`;
+            const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+                expect(device).toBeDefined();
+                    device.createDefaultBridgedDeviceBasicInformationClusterServer(
+                          'OnOffLight',
+                                '1234',
+                                      0xfff1,
+                                            'Matterbridge',
+                                                  'Light',
+                                                        1.5,
+                                                              '',
+                                                                    1.5,
+                                                                          '',
+                                                                                productLabel,
+                                                                                      'http://matterbridge.io/device',
+                                                                                            1.5,
+                                                                                                );
+                                                                                                    expect(device.hasClusterServer(BasicInformation)).toBe(false);
+                                                                                                        expect(device.hasClusterServer(BridgedDeviceBasicInformation)).toBe(true);
+                                                                                                            expect(device.productId).toBeUndefined();
+                                                                                                                expect(device.softwareVersion).toBe(1.5);
+                                                                                                                    expect(device.softwareVersionString).toBe('');
+                                                                                                                        expect(device.hardwareVersion).toBe(1.5);
+                                                                                                                            expect(device.hardwareVersionString).toBe('');
+                                                                                                                                expect(device.productLabel).toBe(productLabel);
+                                                                                                                                    expect(device.productUrl).toBe('http://matterbridge.io/device');
+                                                                                                                                        expect(device.configurationVersion).toBe(1.5);
 
-    await add(device);
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'softwareVersion')).toBe(1);
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'softwareVersionString')).toBe('1.0.0');
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'hardwareVersion')).toBe(1);
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'hardwareVersionString')).toBe('1.0.0');
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productLabel')).toBe('P'.repeat(64));
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productUrl')).toBe('https://matterbridge.io');
-    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'configurationVersion')).toBe(1);
-  });
+                                                                                                                                            await add(device);
+                                                                                                                                                expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'softwareVersion')).toBe(1);
+                                                                                                                                                    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'softwareVersionString')).toBe('1.0.0');
+                                                                                                                                                        expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'hardwareVersion')).toBe(1);
+                                                                                                                                                            expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'hardwareVersionString')).toBe('1.0.0');
+                                                                                                                                                                expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productLabel')).toBe('P'.repeat(64));
+                                                                                                                                                                    expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productUrl')).toBe('https://matterbridge.io');
+                                                                                                                                                                        expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'configurationVersion')).toBe(1);
+                                                                                                                                                                            // ProductId has describedConform on BridgedDeviceBasicInformation since Matter 1.4: omitted here since not passed to createDefaultBridgedDeviceBasicInformationClusterServer().
+                                                                                                                                                                                expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productId')).toBeUndefined();
+                                                                                                                                                                                  });
+
+                                                                                                                                                                                    test('createDefaultBridgedDeviceBasicInformationClusterServer with a valid productId', async () => {
+                                                                                                                                                                                        const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11-productId', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+                                                                                                                                                                                            expect(device).toBeDefined();
+                                                                                                                                                                                                device.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light', 1, '1.0.0', 1, '1.0.0', 'Light', 'https://matterbridge.io', 1, 0x8000);
+                                                                                                                                                                                                    expect(device.productId).toBe(0x8000);
+
+                                                                                                                                                                                                        await add(device);
+                                                                                                                                                                                                            expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productId')).toBe(0x8000);
+                                                                                                                                                                                                              });
+
+                                                                                                                                                                                                                test('createDefaultBridgedDeviceBasicInformationClusterServer with an out of range productId', async () => {
+                                                                                                                                                                                                                    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11-invalidProductId', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+                                                                                                                                                                                                                        expect(device).toBeDefined();
+                                                                                                                                                                                                                            device.createDefaultBridgedDeviceBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 'Light', 1, '1.0.0', 1, '1.0.0', 'Light', 'https://matterbridge.io', 1, 0x10000);
+                                                                                                                                                                                                                                expect(device.productId).toBe(0x10000);
+
+                                                                                                                                                                                                                                    await add(device);
+                                                                                                                                                                                                                  expect(device.getAttribute(BridgedDeviceBasicInformation.id, 'productId')).toBeUndefined();
+                                                                                                                                                                                                                  
+  })  });
 
   test('createDefaultGroupsServer', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight12', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
