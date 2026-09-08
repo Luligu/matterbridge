@@ -16,4 +16,4 @@ paths:
   - '.github/workflows/chip-tests.yml'
 ---
 
-@../../../.agents/rules/matterbridge-chip-tests.instructions.md
+Read and follow [.agents/rules/matterbridge-chip-tests.instructions.md](../../../.agents/rules/matterbridge-chip-tests.instructions.md) in full. It is the single source for this guidance.

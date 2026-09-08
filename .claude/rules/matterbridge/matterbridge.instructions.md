@@ -4,4 +4,4 @@ paths:
   - 'packages/core/src/**'
 ---
 
-@../../../.agents/rules/matterbridge.instructions.md
+Read and follow [.agents/rules/matterbridge.instructions.md](../../../.agents/rules/matterbridge.instructions.md) in full. It is the single source for this guidance.

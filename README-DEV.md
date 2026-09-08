@@ -123,7 +123,7 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 | `.github/instructions/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                          |
 | `.github/instructions/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — dedicated Copilot instruction file                   |
 | `.github/instructions/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
-| `.github/instructions/testing/unit-tests.instructions.md`                 | Testing standards — scoped to `**/*.test.ts`                                       |
+| `.github/instructions/testing/testing.instructions.md`                    | Testing standards — scoped to `**/*.test.ts`                                       |
 
 ## Claude instructions
 
@@ -133,7 +133,7 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 | `.claude/rules/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                          |
 | `.claude/rules/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — loaded for all contexts                              |
 | `.claude/rules/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
-| `.claude/rules/testing/unit-tests.instructions.md`                 | Testing standards — scoped to `**/*.test.ts`                                       |
+| `.claude/rules/testing/testing.instructions.md`                    | Testing standards — scoped to `**/*.test.ts`                                       |
 
 ## Codex/Agents instructions
 

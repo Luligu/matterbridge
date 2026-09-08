@@ -8,4 +8,4 @@ paths:
   - '**/buntest/**/*.ts'
 ---
 
-@../../../.agents/rules/testing.instructions.md
+Read and follow [.agents/rules/testing.instructions.md](../../../.agents/rules/testing.instructions.md) in full. It is the single source for this guidance.

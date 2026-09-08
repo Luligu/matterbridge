@@ -13,3 +13,4 @@ Run this check and reply with a short report. Do not modify any file.
 4. List the skills you discovered from `.agents/skills/` and from any tool-specific folder such as `.claude/commands/` or `.github/prompts/`.
 5. Read `.agents/rules/testing.instructions.md` and report the version at the end of its `description` frontmatter to prove the file is readable.
 6. Report the result as a markdown table with the columns `Item`, `Status`, `Notes`.
+7. Report the context size, including the number of instructions, rules, and skills currently loaded.

@@ -5,4 +5,4 @@ paths:
   - 'packages/core/src/frontend.ts'
 ---
 
-@../../../.agents/rules/plugin-frontend.instructions.md
+Read and follow [.agents/rules/plugin-frontend.instructions.md](../../../.agents/rules/plugin-frontend.instructions.md) in full. It is the single source for this guidance.
