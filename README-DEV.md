@@ -117,23 +117,33 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 
 ## Copilot instructions
 
-| File                                                                      | Notes                                                                              |
-| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| `.github/copilot-instructions.md`                                         | Main project instructions — always loaded                                          |
-| `.github/instructions/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                          |
-| `.github/instructions/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — dedicated Copilot instruction file                   |
-| `.github/instructions/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
-| `.github/instructions/testing/testing.instructions.md`                    | Testing standards — scoped to `**/*.test.ts`                                       |
+| File                                                                      | Notes                                                                                                |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `.github/copilot-instructions.md`                                         | Main project instructions — always loaded                                                            |
+| `.github/instructions/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                                            |
+| `.github/instructions/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — dedicated Copilot instruction file                                     |
+| `.github/instructions/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code                   |
+| `.github/instructions/testing/testing.instructions.md`                    | Testing standards — scoped to `**/*.test.ts`                                                         |
+| `.github/skills/verify-agent-context/SKILL.md`                            | Verify the agent instructions, rules and skills are loaded — agent skill, `/verify-agent-context`    |
+| `.github/skills/matterjs-pr-workflow/SKILL.md`                            | Open a PR against matter.js from the local fork — agent skill, `/matterjs-pr-workflow`               |
+| `.github/skills/verify-npm-alignment/SKILL.md`                            | Verify the npm `latest` and `dev` tag alignment — agent skill, `/verify-npm-alignment`               |
+| `.github/skills/verify-server-endpoint-context/SKILL.md`                  | Verify server endpoint context and forwarding order — agent skill, `/verify-server-endpoint-context` |
+| `.github/skills/verify-version-alignment/SKILL.md`                        | Verify the version alignment across the repo — agent skill, `/verify-version-alignment`              |
 
 ## Claude instructions
 
-| File                                                               | Notes                                                                              |
-| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `CLAUDE.md`                                                        | Main project instructions — always loaded                                          |
-| `.claude/rules/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                          |
-| `.claude/rules/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — loaded for all contexts                              |
-| `.claude/rules/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code |
-| `.claude/rules/testing/testing.instructions.md`                    | Testing standards — scoped to `**/*.test.ts`                                       |
+| File                                                               | Notes                                                                                                |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `CLAUDE.md`                                                        | Main project instructions — always loaded                                                            |
+| `.claude/rules/chip-tests/matterbridge-chip-tests.instructions.md` | CHIP conformance test harness — scoped to CHIP test files                                            |
+| `.claude/rules/matterbridge/matterbridge.instructions.md`          | Matterbridge endpoint guide — loaded for all contexts                                                |
+| `.claude/rules/plugin-frontend/plugin-frontend.instructions.md`    | Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code                   |
+| `.claude/rules/testing/testing.instructions.md`                    | Testing standards — scoped to `**/*.test.ts`                                                         |
+| `.claude/skills/verify-agent-context/SKILL.md`                     | Verify the agent instructions, rules and skills are loaded — agent skill, `/verify-agent-context`    |
+| `.claude/skills/matterjs-pr-workflow/SKILL.md`                     | Open a PR against matter.js from the local fork — agent skill, `/matterjs-pr-workflow`               |
+| `.claude/skills/verify-npm-alignment/SKILL.md`                     | Verify the npm `latest` and `dev` tag alignment — agent skill, `/verify-npm-alignment`               |
+| `.claude/skills/verify-server-endpoint-context/SKILL.md`           | Verify server endpoint context and forwarding order — agent skill, `/verify-server-endpoint-context` |
+| `.claude/skills/verify-version-alignment/SKILL.md`                 | Verify the version alignment across the repo — agent skill, `/verify-version-alignment`              |
 
 ## Codex/Agents instructions
 

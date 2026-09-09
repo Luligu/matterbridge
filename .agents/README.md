@@ -1,4 +1,4 @@
-# Shared agent instructions (v.1.0.0)
+# Shared agent instructions (v.1.0.1)
 
 This folder is the **single source of truth** for the instructions given to every coding agent used on this
 repository — OpenAI Codex, Claude Code and GitHub Copilot. Each agent reads the same documents through its
@@ -64,7 +64,7 @@ Optional `scripts/`, `references/` and `assets/` subfolders are supported alongs
 | ----------- | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
 | Entry point | `AGENTS.md`                                | `CLAUDE.md` → `@AGENTS.md`                          | `AGENTS.md` natively, plus a link from `.github/copilot-instructions.md` |
 | Rules       | listed in `AGENTS.md`, read on demand      | `.claude/rules/*` pointers, auto-loaded by `paths:` | `.github/instructions/*` pointers, auto-applied by `applyTo:`            |
-| Skills      | discovered automatically, run with `$name` | `.claude/commands/*` → `/name`                      | `.github/prompts/*` → `/name`                                            |
+| Skills      | discovered automatically, run with `$name` | `.claude/skills/*` → `/name`                        | `.github/skills/*` → `/name`                                             |
 
 Codex is the only one that reads `.agents/` natively — it scans `.agents/skills` from the working directory
 up to the repository root. Claude Code and Copilot have no such convention, so each keeps a small mirror in
@@ -81,7 +81,9 @@ paths:
 ```
 
 The frontmatter is what makes the tool load the file at the right moment; the body just redirects here. The
-`.claude/commands/*` and `.github/prompts/*` wrappers work the same way for skills.
+`.claude/skills/*` and `.github/skills/*` wrappers work the same way for skills, except that a skill mirror
+redirects with a markdown link rather than an `@` transclusion — both agents follow the link when the skill
+runs, and both also read the mirror's `description` to offer the skill on their own.
 
 ## Adding to this folder
 
@@ -98,10 +100,11 @@ The frontmatter is what makes the tool load the file at the right moment; the bo
 **A new skill:**
 
 1. Write `.agents/skills/<name>/SKILL.md` with `name` (matching the folder) and `description`.
-2. Add `.claude/commands/<name>.md` — frontmatter plus `@../../.agents/skills/<name>/SKILL.md` and
-   `$ARGUMENTS`.
-3. Add `.github/prompts/<name>.prompt.md` — frontmatter plus a link to the same `SKILL.md`.
-4. List it in `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`, using that tool's invocation
+2. Create the two pointer skills, each holding frontmatter (`name` matching its own folder, the same
+   `description`, and an `argument-hint`) plus a link back to the document above:
+   - `.claude/skills/<name>/SKILL.md`
+   - `.github/skills/<name>/SKILL.md`
+3. List it in `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`, using that tool's invocation
    form (`$name` for Codex, `/name` for the other two).
 
 Keep the description identical across a document and its pointers, so the three tools describe the same
