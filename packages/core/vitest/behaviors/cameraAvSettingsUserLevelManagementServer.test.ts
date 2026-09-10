@@ -89,9 +89,12 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should reject setting an absolute pan position outside of the supported range', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', listener);
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 200 })).rejects.toThrow(
       'pan 200 is outside of the supported range [-170, 170]',
     );
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('should reject setting an absolute tilt position outside of the supported range', async () => {
@@ -107,10 +110,21 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should set an absolute pan, tilt and zoom position', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', listener);
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 45, tilt: 10, zoom: 5 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 45, tilt: 10, zoom: 5 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('set mechanical PTZ position to pan 45°, tilt 10°, zoom 5'));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'mptzSetPosition',
+        cluster: CameraAvSettingsUserLevelManagement.name[0].toLowerCase() + CameraAvSettingsUserLevelManagement.name.slice(1),
+        endpoint: device,
+        context: expect.anything(),
+      }),
+    );
   });
 
   it('should leave fields not present in the request unchanged', async () => {
@@ -120,10 +134,21 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should move by a relative pan, tilt and zoom delta', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', listener);
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -5, tiltDelta: 5, zoomDelta: 3 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 40, tilt: 15, zoom: 5 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan -5°, tilt 5°, zoom 3 to pan 40°, tilt 15°, zoom 5'));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'mptzRelativeMove',
+        cluster: CameraAvSettingsUserLevelManagement.name[0].toLowerCase() + CameraAvSettingsUserLevelManagement.name.slice(1),
+        endpoint: device,
+        context: expect.anything(),
+      }),
+    );
   });
 
   it('should clamp a relative move at the pan, tilt and zoom limits', async () => {

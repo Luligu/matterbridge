@@ -27,6 +27,7 @@ import { Status, StatusResponseError } from '@matter/types';
 import type { Chime } from '@matter/types/clusters/chime';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { emitCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /** Id of a chime sound in the InstalledChimeSounds list. */
@@ -74,6 +75,8 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
    * Plays the chime sound passed in the request or, if none is passed, the currently selected chime, and generates the ChimeStartedPlaying event.
    * Per Matter 1.6 Application Cluster spec §11.8.6.1.2, if Enabled is false, the command SHALL succeed with no other side effects.
    *
+   * The PlayChimeSound command observable added by `subscribeCommand()` is emitted last, after the validation and the state update.
+   *
    * @param {Chime.PlayChimeSoundRequest} request - PlayChimeSound request payload.
    * @throws {StatusResponseError} With status NotFound if the requested chimeId is not present in installedChimeSounds.
    */
@@ -93,10 +96,10 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
         Status.NotFound,
       );
     }
-    device.log.info(`MatterbridgeChimeServer: playing chime sound ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    device.log.debug(`MatterbridgeChimeServer: playChimeSound called with chimeId ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeChimeServer: playing chime sound with chimeId ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 11.8.7.1: Generate the ChimeStartedPlaying event when the chime sound starts playing.
     this.events.chimeStartedPlaying.emit({ chimeId }, this.context);
+    emitCommand(this.endpoint, ChimeServer.id, 'playChimeSound', request, this.context);
   }
 }
 

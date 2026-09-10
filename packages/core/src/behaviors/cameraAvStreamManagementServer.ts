@@ -30,6 +30,7 @@ import type { Viewport } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { emitCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -260,6 +261,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     );
     // Matter 1.6.0 § 11.2.8.12.2: Update the StreamUsagePriorities attribute with the contents of StreamPriorities.
     this.state.streamUsagePriorities = request.streamPriorities;
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'setStreamPriorities', request, this.context);
   }
 
   /**
@@ -348,6 +350,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
       device.log.info(
         `MatterbridgeCameraAvStreamManagementServer: reused video stream ${existingStream.videoStreamId} for usage ${request.streamUsage} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
+      emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'videoStreamAllocate', request, this.context);
       return { videoStreamId: existingStream.videoStreamId };
     }
     // Matter 1.6.0 § 11.2.8.4.12: Fail VideoStreamAllocate with RESOURCE_EXHAUSTED if there are not enough resources to allocate a new video stream.
@@ -384,6 +387,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: allocated video stream ${videoStreamId} for usage ${request.streamUsage} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'videoStreamAllocate', request, this.context);
     return { videoStreamId };
   }
 
@@ -408,6 +412,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: deallocated video stream ${request.videoStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'videoStreamDeallocate', request, this.context);
   }
 
   /**
@@ -480,6 +485,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
       device.log.info(
         `MatterbridgeCameraAvStreamManagementServer: reused audio stream ${existingStream.audioStreamId} for usage ${request.streamUsage} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
+      emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'audioStreamAllocate', request, this.context);
       return { audioStreamId: existingStream.audioStreamId };
     }
 
@@ -504,6 +510,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: allocated audio stream ${audioStreamId} for usage ${request.streamUsage} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'audioStreamAllocate', request, this.context);
     return { audioStreamId };
   }
 
@@ -528,6 +535,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: deallocated audio stream ${request.audioStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'audioStreamDeallocate', request, this.context);
   }
 
   /**
@@ -592,6 +600,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
       device.log.info(
         `MatterbridgeCameraAvStreamManagementServer: reused snapshot stream ${existingStream.snapshotStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
+      emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'snapshotStreamAllocate', request, this.context);
       return { snapshotStreamId: existingStream.snapshotStreamId };
     }
     let snapshotStreamId = 0;
@@ -616,6 +625,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
       },
     ];
     device.log.info(`MatterbridgeCameraAvStreamManagementServer: allocated snapshot stream ${snapshotStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'snapshotStreamAllocate', request, this.context);
     return { snapshotStreamId };
   }
 
@@ -641,6 +651,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: deallocated snapshot stream ${request.snapshotStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'snapshotStreamDeallocate', request, this.context);
   }
 
   /**
@@ -683,6 +694,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
       `MatterbridgeCameraAvStreamManagementServer: captureSnapshot called with snapshotStreamId ${request.snapshotStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     const { data, resolution } = cameraColorTestJpegForResolution(request.requestedResolution);
+    emitCommand(this.endpoint, CameraAvStreamManagementServer.id, 'captureSnapshot', request, this.context);
     return {
       data,
       imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg,

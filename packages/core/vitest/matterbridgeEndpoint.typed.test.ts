@@ -582,6 +582,52 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     }
   });
 
+  test('subscribeCommand type checks', async () => {
+    const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorSubscribeCommandTypeCheck', number: EndpointNumber(913) }, true);
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    expect(await addDevice(aggregator, device)).toBe(true);
+    try {
+      const subscribeFromBehavior: MatterbridgeEndpoint = device.subscribeCommand(IdentifyBehavior, 'identify', ({ request }) => {
+        const identifyTime: number = request.identifyTime;
+        void identifyTime;
+      });
+      expect(subscribeFromBehavior).toBe(device);
+
+      const subscribeFromServer: MatterbridgeEndpoint = device.subscribeCommand(IdentifyServer, 'triggerEffect', ({ request }) => {
+        const effectIdentifier: Identify.EffectIdentifier = request.effectIdentifier;
+        void effectIdentifier;
+      });
+      expect(subscribeFromServer).toBe(device);
+
+      const subscribeFromCluster: MatterbridgeEndpoint = device.subscribeCommand(Identify, 'identify', ({ command, cluster, request, endpoint, context }) => {
+        const identifyTime: number = request.identifyTime;
+        const commandName: string = command;
+        const clusterName: string = cluster;
+        const commandEndpoint: MatterbridgeEndpoint = endpoint;
+        void identifyTime;
+        void commandName;
+        void clusterName;
+        void commandEndpoint;
+        void context;
+      });
+      expect(subscribeFromCluster).toBe(device);
+
+      if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
+        // @ts-expect-error intentional type-check guard for Behavior.Type command overload
+        device.subscribeCommand(IdentifyBehavior, 'moveToLevel', () => {});
+        // @ts-expect-error intentional type-check guard for ClusterType command overload
+        device.subscribeCommand(Identify, 'moveToLevel', () => {});
+        // @ts-expect-error intentional type-check guard for Behavior.Type request type
+        device.subscribeCommand(IdentifyBehavior, 'identify', (data: { request: { effectIdentifier: number } }) => void data);
+        // @ts-expect-error intentional type-check guard for ClusterType request type
+        device.subscribeCommand(Identify, 'identify', (data: { request: { effectIdentifier: number } }) => void data);
+      }
+    } finally {
+      await deleteDevice(aggregator, device);
+    }
+  });
+
   test('triggerEvent type checks', async () => {
     const device = new MatterbridgeEndpoint(genericSwitch, { id: 'GenericSwitchTriggerEventTypeCheck', number: EndpointNumber(907) }, true);
     expect(device).toBeDefined();

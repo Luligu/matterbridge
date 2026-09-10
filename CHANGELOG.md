@@ -37,6 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [MatterbridgeEndpoint]: Add `subscribeCommand(cluster, command, listener)`, the command counterpart of `subscribeAttribute()`. It takes the cluster in all the supported shapes (`Behavior.Type`, `ClusterType`, `ClusterId` or the cluster name string), is typed on the command name and on the request payload for the `Behavior.Type` and `ClusterType` overloads, and calls the listener with a single payload holding the `command`, the `cluster`, the `request`, the `endpoint` and the Matter action `context` of the invoke. It is the same payload of `addCommandHandler()` without `attributes`, since the listener is notified after the cluster state has already been updated. The command observable is added on demand to the events object of the cluster, so a subscribed command is also reachable as `endpoint.events.<cluster>.<command>$executed` and, from inside a cluster server behavior, as `this.events.<command>$executed`. Differently from `addCommandHandler()`, which is called first and always receives the raw incoming command, the subscribers are notified by the cluster server as the last action of the command implementation, after the command has been validated and the cluster state updated, so a rejected or discarded command does not notify them. Command notifications are supported by the Chime, Camera AV Stream Management, Camera AV Settings User Level Management, WebRTC Transport Provider and WebRTC Transport Requestor servers.
 - [Evse]: `Evse`/`EvseOptions` accept new optional constructor options enabling the remaining `EnergyEvse` cluster features: `stateOfCharge`/`batteryCapacity` (SoCReporting), `vehicleId` (PlugAndCharge), `rfid` (Rfid, adds the `Rfid` event and the new `triggerRfidEvent()` helper), and `v2x` (V2X, adds the `EnableDischarging` command). `esaCanGenerate` is also now exposed to the child `DeviceEnergyManagement` endpoint for V2X-capable (export-capable) EVSEs. All features are opt-in and disabled by default, matching the existing `ChargingPreferences`-only behavior. Thanks Ludovic BOUÉ.
 - [Evse]: `MatterbridgeEnergyEvseServer` now implements `enableDischarging()` (Matter 1.6.0 § 9.3.9.3), mirroring `enableCharging()`'s validation and state-update mandates for the discharge direction, and `enableCharging()`/`disable()` now correctly interoperate with a concurrently active discharge (`SupplyState.Enabled`) on V2X-capable instances. Thanks Ludovic BOUÉ.
 - [thread]: Add Bun runtime detection to the system check, logging the Bun version and skipping Node.js version warnings when running on Bun.
@@ -71,6 +72,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [MatterbridgeEndpoint]: Discard `subscribeAttribute()` listener return values so callbacks such as `value => values.push(value)` do not prevent subsequent subscribers from receiving attribute changes.
 - [frontend]: Replace deprecated MUI props, the React form event type, and test-only document writing with their supported equivalents.
 - [frontend]: Restore the theme color of the Select dropdown arrow.
 - [frontend]: Settings: an update notification arriving in the background no longer discards the values you are editing.
@@ -2129,7 +2131,7 @@ In this phase (matterbridge `3.4.x`) all plugins will not build and will not run
 ### Changed
 
 - [package]: Updated dependencies.
-- [matterbridge.io]: Updated web site [matterbridge.io](matterbridge.io).
+- [matterbridge.io]: Updated web site [matterbridge.io](https://matterbridge.io).
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">

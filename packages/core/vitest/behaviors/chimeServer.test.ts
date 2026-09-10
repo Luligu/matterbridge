@@ -79,21 +79,19 @@ describe('MatterbridgeChimeServer', () => {
   it('should play the selected chime sound when no chimeId is provided', async () => {
     await expect(device.invokeBehaviorCommand(ChimeCluster, 'playChimeSound', {})).resolves.toBeUndefined();
 
-    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('playing chime sound 0'));
-    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeChimeServer: playChimeSound called with chimeId 0'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('playing chime sound with chimeId 0'));
   });
 
   it('should play the requested chime sound when a chimeId is provided', async () => {
     await expect(device.invokeBehaviorCommand(ChimeCluster, 'playChimeSound', { chimeId: 1 })).resolves.toBeUndefined();
 
-    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('playing chime sound 1'));
-    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeChimeServer: playChimeSound called with chimeId 1'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('playing chime sound with chimeId 1'));
   });
 
   it('should reject with NotFound when the requested chimeId is not in installedChimeSounds', async () => {
     await expect(device.invokeBehaviorCommand(ChimeCluster, 'playChimeSound', { chimeId: 99 })).rejects.toThrow('chime sound 99 is not present in installedChimeSounds');
 
-    expect(loggerInfoSpy).not.toHaveBeenCalledWith(expect.stringContaining('playing chime sound 99'));
+    expect(loggerInfoSpy).not.toHaveBeenCalledWith(expect.stringContaining('playing chime sound with chimeId 99'));
   });
 
   it('should accept writing SelectedChime to a chimeId present in installedChimeSounds', async () => {
@@ -118,6 +116,44 @@ describe('MatterbridgeChimeServer', () => {
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeChimeServer: playChimeSound called but chime is disabled'));
 
     await device.setAttribute(ChimeCluster, 'enabled', true, device.log);
+  });
+
+  it('should notify the subscribers of the playChimeSound command', async () => {
+    const requests: (ChimeCluster.PlayChimeSoundRequest | undefined)[] = [];
+    device.subscribeCommand(
+      ChimeCluster,
+      'playChimeSound',
+      ({ request }) => {
+        requests.push(request);
+      },
+      device.log,
+    );
+
+    await expect(device.invokeBehaviorCommand(ChimeCluster, 'playChimeSound', { chimeId: 1 })).resolves.toBeUndefined();
+    expect(requests).toEqual([{ chimeId: 1 }]);
+
+    // The command observable is emitted last, so a command rejected by the NotFound validation does not notify the subscribers.
+    await expect(device.invokeBehaviorCommand(ChimeCluster, 'playChimeSound', { chimeId: 99 })).rejects.toThrow('chime sound 99 is not present in installedChimeSounds');
+    expect(requests).toEqual([{ chimeId: 1 }]);
+
+    // The same applies to a command that succeeds with no other side effects because the chime is disabled.
+    await device.setAttribute(ChimeCluster, 'enabled', false, device.log);
+    await expect(device.invokeBehaviorCommand(ChimeCluster, 'playChimeSound', { chimeId: 1 })).resolves.toBeUndefined();
+    expect(requests).toEqual([{ chimeId: 1 }]);
+    await device.setAttribute(ChimeCluster, 'enabled', true, device.log);
+  });
+
+  it('should log an error when subscribing to a command not present on the cluster', () => {
+    device.subscribeCommand(
+      'Chime',
+      'playChimeSoundXX',
+      () => {
+        // Never called.
+      },
+      device.log,
+    );
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('subscribeCommand error: Command'));
+    loggerErrorSpy.mockClear();
   });
 
   it('should add createDefaultChimeClusterServer to an endpoint', () => {

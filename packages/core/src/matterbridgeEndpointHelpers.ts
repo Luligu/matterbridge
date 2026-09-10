@@ -3,7 +3,7 @@
  * @description This file contains the helpers for the class MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2024-10-01
- * @version 2.1.0
+ * @version 2.1.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -35,7 +35,7 @@
 import { createHash } from 'node:crypto';
 
 // @matter
-import { Lifecycle } from '@matter/general';
+import { Lifecycle, Observable } from '@matter/general';
 import { type ActionContext, type Behavior, ClusterBehavior, type Endpoint } from '@matter/node';
 // @matter behaviors
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
@@ -179,6 +179,7 @@ import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valv
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
+import type { SubscribeCommandEvents, SubscribeCommandListener, SubscribeCommandObservable } from './matterbridgeEndpointTypes.js';
 
 logModuleLoaded('MatterbridgeEndpointHelpers');
 
@@ -1124,11 +1125,146 @@ export function subscribeAttribute(
     );
     return endpoint;
   }
-  events[clusterName][attribute].on(listener);
+  // Discard callback return values so they cannot stop notification of subsequent subscribers.
+  events[clusterName][attribute].on((newValue: unknown, oldValue: unknown, context: ActionContext) => {
+    listener(newValue, oldValue, context);
+  });
   log?.info(
     `${db}Subscribed endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} attribute ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${attribute}${db}`,
   );
   return endpoint;
+}
+
+/**
+ * Retrieves (and lazily creates) the command observable of the given command on the events object of the given cluster.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint owning the cluster.
+ * @param {string} clusterName - The behavior id of the cluster (i.e. 'chime').
+ * @param {string} commandName - The camelCase name of the command (i.e. 'playChimeSound').
+ * @param {boolean} create - When true the observable is created if not already present.
+ * @returns {SubscribeCommandObservable | undefined} The command observable, or undefined if the endpoint or cluster has no events object, or the observable does not exist.
+ *
+ * @remarks
+ * The observable is registered with the `$executed` suffix (i.e. 'playChimeSound$executed') to keep the command observables in their own
+ * namespace on the events object. Matter.js registers the cluster events under their bare camelCase name, and a cluster can define a command
+ * and an event with the same name (i.e. Groupcast defines both the GroupcastTesting command and the GroupcastTesting event), so without the
+ * suffix the command observable would collide with the native event observable. The suffix mirrors the `$Changing`/`$Changed` suffixes that
+ * matter.js uses for the attribute observables and is internal: the callers always pass the plain command name.
+ */
+function getCommandObservable(endpoint: MatterbridgeEndpoint, clusterName: string, commandName: string, create: boolean): SubscribeCommandObservable | undefined {
+  const events = endpoint.events as unknown as Record<string, SubscribeCommandEvents | undefined> | undefined;
+  const clusterEvents = events?.[clusterName];
+  if (!clusterEvents) return undefined;
+  const eventName = commandName + '$executed';
+  let observable = clusterEvents[eventName];
+  if (!observable && create) {
+    observable = Observable();
+    // Registers the observable with the matter.js EventEmitter so it is disposed together with the endpoint...
+    clusterEvents.addEvent(eventName, observable);
+    // ...and exposes it as a property so it can be reached as `this.events.playChimeSound$executed` like the native cluster events.
+    Object.defineProperty(clusterEvents, eventName, { value: observable, enumerable: true, configurable: true });
+  }
+  return observable;
+}
+
+/**
+ * Subscribes to the provided command on a cluster.
+ *
+ * The command observable is added on demand to the events object of the cluster, so it is reachable as `endpoint.events.<cluster>.<command>$executed`
+ * and, from inside a cluster server behavior, as `this.events.<command>$executed`. The `$executed` suffix keeps the command observables separate
+ * from the native cluster event observables, which matter.js registers under their bare name.
+ *
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint to subscribe the command on.
+ * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the command on.
+ * @param {string} command - The name of the command to subscribe to.
+ * @param {SubscribeCommandListener} listener - A callback function that will be called when the command is received.
+ * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+ * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
+ *
+ * @remarks The listener function (cannot be async) will receive a single {@link SubscribeCommandData} payload with the following properties:
+ * - `command`: The camelCase name of the command that was executed (i.e. 'playChimeSound').
+ * - `cluster`: The behavior id of the cluster that executed the command (i.e. 'chime').
+ * - `request`: The request payload of the command. It is an empty object for commands without payload.
+ * - `endpoint`: The endpoint that executed the command.
+ * - `context`: The action context of the invoke.
+ *
+ * @remarks
+ * The command observable is emitted synchronously, so the listener runs on the stack of the invoke, before the command implementation returns and before the
+ * invoke transaction is committed. The `context` is therefore fully live for the synchronous body of the listener, but must not be retained beyond it: once the
+ * invoke completes the transaction is closed and any later use of the context throws `the owning context has exited`.
+ */
+export function subscribeCommand(
+  endpoint: MatterbridgeEndpoint,
+  cluster: Behavior.Type | ClusterType | ClusterId | string,
+  command: string,
+  listener: SubscribeCommandListener,
+  log?: AnsiLogger,
+): MatterbridgeEndpoint {
+  const behavior = getBehavior(endpoint, cluster);
+  const clusterName = behavior?.id;
+  if (!behavior || !clusterName) {
+    endpoint.log.error(`subscribeCommand ${hk}${command}${er} error: cluster not found on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`);
+    return endpoint;
+  }
+
+  command = lowercaseFirstLetter(command);
+  if (!ClusterBehavior.isType(behavior) || !behavior.schema.commands(command)) {
+    endpoint.log.error(
+      `subscribeCommand error: Command ${hk}${command}${er} not found on Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
+    );
+    return endpoint;
+  }
+
+  const observable = getCommandObservable(endpoint, clusterName, command, true);
+  if (!observable) {
+    endpoint.log.error(
+      `subscribeCommand error: Cluster ${'0x' + getClusterId(endpoint, clusterName)?.toString(16).padStart(4, '0')}:${clusterName} has no events on endpoint ${or}${endpoint.maybeId}${er}:${or}${endpoint.maybeNumber}${er}`,
+    );
+    return endpoint;
+  }
+  // Discard callback return values so they cannot stop notification of subsequent subscribers.
+  observable.on((data) => {
+    listener(data);
+  });
+  log?.info(
+    `${db}Subscribed endpoint ${or}${endpoint.maybeId}${db}:${or}${endpoint.maybeNumber}${db} command ${hk}${capitalizeFirstLetter(clusterName)}${db}.${hk}${command}${db}`,
+  );
+  return endpoint;
+}
+
+/**
+ * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with `subscribeCommand()`.
+ *
+ * @param {Endpoint} endpoint - The endpoint that received the command. Plain endpoints are ignored.
+ * @param {string} cluster - The behavior id of the cluster that received the command (i.e. 'chime').
+ * @param {string} command - The camelCase name of the command that was received (i.e. 'playChimeSound').
+ * @param {unknown} request - The request payload of the command.
+ * @param {ActionContext} context - The action context of the invoke.
+ *
+ * @remarks
+ * The observable exists only when `subscribeCommand()` has been called for the command, so this is a no-op for unsubscribed commands.
+ * It is called by the cluster servers as the last action of a command implementation, once the command has been validated and the cluster state updated.
+ * The `cluster` and `command` names are normalized to camelCase and forwarded to the listeners together with the endpoint, the request and the context.
+ *
+ * @remarks
+ * The emission is synchronous, so the subscribed listeners run before the command implementation returns and before the invoke transaction is committed:
+ * the `context` passed to them is live for the synchronous body of the listener only.
+ */
+export function emitCommand(endpoint: Endpoint, cluster: string, command: string, request: unknown, context: ActionContext): void {
+  if (!isCommandEndpoint(endpoint)) return;
+  const clusterName = lowercaseFirstLetter(cluster);
+  const commandName = lowercaseFirstLetter(command);
+  getCommandObservable(endpoint, clusterName, commandName, false)?.emit({ command: commandName, cluster: clusterName, request, endpoint, context });
+}
+
+/**
+ * Checks whether an endpoint supports Matterbridge command subscriptions.
+ *
+ * @param {Endpoint} endpoint - The endpoint to check.
+ * @returns {boolean} Whether the endpoint supports command subscriptions.
+ */
+function isCommandEndpoint(endpoint: Endpoint): endpoint is MatterbridgeEndpoint {
+  return 'subscribeCommand' in endpoint && typeof endpoint.subscribeCommand === 'function';
 }
 
 /**

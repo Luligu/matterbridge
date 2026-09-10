@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { ChimeClient } from '@matter/node/behaviors/chime';
 import { WebRtcTransportProviderClient } from '@matter/node/behaviors/web-rtc-transport-provider';
-import { WebRtcTransportRequestorClient } from '@matter/node/behaviors/web-rtc-transport-requestor';
+import { WebRtcTransportRequestorClient, WebRtcTransportRequestorServer } from '@matter/node/behaviors/web-rtc-transport-requestor';
 import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Chime } from '@matter/types/clusters/chime';
@@ -33,6 +33,7 @@ import {
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import { MatterbridgeWebRtcTransportRequestorServer } from '../../src/behaviors/webRtcTransportRequestorServer.js';
 import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { Intercom } from '../../src/devices/intercom.js';
 
@@ -159,5 +160,28 @@ describe('Intercom', () => {
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
     expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
+  });
+  it.each(['offer', 'answer', 'iceCandidates', 'end'] as const)('should notify %s subscribers only after the inherited handler succeeds', async (command) => {
+    const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };
+    const device = new Intercom(`Intercom ${command}`, `INTERCOM-${command}`);
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    const listener = vi.fn();
+    device.subscribeCommand(WebRtcTransportRequestor.id, command, listener);
+    const handler = vi.spyOn(WebRtcTransportRequestorServer.prototype, command).mockImplementation(async () => {
+      expect(listener).not.toHaveBeenCalled();
+    });
+    try {
+      await device.act(async (agent) => agent.get(MatterbridgeWebRtcTransportRequestorServer)[command](request));
+      expect(handler).toHaveBeenCalledWith(request);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ command, cluster: 'webRtcTransportRequestor', request, endpoint: device, context: expect.anything() }));
+
+      listener.mockClear();
+      handler.mockRejectedValueOnce(new Error('Rejected signaling'));
+      await expect(device.act(async (agent) => agent.get(MatterbridgeWebRtcTransportRequestorServer)[command](request))).rejects.toThrow('Rejected signaling');
+      expect(listener).not.toHaveBeenCalled();
+    } finally {
+      handler.mockRestore();
+    }
   });
 });

@@ -139,6 +139,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should solicit an offer and record a deferred session', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(WebRtcTransportProvider, 'solicitOffer', listener);
     await expect(
       device.invokeBehaviorCommand(WebRtcTransportProvider, 'solicitOffer', {
         streamUsage: StreamUsage.LiveView,
@@ -153,6 +155,15 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(currentSessions[0].id).toBe(1);
     expect(currentSessions[0].streamUsage).toBe(StreamUsage.LiveView);
     clearExpectedWarnings('No injectable video codec available on negotiated transceivers');
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'solicitOffer',
+        cluster: WebRtcTransportProvider.name[0].toLowerCase() + WebRtcTransportProvider.name.slice(1),
+        endpoint: device,
+        context: expect.anything(),
+      }),
+    );
   });
 
   it('should solicit a second offer with an incremented session id', async () => {
@@ -171,6 +182,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should end the second solicited session', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(WebRtcTransportProvider, 'endSession', listener);
     await expect(
       device.invokeBehaviorCommand(WebRtcTransportProvider, 'endSession', { webRtcSessionId: 2, reason: WebRtcTransportDefinitions.WebRtcEndReason.UserHangup }),
     ).resolves.toBeUndefined();
@@ -178,6 +191,15 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     const currentSessions = device.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
     expect(currentSessions).toHaveLength(1);
     expect(currentSessions[0].id).toBe(1);
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'endSession',
+        cluster: WebRtcTransportProvider.name[0].toLowerCase() + WebRtcTransportProvider.name.slice(1),
+        endpoint: device,
+        context: expect.anything(),
+      }),
+    );
   });
 
   it('should provide an offer for a new session with automatically assigned video and audio streams', async () => {

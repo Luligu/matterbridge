@@ -106,6 +106,8 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
   });
 
   it('should allocate a snapshot stream with the next available identifier', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(CameraAvStreamManagement, 'snapshotStreamAllocate', listener);
     await expect(
       device.invokeBehaviorCommand(CameraAvStreamManagement, 'snapshotStreamAllocate', {
         imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg,
@@ -128,9 +130,20 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       hardwareEncoder: false,
     });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('allocated snapshot stream 1'));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'snapshotStreamAllocate',
+        cluster: CameraAvStreamManagement.name[0].toLowerCase() + CameraAvStreamManagement.name.slice(1),
+        endpoint: device,
+        context: expect.anything(),
+      }),
+    );
   });
 
   it('should reject allocating a snapshot stream with a resolution range not present in snapshotCapabilities', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(CameraAvStreamManagement, 'snapshotStreamAllocate', listener);
     await expect(
       device.invokeBehaviorCommand(CameraAvStreamManagement, 'snapshotStreamAllocate', {
         imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg,
@@ -140,9 +153,12 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
         quality: 90,
       }),
     ).rejects.toThrow('snapshotStreamAllocate requested minResolution/maxResolution range does not match any entry in snapshotCapabilities');
+    expect(listener).not.toHaveBeenCalled();
   });
 
   it('should reuse an existing snapshot stream whose resolution range overlaps a narrower request', async () => {
+    const listener = vi.fn();
+    device.subscribeCommand(CameraAvStreamManagement, 'snapshotStreamAllocate', listener);
     // Overlaps only the stream allocated above (snapshotStreamId 1, range 320x240-1280x720), not the pre-existing
     // one (snapshotStreamId 0, range 320x240-640x480), and still matches the 1280x720 snapshotCapabilities entry.
     await expect(
@@ -159,6 +175,15 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       expect.objectContaining({ snapshotStreamId: 1, minResolution: { width: 700, height: 500 }, maxResolution: { width: 1280, height: 720 } }),
     );
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('reused snapshot stream 1'));
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(listener).toHaveBeenCalledWith(
+      expect.objectContaining({
+        command: 'snapshotStreamAllocate',
+        cluster: CameraAvStreamManagement.name[0].toLowerCase() + CameraAvStreamManagement.name.slice(1),
+        endpoint: device,
+        context: expect.anything(),
+      }),
+    );
   });
 
   it('should deallocate an existing snapshot stream', async () => {
