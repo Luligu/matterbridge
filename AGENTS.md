@@ -1,11 +1,11 @@
-# Matterbridge Agents Instructions (v.1.0.3)
+# Matterbridge Agents Instructions (v.1.0.4)
 
 ## Style And Formatting
 
 - Follow [STYLEGUIDE.md](./STYLEGUIDE.md) for code style, naming, JSDoc, validation, logging, and formatting expectations.
-- JSDoc requirements are enforced by the linter. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
-- Import and export ordering are enforced by the linter or by the formatter. Preserve the existing grouped and sorted order unless a change requires updating it.
-- Follow the existing formatting and do not fight the formatter.
+- JSDoc requirements are enforced by the configured linter. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
+- Import and export ordering are enforced by the formatter. Preserve the existing grouped and sorted order unless a change requires updating it.
+- Formatting is enforced by oxfmt. Follow the existing formatting and do not fight the formatter.
 
 ## Scope And Safety
 
@@ -16,7 +16,7 @@
 
 ## Project Architecture
 
-- This repository is a TypeScript ESM repo. Follow existing project patterns for imports, exports, build configuration, and test setup.
+- This repository uses TypeScript and ESM. Follow existing project patterns for imports, exports, build configuration, and test setup.
 
 ## Testing And Validation
 
@@ -27,18 +27,24 @@
 
 ## Documentation
 
-- When behavior changes, update the relevant tests and documentation in the README.md files.
+- When behavior changes, update the relevant tests and documentation.
 
 ## Additional Agent Guidance
 
-For task-specific guidance, read relevant files in [.agents](./.agents/):
+For task-specific guidance, read relevant files in [.agents/rules](./.agents/rules/):
 
-- `.agents/testing.md` for testing and validation expectations;
-- `.agents/matterbridge.md` for instruction about using matterbridge in a plugin;
-- `.agents/plugin-frontend.md` for guidance on plugin frontend SPAs and custom REST APIs;
-- `.agents/matterbridge-chip-tests.md` for guidance on the Matterbridge CHIP conformance test harness.
-- `.agents/verify-server-endpoint-context.md` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates.
-- `.agents/verify-version-alignment.md` for verifying package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version.
+- `.agents/rules/testing.instructions.md` for testing and validation expectations;
+- `.agents/rules/matterbridge.instructions.md` for instruction about using matterbridge in a plugin;
+- `.agents/rules/plugin-frontend.instructions.md` for guidance on plugin frontend SPAs and custom REST APIs;
+- `.agents/rules/matterbridge-chip-tests.instructions.md` for guidance on the Matterbridge CHIP conformance test harness.
+
+The following workflows are available as skills in [.agents/skills](./.agents/skills/), discovered automatically and invocable with `$<name>`:
+
+- `$matterjs-pr-workflow` for opening a PR against matter.js from the local fork when a change belongs upstream rather than in matterbridge.
+- `$verify-agent-context` for verifying which coding agent is running and that it loaded the shared instructions, rules and skills from AGENTS.md and `.agents/`.
+- `$verify-npm-alignment` for verifying that matterbridge and all the workspace packages published on npm are aligned on the `latest` and `dev` dist-tags.
+- `$verify-server-endpoint-context` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates.
+- `$verify-version-alignment` for verifying package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version.
 
 ## Matter Specs
 

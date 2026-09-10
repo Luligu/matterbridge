@@ -159,6 +159,7 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[MatterbridgeEndpoint]: Add <code>subscribeCommand(cluster, command, listener)</code>, the command counterpart of <code>subscribeAttribute()</code>. It takes the cluster in all the supported shapes (<code>Behavior.Type</code>, <code>ClusterType</code>, <code>ClusterId</code> or the cluster name string), is typed on the command name and on the request payload for the <code>Behavior.Type</code> and <code>ClusterType</code> overloads, and calls the listener with a single payload holding the <code>command</code>, the <code>cluster</code>, the <code>request</code>, the <code>endpoint</code> and the Matter action <code>context</code> of the invoke. It is the same payload of <code>addCommandHandler()</code> without <code>attributes</code>, since the listener is notified after the cluster state has already been updated. The command observable is added on demand to the events object of the cluster, so a subscribed command is also reachable as <code>endpoint.events.&lt;cluster&gt;.&lt;command&gt;$executed</code> and, from inside a cluster server behavior, as <code>this.events.&lt;command&gt;$executed</code>. Differently from <code>addCommandHandler()</code>, which is called first and always receives the raw incoming command, the subscribers are notified by the cluster server as the last action of the command implementation, after the command has been validated and the cluster state updated, so a rejected or discarded command does not notify them. Command notifications are supported by the Chime, Camera AV Stream Management, Camera AV Settings User Level Management, WebRTC Transport Provider and WebRTC Transport Requestor servers.</li>
 <li>[Evse]: <code>Evse</code>/<code>EvseOptions</code> accept new optional constructor options enabling the remaining <code>EnergyEvse</code> cluster features: <code>stateOfCharge</code>/<code>batteryCapacity</code> (SoCReporting), <code>vehicleId</code> (PlugAndCharge), <code>rfid</code> (Rfid, adds the <code>Rfid</code> event and the new <code>triggerRfidEvent()</code> helper), and <code>v2x</code> (V2X, adds the <code>EnableDischarging</code> command). <code>esaCanGenerate</code> is also now exposed to the child <code>DeviceEnergyManagement</code> endpoint for V2X-capable (export-capable) EVSEs. All features are opt-in and disabled by default, matching the existing <code>ChargingPreferences</code>-only behavior. Thanks Ludovic BOUÉ.</li>
 <li>[Evse]: <code>MatterbridgeEnergyEvseServer</code> now implements <code>enableDischarging()</code> (Matter 1.6.0 § 9.3.9.3), mirroring <code>enableCharging()</code>&#39;s validation and state-update mandates for the discharge direction, and <code>enableCharging()</code>/<code>disable()</code> now correctly interoperate with a concurrently active discharge (<code>SupplyState.Enabled</code>) on V2X-capable instances. Thanks Ludovic BOUÉ.</li>
 <li>[thread]: Add Bun runtime detection to the system check, logging the Bun version and skipping Node.js version warnings when running on Bun.</li>
@@ -193,6 +194,7 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[MatterbridgeEndpoint]: Discard <code>subscribeAttribute()</code> listener return values so callbacks such as <code>value =&gt; values.push(value)</code> do not prevent subsequent subscribers from receiving attribute changes.</li>
 <li>[frontend]: Replace deprecated MUI props, the React form event type, and test-only document writing with their supported equivalents.</li>
 <li>[frontend]: Restore the theme color of the Select dropdown arrow.</li>
 <li>[frontend]: Settings: an update notification arriving in the background no longer discards the values you are editing.</li>
@@ -2181,7 +2183,7 @@ From the View menu of the frontend is possible to request the desktop site or th
 <h3 id="changed-53">Changed</h3>
 <ul>
 <li>[package]: Updated dependencies.</li>
-<li>[matterbridge.io]: Updated web site <a href="matterbridge.io">matterbridge.io</a>.</li>
+<li>[matterbridge.io]: Updated web site <a href="https://matterbridge.io">matterbridge.io</a>.</li>
 </ul>
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">

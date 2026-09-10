@@ -17,7 +17,7 @@ const MATTER_PORT = 11000;
 const MATTER_CREATE_ONLY = true;
 
 import { Lifecycle } from '@matter/general';
-import type { ActionContext } from '@matter/node';
+import { type ActionContext, Endpoint } from '@matter/node';
 import {
   BooleanStateBehavior,
   BooleanStateServer,
@@ -38,6 +38,7 @@ import {
   ThermostatUserInterfaceConfigurationServer,
   TimeSynchronizationServer,
 } from '@matter/node/behaviors';
+import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
 import { EndpointNumber } from '@matter/types';
 import {
   ActivatedCarbonFilterMonitoring,
@@ -127,7 +128,8 @@ import {
   thermostat,
 } from '../src/matterbridgeDeviceTypes.js';
 import { assertMatterbridgeEndpoint, isMatterbridgeEndpoint, MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
-import { checkNotLatinCharacters, featuresFor, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from '../src/matterbridgeEndpointHelpers.js';
+import { checkNotLatinCharacters, emitCommand, featuresFor, generateUniqueId, getAttributeId, getClusterId, invokeSubscribeHandler } from '../src/matterbridgeEndpointHelpers.js';
+import type { SubscribeCommandData } from '../src/matterbridgeEndpointTypes.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -910,6 +912,23 @@ describe('Matterbridge ' + NAME, () => {
     expect(offlineState).toBe(false);
   });
 
+  test('should notify subsequent attribute subscribers when a listener returns a value', async () => {
+    const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorSubscribeAttributeReturnValue', number: EndpointNumber(303) });
+    device.createDefaultBooleanStateClusterServer(true);
+    await add(device);
+
+    const values: boolean[] = [];
+    const secondListener = vi.fn();
+    device.subscribeAttribute(BooleanState, 'stateValue', (value) => values.push(value));
+    device.subscribeAttribute(BooleanState, 'stateValue', secondListener);
+
+    expect(await device.setAttribute(BooleanState, 'stateValue', false)).toBe(true);
+
+    expect(values).toEqual([false]);
+    expect(secondListener).toHaveBeenCalledTimes(1);
+    expect(secondListener).toHaveBeenCalledWith(false, true, expect.anything());
+  });
+
   test('subscribeAttribute with await', async () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorII' }, true);
     expect(device).toBeDefined();
@@ -977,6 +996,153 @@ describe('Matterbridge ' + NAME, () => {
     expect(newState).toBe(false);
     expect(oldState).toBe(true);
     expect(offlineState).toBe(false);
+  });
+
+  test('subscribeCommand', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightSubscribeCommand', number: EndpointNumber(300) });
+    expect(device).toBeDefined();
+    device.createDefaultOnOffClusterServer();
+
+    const datas: SubscribeCommandData[] = [];
+    const listener = (data: SubscribeCommandData): void => {
+      datas.push(data);
+    };
+
+    device.subscribeCommand('onOffXX', 'on', listener, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeCommand ${hk}on${er} error: cluster not found on endpoint`));
+
+    device.subscribeCommand('onOff', 'onXX', listener, device.log);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`subscribeCommand error: Command ${hk}onXX${er} not found on Cluster`));
+
+    expect(device.subscribeCommand(OnOffBehavior, 'onWithTimedOff', listener, device.log)).toBe(device);
+    expect(device.subscribeCommand(OnOff, 'toggle', listener, device.log)).toBe(device);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${db}Subscribed endpoint `));
+
+    await add(device);
+
+    // The observable is reachable on the events object of the cluster like the native cluster events, with the internal $executed suffix.
+    expect((device.events as Record<string, Record<string, unknown>>).onOff.toggle$executed).toBeDefined();
+    // The bare command name is left untouched, so a command observable never collides with a native cluster event of the same name.
+    expect((device.events as Record<string, Record<string, unknown>>).onOff.toggle).toBeUndefined();
+    // A command with no subscriber has no observable on the events object of the cluster.
+    expect((device.events as Record<string, Record<string, unknown>>).onOff.on$executed).toBeUndefined();
+
+    // The cluster servers notify the subscribers with emitCommand() as the last action of the command implementation.
+    // The listener receives the command, the cluster, the request, the endpoint and the action context of the invoke.
+    await device.act((agent) => {
+      emitCommand(device, 'onOff', 'toggle', {}, agent.context);
+    });
+    expect(datas).toEqual([{ command: 'toggle', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() }]);
+
+    await device.act((agent) => {
+      emitCommand(device, 'onOff', 'onWithTimedOff', { onOffControl: { acceptOnlyWhenOn: false }, onTime: 10, offWaitTime: 10 }, agent.context);
+    });
+    expect(datas[1]).toEqual({
+      command: 'onWithTimedOff',
+      cluster: 'onOff',
+      request: { onOffControl: { acceptOnlyWhenOn: false }, onTime: 10, offWaitTime: 10 },
+      endpoint: device,
+      context: expect.anything(),
+    });
+
+    // The cluster and command names are normalized to camelCase before being forwarded to the listeners.
+    await device.act((agent) => {
+      emitCommand(device, 'OnOff', 'Toggle', {}, agent.context);
+    });
+    expect(datas[2]).toEqual({ command: 'toggle', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() });
+
+    // Emitting a command that nobody subscribed to is a no-op.
+    await device.act((agent) => {
+      emitCommand(device, 'onOff', 'on', {}, agent.context);
+    });
+    expect(datas).toHaveLength(3);
+
+    // A cluster with no events object on the endpoint cannot expose a command observable.
+    const eventsSpy = vi.spyOn(device, 'events', 'get').mockReturnValue({});
+    expect(device.subscribeCommand(OnOff, 'toggle', listener, device.log)).toBe(device);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`has no events on endpoint`));
+    eventsSpy.mockRestore();
+  });
+
+  test('should ignore command observables when the endpoint is not a MatterbridgeEndpoint', async () => {
+    const endpoint = new Endpoint(OnOffLightDevice, { id: 'PlainEndpointCommand' });
+    const eventsSpy = vi.spyOn(endpoint, 'events', 'get');
+
+    await aggregator.act((agent) => {
+      emitCommand(endpoint, 'onOff', 'toggle', {}, agent.context);
+    });
+
+    expect(eventsSpy).not.toHaveBeenCalled();
+    eventsSpy.mockRestore();
+  });
+
+  test('should notify subsequent command subscribers when a listener returns a value', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightSubscribeCommandReturnValue', number: EndpointNumber(302) });
+    device.createDefaultOnOffClusterServer();
+    await add(device);
+
+    const requests: SubscribeCommandData[] = [];
+    const secondListener = vi.fn();
+    device.subscribeCommand(OnOff, 'toggle', (data) => requests.push(data));
+    device.subscribeCommand(OnOff, 'toggle', secondListener);
+
+    await device.act((agent) => {
+      emitCommand(device, 'onOff', 'toggle', {}, agent.context);
+    });
+
+    expect(requests).toHaveLength(1);
+    expect(secondListener).toHaveBeenCalledTimes(1);
+    expect(secondListener).toHaveBeenCalledWith(requests[0]);
+  });
+
+  test('subscribeCommand with the OffOnly OnOff cluster', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightOffOnlySubscribeCommand', number: EndpointNumber(301) });
+    expect(device).toBeDefined();
+    device.createOffOnlyOnOffClusterServer();
+
+    const datas: SubscribeCommandData[] = [];
+    const listener = (data: SubscribeCommandData): void => {
+      datas.push(data);
+    };
+
+    // Off is the only command the OffOnly feature keeps. On and Toggle are removed by its conformance, but subscribing to them is still accepted:
+    // subscribeCommand() validates the command against the cluster schema, which lists every command of the cluster regardless of the enabled features.
+    loggerLogSpy.mockClear();
+    expect(device.subscribeCommand(OnOff, 'off', listener, device.log)).toBe(device);
+    expect(device.subscribeCommand(OnOff, 'on', listener, device.log)).toBe(device);
+    expect(device.subscribeCommand(OnOff, 'toggle', listener, device.log)).toBe(device);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('subscribeCommand'));
+
+    await add(device);
+
+    // All three command observables are created, including the two that no controller will ever be able to invoke.
+    const events = (device.events as Record<string, Record<string, unknown>>).onOff;
+    expect(events.off$executed).toBeDefined();
+    expect(events.on$executed).toBeDefined();
+    expect(events.toggle$executed).toBeDefined();
+
+    // Matter 1.6.0 § 1.5.6: with the OffOnly feature the On (0x01) and Toggle (0x02) commands are not supported, so AcceptedCommandList only contains Off (0x00).
+    expect(device.getAttribute('onOff', 'featureMap')).toEqual({ lighting: false, deadFrontBehavior: false, offOnly: true });
+    expect(device.getAttribute('onOff', 'acceptedCommandList')).toEqual([0]);
+
+    // Nothing breaks: invokeBehaviorCommand() acts through an offline agent, which does not apply the AcceptedCommandList conformance of the
+    // interaction layer, so the On and Toggle implementations still run and still change the state. A remote invoke would instead be rejected
+    // by matter.js before reaching the cluster server, and the on and toggle listeners would never be notified.
+    await device.invokeBehaviorCommand(OnOff, 'off');
+    expect(device.getAttribute(OnOff, 'onOff')).toBe(false);
+    await device.invokeBehaviorCommand(OnOff, 'on');
+    expect(device.getAttribute(OnOff, 'onOff')).toBe(true);
+    await device.invokeBehaviorCommand(OnOff, 'toggle');
+    expect(device.getAttribute(OnOff, 'onOff')).toBe(false);
+
+    // None of the three invokes notified the subscribers: MatterbridgeOnOffServer forwards its commands to addCommandHandler() only and does not
+    // call emitCommand() yet, so the subscribers of the OnOff commands are notified only when the cluster server emits the command observable.
+    expect(datas).toHaveLength(0);
+
+    await device.act((agent) => {
+      emitCommand(device, 'onOff', 'off', {}, agent.context);
+    });
+    expect(datas).toEqual([{ command: 'off', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() }]);
   });
 
   test('addCommandHandler', async () => {

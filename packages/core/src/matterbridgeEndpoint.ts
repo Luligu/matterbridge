@@ -179,10 +179,11 @@ import {
   setAttribute,
   setCluster,
   subscribeAttribute,
+  subscribeCommand,
   triggerEvent,
   updateAttribute,
 } from './matterbridgeEndpointHelpers.js';
-import type { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint } from './matterbridgeEndpointTypes.js';
+import type { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint, SubscribeCommandListener } from './matterbridgeEndpointTypes.js';
 
 logModuleLoaded('MatterbridgeEndpoint');
 
@@ -1110,6 +1111,101 @@ export class MatterbridgeEndpoint extends Endpoint {
     log?: AnsiLogger,
   ): MatterbridgeEndpoint {
     return subscribeAttribute(this, cluster, attribute, listener, log);
+  }
+
+  /**
+   * Subscribes to the provided command on a cluster.
+   *
+   * @param {Behavior.Type} cluster - The cluster to subscribe the command on.
+   * @param {BehaviorCommandName<T>} command - The name of the command to subscribe to.
+   * @param {SubscribeCommandListener<BehaviorCommandParams<T, C>>} listener - A callback function that will be called when the command is received.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
+   */
+  subscribeCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(
+    cluster: T,
+    command: C,
+    listener: SubscribeCommandListener<BehaviorCommandParams<T, C>>,
+    log?: AnsiLogger,
+  ): MatterbridgeEndpoint;
+  /**
+   * Subscribes to the provided command on a cluster.
+   *
+   * @param {ClusterType} cluster - The cluster to subscribe the command on.
+   * @param {ClusterCommandName<T>} command - The name of the command to subscribe to.
+   * @param {SubscribeCommandListener<ClusterCommandParams<T, C>>} listener - A callback function that will be called when the command is received.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
+   */
+  subscribeCommand<T extends ClusterType, C extends ClusterCommandName<T>>(
+    cluster: T,
+    command: C,
+    listener: SubscribeCommandListener<ClusterCommandParams<T, C>>,
+    log?: AnsiLogger,
+  ): MatterbridgeEndpoint;
+  /**
+   * Subscribes to the provided command on a cluster.
+   *
+   * @param {ClusterId | string} cluster - The cluster to subscribe the command on.
+   * @param {string} command - The name of the command to subscribe to.
+   * @param {SubscribeCommandListener} listener - A callback function that will be called when the command is received.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
+   */
+  subscribeCommand(cluster: ClusterId | string, command: string, listener: SubscribeCommandListener, log?: AnsiLogger): MatterbridgeEndpoint;
+  /**
+   * Subscribes to the provided command on a cluster.
+   *
+   * A command observable is added on demand to the events object of the cluster, so the command can also be reached as
+   * `endpoint.events.<cluster>.<command>$executed` and, from inside a cluster server behavior, as `this.events.<command>$executed`.
+   *
+   * @param {Behavior.Type | ClusterType | ClusterId | string} cluster - The cluster to subscribe the command on.
+   * @param {string} command - The name of the command to subscribe to.
+   * @param {SubscribeCommandListener} listener - A callback function that will be called when the command is received.
+   * @param {AnsiLogger} [log] - Optional logger for logging errors and information.
+   * @returns {MatterbridgeEndpoint} - The endpoint, for chaining.
+   *
+   * @example
+   *
+   * The following examples are all valid ways to subscribe to the 'playChimeSound' command of the 'Chime' cluster server:
+   *
+   * Typed overloads:
+   * ```typescript
+   * device.subscribeCommand(MatterbridgeChimeServer, 'playChimeSound', listener)
+   * device.subscribeCommand(Chime.Cluster, 'playChimeSound', listener)
+   * ```
+   * Not typed overloads:
+   * ```typescript
+   * device.subscribeCommand(Chime.Cluster.id, 'playChimeSound', listener)
+   * device.subscribeCommand('Chime', 'playChimeSound', listener)
+   * ```
+   * The last has the advantage of being able to subscribe to cluster commands without imports. Just use the names found in the Matter specs.
+   *
+   * @remarks
+   * The listener function (cannot be async!) will receive a single {@link SubscribeCommandData} payload with the following properties:
+   * - `command`: The camelCase name of the command that was executed (i.e. 'playChimeSound').
+   * - `cluster`: The behavior id of the cluster that executed the command (i.e. 'chime').
+   * - `request`: The request payload of the command. It is an empty object for commands without payload.
+   * - `endpoint`: The endpoint that executed the command.
+   * - `context`: The action context of the invoke, when available.
+   *
+   * It is the same payload of `addCommandHandler()` without `attributes`: the listener is notified after the cluster state has already been
+   * updated, so it has no transactional state to write to. Use `addCommandHandler()` when the handler has to change the cluster attributes.
+   *
+   * @remarks
+   * The listener is called by the cluster server as the last action of the command implementation, after the command has been validated and the cluster state updated.
+   * It is therefore not called for a command rejected with a Matter status error or discarded by the cluster conformance.
+   * This is the opposite of `addCommandHandler()`, which is called first and always receives the raw incoming command.
+   *
+   * @remarks
+   * The command observable is emitted synchronously, so the listener runs on the stack of the invoke, before the command implementation returns and before the
+   * invoke transaction is committed. The `context` is therefore fully live for the synchronous body of the listener: `context.fabric`, `context.subject` and
+   * `context.session` identify the caller, and writes made through `context.agentFor()` join the invoke transaction and commit atomically with the command.
+   * The `context` must not be retained beyond that: once the invoke completes the transaction is closed and any later use of the context throws
+   * `the owning context has exited`. A listener that defers work must copy out the values it needs (i.e. `fabricIndex`, `subject`) synchronously first.
+   */
+  subscribeCommand(cluster: Behavior.Type | ClusterType | ClusterId | string, command: string, listener: SubscribeCommandListener, log?: AnsiLogger): MatterbridgeEndpoint {
+    return subscribeCommand(this, cluster, command, listener, log);
   }
 
   /**

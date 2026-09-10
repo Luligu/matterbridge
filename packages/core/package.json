@@ -142,6 +142,7 @@
     "multer": "2.3.0",
     "node-ansi-logger": "3.3.1",
     "node-persist-manager": "2.1.1",
+    "werift": "0.24.4",
     "ws": "8.21.3"
   },
   "devDependencies": {
