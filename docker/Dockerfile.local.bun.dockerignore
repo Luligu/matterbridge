@@ -9,6 +9,7 @@
 
 # Not needed by the bun build (saves ~150 MB of context)
 .agents
+.antigravity
 .claude
 .codex
 .gemini

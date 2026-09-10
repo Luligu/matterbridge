@@ -15,6 +15,7 @@ chip
 
 # Local tooling / editor / agent dirs
 .agents
+.antigravity
 .claude
 .codex
 .gemini

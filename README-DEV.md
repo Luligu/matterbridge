@@ -166,7 +166,8 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 
 | File                                                     | Notes                                                                                                |
 | -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `GEMINI.md`                                              | Main project instructions and command execution rules — always loaded                                |
+| `GEMINI.md`                                              | Main project instructions — always loaded                                                            |
+| `.antigravity/settings.json`                             | Antigravity permissions and settings                                                                 |
 | `.agents/rules/matterbridge-chip-tests.instructions.md`  | CHIP conformance test harness — read on demand                                                       |
 | `.agents/rules/matterbridge.instructions.md`             | Matterbridge endpoint guide — read on demand                                                         |
 | `.agents/rules/plugin-frontend.instructions.md`          | Plugin frontend SPA and custom REST API guide — read on demand                                       |
