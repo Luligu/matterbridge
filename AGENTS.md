@@ -1,4 +1,4 @@
-# Matterbridge Agents Instructions (v.1.0.4)
+# Matterbridge Agents Instructions (v.1.0.5)
 
 ## Style And Formatting
 
@@ -38,7 +38,7 @@ For task-specific guidance, read relevant files in [.agents/rules](./.agents/rul
 - `.agents/rules/plugin-frontend.instructions.md` for guidance on plugin frontend SPAs and custom REST APIs;
 - `.agents/rules/matterbridge-chip-tests.instructions.md` for guidance on the Matterbridge CHIP conformance test harness.
 
-The following workflows are available as skills in [.agents/skills](./.agents/skills/), discovered automatically and invocable with `$<name>`:
+The following workflows are available as skills in [.agents/skills](./.agents/skills/), discovered automatically and invocable with `$<name>` (Codex) or `/<name>` (Claude Code, Copilot, Gemini / Antigravity):
 
 - `$matterjs-pr-workflow` for opening a PR against matter.js from the local fork when a change belongs upstream rather than in matterbridge.
 - `$verify-agent-context` for verifying which coding agent is running and that it loaded the shared instructions, rules and skills from AGENTS.md and `.agents/`.

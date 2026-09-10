@@ -48,6 +48,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Extend the `Home` tests to cover the refresh and update notifications, the changelog and browser refresh prompts, and the childbridge store selection.
 - [frontend]: Extend the `Devices` tests to cover the restored filters and view mode, the locked refresh notification, and the reconnection reset.
 - [frontend]: Extend the `App` tests to cover the automatic login when no password is required.
+- [instructions]: Add the Google Gemini / Antigravity agent: `GEMINI.md` as the entry point importing the shared [AGENTS.md](./AGENTS.md) instructions, permissions and settings in `.antigravity/settings.json`, dev container support, and the updated [Development Guide](./README-DEV.md).
 
 ### Changed
 

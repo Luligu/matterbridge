@@ -1,4 +1,4 @@
-// VS Code extensions native v.1.0.5
+// VS Code extensions native v.1.0.6
 {
   "recommendations": [
     "typescriptteam.native-preview",
@@ -9,7 +9,8 @@
     "github.copilot-chat",
     "github.vscode-github-actions",
     "github.vscode-pull-request-github",
-    "openai.chatgpt"
+    "openai.chatgpt",
+    "google.google-antigravity"
   ],
   "unwantedRecommendations": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "firsttris.vscode-jest-runner"]
 }
