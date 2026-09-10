@@ -17,6 +17,7 @@ chip
 .agents
 .claude
 .codex
+.gemini
 .devcontainer
 .env
 .github

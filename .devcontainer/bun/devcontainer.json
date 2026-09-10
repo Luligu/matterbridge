@@ -51,7 +51,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/bun/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/bun/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/bun/.mattercert,type=volume",
-    // Dev container shared volumes for vscode extensions, npm cache, bun cache, bash history, claude, codex and agents to improve performance
+    // Dev container shared volumes for vscode extensions, npm cache, bun cache, bash history, claude, codex, gemini and agents to improve performance
     // Shared with the node variant: both images create /home/<user>/.vscode-server/extensions owned by UID/GID 1000, so the volume seeds correctly for either
     "source=vscode-extensions,target=/home/bun/.vscode-server/extensions,type=volume",
     "source=npm-cache,target=/home/bun/.npm,type=volume",
@@ -59,6 +59,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=bash-cache,target=/home/bun/.bash-cache,type=volume",
     "source=claude,target=/home/bun/.claude,type=volume",
     "source=codex,target=/home/bun/.codex,type=volume",
+    "source=gemini,target=/home/bun/.gemini,type=volume",
     "source=agents,target=/home/bun/.agents,type=volume"
   ],
   // Set up the Docker environment (runs on the host before the container starts).

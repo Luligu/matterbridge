@@ -1,4 +1,4 @@
-# docker/Dockerfile.bun-dev-container v.2.0.0
+# docker/Dockerfile.bun-dev-container v.2.0.1
 
 # This Dockerfile is used to build a development container for Bun applications.
 # It is based on the official Bun Docker image and includes additional tools and configurations for a better development experience.
@@ -38,6 +38,7 @@ RUN apt-get update \
     /home/bun/.mattercert \
     /home/bun/.claude \
     /home/bun/.codex \
+    /home/bun/.gemini \
     /home/bun/.agents \
     /home/bun/.npm \
     /home/bun/.bun/install/cache \

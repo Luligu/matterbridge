@@ -1,4 +1,4 @@
-# Matterbridge Dev Containers v.2.1.0
+# Matterbridge Dev Containers v.2.1.1
 
 Two dev container variants for Matterbridge, tuned for fast, repeatable start-up:
 
@@ -75,7 +75,7 @@ network check and the image pull overlap, so the pull is very nearly free in wal
 
 ### Volume mount points are pre-created in the image
 
-A fresh named volume inherits ownership from the image directory at its mount point — but only if that directory exists. Both Dockerfiles therefore pre-create every fixed `$HOME` mount point (`Matterbridge`, `.matterbridge`, `.mattercert`, `.claude`, `.codex`, `.agents`, `.npm`, `.bun/install/cache`, `.bash-cache`, `.vscode-server/extensions`) before the `chown`, so new volumes come up owned by the container user instead of `root`.
+A fresh named volume inherits ownership from the image directory at its mount point — but only if that directory exists. Both Dockerfiles therefore pre-create every fixed `$HOME` mount point (`Matterbridge`, `.matterbridge`, `.mattercert`, `.claude`, `.codex`, `.gemini`, `.agents`, `.npm`, `.bun/install/cache`, `.bash-cache`, `.vscode-server/extensions`) before the `chown`, so new volumes come up owned by the container user instead of `root`.
 
 The three workspace volumes cannot be handled this way — their path depends on the repository folder name, and these images are shared across repositories. They are fixed at runtime instead (below).
 
@@ -376,6 +376,7 @@ variants.
 | `~/.bash-cache`               | `bash-cache`        | bash history (`HISTFILE`)    |
 | `~/.claude`                   | `claude`            | Claude Code state            |
 | `~/.codex`                    | `codex`             | Codex state                  |
+| `~/.gemini`                   | `gemini`            | Gemini / Antigravity state   |
 | `~/.agents`                   | `agents`            | agent state                  |
 
 Every mount point in both home tables is pre-created in the Dockerfiles, so a fresh volume is seeded

@@ -1,4 +1,4 @@
-# docker/Dockerfile.node-dev-container v.2.0.0
+# docker/Dockerfile.node-dev-container v.2.0.1
 
 # This Dockerfile is used to build a development container for Node.js applications.
 # It is based on the official Node.js Docker image and includes additional tools and configurations for a better development experience.
@@ -37,6 +37,7 @@ RUN apt-get update \
     /home/node/.mattercert \
     /home/node/.claude \
     /home/node/.codex \
+    /home/node/.gemini \
     /home/node/.agents \
     /home/node/.npm \
     /home/node/.bun/install/cache \
