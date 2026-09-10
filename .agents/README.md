@@ -1,7 +1,7 @@
-# Shared agent instructions (v.1.0.1)
+# Shared agent instructions (v.1.0.2)
 
 This folder is the **single source of truth** for the instructions given to every coding agent used on this
-repository — OpenAI Codex, Claude Code and GitHub Copilot. Each agent reads the same documents through its
+repository — OpenAI Codex, Claude Code, GitHub Copilot and Google Gemini / Antigravity. Each agent reads the same documents through its
 own mechanism, so guidance is written once here and never copied.
 
 > **The rule:** edit files in `.agents/` (or `AGENTS.md`). Never edit the copies under `.claude/` or
@@ -60,13 +60,13 @@ Optional `scripts/`, `references/` and `assets/` subfolders are supported alongs
 
 ## How each agent reaches these files
 
-|             | Codex                                      | Claude Code                                         | Copilot                                                                  |
-| ----------- | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ |
-| Entry point | `AGENTS.md`                                | `CLAUDE.md` → `@AGENTS.md`                          | `AGENTS.md` natively, plus a link from `.github/copilot-instructions.md` |
-| Rules       | listed in `AGENTS.md`, read on demand      | `.claude/rules/*` pointers, auto-loaded by `paths:` | `.github/instructions/*` pointers, auto-applied by `applyTo:`            |
-| Skills      | discovered automatically, run with `$name` | `.claude/skills/*` → `/name`                        | `.github/skills/*` → `/name`                                             |
+|             | Codex                                      | Claude Code                                         | Copilot                                                                  | Gemini / Antigravity                                       |
+| ----------- | ------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| Entry point | `AGENTS.md`                                | `CLAUDE.md` → `@AGENTS.md`                          | `AGENTS.md` natively, plus a link from `.github/copilot-instructions.md` | `GEMINI.md` → `@AGENTS.md` (and `AGENTS.md` natively)      |
+| Rules       | listed in `AGENTS.md`, read on demand      | `.claude/rules/*` pointers, auto-loaded by `paths:` | `.github/instructions/*` pointers, auto-applied by `applyTo:`            | listed in `AGENTS.md` / `GEMINI.md`, read on demand        |
+| Skills      | discovered automatically, run with `$name` | `.claude/skills/*` → `/name`                        | `.github/skills/*` → `/name`                                             | discovered automatically from `.agents/skills/*` → `/name` |
 
-Codex is the only one that reads `.agents/` natively — it scans `.agents/skills` from the working directory
+Codex and Gemini / Antigravity read `.agents/` natively — they scan `.agents/skills` from the working directory
 up to the repository root. Claude Code and Copilot have no such convention, so each keeps a small mirror in
 its own folder. Those mirrors hold **only** frontmatter plus a pointer, for example:
 
@@ -104,10 +104,10 @@ runs, and both also read the mirror's `description` to offer the skill on their 
    `description`, and an `argument-hint`) plus a link back to the document above:
    - `.claude/skills/<name>/SKILL.md`
    - `.github/skills/<name>/SKILL.md`
-3. List it in `AGENTS.md`, `CLAUDE.md` and `.github/copilot-instructions.md`, using that tool's invocation
-   form (`$name` for Codex, `/name` for the other two).
+3. List it in `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md`, using that tool's invocation
+   form (`$name` for Codex, `/name` for the others).
 
-Keep the description identical across a document and its pointers, so the three tools describe the same
+Keep the description identical across a document and its pointers, so the tools describe the same
 thing in the same words.
 
 ## Versions
@@ -118,7 +118,7 @@ they must always agree with the document they point at.
 
 ## Checking it works
 
-Run `/verify-agent-context` (Claude Code, Copilot) or `$verify-agent-context` (Codex) in a fresh session.
+Run `/verify-agent-context` (Claude Code, Copilot, Gemini / Antigravity) or `$verify-agent-context` (Codex) in a fresh session.
 It reports which agent is running, whether `AGENTS.md` reached its context, which rules and skills it can
 see, and whether it can actually read a rule file — which is the quickest way to catch a pointer that a
 tool did not follow.

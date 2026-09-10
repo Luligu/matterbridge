@@ -162,6 +162,21 @@ pass/fail summary is available here [`chipTestsSummary.log`](latestChipTestsSumm
 | `.codex/config.toml`                                     | Codex project permissions, approvals, and profile          |
 | `.codex/rules/default.rules`                             | Codex command allow, prompt, and deny rules                |
 
+## Gemini instructions
+
+| File                                                     | Notes                                                                                                |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `GEMINI.md`                                              | Main project instructions and command execution rules — always loaded                                |
+| `.agents/rules/matterbridge-chip-tests.instructions.md`  | CHIP conformance test harness — read on demand                                                       |
+| `.agents/rules/matterbridge.instructions.md`             | Matterbridge endpoint guide — read on demand                                                         |
+| `.agents/rules/plugin-frontend.instructions.md`          | Plugin frontend SPA and custom REST API guide — read on demand                                       |
+| `.agents/rules/testing.instructions.md`                  | Testing standards — read on demand                                                                   |
+| `.agents/skills/verify-agent-context/SKILL.md`           | Verify the agent instructions, rules and skills are loaded — agent skill, `/verify-agent-context`    |
+| `.agents/skills/matterjs-pr-workflow/SKILL.md`           | Open a PR against matter.js from the local fork — agent skill, `/matterjs-pr-workflow`               |
+| `.agents/skills/verify-npm-alignment/SKILL.md`           | Verify the npm `latest` and `dev` tag alignment — agent skill, `/verify-npm-alignment`               |
+| `.agents/skills/verify-server-endpoint-context/SKILL.md` | Verify server endpoint context and forwarding order — agent skill, `/verify-server-endpoint-context` |
+| `.agents/skills/verify-version-alignment/SKILL.md`       | Verify the version alignment across the repo — agent skill, `/verify-version-alignment`              |
+
 ## Guidelines on imports/exports
 
 Matterbridge exports from:
