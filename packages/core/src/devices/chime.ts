@@ -33,8 +33,6 @@ import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.j
 
 /**
  * Options for configuring an {@link Chime} instance.
- *
- * All temperatures in °C. Typical valid range 0–50 unless otherwise noted.
  */
 export interface ChimeOptions extends MatterbridgeEndpointOptions {
   /** Identify time in seconds. Default: 0 */
