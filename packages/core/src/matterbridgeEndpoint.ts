@@ -2469,7 +2469,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         hardwareVersionString: isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0',
         configurationVersion: isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1,
         reachable: true,
-        ...(productId !== undefined && isValidInteger(productId, 0, UINT16_MAX) ? { productId } : {}),
+        ...(isValidInteger(productId, 0, UINT16_MAX) ? { productId } : {}),
       },
     );
     return this;
