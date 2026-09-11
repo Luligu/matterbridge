@@ -1,5 +1,5 @@
 {
-  "_comment": "Antigravity settings v.1.0.0",
+  "_comment": "Antigravity settings v.1.0.1",
   "permissions": {
     "deny": [
       "read_file(.env)",
@@ -43,7 +43,9 @@
       "command(npm run test:verbose)",
       "command(npm run test:coverage)",
       "command(npm run lint)",
+      "command(npm run lint:fix)",
       "command(npm run format)",
+      "command(npm run format:check)",
       "command(bun test)"
     ]
   }
