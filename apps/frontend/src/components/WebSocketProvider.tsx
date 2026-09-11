@@ -351,7 +351,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             if (listener) {
               listener.listener(msg); // Notify the specific listener
             } else {
-              if (debug) console.warn(`WebSocket no listener found for message id ${msg.id}:`, msg);
+              if (debug) console.warn('WebSocket no listener found for message id %s:', msg.id, msg);
             }
           }
           return;
