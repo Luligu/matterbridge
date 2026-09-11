@@ -1,5 +1,15 @@
 {
   "_comment": "Antigravity settings v.1.0.1",
+  "sandboxing": {
+    // Confines agent operations strictly to the current workspace root directory
+    "workspaceOnly": true,
+    // Spawns background tasks in an isolated Git worktree so unstaged work isn't mutated
+    "subagentIsolation": "branch",
+    // Restricts outbound socket connections and arbitrary network requests from subagents
+    "networkAccess": "restricted",
+    // Runs browser automation in a dedicated headless Chrome instance without shared cookies/credentials
+    "browserSandbox": true
+  },
   "permissions": {
     "deny": [
       "read_file(.env)",
