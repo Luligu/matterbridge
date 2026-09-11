@@ -1,4 +1,4 @@
-# docker/Dockerfile.bun-dev-container v.2.0.1
+# docker/Dockerfile.bun-dev-container v.2.1.1
 
 # This Dockerfile is used to build a development container for Bun applications.
 # It is based on the official Bun Docker image and includes additional tools and configurations for a better development experience.
@@ -69,6 +69,10 @@ RUN apt-get update \
   } > /usr/local/bin/npm \
   && chmod +x /usr/local/bin/npm \
   && rm -rf /var/lib/apt/lists/*
+
+# Copy Dev Container lifecycle scripts
+COPY docker/devcontainer/*.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-matterbridge.sh /usr/local/bin/post-create.sh /usr/local/bin/post-start.sh
 
 USER bun
 WORKDIR /home/bun
