@@ -29,6 +29,32 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.10] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.10.
+- [matterbridge]: Bump `@types/bun` to v.1.4.2.
+- [matterbridge]: Bump `marked` to v.18.0.12.
+- [matterbridge]: Bump `oxfmt` to v.0.67.0.
+- [matterbridge]: Bump `oxlint` to v.1.82.0.
+- [test-utils]: Bump `@types/bun` to v.1.4.2.
+- [utils]: Bump `@types/bun` to v.1.4.2.
+- [thread]: Bump `@zip.js/zip.js` to v.2.14.0.
+- [frontend]: Bump `frontend` version to v.3.6.1.
+- [frontend]: Bump `@rjsf/core` to v.6.10.0.
+- [frontend]: Bump `@rjsf/utils` to v.6.10.0.
+- [frontend]: Bump `@rjsf/validator-ajv8` to v.6.10.0.
+- [frontend]: Bump `react` to v.19.3.0.
+- [frontend]: Bump `react-dom` to v.19.3.0.
+- [frontend]: Bump `@types/react` to v.19.3.0.
+- [frontend]: Bump `@types/react-dom` to v.19.3.0.
+- [frontend]: Bump `vite` to v.8.3.0.
+- [frontend]: Bump `oxfmt` to v.0.67.0.
+- [frontend]: Bump `oxlint` to v.1.82.0.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.9] - 2026-09-11
 
 ### Development News
