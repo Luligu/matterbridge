@@ -51,7 +51,20 @@ export function ConditionalTooltip({ title, children }: ConditionalTooltipProps)
       disableFocusListener
       disableTouchListener
       slotProps={{
-        tooltip: { sx: { fontSize: '14px', fontWeight: 'normal', color: '#ffffff', backgroundColor: 'var(--primary-color)' } },
+        tooltip: {
+          sx: {
+            fontSize: '14px',
+            fontWeight: 'normal',
+            color: '#ffffff',
+            backgroundColor: 'var(--primary-color)',
+            // Wide, wrapping tooltip so long/nested attribute values (e.g. a struct with an array of
+            // structs, like DeviceEnergyManagement's Forecast.Slots) stay readable instead of wrapping
+            // into a tall, narrow column at MUI's default 300px tooltip width.
+            maxWidth: 500,
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          },
+        },
       }}
     >
       <span ref={spanRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} style={spanStyle}>
