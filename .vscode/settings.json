@@ -1,4 +1,4 @@
-// VS Code settings native v.1.0.10
+// VS Code settings native v.1.0.11
 {
   "eslint.enable": false,
   "prettier.enable": false,
@@ -44,18 +44,54 @@
   "chat.useAgentsMdFile": true, // Load AGENTS.md at the workspace root as always-on instructions.
   "chat.useNestedAgentsMdFiles": true, // Also load nested AGENTS.md files in subfolders. Experimental.
   "chat.tools.terminal.autoApprove": {
-    "npx tsc": true,
-    "npx oxlint": true,
-    "npx oxfmt": true,
-    "npx vitest": true,
-    "npm run": true,
+    // Denied: raw tool invocations must go through the npm scripts (AGENTS.md hard rule).
+    "npx tsc": false,
+    "npx oxlint": false,
+    "npx oxfmt": false,
+    "npx vitest": false,
+    "tsc": false,
+    "oxlint": false,
+    "oxfmt": false,
+    "vitest": false,
+    // Denied: git mutations and history rewrites must be run manually outside the agent.
+    "git pull": false,
+    "git merge": false,
+    "git push": false,
+    "git rebase": false,
+    "git commit": false,
+    "git reset": false,
+    "git filter-branch": false,
+    "git branch -D": false,
+    "git branch -d": false,
+    "git tag -d": false,
+    "git stash": false,
+    "git reflog expire": false,
+    "git reflog delete": false,
+    // Denied: applies automatic fixes, so it needs an explicit confirmation.
+    "npm run lint:fix": false,
+    // Ask: external network fetches and container runs.
+    "curl": false,
+    "Invoke-WebRequest": false,
+    "docker pull": false,
+    "docker run": false,
+    // Approved: validation scripts.
     "npm run build": true,
     "npm run typecheck": true,
     "npm run lint": true,
+    "npm run format": true,
     "npm run format:check": true,
     "npm run test": true,
     "npm run test:coverage": true,
     "npm run update-htmls": true,
+    // Approved: read-only shell utilities.
+    "cat": true,
+    "ls": true,
+    "head": true,
+    "tail": true,
+    "grep": true,
+    "echo": true,
+    "cd": true,
+    // Approved: read-only git.
     "git status": true,
     "/^git (?:--no-pager )?diff(?: --(?:check|stat))?$/": true,
     "git log": true,

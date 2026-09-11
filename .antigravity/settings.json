@@ -1,5 +1,5 @@
 {
-  "_comment": "Antigravity settings v.1.0.1",
+  "_comment": "Antigravity settings v.1.0.3",
   "sandboxing": {
     // Confines agent operations strictly to the current workspace root directory
     "workspaceOnly": true,
@@ -27,8 +27,18 @@
       "command(git branch -D)",
       "command(git branch -d)",
       "command(git tag -d)",
+      "command(git stash)",
       "command(git reflog expire)",
-      "command(git reflog delete)"
+      "command(git reflog delete)",
+      "command(npx tsc)",
+      "command(npx oxlint)",
+      "command(npx oxfmt)",
+      "command(npx vitest)",
+      "command(tsc)",
+      "command(oxlint)",
+      "command(oxfmt)",
+      "command(vitest)",
+      "command(npm run lint:fix)"
     ],
     "ask": [
       "command(npm install)",
@@ -53,10 +63,17 @@
       "command(npm run test:verbose)",
       "command(npm run test:coverage)",
       "command(npm run lint)",
-      "command(npm run lint:fix)",
       "command(npm run format)",
       "command(npm run format:check)",
-      "command(bun test)"
+      "command(npm run update-htmls)",
+      "command(bun test)",
+      "command(cat)",
+      "command(ls)",
+      "command(head)",
+      "command(tail)",
+      "command(grep)",
+      "command(echo)",
+      "command(cd)"
     ]
   }
 }

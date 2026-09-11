@@ -1,4 +1,4 @@
-# Codex rules v.1.0.4
+# Codex rules v.1.0.6
 
 # Git mutations
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
@@ -13,6 +13,17 @@ prefix_rule(pattern = ["git", "branch", "-d"], decision = "forbidden", justifica
 prefix_rule(pattern = ["git", "tag", "-d"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
 prefix_rule(pattern = ["git", "reflog", "expire"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
 prefix_rule(pattern = ["git", "reflog", "delete"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
+prefix_rule(pattern = ["git", "stash"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
+
+# Raw tool invocations: always use the matching npm script (AGENTS.md hard rule)
+prefix_rule(pattern = ["npx", "tsc"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["npx", "oxlint"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["npx", "oxfmt"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["npx", "vitest"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["tsc"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["oxlint"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["oxfmt"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["vitest"], decision = "forbidden", justification = "Use the matching npm script instead.")
 
 # Dependency installs
 prefix_rule(pattern = ["npm", "install"], decision = "prompt", justification = "Ask before installing dependencies.")
@@ -32,10 +43,20 @@ prefix_rule(pattern = ["npm", "run", "test:watch"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test:verbose"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test:coverage"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "lint"], decision = "allow")
-prefix_rule(pattern = ["npm", "run", "lint:fix"], decision = "allow")
+prefix_rule(pattern = ["npm", "run", "lint:fix"], decision = "forbidden", justification = "Automatic lint fixes must be run manually outside Codex.")
 prefix_rule(pattern = ["npm", "run", "format"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "format:check"], decision = "allow")
+prefix_rule(pattern = ["npm", "run", "update-htmls"], decision = "allow")
 prefix_rule(pattern = ["bun", "test"], decision = "allow")
+
+# Shell utilities
+prefix_rule(pattern = ["cat"], decision = "allow")
+prefix_rule(pattern = ["ls"], decision = "allow")
+prefix_rule(pattern = ["head"], decision = "allow")
+prefix_rule(pattern = ["tail"], decision = "allow")
+prefix_rule(pattern = ["grep"], decision = "allow")
+prefix_rule(pattern = ["echo"], decision = "allow")
+prefix_rule(pattern = ["cd"], decision = "allow")
 
 # External network and containers
 prefix_rule(pattern = ["curl"], decision = "prompt", justification = "Ask before external network fetches.")
