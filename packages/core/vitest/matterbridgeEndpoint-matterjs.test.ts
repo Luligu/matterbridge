@@ -935,10 +935,10 @@ describe('Matterbridge ' + NAME, () => {
     await light.invokeBehaviorCommand('identify', 'identify', { identifyTime: 5 });
     await light.invokeBehaviorCommand('identify', 'triggerEffect', { effectIdentifier: Identify.EffectIdentifier.Okay, effectVariant: Identify.EffectVariant.Default });
     expect(called).toBeTruthy();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Identifying device for 5 seconds (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeIdentifyServer: identifying device for 5 seconds (endpoint ${light.id}.${light.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default} (endpoint ${light.id}.${light.number})`,
+      `MatterbridgeIdentifyServer: triggering effect ${Identify.EffectIdentifier.Okay} variant ${Identify.EffectVariant.Default} (endpoint ${light.id}.${light.number})`,
     );
   });
 
@@ -958,9 +958,9 @@ describe('Matterbridge ' + NAME, () => {
     await light.invokeBehaviorCommand('onOff', 'on');
     await light.invokeBehaviorCommand('onOff', 'off');
     await light.invokeBehaviorCommand('onOff', 'toggle');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Switching device on (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Switching device off (endpoint ${light.id}.${light.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Toggle device on/off (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOnOffServer: switching device on (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOnOffServer: switching device off (endpoint ${light.id}.${light.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOnOffServer: toggling device on/off (endpoint ${light.id}.${light.number})`);
   });
 
   test('invoke MatterbridgeLevelControlServer commands', async () => {
@@ -982,8 +982,14 @@ describe('Matterbridge ' + NAME, () => {
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${extendedLight.id}.${extendedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting level to 100 with transitionTime 5 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeLevelControlServer: setting level to 100 with transitionTime 5 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeLevelControlServer: setting level with on/off to 100 with transitionTime 5 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
   });
 
   test('invoke MatterbridgeColorControlServer commands', async () => {
@@ -1034,14 +1040,26 @@ describe('Matterbridge ' + NAME, () => {
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+      `MatterbridgeColorControlServer: setting hue to 180 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting color to 30000, 30000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting color temperature to 250 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
   });
 
   test('invoke MatterbridgeColorControlServer with enhanced hue commands', async () => {
@@ -1108,19 +1126,34 @@ describe('Matterbridge ' + NAME, () => {
       optionsMask: { executeIfOff: false },
       optionsOverride: { executeIfOff: false },
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting hue to 180 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting enhanced hue to 32000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+      `MatterbridgeColorControlServer: setting hue to 180 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `Setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+      `MatterbridgeColorControlServer: setting enhanced hue to 32000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
     );
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color to 30000, 30000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Setting color temperature to 250 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting hue to 180 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting enhanced hue to 32000 and saturation to 100 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting color to 30000, 30000 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeColorControlServer: setting color temperature to 250 with transitionTime 0 (endpoint ${extendedLight.id}.${extendedLight.number})`,
+    );
   });
 
   test('invoke MatterbridgeWindowCoveringServer commands', async () => {
@@ -1424,7 +1457,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((mode.stateOf(MatterbridgeModeSelectServer) as any).acceptedCommandList).toEqual([0]);
     expect((mode.stateOf(MatterbridgeModeSelectServer) as any).generatedCommandList).toEqual([]);
     await mode.invokeBehaviorCommand('modeSelect', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${mode.id}.${mode.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeModeSelectServer: changing mode to 1 (endpoint ${mode.id}.${mode.number})`);
   });
 
   test('invoke MatterbridgeFanControlServer commands', async () => {
@@ -1442,8 +1475,14 @@ describe('Matterbridge ' + NAME, () => {
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: false });
     await vent.setStateOf(FanControlServer, { percentCurrent: 0 });
     await vent.invokeBehaviorCommand('fanControl', 'step', { direction: FanControl.StepDirection.Decrease, wrap: true, lowestOff: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction Increase wrap: false lowestOff: false (endpoint ${vent.id}.${vent.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stepping fan with direction Decrease wrap: true lowestOff: true (endpoint ${vent.id}.${vent.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeFanControlServer: stepping fan with direction Increase wrap: false lowestOff: false (endpoint ${vent.id}.${vent.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeFanControlServer: stepping fan with direction Decrease wrap: true lowestOff: true (endpoint ${vent.id}.${vent.number})`,
+    );
 
     vi.clearAllMocks();
     await vent.invokeBehaviorCommand('HepaFilterMonitoring', 'resetCondition', {});
@@ -1486,13 +1525,22 @@ describe('Matterbridge ' + NAME, () => {
     await valve.invokeBehaviorCommand('valveConfigurationAndControl', 'open', { openDuration: null });
     await valve.invokeBehaviorCommand('valveConfigurationAndControl', 'open', { openDuration: 60 });
     await valve.invokeBehaviorCommand('valveConfigurationAndControl', 'close');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% until closed (endpoint ${valve.id}.${valve.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to 50% for 60s (endpoint ${valve.id}.${valve.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to fully opened until closed (endpoint ${valve.id}.${valve.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Opening valve to fully opened for 60s (endpoint ${valve.id}.${valve.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing valve (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeValveConfigurationAndControlServer: opening valve to 50% until closed (endpoint ${valve.id}.${valve.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeValveConfigurationAndControlServer: opening valve to 50% for 60s (endpoint ${valve.id}.${valve.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeValveConfigurationAndControlServer: opening valve to fully opened until closed (endpoint ${valve.id}.${valve.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeValveConfigurationAndControlServer: opening valve to fully opened for 60s (endpoint ${valve.id}.${valve.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeValveConfigurationAndControlServer: closing valve (endpoint ${valve.id}.${valve.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`MatterbridgeValveConfigurationAndControlServer: open called`));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeValveConfigurationAndControlServer: close called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeValveConfigurationAndControlServer: close called (endpoint ${valve.id}.${valve.number})`);
   });
 
   test('invoke MatterbridgeSmokeCoAlarmServer commands', async () => {
@@ -1502,7 +1550,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).acceptedCommandList).toEqual([0]);
     expect((smoke.stateOf(MatterbridgeSmokeCoAlarmServer) as any).generatedCommandList).toEqual([]);
     await smoke.invokeBehaviorCommand('smokeCoAlarm', 'selfTestRequest');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Testing SmokeCOAlarm (endpoint ${smoke.id}.${smoke.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeSmokeCoAlarmServer: testing SmokeCOAlarm (endpoint ${smoke.id}.${smoke.number})`);
   });
 
   test('invoke MatterbridgeBooleanStateConfigurationServer commands', async () => {
@@ -1676,11 +1724,14 @@ describe('Matterbridge ' + NAME, () => {
     expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('serviceArea', 'ServiceArea.selectAreas', { newAreas: [1, 2, 3, 4] });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Selecting areas [1, 2, 3, 4] (endpoint ${rvc.id}.${rvc.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer selectAreas called with: [1, 2, 3, 4]`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [1, 2, 3, 4] (endpoint ${rvc.id}.${rvc.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [1, 2, 3, 4] (endpoint ${rvc.id}.${rvc.number})`);
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('serviceArea', 'ServiceArea.selectAreas', { newAreas: [0, 5] });
-    // expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeServiceAreaServer selectAreas called with unsupported area: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [0, 5] (endpoint ${rvc.id}.${rvc.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [0, 5] (endpoint ${rvc.id}.${rvc.number})`);
+    // Matter 1.6.0 § 1.17.7.1.2: an entry not matching any SupportedAreas AreaID is answered with UnsupportedArea, so SelectedAreas keeps its previous value.
+    expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([1, 2, 3, 4]);
   });
 
   test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
@@ -1731,12 +1782,18 @@ describe('Matterbridge ' + NAME, () => {
       duration: 60,
       cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization,
     });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Adjusting power to 0 duration 60 cause 0 (endpoint ${dem.id}.${dem.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power 0 duration 60 cause 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeDeviceEnergyManagementServer: adjusting power to 0 duration 60 cause 0 (endpoint ${dem.id}.${dem.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDeviceEnergyManagementServer: powerAdjustRequest called with power 0 duration 60 cause 0 (endpoint ${dem.id}.${dem.number})`,
+    );
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand('deviceEnergyManagement', 'DeviceEnergyManagement.cancelPowerAdjustRequest', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Cancelling power adjustment (endpoint ${dem.id}.${dem.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementServer: cancelling power adjustment (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementServer: cancelPowerAdjustRequest called (endpoint ${dem.id}.${dem.number})`);
   });
 
   test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
@@ -1751,18 +1808,24 @@ describe('Matterbridge ' + NAME, () => {
     expect((dem as any).state['deviceEnergyManagementMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand('deviceEnergyManagementMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with unsupported newMode 0 (endpoint ${dem.id}.${dem.number})`,
+    );
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand('deviceEnergyManagementMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer: changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)`,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode 1 => No Energy Management (Forecast reporting only) (endpoint ${dem.id}.${dem.number})`,
     );
     vi.clearAllMocks();
     await dem.invokeBehaviorCommand('deviceEnergyManagementMode', 'changeToMode', { newMode: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${dem.id}.${dem.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 2 => Device Energy Management`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer: changing mode to 2 (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode 2 => Device Energy Management (endpoint ${dem.id}.${dem.number})`,
+    );
   });
 
   test('invoke MatterbridgeEnergyEvseServer commands', async () => {

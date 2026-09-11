@@ -177,6 +177,11 @@ export function createMuiTheme(primaryColor: string): Theme {
               borderColor: 'var(--primary-color)',
             },
           },
+          // The dropdown arrow defaults to palette.action.active. That palette entry cannot hold a
+          // CSS variable, because IconButton and Checkbox pass it to alpha(), so it is set here instead.
+          icon: {
+            color: 'var(--main-label-color)',
+          },
         },
       },
       MuiMenu: {

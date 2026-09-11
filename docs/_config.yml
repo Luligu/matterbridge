@@ -38,7 +38,7 @@ exclude:
   - jest.config.js
   - eslint.config.js
   - prettier.config.js
-  - vite.config.ts
+  - vitest.config.ts
   - '*.test.ts'
   - coverage/
   - dist/

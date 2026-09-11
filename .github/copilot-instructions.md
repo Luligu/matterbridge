@@ -1,40 +1,8 @@
-# Matterbridge Workspace Instructions (v.1.0.3)
+# Matterbridge Workspace Instructions (v.1.0.7)
 
-## Style And Formatting
+Apply the [shared agent instructions](../AGENTS.md) to all work in this repository. VS Code also loads that file on its own (`chat.useAgentsMdFile`), so this link is a fallback for clients that do not. It is the single source for the shared instructions — do not duplicate any of it here, edit AGENTS.md instead.
 
-- Follow [STYLEGUIDE.md](../STYLEGUIDE.md) for code style, naming, JSDoc, validation, logging, and formatting expectations.
-- JSDoc requirements are enforced by the configured linter. Treat missing or incomplete JSDoc on required APIs as a real lint issue, not optional documentation.
-- Import and export ordering are enforced by the formatter. Preserve the existing grouped and sorted order unless a change requires updating it.
-- Formatting is enforced by oxfmt. Follow the existing formatting and do not fight the formatter.
+## Copilot specifics
 
-## Scope And Safety
-
-- Keep changes minimal and scoped to the request. Avoid unrelated refactors or broad cleanup.
-- Do not modify production code only to make a test pass. If a failing test points to a likely source issue, explain the issue and change behavior only when required by the task.
-- Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.
-- Maintain compatibility with the supported Node.js versions in this repository: 20.19, 22.13, 24, and 26.
-
-## Project Architecture
-
-- This repository uses TypeScript and ESM. Follow existing project patterns for imports, exports, build configuration, and test setup.
-
-## Testing And Validation
-
-- HARD RULE: never invoke `tsc`, `vitest`, `oxlint`, or `oxfmt` directly (via `npx`, `node node_modules/...`, or any other ad hoc form). Always use the matching entry in [package.json](../package.json) `scripts` or [tasks.json](../.vscode/tasks.json) — e.g. `npm run typecheck` (not `npx tsc`), `npm run lint`/`npm run lint:fix` (not `npx oxlint`), `npm run format`/`npm run format:check` (not `npx oxfmt`), `npm run test`/`npm run test:coverage` or a specific `Test: <Area>` task (not `npx vitest`/`node node_modules/vitest/vitest.mjs` typed out by hand). If a touched area has no matching script or task, say so and ask before improvising a raw invocation — do not silently fall back to `npx`.
-- Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
-- Some tests are intentionally multi-step flows. State may persist across successive steps within a single test flow, but each test unit must remain isolated from other tests.
-- For validation, run the relevant full test file or the matching suite/task for the touched area rather than assuming arbitrary isolated single-test execution is reliable.
-
-## Documentation
-
-- When behavior changes, update the relevant tests and documentation.
-
-## Additional Agent Guidance
-
-- Use dedicated instruction files under [.github/instructions](instructions/) when a rule applies only to specific file types or workflows.
-
-## Matter Specs
-
-- The full Matter 1.6.0 specifications are available locally as HTML files under [chip/1.6.0/specs](../chip/1.6.0/specs/). Treat those HTML specs as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
-- The full Matter 1.5.1 specifications are available locally as HTML files under [chip/1.5.1/specs](../chip/1.5.1/specs/). Use those HTML specs for historical comparisons and delta analysis against Matter 1.6.0, but keep 1.6.0 as the authoritative source.
-- The full Matter 1.4.2 specifications are also available locally as HTML files under [chip/1.4.2/specs](../chip/1.4.2/specs/). Use those HTML specs for historical comparisons and delta analysis against Matter 1.6.0, but keep 1.6.0 as the authoritative source.
+- The rule files AGENTS.md lists under [.agents/rules](../.agents/rules/) are mirrored by [.github/instructions](instructions/), which apply automatically to the file types they are scoped to.
+- The skills it lists under [.agents/skills](../.agents/skills/) are also available as agent skills in [.github/skills](skills/), invocable as slash commands and discovered automatically: `/verify-agent-context`, `/matterjs-pr-workflow`, `/verify-npm-alignment`, `/verify-server-endpoint-context`, `/verify-version-alignment`.

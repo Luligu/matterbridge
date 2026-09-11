@@ -1,4 +1,4 @@
-# Codex rules v.1.0.3
+# Codex rules v.1.0.4
 
 # Git mutations
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
@@ -32,7 +32,9 @@ prefix_rule(pattern = ["npm", "run", "test:watch"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test:verbose"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test:coverage"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "lint"], decision = "allow")
+prefix_rule(pattern = ["npm", "run", "lint:fix"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "format"], decision = "allow")
+prefix_rule(pattern = ["npm", "run", "format:check"], decision = "allow")
 prefix_rule(pattern = ["bun", "test"], decision = "allow")
 
 # External network and containers

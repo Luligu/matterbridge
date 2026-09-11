@@ -25,7 +25,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Setup Node.js 24.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: 24.x
           cache: npm
@@ -40,12 +40,12 @@ jobs:
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Check format of the project
-        run: npm run format:check
-        working-directory: apps/frontend
-
       - name: Lint the project
         run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check formatting of the project
+        run: npm run format:check
         working-directory: apps/frontend
 
       - name: Build the project

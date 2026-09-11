@@ -401,4 +401,24 @@ describe('App', () => {
     expect(screen.getByPlaceholderText('password')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
   });
+
+  it('does not log in when the form unmounts before the auto login settles', async () => {
+    let settleFetch: ((value: unknown) => void) | undefined;
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Promise((resolve) => {
+          settleFetch = resolve;
+        }),
+    ) as unknown as typeof fetch;
+    const setLoggedIn = vi.fn();
+    const { unmount } = render(<LoginForm setLoggedIn={setLoggedIn} />);
+
+    // Unmount while the auto login request is still in flight, then let it settle.
+    unmount();
+    await act(async () => {
+      settleFetch?.({ ok: true, json: async () => ({ valid: true }) });
+    });
+
+    expect(setLoggedIn).not.toHaveBeenCalled();
+  });
 });

@@ -9,8 +9,10 @@
 
 # Not needed by the local build (saves ~150 MB of context)
 .agents
+.antigravity
 .claude
 .codex
+.gemini
 .devcontainer
 .env
 .git

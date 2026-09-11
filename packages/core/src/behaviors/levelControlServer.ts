@@ -55,13 +55,16 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
    */
   override async moveToLevel(request: LevelControl.MoveToLevelRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
       await super.moveToLevel(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelControlServer: setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('LevelControl.moveToLevel', {
       command: 'moveToLevel',
       request,
@@ -70,7 +73,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called`);
+    device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
     await super.moveToLevel(request);
   }
 
@@ -80,13 +84,16 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
    */
   override async moveToLevelWithOnOff(request: LevelControl.MoveToLevelRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting level to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
       await super.moveToLevelWithOnOff(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelControlServer: setting level with on/off to ${request.level} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('LevelControl.moveToLevelWithOnOff', {
       command: 'moveToLevelWithOnOff',
       request,
@@ -95,7 +102,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called`);
+    device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
     await super.moveToLevelWithOnOff(request);
   }
 
@@ -105,13 +113,16 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.MoveRequest} request - Move request payload.
    */
   override async move(request: LevelControl.MoveRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving level with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
       await super.move(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelControlServer: moving level with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('LevelControl.move', {
       command: 'move',
       request,
@@ -120,7 +131,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: move called`);
+    device.log.debug(`MatterbridgeLevelControlServer: move called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
     await super.move(request);
   }
 
@@ -130,13 +142,16 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.MoveRequest} request - Move request payload.
    */
   override async moveWithOnOff(request: LevelControl.MoveRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving level with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
       await super.moveWithOnOff(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelControlServer: moving level with on/off with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('LevelControl.moveWithOnOff', {
       command: 'moveWithOnOff',
       request,
@@ -145,7 +160,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: moveWithOnOff called`);
+    device.log.debug(`MatterbridgeLevelControlServer: moveWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
     await super.moveWithOnOff(request);
   }
 
@@ -155,13 +171,16 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.StepRequest} request - Step request payload.
    */
   override async step(request: LevelControl.StepRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping level with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
       await super.step(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelControlServer: stepping level with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('LevelControl.step', {
       command: 'step',
       request,
@@ -170,7 +189,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: step called`);
+    device.log.debug(`MatterbridgeLevelControlServer: step called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
     await super.step(request);
   }
 
@@ -180,13 +200,16 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.StepRequest} request - Step request payload.
    */
   override async stepWithOnOff(request: LevelControl.StepRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping level with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
       await super.stepWithOnOff(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeLevelControlServer: stepping level with on/off with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('LevelControl.stepWithOnOff', {
       command: 'stepWithOnOff',
       request,
@@ -195,7 +218,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: stepWithOnOff called`);
+    device.log.debug(`MatterbridgeLevelControlServer: stepWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
     await super.stepWithOnOff(request);
   }
 
@@ -205,13 +229,14 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.StopRequest} request - Stop request payload.
    */
   override async stop(request: LevelControl.StopRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stopping level change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
       await super.stop(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeLevelControlServer: stopping level change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('LevelControl.stop', {
       command: 'stop',
       request,
@@ -220,7 +245,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: stop called`);
+    device.log.debug(`MatterbridgeLevelControlServer: stop called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
     await super.stop(request);
   }
 
@@ -230,13 +256,14 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * @param {LevelControl.StopRequest} request - Stop request payload.
    */
   override async stopWithOnOff(request: LevelControl.StopRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stopping level change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
       await super.stopWithOnOff(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeLevelControlServer: stopping level change with on/off (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('LevelControl.stopWithOnOff', {
       command: 'stopWithOnOff',
       request,
@@ -245,7 +272,8 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeLevelControlServer: stopWithOnOff called`);
+    device.log.debug(`MatterbridgeLevelControlServer: stopWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
     await super.stopWithOnOff(request);
   }
 }

@@ -1,4 +1,4 @@
-# docker/Dockerfile.bun-dev-container v.2.0.0
+# docker/Dockerfile.bun-dev-container v.2.0.1
 
 # This Dockerfile is used to build a development container for Bun applications.
 # It is based on the official Bun Docker image and includes additional tools and configurations for a better development experience.
@@ -29,9 +29,20 @@ LABEL org.opencontainers.image.title="matterbridge:bun-dev-container" \
   org.opencontainers.image.created=$BUILD_DATE
 
 RUN apt-get update \
-  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano procps ripgrep shellcheck shfmt sudo unzip \
+  && apt-get install --yes --no-install-recommends avahi-utils bubblewrap btop ca-certificates curl dnsutils fd-find fzf git iproute2 iputils-ping jq nano openssh-client procps ripgrep shellcheck shfmt sudo unzip \
   && ln -s /usr/bin/fdfind /usr/local/bin/fd \
   && mkdir -p /home/bun/.bash-cache \
+    /home/bun/.vscode-server/extensions \
+    /home/bun/Matterbridge \
+    /home/bun/.matterbridge \
+    /home/bun/.mattercert \
+    /home/bun/.claude \
+    /home/bun/.codex \
+    /home/bun/.gemini \
+    /home/bun/.agents \
+    /home/bun/.npm \
+    /home/bun/.bun/install/cache \
+  && sed -i '/^HISTSIZE=/d; /^HISTFILESIZE=/d' /home/bun/.bashrc \
   && { \
     echo ''; \
     echo '# Keep Bash history synced across terminals.'; \
@@ -49,11 +60,8 @@ RUN apt-get update \
     echo '#!/bin/sh'; \
     echo '# npm shim: this image only ships Bun. Forward "npm" calls to bun,'; \
     echo '# which understands "npm run <script>" and most common npm subcommands.'; \
-    echo '# "prune" and "shrinkwrap" are skipped: bun reserves these subcommands'; \
-    echo '# for future use and'; \
-    echo '# exits with an error, but "bun install" already keeps node_modules in'; \
-    echo '# sync with the lockfile, so npm prune has nothing left to do.'; \
-    echo 'if [ "$1" = "prune" ] || [ "$1" = "shrinkwrap" ]; then'; \
+    echo '# "shrinkwrap" is skipped because Bun reserves this subcommand.'; \
+    echo 'if [ "$1" = "shrinkwrap" ]; then'; \
     echo '  printf "%s\\n" "npm shim: skipping npm $1" >&2'; \
     echo '  exit 0'; \
     echo 'fi'; \

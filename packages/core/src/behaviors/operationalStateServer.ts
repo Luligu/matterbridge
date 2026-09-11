@@ -47,7 +47,9 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.debug(`MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // OperationalState and OperationalError have no "N" (nonvolatile) quality in the spec, so they are not persisted and are reset to their defaults on every restart.
+    // Matter 1.6.0 § 1.14.5.5: OperationalState SHALL be populated with a valid OperationalStateID from the OperationalStateList attribute.
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
+    // Matter 1.6.0 § 1.14.5.6: OperationalError SHALL have an ErrorStateID of NoError when no error is detected.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     super.initialize();
   }
@@ -167,6 +169,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
 
     device.log.debug(`MatterbridgeOperationalStateServer: stop called setting operational state to Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // If Stop arrives while Paused, close out the in-progress paused segment before computing PausedTime.
+    // Matter 1.6.0 § 1.14.7.2.3: PausedTime reports the total time spent in the paused state, so a still-open paused segment counts toward it.
     if (this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;
@@ -175,6 +178,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     const pausedTime = this.internal.operationStartedAt === undefined ? null : Math.round(this.internal.pausedAccumulatedMs / 1000);
     this.internal.operationStartedAt = undefined;
     this.internal.pausedAccumulatedMs = 0;
+    // Matter 1.6.0 § 1.14.7.2: Generate OperationCompletion when the overall operation ends, reporting CompletionErrorCode, TotalOperationalTime and PausedTime.
     this.events.operationCompletion.emit({ completionErrorCode: OperationalState.ErrorState.NoError, totalOperationalTime, pausedTime }, this.context);
     // Matter 1.6.0 § 1.14.6.2: On success, set OperationalState to Stopped.
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
@@ -309,8 +313,8 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     }
 
     device.log.debug(`MatterbridgeOperationalStateServer: resume called setting operational state to Running (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Close out the paused segment started in pause(), accumulating it toward OperationCompletion's
-    // PausedTime field (§ 1.14.7.2.3).
+    // Close out the paused segment started in pause().
+    // Matter 1.6.0 § 1.14.7.2.3: PausedTime reports the total time spent in the paused state, accumulated across every Pause/Resume pair.
     if (this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;

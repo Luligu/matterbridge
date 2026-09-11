@@ -722,9 +722,13 @@ describe('HomeDevices', () => {
     // component's `!iframeDocument?.head` guard would always short-circuit; write a minimal document
     // to give the iframe a real head, matching what a real browser provides once a page has loaded.
     const iframeDocument = iframe.contentDocument;
-    iframeDocument?.open();
-    iframeDocument?.write('<html><head></head><body></body></html>');
-    iframeDocument?.close();
+    if (iframeDocument) {
+      iframeDocument.open();
+      const html = iframeDocument.createElement('html');
+      html.append(iframeDocument.createElement('head'), iframeDocument.createElement('body'));
+      iframeDocument.replaceChildren(html);
+      iframeDocument.close();
+    }
 
     fireEvent.load(iframe);
 
@@ -736,9 +740,13 @@ describe('HomeDevices', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
     const iframe = screen.getByTitle('Test Device frontend') as unknown as HTMLIFrameElement;
     const iframeDocument = iframe.contentDocument;
-    iframeDocument?.open();
-    iframeDocument?.write('<html><head></head><body></body></html>');
-    iframeDocument?.close();
+    if (iframeDocument) {
+      iframeDocument.open();
+      const html = iframeDocument.createElement('html');
+      html.append(iframeDocument.createElement('head'), iframeDocument.createElement('body'));
+      iframeDocument.replaceChildren(html);
+      iframeDocument.close();
+    }
 
     fireEvent.load(iframe);
     fireEvent.load(iframe);

@@ -4,6 +4,8 @@
  * @author Luca Liguori
  */
 
+// oxlint-disable vitest/no-commented-out-tests
+
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
@@ -248,6 +250,253 @@ describe('Client clusters and behaviors', () => {
     for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalledTimes(1);
   });
 
+  test('should validate, store, replace and clear WeekDay schedules when the feature is enabled', async () => {
+    // Matter 1.6.0 § 5.2.10.4–7: schedule constraints, response fields and clear-all semantics.
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'WeekDayScheduleCompliance' });
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2);
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBeDefined();
+    const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+
+    for (const userIndex of [1, 2]) {
+      await device.invokeBehaviorCommand(DoorLock, 'setUser', {
+        operationType: DoorLock.DataOperationType.Add,
+        userIndex,
+        userName: 'Guest',
+        userUniqueId: userIndex,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.ScheduleRestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Single,
+      });
+    }
+
+    const index = { weekDayIndex: 1, userIndex: 1 };
+    const request = {
+      ...index,
+      daysMask: new DoorLock.DaysMask({ sunday: false, monday: true, tuesday: false, wednesday: false, thursday: false, friday: false, saturday: false }),
+      startHour: 8,
+      startMinute: 30,
+      endHour: 17,
+      endMinute: 30,
+    };
+    const getSchedule = async (query = index): Promise<DoorLock.GetWeekDayScheduleResponse> =>
+      device.act(async (agent) => {
+        const response = await agent.get(server).getWeekDaySchedule(query);
+        if (response.daysMask) response.daysMask = new DoorLock.DaysMask(response.daysMask);
+        return response;
+      });
+    expect(await getSchedule()).toEqual({ ...index, status: Status.NotFound });
+    expect(await getSchedule({ ...index, userIndex: 3 })).toEqual({ ...index, userIndex: 3, status: Status.NotFound });
+
+    await device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', request);
+    expect(await getSchedule()).toEqual({ ...request, status: Status.Success });
+
+    for (const weekDayIndex of [0, 3]) {
+      const invalidIndex = { ...index, weekDayIndex };
+      expect(await getSchedule(invalidIndex)).toEqual({ ...invalidIndex, status: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', { ...request, weekDayIndex })).rejects.toMatchObject({ code: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', invalidIndex)).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+
+    for (const userIndex of [0, 11]) {
+      const invalidIndex = { ...index, userIndex };
+      expect(await getSchedule(invalidIndex)).toEqual({ ...invalidIndex, status: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', { ...request, userIndex })).rejects.toMatchObject({ code: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', invalidIndex)).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+
+    for (const invalidTime of [{ endHour: 7 }, { endHour: 8, endMinute: 30 }, { endHour: 8, endMinute: 29 }]) {
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', { ...request, ...invalidTime })).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+    expect(await getSchedule()).toEqual({ ...request, status: Status.Success });
+
+    const replacement = { ...request, endHour: 8, endMinute: 31 };
+    await device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', replacement);
+    expect(await getSchedule()).toEqual({ ...replacement, status: Status.Success });
+    await device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', { ...request, weekDayIndex: 2 });
+    await device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', { ...request, userIndex: 2 });
+
+    await device.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', index);
+    expect(await getSchedule()).toEqual({ ...index, status: Status.NotFound });
+    expect(await getSchedule({ ...index, weekDayIndex: 2 })).toEqual({ ...request, weekDayIndex: 2, status: Status.Success });
+
+    await device.invokeBehaviorCommand(DoorLock, 'setWeekDaySchedule', request);
+    await device.invokeBehaviorCommand(DoorLock, 'clearWeekDaySchedule', { ...index, weekDayIndex: 0xfe });
+    for (const weekDayIndex of [1, 2]) {
+      expect(await getSchedule({ ...index, weekDayIndex })).toEqual({ ...index, weekDayIndex, status: Status.NotFound });
+    }
+    expect(await getSchedule({ ...index, userIndex: 2 })).toEqual({ ...request, userIndex: 2, status: Status.Success });
+  });
+
+  test('should validate, store, replace and clear YearDay schedules when the feature is enabled', async () => {
+    // Matter 1.6.0 § 5.2.10.8–11: schedule constraints, response fields and clear-all semantics.
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'YearDayScheduleCompliance' });
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, 2);
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBeDefined();
+    const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+
+    for (const userIndex of [1, 2]) {
+      await device.invokeBehaviorCommand(DoorLock, 'setUser', {
+        operationType: DoorLock.DataOperationType.Add,
+        userIndex,
+        userName: 'Guest',
+        userUniqueId: userIndex,
+        userStatus: DoorLock.UserStatus.OccupiedEnabled,
+        userType: DoorLock.UserType.ScheduleRestrictedUser,
+        credentialRule: DoorLock.CredentialRule.Single,
+      });
+    }
+
+    const index = { yearDayIndex: 1, userIndex: 1 };
+    const request = { ...index, localStartTime: 1_000, localEndTime: 2_000 };
+    const getSchedule = async (query = index): Promise<DoorLock.GetYearDayScheduleResponse> => device.act(async (agent) => agent.get(server).getYearDaySchedule(query));
+    expect(await getSchedule()).toEqual({ ...index, status: Status.NotFound });
+    expect(await getSchedule({ ...index, userIndex: 3 })).toEqual({ ...index, userIndex: 3, status: Status.NotFound });
+
+    await device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', request);
+    expect(await getSchedule()).toEqual({ ...request, status: Status.Success });
+
+    for (const yearDayIndex of [0, 3]) {
+      const invalidIndex = { ...index, yearDayIndex };
+      expect(await getSchedule(invalidIndex)).toEqual({ ...invalidIndex, status: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', { ...request, yearDayIndex })).rejects.toMatchObject({ code: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', invalidIndex)).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+
+    for (const userIndex of [0, 11]) {
+      const invalidIndex = { ...index, userIndex };
+      expect(await getSchedule(invalidIndex)).toEqual({ ...invalidIndex, status: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', { ...request, userIndex })).rejects.toMatchObject({ code: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', invalidIndex)).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+
+    for (const invalidTime of [{ localEndTime: 999 }, { localEndTime: 1_000 }]) {
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', { ...request, ...invalidTime })).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+    expect(await getSchedule()).toEqual({ ...request, status: Status.Success });
+
+    const replacement = { ...request, localEndTime: 3_000 };
+    await device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', replacement);
+    expect(await getSchedule()).toEqual({ ...replacement, status: Status.Success });
+    await device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', { ...request, yearDayIndex: 2 });
+    await device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', { ...request, userIndex: 2 });
+
+    await device.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', index);
+    expect(await getSchedule()).toEqual({ ...index, status: Status.NotFound });
+    expect(await getSchedule({ ...index, yearDayIndex: 2 })).toEqual({ ...request, yearDayIndex: 2, status: Status.Success });
+
+    await device.invokeBehaviorCommand(DoorLock, 'setYearDaySchedule', request);
+    await device.invokeBehaviorCommand(DoorLock, 'clearYearDaySchedule', { ...index, yearDayIndex: 0xfe });
+    for (const yearDayIndex of [1, 2]) {
+      expect(await getSchedule({ ...index, yearDayIndex })).toEqual({ ...index, yearDayIndex, status: Status.NotFound });
+    }
+    expect(await getSchedule({ ...index, userIndex: 2 })).toEqual({ ...request, userIndex: 2, status: Status.Success });
+  });
+
+  test('should validate, store, replace and clear Holiday schedules when the feature is enabled', async () => {
+    // Matter 1.6.0 § 5.2.10.12–15: schedule constraints, response fields and clear-all semantics.
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'HolidayScheduleCompliance' });
+    device.createDefaultDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, undefined, undefined, 2);
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBeDefined();
+    const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+
+    const index = { holidayIndex: 1 };
+    const request = { ...index, localStartTime: 1_000, localEndTime: 2_000, operatingMode: DoorLock.OperatingMode.NoRemoteLockUnlock };
+    const getSchedule = async (query = index): Promise<DoorLock.GetHolidayScheduleResponse> => device.act(async (agent) => agent.get(server).getHolidaySchedule(query));
+    expect(await getSchedule()).toEqual({ ...index, status: Status.NotFound });
+
+    await device.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', request);
+    expect(await getSchedule()).toEqual({ ...request, status: Status.Success });
+
+    for (const holidayIndex of [0, 3]) {
+      const invalidIndex = { ...index, holidayIndex };
+      expect(await getSchedule(invalidIndex)).toEqual({ ...invalidIndex, status: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', { ...request, holidayIndex })).rejects.toMatchObject({ code: Status.InvalidCommand });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', invalidIndex)).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+
+    for (const invalidTime of [{ localEndTime: 999 }, { localEndTime: 1_000 }]) {
+      await expect(device.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', { ...request, ...invalidTime })).rejects.toMatchObject({ code: Status.InvalidCommand });
+    }
+    expect(await getSchedule()).toEqual({ ...request, status: Status.Success });
+
+    const replacement = { ...request, localEndTime: 3_000 };
+    await device.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', replacement);
+    expect(await getSchedule()).toEqual({ ...replacement, status: Status.Success });
+    await device.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', { ...request, holidayIndex: 2 });
+
+    await device.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', index);
+    expect(await getSchedule()).toEqual({ ...index, status: Status.NotFound });
+    expect(await getSchedule({ ...index, holidayIndex: 2 })).toEqual({ ...request, holidayIndex: 2, status: Status.Success });
+
+    await device.invokeBehaviorCommand(DoorLock, 'setHolidaySchedule', request);
+    await device.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', { ...index, holidayIndex: 0xfe });
+    for (const holidayIndex of [1, 2]) {
+      expect(await getSchedule({ ...index, holidayIndex })).toEqual({ ...index, holidayIndex, status: Status.NotFound });
+    }
+  });
+
+  // TODO: Re-enable once the installed matter.js includes the ExpiringUser timeout fix and verify it passes.
+  // Currently fails because the user remains OccupiedEnabled after expiry: https://github.com/matter-js/matter.js/pull/4402
+  /*
+  test('should disable an expiring user when expiringUserTimeout elapses after first credential use', async () => {
+    // Matter 1.6.0 § 5.2.6.18.8 and § 5.2.9.36: expiry starts at first use and disables the user.
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'expiringUserDoorLock' });
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, 1);
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(device.getAttribute(DoorLock, 'expiringUserTimeout')).toBe(1);
+    const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+    const pinCode = Buffer.from('2468');
+    await device.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'Guest',
+      userUniqueId: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.ExpiringUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    await device.invokeBehaviorCommand(DoorLock, 'setCredential', {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+      credentialData: pinCode,
+      userIndex: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.ExpiringUser,
+    });
+    const getUser = async (): Promise<DoorLock.GetUserResponse> => device.act(async (agent) => agent.get(server).getUser({ userIndex: 1 }));
+    expect(await getUser()).toMatchObject({ userType: DoorLock.UserType.ExpiringUser, userStatus: DoorLock.UserStatus.OccupiedEnabled });
+
+    vi.useFakeTimers();
+    try {
+      // Merely creating the credential must not start its one-minute lifetime.
+      await vi.advanceTimersByTimeAsync(120_000);
+      expect(await getUser()).toMatchObject({ userStatus: DoorLock.UserStatus.OccupiedEnabled });
+      await device.invokeBehaviorCommand(DoorLock, 'unlockDoor', { pinCode });
+      expect(device.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+      await device.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
+
+      await vi.advanceTimersByTimeAsync(59_000);
+      expect(await getUser()).toMatchObject({ userStatus: DoorLock.UserStatus.OccupiedEnabled });
+      // Reusing the credential must not restart the lifetime measured from its first use.
+      await device.invokeBehaviorCommand(DoorLock, 'unlockDoor', { pinCode });
+      expect(device.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
+      await device.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
+
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(await getUser()).toMatchObject({ userStatus: DoorLock.UserStatus.OccupiedDisabled });
+      await expect(device.invokeBehaviorCommand(DoorLock, 'unlockDoor', { pinCode })).rejects.toMatchObject({ code: Status.Failure });
+      expect(device.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  */
+
   test('User PIN set and modify user', async () => {
     const lockUserChange = vi.fn();
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
@@ -417,6 +666,71 @@ describe('Client clusters and behaviors', () => {
       agent.get(rfidDoorLockServer).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 } }),
     );
     expect(clearedCredential).toMatchObject({ credentialExists: false, userIndex: null });
+  });
+
+  test('should enforce configured RFID credential limits when RfidCredential is enabled', async () => {
+    const device = new MatterbridgeEndpoint(doorLock, { id: 'rfidCredentialLimits' });
+    device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 2, 4, 7);
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(device.getAttribute(DoorLock.id, 'featureMap')).toMatchObject({ rfidCredential: true });
+    expect(device.getAttribute(DoorLock, 'numberOfRfidUsersSupported')).toBe(2);
+    expect(device.getAttribute(DoorLock, 'minRfidCodeLength')).toBe(4);
+    expect(device.getAttribute(DoorLock, 'maxRfidCodeLength')).toBe(7);
+    const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
+    await device.invokeBehaviorCommand(DoorLock, 'setUser', {
+      operationType: DoorLock.DataOperationType.Add,
+      userIndex: 1,
+      userName: 'RFID Guest',
+      userUniqueId: 1,
+      userStatus: DoorLock.UserStatus.OccupiedEnabled,
+      userType: DoorLock.UserType.UnrestrictedUser,
+      credentialRule: DoorLock.CredentialRule.Single,
+    });
+    const request = {
+      operationType: DoorLock.DataOperationType.Add,
+      credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex: 1 },
+      credentialData: Buffer.from([1, 2, 3, 4]),
+      userIndex: 1,
+      userStatus: null,
+      userType: null,
+    };
+    const setCredentialSpy = vi.spyOn(server.prototype, 'setCredential');
+    const setCredential = async (value: DoorLock.SetCredentialRequest): Promise<DoorLock.SetCredentialResponse> => {
+      await device.invokeBehaviorCommand(DoorLock, 'setCredential', value);
+      return await setCredentialSpy.mock.results[setCredentialSpy.mock.results.length - 1].value;
+    };
+    for (const length of [3, 8]) {
+      expect(await setCredential({ ...request, credentialData: Buffer.alloc(length, 1) })).toMatchObject({
+        status: Status.InvalidCommand,
+      });
+    }
+    expect(await setCredential({ ...request, credential: { ...request.credential, credentialIndex: 3 } })).toMatchObject({
+      status: Status.InvalidCommand,
+    });
+    expect(await device.act(async (agent) => agent.get(server).getCredentialStatus({ credential: request.credential }))).toMatchObject({
+      credentialExists: false,
+      userIndex: null,
+    });
+
+    // Both inclusive code-length limits must be accepted.
+    for (const [credentialIndex, length] of [
+      [1, 4],
+      [2, 7],
+    ]) {
+      const credential = { credentialType: DoorLock.CredentialType.Rfid, credentialIndex };
+      expect(await setCredential({ ...request, credential, credentialData: Buffer.alloc(length, credentialIndex) })).toMatchObject({
+        status: Status.Success,
+      });
+      expect(await device.act(async (agent) => agent.get(server).getCredentialStatus({ credential }))).toMatchObject({ credentialExists: true, userIndex: 1 });
+    }
+    setCredentialSpy.mockRestore();
+    await device.invokeBehaviorCommand(DoorLock, 'clearUser', { userIndex: 1 });
+    for (const credentialIndex of [1, 2]) {
+      expect(
+        await device.act(async (agent) => agent.get(server).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Rfid, credentialIndex } })),
+      ).toMatchObject({ credentialExists: false, userIndex: null });
+    }
   });
 
   test('User PIN returns duplicate and occupied credential statuses', async () => {

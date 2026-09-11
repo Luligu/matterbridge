@@ -1,5 +1,3 @@
-<!-- eslint-disable markdown/no-missing-label-refs -->
-
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -30,6 +28,62 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
+
+## [3.10.9] - 2026-09-11
+
+### Development News
+
+- [chip]: EVSE Complete endpoint 14011 CHIP conformance is green ✅ for all automated harness tests covering the `EnergyEvse` and `EnergyEvseMode` clusters, including the optional `SoCReporting`, `PlugAndCharge`, `Rfid`, and `V2X` features.
+
+### Added
+
+- [MatterbridgeEndpoint]: Add `subscribeCommand(cluster, command, listener)`, the command counterpart of `subscribeAttribute()`. It takes the cluster in all the supported shapes (`Behavior.Type`, `ClusterType`, `ClusterId` or the cluster name string), is typed on the command name and on the request payload for the `Behavior.Type` and `ClusterType` overloads, and calls the listener with a single payload holding the `command`, the `cluster`, the `request`, the `endpoint` and the Matter action `context` of the invoke. It is the same payload of `addCommandHandler()` without `attributes`, since the listener is notified after the cluster state has already been updated. The command observable is added on demand to the events object of the cluster, so a subscribed command is also reachable as `endpoint.events.<cluster>.<command>$executed` and, from inside a cluster server behavior, as `this.events.<command>$executed`. Differently from `addCommandHandler()`, which is called first and always receives the raw incoming command, the subscribers are notified by the cluster server as the last action of the command implementation, after the command has been validated and the cluster state updated, so a rejected or discarded command does not notify them. Command notifications are supported by the Chime, Camera AV Stream Management, Camera AV Settings User Level Management, WebRTC Transport Provider and WebRTC Transport Requestor servers.
+- [Evse]: `Evse`/`EvseOptions` accept new optional constructor options enabling the remaining `EnergyEvse` cluster features: `stateOfCharge`/`batteryCapacity` (SoCReporting), `vehicleId` (PlugAndCharge), `rfid` (Rfid, adds the `Rfid` event and the new `triggerRfidEvent()` helper), and `v2x` (V2X, adds the `EnableDischarging` command). `esaCanGenerate` is also now exposed to the child `DeviceEnergyManagement` endpoint for V2X-capable (export-capable) EVSEs. All features are opt-in and disabled by default, matching the existing `ChargingPreferences`-only behavior. Thanks Ludovic BOUÉ.
+- [Evse]: `MatterbridgeEnergyEvseServer` now implements `enableDischarging()` (Matter 1.6.0 § 9.3.9.3), mirroring `enableCharging()`'s validation and state-update mandates for the discharge direction, and `enableCharging()`/`disable()` now correctly interoperate with a concurrently active discharge (`SupplyState.Enabled`) on V2X-capable instances. Thanks Ludovic BOUÉ.
+- [thread]: Add Bun runtime detection to the system check, logging the Bun version and skipping Node.js version warnings when running on Bun.
+- [thread]: Add a check for the latest stable Bun version during the system check, warning when the running version differs from the latest release.
+- [utils]: Add `getBunLatestVersion()` to fetch the latest stable Bun version from GitHub, returning `undefined` if the request fails or the release tag is invalid.
+- [frontend]: Add a full test suite for the `Logs` page covering the level and text filters, the auto scroll and log length controls, and the clear action.
+- [frontend]: Extend the `Settings` tests to cover every control of both settings panels, the change password and network configuration dialogs, and the debounced Matter fields.
+- [frontend]: Extend the `Home` tests to cover the refresh and update notifications, the changelog and browser refresh prompts, and the childbridge store selection.
+- [frontend]: Extend the `Devices` tests to cover the restored filters and view mode, the locked refresh notification, and the reconnection reset.
+- [frontend]: Extend the `App` tests to cover the automatic login when no password is required.
+- [instructions]: Add the Google Gemini / Antigravity agent: `GEMINI.md` as the entry point importing the shared [AGENTS.md](./AGENTS.md) instructions, permissions and settings in `.antigravity/settings.json`, dev container support, and the updated [Development Guide](./README-DEV.md).
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.9.
+- [workflows]: Upgrade `actions/checkout` and `actions/setup-node` from v6 to v7.
+- [matterbridge]: Bump `@types/node` to v.26.4.1.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.0.
+- [matterbridge]: Bump `oxfmt` to v.0.66.0.
+- [matterbridge]: Bump `oxlint` to v.1.81.0.
+- [matterbridge]: Bump `vitest` to v.5.0.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.10.0.
+- [frontend]: Bump `frontend` version to v.3.6.0.
+- [frontend]: Bump `react-router` to v.8.3.1.
+- [frontend]: Bump `@types/node` to v.26.4.1.
+- [frontend]: Bump `@types/react-dom` to v.19.2.7.
+- [frontend]: Bump `globals` to v.17.12.0.
+- [frontend]: Bump `vitest` to v.5.0.0.
+- [frontend]: Bump `oxfmt` to v.0.66.0.
+- [frontend]: Bump `oxlint` to v.1.81.0.
+- [frontend]: Bump `@mui/material` to v.9.4.0.
+- [frontend]: Bump `@mui/icons-material` to v.9.4.0.
+
+### Fixed
+
+- [MatterbridgeEndpoint]: Discard `subscribeAttribute()` listener return values so callbacks such as `value => values.push(value)` do not prevent subsequent subscribers from receiving attribute changes.
+- [frontend]: Replace deprecated MUI props, the React form event type, and test-only document writing with their supported equivalents.
+- [frontend]: Restore the theme color of the Select dropdown arrow.
+- [frontend]: Settings: an update notification arriving in the background no longer discards the values you are editing.
+- [frontend]: Devices: the saved view mode is applied on the first render, so the other view is no longer mounted and immediately discarded.
+- [frontend]: Devices: the device filter no longer trails one keystroke behind what you type.
+- [frontend]: Home: the QR code and the plugin and device panels show the selected store already on the first render.
+- [frontend]: Logs: the log length and auto scroll controls now update the shared state through the WebSocket provider.
+- [frontend]: Login: the automatic login request is aborted when the login form is closed.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.8] - 2026-09-04
 
@@ -2078,7 +2132,7 @@ In this phase (matterbridge `3.4.x`) all plugins will not build and will not run
 ### Changed
 
 - [package]: Updated dependencies.
-- [matterbridge.io]: Updated web site [matterbridge.io](matterbridge.io).
+- [matterbridge.io]: Updated web site [matterbridge.io](https://matterbridge.io).
 
 <a href="https://www.buymeacoffee.com/luligugithub">
   <img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80">

@@ -1,10 +1,7 @@
-/* eslint-disable n/no-unpublished-import */
-/* eslint-disable n/no-missing-import */
 import { pressureSensor } from '../../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../matterbridgeEndpoint.js';
 import { MatterbridgePlatform } from '../../matterbridgePlatform.js';
 
-// eslint-disable-next-line jsdoc/require-jsdoc
 export default function initializePlugin(matterbridge, log, config) {
   return new MockPlatform(matterbridge, log, config);
 }

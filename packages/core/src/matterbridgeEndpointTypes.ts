@@ -3,7 +3,7 @@
  * @description This file contains the types for MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2025-11-10
- * @version 1.0.1
+ * @version 1.0.4
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,15 +22,14 @@
  */
 
 // @matter
+import type { Observable } from '@matter/general';
+import type { ActionContext } from '@matter/node';
 import type { ClusterId, EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
-import { logModuleLoaded } from '@matterbridge/utils/loader';
 
 // matterbridge
 import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
-
-/* v8 ignore next */
-logModuleLoaded('MatterbridgeEndpointTypes');
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 export type PrimitiveTypes = boolean | number | bigint | string | object | undefined | null;
 
@@ -111,3 +110,41 @@ export interface MatterbridgeEndpointOptions {
    */
   number?: EndpointNumber;
 }
+
+/**
+ * Data passed to a listener subscribed with `subscribeCommand()` when the command has been executed.
+ *
+ * It mirrors the payload of `addCommandHandler()` without `attributes`: the listener is notified after the cluster state
+ * has already been updated, so it has no transactional state to write to.
+ */
+// oxlint-disable-next-line typescript/no-explicit-any
+export interface SubscribeCommandData<R = any> {
+  /** The camelCase name of the command that was executed (i.e. `playChimeSound`). */
+  command: string;
+  /** The behavior id of the cluster that executed the command (i.e. `chime`). */
+  cluster: string;
+  /** The request payload of the command. It is an empty object for commands without payload. */
+  request: R;
+  /** The endpoint that executed the command. */
+  endpoint: MatterbridgeEndpoint;
+  /** The Matter action context of the invoke. It is valid only for the synchronous body of the listener. */
+  context: ActionContext;
+}
+
+/**
+ * Listener subscribed to a cluster command with `subscribeCommand()`.
+ * It cannot be async: the command observable is emitted synchronously inside the still open invoke transaction.
+ */
+// oxlint-disable-next-line typescript/no-explicit-any
+export type SubscribeCommandListener<R = any> = (data: SubscribeCommandData<R>) => void;
+
+/**
+ * Observable added to the cluster events object for a cluster command subscribed with `subscribeCommand()`.
+ * Listeners receive a single {@link SubscribeCommandData} payload.
+ */
+export type SubscribeCommandObservable = Observable<[data: SubscribeCommandData]>;
+
+/** Minimal shape of a matter.js behavior events object needed to add and retrieve command observables. */
+export type SubscribeCommandEvents = Record<string, SubscribeCommandObservable | undefined> & {
+  addEvent(name: string, event: SubscribeCommandObservable): void;
+};

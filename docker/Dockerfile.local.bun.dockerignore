@@ -9,8 +9,10 @@
 
 # Not needed by the bun build (saves ~150 MB of context)
 .agents
+.antigravity
 .claude
 .codex
+.gemini
 .devcontainer
 .env
 .git
@@ -64,7 +66,7 @@ CODEOWNERS
 tsconfig*.json
 packages/**/tsconfig*.json
 **/package-lock.json
-vite.config.ts
+vitest.config.ts
 docker-downloads-history.json
 **/tmp/
 **/temp/

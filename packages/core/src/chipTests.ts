@@ -32,7 +32,7 @@ import { Seconds, Time, type Timer } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
-import { Status, StatusResponseError } from '@matter/types';
+import { MATTER_EPOCH_OFFSET_S, Status, StatusResponseError } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
@@ -127,6 +127,11 @@ const energyEvseOverTemperatureFaultTrigger = 0x0099000000000011n;
 const energyEvseFaultClearTrigger = 0x0099000000000012n;
 const energyEvseDiagnosticsCompleteTrigger = 0x0099000000000020n;
 const energyEvseTimeOfUseModeClearTrigger = 0x0099000000000021n;
+const energyEvseSetSocLowTrigger = 0x0099000000000030n;
+const energyEvseSetSocHighTrigger = 0x0099000000000031n;
+const energyEvseSetSocClearTrigger = 0x0099000000000032n;
+const energyEvseSetVehicleIdTrigger = 0x0099000000000040n;
+const energyEvseRfidTrigger = 0x0099000000000050n;
 // TC_MTRID_3_1's test_event_fake_data/test_event_clear constants (src/python_testing/TC_MTRIDTestBase.py).
 const meterIdentificationAttributesValueSetTrigger = 0x0b06000000000000n;
 const meterIdentificationTestEventClearTrigger = 0x0b06000000000001n;
@@ -402,6 +407,11 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
     normalizeTestEventTrigger(energyEvseFaultClearTrigger),
     normalizeTestEventTrigger(energyEvseDiagnosticsCompleteTrigger),
     normalizeTestEventTrigger(energyEvseTimeOfUseModeClearTrigger),
+    normalizeTestEventTrigger(energyEvseSetSocLowTrigger),
+    normalizeTestEventTrigger(energyEvseSetSocHighTrigger),
+    normalizeTestEventTrigger(energyEvseSetSocClearTrigger),
+    normalizeTestEventTrigger(energyEvseSetVehicleIdTrigger),
+    normalizeTestEventTrigger(energyEvseRfidTrigger),
   ];
   if (!supportedTriggers.includes(eventTrigger) || !chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
   const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
@@ -423,6 +433,9 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
           minimumChargeCurrent: 6_000,
           maximumChargeCurrent: 32_000,
           userMaximumChargeCurrent: 32_000,
+          chargingEnabledUntil: MATTER_EPOCH_OFFSET_S,
+          ...(endpoint.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil') ? { dischargingEnabledUntil: MATTER_EPOCH_OFFSET_S } : {}),
+          ...(endpoint.hasAttributeServer(EnergyEvse.id, 'maximumDischargeCurrent') ? { maximumDischargeCurrent: 0 } : {}),
         },
         log,
       );
@@ -432,7 +445,17 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
     case normalizeTestEventTrigger(energyEvsePluggedInTrigger): {
       const nextSessionId = sessionId + 1;
       energyEvseSessionStartedAt.set(chipTestActiveEndpointId, Time.nowMs);
-      await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.PluggedInNoDemand, sessionId: nextSessionId, sessionDuration: 0, sessionEnergyCharged: 0 }, log);
+      await endpoint.setCluster(
+        EnergyEvse,
+        {
+          state: EnergyEvse.State.PluggedInNoDemand,
+          sessionId: nextSessionId,
+          sessionDuration: 0,
+          sessionEnergyCharged: 0,
+          ...(endpoint.hasAttributeServer(EnergyEvse.id, 'sessionEnergyDischarged') ? { sessionEnergyDischarged: 0 } : {}),
+        },
+        log,
+      );
       await endpoint.triggerEvent(EnergyEvse, 'evConnected', { sessionId: nextSessionId }, log);
       return true;
     }
@@ -440,18 +463,31 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
       const sessionStartedAt = energyEvseSessionStartedAt.get(chipTestActiveEndpointId);
       const sessionDuration = sessionStartedAt === undefined ? 0 : Math.floor((Time.nowMs - sessionStartedAt) / 1_000);
       await endpoint.triggerEvent(EnergyEvse, 'evNotDetected', { sessionId, state: EnergyEvse.State.PluggedInNoDemand, sessionDuration, sessionEnergyCharged: 1 }, log);
-      await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.NotPluggedIn, sessionDuration, sessionEnergyCharged: 1 }, log);
+      await endpoint.setCluster(
+        EnergyEvse,
+        {
+          state: EnergyEvse.State.NotPluggedIn,
+          sessionDuration,
+          sessionEnergyCharged: 1,
+          ...(endpoint.hasAttributeServer(EnergyEvse.id, 'sessionEnergyDischarged') ? { sessionEnergyDischarged: 1 } : {}),
+        },
+        log,
+      );
       energyEvseSessionStartedAt.delete(chipTestActiveEndpointId);
       return true;
     }
     case normalizeTestEventTrigger(energyEvseChargeDemandTrigger): {
-      const charging = endpoint.getAttribute(EnergyEvse.id, 'supplyState') === EnergyEvse.SupplyState.ChargingEnabled;
+      const supplyState = endpoint.getAttribute(EnergyEvse.id, 'supplyState');
+      const charging = supplyState === EnergyEvse.SupplyState.ChargingEnabled || supplyState === EnergyEvse.SupplyState.Enabled;
       const nextState = charging ? EnergyEvse.State.PluggedInCharging : EnergyEvse.State.PluggedInDemand;
       await endpoint.setCluster(EnergyEvse, { state: nextState }, log);
       if (charging) {
         const maximumChargeCurrentAttribute = endpoint.getAttribute(EnergyEvse.id, 'maximumChargeCurrent');
         const maximumCurrent = typeof maximumChargeCurrentAttribute === 'number' || typeof maximumChargeCurrentAttribute === 'bigint' ? maximumChargeCurrentAttribute : 0;
-        await endpoint.triggerEvent(EnergyEvse, 'energyTransferStarted', { sessionId, state: nextState, maximumCurrent }, log);
+        const maximumDischargeCurrentAttribute = endpoint.getAttribute(EnergyEvse.id, 'maximumDischargeCurrent');
+        const maximumDischargeCurrent =
+          typeof maximumDischargeCurrentAttribute === 'number' || typeof maximumDischargeCurrentAttribute === 'bigint' ? maximumDischargeCurrentAttribute : undefined;
+        await endpoint.triggerEvent(EnergyEvse, 'energyTransferStarted', { sessionId, state: nextState, maximumCurrent, maximumDischargeCurrent }, log);
       }
       return true;
     }
@@ -478,6 +514,21 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
       return true;
     case normalizeTestEventTrigger(energyEvseDiagnosticsCompleteTrigger):
       await endpoint.setCluster(EnergyEvse, { state: EnergyEvse.State.NotPluggedIn, supplyState: EnergyEvse.SupplyState.Disabled }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseSetSocLowTrigger):
+      await endpoint.setCluster(EnergyEvse, { stateOfCharge: 20, batteryCapacity: 70_000_000 }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseSetSocHighTrigger):
+      await endpoint.setCluster(EnergyEvse, { stateOfCharge: 95, batteryCapacity: 70_000_000 }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseSetSocClearTrigger):
+      await endpoint.setCluster(EnergyEvse, { stateOfCharge: null, batteryCapacity: null }, log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseSetVehicleIdTrigger):
+      await endpoint.setAttribute(EnergyEvse.id, 'vehicleId', 'Matterbridge EVSE', log);
+      return true;
+    case normalizeTestEventTrigger(energyEvseRfidTrigger):
+      await endpoint.triggerEvent(EnergyEvse, 'rfid', { uid: Uint8Array.of(0x4d, 0x42, 0x45, 0x56, 0x53, 0x45) }, log);
       return true;
     default:
       return false;

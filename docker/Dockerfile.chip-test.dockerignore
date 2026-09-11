@@ -6,12 +6,13 @@
 #
 # This image clones Matterbridge, the plugins and connectedhomeip from GitHub and
 # builds them; it uses no local source. From the context it copies only the
-# docker/chip-test/ fixtures and docker/entrypoint.chip-test.sh, so we ignore
-# everything else.
+# build metadata, docker/chip-test/ fixtures and docker/entrypoint.chip-test.sh,
+# so we ignore everything else.
 
 # Ignore everything...
 *
 
 # ...except the files this Dockerfile copies.
+!.dockerbuild.json
 !docker/chip-test
 !docker/entrypoint.chip-test.sh

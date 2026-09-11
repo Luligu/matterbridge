@@ -1,5 +1,5 @@
 // React
-import { useEffect, useState, useContext, useRef, memo } from 'react';
+import { useEffect, useMemo, useState, useContext, useRef, memo } from 'react';
 
 import { debug, enableMobile } from '../appState';
 import { type WsMessageApiResponse, type ApiPlugin, type MatterbridgeInformation, type SystemInformation } from '../utils/backendShared';
@@ -28,7 +28,7 @@ function Home(): React.JSX.Element {
   const [changelog, _setChangelog] = useState('https://matterbridge.io/CHANGELOG.html');
   const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
-  const [storeId, setStoreId] = useState<string | null>(null);
+  const [selectedStoreId, setStoreId] = useState<string | null>(null);
   // Contexts
   const { mobile } = useContext(UiContext);
   const { addListener, removeListener, online, sendMessage, getUniqueId } = useContext(WebSocketContext);
@@ -94,22 +94,15 @@ function Home(): React.JSX.Element {
     };
   }, [addListener, removeListener, sendMessage]);
 
-  useEffect(() => {
-    if (debug) console.log(`Home storeId effect with storeId ${storeId}`);
-    if (matterbridgeInfo?.bridgeMode === 'bridge' && !storeId) {
-      if (debug) console.log(`Home storeId effect set storeId to Matterbridge`);
-      setStoreId('Matterbridge');
-    }
-    if (matterbridgeInfo?.bridgeMode === 'childbridge' && !storeId && plugins) {
-      for (const plugin of plugins) {
-        if (plugin.matter?.id) {
-          if (debug) console.log(`Home storeId effect set storeId to ${plugin.matter.id}`);
-          setStoreId(plugin.matter.id);
-          break;
-        }
-      }
-    }
-  }, [matterbridgeInfo, plugins, storeId]);
+  // Default store: the bridge itself in bridge mode, or the first plugin exposing a matter id in childbridge mode.
+  const defaultStoreId = useMemo(() => {
+    if (matterbridgeInfo?.bridgeMode === 'bridge') return 'Matterbridge';
+    if (matterbridgeInfo?.bridgeMode === 'childbridge') return plugins.find((plugin) => plugin.matter?.id)?.matter?.id ?? null;
+    return null;
+  }, [matterbridgeInfo, plugins]);
+
+  // The store shown on the page: the user's explicit pick, falling back to the derived default.
+  const storeId = selectedStoreId ?? defaultStoreId;
 
   useEffect(() => {
     if (online) {

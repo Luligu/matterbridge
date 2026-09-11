@@ -26,6 +26,8 @@ import type { ActionContext } from '@matter/node';
 import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 
+import { MatterbridgeServer } from './matterbridgeServer.js';
+
 /**
  * OccupancySensing server with backward-compatible HoldTime synchronization.
  *
@@ -38,6 +40,9 @@ export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.w
 
   override initialize(): MaybePromise {
     const result = super.initialize();
+
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeOccupancySensingServer: initializing (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore else
     if (this.events.holdTime$Changing) this.reactTo(this.events.holdTime$Changing, this.#syncPirOccupiedToUnoccupiedDelay);
     // v8 ignore else
@@ -49,6 +54,7 @@ export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.w
     const state = this.endpoint.agentFor(context).get(MatterbridgeOccupancySensingServer).state;
     if (this.#syncingHoldTime || holdTime === undefined || state.pirOccupiedToUnoccupiedDelay === holdTime) return;
     this.#syncingHoldTime = true;
+    // Matter 1.6.0 § 2.7.6.5: A legacy *OccupiedToUnoccupiedDelay attribute provided alongside HoldTime SHALL follow HoldTime when it is updated, maintaining equality.
     state.pirOccupiedToUnoccupiedDelay = holdTime;
     this.#syncingHoldTime = false;
   };
@@ -57,6 +63,7 @@ export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.w
     const state = this.endpoint.agentFor(context).get(MatterbridgeOccupancySensingServer).state;
     if (this.#syncingHoldTime || pirOccupiedToUnoccupiedDelay === undefined || state.holdTime === pirOccupiedToUnoccupiedDelay) return;
     this.#syncingHoldTime = true;
+    // Matter 1.6.0 § 2.7.6.5: HoldTime SHALL follow an updated legacy *OccupiedToUnoccupiedDelay attribute, maintaining equality in the reverse direction.
     state.holdTime = pirOccupiedToUnoccupiedDelay;
     this.#syncingHoldTime = false;
   };

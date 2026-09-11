@@ -1,9 +1,29 @@
-Chip tests run started at 2026-09-03T21:40:04.295Z
+Chip tests run started at 2026-09-06T12:32:03.310Z
 
-✅ Generic device basic composition (TC_DeviceBasicComposition.py)
-✅ Generic device conformance (TC_DeviceConformance.py)
-✅ Generic device default warnings (TC_DefaultWarnings.py)
-✅ Generic TestEventTrigger command (TC_TestEventTrigger.py)
+✅ EnergyEvse attributes on EVSE (Test_TC_EEVSE_2_1)
+✅ EnergyEvse primary functionality on EVSE (TC_EEVSE_2_2.py)
+✅ EnergyEvse charging preferences functionality on EVSE (TC_EEVSE_2_3.py)
+✅ EnergyEvse fault functionality on EVSE (TC_EEVSE_2_4.py)
+✅ EnergyEvse diagnostics functionality on EVSE (TC_EEVSE_2_5.py)
+✅ EnergyEvse reporting functionality on EVSE (TC_EEVSE_2_6.py)
+⏭️ EnergyEvse state-of-charge functionality on EVSE (TC_EEVSE_2_7.py)
+   ↳ Requires the SoCReporting feature; endpoint 1401 does not enable this optional feature.
+⏭️ EnergyEvse vehicle identification functionality on EVSE (TC_EEVSE_2_8.py)
+   ↳ Requires the PlugAndCharge feature; endpoint 1401 does not enable this optional feature.
+⏭️ EnergyEvse RFID event functionality on EVSE (TC_EEVSE_2_9.py)
+   ↳ Requires the RFID feature; endpoint 1401 does not enable this optional feature.
+⏭️ EnergyEvse bidirectional functionality on EVSE (TC_EEVSE_2_10.py)
+   ↳ Requires the V2X feature; endpoint 1401 does not enable this optional feature.
+✅ EnergyEvse attributes on EVSE Complete (Test_TC_EEVSE_2_1)
+✅ EnergyEvse primary functionality on EVSE Complete (TC_EEVSE_2_2.py)
+✅ EnergyEvse charging preferences functionality on EVSE Complete (TC_EEVSE_2_3.py)
+✅ EnergyEvse fault functionality on EVSE Complete (TC_EEVSE_2_4.py)
+✅ EnergyEvse diagnostics functionality on EVSE Complete (TC_EEVSE_2_5.py)
+✅ EnergyEvse reporting functionality on EVSE Complete (TC_EEVSE_2_6.py)
+✅ EnergyEvse state-of-charge functionality on EVSE Complete (TC_EEVSE_2_7.py)
+✅ EnergyEvse vehicle identification functionality on EVSE Complete (TC_EEVSE_2_8.py)
+✅ EnergyEvse RFID event functionality on EVSE Complete (TC_EEVSE_2_9.py)
+✅ EnergyEvse bidirectional functionality on EVSE Complete (TC_EEVSE_2_10.py)
 
-Summary: 4/4 tests passed.
-Chip tests run ended at 2026-09-03T21:41:04.046Z (total duration 1m 00s)
+Summary: 16/16 tests passed (4 skipped).
+Chip tests run ended at 2026-09-06T12:34:23.103Z (total duration 2m 20s)

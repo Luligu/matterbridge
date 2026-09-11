@@ -53,7 +53,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeDoorLockServer: initializing server (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.9.25: Validate that SupportedOperatingModes advertises every required operating-mode bit.
+    // Matter 1.6.0 § 5.2.9.25: In SupportedOperatingModes a zero bit means the mode is supported and every not-yet-defined bit SHALL be set to 1, so the reserved bit range must be fully set.
     super.initialize();
   }
 

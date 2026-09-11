@@ -82,7 +82,10 @@ describe('MatterbridgeDeviceEnergyManagementModeServer', () => {
     await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 0 });
     expect(modeCalls[0]).toEqual({ cluster: 'deviceEnergyManagementMode', endpoint: energyManagement, request: { newMode: 0 } });
     expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'currentMode')).toBe(1);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: 0');
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with unsupported newMode 0 (endpoint ${energyManagement.id}.${energyManagement.number})`,
+    );
 
     await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 1 });
     expect(modeCalls[1]).toEqual({ cluster: 'deviceEnergyManagementMode', endpoint: energyManagement, request: { newMode: 1 } });
@@ -90,14 +93,17 @@ describe('MatterbridgeDeviceEnergyManagementModeServer', () => {
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.OptOut);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
-      'MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 1 => No Energy Management (Forecast reporting only)',
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode 1 => No Energy Management (Forecast reporting only) (endpoint ${energyManagement.id}.${energyManagement.number})`,
     );
 
     await energyManagement.invokeBehaviorCommand(DeviceEnergyManagementMode, 'changeToMode', { newMode: 5 });
     expect(modeCalls[2]).toEqual({ cluster: 'deviceEnergyManagementMode', endpoint: energyManagement, request: { newMode: 5 } });
     expect(energyManagement.getAttribute(DeviceEnergyManagementMode.id, 'currentMode')).toBe(5);
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode 5 => Full Energy Management');
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode 5 => Full Energy Management (endpoint ${energyManagement.id}.${energyManagement.number})`,
+    );
 
     const originalHas = energyManagement.behaviors.has.bind(energyManagement.behaviors);
     const hasSpy = vi.spyOn(energyManagement.behaviors, 'has');

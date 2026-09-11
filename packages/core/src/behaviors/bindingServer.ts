@@ -47,7 +47,7 @@ export class MatterbridgeBindingServer extends BindingServer {
     super.initialize();
 
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Initializing MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) with clientList: ${this.state.clientList.join(', ')}`);
+    device.log.info(`MatterbridgeBindingServer: initializing with clientList ${this.state.clientList.join(', ')} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
 
     // Ensure that the Descriptor clientList includes all clusters from the binding clientList (deferred after construction)
     const clientList = this.state.clientList;
@@ -56,12 +56,13 @@ export class MatterbridgeBindingServer extends BindingServer {
       const toAddClientList = clientList.filter((id) => !currentClientList.includes(id));
       /* v8 ignore next */
       if (toAddClientList.length > 0) {
-        device.log.info(`Adding client clusters to endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: ${toAddClientList.join(', ')}`);
+        device.log.info(`MatterbridgeBindingServer: adding client clusters ${toAddClientList.join(', ')} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+        // Matter 1.6.0 § 9.5.6.3: The Descriptor ClientList attribute lists each cluster ID for the client clusters present on the endpoint instance.
         await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
       }
       const targets = this.endpoint.stateOf(BindingServer).binding;
       for (const target of targets) {
-        device.log.info(`Active binding for endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}: target ${debugStringify(target)}`);
+        device.log.info(`MatterbridgeBindingServer: active binding target ${debugStringify(target)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       }
     });
 
@@ -69,14 +70,14 @@ export class MatterbridgeBindingServer extends BindingServer {
     this.reactTo(this.events.binding$Changed, (value) => {
       this.internal.bound = value.length > 0;
       device.log.notice(
-        `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding changed: ${debugStringify(value)}${nt}, bound: ${this.internal.bound}`,
+        `MatterbridgeBindingServer: binding changed to ${debugStringify(value)}${nt}, bound ${this.internal.bound} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     });
 
     // React to established bindings, update internal bound state and subscribe to remote node
     this.reactTo(this.events.established, async (resolution: BindingResolution) => {
       device.log.notice(
-        `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding established: kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt}`,
+        `MatterbridgeBindingServer: binding established with kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       this.internal.boundEndpoints.set(resolution.entry, resolution.endpoint);
       if (resolution.kind !== 'client') return;
@@ -86,7 +87,7 @@ export class MatterbridgeBindingServer extends BindingServer {
     // React to removed bindings and update internal bound state
     this.reactTo(this.events.removed, (resolution: BindingResolution) => {
       device.log.notice(
-        `MatterbridgeBindingServer (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) binding removed: kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt}`,
+        `MatterbridgeBindingServer: binding removed with kind ${resolution.kind} entry ${debugStringify(resolution.entry)}${nt} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       this.internal.boundEndpoints.delete(resolution.entry);
     });

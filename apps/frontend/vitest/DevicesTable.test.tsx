@@ -177,6 +177,8 @@ function createSocket(online = true): TestSocket {
     logFilterSearch: '*',
     logAutoScroll: { current: true },
     setMessages: vi.fn(),
+    setLogLength: vi.fn(),
+    setLogAutoScroll: vi.fn(),
     setLogFilterLevel: vi.fn(),
     setLogFilterSearch: vi.fn(),
     filterLogMessages: vi.fn(),

@@ -76,7 +76,7 @@ describe('MatterbridgeSwitchServer', () => {
       Switch.Feature.MomentarySwitchMultiPress,
     );
     expect(button.behaviors.has(switchServer)).toBeTruthy();
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Initializing MatterbridgeSwitchServer (endpoint ${button.id}.${button.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeSwitchServer: initializing (endpoint ${button.id}.${button.number})`);
 
     // The base server's own initialize() would have seeded currentPosition; it stays at the cluster default here.
     expect(button.getAttribute(Switch, 'currentPosition')).toBe(0);

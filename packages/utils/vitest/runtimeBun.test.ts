@@ -77,6 +77,50 @@ describe('isBun()', () => {
   });
 });
 
+describe('getBunLatestVersion()', () => {
+  it('should return the stable version when GitHub returns a valid release', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({ tag_name: 'bun-v1.4.0' }));
+    const { getBunLatestVersion } = await importRuntimeBun();
+
+    await expect(getBunLatestVersion()).resolves.toBe('1.4.0');
+    expect(fetchMock).toHaveBeenCalledWith('https://api.github.com/repos/oven-sh/bun/releases/latest', {
+      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'matterbridge' },
+      signal: expect.any(AbortSignal),
+    });
+  });
+
+  it('should return undefined when GitHub returns an HTTP error', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 403 }));
+    const { getBunLatestVersion } = await importRuntimeBun();
+
+    await expect(getBunLatestVersion()).resolves.toBeUndefined();
+  });
+
+  it.each([null, {}, { tag_name: 123 }, { tag_name: 'canary' }, { tag_name: 'bun-v1.4.0-canary' }, { tag_name: '1.4.0' }])(
+    'should return undefined when the release payload is invalid: %j',
+    async (release) => {
+      vi.spyOn(globalThis, 'fetch').mockResolvedValue(Response.json(release));
+      const { getBunLatestVersion } = await importRuntimeBun();
+
+      await expect(getBunLatestVersion()).resolves.toBeUndefined();
+    },
+  );
+
+  it('should return undefined when the response is not valid JSON', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('invalid json'));
+    const { getBunLatestVersion } = await importRuntimeBun();
+
+    await expect(getBunLatestVersion()).resolves.toBeUndefined();
+  });
+
+  it.each([new Error('Network unavailable'), new DOMException('Request timed out', 'TimeoutError')])('should return undefined when the request fails: %s', async (error) => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(error);
+    const { getBunLatestVersion } = await importRuntimeBun();
+
+    await expect(getBunLatestVersion()).resolves.toBeUndefined();
+  });
+});
+
 describe('bunAvailable()', () => {
   beforeEach(() => {
     mockedExistsSync = vi.fn<ExistsSyncFn>(() => false);

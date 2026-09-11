@@ -9,6 +9,9 @@ import type { Mock } from 'vitest';
 
 type RunOptions = Readonly<{
   nodeVersion: string;
+  bunVersion?: string;
+  isBun?: boolean;
+  bunLatestVersion?: string;
   mdnsInterface?: string;
   // @ts-expect-error Partial type for testing purposes
   networkInterfaces: ReturnType<(typeof import('node:os'))['default']['networkInterfaces']>;
@@ -54,6 +57,7 @@ type RunWorkerSystemCheckResult = Readonly<{
   fetchMock: Mock<(...args: any[]) => any>;
   inspectError: Mock<(...args: any[]) => any>;
   networkInterfacesMock: Mock<(...args: any[]) => any>;
+  getBunLatestVersionMock: Mock<() => Promise<string | undefined>>;
 }>;
 
 async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSystemCheckResult> {
@@ -97,6 +101,12 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
 
   const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
   vi.doMock('@matterbridge/utils/error', () => ({ inspectError }));
+  const getBunLatestVersionMock = vi.fn<() => Promise<string | undefined>>().mockResolvedValue(options.bunLatestVersion);
+  vi.doMock('@matterbridge/utils/bun', () => ({
+    isBun: (): boolean => options.isBun ?? options.bunVersion !== undefined,
+    getBunVersion: (): string | undefined => options.bunVersion,
+    getBunLatestVersion: getBunLatestVersionMock,
+  }));
 
   const excludedInterfaceNamePattern =
     /(tailscale|wireguard|openvpn|zerotier|hamachi|\bwg\d+\b|\btun\d+\b|\btap\d+\b|\butun\d+\b|docker|podman|\bveth[a-z0-9]*\b|\bbr-[a-z0-9]+\b|cni|kube|flannel|calico|virbr\d*\b|vmware|vmnet\d*\b|virtualbox|vboxnet\d*\b|teredo|isatap)/i;
@@ -108,7 +118,7 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
   try {
     await import('../src/workerSystemCheck.js');
     const success = await runPromise;
-    return { wrapperName, success, loggerMock, snackBarMock, fetchMock, inspectError, networkInterfacesMock };
+    return { wrapperName, success, loggerMock, snackBarMock, fetchMock, inspectError, networkInterfacesMock, getBunLatestVersionMock };
   } finally {
     restoreNvm();
     restoreNodeVersion();
@@ -137,6 +147,7 @@ describe('workerSystemCheck', () => {
     expect(fetchMock).toHaveBeenCalledWith({ type: 'matterbridge_shared', src: 'matterbridge', dst: 'matterbridge' }, 1000);
 
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting system check/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'You are running Node.js version: 20.18.0');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: NVM is a development tool/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 20\.19\.0 is not supported/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Found network interface 'docker0'.*Matter mDNS/));
@@ -214,7 +225,7 @@ describe('workerSystemCheck', () => {
   });
 
   test('node 24: does not emit NOTICE upgrade suggestion', async () => {
-    const { success, loggerMock } = await runWorkerSystemCheck({
+    const { success, loggerMock, getBunLatestVersionMock } = await runWorkerSystemCheck({
       nodeVersion: '24.13.0',
       mdnsInterface: 'eth0',
       networkInterfaces: {
@@ -223,8 +234,60 @@ describe('workerSystemCheck', () => {
     });
 
     expect(success).toBe(true);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'You are running Node.js version: 24.13.0');
+    expect(loggerMock).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Bun version:'));
+    expect(getBunLatestVersionMock).not.toHaveBeenCalled();
     const noticeCalls = (loggerMock as Mock).mock.calls.filter((c) => c[0] === LogLevel.NOTICE);
     expect(noticeCalls).toHaveLength(0);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
+  });
+
+  test.each(['20.18.0', '22.12.0', '21.0.0'])('should log Bun version and skip Node.js warnings when Bun reports Node.js %s', async (nodeVersion) => {
+    const { success, loggerMock, snackBarMock, networkInterfacesMock } = await runWorkerSystemCheck({
+      nodeVersion,
+      bunVersion: '1.4.0',
+      networkInterfaces: {},
+    });
+
+    expect(success).toBe(true);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'You are running Bun version: 1.4.0');
+    expect(loggerMock).not.toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Node.js'));
+    expect(snackBarMock).not.toHaveBeenCalledWith(expect.stringContaining('Node.js'), expect.anything(), expect.anything());
+    expect(networkInterfacesMock).toHaveBeenCalledOnce();
+    expect(snackBarMock).toHaveBeenCalledWith('System Check: No internal network interface found. Check your network configuration.', 0, 'error');
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
+  });
+
+  test('should warn when a different latest Bun version is available', async () => {
+    const { success, loggerMock, getBunLatestVersionMock } = await runWorkerSystemCheck({
+      nodeVersion: '24.13.0',
+      bunVersion: '1.3.0',
+      bunLatestVersion: '1.4.0',
+      networkInterfaces: {},
+    });
+
+    expect(success).toBe(true);
+    expect(getBunLatestVersionMock).toHaveBeenCalledOnce();
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'You are running Bun version: 1.3.0');
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, 'Latest Bun version available: 1.4.0. You are running an outdated version of Bun.');
+  });
+
+  test.each([
+    { bunVersion: '1.4.0', bunLatestVersion: '1.4.0' },
+    { bunVersion: '1.4.0', bunLatestVersion: undefined },
+    { bunVersion: undefined, bunLatestVersion: '1.4.0' },
+  ])('should skip the Bun update warning when versions match or are unavailable: %j', async (versions) => {
+    const { success, loggerMock, networkInterfacesMock, getBunLatestVersionMock } = await runWorkerSystemCheck({
+      nodeVersion: '24.13.0',
+      isBun: true,
+      ...versions,
+      networkInterfaces: {},
+    });
+
+    expect(success).toBe(true);
+    expect(getBunLatestVersionMock).toHaveBeenCalledOnce();
+    expect(loggerMock).not.toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('Latest Bun version available:'));
+    expect(networkInterfacesMock).toHaveBeenCalledOnce();
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
   });
 

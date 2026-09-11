@@ -60,13 +60,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveToHueRequest} request - Move-to-hue request payload.
    */
   override async moveToHue(request: ColorControl.MoveToHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.4.5: Set ColorMode to CurrentHueAndCurrentSaturation, then move CurrentHue continuously to the Hue field over TransitionTime.
       await super.moveToHue(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting hue to ${request.hue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveToHue', {
       command: 'moveToHue',
       request,
@@ -75,7 +78,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveToHue called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveToHue called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.4.5: Set ColorMode to CurrentHueAndCurrentSaturation, then move CurrentHue continuously to the Hue field over TransitionTime.
     await super.moveToHue(request);
   }
 
@@ -85,13 +89,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveHueRequest} request - Move-hue request payload.
    */
   override async moveHue(request: ColorControl.MoveHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving hue with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.5.4: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentHue continuously at the given rate.
       await super.moveHue(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: moving hue with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveHue', {
       command: 'moveHue',
       request,
@@ -100,7 +107,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveHue called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveHue called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.5.4: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentHue continuously at the given rate.
     await super.moveHue(request);
   }
 
@@ -110,13 +118,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.StepHueRequest} request - Step-hue request payload.
    */
   override async stepHue(request: ColorControl.StepHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping hue with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.6.5: Reject a StepSize of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentHue by StepSize over TransitionTime.
       await super.stepHue(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: stepping hue with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.stepHue', {
       command: 'stepHue',
       request,
@@ -125,7 +136,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: stepHue called`);
+    device.log.debug(`MatterbridgeColorControlServer: stepHue called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.6.5: Reject a StepSize of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentHue by StepSize over TransitionTime.
     await super.stepHue(request);
   }
 
@@ -135,15 +147,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.EnhancedMoveToHueRequest} request - Enhanced-move-to-hue request payload.
    */
   override async enhancedMoveToHue(request: ColorControl.EnhancedMoveToHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.15.5: Set EnhancedColorMode to CurrentHueAndCurrentSaturation, then move EnhancedCurrentHue continuously to the EnhancedHue field over TransitionTime.
       await super.enhancedMoveToHue(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting enhanced hue to ${request.enhancedHue} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.enhancedMoveToHue', {
       command: 'enhancedMoveToHue',
       request,
@@ -152,7 +165,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called`);
+    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHue called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.15.5: Set EnhancedColorMode to CurrentHueAndCurrentSaturation, then move EnhancedCurrentHue continuously to the EnhancedHue field over TransitionTime.
     await super.enhancedMoveToHue(request);
   }
 
@@ -162,13 +176,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.EnhancedMoveHueRequest} request - Enhanced-move-hue request payload.
    */
   override async enhancedMoveHue(request: ColorControl.EnhancedMoveHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving enhanced hue with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.16.4: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise move EnhancedCurrentHue continuously at the given rate.
       await super.enhancedMoveHue(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: moving enhanced hue with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.enhancedMoveHue', {
       command: 'enhancedMoveHue',
       request,
@@ -177,7 +194,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveHue called`);
+    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveHue called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.16.4: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise move EnhancedCurrentHue continuously at the given rate.
     await super.enhancedMoveHue(request);
   }
 
@@ -187,13 +205,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.EnhancedStepHueRequest} request - Enhanced-step-hue request payload.
    */
   override async enhancedStepHue(request: ColorControl.EnhancedStepHueRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping enhanced hue with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.17.5: Reject a StepSize of zero with INVALID_COMMAND, otherwise move EnhancedCurrentHue by StepSize over TransitionTime.
       await super.enhancedStepHue(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: stepping enhanced hue with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.enhancedStepHue', {
       command: 'enhancedStepHue',
       request,
@@ -202,7 +223,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: enhancedStepHue called`);
+    device.log.debug(`MatterbridgeColorControlServer: enhancedStepHue called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.17.5: Reject a StepSize of zero with INVALID_COMMAND, otherwise move EnhancedCurrentHue by StepSize over TransitionTime.
     await super.enhancedStepHue(request);
   }
 
@@ -212,13 +234,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveToSaturationRequest} request - Move-to-saturation request payload.
    */
   override async moveToSaturation(request: ColorControl.MoveToSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.7.2: Set ColorMode to CurrentHueAndCurrentSaturation, then move CurrentSaturation continuously to the Saturation field over TransitionTime.
       await super.moveToSaturation(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveToSaturation', {
       command: 'moveToSaturation',
       request,
@@ -227,7 +252,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveToSaturation called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.7.2: Set ColorMode to CurrentHueAndCurrentSaturation, then move CurrentSaturation continuously to the Saturation field over TransitionTime.
     await super.moveToSaturation(request);
   }
 
@@ -237,13 +263,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveSaturationRequest} request - Move-saturation request payload.
    */
   override async moveSaturation(request: ColorControl.MoveSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving saturation with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.8.4: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentSaturation continuously at the given rate.
       await super.moveSaturation(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: moving saturation with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveSaturation', {
       command: 'moveSaturation',
       request,
@@ -252,7 +281,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveSaturation called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveSaturation called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.8.4: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentSaturation continuously at the given rate.
     await super.moveSaturation(request);
   }
 
@@ -262,13 +292,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.StepSaturationRequest} request - Step-saturation request payload.
    */
   override async stepSaturation(request: ColorControl.StepSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping saturation with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.9.5: Reject a StepSize of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentSaturation by StepSize over TransitionTime.
       await super.stepSaturation(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: stepping saturation with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.stepSaturation', {
       command: 'stepSaturation',
       request,
@@ -277,7 +310,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: stepSaturation called`);
+    device.log.debug(`MatterbridgeColorControlServer: stepSaturation called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.9.5: Reject a StepSize of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentHueAndCurrentSaturation and move CurrentSaturation by StepSize over TransitionTime.
     await super.stepSaturation(request);
   }
 
@@ -287,15 +321,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveToHueAndSaturationRequest} request - Move-to-hue-and-saturation request payload.
    */
   override async moveToHueAndSaturation(request: ColorControl.MoveToHueAndSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.10.2: Set ColorMode to CurrentHueAndCurrentSaturation, then move CurrentHue and CurrentSaturation continuously to the Hue and Saturation fields over TransitionTime.
       await super.moveToHueAndSaturation(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting hue to ${request.hue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveToHueAndSaturation', {
       command: 'moveToHueAndSaturation',
       request,
@@ -304,7 +339,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveToHueAndSaturation called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.10.2: Set ColorMode to CurrentHueAndCurrentSaturation, then move CurrentHue and CurrentSaturation continuously to the Hue and Saturation fields over TransitionTime.
     await super.moveToHueAndSaturation(request);
   }
 
@@ -314,15 +350,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.EnhancedMoveToHueAndSaturationRequest} request - Enhanced-move-to-hue-and-saturation request payload.
    */
   override async enhancedMoveToHueAndSaturation(request: ColorControl.EnhancedMoveToHueAndSaturationRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.18.5: Set EnhancedColorMode to CurrentHueAndCurrentSaturation, then move EnhancedCurrentHue and CurrentSaturation continuously to the EnhancedHue and Saturation fields over TransitionTime.
       await super.enhancedMoveToHueAndSaturation(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting enhanced hue to ${request.enhancedHue} and saturation to ${request.saturation} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.enhancedMoveToHueAndSaturation', {
       command: 'enhancedMoveToHueAndSaturation',
       request,
@@ -331,7 +368,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called`);
+    device.log.debug(`MatterbridgeColorControlServer: enhancedMoveToHueAndSaturation called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.18.5: Set EnhancedColorMode to CurrentHueAndCurrentSaturation, then move EnhancedCurrentHue and CurrentSaturation continuously to the EnhancedHue and Saturation fields over TransitionTime.
     await super.enhancedMoveToHueAndSaturation(request);
   }
 
@@ -341,15 +379,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveToColorRequest} request - Move-to-color request payload.
    */
   override async moveToColor(request: ColorControl.MoveToColorRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.11.2: Set ColorMode to CurrentXAndCurrentY, then move CurrentX and CurrentY continuously to the ColorX and ColorY fields over TransitionTime.
       await super.moveToColor(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting color to ${request.colorX}, ${request.colorY} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveToColor', {
       command: 'moveToColor',
       request,
@@ -358,7 +397,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveToColor called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveToColor called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.11.2: Set ColorMode to CurrentXAndCurrentY, then move CurrentX and CurrentY continuously to the ColorX and ColorY fields over TransitionTime.
     await super.moveToColor(request);
   }
 
@@ -368,13 +408,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveColorRequest} request - Move-color request payload.
    */
   override async moveColor(request: ColorControl.MoveColorRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving color with rateX ${request.rateX} and rateY ${request.rateY} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.12.4: A RateX and RateY of zero performs no movement and only stops any command in progress, otherwise move CurrentX and CurrentY continuously at the given rates.
       await super.moveColor(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: moving color with rateX ${request.rateX} and rateY ${request.rateY} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveColor', {
       command: 'moveColor',
       request,
@@ -383,7 +426,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveColor called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveColor called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.12.4: A RateX and RateY of zero performs no movement and only stops any command in progress, otherwise move CurrentX and CurrentY continuously at the given rates.
     await super.moveColor(request);
   }
 
@@ -393,13 +437,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.StepColorRequest} request - Step-color request payload.
    */
   override async stepColor(request: ColorControl.StepColorRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping color with stepX ${request.stepX} and stepY ${request.stepY} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.13.4: Reject a StepX and StepY both of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentXAndCurrentY and move CurrentX and CurrentY by the step over TransitionTime.
       await super.stepColor(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: stepping color with stepX ${request.stepX} and stepY ${request.stepY} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.stepColor', {
       command: 'stepColor',
       request,
@@ -408,7 +455,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: stepColor called`);
+    device.log.debug(`MatterbridgeColorControlServer: stepColor called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.13.4: Reject a StepX and StepY both of zero with INVALID_COMMAND, otherwise set ColorMode to CurrentXAndCurrentY and move CurrentX and CurrentY by the step over TransitionTime.
     await super.stepColor(request);
   }
 
@@ -418,15 +466,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveToColorTemperatureRequest} request - Move-to-color-temperature request payload.
    */
   override async moveToColorTemperature(request: ColorControl.MoveToColorTemperatureRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(
-      `Setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-    );
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.14.2: Set ColorMode to ColorTemperatureMireds, then move ColorTemperatureMireds continuously to the requested value over TransitionTime.
       await super.moveToColorTemperature(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: setting color temperature to ${request.colorTemperatureMireds} with transitionTime ${request.transitionTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveToColorTemperature', {
       command: 'moveToColorTemperature',
       request,
@@ -435,7 +484,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveToColorTemperature called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.14.2: Set ColorMode to ColorTemperatureMireds, then move ColorTemperatureMireds continuously to the requested value over TransitionTime.
     await super.moveToColorTemperature(request);
   }
 
@@ -445,13 +495,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.MoveColorTemperatureRequest} request - Move-color-temperature request payload.
    */
   override async moveColorTemperature(request: ColorControl.MoveColorTemperatureRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Moving color temperature with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.21.6: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise set ColorMode and EnhancedColorMode to ColorTemperatureMireds and move continuously at the given rate within the requested mireds limits.
       await super.moveColorTemperature(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: moving color temperature with mode ${request.moveMode} and rate ${request.rate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.moveColorTemperature', {
       command: 'moveColorTemperature',
       request,
@@ -460,7 +513,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: moveColorTemperature called`);
+    device.log.debug(`MatterbridgeColorControlServer: moveColorTemperature called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.21.6: Reject an Up or Down MoveMode with a Rate of zero with INVALID_COMMAND, otherwise set ColorMode and EnhancedColorMode to ColorTemperatureMireds and move continuously at the given rate within the requested mireds limits.
     await super.moveColorTemperature(request);
   }
 
@@ -470,13 +524,16 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.StepColorTemperatureRequest} request - Step-color-temperature request payload.
    */
   override async stepColorTemperature(request: ColorControl.StepColorTemperatureRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stepping color temperature with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.22.7: Reject a StepSize of zero with INVALID_COMMAND, otherwise set ColorMode and EnhancedColorMode to ColorTemperatureMireds and move by StepSize over TransitionTime within the requested mireds limits.
       await super.stepColorTemperature(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeColorControlServer: stepping color temperature with mode ${request.stepMode} and size ${request.stepSize} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('ColorControl.stepColorTemperature', {
       command: 'stepColorTemperature',
       request,
@@ -485,7 +542,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: stepColorTemperature called`);
+    device.log.debug(`MatterbridgeColorControlServer: stepColorTemperature called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.22.7: Reject a StepSize of zero with INVALID_COMMAND, otherwise set ColorMode and EnhancedColorMode to ColorTemperatureMireds and move by StepSize over TransitionTime within the requested mireds limits.
     await super.stepColorTemperature(request);
   }
 
@@ -495,13 +553,14 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * @param {ColorControl.StopMoveStepRequest} request - Stop-move-step request payload.
    */
   override async stopMoveStep(request: ColorControl.StopMoveStepRequest): Promise<void> {
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stopping color move/step (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
+      // Matter 1.6.0 § 3.2.8.20.2: Terminate any MoveTo, Move or Step in progress, leaving CurrentHue, EnhancedCurrentHue and CurrentSaturation at their present values and setting RemainingTime to 0.
       await super.stopMoveStep(request);
       return;
     }
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeColorControlServer: stopping color move/step (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ColorControl.stopMoveStep', {
       command: 'stopMoveStep',
       request,
@@ -510,7 +569,8 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    device.log.debug(`MatterbridgeColorControlServer: stopMoveStep called`);
+    device.log.debug(`MatterbridgeColorControlServer: stopMoveStep called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 3.2.8.20.2: Terminate any MoveTo, Move or Step in progress, leaving CurrentHue, EnhancedCurrentHue and CurrentSaturation at their present values and setting RemainingTime to 0.
     await super.stopMoveStep(request);
   }
 }

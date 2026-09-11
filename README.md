@@ -1,5 +1,3 @@
-<!-- eslint-disable markdown/no-multiple-h1 -->
-
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
@@ -44,7 +42,7 @@ Simply pair Matterbridge once, and it will load all your registered plugins.
 
 This project aims to enable porting Homebridge plugins to Matterbridge plugins without having to recode everything ([Development](README-DEV.md)).
 
-The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js, npm, TypeScript, Jest, Vitest, and the shared Matterbridge Oxc/oxlint/oxfmt configs) already loaded and configured.
+The easiest way to start create a new plugin is to clone the [Matterbridge Plugin Template](https://github.com/Luligu/matterbridge-plugin-template) which has **Dev Container support for instant development environment** and all tools and extensions (like Node.js or Bun, TypeScript Native, Vitest, and the shared Matterbridge Oxc/oxlint/oxfmt configs) already loaded and configured.
 
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
@@ -433,6 +431,10 @@ Matterbridge plugin that exposes Litetouch 2000 lighting loads as Matter devices
 ### [Roomba](https://github.com/Rashed97/matterbridge-roomba)
 
 Matterbridge plugin that connects iRobot Roomba robot vacuums to the Matter fabric via their local MQTT broker and APIs.
+
+### [Elgato](https://github.com/passtas/matterbridge-elgato)
+
+Matterbridge dynamic platform plugin that exposes Elgato Key Light, Key Light Air and Light Strip to Matter using the local HTTP API with mDNS discovery.
 
 ## How to install and add a plugin with the frontend (best option)
 

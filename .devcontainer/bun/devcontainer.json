@@ -1,4 +1,4 @@
-// .devcontainer/bun/devcontainer.json v.2.0.0
+// .devcontainer/bun/devcontainer.json v.2.1.1
 
 // This file defines the bun development container configuration for Matterbridge.
 
@@ -51,16 +51,30 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/bun/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/bun/.matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-cert,target=/home/bun/.mattercert,type=volume",
-    // Dev container shared volumes for npm cache, bun cache, bash history, claude, codex and agents to improve performance
+    // Dev container shared volumes for vscode extensions, npm cache, bun cache, bash history, claude, codex, gemini and agents to improve performance
+    // Shared with the node variant: both images create /home/<user>/.vscode-server/extensions owned by UID/GID 1000, so the volume seeds correctly for either
+    "source=vscode-extensions,target=/home/bun/.vscode-server/extensions,type=volume",
     "source=npm-cache,target=/home/bun/.npm,type=volume",
     "source=bun-cache,target=/home/bun/.bun/install/cache,type=volume",
     "source=bash-cache,target=/home/bun/.bash-cache,type=volume",
     "source=claude,target=/home/bun/.claude,type=volume",
     "source=codex,target=/home/bun/.codex,type=volume",
+    "source=gemini,target=/home/bun/.gemini,type=volume",
     "source=agents,target=/home/bun/.agents,type=volume"
   ],
-  // Set up the Docker environment (runs on the host before the container starts)
-  "initializeCommand": "bash .devcontainer/bun/initialize.sh",
+  // Set up the Docker environment (runs on the host before the container starts).
+  // Object form: entries run in parallel, each through the host shell (cmd.exe on Windows, /bin/sh elsewhere).
+  // Deliberately uses only docker, so the host needs no node, bun or bash: the container is the only toolchain.
+  // "||" is one of the few constructs both cmd.exe and /bin/sh share; docker network create is not idempotent,
+  // hence the inspect first. On a host that has never created the network, the inspect logs a harmless
+  // "network matterbridge not found" to stderr before it is created (there is no portable null device).
+  // The pull is unconditional: it costs ~0.9s, runs in parallel with the network check, and guarantees the
+  // image itself is never silently stale. Note that pulling refreshes the image, not an existing container:
+  // a container keeps the image it was created from until you run "Dev Containers: Rebuild Container".
+  "initializeCommand": {
+    "network": "docker network inspect matterbridge --format ok || docker network create --ipv6 matterbridge",
+    "pull": "docker pull luligu/matterbridge:bun-dev-container"
+  },
   // On create, prepare the directories and install and build Matterbridge (runs inside the container)
   "postCreateCommand": "bash .devcontainer/bun/post-create.sh",
   // On start, install and build Matterbridge (runs inside the container)
@@ -102,7 +116,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
         "github.copilot-chat",
         "github.vscode-github-actions",
         "github.vscode-pull-request-github",
-        "openai.chatgpt"
+        "openai.chatgpt",
+        "google.google-antigravity"
       ],
       // Settings for the VS Code environment specific to the dev container (overrides user and workspace settings)
       "settings": {

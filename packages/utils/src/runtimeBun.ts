@@ -27,6 +27,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { logModuleLoaded } from './loader.js';
+import { isValidObject, isValidString } from './validate.js';
 
 logModuleLoaded('RuntimeBun');
 
@@ -69,6 +70,31 @@ export function bunAvailable(): boolean {
 export function getBunVersion(): string | undefined {
   if (HAS_BUN_GLOBAL) return Bun.version;
   return process?.versions?.bun;
+}
+
+/**
+ * Fetches the latest stable Bun version from the official GitHub releases API.
+ *
+ * Works on Bun and Node.js. The request times out after 10 seconds.
+ *
+ * @returns {Promise<string | undefined>} The version string without the `bun-v` tag prefix, or `undefined` if the request fails or the release tag is invalid.
+ */
+export async function getBunLatestVersion(): Promise<string | undefined> {
+  try {
+    const response = await fetch('https://api.github.com/repos/oven-sh/bun/releases/latest', {
+      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'matterbridge' },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) return undefined;
+
+    const release: unknown = await response.json();
+    if (!isValidObject(release) || !('tag_name' in release) || !isValidString(release.tag_name) || !/^bun-v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(release.tag_name)) {
+      return undefined;
+    }
+    return release.tag_name.slice('bun-v'.length);
+  } catch {
+    return undefined;
+  }
 }
 
 /**

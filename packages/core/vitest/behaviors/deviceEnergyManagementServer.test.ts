@@ -80,7 +80,7 @@ describe('Client clusters and behaviors', () => {
   test('PowerAdjustRequest is rejected without PowerAdjustmentCapability', async () => {
     await expect(
       esa.invokeBehaviorCommand(DeviceEnergyManagement, 'powerAdjustRequest', { power: 1_000_000, duration: 10, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization }),
-    ).rejects.toThrow('No power adjustment capability available');
+    ).rejects.toThrow('MatterbridgeDeviceEnergyManagementServer: no power adjustment capability available');
   });
 
   test('PowerAdjustRequest is rejected when Power or Duration is out of range', async () => {
@@ -91,10 +91,10 @@ describe('Client clusters and behaviors', () => {
 
     await expect(
       esa.invokeBehaviorCommand(DeviceEnergyManagement, 'powerAdjustRequest', { power: 2_000_001, duration: 10, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization }),
-    ).rejects.toThrow('Power or duration out of range');
+    ).rejects.toThrow('MatterbridgeDeviceEnergyManagementServer: power or duration out of range');
     await expect(
       esa.invokeBehaviorCommand(DeviceEnergyManagement, 'powerAdjustRequest', { power: 1_000_000, duration: 9, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization }),
-    ).rejects.toThrow('Power or duration out of range');
+    ).rejects.toThrow('MatterbridgeDeviceEnergyManagementServer: power or duration out of range');
     expect(esa.getAttribute(DeviceEnergyManagement, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
   });
 
@@ -137,14 +137,16 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('CancelPowerAdjustRequest is rejected when nothing is active', async () => {
-    await expect(esa.invokeBehaviorCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest')).rejects.toThrow('No power adjustment is currently active');
+    await expect(esa.invokeBehaviorCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest')).rejects.toThrow(
+      'MatterbridgeDeviceEnergyManagementServer: no power adjustment is currently active',
+    );
   });
 
   test('PowerAdjustRequest is rejected for an opted-out cause', async () => {
     await esa.setAttribute(DeviceEnergyManagement, 'optOutState', DeviceEnergyManagement.OptOutState.LocalOptOut);
     await expect(
       esa.invokeBehaviorCommand(DeviceEnergyManagement, 'powerAdjustRequest', { power: 1_000_000, duration: 10, cause: DeviceEnergyManagement.AdjustmentCause.LocalOptimization }),
-    ).rejects.toThrow('User has opted out of this adjustment cause');
+    ).rejects.toThrow('MatterbridgeDeviceEnergyManagementServer: user has opted out of this adjustment cause');
     await esa.setAttribute(DeviceEnergyManagement, 'optOutState', DeviceEnergyManagement.OptOutState.NoOptOut);
   });
 
@@ -289,12 +291,15 @@ describe('Client clusters and behaviors', () => {
       });
       expect(loggerLogSpy).toHaveBeenCalledWith(
         LogLevel.DEBUG,
-        `MatterbridgeDeviceEnergyManagementServer powerAdjustRequest called with power ${powerAdjustRequest.power} duration ${powerAdjustRequest.duration} cause ${powerAdjustRequest.cause}`,
+        `MatterbridgeDeviceEnergyManagementServer: powerAdjustRequest called with power ${powerAdjustRequest.power} duration ${powerAdjustRequest.duration} cause ${powerAdjustRequest.cause} (endpoint ${energyManagement.id}.${energyManagement.number})`,
       );
 
       await energyManagement.invokeBehaviorCommand('deviceEnergyManagement', 'cancelPowerAdjustRequest');
       expect(cancelCalls[0]).toEqual({ cluster: 'deviceEnergyManagement', endpoint: energyManagement, request: {} });
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'MatterbridgeDeviceEnergyManagementServer cancelPowerAdjustRequest called');
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeDeviceEnergyManagementServer: cancelPowerAdjustRequest called (endpoint ${energyManagement.id}.${energyManagement.number})`,
+      );
       expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
     });
   });

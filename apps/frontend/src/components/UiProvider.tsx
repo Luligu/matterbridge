@@ -54,8 +54,9 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
         variant: 'default',
         autoHideDuration: timeout === null || timeout === undefined || timeout > 0 ? (timeout ?? 5) * 1000 : null,
         persist: timeout === 0,
-        // notistack render prop, not a nested component definition: enqueueSnackbar calls content(key, message) to render custom snackbar markup.
-        // oxlint-disable-next-line react/no-unstable-nested-components
+        // TODO: Replace this deprecated per-snackbar callback with a custom component registered through SnackbarProvider.Components.
+        // Keep it for now because it captures the message-specific severity and close handler; it is a Notistack render callback, not a nested React component.
+        // oxlint-disable-next-line react/no-unstable-nested-components typescript/no-deprecated
         content: (key) => (
           <Box key={key} sx={{ margin: '0', padding: '0', width: '300px', marginRight: '30px' }}>
             <Alert

@@ -239,8 +239,28 @@ pass/fail summary is available here <a href="latestChipTestsSummary.log"><code>c
 <td>Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code</td>
 </tr>
 <tr>
-<td><code>.github/instructions/testing/unit-tests.instructions.html</code></td>
+<td><code>.github/instructions/testing/testing.instructions.html</code></td>
 <td>Testing standards — scoped to <code>**/*.test.ts</code></td>
+</tr>
+<tr>
+<td><code>.github/skills/verify-agent-context/SKILL.html</code></td>
+<td>Verify the agent instructions, rules and skills are loaded — agent skill, <code>/verify-agent-context</code></td>
+</tr>
+<tr>
+<td><code>.github/skills/matterjs-pr-workflow/SKILL.html</code></td>
+<td>Open a PR against matter.js from the local fork — agent skill, <code>/matterjs-pr-workflow</code></td>
+</tr>
+<tr>
+<td><code>.github/skills/verify-npm-alignment/SKILL.html</code></td>
+<td>Verify the npm <code>latest</code> and <code>dev</code> tag alignment — agent skill, <code>/verify-npm-alignment</code></td>
+</tr>
+<tr>
+<td><code>.github/skills/verify-server-endpoint-context/SKILL.html</code></td>
+<td>Verify server endpoint context and forwarding order — agent skill, <code>/verify-server-endpoint-context</code></td>
+</tr>
+<tr>
+<td><code>.github/skills/verify-version-alignment/SKILL.html</code></td>
+<td>Verify the version alignment across the repo — agent skill, <code>/verify-version-alignment</code></td>
 </tr>
 </tbody></table>
 <h2 id="claude-instructions">Claude instructions</h2>
@@ -268,8 +288,28 @@ pass/fail summary is available here <a href="latestChipTestsSummary.log"><code>c
 <td>Plugin frontend SPA and custom REST API guide — scoped to frontend and plugin code</td>
 </tr>
 <tr>
-<td><code>.claude/rules/testing/unit-tests.instructions.html</code></td>
+<td><code>.claude/rules/testing/testing.instructions.html</code></td>
 <td>Testing standards — scoped to <code>**/*.test.ts</code></td>
+</tr>
+<tr>
+<td><code>.claude/skills/verify-agent-context/SKILL.html</code></td>
+<td>Verify the agent instructions, rules and skills are loaded — agent skill, <code>/verify-agent-context</code></td>
+</tr>
+<tr>
+<td><code>.claude/skills/matterjs-pr-workflow/SKILL.html</code></td>
+<td>Open a PR against matter.js from the local fork — agent skill, <code>/matterjs-pr-workflow</code></td>
+</tr>
+<tr>
+<td><code>.claude/skills/verify-npm-alignment/SKILL.html</code></td>
+<td>Verify the npm <code>latest</code> and <code>dev</code> tag alignment — agent skill, <code>/verify-npm-alignment</code></td>
+</tr>
+<tr>
+<td><code>.claude/skills/verify-server-endpoint-context/SKILL.html</code></td>
+<td>Verify server endpoint context and forwarding order — agent skill, <code>/verify-server-endpoint-context</code></td>
+</tr>
+<tr>
+<td><code>.claude/skills/verify-version-alignment/SKILL.html</code></td>
+<td>Verify the version alignment across the repo — agent skill, <code>/verify-version-alignment</code></td>
 </tr>
 </tbody></table>
 <h2 id="codexagents-instructions">Codex/Agents instructions</h2>
@@ -285,20 +325,40 @@ pass/fail summary is available here <a href="latestChipTestsSummary.log"><code>c
 <td>Main project instructions</td>
 </tr>
 <tr>
-<td><code>.agents/matterbridge-chip-tests.html</code></td>
+<td><code>.agents/rules/matterbridge-chip-tests.instructions.html</code></td>
 <td>CHIP conformance test harness</td>
 </tr>
 <tr>
-<td><code>.agents/matterbridge.html</code></td>
+<td><code>.agents/rules/matterbridge.instructions.html</code></td>
 <td>Matterbridge endpoint guide</td>
 </tr>
 <tr>
-<td><code>.agents/plugin-frontend.html</code></td>
+<td><code>.agents/rules/plugin-frontend.instructions.html</code></td>
 <td>Plugin frontend SPA and custom REST API guide</td>
 </tr>
 <tr>
-<td><code>.agents/testing.html</code></td>
+<td><code>.agents/rules/testing.instructions.html</code></td>
 <td>Testing and validation expectations</td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-agent-context/SKILL.html</code></td>
+<td>Verify the agent instructions, rules and skills are loaded</td>
+</tr>
+<tr>
+<td><code>.agents/skills/matterjs-pr-workflow/SKILL.html</code></td>
+<td>Open a PR against matter.js from the local fork</td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-npm-alignment/SKILL.html</code></td>
+<td>Verify the npm <code>latest</code> and <code>dev</code> tag alignment</td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-server-endpoint-context/SKILL.html</code></td>
+<td>Verify server endpoint context and forwarding order</td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-version-alignment/SKILL.html</code></td>
+<td>Verify the version alignment across the repo</td>
 </tr>
 <tr>
 <td><code>.codex/config.toml</code></td>
@@ -307,6 +367,59 @@ pass/fail summary is available here <a href="latestChipTestsSummary.log"><code>c
 <tr>
 <td><code>.codex/rules/default.rules</code></td>
 <td>Codex command allow, prompt, and deny rules</td>
+</tr>
+</tbody></table>
+<h2 id="gemini-instructions">Gemini instructions</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GEMINI.html</code></td>
+<td>Main project instructions — always loaded</td>
+</tr>
+<tr>
+<td><code>.antigravity/settings.json</code></td>
+<td>Antigravity permissions and settings</td>
+</tr>
+<tr>
+<td><code>.agents/rules/matterbridge-chip-tests.instructions.html</code></td>
+<td>CHIP conformance test harness — read on demand</td>
+</tr>
+<tr>
+<td><code>.agents/rules/matterbridge.instructions.html</code></td>
+<td>Matterbridge endpoint guide — read on demand</td>
+</tr>
+<tr>
+<td><code>.agents/rules/plugin-frontend.instructions.html</code></td>
+<td>Plugin frontend SPA and custom REST API guide — read on demand</td>
+</tr>
+<tr>
+<td><code>.agents/rules/testing.instructions.html</code></td>
+<td>Testing standards — read on demand</td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-agent-context/SKILL.html</code></td>
+<td>Verify the agent instructions, rules and skills are loaded — agent skill, <code>/verify-agent-context</code></td>
+</tr>
+<tr>
+<td><code>.agents/skills/matterjs-pr-workflow/SKILL.html</code></td>
+<td>Open a PR against matter.js from the local fork — agent skill, <code>/matterjs-pr-workflow</code></td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-npm-alignment/SKILL.html</code></td>
+<td>Verify the npm <code>latest</code> and <code>dev</code> tag alignment — agent skill, <code>/verify-npm-alignment</code></td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-server-endpoint-context/SKILL.html</code></td>
+<td>Verify server endpoint context and forwarding order — agent skill, <code>/verify-server-endpoint-context</code></td>
+</tr>
+<tr>
+<td><code>.agents/skills/verify-version-alignment/SKILL.html</code></td>
+<td>Verify the version alignment across the repo — agent skill, <code>/verify-version-alignment</code></td>
 </tr>
 </tbody></table>
 <h2 id="guidelines-on-importsexports">Guidelines on imports/exports</h2>

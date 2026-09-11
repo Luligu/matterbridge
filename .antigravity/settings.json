@@ -1,0 +1,62 @@
+{
+  "_comment": "Antigravity settings v.1.0.1",
+  "sandboxing": {
+    // Confines agent operations strictly to the current workspace root directory
+    "workspaceOnly": true,
+    // Spawns background tasks in an isolated Git worktree so unstaged work isn't mutated
+    "subagentIsolation": "branch",
+    // Restricts outbound socket connections and arbitrary network requests from subagents
+    "networkAccess": "restricted",
+    // Runs browser automation in a dedicated headless Chrome instance without shared cookies/credentials
+    "browserSandbox": true
+  },
+  "permissions": {
+    "deny": [
+      "read_file(.env)",
+      "read_file(.env.*)",
+      "read_file(**/.env)",
+      "read_file(**/.env.*)",
+      "read_file(**/secrets/**)",
+      "command(git pull)",
+      "command(git merge)",
+      "command(git push)",
+      "command(git rebase)",
+      "command(git commit)",
+      "command(git reset)",
+      "command(git filter-branch)",
+      "command(git branch -D)",
+      "command(git branch -d)",
+      "command(git tag -d)",
+      "command(git reflog expire)",
+      "command(git reflog delete)"
+    ],
+    "ask": [
+      "command(npm install)",
+      "command(npm i)",
+      "command(npm uninstall)",
+      "command(bun install)",
+      "command(bun i)",
+      "command(bun uninstall)",
+      "command(bun add)",
+      "command(bun remove)",
+      "command(curl)",
+      "command(Invoke-WebRequest)",
+      "command(docker pull)",
+      "command(docker run)"
+    ],
+    "allow": [
+      "read_file(*)",
+      "command(npm run typecheck)",
+      "command(npm run build)",
+      "command(npm run test)",
+      "command(npm run test:watch)",
+      "command(npm run test:verbose)",
+      "command(npm run test:coverage)",
+      "command(npm run lint)",
+      "command(npm run lint:fix)",
+      "command(npm run format)",
+      "command(npm run format:check)",
+      "command(bun test)"
+    ]
+  }
+}

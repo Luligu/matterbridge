@@ -1,4 +1,4 @@
-// .oxlintrc.json 1.0.18
+// .oxlintrc.json v.1.0.18
 
 // This Oxlint configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules.
 {
@@ -11,6 +11,7 @@
     "chip/**",
     "**/coverage/**",
     "**/dist/**",
+    "docker/chip-test/**",
     "**/temp/**",
     "**/node_modules/**",
     "**/out/**",
@@ -18,8 +19,7 @@
     "**/screenshots/**",
     "vendor/**",
     "**/package-lock.json",
-    "**/bin/**",
-    "**/src/mock/**"
+    "**/bin/**"
   ],
   "env": {
     "builtin": true,

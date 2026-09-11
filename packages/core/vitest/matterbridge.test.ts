@@ -40,7 +40,6 @@ const isWorkerResponseBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, '
 const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
 const respondBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'respond');
 const fetchBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'fetch');
-// @ts-expect-error - access to private members for testing
 const broadcastMessageHandlerBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
 
 // Setup the test environment

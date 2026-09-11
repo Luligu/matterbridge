@@ -1,5 +1,3 @@
-<!-- eslint-disable markdown/no-multiple-h1 -->
-
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp; Matterbridge mDNS reflector
 
 This project aims to use Matterbridge in these configurations:

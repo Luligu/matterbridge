@@ -978,6 +978,7 @@ export type CommandHandlerDataMap = {
 
   // Energy Evse
   'enableCharging': CommandHandlerData<'EnergyEvse.enableCharging'>;
+  'enableDischarging': CommandHandlerData<'EnergyEvse.enableDischarging'>;
   'disable': CommandHandlerData<'EnergyEvse.disable'>;
   'setTargets': CommandHandlerData<'EnergyEvse.setTargets'>;
   'getTargets': CommandHandlerData<'EnergyEvse.getTargets'>;
@@ -985,6 +986,13 @@ export type CommandHandlerDataMap = {
   'EnergyEvse.enableCharging': {
     command: 'enableCharging';
     request: EnergyEvse.EnableChargingRequest;
+    cluster: 'energyEvse';
+    attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'EnergyEvse.enableDischarging': {
+    command: 'enableDischarging';
+    request: EnergyEvse.EnableDischargingRequest;
     cluster: 'energyEvse';
     attributes: ClusterAttributeValues<(typeof EnergyEvse)['attributes']>;
     endpoint: MatterbridgeEndpoint;

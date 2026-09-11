@@ -44,7 +44,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
    */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeDeviceEnergyManagementModeServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DeviceEnergyManagementMode.changeToMode', {
       command: 'changeToMode',
       request,
@@ -56,7 +56,9 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     // Matter 1.6.0 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
     if (!supported) {
-      device.log.error(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
+      device.log.error(
+        `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with unsupported newMode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
     // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
@@ -76,7 +78,10 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
         });
       }
     }
-    device.log.debug(`MatterbridgeDeviceEnergyManagementModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
+    device.log.debug(
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 1.10.7.1.1: Transition into the mode associated with NewMode and respond with Success, or with a product-specific status and StatusText when the device is unable to transition.
     return await super.changeToMode(request);
   }
 }

@@ -29,7 +29,7 @@ jobs:
           ref: main
 
       - name: Setup Node.js 24.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           cache: npm
@@ -55,12 +55,19 @@ jobs:
       - name: Lint matterbridge
         run: npm run lint
 
+      - name: Check matterbridge formatting
+        run: npm run format:check
+
       - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
       - name: Lint frontend
         run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check frontend formatting
+        run: npm run format:check
         working-directory: apps/frontend
 
       - name: Build frontend
@@ -95,7 +102,7 @@ jobs:
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag latest
 
       - name: Wait for npm registry propagation
-        run: sleep 60
+        run: sleep 600
 
       - name: Trigger Matterbridge Docker Build Latest
         uses: actions/github-script@v9
@@ -118,7 +125,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-dev.yml',
-              ref: 'main'
+              ref: 'dev'
             })
 
       - name: Trigger Matterbridge Docker Build Bundev
@@ -130,7 +137,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bundev.yml',
-              ref: 'main'
+              ref: 'dev'
             })
 
       - name: Trigger Matterbridge Docker Build node-ubuntu-slim
@@ -229,6 +236,18 @@ jobs:
               ref: 'main'
             })
 
+      - name: Trigger Matterbridge Docker Build chip-test
+        uses: actions/github-script@v9
+        with:
+          github-token: ${{ secrets.PAT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'docker-buildx-chip-test.yml',
+              ref: 'dev'
+            })
+
   publish-dev:
     name: Publish daily dev to npm and trigger docker builds dev and bundev
     if: github.event_name != 'release'
@@ -240,7 +259,7 @@ jobs:
           ref: dev
 
       - name: Setup Node.js 24.x
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v7
         with:
           node-version: '24.x'
           cache: npm
@@ -266,12 +285,19 @@ jobs:
       - name: Lint matterbridge
         run: npm run lint
 
+      - name: Check matterbridge formatting
+        run: npm run format:check
+
       - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
       - name: Lint frontend
         run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check frontend formatting
+        run: npm run format:check
         working-directory: apps/frontend
 
       - name: Build frontend
@@ -349,10 +375,6 @@ jobs:
         run: |
           npm version "${{ steps.meta.outputs.ORIG_BASE }}" --no-git-tag-version --ignore-scripts
           node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev
-
-      - name: Wait for npm registry propagation
-        if: steps.check_new.outputs.should_publish == 'true'
-        run: sleep 60
 
       - name: Trigger Matterbridge Docker Build Dev
         if: steps.check_new.outputs.should_publish == 'true'

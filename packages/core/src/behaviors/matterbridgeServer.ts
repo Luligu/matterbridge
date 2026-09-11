@@ -39,7 +39,7 @@ export class MatterbridgeServer extends Behavior {
    * Logs initialization and delegates to the base behavior.
    */
   override initialize(): void {
-    this.state.log.debug(`MatterbridgeServer initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.state.log.debug(`MatterbridgeServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     super.initialize();
   }
 }
