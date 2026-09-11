@@ -39,7 +39,7 @@ The image (tag **bun** 69 MB) includes only Matterbridge, using the latest relea
 
 The image (tag **s6-rc** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:24-trixie-slim`, supports `arm64`, `amd64` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the [Matterbridge Home Assistant Application](https://github.com/Luligu/matterbridge-home-assistant-addon).
 
-The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bullseye-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
+The image (tag **s6-rc-legacy** 83 MB) includes only Matterbridge, using the latest release published on npm. This image is based on `node:22-bookworm-slim`, supports `arm64`, `amd64` and `arm/v7` and integrates the `s6-rc overlay` system. Plugins are not included in the image: they will be reinstalled on first run. It is only used for the legacy [Matterbridge Home Assistant Application (Legacy)](https://github.com/Luligu/matterbridge-home-assistant-addon-legacy).
 
 ### Matterbridge chip-tool docker image
 

@@ -156,6 +156,7 @@
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.10.</li>
+<li>[docker]: Change the base image of the <strong>s6-rc-legacy</strong> docker image from <code>node:22-bullseye-slim</code> to <code>node:22-bookworm-slim</code>. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security <code>Release</code> file expired on 2026-09-07, breaking <code>apt-get update</code> during the build. Debian 12 (bookworm) still provides the <code>armhf</code> port and <code>node:22</code> still publishes <code>linux/arm/v7</code>, so <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> support is unchanged.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.2.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.0.12.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.67.0.</li>
