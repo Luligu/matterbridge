@@ -146,6 +146,7 @@ import {
   checkNotLatinCharacters,
   createUniqueId,
   defaultFor,
+  emitCommand,
   featuresFor,
   generateUniqueId,
   getApparentElectricalPowerMeasurementClusterServer,
@@ -191,6 +192,9 @@ logModuleLoaded('MatterbridgeEndpoint');
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
 
 type FirstCommandParam<Params extends unknown[]> = Params extends [] ? undefined : Params[0];
+
+/** The request payload accepted for a command: commands without payload take an empty object. */
+type CommandRequest<P> = [P] extends [undefined] ? Record<string, never> : P;
 
 /** Behavior.Type utilities */
 
@@ -1206,6 +1210,56 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   subscribeCommand(cluster: Behavior.Type | ClusterType | ClusterId | string, command: string, listener: SubscribeCommandListener, log?: AnsiLogger): MatterbridgeEndpoint {
     return subscribeCommand(this, cluster, command, listener, log);
+  }
+
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {Behavior.Type} cluster - The cluster that received the command.
+   * @param {BehaviorCommandName<T>} command - The name of the command that was received.
+   * @param {BehaviorCommandParams<T, C>} request - The request payload of the command.
+   * @param {ActionContext} context - The action context of the invoke.
+   */
+  emitCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(
+    cluster: T,
+    command: C,
+    request: CommandRequest<BehaviorCommandParams<T, C>>,
+    context: ActionContext,
+  ): void;
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {ClusterType} cluster - The cluster that received the command.
+   * @param {ClusterCommandName<T>} command - The name of the command that was received.
+   * @param {ClusterCommandParams<T, C>} request - The request payload of the command.
+   * @param {ActionContext} context - The action context of the invoke.
+   */
+  emitCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, request: CommandRequest<ClusterCommandParams<T, C>>, context: ActionContext): void;
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {string} cluster - The behavior id of the cluster that received the command (i.e. 'onOff').
+   * @param {string} command - The name of the command that was received (i.e. 'offWithEffect').
+   * @param {unknown} request - The request payload of the command.
+   * @param {ActionContext} context - The action context of the invoke.
+   */
+  emitCommand(cluster: string, command: string, request: unknown, context: ActionContext): void;
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {Behavior.Type | ClusterType | string} cluster - The cluster that received the command, as a behavior, a cluster or its behavior id (i.e. 'onOff').
+   * @param {string} command - The camelCase name of the command that was received (i.e. 'offWithEffect').
+   * @param {unknown} request - The request payload of the command. Pass an empty object for commands without payload.
+   * @param {ActionContext} context - The action context of the invoke.
+   *
+   * @remarks
+   * The observable exists only when {@link subscribeCommand} has been called for the command, so this is a no-op for unsubscribed commands.
+   * It is called by the cluster servers as the last action of a command implementation, once the command has been validated and the cluster state updated.
+   */
+  emitCommand(cluster: Behavior.Type | ClusterType | string, command: string, request: unknown, context: ActionContext): void {
+    // Behavior.Type carries a string id ('onOff'), ClusterType a numeric id and the cluster name ('OnOff'): both resolve to the behavior id once lowercased.
+    const clusterName = typeof cluster === 'string' ? cluster : typeof cluster.id === 'string' ? cluster.id : cluster.name;
+    emitCommand(this, clusterName, command, request, context);
   }
 
   /**

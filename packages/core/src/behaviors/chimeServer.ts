@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2026-07-13
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -24,10 +24,9 @@
 
 import { ChimeServer } from '@matter/node/behaviors/chime';
 import { Status, StatusResponseError } from '@matter/types';
-import type { Chime } from '@matter/types/clusters/chime';
+import { Chime } from '@matter/types/clusters/chime';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { emitCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /** Id of a chime sound in the InstalledChimeSounds list. */
@@ -43,9 +42,12 @@ export type ChimeId = number;
 const ChimeServerBase = ChimeServer.enable({ events: { chimeStartedPlaying: true } });
 
 /**
- * Chime server that forwards the PlayChimeSound command to the Matterbridge command handler and generates the ChimeStartedPlaying event.
+ * Chime server that notifies the PlayChimeSound command subscribers and generates the ChimeStartedPlaying event.
  */
 export class MatterbridgeChimeServer extends ChimeServerBase {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   override initialize(): void {
     // Must stay an unbound method reference: matter.js calls reactors via `reactor.call(transactionScopedThis, ...)`,
     // rebinding `this` to a fresh per-write transactional proxy. A bound arrow function ignores that rebind and
@@ -99,7 +101,7 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
     device.log.info(`MatterbridgeChimeServer: playing chime sound with chimeId ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 11.8.7.1: Generate the ChimeStartedPlaying event when the chime sound starts playing.
     this.events.chimeStartedPlaying.emit({ chimeId }, this.context);
-    emitCommand(this.endpoint, ChimeServer.id, 'playChimeSound', request, this.context);
+    this.endpoint.emitCommand(Chime, 'playChimeSound', request, this.context);
   }
 }
 

@@ -1135,10 +1135,17 @@ describe('Matterbridge ' + NAME, () => {
     await device.invokeBehaviorCommand(OnOff, 'toggle');
     expect(device.getAttribute(OnOff, 'onOff')).toBe(false);
 
-    // None of the three invokes notified the subscribers: MatterbridgeOnOffServer forwards its commands to addCommandHandler() only and does not
-    // call emitCommand() yet, so the subscribers of the OnOff commands are notified only when the cluster server emits the command observable.
-    expect(datas).toHaveLength(0);
+    // All three invokes notified the subscribers: MatterbridgeOnOffServer emits the command observable as the last action of each command
+    // implementation, after forwarding to addCommandHandler() and after the state update. Toggle notifies twice because matter.js implements
+    // OnOffServer.toggle() by delegating to off() or on(), which re-enters the override: the delegated command is emitted before toggle itself.
+    expect(datas).toEqual([
+      { command: 'off', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() },
+      { command: 'on', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() },
+      { command: 'off', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() },
+      { command: 'toggle', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() },
+    ]);
 
+    datas.length = 0;
     await device.act((agent) => {
       emitCommand(device, 'onOff', 'off', {}, agent.context);
     });
