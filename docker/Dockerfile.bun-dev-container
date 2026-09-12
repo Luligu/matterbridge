@@ -1,4 +1,4 @@
-# docker/Dockerfile.bun-dev-container v.2.1.1
+# docker/Dockerfile.bun-dev-container v.2.2.0
 
 # This Dockerfile is used to build a development container for Bun applications.
 # It is based on the official Bun Docker image and includes additional tools and configurations for a better development experience.

@@ -35,11 +35,11 @@ if [ -z "$BRANCH" ] || [ -z "$MODE" ]; then
 fi
 
 echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "1.install-matterbridge - Installing Matterbridge from the $BRANCH branch..."
-cd /
 if [ ! -d "/workspaces" ]; then
   echo "Directory /workspaces does not exist. Exiting."
   exit 1
 fi
+cd /workspaces
 
 echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "2.install-matterbridge - Preparing Matterbridge directory..."
 if [ "$(stat -c %u matterbridge)" != "$(id -u)" ]; then
