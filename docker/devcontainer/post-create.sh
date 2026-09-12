@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# docker/devcontainer/post-create.sh v.2.1.1
+# docker/devcontainer/post-create.sh v.2.2.0
 
 # This script runs after the Dev Container is created to set up the dev container environment.
 
@@ -8,6 +8,7 @@ set -euo pipefail
 
 MODE=""
 PLUGIN=false
+BRANCH="dev"
 
 for arg in "$@"; do
   case "$arg" in
@@ -20,16 +21,22 @@ for arg in "$@"; do
     --plugin)
       PLUGIN=true
       ;;
+    --dev)
+      BRANCH="dev"
+      ;;
+    --main)
+      BRANCH="main"
+      ;;
     *)
       echo "Unknown argument: $arg" >&2
-      echo "Usage: post-create.sh <--bun|--node> [--plugin]" >&2
+      echo "Usage: post-create.sh <--bun|--node> [--plugin] [--dev|--main]" >&2
       exit 1
       ;;
   esac
 done
 
 if [ -z "$MODE" ]; then
-  echo "Usage: post-create.sh <--bun|--node> [--plugin]" >&2
+  echo "Usage: post-create.sh <--bun|--node> [--plugin] [--dev|--main]" >&2
   exit 1
 fi
 
@@ -89,8 +96,8 @@ for path in . "${workspace_paths[@]}" "${home_paths[@]}"; do
 done
 
 if [ "$PLUGIN" = true ]; then
-  step "Building Matterbridge..."
-  # Change dev to main to install the stable branch.
+  step "Building Matterbridge from the ${BRANCH} branch..."
+  # The branch defaults to dev; pass --main to install the stable branch.
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
   INSTALL_SCRIPT="${SCRIPT_DIR}/install-matterbridge.sh"
   if [ ! -f "$INSTALL_SCRIPT" ]; then
@@ -99,7 +106,7 @@ if [ "$PLUGIN" = true ]; then
   if [ ! -f "$INSTALL_SCRIPT" ]; then
     INSTALL_SCRIPT=".devcontainer/install-matterbridge.sh"
   fi
-  bash "$INSTALL_SCRIPT" dev "--$MODE"
+  bash "$INSTALL_SCRIPT" "$BRANCH" "--$MODE"
 fi
 
 step "Installing the ${TARGET} dependencies..."

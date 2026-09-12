@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# docker/devcontainer/post-start.sh v.2.1.1
+# docker/devcontainer/post-start.sh v.2.2.0
 
 # This script runs after the Dev Container is started to set up the dev container environment.
 
