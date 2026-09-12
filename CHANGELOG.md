@@ -55,6 +55,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [docker]: Change the base image of the **s6-rc-legacy** docker image from `node:22-bullseye-slim` to `node:22-bookworm-slim`. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security `Release` file expired on 2026-09-07, breaking `apt-get update` during the build. Debian 12 (bookworm) still provides the `armhf` port and `node:22` still publishes `linux/arm/v7`, so `arm64`, `amd64` and `arm/v7` support is unchanged.
 - [MatterbridgeEndpoint]: `createDefaultBridgedDeviceBasicInformationClusterServer()` takes a new optional trailing `productId` parameter and reports it on the `BridgedDeviceBasicInformation` cluster when it is a valid uint16. `ProductId` had `disallowConform` on this cluster up to Matter 1.3, but Matter 1.4 (cluster revision 4) changed it to `describedConform` (optional when bridging Matter devices), so it is now spec compliant to report it. The parameter is optional and appended at the end of the signature, so all the existing call sites are unaffected and the attribute stays absent unless a caller opts in. It is also passed through by `deserialize()` and by `MatterbridgePlatform`, so a stored device doesn't lose its `productId`. Thanks Ludovic BOUÉ.
 
+### Fixed
+
+- [matterbridge]: The root directory is now resolved by probing the install layout on the file system instead of guessing it from the runtime and from a fixed number of parent directories.
+- [matterbridge]: Fix `ENOENT ... /apps/frontend/package.json` when `matterbridge` is started on node from a bun global install, and the same wrong root directory on any hoisted (flat) install and on a repository directory not named `matterbridge`.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.9] - 2026-09-11

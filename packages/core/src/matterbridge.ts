@@ -114,7 +114,7 @@ import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 // matterbridge
 import { DeviceManager } from './deviceManager.js';
 import { Frontend } from './frontend.js';
-import { addVirtualDevice, addVirtualDevices } from './helpers.js';
+import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './helpers.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
@@ -669,36 +669,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.matterbridgeCertDirectory = this.profile ? path.join(this.homeDirectory, '.mattercert', 'profiles', this.profile) : path.join(this.homeDirectory, '.mattercert');
     await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
-    // Set the matterbridge root directory
+    // Set the matterbridge root directory. The install layout is probed on the file system: it depends on the package manager and not on the runtime
+    // that starts the cli, so `matterbridge` (node shebang) and `bunx --bun matterbridge` resolve the same directory for the same installation.
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     this.log.debug(`Determining root directory from currentFileDirectory = ${CYAN}${currentFileDirectory}${db}`);
-    // v8 ignore next - the following code is used to determine the root directory of the matterbridge application based on the current file directory. It is not coverable by tests.
-    if (
-      currentFileDirectory.endsWith(path.join('matterbridge', 'packages', 'core', 'src')) ||
-      currentFileDirectory.endsWith(path.join('matterbridge', 'packages', 'core', 'dist'))
-    ) {
-      // ...\matterbridge\packages\core\src on test
-      // ...\matterbridge\packages\core\dist on development
-      // test and development - adjust the path for packages core src/dist directory (3).
-      this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..');
-      this.log.debug(`Found packages core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-    } else if (currentFileDirectory.endsWith(path.join('matterbridge', 'dist'))) {
-      // ...\matterbridge\dist
-      // bundler - adjust the path for bundled core into Matterbridge's own dist directory (1).
-      this.rootDirectory = path.resolve(currentFileDirectory, '..');
-      this.log.debug(`Found bundled core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-    } else {
-      if (isBun()) {
-        // bun installs matterbridge into the global prefix alongside its own dependencies.
-        this.rootDirectory = path.join(getGlobalBunModules(), 'matterbridge');
-        this.log.debug(`Found bun global core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-      } else {
-        // node installs matterbridge into the global prefix and its own dependencies into ...\matterbridge\node_modules\@matterbridge\core\dist
-        // production - adjust the path for node_modules @matterbridge core dist directory (4).
-        this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..', '..');
-        this.log.debug(`Found production core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-      }
+    const rootDirectory = await resolveRootDirectory(currentFileDirectory);
+    // v8 ignore next 4 - the resolution of the root directory depends on the install layout. It is not coverable by tests.
+    if (rootDirectory === undefined) {
+      const message = `Cannot determine the matterbridge root directory from ${currentFileDirectory}: no matterbridge package.json found in the parent directories.`;
+      this.log.fatal(message);
+      throw new Error(message);
     }
+    this.rootDirectory = rootDirectory;
+    this.log.debug(`Found root directory: ${CYAN}${this.rootDirectory}${db}`);
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);

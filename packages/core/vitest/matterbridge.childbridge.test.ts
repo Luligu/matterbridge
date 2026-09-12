@@ -35,12 +35,16 @@ import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import type { PluginManager } from '../src/pluginManager.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
-// Mock the addVirtualDevice from the helpers module so loading does not spawn virtual devices
-vi.mock('../src/helpers.js', () => ({
-  addVirtualDevice: vi.fn(() => {
-    return; // Mock the addVirtualDevice function to return immediately
-  }),
-}));
+// Mock the addVirtualDevice from the helpers module so loading does not spawn virtual devices (the rest of the module stays real)
+vi.mock('../src/helpers.js', async () => {
+  const actual = await vi.importActual<typeof import('../src/helpers.js')>('../src/helpers.js');
+  return {
+    ...actual,
+    addVirtualDevice: vi.fn(() => {
+      return; // Mock the addVirtualDevice function to return immediately
+    }),
+  };
+});
 
 // Setup the test environment
 await setupTest(NAME, false, [], { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' });
