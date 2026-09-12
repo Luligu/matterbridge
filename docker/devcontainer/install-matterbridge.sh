@@ -45,8 +45,10 @@ echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "2.install-matterbrid
 if [ "$(stat -c %u matterbridge)" != "$(id -u)" ]; then
   sudo chown -R "$(id -u):$(id -g)" matterbridge
 fi
+# Set the setgid bit so everything created inside the mounted volume inherits its
+# group, keeping the cloned tree group-accessible regardless of the creator's umask.
 sudo chmod g+s matterbridge
-sudo rm -rf matterbridge/* matterbridge/.[!.]* matterbridge/..?*
+# sudo rm -rf matterbridge/* matterbridge/.[!.]* matterbridge/..?*
 
 echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "3.install-matterbridge - Cloning Matterbridge from the $BRANCH branch..."
 # Shallow clone for speed (history not needed inside dev container). Remove --depth if full history required.
