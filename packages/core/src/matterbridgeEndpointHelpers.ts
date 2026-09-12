@@ -1235,7 +1235,7 @@ export function subscribeCommand(
 /**
  * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with `subscribeCommand()`.
  *
- * @param {Endpoint} endpoint - The endpoint that received the command. Plain endpoints are ignored.
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint that received the command.
  * @param {string} cluster - The behavior id of the cluster that received the command (i.e. 'chime').
  * @param {string} command - The camelCase name of the command that was received (i.e. 'playChimeSound').
  * @param {unknown} request - The request payload of the command.
@@ -1250,21 +1250,10 @@ export function subscribeCommand(
  * The emission is synchronous, so the subscribed listeners run before the command implementation returns and before the invoke transaction is committed:
  * the `context` passed to them is live for the synchronous body of the listener only.
  */
-export function emitCommand(endpoint: Endpoint, cluster: string, command: string, request: unknown, context: ActionContext): void {
-  if (!isCommandEndpoint(endpoint)) return;
+export function emitCommand(endpoint: MatterbridgeEndpoint, cluster: string, command: string, request: unknown, context: ActionContext): void {
   const clusterName = lowercaseFirstLetter(cluster);
   const commandName = lowercaseFirstLetter(command);
   getCommandObservable(endpoint, clusterName, commandName, false)?.emit({ command: commandName, cluster: clusterName, request, endpoint, context });
-}
-
-/**
- * Checks whether an endpoint supports Matterbridge command subscriptions.
- *
- * @param {Endpoint} endpoint - The endpoint to check.
- * @returns {boolean} Whether the endpoint supports command subscriptions.
- */
-function isCommandEndpoint(endpoint: Endpoint): endpoint is MatterbridgeEndpoint {
-  return 'subscribeCommand' in endpoint && typeof endpoint.subscribeCommand === 'function';
 }
 
 /**

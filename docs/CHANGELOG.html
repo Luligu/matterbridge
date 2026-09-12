@@ -156,7 +156,6 @@
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.10.</li>
-<li>[docker]: Change the base image of the <strong>s6-rc-legacy</strong> docker image from <code>node:22-bullseye-slim</code> to <code>node:22-bookworm-slim</code>. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security <code>Release</code> file expired on 2026-09-07, breaking <code>apt-get update</code> during the build. Debian 12 (bookworm) still provides the <code>armhf</code> port and <code>node:22</code> still publishes <code>linux/arm/v7</code>, so <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> support is unchanged.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.2.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.0.12.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.67.0.</li>
@@ -175,6 +174,8 @@
 <li>[frontend]: Bump <code>vite</code> to v.8.3.0.</li>
 <li>[frontend]: Bump <code>oxfmt</code> to v.0.67.0.</li>
 <li>[frontend]: Bump <code>oxlint</code> to v.1.82.0.</li>
+<li>[docker]: Change the base image of the <strong>s6-rc-legacy</strong> docker image from <code>node:22-bullseye-slim</code> to <code>node:22-bookworm-slim</code>. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security <code>Release</code> file expired on 2026-09-07, breaking <code>apt-get update</code> during the build. Debian 12 (bookworm) still provides the <code>armhf</code> port and <code>node:22</code> still publishes <code>linux/arm/v7</code>, so <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> support is unchanged.</li>
+<li>[MatterbridgeEndpoint]: <code>createDefaultBridgedDeviceBasicInformationClusterServer()</code> takes a new optional trailing <code>productId</code> parameter and reports it on the <code>BridgedDeviceBasicInformation</code> cluster when it is a valid uint16. <code>ProductId</code> had <code>disallowConform</code> on this cluster up to Matter 1.3, but Matter 1.4 (cluster revision 4) changed it to <code>describedConform</code> (optional when bridging Matter devices), so it is now spec compliant to report it. The parameter is optional and appended at the end of the signature, so all the existing call sites are unaffected and the attribute stays absent unless a caller opts in. It is also passed through by <code>deserialize()</code> and by <code>MatterbridgePlatform</code>, so a stored device doesn&#39;t lose its <code>productId</code>. Thanks Ludovic BOUÉ.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3109-2026-09-11">[3.10.9] - 2026-09-11</h2>

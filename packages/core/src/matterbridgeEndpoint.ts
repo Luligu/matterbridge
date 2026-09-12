@@ -146,6 +146,7 @@ import {
   checkNotLatinCharacters,
   createUniqueId,
   defaultFor,
+  emitCommand,
   featuresFor,
   generateUniqueId,
   getApparentElectricalPowerMeasurementClusterServer,
@@ -191,6 +192,9 @@ logModuleLoaded('MatterbridgeEndpoint');
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
 
 type FirstCommandParam<Params extends unknown[]> = Params extends [] ? undefined : Params[0];
+
+/** The request payload accepted for a command: commands without payload take an empty object. */
+type CommandRequest<P> = [P] extends [undefined] ? Record<string, never> : P;
 
 /** Behavior.Type utilities */
 
@@ -1209,6 +1213,56 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {Behavior.Type} cluster - The cluster that received the command.
+   * @param {BehaviorCommandName<T>} command - The name of the command that was received.
+   * @param {BehaviorCommandParams<T, C>} request - The request payload of the command.
+   * @param {ActionContext} context - The action context of the invoke.
+   */
+  emitCommand<T extends Behavior.Type, C extends BehaviorCommandName<T>>(
+    cluster: T,
+    command: C,
+    request: CommandRequest<BehaviorCommandParams<T, C>>,
+    context: ActionContext,
+  ): void;
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {ClusterType} cluster - The cluster that received the command.
+   * @param {ClusterCommandName<T>} command - The name of the command that was received.
+   * @param {ClusterCommandParams<T, C>} request - The request payload of the command.
+   * @param {ActionContext} context - The action context of the invoke.
+   */
+  emitCommand<T extends ClusterType, C extends ClusterCommandName<T>>(cluster: T, command: C, request: CommandRequest<ClusterCommandParams<T, C>>, context: ActionContext): void;
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {string} cluster - The behavior id of the cluster that received the command (i.e. 'onOff').
+   * @param {string} command - The name of the command that was received (i.e. 'offWithEffect').
+   * @param {unknown} request - The request payload of the command.
+   * @param {ActionContext} context - The action context of the invoke.
+   */
+  emitCommand(cluster: string, command: string, request: unknown, context: ActionContext): void;
+  /**
+   * Emits the command observable of the provided command on a cluster, if any listener subscribed to it with {@link subscribeCommand}.
+   *
+   * @param {Behavior.Type | ClusterType | string} cluster - The cluster that received the command, as a behavior, a cluster or its behavior id (i.e. 'onOff').
+   * @param {string} command - The camelCase name of the command that was received (i.e. 'offWithEffect').
+   * @param {unknown} request - The request payload of the command. Pass an empty object for commands without payload.
+   * @param {ActionContext} context - The action context of the invoke.
+   *
+   * @remarks
+   * The observable exists only when {@link subscribeCommand} has been called for the command, so this is a no-op for unsubscribed commands.
+   * It is called by the cluster servers as the last action of a command implementation, once the command has been validated and the cluster state updated.
+   */
+  emitCommand(cluster: Behavior.Type | ClusterType | string, command: string, request: unknown, context: ActionContext): void {
+    // Behavior.Type carries a string id ('onOff'), ClusterType a numeric id and the cluster name ('OnOff'): both resolve to the behavior id once lowercased.
+    const clusterName = typeof cluster === 'string' ? cluster : typeof cluster.id === 'string' ? cluster.id : cluster.name;
+    emitCommand(this, clusterName, command, request, context);
+  }
+
+  /**
    * Sets the state of the provided cluster on a given endpoint.
    *
    * @param {Behavior.Type} cluster - The cluster to set.
@@ -2207,6 +2261,7 @@ export class MatterbridgeEndpoint extends Endpoint {
           serializedDevice.productLabel,
           serializedDevice.productUrl,
           serializedDevice.configurationVersion,
+          serializedDevice.productId,
         );
       else if (clusterId === BasicInformation.id)
         device.createDefaultBasicInformationClusterServer(
@@ -2411,10 +2466,11 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {string} [productLabel] - The product label of the device. Default is 'Matter Bridged Endpoint'.
    * @param {string} [productUrl] - The product URL of the device. Default is 'https://matterbridge.io'.
    * @param {number} [configurationVersion] - The configuration version of the device. Default is 1.
+   * @param {number} [productId] - The product ID of the device. Optional: not set by default, so it is only reported when explicitly provided here.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * - The productId doesn't exist on the BridgedDeviceBasicInformation cluster.
+   * - ProductId had disallowConform on BridgedDeviceBasicInformation up to Matter 1.3. Matter 1.4 (cluster revision 4) changed it to describedConform (optional, "optional when bridging Matter devices"), so it is safe to report when the caller provides one.
    * - The bridgedNode device type must be added to the deviceTypeList of the Descriptor cluster.
    * - The product URL must follow RFC 1738 syntax, use the HTTPS scheme and contain at most 256 ASCII characters.
    */
@@ -2431,12 +2487,13 @@ export class MatterbridgeEndpoint extends Endpoint {
     productLabel: string = 'Matter Bridged Endpoint',
     productUrl: string = 'https://matterbridge.io',
     configurationVersion: number = 1,
+    productId?: number,
   ): this {
     this.log.logName = deviceName;
     this.deviceName = deviceName;
     this.serialNumber = serialNumber;
     this.uniqueId = createUniqueId(deviceName, serialNumber, vendorName, productName);
-    this.productId = undefined;
+    this.productId = productId;
     this.productName = productName;
     this.productLabel = productLabel;
     this.productUrl = productUrl;
@@ -2466,6 +2523,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         hardwareVersionString: isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0',
         configurationVersion: isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1,
         reachable: true,
+        ...(isValidInteger(productId, 0, UINT16_MAX) ? { productId } : {}),
       },
     );
     return this;

@@ -28,10 +28,9 @@ import { WebRtcTransportProviderServer } from '@matter/node/behaviors/web-rtc-tr
 import { WebRtcTransportRequestorClient } from '@matter/node/behaviors/web-rtc-transport-requestor';
 import { EndpointNumber, FabricIndex, NodeId, StreamUsage, Status, StatusResponseError } from '@matter/types';
 import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
-import type { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
+import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { emitCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeCameraAvStreamManagementServer } from './cameraAvStreamManagementServer.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 import { type WeriftOfferOptions, WeriftWebRtcSession } from './weriftSession.js';
@@ -122,6 +121,9 @@ interface RemoteActorSessionContext {
  *
  */
 export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportProviderServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   declare state: MatterbridgeWebRtcTransportProviderServer.State;
 
   /**
@@ -678,7 +680,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
 
     const requestorEndpoint = await this.#resolvePeerRequestorEndpoint(peerNodeId, fabricIndex, request.originatingEndpointId);
     if (this.#evictIfOverCapacity(webRtcSessionId, requestorEndpoint)) {
-      emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'solicitOffer', request, this.context);
+      this.endpoint.emitCommand(WebRtcTransportProvider, 'solicitOffer', request, this.context);
       return { webRtcSessionId, deferredOffer: false, ...this.#echoDeprecatedStreamIds(request, videoStreams, audioStreams) };
     }
 
@@ -707,7 +709,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
       );
     }
 
-    emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'solicitOffer', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportProvider, 'solicitOffer', request, this.context);
     return { webRtcSessionId, deferredOffer: false, ...this.#echoDeprecatedStreamIds(request, videoStreams, audioStreams) };
   }
 
@@ -785,7 +787,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
 
       const requestorEndpointForCapacityCheck = await this.#resolvePeerRequestorEndpoint(peerNodeId, fabricIndex, request.originatingEndpointId ?? EndpointNumber(0));
       if (this.#evictIfOverCapacity(webRtcSessionId, requestorEndpointForCapacityCheck)) {
-        emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'provideOffer', request, this.context);
+        this.endpoint.emitCommand(WebRtcTransportProvider, 'provideOffer', request, this.context);
         return { webRtcSessionId, ...this.#echoDeprecatedStreamIds(request, videoStreams, audioStreams) };
       }
       // Matter 1.6.0 § 11.5.6.3.12: Respond with NOT_FOUND if a non-null WebRTCSessionID does not match a value in CurrentSessions.
@@ -830,7 +832,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
 
     // Spread into plain arrays first: state's list attributes throw on out-of-bounds index access (e.g. `[0]` on an
     // empty list) instead of returning undefined like a normal JS array.
-    emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'provideOffer', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportProvider, 'provideOffer', request, this.context);
     return { webRtcSessionId, ...this.#echoDeprecatedStreamIds(request, session.videoStreams && [...session.videoStreams], session.audioStreams && [...session.audioStreams]) };
   }
 
@@ -864,7 +866,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     if (webRtcPeer) {
       await webRtcPeer.applyAnswer(request.sdp);
     }
-    emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'provideAnswer', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportProvider, 'provideAnswer', request, this.context);
   }
 
   /**
@@ -953,7 +955,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
         }),
       );
     }
-    emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'provideIceCandidates', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportProvider, 'provideIceCandidates', request, this.context);
   }
 
   /**
@@ -983,7 +985,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     device.log.info(
       `MatterbridgeWebRtcTransportProviderServer.endSession: ended webRTC session ${request.webRtcSessionId} (reason ${request.reason}) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    emitCommand(this.endpoint, WebRtcTransportProviderServer.id, 'endSession', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportProvider, 'endSession', request, this.context);
   }
 }
 

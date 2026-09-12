@@ -3,7 +3,7 @@
  * @description This file contains the MatterbridgeOnOffServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -21,8 +21,6 @@
  * limitations under the License.
  */
 
-/* oxlint-disable typescript/no-unsafe-type-assertion */
-
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { OnOff } from '@matter/types/clusters/on-off';
 
@@ -36,8 +34,13 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * onWithRecallGlobalScene, onWithTimedOff) are visible for overriding.
  */
 export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Lighting) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Forwards On requests to the Matterbridge command handler.
+   *
+   * The On command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    */
   override async on(): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
@@ -53,16 +56,19 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: on called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.5.7.2.1: On receipt of the On command the server SHALL set the OnOff attribute to TRUE, and when OnTime and OffWaitTime are both supported SHALL set OffWaitTime to 0.
     await super.on();
+    this.endpoint.emitCommand(OnOff, 'on', {}, this.context);
   }
 
   /**
    * Forwards Off requests to the Matterbridge command handler.
+   *
+   * The Off command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    */
   override async off(): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
@@ -78,16 +84,19 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: off called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.5.7.1.1: On receipt of the Off command the server SHALL set the OnOff attribute to FALSE, and when OnTime is supported SHALL set OnTime to 0.
     await super.off();
+    this.endpoint.emitCommand(OnOff, 'off', {}, this.context);
   }
 
   /**
    * Forwards Toggle requests to the Matterbridge command handler.
+   *
+   * The Toggle command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    */
   override async toggle(): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
@@ -103,16 +112,19 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: toggle called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.5.7.3.1: On receipt of the Toggle command the server SHALL set the OnOff attribute to the inverse of its current value.
     await super.toggle();
+    this.endpoint.emitCommand(OnOff, 'toggle', {}, this.context);
   }
 
   /**
    * Forwards OffWithEffect requests to the Matterbridge command handler.
+   *
+   * The OffWithEffect command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {OnOff.OffWithEffectRequest} request - Off-with-effect request payload.
    */
@@ -132,16 +144,19 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       request,
       cluster: OnOffServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: offWithEffect called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.5.7.4.3: On receipt of OffWithEffect, when GlobalSceneControl is TRUE the server SHALL store its settings in the global scene, set GlobalSceneControl to FALSE, set OnOff to FALSE and OnTime to 0; otherwise it SHALL only set OnOff to FALSE.
     await super.offWithEffect(request);
+    this.endpoint.emitCommand(OnOff, 'offWithEffect', request, this.context);
   }
 
   /**
    * Forwards OnWithRecallGlobalScene requests to the Matterbridge command handler.
+   *
+   * The OnWithRecallGlobalScene command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    */
   override async onWithRecallGlobalScene(): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
@@ -157,16 +172,19 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       request: {},
       cluster: OnOffServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: onWithRecallGlobalScene called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.5.7.5.1: On receipt of OnWithRecallGlobalScene the server SHALL discard the command when GlobalSceneControl is TRUE, otherwise recall the global scene and set GlobalSceneControl to TRUE.
     await super.onWithRecallGlobalScene();
+    this.endpoint.emitCommand(OnOff, 'onWithRecallGlobalScene', {}, this.context);
   }
 
   /**
    * Forwards OnWithTimedOff requests to the Matterbridge command handler.
+   *
+   * The OnWithTimedOff command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {OnOff.OnWithTimedOffRequest} request - On-with-timed-off request payload.
    */
@@ -186,11 +204,12 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       request,
       cluster: OnOffServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: onWithTimedOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.5.7.6.4: On receipt of OnWithTimedOff the server SHALL discard the command when AcceptOnlyWhenOn is set and OnOff is FALSE, otherwise adjust OnTime and OffWaitTime as specified and set OnOff to TRUE.
     await super.onWithTimedOff(request);
+    this.endpoint.emitCommand(OnOff, 'onWithTimedOff', request, this.context);
   }
 }
