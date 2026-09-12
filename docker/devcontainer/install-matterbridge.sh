@@ -51,8 +51,22 @@ sudo chmod g+s matterbridge
 # sudo rm -rf matterbridge/* matterbridge/.[!.]* matterbridge/..?*
 
 echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "3.install-matterbridge - Cloning Matterbridge from the $BRANCH branch..."
-# Shallow clone for speed (history not needed inside dev container). Remove --depth if full history required.
-git clone --depth 1 --single-branch --no-tags -b "$BRANCH" https://github.com/Luligu/matterbridge.git matterbridge
+# "git clone" refuses a non-empty target, so the repository is fetched in place instead:
+# on the first run (or after a wipe) the directory is emptied and initialized, on later
+# runs only the new commits are fetched and the working tree is reset onto them. That
+# keeps node_modules and the previous build output, which is what makes a re-install fast.
+if [ ! -d matterbridge/.git ]; then
+  sudo rm -rf matterbridge/* matterbridge/.[!.]* matterbridge/..?*
+  git init -q -b "$BRANCH" matterbridge
+  git -C matterbridge remote add origin https://github.com/Luligu/matterbridge.git
+fi
+# Shallow fetch for speed (history not needed inside dev container). Remove --depth if full history required.
+git -C matterbridge fetch --depth 1 --no-tags origin "$BRANCH"
+# -f/-B discards local edits and moves the branch onto the fetched commit, so files changed
+# or deleted upstream are handled; clean removes stale untracked leftovers (for example a
+# previous build output) while preserving the installed dependencies.
+git -C matterbridge checkout -f -B "$BRANCH" FETCH_HEAD
+git -C matterbridge clean -qxdf -e node_modules -e apps/frontend/node_modules
 cd matterbridge
 
 if [ "$MODE" = "bun" ]; then
@@ -77,15 +91,15 @@ else
   node scripts/version.mjs git
 
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "5.install-matterbridge - Installing Matterbridge dependencies and building..."
-  npm ci --no-fund --no-audit && npm run build
+  npm install --no-fund --no-audit && npm run build
 
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "6.install-matterbridge - Installing Matterbridge frontend dependencies and building..."
-  cd apps/frontend && npm ci --no-fund --no-audit && npm run build && cd ../..
+  cd apps/frontend && npm install --no-fund --no-audit && npm run build && cd ../..
 
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "7.install-matterbridge - Installing Matterbridge globally..."
   sudo npm link --no-fund --no-audit
 fi
 
-sudo rm -rf .agents .antigravity .cache .claude .codex .devcontainer .git .github .vscode docker docs reflector screenshots scripts systemd
+# sudo rm -rf .agents .antigravity .cache .claude .codex .devcontainer .git .github .vscode docker docs reflector screenshots scripts systemd
 
 echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "8.install-matterbridge - Matterbridge has been installed from the $BRANCH branch."
