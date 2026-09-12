@@ -53,6 +53,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.67.0.
 - [frontend]: Bump `oxlint` to v.1.82.0.
 - [docker]: Change the base image of the **s6-rc-legacy** docker image from `node:22-bullseye-slim` to `node:22-bookworm-slim`. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security `Release` file expired on 2026-09-07, breaking `apt-get update` during the build. Debian 12 (bookworm) still provides the `armhf` port and `node:22` still publishes `linux/arm/v7`, so `arm64`, `amd64` and `arm/v7` support is unchanged.
+- [MatterbridgeEndpoint]: `createDefaultBridgedDeviceBasicInformationClusterServer()` takes a new optional trailing `productId` parameter and reports it on the `BridgedDeviceBasicInformation` cluster when it is a valid uint16. `ProductId` had `disallowConform` on this cluster up to Matter 1.3, but Matter 1.4 (cluster revision 4) changed it to `describedConform` (optional when bridging Matter devices), so it is now spec compliant to report it. The parameter is optional and appended at the end of the signature, so all the existing call sites are unaffected and the attribute stays absent unless a caller opts in. It is also passed through by `deserialize()` and by `MatterbridgePlatform`, so a stored device doesn't lose its `productId`. Thanks Ludovic BOUÉ.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
