@@ -1064,18 +1064,6 @@ describe('Matterbridge ' + NAME, () => {
     eventsSpy.mockRestore();
   });
 
-  test('should ignore command observables when the endpoint is not a MatterbridgeEndpoint', async () => {
-    const endpoint = new Endpoint(OnOffLightDevice, { id: 'PlainEndpointCommand' });
-    const eventsSpy = vi.spyOn(endpoint, 'events', 'get');
-
-    await aggregator.act((agent) => {
-      emitCommand(endpoint, 'onOff', 'toggle', {}, agent.context);
-    });
-
-    expect(eventsSpy).not.toHaveBeenCalled();
-    eventsSpy.mockRestore();
-  });
-
   test('should notify subsequent command subscribers when a listener returns a value', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightSubscribeCommandReturnValue', number: EndpointNumber(302) });
     device.createDefaultOnOffClusterServer();

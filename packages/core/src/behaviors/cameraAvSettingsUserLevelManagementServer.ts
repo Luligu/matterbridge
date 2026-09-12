@@ -27,7 +27,6 @@ import { Status, StatusResponseError } from '@matter/types';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { emitCommand } from '../matterbridgeEndpointHelpers.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -52,6 +51,9 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   CameraAvSettingsUserLevelManagement.Feature.MechanicalTilt,
   CameraAvSettingsUserLevelManagement.Feature.MechanicalZoom,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Handles the MPTZSetPosition command.
    * Moves the camera to the provided absolute values for pan, tilt and zoom. Fields omitted from the request leave
@@ -101,7 +103,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     device.log.info(
       `MatterbridgeCameraAvSettingsUserLevelManagementServer: set mechanical PTZ position to pan ${this.state.mptzPosition.pan}°, tilt ${this.state.mptzPosition.tilt}°, zoom ${this.state.mptzPosition.zoom} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    emitCommand(this.endpoint, CameraAvSettingsUserLevelManagementServer.id, 'mptzSetPosition', request, this.context);
+    this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', request, this.context);
   }
 
   /**
@@ -139,7 +141,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     device.log.info(
       `MatterbridgeCameraAvSettingsUserLevelManagementServer: moved mechanical PTZ position by pan ${request.panDelta ?? 0}°, tilt ${request.tiltDelta ?? 0}°, zoom ${request.zoomDelta ?? 0} to pan ${pan}°, tilt ${tilt}°, zoom ${zoom} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    emitCommand(this.endpoint, CameraAvSettingsUserLevelManagementServer.id, 'mptzRelativeMove', request, this.context);
+    this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', request, this.context);
   }
 }
 
