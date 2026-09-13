@@ -172,6 +172,41 @@ export class WeriftWebRtcSession {
   private readonly dtlsTransportsWithStateLogging = new Set<RTCDtlsTransport>();
 
   /**
+   * The fixed local UDP port range ICE binds its candidates to, from the `MATTERBRIDGE_ICE_PORT_RANGE` environment
+   * variable in `min-max` form (e.g. `50000-50010`). Left unset, werift picks an ephemeral port per session, which a
+   * container runtime cannot publish ahead of time; pinning the range lets a deployment publish exactly those UDP
+   * ports so a peer outside the container network can reach them. werift rejects a range whose bounds are equal.
+   *
+   * @returns {[number, number] | undefined} The parsed port range, or undefined when unset or malformed.
+   */
+  private static parseIcePortRange(): [number, number] | undefined {
+    const raw = process.env.MATTERBRIDGE_ICE_PORT_RANGE?.trim();
+    if (!raw) return undefined;
+    const match = /^(\d{1,5})-(\d{1,5})$/.exec(raw);
+    if (!match) return undefined;
+    const min = Number(match[1]);
+    const max = Number(match[2]);
+    if (min < 1024 || max > 65_535 || min >= max) return undefined;
+    return [min, max];
+  }
+
+  /**
+   * Extra local addresses advertised as ICE host candidates, from the comma-separated
+   * `MATTERBRIDGE_ICE_HOST_ADDRESSES` environment variable. A container on a bridge network only knows its private
+   * address, which a peer outside that network cannot route to; advertising the host address that forwards the
+   * published ICE ports gives such a peer a candidate it can actually reach.
+   *
+   * @returns {string[] | undefined} The parsed addresses, or undefined when unset or empty.
+   */
+  private static parseIceAdditionalHostAddresses(): string[] | undefined {
+    const addresses =
+      process.env.MATTERBRIDGE_ICE_HOST_ADDRESSES?.split(',')
+        .map((address) => address.trim())
+        .filter((address) => address.length > 0) ?? [];
+    return addresses.length > 0 ? addresses : undefined;
+  }
+
+  /**
    * Creates a new werift RTCPeerConnection configured with the codecs this session can negotiate and inject.
    *
    * @param {number} webRtcSessionId - The WebRtcTransportProvider session identifier this instance backs, used as this session's log name.
@@ -182,8 +217,15 @@ export class WeriftWebRtcSession {
     // Cloned so the per-session overrides applied by applyOptionOverrides never write back into the caller's object,
     // which is the endpoint's (immutable outside a transaction) behavior state.
     this.options = { ...options };
-    this.peerConnection = new RTCPeerConnection({ codecs: { audio: [useOPUS(), usePCMU()], video: [useH264(), useVP8()] } });
+    const icePortRange = WeriftWebRtcSession.parseIcePortRange();
+    const iceAdditionalHostAddresses = WeriftWebRtcSession.parseIceAdditionalHostAddresses();
+    this.peerConnection = new RTCPeerConnection({ codecs: { audio: [useOPUS(), usePCMU()], video: [useH264(), useVP8()] }, icePortRange, iceAdditionalHostAddresses });
     this.log = new AnsiLogger({ logName: `WebRTC session ${webRtcSessionId}`, logLevel: LogLevel.DEBUG, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS });
+    if (icePortRange || iceAdditionalHostAddresses) {
+      this.log.debug(
+        `ICE overrides: portRange=${icePortRange ? `${icePortRange[0]}-${icePortRange[1]}` : 'default'} additionalHostAddresses=${iceAdditionalHostAddresses?.join(', ') ?? 'none'}`,
+      );
+    }
     // Log when local ICE candidate discovery starts or completes.
     this.peerConnection.iceGatheringStateChange.subscribe((state) => {
       this.log.info(`ICE gathering state: ${state}`);

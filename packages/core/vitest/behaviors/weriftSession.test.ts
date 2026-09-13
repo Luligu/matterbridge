@@ -333,6 +333,70 @@ describe('WeriftWebRtcSession', () => {
     });
   });
 
+  describe('ICE environment overrides', () => {
+    afterEach(() => {
+      vi.unstubAllEnvs();
+    });
+
+    /**
+     * Collects the address and port of every `typ host` candidate in an SDP. Server-reflexive candidates are skipped
+     * because their port is the NAT mapping, not the local port the range pins.
+     *
+     * @param {string} sdp - The SDP to read the candidate lines from.
+     * @returns {{ address: string; port: number }[]} The host candidates found.
+     */
+    function hostCandidates(sdp: string): { address: string; port: number }[] {
+      return [...sdp.matchAll(/^a=candidate:\S+ \d+ udp \d+ (\S+) (\d+) typ host/gm)].map((match) => ({ address: match[1], port: Number(match[2]) }));
+    }
+
+    it('should bind host candidates inside the range when MATTERBRIDGE_ICE_PORT_RANGE is set', async () => {
+      vi.stubEnv('MATTERBRIDGE_ICE_PORT_RANGE', '51000-51010');
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        const candidates = hostCandidates(await session.createOffer());
+        expect(candidates.length).toBeGreaterThan(0);
+        for (const candidate of candidates) {
+          expect(candidate.port).toBeGreaterThanOrEqual(51_000);
+          expect(candidate.port).toBeLessThanOrEqual(51_010);
+        }
+      } finally {
+        await session.close();
+      }
+    });
+
+    it('should advertise an extra host candidate when MATTERBRIDGE_ICE_HOST_ADDRESSES is set', async () => {
+      // RFC 5737 TEST-NET-3, so the address is guaranteed not to exist on any test machine.
+      vi.stubEnv('MATTERBRIDGE_ICE_HOST_ADDRESSES', '203.0.113.9');
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        const addresses = hostCandidates(await session.createOffer()).map((candidate) => candidate.address);
+        expect(addresses).toContain('203.0.113.9');
+      } finally {
+        await session.close();
+      }
+    });
+
+    it('should fall back to ephemeral ports when MATTERBRIDGE_ICE_PORT_RANGE is malformed', async () => {
+      vi.stubEnv('MATTERBRIDGE_ICE_PORT_RANGE', '51000');
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        expect(hostCandidates(await session.createOffer()).length).toBeGreaterThan(0);
+      } finally {
+        await session.close();
+      }
+    });
+
+    it('should fall back to ephemeral ports when MATTERBRIDGE_ICE_PORT_RANGE has equal bounds', async () => {
+      vi.stubEnv('MATTERBRIDGE_ICE_PORT_RANGE', '51000-51000');
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        expect(hostCandidates(await session.createOffer()).length).toBeGreaterThan(0);
+      } finally {
+        await session.close();
+      }
+    });
+  });
+
   describe('video source selection', () => {
     const originalPlatform = process.platform;
 
