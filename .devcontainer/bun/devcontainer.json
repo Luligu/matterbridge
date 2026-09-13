@@ -36,7 +36,14 @@ Dev containers have networking limitations depending on the host OS and Docker s
   "image": "luligu/matterbridge:bun-dev-container",
   // Inherit timezone from the host environment (set TZ on the host, e.g. Europe/Paris)
   "containerEnv": {
-    "TZ": "${localEnv:TZ}"
+    "TZ": "${localEnv:TZ}",
+    // Pin WebRTC ICE to the fixed UDP range published in runArgs below, and advertise the WSL 2 VM address as an
+    // extra host candidate. A browser on the Windows host can route to the VM but not into the bridge network, so
+    // without this it only ever sees the unreachable 172.18.x.x container candidate and no media path opens.
+    // Get the address with "wsl hostname -I" (first entry); it changes on reboot unless .wslconfig uses
+    // networkingMode=mirrored. Leave both unset on setups where the peer can already reach the container.
+    "MATTERBRIDGE_ICE_PORT_RANGE": "51000-51010",
+    "MATTERBRIDGE_ICE_HOST_ADDRESSES": "172.27.167.141"
   },
   // Both the node and bun base images already use UID/GID 1000. Disabling the UID update avoids
   // VS Code creating a workspace-derived vsc-* image shared by both variants.
@@ -93,7 +100,11 @@ Dev containers have networking limitations depending on the host OS and Docker s
     // Publish the Matterbridge UI port on the Docker host as a single dual-stack (IPv4 + IPv6) binding, so http://localhost:8283
     // and http://[::1]:8283 both work even without VS Code port forwarding.
     "--publish",
-    "[::]:8283:8283"
+    "[::]:8283:8283",
+    // Publish the fixed WebRTC ICE UDP range set in containerEnv above, so a peer on the Docker host can reach the
+    // candidates werift advertises. Must stay in sync with MATTERBRIDGE_ICE_PORT_RANGE.
+    "--publish",
+    "51000-51010:51000-51010/udp"
   ],
   "portsAttributes": {
     "8283": {
