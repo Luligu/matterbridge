@@ -432,6 +432,11 @@ pass/fail summary is available here <a href="latestChipTestsSummary.log"><code>c
 <ul>
 <li>All single device classes like the Rvc, LaundryWasher, etc...</li>
 </ul>
+<p><strong>&quot;matterbridge/devices/camera&quot;</strong></p>
+<ul>
+<li>All the Chapter 16 Camera device classes like the Camera, VideoDoorbell, etc... They are exported from a separate
+path to keep the WebRTC stack (werift) off the import path of &quot;matterbridge/devices&quot;.</li>
+</ul>
 <p><strong>&quot;matterbridge/clusters&quot;</strong></p>
 <ul>
 <li>All clusters not present in matter.js or modified. It can be empty.</li>

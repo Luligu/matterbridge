@@ -54,6 +54,10 @@
       "types": "./dist/devices/export.d.ts",
       "import": "./dist/devices/export.js"
     },
+    "./devices/camera": {
+      "types": "./dist/devices/camera/export.d.ts",
+      "import": "./dist/devices/camera/export.js"
+    },
     "./clusters": {
       "types": "./dist/clusters/export.d.ts",
       "import": "./dist/clusters/export.js"

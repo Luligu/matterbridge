@@ -17,6 +17,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -144,14 +145,47 @@ describe('FloodlightCamera', () => {
 
   it('should add additional lights with tags and a custom initial state', async () => {
     const device = new FloodlightCamera('Floodlight Camera Multi Light', 'FLOODLIGHT-CAMERA-MULTI-LIGHT');
-    const left = device.addLight('Left Floodlight', [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }], true);
-    const right = device.addLight('Right Floodlight', [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }]);
+    const left = device.addLight('Left Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }], onOff: true });
+    const right = device.addLight('Right Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftFloodlight');
     expect(right.id).toBe('RightFloodlight');
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
     expect(left.getAttribute(OnOff, 'onOff')).toBe(true);
     expect(right.getAttribute(OnOff, 'onOff')).toBe(false);
+  });
+
+  it('should create the child endpoints with explicit endpoint numbers', async () => {
+    const device = new FloodlightCamera('Floodlight Camera Numbers', 'FLOODLIGHT-CAMERA-NUMBERS', {
+      id: 'FloodlightCameraNumbers',
+      number: EndpointNumber(16_02),
+      cameraOptions: { number: EndpointNumber(16_02_1) },
+      lightOptions: { number: EndpointNumber(16_02_2) },
+    });
+    expect(device.number).toBe(EndpointNumber(16_02));
+    expect(device.getChildEndpointById('Camera')?.number).toBe(EndpointNumber(16_02_1));
+    expect(device.getChildEndpointById('Light')?.number).toBe(EndpointNumber(16_02_2));
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+  });
+
+  it('should create the camera child endpoint with a tagList', async () => {
+    const device = new FloodlightCamera('Floodlight Camera Camera Tags', 'FLOODLIGHT-CAMERA-CAMERA-TAGS', {
+      cameraOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }] },
+    });
+    const cameraChild = device.getChildEndpointById('Camera');
+    expect(cameraChild).toBeDefined();
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }]);
+  });
+
+  it('should add an additional light with an explicit endpoint number', async () => {
+    const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER');
+    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_3) });
+    expect(light.number).toBe(EndpointNumber(16_02_3));
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should create a floodlight camera device with custom stream usages on the camera child', async () => {

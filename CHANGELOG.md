@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.10] - Dev branch
 
+### Added
+
+- [demoDevices]: Add all the Chapter 16 Camera device types: Camera on endpoint 1601, a second PTZ Camera exposing the optional `CameraAvSettingsUserLevelManagement` cluster on endpoint 16011, the composed Floodlight Camera on endpoint 1602 (Camera 16021 and On/Off Light 16022), the composed Video Doorbell on endpoint 1603 (Camera 16031 and Doorbell 16032), Intercom on endpoint 1604, Audio Doorbell on endpoint 1605, Snapshot Camera on endpoint 1606, Chime on endpoint 1607, Camera Controller on endpoint 1608 and Doorbell on endpoint 1609. Endpoint 1601 keeps the plain defaults, while the other endpoints activate the two options adding an optional cluster: `ptz` (Camera AV Settings User Level Management on the Camera endpoints) and `identifyType` (Identify where it is optional, i.e. Camera, Intercom, Snapshot Camera and Chime).
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.10.
