@@ -130,7 +130,7 @@ describe('WeriftWebRtcSession', () => {
   let options: WeriftOfferOptions;
 
   beforeEach(() => {
-    options = { video: true, audio: true, videoSource: 'test', audioSource: 'test' };
+    options = { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' };
     mockResolvableFfmpeg();
   });
 
@@ -142,7 +142,7 @@ describe('WeriftWebRtcSession', () => {
   });
 
   it('should create a real SDP offer with a video transceiver when video is requested', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
     const sdp = await session.createOffer();
 
@@ -154,7 +154,7 @@ describe('WeriftWebRtcSession', () => {
   });
 
   it('should create a real SDP offer with both a video and an audio transceiver when both are requested', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: true });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: true });
 
     const sdp = await session.createOffer();
 
@@ -165,7 +165,7 @@ describe('WeriftWebRtcSession', () => {
   });
 
   it('should create a real SDP offer with no media transceivers when neither video nor audio is requested', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: false, audio: false });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: false, offerAudio: false });
 
     const sdp = await session.createOffer();
 
@@ -177,14 +177,14 @@ describe('WeriftWebRtcSession', () => {
   });
 
   it('should close without throwing', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
     await session.createOffer();
 
     await expect(session.close()).resolves.toBeUndefined();
   });
 
   it('should not attach a second test video track when creating a subsequent offer on the same session', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
     await session.createOffer();
 
     const sdp = await session.createOffer();
@@ -222,7 +222,7 @@ describe('WeriftWebRtcSession', () => {
   });
 
   it('should apply a real remote SDP answer to a local offer', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
     const offerSdp = await session.createOffer();
     const answerSdp = await createRemoteAnswerSdp(offerSdp);
 
@@ -233,7 +233,7 @@ describe('WeriftWebRtcSession', () => {
   });
 
   it('should apply a remote ICE candidate after a completed offer/answer exchange', async () => {
-    const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
     const offerSdp = await session.createOffer();
     const answerSdp = await createRemoteAnswerSdp(offerSdp);
     await session.applyAnswer(answerSdp);
@@ -414,7 +414,7 @@ describe('WeriftWebRtcSession', () => {
     it('should not inject a video track when videoSource is missing at runtime', async () => {
       // @ts-expect-error Exercise missing configuration supplied by an untyped caller.
       options.videoSource = undefined;
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -426,7 +426,7 @@ describe('WeriftWebRtcSession', () => {
 
     it('should attach the synthetic moving test pattern track when videoSource=test', async () => {
       options.videoSource = 'test';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -438,7 +438,7 @@ describe('WeriftWebRtcSession', () => {
     it('should fall back to no injected track when videoSource is unsupported', async () => {
       // @ts-expect-error Exercise invalid configuration supplied by an untyped caller.
       options.videoSource = 'unsupported';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -451,7 +451,7 @@ describe('WeriftWebRtcSession', () => {
     it('should not attach a video track when videoSource=webcam is set without a device', async () => {
       loggerErrorSpy.mockClear();
       options.videoSource = 'webcam';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -469,7 +469,7 @@ describe('WeriftWebRtcSession', () => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = '/dev/video0';
       Object.defineProperty(process, 'platform', { value: 'freebsd' });
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -488,7 +488,7 @@ describe('WeriftWebRtcSession', () => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = device;
       Object.defineProperty(process, 'platform', { value: platform });
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -501,7 +501,7 @@ describe('WeriftWebRtcSession', () => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = '/dev/video0';
       options.videoResolution = resolution;
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -514,7 +514,7 @@ describe('WeriftWebRtcSession', () => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = '/dev/video0';
       options.videoResolution = '4000x3000';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -567,7 +567,7 @@ describe('WeriftWebRtcSession', () => {
     it('should not attach a video track when videoSource=rtsp is set without a url', async () => {
       loggerErrorSpy.mockClear();
       options.videoSource = 'rtsp';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -581,7 +581,7 @@ describe('WeriftWebRtcSession', () => {
     it('should attach a video track from the configured RTSP url', async () => {
       options.videoSource = 'rtsp';
       options.videoSourceDevice = 'rtsp://admin:password@192.168.1.100:554/ch1/main';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -620,7 +620,7 @@ describe('WeriftWebRtcSession', () => {
   describe('disabled video source', () => {
     it('should still negotiate a video transceiver but not inject a track when videoSource=none', async () => {
       options.videoSource = 'none';
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 
       const sdp = await session.createOffer();
 
@@ -753,7 +753,7 @@ describe('WeriftWebRtcSession', () => {
 
   describe('injectable codec selection', () => {
     it('should prefer an already-negotiated injectable codec when creating a subsequent offer', async () => {
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const transceiver = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
       transceiver.codecs = [new RTCRtpCodecParameters({ mimeType: 'video/VP8', clockRate: 90000, payloadType: 96 })];
 
@@ -765,7 +765,7 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it('should prefer an already-negotiated H264 codec, using the H264 ffmpeg encoder, when creating a subsequent offer', async () => {
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const transceiver = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
       transceiver.codecs = [new RTCRtpCodecParameters({ mimeType: 'video/h264', clockRate: 90000, payloadType: 97 })];
 
@@ -833,7 +833,7 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it('should not treat a non-injectable codec as preferred when creating an offer for a pre-existing transceiver', async () => {
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const transceiver = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
       transceiver.codecs = [new RTCRtpCodecParameters({ mimeType: 'video/VP9', clockRate: 90000, payloadType: 98 })];
 
@@ -845,7 +845,7 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it('should only adjust the video transceiver(s) that actually have the preferred codec available', async () => {
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const withPreferredCodec = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
       withPreferredCodec.codecs = [new RTCRtpCodecParameters({ mimeType: 'video/VP8', clockRate: 90000, payloadType: 96 })];
       const withoutPreferredCodec = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
@@ -916,7 +916,7 @@ describe('WeriftWebRtcSession', () => {
 
   describe('missing ffmpeg dependency', () => {
     it('should still negotiate a video transceiver but not inject a track when ffmpeg cannot be resolved', async () => {
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       vi.mocked(hasFfmpeg).mockReturnValue(false);
 
       const sdp = await session.createOffer();
@@ -942,7 +942,7 @@ describe('WeriftWebRtcSession', () => {
   describe('video track injection lifecycle', () => {
     it('should attach a default VP8 video track only once when no codec is already preferred', async () => {
       type TestVideoState = { testVideoAttached: boolean; testVideoGenerator?: { killed: boolean } };
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       mockResolvableFfmpeg();
 
       const firstSdp = await session.createOffer();
@@ -961,7 +961,7 @@ describe('WeriftWebRtcSession', () => {
       ['H264', new RTCRtpCodecParameters({ mimeType: 'video/H264', clockRate: 90000, payloadType: 97 })],
     ])('should attach and clean up a %s video track when command resolution succeeds', async (_name, codec) => {
       type TestVideoState = { testVideoAttached: boolean; testVideoGenerator?: { killed: boolean } };
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       mockResolvableFfmpeg();
       const transceiver = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
       transceiver.codecs = [codec];
@@ -1044,7 +1044,7 @@ describe('WeriftWebRtcSession', () => {
   describe('process exit cleanup', () => {
     it('should kill a leftover ffmpeg process when the process emits exit', async () => {
       type SessionState = { testVideoGenerator?: ChildProcess };
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       mockResolvableFfmpeg();
 
       await session.createOffer();
@@ -1095,7 +1095,7 @@ describe('WeriftWebRtcSession', () => {
   describe('DTLS-triggered auto-close', () => {
     it('should close the session once a DTLS transport reaches closed on its own', async () => {
       type DtlsTransportState = { setState(state: string, emitEvent?: boolean): void };
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const closeSpy = vi.spyOn(session, 'close');
       await session.createOffer();
       const [dtlsTransport] = session.peerConnection.dtlsTransports;
@@ -1110,7 +1110,7 @@ describe('WeriftWebRtcSession', () => {
 
     it('should close the session once a DTLS transport reaches failed on its own', async () => {
       type DtlsTransportState = { setState(state: string, emitEvent?: boolean): void };
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const closeSpy = vi.spyOn(session, 'close');
       await session.createOffer();
       const [dtlsTransport] = session.peerConnection.dtlsTransports;
@@ -1123,7 +1123,7 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it('should not call close a second time when a normal close() itself drives the DTLS transport to closed', async () => {
-      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
       const closeSpy = vi.spyOn(session, 'close');
       await session.createOffer();
 

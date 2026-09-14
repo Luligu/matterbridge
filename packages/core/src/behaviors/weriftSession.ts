@@ -41,10 +41,18 @@ type AudioSource = 'none' | 'test' | 'microphone' | 'rtsp';
  * Media kinds to negotiate when creating a real WebRTC offer for a WebRtcTransportProvider session.
  */
 export interface WeriftOfferOptions {
-  /** Whether to add a sendonly video transceiver to the offer. Overridden per request with the client's requested video streams. */
-  video: boolean;
-  /** Whether to add a sendonly audio transceiver to the offer. Overridden per request with the client's requested audio streams. */
-  audio: boolean;
+  /**
+   * Whether to add a sendonly video transceiver to an offer this session generates. Read only by
+   * {@link WeriftWebRtcSession.createOffer}: an answer takes its transceivers from the remote offer instead.
+   * Overridden per request with the client's requested video streams.
+   */
+  offerVideo: boolean;
+  /**
+   * Whether to add a sendonly audio transceiver to an offer this session generates. Read only by
+   * {@link WeriftWebRtcSession.createOffer}: an answer takes its transceivers from the remote offer instead.
+   * Overridden per request with the client's requested audio streams.
+   */
+  offerAudio: boolean;
   /**
    * Video source: no injected track (`none`), a synthetic
    * pattern (`test`), a local capture device (`webcam`), or an RTSP stream (`rtsp`). Use `none` to disable source injection.
@@ -844,8 +852,8 @@ export class WeriftWebRtcSession {
   async createOffer(overrides?: WeriftOfferOverrides): Promise<string> {
     this.applyOptionOverrides(overrides);
     const options = this.options;
-    this.log.debug(`CreateOffer requested (video=${options.video}, audio=${options.audio}, videoResolution=${options.videoResolution ?? 'undefined'})`);
-    if (options.video) {
+    this.log.debug(`CreateOffer requested (offerVideo=${options.offerVideo}, offerAudio=${options.offerAudio}, videoResolution=${options.videoResolution ?? 'undefined'})`);
+    if (options.offerVideo) {
       const preferredCodec = this.getPreferredInjectableVideoCodec();
       if (preferredCodec) {
         this.preferVideoCodecOnTransceivers(preferredCodec.mimeType.toLowerCase());
@@ -855,7 +863,7 @@ export class WeriftWebRtcSession {
       await this.generateVideoTrack(preferredCodec);
       if (!this.testVideoAttached) this.peerConnection.addTransceiver('video', { direction: 'sendonly' });
     }
-    if (options.audio) this.peerConnection.addTransceiver('audio', { direction: 'sendonly' });
+    if (options.offerAudio) this.peerConnection.addTransceiver('audio', { direction: 'sendonly' });
     const offer = await this.peerConnection.createOffer();
     await this.peerConnection.setLocalDescription(offer);
     // setLocalDescription gathers ICE candidates into the SDP it stores as localDescription; offer.sdp itself

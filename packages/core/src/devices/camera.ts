@@ -141,7 +141,7 @@ export class Camera extends MatterbridgeEndpoint {
    *  - tiltMin: -20, tiltMax: 90 (angular degrees)
    *  - zoomMax: 10
    *  - mptzPosition: { pan: 0, tilt: 0, zoom: 1 }
-   *  - weriftOfferOptions: { video: true, audio: true, videoSource: 'none', audioSource: 'none' }
+   *  - weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {Camera} The Camera instance.
    */

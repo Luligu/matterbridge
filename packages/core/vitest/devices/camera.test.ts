@@ -186,7 +186,7 @@ describe('Camera', () => {
   });
 
   it('should create a camera device with custom werift offer options', async () => {
-    const weriftOfferOptions: WeriftOfferOptions = { video: true, audio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
+    const weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
     const device = new Camera('Camera Werift', 'CAMERA-WERIFT', { weriftOfferOptions });
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
@@ -197,6 +197,6 @@ describe('Camera', () => {
     const device = new Camera('Camera Werift Defaults', 'CAMERA-WERIFT-DEFAULTS');
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
-    expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual({ video: true, audio: true, videoSource: 'none', audioSource: 'none' });
+    expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual({ offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' });
   });
 });

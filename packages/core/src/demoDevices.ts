@@ -1067,7 +1067,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new Camera('Camera', 'CAMERA-16-01', {
     id: 'Camera',
     number: EndpointNumber(16_01),
-    weriftOfferOptions: { video: true, audio: true, videoSource: 'test', audioSource: 'test' },
+    weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
   });
   await registerDevice(ep, 'Camera', 'CAMERA-16-01');
 
@@ -1076,7 +1076,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(16_01_1),
     ptz: true,
     identifyType: Identify.IdentifyType.VisibleIndicator,
-    weriftOfferOptions: { video: true, audio: true, videoSource: 'test', audioSource: 'test' },
+    weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
   });
   await registerDevice(ep, 'Camera Ptz', 'CAMERA-16-01-1');
 
@@ -1087,7 +1087,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
       number: EndpointNumber(16_02_1),
       ptz: true,
       identifyType: Identify.IdentifyType.VisibleIndicator,
-      weriftOfferOptions: { video: true, audio: true, videoSource: 'test', audioSource: 'test' },
+      weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
     },
     lightOptions: { number: EndpointNumber(16_02_2) },
   });
@@ -1100,7 +1100,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
       number: EndpointNumber(16_03_1),
       ptz: true,
       identifyType: Identify.IdentifyType.VisibleIndicator,
-      weriftOfferOptions: { video: true, audio: true, videoSource: 'test', audioSource: 'test' },
+      weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
     },
     doorbellOptions: { number: EndpointNumber(16_03_2) },
   });
@@ -1114,7 +1114,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     number: EndpointNumber(16_04),
     identifyType: Identify.IdentifyType.VisibleIndicator,
     // Audio-only device type: no video transceiver is offered, and the audio track carries the synthetic test tone.
-    weriftOfferOptions: { video: false, audio: true, videoSource: 'none', audioSource: 'test' },
+    weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
   });
   await registerDevice(ep, 'Intercom I', 'CAMERA-16-04');
 
@@ -1122,14 +1122,14 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'IntercomII',
     number: EndpointNumber(16_04_1),
     identifyType: Identify.IdentifyType.VisibleIndicator,
-    weriftOfferOptions: { video: false, audio: true, videoSource: 'none', audioSource: 'test' },
+    weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
   });
   await registerDevice(ep, 'Intercom II', 'CAMERA-16-04-1');
 
   ep = new AudioDoorbell('Audio Doorbell', 'CAMERA-16-05', {
     id: 'AudioDoorbell',
     number: EndpointNumber(16_05),
-    weriftOfferOptions: { video: false, audio: true, videoSource: 'none', audioSource: 'test' },
+    weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
   });
   await registerDevice(ep, 'Audio Doorbell', 'CAMERA-16-05');
 

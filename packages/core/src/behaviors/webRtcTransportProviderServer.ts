@@ -691,8 +691,8 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     // not request. The resolution follows the client's allocated video stream only when none is configured. They are
     // stored on the session so the later track injection sees the same values.
     const sdp = await webRtcPeer.createOffer({
-      video: !!videoStreams?.length,
-      audio: !!audioStreams?.length,
+      offerVideo: !!videoStreams?.length,
+      offerAudio: !!audioStreams?.length,
       videoResolution: this.state.weriftOfferOptions.videoResolution ?? this.#resolveVideoResolution(videoStreams),
     });
 
@@ -811,8 +811,8 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     // The remote offer drives which transceivers exist here, so the kinds are recorded on the session rather than used
     // to add transceivers; the capture resolution is applied the same way as in #solicitOffer above.
     const sdp = await webRtcPeer.createAnswer(request.sdp, {
-      video: !!session.videoStreams?.length,
-      audio: !!session.audioStreams?.length,
+      offerVideo: !!session.videoStreams?.length,
+      offerAudio: !!session.audioStreams?.length,
       videoResolution: this.state.weriftOfferOptions.videoResolution ?? this.#resolveVideoResolution(session.videoStreams),
     });
 
@@ -998,7 +998,7 @@ export namespace MatterbridgeWebRtcTransportProviderServer {
   /** Configuration and cluster attributes for the WebRTC transport provider. */
   export class State extends WebRtcTransportProviderServer.State {
     /** Media negotiation and source options for WebRTC sessions; source injection is disabled by default. */
-    weriftOfferOptions: WeriftOfferOptions = { video: true, audio: true, videoSource: 'none', audioSource: 'none' };
+    weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' };
   }
 
   /**
@@ -1027,7 +1027,7 @@ export namespace MatterbridgeWebRtcTransportProviderServer {
  */
 export function createDefaultWebRtcTransportProviderClusterServer(
   endpoint: MatterbridgeEndpoint,
-  weriftOfferOptions: WeriftOfferOptions = { video: true, audio: true, videoSource: 'none', audioSource: 'none' },
+  weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' },
 ): MatterbridgeEndpoint {
   endpoint.behaviors.require(MatterbridgeWebRtcTransportProviderServer, { currentSessions: [], weriftOfferOptions });
   return endpoint;

@@ -218,7 +218,7 @@ describe('VideoDoorbell', () => {
   });
 
   it('should create a video doorbell device with custom werift offer options on the camera child', async () => {
-    const weriftOfferOptions: WeriftOfferOptions = { video: true, audio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
+    const weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
     const device = new VideoDoorbell('Video Doorbell Werift', 'VIDEO-DOORBELL-WERIFT', { cameraOptions: { weriftOfferOptions } });
 
     expect(await addDevice(aggregator, device)).toBeTruthy();

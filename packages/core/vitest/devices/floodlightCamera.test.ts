@@ -203,7 +203,7 @@ describe('FloodlightCamera', () => {
   });
 
   it('should create a floodlight camera device with custom werift offer options on the camera child', async () => {
-    const weriftOfferOptions: WeriftOfferOptions = { video: true, audio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
+    const weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
     const device = new FloodlightCamera('Floodlight Camera Werift', 'FLOODLIGHT-CAMERA-WERIFT', { cameraOptions: { weriftOfferOptions } });
 
     expect(await addDevice(aggregator, device)).toBeTruthy();

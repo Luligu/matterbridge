@@ -867,7 +867,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
     beforeAll(async () => {
       webRtcCamera = new Camera('Camera Snapshot Source', 'CAMERA-SNAPSHOT-SOURCE', {
-        weriftOfferOptions: { video: true, audio: false, videoSource: 'test', audioSource: 'none' },
+        weriftOfferOptions: { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none' },
       });
       expect(await addDevice(aggregator, webRtcCamera)).toBeTruthy();
     });

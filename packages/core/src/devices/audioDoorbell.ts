@@ -91,7 +91,7 @@ export class AudioDoorbell extends MatterbridgeEndpoint {
    *  - supportedStreamUsages: [StreamUsage.LiveView]
    *  - streamUsagePriorities: same as supportedStreamUsages
    *  - microphoneCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
-   *  - weriftOfferOptions: { video: true, audio: true, videoSource: 'none', audioSource: 'none' }
+   *  - weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {AudioDoorbell} The AudioDoorbell instance.
    */
