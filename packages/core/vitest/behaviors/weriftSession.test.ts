@@ -12,8 +12,9 @@
 const NAME = 'WeriftSession';
 
 import { spawn, type ChildProcess } from 'node:child_process';
+import { EventEmitter } from 'node:events';
 
-import { setupTest } from '@matterbridge/vitest-utils';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/vitest-utils';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
@@ -25,6 +26,12 @@ vi.mock('../../src/behaviors/ffmpeg.js', async (importOriginal) => {
 });
 
 await setupTest(NAME);
+
+// The dev container exports MATTERBRIDGE_ICE_PORT_RANGE / MATTERBRIDGE_ICE_HOST_ADDRESSES for manual WebRTC testing. Unset
+// them here so every session in this file starts from werift's defaults (the ICE override tests stub them explicitly, and
+// vi.unstubAllEnvs() then restores this unset state), and so parallel workers don't all fight over the same 11-port range.
+delete process.env.MATTERBRIDGE_ICE_PORT_RANGE;
+delete process.env.MATTERBRIDGE_ICE_HOST_ADDRESSES;
 
 const realHasFfmpeg = await vi.importActual<typeof import('../../src/behaviors/ffmpeg.js')>('../../src/behaviors/ffmpeg.js').then((m) => m.hasFfmpeg);
 
@@ -325,7 +332,7 @@ describe('WeriftWebRtcSession', () => {
       const session = new WeriftWebRtcSession(1, { ...options });
       try {
         await session.createAnswer(await createRemoteAudioOfferSdp());
-        expect(vi.mocked(runFfmpeg).mock.calls[0]?.[0]).toEqual(expect.arrayContaining(['-stream_loop', '-1']));
+        expect(vi.mocked(runFfmpeg).mock.calls[0]?.[0]).toEqual(expect.arrayContaining(['-f', 'lavfi', '-i', expect.stringContaining('sine=')]));
       } finally {
         await session.close();
         vi.unstubAllEnvs();
@@ -441,13 +448,34 @@ describe('WeriftWebRtcSession', () => {
       await session.close();
     });
 
-    it('should still attach a video track, falling back to the test pattern, when videoSource=webcam is set without a device', async () => {
+    it('should not attach a video track when videoSource=webcam is set without a device', async () => {
+      loggerErrorSpy.mockClear();
       options.videoSource = 'webcam';
       const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
 
       const sdp = await session.createOffer();
 
+      // The transceiver is still negotiated; only the injected track is skipped, so the test pattern is never
+      // silently substituted for the missing webcam.
       expect(sdp).toContain('m=video');
+      expect((session as unknown as { testVideoAttached: boolean }).testVideoAttached).toBe(false);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('options.videoSource=webcam requires options.videoSourceDevice to be set; not injecting a video track'));
+
+      await session.close();
+    });
+
+    it('should not attach a video track when webcam capture is unsupported on this platform', async () => {
+      loggerErrorSpy.mockClear();
+      options.videoSource = 'webcam';
+      options.videoSourceDevice = '/dev/video0';
+      Object.defineProperty(process, 'platform', { value: 'freebsd' });
+      const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
+
+      const sdp = await session.createOffer();
+
+      expect(sdp).toContain('m=video');
+      expect((session as unknown as { testVideoAttached: boolean }).testVideoAttached).toBe(false);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Webcam capture via ffmpeg is not supported on platform "freebsd"; not injecting a video track'));
 
       await session.close();
     });
@@ -456,7 +484,6 @@ describe('WeriftWebRtcSession', () => {
       ['linux', '/dev/video0'],
       ['darwin', '0'],
       ['win32', 'Integrated Camera'],
-      ['freebsd', '/dev/video0'],
     ])('should attach a video track from the configured webcam device on platform %s', async (platform, device) => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = device;
@@ -537,13 +564,16 @@ describe('WeriftWebRtcSession', () => {
   });
 
   describe('rtsp video source', () => {
-    it('should still attach a video track, falling back to the test pattern, when videoSource=rtsp is set without a url', async () => {
+    it('should not attach a video track when videoSource=rtsp is set without a url', async () => {
+      loggerErrorSpy.mockClear();
       options.videoSource = 'rtsp';
       const session = new WeriftWebRtcSession(1, { ...options, video: true, audio: false });
 
       const sdp = await session.createOffer();
 
       expect(sdp).toContain('m=video');
+      expect((session as unknown as { testVideoAttached: boolean }).testVideoAttached).toBe(false);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('options.videoSource=rtsp requires options.videoSourceDevice to be set; not injecting a video track'));
 
       await session.close();
     });
@@ -636,14 +666,38 @@ describe('WeriftWebRtcSession', () => {
       await session.close();
     });
 
-    it('should still attach an audio track, falling back to the test-voice clip, when audioSource=microphone is set without a device', async () => {
+    it('should not attach an audio track when audioSource=microphone is set without a device', async () => {
+      loggerErrorSpy.mockClear();
       options.audioSource = 'microphone';
       const session = new WeriftWebRtcSession(1, { ...options });
       const offerSdp = await createRemoteAudioOfferSdp();
 
       const answerSdp = await session.createAnswer(offerSdp);
 
+      // The transceiver is still negotiated; only the injected track is skipped, so the test tone is never
+      // silently substituted for the missing microphone.
       expect(answerSdp).toContain('m=audio');
+      expect((session as unknown as { testAudioAttached: boolean }).testAudioAttached).toBe(false);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('options.audioSource=microphone requires options.audioSourceDevice to be set; not injecting an audio track'),
+      );
+
+      await session.close();
+    });
+
+    it('should not attach an audio track when microphone capture is unsupported on this platform', async () => {
+      loggerErrorSpy.mockClear();
+      options.audioSource = 'microphone';
+      options.audioSourceDevice = 'hw:0,0';
+      Object.defineProperty(process, 'platform', { value: 'freebsd' });
+      const session = new WeriftWebRtcSession(1, { ...options });
+      const offerSdp = await createRemoteAudioOfferSdp();
+
+      const answerSdp = await session.createAnswer(offerSdp);
+
+      expect(answerSdp).toContain('m=audio');
+      expect((session as unknown as { testAudioAttached: boolean }).testAudioAttached).toBe(false);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Microphone capture via ffmpeg is not supported on platform "freebsd"; not injecting an audio track'));
 
       await session.close();
     });
@@ -652,7 +706,6 @@ describe('WeriftWebRtcSession', () => {
       ['linux', 'hw:0,0'],
       ['darwin', '0'],
       ['win32', 'Microphone Array'],
-      ['freebsd', 'hw:0,0'],
     ])('should attach an audio track from the configured microphone device on platform %s', async (platform, device) => {
       options.audioSource = 'microphone';
       options.audioSourceDevice = device;
@@ -669,7 +722,8 @@ describe('WeriftWebRtcSession', () => {
   });
 
   describe('rtsp audio source', () => {
-    it('should still attach an audio track, falling back to the test-voice clip, when audioSource=rtsp is set without a url', async () => {
+    it('should not attach an audio track when audioSource=rtsp is set without a url', async () => {
+      loggerErrorSpy.mockClear();
       options.audioSource = 'rtsp';
       const session = new WeriftWebRtcSession(1, { ...options });
       const offerSdp = await createRemoteAudioOfferSdp();
@@ -677,6 +731,8 @@ describe('WeriftWebRtcSession', () => {
       const answerSdp = await session.createAnswer(offerSdp);
 
       expect(answerSdp).toContain('m=audio');
+      expect((session as unknown as { testAudioAttached: boolean }).testAudioAttached).toBe(false);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('options.audioSource=rtsp requires options.audioSourceDevice to be set; not injecting an audio track'));
 
       await session.close();
     });
@@ -941,6 +997,47 @@ describe('WeriftWebRtcSession', () => {
 
       expect((session as unknown as TestAudioState).testAudioAttached).toBe(false);
       expect((session as unknown as TestAudioState).testAudioGenerator).toBeUndefined();
+    });
+  });
+
+  describe('ffmpeg generator stderr logging', () => {
+    it('should log the ffmpeg generator stderr at debug level', async () => {
+      loggerDebugSpy.mockClear();
+      // -loglevel error means a healthy ffmpeg writes nothing here, so stand in a process that does.
+      vi.mocked(hasFfmpeg).mockReturnValue(true);
+      vi.mocked(runFfmpeg).mockImplementation(() => spawn(process.execPath, ['-e', 'process.stderr.write("Invalid argument\\n")']));
+      const session = new WeriftWebRtcSession(1, { ...options });
+      const offerSdp = await createRemoteAudioOfferSdp();
+
+      await session.createAnswer(offerSdp);
+
+      await vi.waitFor(() => {
+        expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Ffmpeg audio generator: Invalid argument'));
+      });
+
+      await session.close();
+    });
+
+    it('should ignore a whitespace-only stderr chunk and a generator with no stderr pipe', async () => {
+      loggerDebugSpy.mockClear();
+      const stderr = new EventEmitter();
+      const withStderr = Object.assign(new EventEmitter(), { stderr, kill: vi.fn() }) as unknown as ChildProcess;
+      const withoutStderr = Object.assign(new EventEmitter(), { stderr: null, kill: vi.fn() }) as unknown as ChildProcess;
+      vi.mocked(hasFfmpeg).mockReturnValue(true);
+      vi.mocked(runFfmpeg).mockReturnValueOnce(withStderr).mockReturnValueOnce(withoutStderr);
+
+      const first = new WeriftWebRtcSession(1, { ...options });
+      await first.createAnswer(await createRemoteAudioOfferSdp());
+      stderr.emit('data', Buffer.from('  \n'));
+
+      // The second session's generator exposes no stderr pipe at all, so nothing is attached to it.
+      const second = new WeriftWebRtcSession(2, { ...options });
+      await second.createAnswer(await createRemoteAudioOfferSdp());
+
+      expect(loggerDebugSpy).not.toHaveBeenCalledWith(expect.stringContaining('Ffmpeg audio generator:'));
+
+      await first.close();
+      await second.close();
     });
   });
 

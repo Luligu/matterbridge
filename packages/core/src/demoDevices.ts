@@ -1083,7 +1083,12 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new FloodlightCamera('Floodlight Camera', 'CAMERA-16-02', {
     id: 'FloodlightCamera',
     number: EndpointNumber(16_02),
-    cameraOptions: { number: EndpointNumber(16_02_1), ptz: true, identifyType: Identify.IdentifyType.VisibleIndicator },
+    cameraOptions: {
+      number: EndpointNumber(16_02_1),
+      ptz: true,
+      identifyType: Identify.IdentifyType.VisibleIndicator,
+      weriftOfferOptions: { video: true, audio: true, videoSource: 'test', audioSource: 'test' },
+    },
     lightOptions: { number: EndpointNumber(16_02_2) },
   });
   await registerDevice(ep, 'Floodlight Camera', 'CAMERA-16-02');
@@ -1091,7 +1096,12 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep = new VideoDoorbell('Video Doorbell', 'CAMERA-16-03', {
     id: 'VideoDoorbell',
     number: EndpointNumber(16_03),
-    cameraOptions: { number: EndpointNumber(16_03_1), ptz: true, identifyType: Identify.IdentifyType.VisibleIndicator },
+    cameraOptions: {
+      number: EndpointNumber(16_03_1),
+      ptz: true,
+      identifyType: Identify.IdentifyType.VisibleIndicator,
+      weriftOfferOptions: { video: true, audio: true, videoSource: 'test', audioSource: 'test' },
+    },
     doorbellOptions: { number: EndpointNumber(16_03_2) },
   });
   await registerDevice(ep, 'Video Doorbell', 'CAMERA-16-03');
@@ -1099,19 +1109,35 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   // Two Intercom endpoints are registered so a controller can bind them to each other: an Intercom both hosts and
   // invokes WebRtcTransportProvider/WebRtcTransportRequestor, so a peer intercom is needed on the other side of the
   // binding for a two-way call.
-  ep = new Intercom('Intercom I', 'CAMERA-16-04', { id: 'Intercom', number: EndpointNumber(16_04), identifyType: Identify.IdentifyType.VisibleIndicator });
+  ep = new Intercom('Intercom I', 'CAMERA-16-04', {
+    id: 'Intercom',
+    number: EndpointNumber(16_04),
+    identifyType: Identify.IdentifyType.VisibleIndicator,
+    // Audio-only device type: no video transceiver is offered, and the audio track carries the synthetic test tone.
+    weriftOfferOptions: { video: false, audio: true, videoSource: 'none', audioSource: 'test' },
+  });
   await registerDevice(ep, 'Intercom I', 'CAMERA-16-04');
 
-  ep = new Intercom('Intercom II', 'CAMERA-16-04-1', { id: 'IntercomII', number: EndpointNumber(16_04_1), identifyType: Identify.IdentifyType.VisibleIndicator });
+  ep = new Intercom('Intercom II', 'CAMERA-16-04-1', {
+    id: 'IntercomII',
+    number: EndpointNumber(16_04_1),
+    identifyType: Identify.IdentifyType.VisibleIndicator,
+    weriftOfferOptions: { video: false, audio: true, videoSource: 'none', audioSource: 'test' },
+  });
   await registerDevice(ep, 'Intercom II', 'CAMERA-16-04-1');
 
-  ep = new AudioDoorbell('Audio Doorbell', 'CAMERA-16-05', { id: 'AudioDoorbell', number: EndpointNumber(16_05) });
+  ep = new AudioDoorbell('Audio Doorbell', 'CAMERA-16-05', {
+    id: 'AudioDoorbell',
+    number: EndpointNumber(16_05),
+    weriftOfferOptions: { video: false, audio: true, videoSource: 'none', audioSource: 'test' },
+  });
   await registerDevice(ep, 'Audio Doorbell', 'CAMERA-16-05');
 
   ep = new SnapshotCamera('Snapshot Camera', 'CAMERA-16-06', {
     id: 'SnapshotCamera',
     number: EndpointNumber(16_06),
     identifyType: Identify.IdentifyType.VisibleIndicator,
+    snapshotSource: 'test',
   });
   await registerDevice(ep, 'Snapshot Camera', 'CAMERA-16-06');
 

@@ -26,7 +26,7 @@ import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { createDefaultSnapshotCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
+import { createDefaultSnapshotCameraAvStreamManagementClusterServer, type SnapshotSource } from '../behaviors/cameraAvStreamManagementServer.js';
 import { powerSource, snapshotCamera } from '../matterbridgeDeviceTypes.js';
 // Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -58,6 +58,17 @@ export interface SnapshotCameraOptions extends MatterbridgeEndpointOptions {
   supportedStreamUsages?: StreamUsage[];
   /** List of stream usages in decreasing order of priority */
   streamUsagePriorities?: StreamUsage[];
+
+  /**
+   * Snapshot capture source for CaptureSnapshot: the synthetic ffmpeg test pattern (`test`), a local capture device
+   * (`webcam`), or an RTSP stream (`rtsp`). Default: unset, in which case CaptureSnapshot fails (there is no placeholder image).
+   */
+  snapshotSource?: SnapshotSource;
+  /**
+   * Webcam device identifier or RTSP url for `snapshotSource` `webcam`/`rtsp`; ignored for `test`.
+   * Webcam identifiers are a device path on Linux, an avfoundation index on macOS, or a dshow name on Windows.
+   */
+  snapshotSourceDevice?: string;
 }
 
 /**
@@ -89,6 +100,8 @@ export class SnapshotCamera extends MatterbridgeEndpoint {
    *  - maxNetworkBandwidth: 10000
    *  - supportedStreamUsages: [StreamUsage.Recording]
    *  - streamUsagePriorities: [StreamUsage.Recording]
+   *  - snapshotSource: unset (CaptureSnapshot fails until a source is configured)
+   *  - snapshotSourceDevice: unset
    *
    * @returns {SnapshotCamera} The SnapshotCamera instance.
    */
@@ -110,6 +123,8 @@ export class SnapshotCamera extends MatterbridgeEndpoint {
       maxNetworkBandwidth = 10000,
       supportedStreamUsages = [StreamUsage.Recording],
       streamUsagePriorities = [StreamUsage.Recording],
+      snapshotSource,
+      snapshotSourceDevice,
       id,
       number,
       tagList,
@@ -150,6 +165,8 @@ export class SnapshotCamera extends MatterbridgeEndpoint {
       maxNetworkBandwidth,
       supportedStreamUsages,
       streamUsagePriorities,
+      snapshotSource,
+      snapshotSourceDevice,
     });
     this.addRequiredClusters();
   }

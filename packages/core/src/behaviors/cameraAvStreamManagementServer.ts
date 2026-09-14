@@ -22,27 +22,16 @@
  * limitations under the License.
  */
 
-import { readFileSync } from 'node:fs';
-
 import { CameraAvStreamManagementServer } from '@matter/node/behaviors/camera-av-stream-management';
+import { WebRtcTransportProviderServer } from '@matter/node/behaviors/web-rtc-transport-provider';
 import { Status, StatusResponseError, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import type { Viewport } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
-
-/**
- * A static JPEG television calibration card available to serve from `CaptureSnapshot`, at a given resolution.
- */
-export interface CameraColorTestJpeg {
-  /** The JPEG image data. */
-  data: Buffer;
-  /** The resolution of the JPEG image. */
-  resolution: CameraAvStreamManagement.VideoResolution;
-}
-
-const DEFAULT_CAMERA_COLOR_TEST_RESOLUTION = '640x480';
+import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from './snapshot.js';
+import type { WeriftOfferOptions } from './weriftSession.js';
 
 /**
  * Valid AudioStreamAllocate BitDepth values per Matter 1.6 Application Cluster spec §11.2.8.1 ("8, 16, 24, 32").
@@ -67,37 +56,41 @@ const AUDIO_CODECS = numericEnumValues(CameraAvStreamManagement.AudioCodec);
 /** Valid VideoCodecEnum member values; unlike ImageCodec, matter.js does not reject unknown VideoCodec values before the command handler runs. */
 const VIDEO_CODECS = numericEnumValues(CameraAvStreamManagement.VideoCodec);
 
-const cameraColorTestJpegs: Record<string, CameraColorTestJpeg> = {
-  '640x480': { data: readFileSync(new URL('../../assets/camera-color-test-640-480.jpeg', import.meta.url)), resolution: { width: 640, height: 480 } },
-  '1280x720': { data: readFileSync(new URL('../../assets/camera-color-test-1280-720.jpeg', import.meta.url)), resolution: { width: 1280, height: 720 } },
-  '1920x1080': { data: readFileSync(new URL('../../assets/camera-color-test-1920-1080.jpeg', import.meta.url)), resolution: { width: 1920, height: 1080 } },
-};
+/**
+ * Snapshot capture source configured directly on the CameraAvStreamManagement cluster (see
+ * MatterbridgeCameraAvStreamManagementServer.State), for devices without a WebRtcTransportProvider cluster to derive
+ * it from: the synthetic ffmpeg test pattern (`test`), a local capture device (`webcam`), or an RTSP stream (`rtsp`).
+ */
+export type SnapshotSource = 'test' | 'webcam' | 'rtsp';
 
 /**
- * Returns the {@link CameraColorTestJpeg} calibration card matching the requested resolution exactly.
+ * Narrows a sibling WebRtcTransportProvider behavior state to one carrying Matterbridge's `weriftOfferOptions`
+ * (see MatterbridgeWebRtcTransportProviderServer.State). Kept as a structural guard instead of importing that
+ * server class, which already imports this module and would otherwise create an import cycle.
  *
- * Edge cases:
- *  - Falls back to the 640x480 card when the requested resolution isn't one of the standard camera resolutions (640x480, 1280x720, 1920x1080).
- *
- * @param {CameraAvStreamManagement.VideoResolution} requestedResolution - The resolution requested by the client.
- * @returns {CameraColorTestJpeg} The matching calibration card.
+ * @param {object} state - The WebRtcTransportProvider behavior state read from the endpoint.
+ * @returns {boolean} True if the state carries `weriftOfferOptions`.
  */
-export function cameraColorTestJpegForResolution(requestedResolution: CameraAvStreamManagement.VideoResolution): CameraColorTestJpeg {
-  return cameraColorTestJpegs[`${requestedResolution.width}x${requestedResolution.height}`] ?? cameraColorTestJpegs[DEFAULT_CAMERA_COLOR_TEST_RESOLUTION];
+function hasWeriftOfferOptions(state: object): state is { weriftOfferOptions: WeriftOfferOptions } {
+  return 'weriftOfferOptions' in state && typeof state.weriftOfferOptions === 'object' && state.weriftOfferOptions !== null;
 }
+
+/** Featured matter.js base of {@link MatterbridgeCameraAvStreamManagementServer}; also the base of its State, so feature-gated attributes keep their types. */
+const MatterbridgeCameraAvStreamManagementServerBase = CameraAvStreamManagementServer.with(
+  CameraAvStreamManagement.Feature.Video,
+  CameraAvStreamManagement.Feature.Audio,
+  CameraAvStreamManagement.Feature.Snapshot,
+  CameraAvStreamManagement.Feature.ImageControl,
+);
 
 /**
  * CameraAvStreamManagement server, specialized for the Snapshot feature only, that implements the
  * stream-priority, snapshot-stream allocation, and snapshot-capture commands required by a Snapshot Camera device.
  */
-export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamManagementServer.with(
-  CameraAvStreamManagement.Feature.Video,
-  CameraAvStreamManagement.Feature.Audio,
-  CameraAvStreamManagement.Feature.Snapshot,
-  CameraAvStreamManagement.Feature.ImageControl,
-) {
+export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCameraAvStreamManagementServerBase {
   /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
   declare readonly endpoint: MatterbridgeEndpoint;
+  declare readonly state: MatterbridgeCameraAvStreamManagementServer.State;
 
   /**
    * Whether {@link initialize}'s default stream self-allocation is skipped entirely. Set via the
@@ -657,16 +650,56 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
   }
 
   /**
+   * Resolves the ffmpeg snapshot source: the cluster's own `snapshotSource`/`snapshotSourceDevice` state when set
+   * (a SnapshotCamera has no video stream to share a source with), otherwise the sibling WebRtcTransportProvider
+   * cluster's `weriftOfferOptions`, so CaptureSnapshot returns a still frame of the same source the WebRTC video
+   * stream is injected from. Either way the source maps to {@link TEST_SNAPSHOT_SOURCE} for `test`, and to the
+   * configured device (webcam device or RTSP url) for `webcam`/`rtsp`. There is no placeholder image: an endpoint
+   * with no usable source cannot answer CaptureSnapshot at all, so this fails the command rather than returning
+   * something that isn't the camera.
+   *
+   * @returns {string} The snapshot source.
+   * @throws {StatusResponseError} Failure if no `snapshotSource` is set and the endpoint has no WebRtcTransportProvider cluster (or its `videoSource` is `none`), or a `webcam`/`rtsp` source has no device configured.
+   */
+  #resolveSnapshotSource(): string {
+    const endpoint = `(endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`;
+    const fail = (reason: string): StatusResponseError => {
+      this.endpoint.stateOf(MatterbridgeServer).log.error(`MatterbridgeCameraAvStreamManagementServer: cannot capture snapshot: ${reason} ${endpoint}`);
+      return new StatusResponseError(`MatterbridgeCameraAvStreamManagementServer: cannot capture snapshot: ${reason} ${endpoint}`, Status.Failure);
+    };
+    const sourceFor = (source: SnapshotSource, device: string | undefined, sourceOption: string, deviceOption: string): string => {
+      if (source === 'test') return TEST_SNAPSHOT_SOURCE;
+      if (device) return device;
+      throw fail(`${sourceOption}=${source} requires ${deviceOption} to be set`);
+    };
+    const { snapshotSource, snapshotSourceDevice } = this.state;
+    if (snapshotSource !== undefined) return sourceFor(snapshotSource, snapshotSourceDevice, 'snapshotSource', 'snapshotSourceDevice');
+    if (!this.endpoint.behaviors.has(WebRtcTransportProviderServer)) {
+      throw fail('no snapshotSource is configured and the endpoint has no WebRtcTransportProvider cluster to read the video source from');
+    }
+    const state = this.endpoint.stateOf(WebRtcTransportProviderServer);
+    /* v8 ignore next -- unreachable: every Matterbridge camera device installs MatterbridgeWebRtcTransportProviderServer,
+     * whose State always declares weriftOfferOptions; only matter.js's bare WebRtcTransportProviderServer would lack it. */
+    if (!hasWeriftOfferOptions(state)) throw fail('the WebRtcTransportProvider cluster state has no weriftOfferOptions');
+    const { videoSource, videoSourceDevice } = state.weriftOfferOptions;
+    if (videoSource === 'none') throw fail(`weriftOfferOptions.videoSource=${videoSource} provides no video source`);
+    return sourceFor(videoSource, videoSourceDevice, 'weriftOfferOptions.videoSource', 'videoSourceDevice');
+  }
+
+  /**
    * Handles the CaptureSnapshot command.
-   * Returns a snapshot from the camera for the requested (or automatically selected) snapshot stream.
-   * The image data is a static JPEG television calibration card, picked from {@link cameraColorTestJpegs} to match
-   * the requested resolution, until a real capture pipeline is wired in.
+   * Returns a snapshot from the camera for the requested (or automatically selected) snapshot stream, captured via
+   * ffmpeg (see {@link captureSnapshot}) from the same source the sibling WebRtcTransportProvider cluster streams
+   * video from — the synthetic test pattern for `weriftOfferOptions.videoSource=test`, or the configured webcam
+   * device / RTSP url for `webcam`/`rtsp` — and kept within the 64000 byte limit by the capture pipeline's
+   * quality/resolution retries. A downgraded capture reports height -1 (derived by ffmpeg from the aspect ratio),
+   * which is recomputed from the requested aspect for the response.
    *
    * @param {CameraAvStreamManagement.CaptureSnapshotRequest} request - CaptureSnapshot request payload.
-   * @returns {CameraAvStreamManagement.CaptureSnapshotResponse} The captured snapshot.
-   * @throws {StatusResponseError} NotFound if snapshotStreamId does not match an entry in allocatedSnapshotStreams, or if snapshotStreamId is null (automatic selection) and no snapshot stream is allocated.
+   * @returns {Promise<CameraAvStreamManagement.CaptureSnapshotResponse>} The captured snapshot.
+   * @throws {StatusResponseError} NotFound if snapshotStreamId does not match an entry in allocatedSnapshotStreams, or if snapshotStreamId is null (automatic selection) and no snapshot stream is allocated; Failure if no video source is configured (see {@link #resolveSnapshotSource}) or the ffmpeg capture fails (missing ffmpeg, unreachable camera, timeout, or no JPEG within the byte limit).
    */
-  override captureSnapshot(request: CameraAvStreamManagement.CaptureSnapshotRequest): CameraAvStreamManagement.CaptureSnapshotResponse {
+  override async captureSnapshot(request: CameraAvStreamManagement.CaptureSnapshotRequest): Promise<CameraAvStreamManagement.CaptureSnapshotResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { snapshotStreamId } = request;
     const stream = this.state.allocatedSnapshotStreams.find((s) => snapshotStreamId === null || s.snapshotStreamId === snapshotStreamId);
@@ -680,30 +713,51 @@ export class MatterbridgeCameraAvStreamManagementServer extends CameraAvStreamMa
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: capturing snapshot ${snapshotStreamId ?? 'auto'} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // TODO: Replace the static calibration card with a real capture once CameraAvStreamManagement.captureSnapshot is wired into matterbridge
-    /*
-    await device.commandHandler.executeHandler('CameraAvStreamManagement.captureSnapshot', {
-      command: 'captureSnapshot',
-      request,
-      cluster: CameraAvStreamManagementServer.id,
-      attributes: this.state,
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      endpoint: this.endpoint as MatterbridgeEndpoint,
-      context: this.context,
-    });
-    */
     device.log.debug(
       `MatterbridgeCameraAvStreamManagementServer: captureSnapshot called with snapshotStreamId ${request.snapshotStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    const { data, resolution } = cameraColorTestJpegForResolution(request.requestedResolution);
+    const src = this.#resolveSnapshotSource();
+    const { width, height } = request.requestedResolution;
+    let captured;
+    try {
+      captured = await captureSnapshot({ src, width, height });
+    } catch (error) {
+      const message = `MatterbridgeCameraAvStreamManagementServer: snapshot capture failed: ${error instanceof Error ? error.message : String(error)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`;
+      device.log.error(message);
+      throw new StatusResponseError(message, Status.Failure);
+    }
+    const resolution = { width: captured.width, height: captured.height === -1 ? Math.round((captured.width * height) / width) : captured.height };
+    device.log.info(
+      `MatterbridgeCameraAvStreamManagementServer: captured snapshot ${captured.byteLength}B at ${resolution.width}x${resolution.height}, quality ${captured.quality}${captured.downgraded ? ' (downgraded)' : ''} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     this.endpoint.emitCommand(CameraAvStreamManagement, 'captureSnapshot', request, this.context);
     return {
-      data,
+      data: captured.data,
       imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg,
       resolution,
     };
   }
 }
+
+/**
+ * matter.js's own Behavior subclasses declare State this way (see e.g. @matter/node's SubscriptionsServer.ts); it's
+ * how the framework resolves `this.state`'s type, so an ES module can't replace it.
+ */
+/* v8 ignore start */
+// oxlint-disable-next-line typescript-eslint/no-namespace
+export namespace MatterbridgeCameraAvStreamManagementServer {
+  /** Snapshot capture configuration in addition to the standard CameraAvStreamManagement attributes. */
+  export class State extends MatterbridgeCameraAvStreamManagementServerBase.State {
+    /**
+     * Snapshot capture source for CaptureSnapshot. When unset (the default), the source is derived from the sibling
+     * WebRtcTransportProvider cluster's `weriftOfferOptions.videoSource`; set it on devices without one (SnapshotCamera).
+     */
+    snapshotSource?: SnapshotSource = undefined;
+    /** Webcam device identifier or RTSP url for `snapshotSource` `webcam`/`rtsp`; ignored for `test`. */
+    snapshotSourceDevice?: string = undefined;
+  }
+}
+/* v8 ignore stop */
 
 /**
  * Initial state accepted by {@link createDefaultCameraAvStreamManagementClusterServer}.
@@ -885,6 +939,10 @@ export interface SnapshotCameraAvStreamManagementClusterOptions {
   maxNetworkBandwidth: number;
   supportedStreamUsages: StreamUsage[];
   streamUsagePriorities: StreamUsage[];
+  /** Snapshot capture source for CaptureSnapshot (see {@link SnapshotSource}). When unset, CaptureSnapshot fails: a snapshot-only endpoint has no WebRtcTransportProvider cluster to derive a source from. */
+  snapshotSource?: SnapshotSource;
+  /** Webcam device identifier or RTSP url for `snapshotSource` `webcam`/`rtsp`; ignored for `test`. */
+  snapshotSourceDevice?: string;
 }
 
 /**
@@ -908,6 +966,9 @@ export function createDefaultSnapshotCameraAvStreamManagementClusterServer(
     maxEncodedPixelRate: options.maxEncodedPixelRate, // VDO | SNP
     snapshotCapabilities: options.snapshotCapabilities, // SNP
     allocatedSnapshotStreams: [], // SNP, persisted by matter.js — never seeded from options
+    // Matterbridge snapshot capture source (not a Matter attribute)
+    snapshotSource: options.snapshotSource,
+    snapshotSourceDevice: options.snapshotSourceDevice,
   });
   return endpoint;
 }
