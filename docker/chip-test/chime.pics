@@ -1,0 +1,11 @@
+# To run tests on Chime --PICS is required
+# Matches createDefaultChimeClusterServer()/MatterbridgeChimeServer (packages/core/src/behaviors/chimeServer.ts)
+# on CHIP Chime endpoint 1607.
+PICS_SDK_CI_ONLY=1
+CHIME.S=1
+CHIME.C=0 # The Chime endpoint hosts a server only; the Chime client cluster lives on the Doorbell endpoints 1609
+CHIME.S.A0000=1 # InstalledChimeSounds
+CHIME.S.A0001=1 # SelectedChime
+CHIME.S.A0002=1 # Enabled
+CHIME.S.C00.Rsp=1 # PlayChimeSound (the optional ChimeID field is supported, see playChimeSound() in chimeServer.ts)
+CHIME.S.E00=1 # ChimeStartedPlaying (mandatory from cluster revision 2; enabled explicitly by ChimeServer.enable() in chimeServer.ts)

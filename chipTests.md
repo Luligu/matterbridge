@@ -370,6 +370,18 @@ Electrical Energy Tariff Upcoming (child of Electrical Utility Meter, endpoint 1
 - Commodity Price
 - Commodity Tariff
 
+## Endpoint 1607
+
+Chime clusters:
+
+- Chime
+
+## Endpoint 1609
+
+Doorbell clusters:
+
+- Switch (single-press momentary switch: MomentarySwitch feature only)
+
 ## Patched CHIP tests
 
 Local copies under `docker/chip-test/patches/`, applied over the same-named upstream file inside the container

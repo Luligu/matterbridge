@@ -453,6 +453,8 @@
     "chip:test:commodity-metering": "node scripts/run-matterbridge-chip-tests.mjs --test TC_COMMTR_",
     "chip:test:commodity-price": "node scripts/run-matterbridge-chip-tests.mjs --test TC_SEPR_",
     "chip:test:commodity-tariff": "node scripts/run-matterbridge-chip-tests.mjs --test TC_SETRF_",
+    "chip:test:chime": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CHIME_",
+    "chip:test:switch": "node scripts/run-matterbridge-chip-tests.mjs --test TC_SWTCH",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",
     "publish:dev": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag dev && npm run reset",
     "publish:edge": "node scripts/publish-workspaces.mjs --scope @matterbridge --tag edge && npm run reset",

@@ -50,7 +50,9 @@ import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Switch } from '@matter/types/clusters/switch';
 import { TariffPriceType, TariffUnit } from '@matter/types/globals';
+import { wait } from '@matterbridge/utils/wait';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
@@ -58,6 +60,7 @@ import { cliEmitter } from './cliEmitter.js';
 import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { featuresFor } from './matterbridgeEndpointHelpers.js';
 
 type ChipTestAppPipeCommand = {
   Name?: string;
@@ -72,6 +75,10 @@ type ChipTestAppPipeCommand = {
   Param?: number;
   Error?: string;
   DoorOpen?: number;
+  ButtonId?: number;
+  LongPressDelayMillis?: number;
+  LongPressDurationMillis?: number;
+  FeatureMap?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -1472,9 +1479,72 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
         `CHIP test app pipe OperationalStateChange(${command.Operation}${command.Param === undefined ? '' : `, ${command.Param}`}) applied on endpoint ${endpointId}`,
       );
       return;
+    case 'SimulateSwitchIdle':
+      // TC_SWTCH.py's _send_switch_idle_named_pipe_command(): return the button to the un-actuated position
+      // without generating any event, so the test can assert CurrentPosition is 0 before it presses anything.
+      await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
+      matterbridge.log.info(`CHIP test app pipe set Switch.CurrentPosition to 0 (idle) on endpoint ${endpointId}`);
+      return;
+    case 'SimulateLongPress':
+      await simulateChipTestSwitchLongPress(matterbridge, endpoint, endpointId, command);
+      return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
   }
+}
+
+/**
+ * Simulates a press-and-hold on a Switch endpoint, for TC_SWTCH.py's SimulateLongPress app pipe command
+ * (_send_long_press_named_pipe_command(), used by both _ask_for_long_press() and _ask_for_keep_pressed()).
+ *
+ * The command carries the press duration rather than a separate release command, so the whole press/release
+ * sequence is played out here: CurrentPosition moves to the pressed position and InitialPress is emitted
+ * immediately, then CurrentPosition returns to 0 after LongPressDurationMillis. TC_SWTCH_2_3 reads
+ * CurrentPosition while the press is still held, so the release must not happen before that delay elapses.
+ *
+ * Which release events accompany that sequence is decided by the endpoint's own Switch feature map, not by the
+ * command's FeatureMap field: emitting an event the cluster server never enabled would throw. For a
+ * MomentarySwitch-only endpoint (the CHIP Doorbell on endpoint 1609, see createDefaultMomentarySwitchClusterServer)
+ * that means InitialPress alone, which is exactly what TC_SWTCH_2_4 asserts when MSL/AS/MSR/MSM are all absent.
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint hosting the Switch cluster server.
+ * @param {number} endpointId - The endpoint number, for logging.
+ * @param {ChipTestAppPipeCommand} command - The SimulateLongPress app pipe command.
+ */
+async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpoint: MatterbridgeEndpoint, endpointId: number, command: ChipTestAppPipeCommand): Promise<void> {
+  if (!endpoint.hasClusterServer(Switch.id)) {
+    matterbridge.log.warn(`Ignoring SimulateLongPress CHIP test app pipe command on endpoint ${endpointId} without a Switch cluster server`);
+    return;
+  }
+  const features = featuresFor(endpoint, Switch.id);
+  const newPosition = command.ButtonId ?? 1;
+  const delayMs = command.LongPressDelayMillis ?? 0;
+  const durationMs = command.LongPressDurationMillis ?? 0;
+
+  await endpoint.setAttribute(Switch.id, 'currentPosition', newPosition, matterbridge.log);
+  await endpoint.triggerEvent(Switch.id, 'initialPress', { newPosition }, matterbridge.log);
+  matterbridge.log.info(`CHIP test app pipe pressed Switch position ${newPosition} on endpoint ${endpointId} for ${durationMs}ms`);
+
+  // Matter 1.6.0 § 1.13.7.3: LongPress is generated once the press has been held past the long-press threshold,
+  // i.e. LongPressDelayMillis into the LongPressDurationMillis the command asks us to hold for.
+  if (features.momentarySwitchLongPress) {
+    await wait(Math.min(delayMs, durationMs));
+    await endpoint.triggerEvent(Switch.id, 'longPress', { newPosition }, matterbridge.log);
+    await wait(Math.max(durationMs - delayMs, 0));
+  } else {
+    await wait(durationMs);
+  }
+
+  await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
+  // Matter 1.6.0 § 1.13.7.5/1.13.7.4: a release after a long press reports LongRelease when MSL is supported,
+  // and ShortRelease when only MSR is. With neither feature the position simply returns to 0 silently.
+  if (features.momentarySwitchLongPress) {
+    await endpoint.triggerEvent(Switch.id, 'longRelease', { previousPosition: newPosition }, matterbridge.log);
+  } else if (features.momentarySwitchRelease) {
+    await endpoint.triggerEvent(Switch.id, 'shortRelease', { previousPosition: newPosition }, matterbridge.log);
+  }
+  matterbridge.log.info(`CHIP test app pipe released Switch position ${newPosition} on endpoint ${endpointId}`);
 }
 
 function getChipTestEndpoint(matterbridge: Matterbridge, endpointId: number): MatterbridgeEndpoint | undefined {
@@ -1502,7 +1572,11 @@ function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeComma
     (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number') &&
     (!('Device' in value) || typeof value.Device === 'string') &&
     (!('Operation' in value) || typeof value.Operation === 'string') &&
-    (!('Param' in value) || typeof value.Param === 'number')
+    (!('Param' in value) || typeof value.Param === 'number') &&
+    (!('ButtonId' in value) || typeof value.ButtonId === 'number') &&
+    (!('LongPressDelayMillis' in value) || typeof value.LongPressDelayMillis === 'number') &&
+    (!('LongPressDurationMillis' in value) || typeof value.LongPressDurationMillis === 'number') &&
+    (!('FeatureMap' in value) || typeof value.FeatureMap === 'number')
   );
 }
 // v8 ignore end
