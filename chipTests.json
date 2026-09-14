@@ -268,7 +268,7 @@
       "test": "TC_OPCREDS_3_8.py",
       "endpoint": 0,
       "skip": true,
-      "comment": "Fails at import time: ModuleNotFoundError: No module named 'nest_asyncio' — missing Python dependency in this image, unrelated to Matterbridge."
+      "comment": "Requires a single-fabric DUT: step 0 asserts exactly one entry in TrustedRootCertificates (TH1's), but this image is commissioned on two fabrics by design (chip-tool's alpha and the Python framework's default_controller), so it fails with 'Expecting exactly one root from TrustedRootCertificates (TH1's), got 2'. Unrelated to Matterbridge. The nest_asyncio dependency it imports is now kept in the image (see docker/Dockerfile.chip-test)."
     },
     {
       "name": "GeneralCommissioning attributes on RootNode",

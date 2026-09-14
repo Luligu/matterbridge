@@ -48,6 +48,128 @@ python3 scripts/tests/chipyaml/chiptool.py tests Test_TC_I_2_1 --endpoint 7
 node scripts/run-matterbridge-chip-tests.mjs --stop
 ```
 
+## Bind a client cluster (Chime client on the Doorbell)
+
+A few device types mandate a *client* cluster: the Doorbell (device type `0x0148`) must host a Chime client,
+which in the demo device tree lives on endpoint 1609, while the Chime *server* lives on its own endpoint 1607.
+A client cluster has nothing to read — to point it at a server you write the `Binding` cluster (`0x001E`)
+`Binding` attribute (`0x0000`) on the endpoint that hosts the client.
+
+Check the two halves first (endpoint 1609 must list Binding as a server and Chime as a client, endpoint 1607
+must list Chime as a server):
+
+```bash
+chip-tool descriptor read server-list 0x12344321 1609   # ... 30 (Binding) ...
+chip-tool descriptor read client-list 0x12344321 1609   # 1366 (Chime)
+chip-tool descriptor read server-list 0x12344321 1607   # ... 1366 (Chime) ...
+```
+
+### Both fabrics need their own binding
+
+The `Binding` attribute is fabric-scoped (`fabricScoped="true"` on both the attribute and `TargetStruct`, see
+`chip/1.6.0/xml/clusters/Binding-Cluster.xml`), so each fabric sees and writes only its own entries. The
+container is commissioned on two fabrics — fabric index 1 is chip-tool's baked-in `alpha` identity, fabric
+index 2 is the Python test framework's `default_controller` (`operationalcredentials read commissioned-fabrics`
+reports `2`). A binding written from chip-tool is invisible to the Python tests and vice versa, so write it on
+both. They do not overwrite each other: a fabric-scoped write replaces only the writing fabric's entries.
+
+Fabric 1, from chip-tool:
+
+```bash
+chip-tool binding write binding \
+  '[{"fabricIndex":1,"node":305414945,"endpoint":1607,"cluster":1366}]' \
+  0x12344321 1609
+```
+
+`0x12344321` and `1609` are the *destination* node and endpoint — the endpoint whose binding table is being
+written, i.e. the one hosting the client. The target endpoint 1607 appears only inside the JSON. Struct fields
+want decimal, so the node id is repeated as `305414945` (`0x12344321`) and the cluster as `1366` (`0x0556`,
+Chime). `fabricIndex` is assigned by the server from the writing session and ignored on write.
+
+Fabric 2 cannot be driven from chip-tool at all. It is not a CLI limitation — chip-tool happily holds several
+fabrics, one per `--commissioner-name` identity — but fabric 2 was commissioned by the Python framework from
+its *own* root CA, whose private key exists only in `/root/connectedhomeip/admin_storage.json`. Joining an
+existing fabric requires a NOC chaining to that fabric's root plus the matching operational private key, and
+chip-tool has no way to import another controller's credentials: each identity mints its own CA and NOCs in
+`/tmp/chip_tool_config.<identity>.ini`. The DUT confirms the split — the two fabrics report different
+`RootPublicKey` values. A `--commissioner-name beta` invocation would create a *third* fabric needing its own
+commissioning, and until then cannot even resolve the node (operational DNS-SD instance names are keyed by the
+compressed fabric id, derived from the root public key, so the lookup just times out).
+
+The interactive equivalent of chip-tool for fabric 2 is `matter-repl`, pointed at the Python framework's own
+storage (note it takes no `--simple-prompt`; unknown flags abort the startup script and leave you with a bare
+IPython prompt and no `devCtrl`):
+
+```bash
+docker exec -it chip-test /root/connectedhomeip/out/python_env/bin/matter-repl \
+  -s /root/connectedhomeip/admin_storage.json
+```
+
+```python
+await devCtrl.ReadAttribute(0x12344321, [(1609, Clusters.Binding.Attributes.Binding)])
+```
+
+Only one process may use `admin_storage.json` at a time, so close the REPL before running Python tests.
+
+For a scripted or repeatable binding, fabric 2 is written through a throwaway Python script instead (same
+copy-in/run/delete pattern as §4 of the chip-tests instructions):
+
+```python
+import matter.clusters as Clusters
+from matter.testing.decorators import async_test_body
+from matter.testing.matter_testing import MatterBaseTest
+from matter.testing.runner import default_matter_test_main
+
+
+class BindChime(MatterBaseTest):
+    @async_test_body
+    async def test_bind(self):
+        target = Clusters.Binding.Structs.TargetStruct(node=self.dut_node_id, endpoint=1607, cluster=Clusters.Chime.id)
+        await self.default_controller.WriteAttribute(self.dut_node_id, [(1609, Clusters.Binding.Attributes.Binding([target]))])
+
+
+if __name__ == "__main__":
+    default_matter_test_main()
+```
+
+```bash
+docker cp bind_chime.py chip-test:/root/connectedhomeip/src/python_testing/__bind_chime.py
+docker exec chip-test python3 src/python_testing/__bind_chime.py
+docker exec chip-test rm -f /root/connectedhomeip/src/python_testing/__bind_chime.py
+```
+
+### Verify
+
+A plain read is fabric-filtered and shows only the caller's own entry, so pass `--fabric-filtered false` to see
+both:
+
+```bash
+chip-tool binding read binding 0x12344321 1609 --fabric-filtered false
+```
+
+```text
+Binding: 2 entries
+  [1]: { Node: 305414945, Endpoint: 1607, Cluster: 1366, FabricIndex: 1 }
+  [2]: { Node: 305414945, Endpoint: 1607, Cluster: 1366, FabricIndex: 2 }
+```
+
+### Notes
+
+- A write replaces the writing fabric's entries wholesale — it does not append, and it does not touch entries
+  belonging to other fabrics. So the Python write above leaves the chip-tool entry intact (the verification read
+  still shows both), but a second chip-tool write would drop the first chip-tool target. To add a target to a
+  fabric that already has one, read that fabric's current list and write all its entries back together. Writing
+  `[]` clears only the calling fabric's bindings.
+- A `TargetStruct` is either unicast (`node` + `endpoint`, optionally narrowed by `cluster`) or group
+  (`group` instead of `node`/`endpoint`); the two forms are mutually exclusive. Omitting `cluster` binds every
+  client cluster on the source endpoint.
+- The binding is only an address book entry and grants no access. An invoke from the client is still subject to
+  the target's ACL — irrelevant here, since source and target are the same node and the existing admin entries
+  already cover endpoint 1607, but a real cross-node binding also needs an ACL entry on the target admitting
+  the source node at `operate` privilege.
+- `Binding` is `nonVolatile`, so entries survive a container restart. They are cleared by `--reset` (stateful
+  cluster storage wipe) and by re-pairing the fabrics.
+
 ## Endpoint 0
 
 Root node clusters:
