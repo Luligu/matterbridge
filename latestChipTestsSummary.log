@@ -1,4 +1,4 @@
-Chip tests run started at 2026-09-04T16:53:44.101Z
+Chip tests run started at 2026-09-14T08:52:48.698Z
 
 ✅ Generic device basic composition (TC_DeviceBasicComposition.py)
 ✅ Generic device conformance (TC_DeviceConformance.py)
@@ -510,6 +510,18 @@ Chip tests run started at 2026-09-04T16:53:44.101Z
    ↳ Requires the V2X feature; endpoint 1401 does not enable this optional feature.
 ✅ EnergyEvseMode attributes on EVSE (TC_EEVSEM_1_2.py)
 ✅ EnergyEvseMode change mode on EVSE (Test_TC_EEVSEM_2_1)
+✅ EnergyEvse attributes on EVSE Complete (Test_TC_EEVSE_2_1)
+✅ EnergyEvse primary functionality on EVSE Complete (TC_EEVSE_2_2.py)
+✅ EnergyEvse charging preferences functionality on EVSE Complete (TC_EEVSE_2_3.py)
+✅ EnergyEvse fault functionality on EVSE Complete (TC_EEVSE_2_4.py)
+✅ EnergyEvse diagnostics functionality on EVSE Complete (TC_EEVSE_2_5.py)
+✅ EnergyEvse reporting functionality on EVSE Complete (TC_EEVSE_2_6.py)
+✅ EnergyEvse state-of-charge functionality on EVSE Complete (TC_EEVSE_2_7.py)
+✅ EnergyEvse vehicle identification functionality on EVSE Complete (TC_EEVSE_2_8.py)
+✅ EnergyEvse RFID event functionality on EVSE Complete (TC_EEVSE_2_9.py)
+✅ EnergyEvse bidirectional functionality on EVSE Complete (TC_EEVSE_2_10.py)
+✅ EnergyEvseMode attributes on EVSE Complete (TC_EEVSEM_1_2.py)
+✅ EnergyEvseMode change mode on EVSE Complete (Test_TC_EEVSEM_2_1)
 ✅ MeterIdentification attributes on Electrical Utility Meter (TC_MTRID_2_1.py)
 ✅ MeterIdentification subscription report verification on Electrical Utility Meter (TC_MTRID_3_1.py)
 ✅ CommodityMetering attributes on Electrical Meter (TC_COMMTR_2_1.py)
@@ -523,5 +535,5 @@ Chip tests run started at 2026-09-04T16:53:44.101Z
 ✅ CommodityTariff primary functionality on Electrical Energy Tariff (TC_SETRF_2_3.py)
 ✅ CommodityTariff subscription report verification on Electrical Energy Tariff (TC_SETRF_3_1.py)
 
-Summary: 368/369 tests passed (76 skipped).
-Chip tests run ended at 2026-09-04T17:51:30.928Z (total duration 57m 47s)
+Summary: 380/381 tests passed (76 skipped).
+Chip tests run ended at 2026-09-14T09:50:30.219Z (total duration 57m 42s)
