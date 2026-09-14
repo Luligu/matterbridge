@@ -373,36 +373,51 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultPowerSourceWiredClusterServer();
   await registerDevice(ep, 'Pump Controller', 'SWITCH-06-05');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
+  // A single (non-composed) Generic Switch carrying the full-featured momentary switch: MomentarySwitch,
+  // MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress, i.e. the feature set the
+  // Single/Double/Long event sequences of triggerSwitchEvent() need.
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'MomentarySwitch', number: EndpointNumber(6_06) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultSwitchClusterServer();
+  await registerDevice(ep, 'Momentary Switch', 'SWITCH-06-06');
+
+  // A single (non-composed) Generic Switch carrying the LatchingSwitch feature instead.
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'LatchingSwitch', number: EndpointNumber(6_06_1) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultLatchingSwitchClusterServer();
+  await registerDevice(ep, 'Latching Switch', 'SWITCH-06-06-1');
+
+  // A composed Generic Switch: an aggregator parent with one child endpoint per button.
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06_2) });
   ep.createDefaultPowerSourceBatteryClusterServer();
   await ep.addFixedLabel('composed', 'GenericSwitch');
   // Each button combines a Switches-domain function tag with a Common Number position tag, per the Generic
   // Switch device type section's guidance on applying tags from multiple namespaces (Matter spec § 21).
   ep.addChildDeviceType('Button1', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_1),
+    number: EndpointNumber(6_06_3),
     tagList: [getSemtag(SwitchesTag.On), getSemtag(CommonNumberTag.One)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
   ep.addChildDeviceType('Button2', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_2),
+    number: EndpointNumber(6_06_4),
     tagList: [getSemtag(SwitchesTag.Off), getSemtag(CommonNumberTag.Two)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
   ep.addChildDeviceType('Button3', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_3),
+    number: EndpointNumber(6_06_5),
     tagList: [getSemtag(SwitchesTag.Up), getSemtag(CommonNumberTag.Three)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
   ep.addChildDeviceType('Button4', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_4),
+    number: EndpointNumber(6_06_6),
     tagList: [getSemtag(SwitchesTag.Down), getSemtag(CommonNumberTag.Four)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
-  await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06');
+  await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06-2');
 
   // Chapter 7 - Sensor Devices
 
