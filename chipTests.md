@@ -50,8 +50,8 @@ node scripts/run-matterbridge-chip-tests.mjs --stop
 
 ## Bind a client cluster (Chime client on the Doorbell)
 
-A few device types mandate a *client* cluster: the Doorbell (device type `0x0148`) must host a Chime client,
-which in the demo device tree lives on endpoint 1609, while the Chime *server* lives on its own endpoint 1607.
+A few device types mandate a _client_ cluster: the Doorbell (device type `0x0148`) must host a Chime client,
+which in the demo device tree lives on endpoint 1609, while the Chime _server_ lives on its own endpoint 1607.
 A client cluster has nothing to read — to point it at a server you write the `Binding` cluster (`0x001E`)
 `Binding` attribute (`0x0000`) on the endpoint that hosts the client.
 
@@ -81,18 +81,18 @@ chip-tool binding write binding \
   0x12344321 1609
 ```
 
-`0x12344321` and `1609` are the *destination* node and endpoint — the endpoint whose binding table is being
+`0x12344321` and `1609` are the _destination_ node and endpoint — the endpoint whose binding table is being
 written, i.e. the one hosting the client. The target endpoint 1607 appears only inside the JSON. Struct fields
 want decimal, so the node id is repeated as `305414945` (`0x12344321`) and the cluster as `1366` (`0x0556`,
 Chime). `fabricIndex` is assigned by the server from the writing session and ignored on write.
 
 Fabric 2 cannot be driven from chip-tool at all. It is not a CLI limitation — chip-tool happily holds several
 fabrics, one per `--commissioner-name` identity — but fabric 2 was commissioned by the Python framework from
-its *own* root CA, whose private key exists only in `/root/connectedhomeip/admin_storage.json`. Joining an
+its _own_ root CA, whose private key exists only in `/root/connectedhomeip/admin_storage.json`. Joining an
 existing fabric requires a NOC chaining to that fabric's root plus the matching operational private key, and
 chip-tool has no way to import another controller's credentials: each identity mints its own CA and NOCs in
 `/tmp/chip_tool_config.<identity>.ini`. The DUT confirms the split — the two fabrics report different
-`RootPublicKey` values. A `--commissioner-name beta` invocation would create a *third* fabric needing its own
+`RootPublicKey` values. A `--commissioner-name beta` invocation would create a _third_ fabric needing its own
 commissioning, and until then cannot even resolve the node (operational DNS-SD instance names are keyed by the
 compressed fabric id, derived from the root public key, so the lookup just times out).
 
@@ -111,32 +111,23 @@ await devCtrl.ReadAttribute(0x12344321, [(1609, Clusters.Binding.Attributes.Bind
 
 Only one process may use `admin_storage.json` at a time, so close the REPL before running Python tests.
 
-For a scripted or repeatable binding, fabric 2 is written through a throwaway Python script instead (same
-copy-in/run/delete pattern as §4 of the chip-tests instructions):
-
-```python
-import matter.clusters as Clusters
-from matter.testing.decorators import async_test_body
-from matter.testing.matter_testing import MatterBaseTest
-from matter.testing.runner import default_matter_test_main
-
-
-class BindChime(MatterBaseTest):
-    @async_test_body
-    async def test_bind(self):
-        target = Clusters.Binding.Structs.TargetStruct(node=self.dut_node_id, endpoint=1607, cluster=Clusters.Chime.id)
-        await self.default_controller.WriteAttribute(self.dut_node_id, [(1609, Clusters.Binding.Attributes.Binding([target]))])
-
-
-if __name__ == "__main__":
-    default_matter_test_main()
-```
+For a scripted or repeatable binding — and for anything unattended, since the runner cannot type into an
+interactive prompt — use [docker/chip-test/bind.py](docker/chip-test/bind.py), a cluster-agnostic helper that
+writes the Binding attribute on any endpoint. Copy it in, run it, delete it (the same pattern as §4 of the
+chip-tests instructions):
 
 ```bash
-docker cp bind_chime.py chip-test:/root/connectedhomeip/src/python_testing/__bind_chime.py
-docker exec chip-test python3 src/python_testing/__bind_chime.py
-docker exec chip-test rm -f /root/connectedhomeip/src/python_testing/__bind_chime.py
+docker cp docker/chip-test/bind.py chip-test:/root/connectedhomeip/src/python_testing/__bind.py
+docker exec chip-test python3 src/python_testing/__bind.py \
+  --int-arg source_endpoint:1609 --string-arg 'targets:[{"endpoint": 1607, "cluster": 1366}]'
+docker exec chip-test rm -f /root/connectedhomeip/src/python_testing/__bind.py
 ```
+
+`source_endpoint` is the endpoint hosting the client cluster. `targets` is a JSON list of binding targets:
+each entry is either unicast (`endpoint`, plus an optional `node` defaulting to the DUT node id) or group
+(`group`), with an optional `cluster` narrowing the binding to one client cluster. Add `--bool-arg
+append:true` to merge with this fabric's existing entries instead of replacing them, and pass `targets:[]` to
+clear them. The script prints the binding list before and after, and fails if the write is rejected.
 
 ### Verify
 
