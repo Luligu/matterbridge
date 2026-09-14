@@ -35,7 +35,7 @@ describe('DevicesIcons', () => {
     expectText('AC');
     expectText('Front');
     expectText('3300 mV');
-    expect(screen.getAllByText('Controller')).toHaveLength(11);
+    expect(screen.getAllByText('Controller')).toHaveLength(12);
     expect(screen.getAllByText('On').length).toBeGreaterThanOrEqual(3);
     expect(screen.getAllByText('Off').length).toBeGreaterThanOrEqual(2);
     expectText('Level 128');
@@ -76,7 +76,7 @@ describe('DevicesIcons', () => {
     expectText('Video bell');
     expectText('Intercom');
     expectText('Snapshot');
-    expectText('Cam ctrl');
+    expect(screen.queryByText('Cam ctrl')).not.toBeInTheDocument();
     expectText('Chime');
     expectText('Doorbell');
     expectText('Audio bell');

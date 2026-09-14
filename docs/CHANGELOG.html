@@ -153,6 +153,14 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="31010-dev-branch">[3.10.10] - Dev branch</h2>
+<h3 id="development-news">Development News</h3>
+<ul>
+<li>[chip]: Chime endpoint 1607 CHIP conformance is green ✅ for all automated harness tests covering the <code>Chime</code> cluster, including the optional <code>ChimeID</code> field of the <code>PlayChimeSound</code> command (<code>TC_CHIME_2_5.py</code>) and the <code>ChimeStartedPlaying</code> event (<code>TC_CHIME_2_6.py</code>).</li>
+<li>[chip]: Momentary Switch endpoint 606 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Switch</code> cluster, including the <code>MomentarySwitch</code>, <code>MomentarySwitchRelease</code>, <code>MomentarySwitchLongPress</code> and <code>MomentarySwitchMultiPress</code> features, with its own <code>generic-switch-momentary.pics</code>.</li>
+<li>[chip]: Latching Switch endpoint 6061 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Switch</code> cluster <code>LatchingSwitch</code> feature, with its own <code>generic-switch-latching.pics</code>.</li>
+<li>[chip]: Generic Switch Button1 endpoint 6063 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Switch</code> cluster on a single-press momentary switch, with its own <code>generic-switch-single.pics</code>.</li>
+<li>[chip]: Doorbell endpoint 1609 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Switch</code> cluster on the mandatory single-press momentary switch of the Doorbell device type.</li>
+</ul>
 <h3 id="added">Added</h3>
 <ul>
 <li>[demoDevices]: Add all the Chapter 16 Camera device types: Camera on endpoint 1601, a second PTZ Camera exposing the optional <code>CameraAvSettingsUserLevelManagement</code> cluster on endpoint 16011, the composed Floodlight Camera on endpoint 1602 (Camera 16021 and On/Off Light 16022), the composed Video Doorbell on endpoint 1603 (Camera 16031 and Doorbell 16032), Intercom on endpoint 1604, Audio Doorbell on endpoint 1605, Snapshot Camera on endpoint 1606, Chime on endpoint 1607, Camera Controller on endpoint 1608 and Doorbell on endpoint 1609. Endpoint 1601 keeps the plain defaults, while the other endpoints activate the two options adding an optional cluster: <code>ptz</code> (Camera AV Settings User Level Management on the Camera endpoints) and <code>identifyType</code> (Identify where it is optional, i.e. Camera, Intercom, Snapshot Camera and Chime).</li>
@@ -160,24 +168,27 @@
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.10.</li>
+<li>[matterbridge]: Bump <code>@types/node</code> to v.26.5.1.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.2.</li>
-<li>[matterbridge]: Bump <code>marked</code> to v.18.0.12.</li>
-<li>[matterbridge]: Bump <code>oxfmt</code> to v.0.67.0.</li>
-<li>[matterbridge]: Bump <code>oxlint</code> to v.1.82.0.</li>
+<li>[matterbridge]: Bump <code>marked</code> to v.18.0.13.</li>
+<li>[matterbridge]: Bump <code>oxfmt</code> to v.0.68.0.</li>
+<li>[matterbridge]: Bump <code>oxlint</code> to v.1.83.0.</li>
+<li>[matterbridge]: Bump <code>multer</code> to v.2.4.0.</li>
 <li>[test-utils]: Bump <code>@types/bun</code> to v.1.4.2.</li>
 <li>[utils]: Bump <code>@types/bun</code> to v.1.4.2.</li>
-<li>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.14.0.</li>
+<li>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.15.0.</li>
 <li>[frontend]: Bump <code>frontend</code> version to v.3.6.1.</li>
 <li>[frontend]: Bump <code>@rjsf/core</code> to v.6.10.0.</li>
 <li>[frontend]: Bump <code>@rjsf/utils</code> to v.6.10.0.</li>
 <li>[frontend]: Bump <code>@rjsf/validator-ajv8</code> to v.6.10.0.</li>
 <li>[frontend]: Bump <code>react</code> to v.19.3.0.</li>
 <li>[frontend]: Bump <code>react-dom</code> to v.19.3.0.</li>
+<li>[frontend]: Bump <code>@types/node</code> to v.26.5.1.</li>
 <li>[frontend]: Bump <code>@types/react</code> to v.19.3.0.</li>
 <li>[frontend]: Bump <code>@types/react-dom</code> to v.19.3.0.</li>
 <li>[frontend]: Bump <code>vite</code> to v.8.3.0.</li>
-<li>[frontend]: Bump <code>oxfmt</code> to v.0.67.0.</li>
-<li>[frontend]: Bump <code>oxlint</code> to v.1.82.0.</li>
+<li>[frontend]: Bump <code>oxfmt</code> to v.0.68.0.</li>
+<li>[frontend]: Bump <code>oxlint</code> to v.1.83.0.</li>
 <li>[docker]: Change the base image of the <strong>s6-rc-legacy</strong> docker image from <code>node:22-bullseye-slim</code> to <code>node:22-bookworm-slim</code>. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security <code>Release</code> file expired on 2026-09-07, breaking <code>apt-get update</code> during the build. Debian 12 (bookworm) still provides the <code>armhf</code> port and <code>node:22</code> still publishes <code>linux/arm/v7</code>, so <code>arm64</code>, <code>amd64</code> and <code>arm/v7</code> support is unchanged.</li>
 <li>[MatterbridgeEndpoint]: <code>createDefaultBridgedDeviceBasicInformationClusterServer()</code> takes a new optional trailing <code>productId</code> parameter and reports it on the <code>BridgedDeviceBasicInformation</code> cluster when it is a valid uint16. <code>ProductId</code> had <code>disallowConform</code> on this cluster up to Matter 1.3, but Matter 1.4 (cluster revision 4) changed it to <code>describedConform</code> (optional when bridging Matter devices), so it is now spec compliant to report it. The parameter is optional and appended at the end of the signature, so all the existing call sites are unaffected and the attribute stays absent unless a caller opts in. It is also passed through by <code>deserialize()</code> and by <code>MatterbridgePlatform</code>, so a stored device doesn&#39;t lose its <code>productId</code>. Thanks Ludovic BOUÉ.</li>
 </ul>
@@ -188,7 +199,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3109-2026-09-11">[3.10.9] - 2026-09-11</h2>
-<h3 id="development-news">Development News</h3>
+<h3 id="development-news-1">Development News</h3>
 <ul>
 <li>[chip]: EVSE Complete endpoint 14011 CHIP conformance is green ✅ for all automated harness tests covering the <code>EnergyEvse</code> and <code>EnergyEvseMode</code> clusters, including the optional <code>SoCReporting</code>, <code>PlugAndCharge</code>, <code>Rfid</code>, and <code>V2X</code> features.</li>
 </ul>
@@ -242,7 +253,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3108-2026-09-04">[3.10.8] - 2026-09-04</h2>
-<h3 id="development-news-1">Development News</h3>
+<h3 id="development-news-2">Development News</h3>
 <ul>
 <li><p>[chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
 </li>
@@ -361,7 +372,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="development-news-2">Development News</h3>
+<h3 id="development-news-3">Development News</h3>
 <ul>
 <li>[chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>EnergyEvse</code> cluster.</li>
 <li>[chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the <code>EnergyEvseMode</code> cluster.</li>
@@ -448,7 +459,7 @@
 <ul>
 <li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
 </ul>
-<h3 id="development-news-3">Development News</h3>
+<h3 id="development-news-4">Development News</h3>
 <ul>
 <li>[chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the <code>RootNode</code> device type and <code>BasicInformation</code>, <code>PowerSource</code>, <code>AccessControl</code>, <code>GeneralDiagnostics</code>, <code>GroupKeyManagement</code>, <code>OperationalCredentials</code> and <code>GeneralCommissioning</code> clusters.</li>
 <li>[chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the <code>Aggregator</code> device type.</li>
@@ -519,7 +530,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3105-2026-08-14">[3.10.5] - 2026-08-14</h2>
-<h3 id="development-news-4">Development news</h3>
+<h3 id="development-news-5">Development news</h3>
 <ul>
 <li>[closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass). So far fully supported by SmartThings and partially by Matter Server dashboard.</li>
 </ul>

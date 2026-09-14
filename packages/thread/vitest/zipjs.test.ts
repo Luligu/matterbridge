@@ -11,7 +11,7 @@ import path from 'node:path';
 import { promisify } from 'node:util';
 
 import { loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
-import { Uint8ArrayReader, Uint8ArrayWriter, ZipWriter } from '@zip.js/zip.js';
+import { ERR_UNSAFE_FILENAME, Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
 
 import { createZip, readZip, unZip } from '../src/zipjs.js';
 
@@ -113,7 +113,33 @@ describe('zipjs', () => {
     await expect(unZip(safeZipPath, customDestination)).resolves.toBe(customDestination);
     await expect(readFile(path.join(customDestination, 'folder', 'child.txt'), 'utf-8')).resolves.toBe('windows-content');
 
-    await expect(unZip(traversalZipPath, path.join(tempDirectory, 'traversal'))).rejects.toThrow('Refusing to extract zip entry outside destination: ..\\escape.txt');
+    // zip.js 2.15.0 rejects backslash traversal during getEntries(), before our destination guard.
+    await expect(unZip(traversalZipPath, path.join(tempDirectory, 'traversal'))).rejects.toMatchObject({
+      message: ERR_UNSAFE_FILENAME,
+      filename: '..\\escape.txt',
+    });
+    await expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  test('should reject traversal when an unsafe filename reaches the destination guard', async () => {
+    const tempDirectory = await createTempDirectory();
+    const zipPath = path.join(tempDirectory, 'traversal.zip');
+    await createArchive(zipPath, [{ filename: '..\\escape.txt', content: 'escape-content' }]);
+
+    // Bypass upstream validation only in this test to exercise our independent guard.
+    const reader = new ZipReader(new Uint8ArrayReader(await readFile(zipPath)), { filenameValidation: 'tolerant' });
+    try {
+      const entries = await reader.getEntries();
+      const getEntriesSpy = vi.spyOn(ZipReader.prototype, 'getEntries').mockResolvedValueOnce(entries);
+      try {
+        await expect(unZip(zipPath, path.join(tempDirectory, 'destination'))).rejects.toThrow('Refusing to extract zip entry outside destination: ..\\escape.txt');
+        await expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+      } finally {
+        getEntriesSpy.mockRestore();
+      }
+    } finally {
+      await reader.close();
+    }
   });
 
   test('rejects unsupported source path types when stat is neither file nor directory', async () => {

@@ -31,6 +31,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.10] - Dev branch
 
+### Development News
+
+- [chip]: Chime endpoint 1607 CHIP conformance is green ✅ for all automated harness tests covering the `Chime` cluster, including the optional `ChimeID` field of the `PlayChimeSound` command (`TC_CHIME_2_5.py`) and the `ChimeStartedPlaying` event (`TC_CHIME_2_6.py`).
+- [chip]: Momentary Switch endpoint 606 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster, including the `MomentarySwitch`, `MomentarySwitchRelease`, `MomentarySwitchLongPress` and `MomentarySwitchMultiPress` features, with its own `generic-switch-momentary.pics`.
+- [chip]: Latching Switch endpoint 6061 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster `LatchingSwitch` feature, with its own `generic-switch-latching.pics`.
+- [chip]: Generic Switch Button1 endpoint 6063 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster on a single-press momentary switch, with its own `generic-switch-single.pics`.
+- [chip]: Doorbell endpoint 1609 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster on the mandatory single-press momentary switch of the Doorbell device type.
+
 ### Added
 
 - [demoDevices]: Add all the Chapter 16 Camera device types: Camera on endpoint 1601, a second PTZ Camera exposing the optional `CameraAvSettingsUserLevelManagement` cluster on endpoint 16011, the composed Floodlight Camera on endpoint 1602 (Camera 16021 and On/Off Light 16022), the composed Video Doorbell on endpoint 1603 (Camera 16031 and Doorbell 16032), Intercom on endpoint 1604, Audio Doorbell on endpoint 1605, Snapshot Camera on endpoint 1606, Chime on endpoint 1607, Camera Controller on endpoint 1608 and Doorbell on endpoint 1609. Endpoint 1601 keeps the plain defaults, while the other endpoints activate the two options adding an optional cluster: `ptz` (Camera AV Settings User Level Management on the Camera endpoints) and `identifyType` (Identify where it is optional, i.e. Camera, Intercom, Snapshot Camera and Chime).
@@ -38,24 +46,27 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.10.
+- [matterbridge]: Bump `@types/node` to v.26.5.1.
 - [matterbridge]: Bump `@types/bun` to v.1.4.2.
-- [matterbridge]: Bump `marked` to v.18.0.12.
-- [matterbridge]: Bump `oxfmt` to v.0.67.0.
-- [matterbridge]: Bump `oxlint` to v.1.82.0.
+- [matterbridge]: Bump `marked` to v.18.0.13.
+- [matterbridge]: Bump `oxfmt` to v.0.68.0.
+- [matterbridge]: Bump `oxlint` to v.1.83.0.
+- [matterbridge]: Bump `multer` to v.2.4.0.
 - [test-utils]: Bump `@types/bun` to v.1.4.2.
 - [utils]: Bump `@types/bun` to v.1.4.2.
-- [thread]: Bump `@zip.js/zip.js` to v.2.14.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.15.0.
 - [frontend]: Bump `frontend` version to v.3.6.1.
 - [frontend]: Bump `@rjsf/core` to v.6.10.0.
 - [frontend]: Bump `@rjsf/utils` to v.6.10.0.
 - [frontend]: Bump `@rjsf/validator-ajv8` to v.6.10.0.
 - [frontend]: Bump `react` to v.19.3.0.
 - [frontend]: Bump `react-dom` to v.19.3.0.
+- [frontend]: Bump `@types/node` to v.26.5.1.
 - [frontend]: Bump `@types/react` to v.19.3.0.
 - [frontend]: Bump `@types/react-dom` to v.19.3.0.
 - [frontend]: Bump `vite` to v.8.3.0.
-- [frontend]: Bump `oxfmt` to v.0.67.0.
-- [frontend]: Bump `oxlint` to v.1.82.0.
+- [frontend]: Bump `oxfmt` to v.0.68.0.
+- [frontend]: Bump `oxlint` to v.1.83.0.
 - [docker]: Change the base image of the **s6-rc-legacy** docker image from `node:22-bullseye-slim` to `node:22-bookworm-slim`. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security `Release` file expired on 2026-09-07, breaking `apt-get update` during the build. Debian 12 (bookworm) still provides the `armhf` port and `node:22` still publishes `linux/arm/v7`, so `arm64`, `amd64` and `arm/v7` support is unchanged.
 - [MatterbridgeEndpoint]: `createDefaultBridgedDeviceBasicInformationClusterServer()` takes a new optional trailing `productId` parameter and reports it on the `BridgedDeviceBasicInformation` cluster when it is a valid uint16. `ProductId` had `disallowConform` on this cluster up to Matter 1.3, but Matter 1.4 (cluster revision 4) changed it to `describedConform` (optional when bridging Matter devices), so it is now spec compliant to report it. The parameter is optional and appended at the end of the signature, so all the existing call sites are unaffected and the attribute stays absent unless a caller opts in. It is also passed through by `deserialize()` and by `MatterbridgePlatform`, so a stored device doesn't lose its `productId`. Thanks Ludovic BOUÉ.
 

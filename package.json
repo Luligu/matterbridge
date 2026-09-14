@@ -479,12 +479,12 @@
   "devDependencies": {
     "@matter/main": "0.17.9",
     "@types/bun": "1.4.2",
-    "@types/node": "26.4.1",
+    "@types/node": "26.5.1",
     "@vitest/coverage-v8": "5.0.0",
     "cross-spawn": "7.0.6",
-    "marked": "18.0.12",
-    "oxfmt": "0.67.0",
-    "oxlint": "1.82.0",
+    "marked": "18.0.13",
+    "oxfmt": "0.68.0",
+    "oxlint": "1.83.0",
     "oxlint-tsgolint": "7.0.2001",
     "typescript": "7.0.2",
     "vitest": "5.0.0"
