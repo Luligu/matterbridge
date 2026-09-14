@@ -2330,6 +2330,92 @@
       "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
+      "name": "Switch attributes on Momentary Switch",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics"]
+    },
+    {
+      "name": "Switch momentary switch functionality on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
+    },
+    {
+      "name": "Switch momentary switch long press on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
+    },
+    {
+      "name": "Switch momentary switch multi press on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_5"]
+    },
+    {
+      "name": "Switch action switch multi press on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_6"],
+      "skip": true,
+      "comment": "Gated on has_feature(Switch, kMomentarySwitchMultiPress) AND has_feature(Switch, kActionSwitch), both probed live on the DUT. Matterbridge never enables the ActionSwitch feature, so it always skips."
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Momentary Switch",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
+    },
+    {
+      "name": "Switch attributes on Latching Switch",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 6061,
+      "args": ["--PICS /root/generic-switch-latching.pics"]
+    },
+    {
+      "name": "Switch latching switch functionality on Latching Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 6061,
+      "args": ["--PICS /root/generic-switch-latching.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_2"]
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Latching Switch",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 6061,
+      "args": ["--PICS /root/generic-switch-latching.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
+    },
+    {
+      "name": "Switch attributes on Generic Switch Button1",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics"]
+    },
+    {
+      "name": "Switch momentary switch functionality on Generic Switch Button1",
+      "test": "TC_SWTCH.py",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
+    },
+    {
+      "name": "Switch momentary switch long press on Generic Switch Button1",
+      "test": "TC_SWTCH.py",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Generic Switch Button1",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
+    },
+    {
       "name": "RvcRunMode attributes on RoboticVacuumCleaner",
       "test": "TC_RVCRUNM_1_2.py",
       "endpoint": 1201,
@@ -3070,94 +3156,6 @@
       "test": "TC_CHIME_2_6.py",
       "endpoint": 1607,
       "args": ["--PICS /root/chime.pics"]
-    },
-    {
-      "name": "Switch attributes on Momentary Switch",
-      "test": "Test_TC_SWTCH_2_1",
-      "endpoint": 606,
-      "args": ["--PICS /root/generic-switch-momentary.pics"]
-    },
-    {
-      "name": "Switch momentary switch functionality on Momentary Switch",
-      "test": "TC_SWTCH.py",
-      "endpoint": 606,
-      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
-    },
-    {
-      "name": "Switch momentary switch long press on Momentary Switch",
-      "test": "TC_SWTCH.py",
-      "endpoint": 606,
-      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
-    },
-    {
-      "name": "Switch momentary switch multi press on Momentary Switch",
-      "test": "TC_SWTCH.py",
-      "endpoint": 606,
-      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_5"]
-    },
-    {
-      "name": "Switch action switch multi press on Momentary Switch",
-      "test": "TC_SWTCH.py",
-      "endpoint": 606,
-      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_6"],
-      "skip": true,
-      "comment": "Gated on has_feature(Switch, kMomentarySwitchMultiPress) AND has_feature(Switch, kActionSwitch), both probed live on the DUT. Matterbridge never enables the ActionSwitch feature, so it always skips."
-    },
-    {
-      "name": "Switch primary functionality with client as DUT on Momentary Switch",
-      "test": "Test_TC_SWTCH_3_2",
-      "endpoint": 606,
-      "args": ["--PICS /root/generic-switch-momentary.pics"],
-      "skip": true,
-      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
-    },
-    {
-      "name": "Switch attributes on Latching Switch",
-      "test": "Test_TC_SWTCH_2_1",
-      "endpoint": 6061,
-      "args": ["--PICS /root/generic-switch-latching.pics"]
-    },
-    {
-      "name": "Switch latching switch functionality on Latching Switch",
-      "test": "TC_SWTCH.py",
-      "endpoint": 6061,
-      "args": ["--PICS /root/generic-switch-latching.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_2"],
-      "resetBefore": true,
-      "comment": "Needs CurrentPosition to start at 0. Step 3 parks the switch at position 0 and immediately resets its event listener; under the button simulator the resulting SwitchLatched(0) lands after that reset and is then mistaken for step 5's SwitchLatched(1). Starting un-actuated means step 3 changes nothing and emits nothing. matter.js persists CurrentPosition, so a restart alone is not enough: the reset relies on the *.switch.currentPosition glob to drop the stored value first."
-    },
-    {
-      "name": "Switch primary functionality with client as DUT on Latching Switch",
-      "test": "Test_TC_SWTCH_3_2",
-      "endpoint": 6061,
-      "args": ["--PICS /root/generic-switch-latching.pics"],
-      "skip": true,
-      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
-    },
-    {
-      "name": "Switch attributes on Generic Switch Button1",
-      "test": "Test_TC_SWTCH_2_1",
-      "endpoint": 6063,
-      "args": ["--PICS /root/generic-switch-single.pics"]
-    },
-    {
-      "name": "Switch momentary switch functionality on Generic Switch Button1",
-      "test": "TC_SWTCH.py",
-      "endpoint": 6063,
-      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
-    },
-    {
-      "name": "Switch momentary switch long press on Generic Switch Button1",
-      "test": "TC_SWTCH.py",
-      "endpoint": 6063,
-      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
-    },
-    {
-      "name": "Switch primary functionality with client as DUT on Generic Switch Button1",
-      "test": "Test_TC_SWTCH_3_2",
-      "endpoint": 6063,
-      "args": ["--PICS /root/generic-switch-single.pics"],
-      "skip": true,
-      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
     },
     {
       "name": "Switch attributes on Doorbell",

@@ -1,4 +1,4 @@
-Chip tests run started at 2026-09-14T16:32:40.079Z
+Chip tests run started at 2026-09-14T16:36:49.575Z
 
 ✅ Switch attributes on Momentary Switch (Test_TC_SWTCH_2_1)
 ✅ Switch momentary switch functionality on Momentary Switch (TC_SWTCH.py)
@@ -24,4 +24,4 @@ Chip tests run started at 2026-09-14T16:32:40.079Z
    ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
 
 Summary: 12/12 tests passed (5 skipped).
-Chip tests run ended at 2026-09-14T16:34:07.962Z (total duration 1m 28s)
+Chip tests run ended at 2026-09-14T16:38:06.005Z (total duration 1m 16s)
