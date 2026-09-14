@@ -153,6 +153,16 @@ const demoPluginSchema: PlatformSchema = {
   },
 };
 
+let demoPluginConfig: PlatformConfig = {
+  name: demoPluginName,
+  type: demoPluginType,
+  version: demoPluginVersion,
+  debug: false,
+  unregisterOnShutdown: false,
+  whiteList: [],
+  blackList: [],
+};
+
 export async function createDemoDevices(matterbridge: Matterbridge): Promise<void> {
   if (matterbridge.bridgeMode !== 'bridge') {
     matterbridge.log.error('Demo devices can only be created in bridge mode');
@@ -166,21 +176,11 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   }
   const configFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.config.json`);
   const schemaFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.schema.json`);
-  const defaultConfig: PlatformConfig = {
-    name: demoPluginName,
-    type: demoPluginType,
-    version: demoPluginVersion,
-    debug: false,
-    unregisterOnShutdown: false,
-    whiteList: [],
-    blackList: [],
-  };
-  let config = defaultConfig;
   try {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const storedConfig = JSON.parse(await readFile(configFile, 'utf8')) as PlatformConfig;
-    config = {
-      ...defaultConfig,
+    demoPluginConfig = {
+      ...demoPluginConfig,
       ...storedConfig,
       name: demoPluginName,
       type: demoPluginType,
@@ -193,7 +193,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') matterbridge.log.error(`Failed to read demo devices config ${configFile}: ${getErrorMessage(error)}`);
   }
   try {
-    await writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+    await writeFile(configFile, JSON.stringify(demoPluginConfig, null, 2), 'utf8');
     await writeFile(schemaFile, JSON.stringify(demoPluginSchema, null, 2), 'utf8');
   } catch (error) {
     matterbridge.log.error(`Failed to write demo devices config or schema: ${getErrorMessage(error)}`);
@@ -209,7 +209,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     enabled: false,
     private: true,
     registeredDevices: 0,
-    configJson: config,
+    configJson: demoPluginConfig,
     schemaJson: demoPluginSchema,
     hasWhiteList: true,
     hasBlackList: true,
@@ -217,9 +217,9 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const whiteList = config.whiteList as string[];
+    const whiteList = demoPluginConfig.whiteList as string[];
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const blackList = config.blackList as string[];
+    const blackList = demoPluginConfig.blackList as string[];
     if (blackList.includes(deviceName)) {
       matterbridge.log.info(`Skipping demo device ${deviceName} because it is in the blacklist`);
       return;
