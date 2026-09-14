@@ -1,0 +1,24 @@
+# To run tests on Switch --PICS is required
+# Matches createDefaultSwitchClusterServer() (packages/core/src/matterbridgeEndpoint.ts) — the full-featured
+# momentary switch: MomentarySwitch, MomentarySwitchRelease, MomentarySwitchLongPress and
+# MomentarySwitchMultiPress, NumberOfPositions 2, CurrentPosition 0, MultiPressMax 2, and every momentary
+# event. Used by the standalone CHIP Momentary Switch on endpoint 606 (FeatureMap 0x1e, verified on the DUT).
+PICS_SDK_CI_ONLY=1
+SWTCH.S=1
+SWTCH.C=0 # Matterbridge only exposes a Switch server, never acts as a client
+SWTCH.S.F00=0 # LatchingSwitch
+SWTCH.S.F01=1 # MomentarySwitch
+SWTCH.S.F02=1 # MomentarySwitchRelease
+SWTCH.S.F03=1 # MomentarySwitchLongPress
+SWTCH.S.F04=1 # MomentarySwitchMultiPress
+SWTCH.S.F05=0 # ActionSwitch
+SWTCH.S.A0000=1 # NumberOfPositions
+SWTCH.S.A0001=1 # CurrentPosition
+SWTCH.S.A0002=1 # MultiPressMax (mandatory with MSM)
+SWTCH.S.E00=0 # SwitchLatched (requires LS)
+SWTCH.S.E01=1 # InitialPress
+SWTCH.S.E02=1 # LongPress
+SWTCH.S.E03=1 # ShortRelease
+SWTCH.S.E04=1 # LongRelease
+SWTCH.S.E05=1 # MultiPressOngoing
+SWTCH.S.E06=1 # MultiPressComplete

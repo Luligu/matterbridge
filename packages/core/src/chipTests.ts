@@ -79,6 +79,11 @@ type ChipTestAppPipeCommand = {
   LongPressDelayMillis?: number;
   LongPressDurationMillis?: number;
   FeatureMap?: number;
+  PositionId?: number;
+  MultiPressPressedTimeMillis?: number;
+  MultiPressReleasedTimeMillis?: number;
+  MultiPressNumPresses?: number;
+  MultiPressMax?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
@@ -1488,6 +1493,25 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
     case 'SimulateLongPress':
       await simulateChipTestSwitchLongPress(matterbridge, endpoint, endpointId, command);
       return;
+    case 'SimulateLatchPosition': {
+      // TC_SWTCH.py's _send_latching_switch_named_pipe_command(): move a latching switch to a new position.
+      // Matter 1.6.0 § 1.13.7.1: SwitchLatched is generated when the switch is moved to a NEW position, so a
+      // command that re-states the position the switch is already in must stay silent. TC_SWTCH_2_2 relies on
+      // that: it parks the switch at position 0 (usually already the current value) and resets its event
+      // listener, so a spurious SwitchLatched(0) here would be read as the answer to its next position change.
+      const newPosition = command.PositionId ?? 0;
+      if (endpoint.getAttribute(Switch.id, 'currentPosition', matterbridge.log) === newPosition) {
+        matterbridge.log.info(`CHIP test app pipe left Switch latched at position ${newPosition} on endpoint ${endpointId}`);
+        return;
+      }
+      await endpoint.setAttribute(Switch.id, 'currentPosition', newPosition, matterbridge.log);
+      await endpoint.triggerEvent(Switch.id, 'switchLatched', { newPosition }, matterbridge.log);
+      matterbridge.log.info(`CHIP test app pipe latched Switch to position ${newPosition} on endpoint ${endpointId}`);
+      return;
+    }
+    case 'SimulateMultiPress':
+      await simulateChipTestSwitchMultiPress(matterbridge, endpoint, endpointId, command);
+      return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
   }
@@ -1547,6 +1571,53 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
   matterbridge.log.info(`CHIP test app pipe released Switch position ${newPosition} on endpoint ${endpointId}`);
 }
 
+/**
+ * Simulates a rapid sequence of press/release cycles on a Switch endpoint, for TC_SWTCH.py's SimulateMultiPress
+ * app pipe command (_send_multi_press_named_pipe_command(), used by TC_SWTCH_2_5).
+ *
+ * Matter 1.6.0 § 1.13.7: a multi-press sequence reports InitialPress on every press, MultiPressOngoing from the
+ * second press onwards, ShortRelease after each release when MSR is supported, and a single MultiPressComplete
+ * once the sequence ends. MultiPressComplete is emitted here rather than on a following SimulateSwitchIdle,
+ * because TC_SWTCH_2_5 calls _ask_for_switch_idle(omit_for_simulator=True) — which sends nothing at all under
+ * the button simulator — and then waits for the event.
+ *
+ * Both press counts are capped at MultiPressMax, whose constraint on CurrentNumberOfPressesCounted and
+ * TotalNumberOfPressesCounted is `max MultiPressMax` (Matter 1.6.0 § 1.13.7.6/1.13.7.7).
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint hosting the Switch cluster server.
+ * @param {number} endpointId - The endpoint number, for logging.
+ * @param {ChipTestAppPipeCommand} command - The SimulateMultiPress app pipe command.
+ */
+async function simulateChipTestSwitchMultiPress(matterbridge: Matterbridge, endpoint: MatterbridgeEndpoint, endpointId: number, command: ChipTestAppPipeCommand): Promise<void> {
+  if (!endpoint.hasClusterServer(Switch.id)) {
+    matterbridge.log.warn(`Ignoring SimulateMultiPress CHIP test app pipe command on endpoint ${endpointId} without a Switch cluster server`);
+    return;
+  }
+  const features = featuresFor(endpoint, Switch.id);
+  const newPosition = command.ButtonId ?? 1;
+  const presses = Math.max(command.MultiPressNumPresses ?? 1, 1);
+  const pressedMs = command.MultiPressPressedTimeMillis ?? 0;
+  const releasedMs = command.MultiPressReleasedTimeMillis ?? 0;
+  const multiPressMax = endpoint.getAttribute(Switch.id, 'multiPressMax', matterbridge.log) ?? command.MultiPressMax ?? presses;
+
+  for (let press = 1; press <= presses; press++) {
+    await endpoint.setAttribute(Switch.id, 'currentPosition', newPosition, matterbridge.log);
+    await endpoint.triggerEvent(Switch.id, 'initialPress', { newPosition }, matterbridge.log);
+    if (press > 1) {
+      await endpoint.triggerEvent(Switch.id, 'multiPressOngoing', { newPosition, currentNumberOfPressesCounted: Math.min(press, multiPressMax) }, matterbridge.log);
+    }
+    await wait(pressedMs);
+    await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
+    if (features.momentarySwitchRelease) {
+      await endpoint.triggerEvent(Switch.id, 'shortRelease', { previousPosition: newPosition }, matterbridge.log);
+    }
+    await wait(releasedMs);
+  }
+  await endpoint.triggerEvent(Switch.id, 'multiPressComplete', { previousPosition: newPosition, totalNumberOfPressesCounted: Math.min(presses, multiPressMax) }, matterbridge.log);
+  matterbridge.log.info(`CHIP test app pipe completed ${presses} press(es) of Switch position ${newPosition} on endpoint ${endpointId}`);
+}
+
 function getChipTestEndpoint(matterbridge: Matterbridge, endpointId: number): MatterbridgeEndpoint | undefined {
   const aggregatorEndpoint = matterbridge.aggregatorNode;
   if (!aggregatorEndpoint) return undefined;
@@ -1576,7 +1647,12 @@ function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeComma
     (!('ButtonId' in value) || typeof value.ButtonId === 'number') &&
     (!('LongPressDelayMillis' in value) || typeof value.LongPressDelayMillis === 'number') &&
     (!('LongPressDurationMillis' in value) || typeof value.LongPressDurationMillis === 'number') &&
-    (!('FeatureMap' in value) || typeof value.FeatureMap === 'number')
+    (!('FeatureMap' in value) || typeof value.FeatureMap === 'number') &&
+    (!('PositionId' in value) || typeof value.PositionId === 'number') &&
+    (!('MultiPressPressedTimeMillis' in value) || typeof value.MultiPressPressedTimeMillis === 'number') &&
+    (!('MultiPressReleasedTimeMillis' in value) || typeof value.MultiPressReleasedTimeMillis === 'number') &&
+    (!('MultiPressNumPresses' in value) || typeof value.MultiPressNumPresses === 'number') &&
+    (!('MultiPressMax' in value) || typeof value.MultiPressMax === 'number')
   );
 }
 // v8 ignore end

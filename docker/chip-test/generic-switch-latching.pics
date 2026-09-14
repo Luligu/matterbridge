@@ -1,0 +1,23 @@
+# To run tests on Switch --PICS is required
+# Matches createDefaultLatchingSwitchClusterServer() (packages/core/src/matterbridgeEndpoint.ts) — the
+# latching switch: LatchingSwitch only, NumberOfPositions 2, CurrentPosition 0, and the SwitchLatched event
+# alone. Used by the standalone CHIP Latching Switch on endpoint 6061 (FeatureMap 0x01, verified on the DUT).
+PICS_SDK_CI_ONLY=1
+SWTCH.S=1
+SWTCH.C=0 # Matterbridge only exposes a Switch server, never acts as a client
+SWTCH.S.F00=1 # LatchingSwitch
+SWTCH.S.F01=0 # MomentarySwitch
+SWTCH.S.F02=0 # MomentarySwitchRelease
+SWTCH.S.F03=0 # MomentarySwitchLongPress
+SWTCH.S.F04=0 # MomentarySwitchMultiPress
+SWTCH.S.F05=0 # ActionSwitch
+SWTCH.S.A0000=1 # NumberOfPositions
+SWTCH.S.A0001=1 # CurrentPosition
+SWTCH.S.A0002=0 # MultiPressMax (requires MSM)
+SWTCH.S.E00=1 # SwitchLatched
+SWTCH.S.E01=0 # InitialPress (requires MS)
+SWTCH.S.E02=0 # LongPress (requires MSL)
+SWTCH.S.E03=0 # ShortRelease (requires MSR)
+SWTCH.S.E04=0 # LongRelease (requires MSL)
+SWTCH.S.E05=0 # MultiPressOngoing (requires MSM)
+SWTCH.S.E06=0 # MultiPressComplete (requires MSM)
