@@ -2205,8 +2205,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.warn(' ***********************************************************************************');
       this.log.warn(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running chip test app pipe. *');
       this.log.warn(' ***********************************************************************************');
-      const { createChipTestAppPipe } = await import('./chipTests.js');
+      const { createChipTestAppPipe, createChipTestRestartFlag } = await import('./chipTests.js');
       createChipTestAppPipe(this);
+      createChipTestRestartFlag(this);
     }
 
     // Load and start all plugins without awaiting them to start

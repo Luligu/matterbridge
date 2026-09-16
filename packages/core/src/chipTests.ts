@@ -26,7 +26,7 @@
 /* v8 ignore start - CHIP test glue only runs inside the chip-test Docker container, gated behind MATTERBRIDGE_CHIP_TEST */
 
 import { spawnSync } from 'node:child_process';
-import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
+import { closeSync, constants, existsSync, openSync, readFileSync, readSync, unlinkSync } from 'node:fs';
 
 import { Seconds, Time, type Timer } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
@@ -87,6 +87,14 @@ type ChipTestAppPipeCommand = {
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
+// Written by MatterBaseTest.request_device_reboot() (matter/testing/matter_testing.py) whenever a Python test
+// is started with --restart-flag-file, and polled by createChipTestRestartFlag(). Must match the path passed
+// in chipTests.json's "args" for every test that reboots the DUT mid-run.
+const chipTestRestartFlagPath = '/tmp/matterbridge-chip-test-restart-flag';
+// The only flag content createChipTestRestartFlag() acts on. request_device_reboot() always writes exactly
+// this; request_device_factory_reset() writes "factory reset"/"factory reset app only" instead, which this
+// monitor deliberately does not implement (it would have to wipe the node storage and the fabrics).
+const chipTestRestartFlagText = 'restart';
 const chipTestValidEventTrigger = 0xfffffffffff10000n;
 const smokeCoAlarmWarningSmokeAlarmTrigger = 0x005c000000000090n;
 const smokeCoAlarmCriticalSmokeAlarmTrigger = 0x005c00000000009cn;
@@ -190,6 +198,17 @@ const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0
 // MATTERBRIDGE_DEMO_DEVICES also created a device tree via createChipTestDevices() (chipTestDevices.ts).
 let chipTestMatterbridge: Matterbridge | undefined;
 let closeChipTestAppPipe: (() => void) | undefined;
+// The restart-flag poll timer and its state. Both are module level rather than per-instance on purpose: a
+// CHIP test restart is an in-process reload (Matterbridge.restartProcess() -> cleanup('restarting...', true)
+// -> cliEmitter 'restart' -> Matterbridge.loadInstance(true) in cli.ts), so the Node process — and this
+// module's state — outlives the Matterbridge instance that requested the restart. The timer is created once
+// and keeps polling across restarts, reading the current instance through chipTestMatterbridge.
+let chipTestRestartFlagTimer: ReturnType<typeof setInterval> | undefined;
+// True between requesting a restart and clearing the flag once the new instance's root server node is
+// online. Suppresses re-triggering off the same flag file while the restart is still in flight.
+let chipTestRestartPending = false;
+// Set once an unsupported flag content has been reported, so the 250 ms poll doesn't log it repeatedly.
+let chipTestRestartFlagWarned = false;
 let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
 // The endpoint chipTests.json's "endpoint" field names for whichever test is currently running, set via the
 // app-pipe "SetTestEndpoint" command (run-matterbridge-chip-tests.mjs writes it before every test, cleared —
@@ -230,6 +249,104 @@ export class MatterbridgeGeneralDiagnosticsServer extends GeneralDiagnosticsServ
     if (isChipTestEnableKey(keyData)) this.state.deviceTestEnableKey = keyData;
     return super.payloadTestRequest(request);
   }
+}
+
+/**
+ * Removes the CHIP test restart flag file, signalling to the waiting Python test that the reboot completed.
+ *
+ * @param {AnsiLogger} log - The logger to report a failed removal on.
+ */
+function removeChipTestRestartFlag(log: AnsiLogger): void {
+  try {
+    if (existsSync(chipTestRestartFlagPath)) unlinkSync(chipTestRestartFlagPath);
+  } catch (error) {
+    log.error(`Failed to remove CHIP test restart flag ${chipTestRestartFlagPath}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Starts the CHIP test restart-flag monitor, the backchannel behind MatterBaseTest.request_device_reboot().
+ *
+ * A handful of Python CHIP tests (TC_ACL_2_10, TC_AVSM_2_18 through TC_AVSM_2_21, TC_AVSUM_2_9, TC_BINFO_2_2
+ * and TC_CC_6_5) reboot the DUT mid-test to assert that state survives a restart. When started with
+ * --restart-flag-file, request_device_reboot() writes "restart" into that file, expires its CASE sessions,
+ * and then blocks in wait_for_restart_flag_file_removal() — whose contract is that the flag is removed only
+ * *after* the DUT has fully rebooted and is ready again, with a hard 30 s timeout. Without a monitor the
+ * tests instead fall into the manual branch, where wait_for_user_input() swallows the EOF this harness's
+ * closed stdin produces and the test continues as if a reboot had happened, passing vacuously.
+ *
+ * Restarting the container is not an option here: the entrypoint execs Matterbridge as PID 1, so the Python
+ * test — which runs inside that same container via docker exec — would be killed along with it. Instead this
+ * reuses Matterbridge's own frontend restart path (restartProcess(), i.e. /api/restart), which tears the
+ * instance down and reloads a fresh one in-process without ever exiting Node. The container, and the test,
+ * stay up while the DUT genuinely restarts and reloads its state from the node storage.
+ *
+ * Called from startBridge() alongside createChipTestAppPipe(), so it is gated behind MATTERBRIDGE_CHIP_TEST
+ * exactly like the app pipe, and re-entered on every startBridge() — including the one that follows a restart
+ * it requested. It relies on createChipTestAppPipe() having set chipTestMatterbridge first.
+ *
+ * @param {Matterbridge} matterbridge - The current Matterbridge instance.
+ */
+export function createChipTestRestartFlag(matterbridge: Matterbridge): void {
+  // Re-entered by the fresh instance after a restart this monitor requested. The flag is cleared only once
+  // the root server node is back online, since the test resumes reading attributes the moment it disappears.
+  if (chipTestRestartPending) {
+    const onOnline = (nodeId: string): void => {
+      // Filtered rather than a once() listener: in childbridge mode the plugin server nodes come online too,
+      // and only the root node coming back means the DUT is reachable again.
+      if (nodeId !== 'Matterbridge') return;
+      matterbridge.off('online', onOnline);
+      removeChipTestRestartFlag(matterbridge.log);
+      // Cleared only here, after the flag is gone. Clearing it on entry instead would let the poll below see
+      // the still-present flag and immediately request a second, spurious restart.
+      chipTestRestartPending = false;
+      matterbridge.log.notice(`CHIP test restart completed, cleared restart flag ${chipTestRestartFlagPath}`);
+    };
+    matterbridge.on('online', onOnline);
+  }
+
+  // The timer outlives each instance, so it is only ever created once.
+  if (chipTestRestartFlagTimer) return;
+
+  matterbridge.log.notice(`CHIP test restart flag monitor watching ${chipTestRestartFlagPath}`);
+  chipTestRestartFlagTimer = setInterval(() => {
+    const instance = chipTestMatterbridge;
+    if (!instance || chipTestRestartPending || !existsSync(chipTestRestartFlagPath)) return;
+
+    let flagText: string;
+    try {
+      flagText = readFileSync(chipTestRestartFlagPath, 'utf8').trim();
+    } catch (error) {
+      instance.log.error(`Failed to read CHIP test restart flag ${chipTestRestartFlagPath}: ${error instanceof Error ? error.message : String(error)}`);
+      return;
+    }
+
+    if (flagText !== chipTestRestartFlagText) {
+      // Left in place rather than cleared, so the test fails loudly on its own 30 s timeout instead of being
+      // told a factory reset it asked for had completed.
+      if (!chipTestRestartFlagWarned) {
+        chipTestRestartFlagWarned = true;
+        instance.log.warn(`Ignoring unsupported CHIP test restart flag content "${flagText}": only "${chipTestRestartFlagText}" is implemented`);
+      }
+      return;
+    }
+
+    chipTestRestartFlagWarned = false;
+    chipTestRestartPending = true;
+    instance.log.notice(`CHIP test restart requested via ${chipTestRestartFlagPath}, restarting Matterbridge...`);
+    instance.restartProcess().catch((error: unknown) => {
+      // Leave the flag in place so the test times out instead of resuming against a half-torn-down bridge.
+      chipTestRestartPending = false;
+      instance.log.error(`Failed to restart Matterbridge for the CHIP test restart flag: ${error instanceof Error ? error.message : String(error)}`);
+    });
+  }, 250);
+  chipTestRestartFlagTimer.unref();
+
+  cliEmitter.once('shutdown', () => {
+    if (chipTestRestartFlagTimer) clearInterval(chipTestRestartFlagTimer);
+    chipTestRestartFlagTimer = undefined;
+    removeChipTestRestartFlag(matterbridge.log);
+  });
 }
 
 function isChipTestEnableKey(keyData: Uint8Array): boolean {
