@@ -36,7 +36,8 @@
     "Test_TC_DRYERCTRL_2_1.yaml",
     "TC_MWOCTRL_2_2.py",
     "Test_TC_EEVSE_2_1.yaml",
-    "TC_EEVSE_2_2.py"
+    "TC_EEVSE_2_2.py",
+    "TC_AVSUM_2_7.py"
   ],
   "tests": [
     {

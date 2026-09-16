@@ -434,7 +434,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    *
    * @param {CameraAvSettingsUserLevelManagement.DptzSetViewportRequest} request - DPTZSetViewport request payload.
    * @throws {StatusResponseError} With status NotFound if videoStreamId is not present in DPTZStreams.
-   * @throws {StatusResponseError} With status ConstraintError if the viewport is smaller than MinViewportResolution, larger than the sensor, or does not match the aspect ratio of the stream.
+   * @throws {StatusResponseError} With status DynamicConstraintError if the viewport is smaller than MinViewportResolution, larger than the sensor, or does not match the aspect ratio of the stream.
    */
   override dptzSetViewport(request: CameraAvSettingsUserLevelManagement.DptzSetViewportRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -443,14 +443,14 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     const { videoSensorParams, minViewportResolution } = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state;
     const width = viewportWidth(viewport);
     const height = viewportHeight(viewport);
-    // Matter 1.6.0 § 11.3.7.6.3: Reject with an error when the requested viewport is outside of the defined allowed range, the lower bound of which is MinViewportResolution.
+    // Matter 1.6.0 § 11.3.7.6.3: Reject with DYNAMIC_CONSTRAINT_ERROR when the requested viewport is outside of the defined allowed range, the lower bound of which is MinViewportResolution.
     if (width < minViewportResolution.width || height < minViewportResolution.height) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: viewport ${width}x${height} is smaller than the minimum viewport resolution ${minViewportResolution.width}x${minViewportResolution.height} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.ConstraintError,
+        Status.DynamicConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.6.3: The upper bound of the allowed range is the sensor Cartesian plane, of size SensorWidth by SensorHeight.
+    // Matter 1.6.0 § 11.3.7.6.3: The upper bound of that same allowed range is the sensor Cartesian plane, of size SensorWidth by SensorHeight.
     if (
       viewport.x2 > videoSensorParams.sensorWidth ||
       viewport.y2 > videoSensorParams.sensorHeight ||
@@ -459,14 +459,14 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     ) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: viewport ${width}x${height} at (${viewport.x1}, ${viewport.y1}) does not fit the sensor ${videoSensorParams.sensorWidth}x${videoSensorParams.sensorHeight} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.ConstraintError,
+        Status.DynamicConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.6.2: The aspect ratio of the viewport SHALL match the aspect ratio of the stream requested.
+    // Matter 1.6.0 § 11.3.7.6.2: The aspect ratio of the viewport SHALL match the aspect ratio of the stream requested. § 11.3.7.6.3 lists only NOT_FOUND and DYNAMIC_CONSTRAINT_ERROR as failures, so a viewport failing this SHALL is also outside the defined allowed range.
     if (!sameAspectRatio(width, height, viewportWidth(entry.viewport), viewportHeight(entry.viewport))) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: viewport ${width}x${height} does not match the aspect ratio of video stream ${videoStreamId} (${viewportWidth(entry.viewport)}x${viewportHeight(entry.viewport)}) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.ConstraintError,
+        Status.DynamicConstraintError,
       );
     }
     // Matter 1.6.0 § 11.3.7.6.3: Update the entry in DPTZStreams with the requested Viewport and apply it to the requested video stream.

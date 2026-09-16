@@ -817,6 +817,31 @@ exercises), so `write_setpoint()`/`send_raise_lower_and_verify()` compute the ex
 per-call instead of asserting fixed constants. Verified compatible with this image's baked `matter.testing`
 package (`EventSubscriptionHandler`, `TestStep`, `default_matter_test_main` all resolve).
 
+### `TC_AVSUM_2_7.py`
+
+Steps 7, 9 and 14 expect `DPTZSetViewport` to reject an out-of-range viewport with `CONSTRAINT_ERROR` (0x87).
+Matter 1.6.0 § 11.3.7.6.3 "Effect on Receipt" defines exactly two failure modes for this command: `NOT_FOUND`
+when the `VideoStreamID` has no entry in `DPTZStreams`, and **`DYNAMIC_CONSTRAINT_ERROR` (0x8b)** when "the
+requested viewport is outside of the defined allowed range". All three of those steps are the second case: a
+viewport below `MinViewportResolution` (step 7), one larger than the sensor (step 9), and one whose aspect
+ratio does not match the stream's, which § 11.3.7.6.2 makes a `SHALL` on the `Viewport` field and which
+§ 11.3.7.6.3 therefore also folds into the allowed range, since it lists no third status (step 14). The patch
+changes only those three `expected_status` values from `Status.ConstraintError` to
+`Status.DynamicConstraintError`; nothing else in the file is touched, and no command, PICS guard, viewport
+value or endpoint is changed.
+
+`MatterbridgeCameraAvSettingsUserLevelManagementServer.dptzSetViewport()` follows the specification and
+returns `DYNAMIC_CONSTRAINT_ERROR`, so the unpatched test fails all three steps against a spec-correct DUT.
+The distinction is not cosmetic: `CONSTRAINT_ERROR` is the status for a field violating a _static_ constraint
+declared in the cluster XML, which matter.js enforces from the data model before the command ever reaches the
+server, whereas these three checks depend on `MinViewportResolution`, `VideoSensorParams` and the stream's
+current viewport — runtime state — which is precisely what `DYNAMIC_CONSTRAINT_ERROR` exists to report. The
+sibling command keeps the static form: `TC_AVSUM_2_8.py` step 4 expects `CONSTRAINT_ERROR` for a `ZoomDelta`
+of 101, which is correct and unpatched, because the cluster XML constrains that field to `-100 to 100` and
+matter.js rejects it from the model.
+
+Not yet reported upstream.
+
 # Known Issues
 
 ## matter.js discovery

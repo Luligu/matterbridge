@@ -9,7 +9,7 @@ const NAME = 'CameraAvSettingsUserLevelManagementServerBehavior';
 const MATTER_PORT = 6011;
 const MATTER_CREATE_ONLY = true;
 
-import { StreamUsage } from '@matter/types';
+import { Status, StreamUsage } from '@matter/types';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
@@ -342,26 +342,30 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   it('should reject setting the viewport of a video stream that is not in dptzStreams', async () => {
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', { videoStreamId: 5, viewport: { x1: 0, y1: 0, x2: 1920, y2: 1080 } }),
-    ).rejects.toThrow('video stream 5 is not present in dptzStreams');
+    ).rejects.toMatchObject({ code: Status.NotFound, message: expect.stringContaining('video stream 5 is not present in dptzStreams') });
   });
 
   it('should reject a viewport smaller than the minimum viewport resolution', async () => {
+    // Matter 1.6.0 § 11.3.7.6.3: outside the defined allowed range is DYNAMIC_CONSTRAINT_ERROR (0x8b), not CONSTRAINT_ERROR.
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', { videoStreamId: 0, viewport: { x1: 1, y1: 10, x2: 1, y2: 10 } }),
-    ).rejects.toThrow('viewport 0x0 is smaller than the minimum viewport resolution 640x360');
+    ).rejects.toMatchObject({ code: Status.DynamicConstraintError, message: expect.stringContaining('viewport 0x0 is smaller than the minimum viewport resolution 640x360') });
   });
 
   it('should reject a viewport that does not fit the sensor', async () => {
     // 1936x1089 keeps the 16:9 aspect ratio of the sensor, so this can only be rejected by the sensor size check.
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', { videoStreamId: 0, viewport: { x1: 0, y1: 0, x2: 1936, y2: 1089 } }),
-    ).rejects.toThrow('viewport 1936x1089 at (0, 0) does not fit the sensor 1920x1080');
+    ).rejects.toMatchObject({ code: Status.DynamicConstraintError, message: expect.stringContaining('viewport 1936x1089 at (0, 0) does not fit the sensor 1920x1080') });
   });
 
   it('should reject a viewport that does not match the aspect ratio of the stream', async () => {
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', { videoStreamId: 0, viewport: { x1: 0, y1: 540, x2: 1920, y2: 1080 } }),
-    ).rejects.toThrow('viewport 1920x540 does not match the aspect ratio of video stream 0 (1920x1080)');
+    ).rejects.toMatchObject({
+      code: Status.DynamicConstraintError,
+      message: expect.stringContaining('viewport 1920x540 does not match the aspect ratio of video stream 0 (1920x1080)'),
+    });
   });
 
   it('should set the viewport of an allocated video stream', async () => {
