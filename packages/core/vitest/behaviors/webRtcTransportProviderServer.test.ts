@@ -134,8 +134,16 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(currentSessions[0].audioStreams).toEqual([0]);
     clearExpectedWarnings('No injectable video codec available on negotiated transceivers');
 
+    expect(device.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')?.[0].referenceCount).toBe(1);
+    expect(device.getAttribute(CameraAvStreamManagement, 'allocatedAudioStreams')?.[0].referenceCount).toBe(1);
+
+    await expect(device.invokeBehaviorCommand(CameraAvStreamManagement, 'videoStreamDeallocate', { videoStreamId: 0 })).rejects.toThrow('video stream 0 is in use');
+    await expect(device.invokeBehaviorCommand(CameraAvStreamManagement, 'audioStreamDeallocate', { audioStreamId: 0 })).rejects.toThrow('audio stream 0 is in use');
+
     // Restores currentSessions to empty without resetting the monotonically increasing session id allocator.
     await device.invokeBehaviorCommand(WebRtcTransportProvider, 'endSession', { webRtcSessionId: 0, reason: WebRtcTransportDefinitions.WebRtcEndReason.UserHangup });
+    expect(device.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')?.[0].referenceCount).toBe(0);
+    expect(device.getAttribute(CameraAvStreamManagement, 'allocatedAudioStreams')?.[0].referenceCount).toBe(0);
   });
 
   it('should solicit an offer and record a deferred session', async () => {
@@ -210,6 +218,9 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(currentSessions).toHaveLength(2);
     expect(currentSessions[1].videoStreams).toEqual([0]);
     expect(currentSessions[1].audioStreams).toEqual([0]);
+
+    expect(device.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')?.[0].referenceCount).toBe(2);
+    expect(device.getAttribute(CameraAvStreamManagement, 'allocatedAudioStreams')?.[0].referenceCount).toBe(1);
 
     // Restores currentSessions to the session created by the main flow.
     await device.invokeBehaviorCommand(WebRtcTransportProvider, 'endSession', { webRtcSessionId: 3, reason: WebRtcTransportDefinitions.WebRtcEndReason.UserHangup });

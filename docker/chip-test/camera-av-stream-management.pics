@@ -1,0 +1,9 @@
+# Camera endpoint 1601: Camera and MatterbridgeCameraAvStreamManagementServer.
+# These are the PICS gates consumed by the AVSM Python tests; other capabilities
+# are checked against the live FeatureMap and AttributeList.
+PICS_SDK_CI_ONLY=1
+AVSM.S=1
+AVSM.C=0
+AVSM.S.F_VDO=1 # Video
+AVSM.S.F_ADO=1 # Audio
+AVSM.S.F_SNP=1 # Snapshot

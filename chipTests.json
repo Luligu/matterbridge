@@ -7,7 +7,11 @@
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
     "*.RoboticVacuumCleaner.rvcCleanMode.currentMode",
     "*.Chime.chime.*",
-    "*.switch.currentPosition"
+    "*.switch.currentPosition",
+    "*.cameraAvStreamManagement.allocatedVideoStreams",
+    "*.cameraAvStreamManagement.allocatedAudioStreams",
+    "*.cameraAvStreamManagement.allocatedSnapshotStreams",
+    "*.cameraAvStreamManagement.streamUsagePriorities"
   ],
   "patches": [
     "TC_DeviceBasicComposition.py",
@@ -61,7 +65,7 @@
       "name": "BasicInformation attributes with node-as-subject on RootNode",
       "test": "TC_BINFO_2_2.py",
       "endpoint": 0,
-      "args": ["--PICS /root/matterbridge.pics"]
+      "args": ["--PICS /root/matterbridge.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"]
     },
     {
       "name": "BasicInformation ProductAppearance on RootNode",
@@ -153,7 +157,8 @@
     {
       "name": "AccessControl multi-fabric ACL/Extension write with server-as-subject",
       "test": "TC_ACL_2_10.py",
-      "endpoint": 0
+      "endpoint": 0,
+      "args": ["--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"]
     },
     {
       "name": "AccessControl Managed Device feature (ARL) on RootNode",
@@ -1883,7 +1888,7 @@
       "endpoint": 401,
       "args": ["--PICS /root/on-off.pics"],
       "skip": true,
-      "comment": "Requires 6 real DUT reboots."
+      "comment": "Requires 6 real DUT reboots, and the restart-flag monitor cannot serve them: --restart-flag-file is a Python matter_testing facility, while this YAML test reboots either via SystemCommands.Reboot (PICS_SDK_CI_ONLY, which only restarts an app chip-tool itself spawned) or a LogCommands.UserPrompt on stdin (PICS_SKIP_SAMPLE_APP). Answering that prompt with canned input would fake the reboot, not perform one. It would fail anyway for the same reason as TC_CC_6_5: matter.js skips the StartUpOnOff/StartUpCurrentLevel/StartUpColorTemperatureMireds startup logic on any endpoint under an aggregator. Verified directly against endpoint 401 — with StartUpOnOff=1 and OnOff=false, a real reboot left OnOff false."
     },
     {
       "name": "OnOff scenes management interaction on OnOffLight",
@@ -2116,9 +2121,8 @@
       "test": "TC_CC_6_5.py",
       "endpoint": 403,
       "note": "Exercises CT: StartUpColorTemperatureMireds (A4010) applied to ColorTemperatureMireds on restart.",
-      "args": ["--PICS /root/color-control-ct.pics"],
-      "skip": true,
-      "comment": "Requires a real DUT reboot."
+      "args": ["--PICS /root/color-control-ct.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "comment": "Reboots the DUT via createChipTestRestartFlag(). matter.js skips StartUpColorTemperatureMireds on aggregator-owned endpoints (PR #3048), which has no basis in the spec, so MatterbridgeColorControlServer.initialize() re-applies it."
     },
     {
       "name": "ColorControl Enhanced MoveToHue functionality on ExtendedColorLightEnhancedEHSXYCT",
@@ -3120,6 +3124,155 @@
       "test": "TC_SETRF_3_1.py",
       "endpoint": 14092,
       "args": ["--PICS /root/commodity-tariff.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CameraAvStreamManagement attributes on Camera",
+      "test": "TC_AVSM_2_1.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream allocation on Camera",
+      "test": "TC_AVSM_2_2.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream modification on Camera",
+      "test": "TC_AVSM_2_3.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream deallocation on Camera",
+      "test": "TC_AVSM_2_4.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement audio stream allocation on Camera",
+      "test": "TC_AVSM_2_5.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement audio stream deallocation on Camera",
+      "test": "TC_AVSM_2_6.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video stream allocation on Camera",
+      "test": "TC_AVSM_2_7.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--int-arg minFrameRate:20"],
+      "comment": "Use minFrameRate 20 so the resource-exhaustion check requests at most 55 fps, within the camera's advertised 60 fps maximum. The default 30 produces a 65 fps request and correctly receives DynamicConstraintError instead of ResourceExhausted."
+    },
+    {
+      "name": "CameraAvStreamManagement video stream modification on Camera",
+      "test": "TC_AVSM_2_8.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video stream deallocation on Camera",
+      "test": "TC_AVSM_2_9.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement CaptureSnapshot on Camera",
+      "test": "TC_AVSM_2_10.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement SetStreamPriorities on Camera",
+      "test": "TC_AVSM_2_11.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement writable attributes on Camera",
+      "test": "TC_AVSM_2_12.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video stream allocation reuse on Camera",
+      "test": "TC_AVSM_2_13.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement audio stream allocation reuse on Camera",
+      "test": "TC_AVSM_2_14.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream allocation reuse on Camera",
+      "test": "TC_AVSM_2_15.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement stream reference counts on Camera",
+      "test": "TC_AVSM_2_16.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "CameraAvStreamManagement soft privacy and livestream handling on Camera",
+      "test": "TC_AVSM_2_17.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "CameraAvStreamManagement allocated video stream persistence on Camera",
+      "test": "TC_AVSM_2_18.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement allocated audio stream persistence on Camera",
+      "test": "TC_AVSM_2_19.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement allocated snapshot stream persistence on Camera",
+      "test": "TC_AVSM_2_20.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement stream usage priority persistence on Camera",
+      "test": "TC_AVSM_2_21.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream reuse with intersecting parameter ranges on Camera",
+      "test": "TC_AVSM_StreamReuseRangeParams.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video streams persistence on Camera",
+      "test": "TC_AVSM_VideoStreamsPersistence.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"],
+      "skip": true,
+      "comment": "Steps 12/14 simulate a reboot by sending FaultInjection.FailAtFault (manufacturer-specific cluster 0xFFF1FC06 on endpoint 0) with kChipFault ids 34 (kFault_ClearInMemoryAllocatedVideoStreams) and 37 (kFault_LoadPersistentCameraAVSMAttributes). That cluster is a chip example-app debug hook into the C++ camera-app internals; Matterbridge doesn't implement it, so step 12 fails with UnsupportedCluster (0xc3). Gated on a cluster rather than a PICS flag, so no PICS change unlocks it. Also a PICS_SDK_CI_ONLY SDK-internal test, not a certification test (hence no TC_AVSM_<n>_<m> number)."
     },
     {
       "name": "Chime attributes on Chime",

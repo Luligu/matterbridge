@@ -1,27 +1,6 @@
-Chip tests run started at 2026-09-14T16:36:49.575Z
+Chip tests run started at 2026-09-16T15:58:13.053Z
 
-✅ Switch attributes on Momentary Switch (Test_TC_SWTCH_2_1)
-✅ Switch momentary switch functionality on Momentary Switch (TC_SWTCH.py)
-✅ Switch momentary switch long press on Momentary Switch (TC_SWTCH.py)
-✅ Switch momentary switch multi press on Momentary Switch (TC_SWTCH.py)
-⏭️ Switch action switch multi press on Momentary Switch (TC_SWTCH.py)
-   ↳ Gated on has_feature(Switch, kMomentarySwitchMultiPress) AND has_feature(Switch, kActionSwitch), both probed live on the DUT. Matterbridge never enables the ActionSwitch feature, so it always skips.
-⏭️ Switch primary functionality with client as DUT on Momentary Switch (Test_TC_SWTCH_3_2)
-   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
-✅ Switch attributes on Latching Switch (Test_TC_SWTCH_2_1)
-✅ Switch latching switch functionality on Latching Switch (TC_SWTCH.py)
-⏭️ Switch primary functionality with client as DUT on Latching Switch (Test_TC_SWTCH_3_2)
-   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
-✅ Switch attributes on Generic Switch Button1 (Test_TC_SWTCH_2_1)
-✅ Switch momentary switch functionality on Generic Switch Button1 (TC_SWTCH.py)
-✅ Switch momentary switch long press on Generic Switch Button1 (TC_SWTCH.py)
-⏭️ Switch primary functionality with client as DUT on Generic Switch Button1 (Test_TC_SWTCH_3_2)
-   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
-✅ Switch attributes on Doorbell (Test_TC_SWTCH_2_1)
-✅ Switch momentary switch functionality on Doorbell (TC_SWTCH.py)
-✅ Switch momentary switch long press on Doorbell (TC_SWTCH.py)
-⏭️ Switch primary functionality with client as DUT on Doorbell (Test_TC_SWTCH_3_2)
-   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
+✅ AccessControl multi-fabric ACL/Extension write with server-as-subject (TC_ACL_2_10.py)
 
-Summary: 12/12 tests passed (5 skipped).
-Chip tests run ended at 2026-09-14T16:38:06.005Z (total duration 1m 16s)
+Summary: 1/1 tests passed.
+Chip tests run ended at 2026-09-16T15:58:22.456Z (total duration 9s)

@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2026-07-13
- * @version 2.0.0
+ * @version 2.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -392,6 +392,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    *
    * @param {CameraAvStreamManagement.VideoStreamDeallocateRequest} request - VideoStreamDeallocate request payload.
    * @throws {StatusResponseError} With status NotFound if the requested videoStreamId is not present in allocatedVideoStreams.
+   * @throws {StatusResponseError} With status InvalidInState if the stream is in use.
    */
   override videoStreamDeallocate(request: CameraAvStreamManagement.VideoStreamDeallocateRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -400,6 +401,13 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: video stream ${request.videoStreamId} is not present in allocatedVideoStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
+      );
+    }
+    // Matter 1.6.0 § 11.2.8.7.2: Fail with INVALID_IN_STATE while the stream is referenced.
+    if (this.state.allocatedVideoStreams.some((stream) => stream.videoStreamId === request.videoStreamId && stream.referenceCount > 0)) {
+      throw new StatusResponseError(
+        `MatterbridgeCameraAvStreamManagementServer: video stream ${request.videoStreamId} is in use (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidInState,
       );
     }
     // Matter 1.6.0 § 11.2.8.7.2: Deallocate the stream and remove its VideoStreamID entry from AllocatedVideoStreams.
@@ -515,6 +523,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    *
    * @param {CameraAvStreamManagement.AudioStreamDeallocateRequest} request - AudioStreamDeallocate request payload.
    * @throws {StatusResponseError} With status NotFound if the requested audioStreamId is not present in allocatedAudioStreams.
+   * @throws {StatusResponseError} With status InvalidInState if the stream is in use.
    */
   override audioStreamDeallocate(request: CameraAvStreamManagement.AudioStreamDeallocateRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -523,6 +532,13 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: audio stream ${request.audioStreamId} is not present in allocatedAudioStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
+      );
+    }
+    // Matter 1.6.0 § 11.2.8.3.2: Fail with INVALID_IN_STATE while the stream is referenced.
+    if (this.state.allocatedAudioStreams.some((stream) => stream.audioStreamId === request.audioStreamId && stream.referenceCount > 0)) {
+      throw new StatusResponseError(
+        `MatterbridgeCameraAvStreamManagementServer: audio stream ${request.audioStreamId} is in use (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidInState,
       );
     }
     // Matter 1.6.0 § 11.2.8.3.2: Deallocate the stream and remove its AudioStreamID entry from AllocatedAudioStreams.

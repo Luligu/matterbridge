@@ -24,7 +24,7 @@ import {
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -128,5 +128,55 @@ describe('MatterbridgeOnOffServer', () => {
       expect(data.attributes.onOff).toBe(false);
     });
     expectOnOff(true);
+  });
+
+  describe('StartUpOnOff', () => {
+    /**
+     * Adds an OnOff light with the given initial OnOff state and StartUpOnOff value, then returns the OnOff
+     * attribute as it stands once the behavior has initialized.
+     *
+     * @param {string} id - Unique endpoint id.
+     * @param {boolean} onOff - The persisted OnOff value the endpoint starts from.
+     * @param {OnOff.StartUpOnOff | null} startUpOnOff - The StartUpOnOff value to apply on startup.
+     *
+     * @returns {Promise<unknown>} The OnOff attribute after initialization.
+     */
+    const addLight = async (id: string, onOff: boolean, startUpOnOff: OnOff.StartUpOnOff | null): Promise<unknown> => {
+      const device = new MatterbridgeEndpoint([extendedColorLight, bridge], { id });
+      device.createDefaultBridgedDeviceBasicInformationClusterServer(id, `SN-${id}`);
+      device.createDefaultOnOffClusterServer(onOff, false, 0, 0, startUpOnOff);
+      device.addRequiredClusterServers();
+      expect(await addDevice(aggregator, device)).toBeTruthy();
+      return device.getAttribute(OnOff, 'onOff');
+    };
+
+    it('applies On', async () => {
+      expect(await addLight('suOnOffOn', false, OnOff.StartUpOnOff.On)).toBe(true);
+    });
+
+    it('applies Off', async () => {
+      expect(await addLight('suOnOffOff', true, OnOff.StartUpOnOff.Off)).toBe(false);
+    });
+
+    it('applies Toggle', async () => {
+      expect(await addLight('suOnOffToggle', false, OnOff.StartUpOnOff.Toggle)).toBe(true);
+    });
+
+    it('keeps the previous value when null', async () => {
+      expect(await addLight('suOnOffNull', true, null)).toBe(true);
+    });
+
+    it('leaves OnOff untouched when the startup value already matches', async () => {
+      expect(await addLight('suOnOffSame', true, OnOff.StartUpOnOff.On)).toBe(true);
+    });
+
+    it('does not apply without the Lighting feature', async () => {
+      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suOnOffNoLighting' });
+      device.createDefaultBridgedDeviceBasicInformationClusterServer('suOnOffNoLighting', 'SN-suOnOffNoLighting');
+      device.createOnOffClusterServer(false);
+      device.addRequiredClusterServers();
+      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(device.getAttribute(OnOff, 'onOff')).toBe(false);
+    });
   });
 });

@@ -483,6 +483,156 @@ Electrical Energy Tariff Upcoming (child of Electrical Utility Meter, endpoint 1
 - Commodity Price
 - Commodity Tariff
 
+## Endpoint 1601
+
+Camera clusters:
+
+- Camera AV Stream Management (Video, Audio, Snapshot and ImageControl)
+
+`chipTests.json` includes all 21 numbered `TC_AVSM_2_1` through `TC_AVSM_2_21` tests,
+plus `TC_AVSM_StreamReuseRangeParams` and `TC_AVSM_VideoStreamsPersistence`.
+The shared `TC_AVSMTestBase.py` is a helper, not a standalone test. No AVSM YAML tests
+are present in the CHIP container.
+
+Run with `npm run chip:test -- --test TC_AVSM_`. The focused
+`camera-av-stream-management.pics` declares the server and the feature aliases consumed
+by the persistence tests; other capabilities are discovered from the live endpoint.
+SDK CI mode disables interactive snapshot image verification in `TC_AVSM_2_10` (and
+that upstream mode also tolerates snapshot capture command errors).
+
+`TC_AVSM_2_7` uses `--int-arg minFrameRate:20` to keep its resource-exhaustion
+check within the camera's 60 fps maximum. The default produces a 65 fps request,
+which correctly returns `DynamicConstraintError` before checking available resources.
+
+WebRTC session creation increments the reference counts of its video and audio streams;
+ending the session decrements them. Referenced streams reject deallocation with
+`InvalidInState` (Matter 1.6 §§11.5.6.1.10, 11.5.6.3.12 and 11.5.6.7.3).
+
+`TC_AVSM_2_16` and `TC_AVSM_2_17` receive the app-pipe path, but their optional
+`SetHardPrivacyModeOn` stimulus is not implemented by the Matterbridge backchannel.
+
+`TC_AVSM_2_18` through `TC_AVSM_2_21` perform actual mid-test DUT reboots via
+`request_device_reboot()`, served by the restart-flag monitor (see "Mid-test DUT reboots"
+below). They pass `--restart-flag-file` and set `resetBefore`, since a stream left
+allocated by an earlier test now genuinely survives a restart and would break their
+"AllocatedVideoStreams should be empty" precondition.
+
+`TC_AVSM_VideoStreamsPersistence` is skipped. Its steps 12 and 14 simulate a reboot by
+sending `FaultInjection.FailAtFault` (manufacturer-specific cluster `0xFFF1FC06` on
+endpoint 0) with `kChipFault` ids 34 (`kFault_ClearInMemoryAllocatedVideoStreams`) and
+37 (`kFault_LoadPersistentCameraAVSMAttributes`), to clear the in-memory stream list and
+then re-run the persistent-attribute load path. That cluster is a chip example-app debug
+hook into the C++ `camera-app` internals, not something a bridge implements, so step 12
+fails with `UnsupportedCluster (0xc3)` — steps 1 through 11 pass, allocating the video
+stream normally. It is gated on a missing cluster rather than a PICS flag, so no PICS
+change unlocks it. It is also a `PICS_SDK_CI_ONLY` SDK-internal test rather than a
+certification test, which is why it carries no `TC_AVSM_<n>_<m>` number. Implementing a
+minimal `MATTERBRIDGE_CHIP_TEST`-gated FaultInjection server for those two fault ids
+would make it runnable, and would be the only AVSM test that actually asserts allocated
+video streams survive a restart.
+
+## Mid-test DUT reboots (restart-flag monitor)
+
+Several Python tests reboot the DUT mid-run to assert that state survives a restart:
+`TC_ACL_2_10`, `TC_AVSM_2_18` through `TC_AVSM_2_21`, `TC_BINFO_2_2` and `TC_CC_6_5`.
+They all go through the one shared `MatterBaseTest.request_device_reboot()` in
+`matter/testing/matter_testing.py`, which has two branches.
+
+Without `--restart-flag-file` it takes the manual branch: it prompts an operator to reboot
+the DUT and blocks on `input()`. Under this noninteractive harness stdin is closed, so
+`wait_for_user_input()` swallows the `EOFError`, returns `None`, and the caller ignores
+it — the test continues as if a reboot had happened and its persistence assertions pass
+vacuously against a bridge that never restarted. A pass from that branch proves nothing.
+
+With `--restart-flag-file <path>` it takes the flag branch: it writes `restart` into the
+file, expires its CASE sessions, and blocks in `wait_for_restart_flag_file_removal()`,
+whose contract is that the flag disappears only _after_ the DUT is fully rebooted and
+ready, with a hard 30 s timeout.
+
+Restarting the container to serve that is not an option: `docker/entrypoint.chip-test.sh`
+ends in `exec "$@"`, so Matterbridge is PID 1 and a `docker restart` would kill the Python
+test running inside the same container via `docker exec`. Instead `createChipTestRestartFlag()`
+in `packages/core/src/chipTests.ts` polls the flag and reuses Matterbridge's own frontend
+restart path — `restartProcess()`, i.e. `/api/restart` — which cleans up the instance and
+reloads a fresh one in-process (`cliEmitter` `restart` -> `Matterbridge.loadInstance(true)`
+in `cli.ts`) without ever exiting Node. The container and the test both stay up while the
+DUT genuinely restarts and reloads its state from the node storage.
+
+It is called from `startBridge()` alongside `createChipTestAppPipe()`, so it is gated
+behind `MATTERBRIDGE_CHIP_TEST` the same way, and its timer and state are module level so
+they outlive the instance that requested the restart. The flag is cleared only once the
+root server node re-emits `online` — clearing it earlier would both let the test resume
+against a still-booting bridge and let the monitor's own poll see the stale flag and fire
+a second, spurious restart. Only `restart` is handled; the `factory reset` variants that
+`request_device_factory_reset()` writes are left in place so the test fails loudly rather
+than being told a reset it asked for had completed.
+
+To add a reboot-backed test, pass `--restart-flag-file /tmp/matterbridge-chip-test-restart-flag`
+in that entry's `args`. A completed reboot logs `CHIP test restart requested via ...`,
+`Cleanup completed. Restarting...` and `CHIP test restart completed, cleared restart flag ...`,
+and takes roughly 4-5 s against the 30 s budget. To confirm a run really rebooted rather
+than falling into the EOF branch, check that `chipTests.log` contains no `EOF on STDIN`
+and one `App reboot completed successfully` per reboot. Note the container's `local` log
+driver rotates at 100 MB x 3, so `docker logs` may only show the most recent cycles —
+`chipTests.log` is the reliable record.
+
+### StartUp* attributes are ignored on bridged endpoints
+
+`TC_CC_6_5` is skipped despite the reboot working. matter.js guards the startup logic of
+all three `StartUp*` clusters with `!this.endpoint.ownerOfType(AggregatorEndpoint)` —
+`OnOffServer` (`StartUpOnOff`), `LevelControlServer` (`StartUpCurrentLevel`) and
+`ColorControlServer` (`StartUpColorTemperatureMireds`) — so none of them apply on an
+endpoint under an aggregator, which every Matterbridge bridged device is. It comes from
+matter.js PR #3048 ("Ignore Startup definitions for Bridged devices"), whose stated
+rationale is that the values "are for the bridged devices".
+
+That guard has no basis in the specification. The only exception the Matter 1.6 cluster
+spec defines for these attributes is OTA ("This behavior does not apply to reboots
+associated with OTA"), which is the _other_ half of the same condition
+(`bootReason !== SoftwareUpdateCompleted`). There is no aggregator or bridge carve-out in
+§1.5.7 (OnOff), §1.6.7 (LevelControl) or §3.2.7.23 (ColorControl), and Core §9.12.2.4 says
+a Bridge's clusters are to be interacted with "in the same manner as with a native Matter
+Node of that device type". Core §7.12.1 also defines a restart to include "a program
+restart", and explicitly blesses the pattern of "a persistent configuration attribute A
+that contains a value to use to restore persistent state attribute B after a restart".
+
+Verified directly against endpoint 401: with `StartUpOnOff` set to 1 (On) and `OnOff`
+false, a real reboot through the restart-flag monitor left `OnOff` false.
+
+The practical problem is that the attributes are implemented and advertised but silently
+ignored — `CC.S.A4010`, `OO.S.A4003` and `LVL.S.A4000` are all declared `1` in the PICS
+files, so a controller can write them, read them back, and never see them take effect.
+
+Matterbridge therefore re-applies the startup value itself, in the `initialize()` override
+of `MatterbridgeOnOffServer`, `MatterbridgeLevelControlServer` and
+`MatterbridgeColorControlServer`, after `super.initialize()` has skipped it. The OTA
+exclusion the spec _does_ define is honoured through `isSoftwareUpdateBoot()` in
+`matterbridgeServer.ts`. ColorControl's logic is mirrored rather than reused, because
+matter.js keeps the aggregator guard _inside_ `initializeColorTemperature()`, so that
+method cannot simply be re-entered.
+
+The override is not gated: it applies in normal runs too. That is safe because every helper
+defaults its startup attribute to `null`, and `null` is the spec's "keep the previous
+value" — so the override is a no-op unless a controller has explicitly written a non-null
+value, which is exactly the request the attribute exists to express. All five
+`create*ColorControlClusterServer()` helpers now take `startUpColorTemperatureMireds` as a
+trailing optional parameter, matching `createDefaultOnOffClusterServer()`'s `startUpOnOff`
+and `createDefaultLevelControlClusterServer()`'s `startUpCurrentLevel`. Remove the three
+overrides and `isSoftwareUpdateBoot()` once matter.js applies StartUp* on aggregator-owned
+endpoints itself.
+
+With the override in place `TC_CC_6_5` passes. Verified on endpoint 401 for OnOff too:
+with `StartUpOnOff` set to 1 (On) and `OnOff` false, a reboot through the restart-flag
+monitor now leaves `OnOff` true — the exact inverse of the behavior without it.
+
+`Test_TC_OO_2_4` (the `StartUpOnOff` equivalent) is additionally unreachable by this
+monitor: it is YAML-only, and YAML tests have no `--restart-flag-file`. Their reboot steps
+are either `SystemCommands.Reboot` under `PICS_SDK_CI_ONLY` — which restarts an app
+chip-tool itself spawned, not a separately running bridge — or a `LogCommands.UserPrompt`
+answered on stdin, where canned input would fake the reboot rather than perform one.
+`LevelControl` has no certification test for `StartUpCurrentLevel` at all, so that
+attribute is unexercised either way.
+
 ## Endpoint 1607
 
 Chime clusters:
