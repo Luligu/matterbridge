@@ -333,7 +333,7 @@ describe('MatterNode', () => {
     const powerSourceState = invalidServerNode.stateOf(PowerSourceServer.with(PowerSource.Feature.Wired));
     expect(powerSourceState.status).toBe(PowerSource.PowerSourceStatus.Active);
     expect(powerSourceState.order).toBe(0);
-    expect(powerSourceState.endpointList).toEqual([]);
+    expect(powerSourceState.endpointList).toEqual([0]);
     expect(powerSourceState.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid passcode -1 for server node InvalidCommissioning. Passcode must be between 0 and 99999999. Generating a random passcode...',

@@ -55,7 +55,7 @@ import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, type ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
+import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
@@ -3074,7 +3074,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               status: PowerSource.PowerSourceStatus.Active,
               order: 0,
               description: 'AC Power',
-              endpointList: [],
+              // Matter 1.6.0 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
+              // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
+              endpointList: [EndpointNumber(0)],
               wiredCurrentType: PowerSource.WiredCurrentType.Ac,
             },
           }
