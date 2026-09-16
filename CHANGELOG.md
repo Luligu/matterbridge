@@ -40,6 +40,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [chip]: Doorbell endpoint 1609 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster on the mandatory single-press momentary switch of the Doorbell device type.
 - [chip]: Camera endpoint 1601 CHIP conformance is green ✅ for all applicable automated harness tests covering the `CameraAvStreamManagement` cluster, including the `Video`, `Audio` and `Snapshot` features and the allocated stream and stream usage priority persistence tests (`TC_AVSM_2_18.py` to `TC_AVSM_2_21.py`), which reboot the DUT mid-test through `createChipTestRestartFlag()`, with its own `camera-av-stream-management.pics`.
 - [chip]: PTZ Camera endpoint 16011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `CameraAvSettingsUserLevelManagement` cluster `MechanicalPan`, `MechanicalTilt`, `MechanicalZoom`, `MechanicalPresets` and `DigitalPTZ` features, including the `MPTZPosition`, `MPTZPresets` and `DPTZStreams` persistence test (`TC_AVSUM_2_9.py`), which reboots the DUT mid-test through `createChipTestRestartFlag()`.
+- [chip]: Camera endpoint 1601 CHIP conformance is green ✅ for all applicable automated harness tests covering the `WebRtcTransportProvider` cluster, i.e. the full `SolicitOffer`, `ProvideOffer`, `ProvideAnswer`, `ProvideICECandidates` and `EndSession` command set and the `CurrentSessions` attribute (`TC_WEBRTCP_2_1.py` to `TC_WEBRTCP_2_32.py`).
 
 ### Added
 
@@ -78,6 +79,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [WebRtcTransportProvider]: `MatterbridgeWebRtcTransportProviderServer` now invokes `ICECandidates` on the peer's `WebRtcTransportRequestor`, so the camera trickles its own ICE candidates as Matter 1.6.0 § 11.4.3.1 and § 11.4.3.2 expect. Only `Offer`, `Answer` and `End` were ever invoked before, so a controller that waits for the trickle command instead of reading the candidates out of the SDP never saw them. The candidates are sent in reply to the peer's own `ProvideICECandidates`, which is the signal that it has applied our SDP as its remote description: pushing them straight after the `Offer`/`Answer` reaches a peer mid-negotiation, and a libdatachannel based controller aborts on that. A peer that never trickles is unaffected, since the candidates are also embedded in the `Offer`/`Answer` SDP.
+- [WebRtcTransportProvider]: `MatterbridgeWebRtcTransportProviderServer.provideOffer()` now responds with `RESOURCE_EXHAUSTED` and rolls back the new session when it would exceed the concurrent session capacity, per Matter 1.6.0 § 11.5.6.3. It previously shared `solicitOffer()`'s behavior of accepting the session and ending it afterwards with `OutOfResources`, which § 11.5.6.1 defines for `SolicitOffer` only. `solicitOffer()` is unchanged.
 - [matterbridge]: The root directory is now resolved by probing the install layout on the file system instead of guessing it from the runtime and from a fixed number of parent directories.
 - [matterbridge]: Fix `ENOENT ... /apps/frontend/package.json` when `matterbridge` is started on node from a bun global install, and the same wrong root directory on any hoisted (flat) install and on a repository directory not named `matterbridge`.
 

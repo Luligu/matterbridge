@@ -141,6 +141,33 @@ describe('WeriftWebRtcSession', () => {
     vi.mocked(runFfmpeg).mockReset();
   });
 
+  it('should gather local ICE candidates, defaulting a missing sdpMid/sdpMLineIndex to null and ignoring the end-of-candidates signal', async () => {
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: false, offerAudio: false });
+
+    expect(session.localIceCandidates).toEqual([]);
+
+    // werift always reports these two, but they are optional on its RTCIceCandidate and the Matter ICECandidateStruct
+    // spells "no association" as null (Matter 1.6.0 § 11.4.5.4.2/§ 11.4.5.4.3), so both shapes are normalized here.
+    session.peerConnection.onIceCandidate.execute({ candidate: 'candidate:1 1 udp 2130706431 192.0.2.1 5000 typ host', sdpMid: '0', sdpMLineIndex: 0 } as never);
+    session.peerConnection.onIceCandidate.execute({ candidate: 'candidate:2 1 udp 2130706431 192.0.2.2 5001 typ host' } as never);
+    // The end-of-candidates signal carries no candidate and must not be added to the list. The explicit undefined is
+    // required, not useless: werift types this event as Event<[RTCIceCandidate | undefined]>, a one-element tuple, so
+    // execute() with no argument does not compile, and null is not the value werift signals end-of-candidates with.
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    session.peerConnection.onIceCandidate.execute(undefined);
+
+    expect(session.localIceCandidates).toEqual([
+      { candidate: 'candidate:1 1 udp 2130706431 192.0.2.1 5000 typ host', sdpMid: '0', sdpmLineIndex: 0 },
+      { candidate: 'candidate:2 1 udp 2130706431 192.0.2.2 5001 typ host', sdpMid: null, sdpmLineIndex: null },
+    ]);
+
+    // The getter returns a copy, so a caller cannot mutate the session's own list.
+    session.localIceCandidates.push({ candidate: 'candidate:3', sdpMid: null, sdpmLineIndex: null });
+    expect(session.localIceCandidates).toHaveLength(2);
+
+    await session.close();
+  });
+
   it('should create a real SDP offer with a video transceiver when video is requested', async () => {
     const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 

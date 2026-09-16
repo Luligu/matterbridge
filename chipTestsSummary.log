@@ -1,4 +1,4 @@
-Chip tests run started at 2026-09-16T20:47:44.684Z
+Chip tests run started at 2026-09-16T21:01:11.109Z
 
 ✅ WebRtcTransportProvider delayed processing of SolicitOffer on Camera (TC_WEBRTCP_2_1.py)
 ✅ WebRtcTransportProvider immediate processing of SolicitOffer on Camera (TC_WEBRTCP_2_2.py)
@@ -40,4 +40,4 @@ Chip tests run started at 2026-09-16T20:47:44.684Z
 ✅ WebRtcTransportProvider immediate processing of SolicitOffer with old stream attributes on release 1.5.1 or later on Camera (TC_WEBRTCP_2_32.py)
 
 Summary: 24/24 tests passed (7 skipped).
-Chip tests run ended at 2026-09-16T20:54:17.201Z (total duration 6m 33s)
+Chip tests run ended at 2026-09-16T21:07:57.036Z (total duration 6m 46s)

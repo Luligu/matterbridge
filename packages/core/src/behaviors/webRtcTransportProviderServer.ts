@@ -1032,6 +1032,9 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
         this.internal.trickledSessions.add(request.webRtcSessionId);
         this.#invokeDeferred(async () => {
           const requestorEndpoint = await this.#resolvePeerRequestorEndpoint(session.peerNodeId, session.fabricIndex, session.peerEndpointId);
+          /* v8 ignore next -- requires a real connectable peer node, which this project's vitest harness has no
+           * infrastructure to set up (no remote peer test helpers exist); #resolvePeerRequestorEndpoint always
+           * returns undefined there, so only the falsy branch is reachable. */
           if (requestorEndpoint) await this.#trickleLocalIceCandidates(requestorEndpoint, request.webRtcSessionId, webRtcPeer);
         }, `ICECandidates for session ${request.webRtcSessionId}`);
       }
