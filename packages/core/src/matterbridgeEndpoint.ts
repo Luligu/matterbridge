@@ -2918,6 +2918,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
    * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
    * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
+   * @param {number | null} startUpColorTemperatureMireds - The startup color temperature in mireds, applied to colorTemperatureMireds on restart. Null (default) keeps the previous value.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -2950,6 +2951,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     colorTemperatureMireds: number = 500,
     colorTempPhysicalMinMireds: number = 147,
     colorTempPhysicalMaxMireds: number = 500,
+    startUpColorTemperatureMireds: number | null = null,
   ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
@@ -2967,7 +2969,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       colorTempPhysicalMinMireds,
       colorTempPhysicalMaxMireds,
       coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      startUpColorTemperatureMireds: null,
+      startUpColorTemperatureMireds,
       remainingTime: 0,
     });
     return this;
@@ -2983,6 +2985,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
    * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
    * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
+   * @param {number | null} startUpColorTemperatureMireds - The startup color temperature in mireds, applied to colorTemperatureMireds on restart. Null (default) keeps the previous value.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -3015,6 +3018,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     colorTemperatureMireds: number = 500,
     colorTempPhysicalMinMireds: number = 147,
     colorTempPhysicalMaxMireds: number = 500,
+    startUpColorTemperatureMireds: number | null = null,
   ): this {
     this.behaviors.require(
       MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.HueSaturation, ColorControl.Feature.EnhancedHue, ColorControl.Feature.ColorTemperature),
@@ -3035,7 +3039,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         colorTempPhysicalMinMireds,
         colorTempPhysicalMaxMireds,
         coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-        startUpColorTemperatureMireds: null,
+        startUpColorTemperatureMireds,
         remainingTime: 0,
       },
     );
@@ -3050,6 +3054,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
    * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
    * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
+   * @param {number | null} startUpColorTemperatureMireds - The startup color temperature in mireds, applied to colorTemperatureMireds on restart. Null (default) keeps the previous value.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
@@ -3067,6 +3072,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     colorTemperatureMireds: number = 500,
     colorTempPhysicalMinMireds: number = 147,
     colorTempPhysicalMaxMireds: number = 500,
+    startUpColorTemperatureMireds: number | null = null,
   ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.Xy, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentXAndCurrentY,
@@ -3082,7 +3088,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       colorTempPhysicalMinMireds,
       colorTempPhysicalMaxMireds,
       coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      startUpColorTemperatureMireds: null,
+      startUpColorTemperatureMireds,
       remainingTime: 0,
     });
     return this;
@@ -3096,6 +3102,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
    * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
    * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
+   * @param {number | null} startUpColorTemperatureMireds - The startup color temperature in mireds, applied to colorTemperatureMireds on restart. Null (default) keeps the previous value.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -3110,6 +3117,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     colorTemperatureMireds: number = 500,
     colorTempPhysicalMinMireds: number = 147,
     colorTempPhysicalMaxMireds: number = 500,
+    startUpColorTemperatureMireds: number | null = null,
   ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
@@ -3125,7 +3133,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       colorTempPhysicalMinMireds,
       colorTempPhysicalMaxMireds,
       coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      startUpColorTemperatureMireds: null,
+      startUpColorTemperatureMireds,
       remainingTime: 0,
     });
     return this;
@@ -3138,6 +3146,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {number} colorTemperatureMireds - The color temperature in mireds (range colorTempPhysicalMinMireds-colorTempPhysicalMaxMireds).
    * @param {number} colorTempPhysicalMinMireds - The physical minimum color temperature in mireds (default 147).
    * @param {number} colorTempPhysicalMaxMireds - The physical maximum color temperature in mireds (default 500).
+   * @param {number | null} startUpColorTemperatureMireds - The startup color temperature in mireds, applied to colorTemperatureMireds on restart. Null (default) keeps the previous value.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks colorMode and enhancedColorMode persist across restarts.
@@ -3145,7 +3154,12 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks startUpColorTemperatureMireds persists across restarts.
    * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
-  createCtColorControlClusterServer(colorTemperatureMireds: number = 250, colorTempPhysicalMinMireds: number = 147, colorTempPhysicalMaxMireds: number = 500): this {
+  createCtColorControlClusterServer(
+    colorTemperatureMireds: number = 250,
+    colorTempPhysicalMinMireds: number = 147,
+    colorTempPhysicalMaxMireds: number = 500,
+    startUpColorTemperatureMireds: number | null = null,
+  ): this {
     this.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.ColorTemperature), {
       colorMode: ColorControl.ColorMode.ColorTemperatureMireds,
       enhancedColorMode: ColorControl.EnhancedColorMode.ColorTemperatureMireds,
@@ -3158,7 +3172,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       colorTempPhysicalMinMireds,
       colorTempPhysicalMaxMireds,
       coupleColorTempToLevelMinMireds: colorTempPhysicalMinMireds,
-      startUpColorTemperatureMireds: null,
+      startUpColorTemperatureMireds,
       remainingTime: 0,
     });
     return this;
