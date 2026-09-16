@@ -23,10 +23,32 @@
 
 /* oxlint-disable typescript/no-namespace */
 
-import { Behavior } from '@matter/node';
+import type { Environment } from '@matter/general';
+import { Behavior, ServerNode } from '@matter/node';
+import { GeneralDiagnosticsBehavior } from '@matter/node/behaviors/general-diagnostics';
+import { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 import type { CommandHandler } from '../matterbridgeEndpointCommandHandler.js';
+
+/**
+ * Returns whether the node booted because a software update completed.
+ *
+ * The Matter 1.6 specification excludes OTA reboots from the StartUpOnOff / StartUpCurrentLevel /
+ * StartUpColorTemperatureMireds behavior ("This behavior does not apply to reboots associated with OTA. After
+ * an OTA restart, the ... attribute SHALL return to its value prior to the restart"), so the
+ * MATTERBRIDGE_CHIP_TEST-only startup overrides in MatterbridgeOnOffServer, MatterbridgeLevelControlServer
+ * and MatterbridgeColorControlServer must honour it. Mirrors matter.js's own private `#getBootReason()`.
+ *
+ * @param {Environment} env - The environment to resolve the root ServerNode from.
+ *
+ * @returns {boolean} True when the boot reason is SoftwareUpdateCompleted.
+ */
+export function isSoftwareUpdateBoot(env: Environment): boolean {
+  const rootEndpoint = env.get(ServerNode);
+  if (!rootEndpoint.behaviors.has(GeneralDiagnosticsBehavior)) return false;
+  return rootEndpoint.stateOf(GeneralDiagnosticsBehavior).bootReason === GeneralDiagnostics.BootReason.SoftwareUpdateCompleted;
+}
 
 /**
  * Base behavior providing a logger and command dispatch for Matterbridge endpoints.

@@ -29,7 +29,7 @@ import { ColorControl } from '@matter/types/clusters/color-control';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
-import { MatterbridgeServer } from './matterbridgeServer.js';
+import { isSoftwareUpdateBoot, MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * ColorControl server (hue/saturation/xy/color temperature) forwarding commands to the Matterbridge command handler.
@@ -49,12 +49,40 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * certification testing instead of jumping straight to the target value (see chipTests.md Known Issues).
    * Production behavior (matter.js's own default: immediate jump, no simulated transition) is unchanged.
    *
+   * Also re-applies StartUpColorTemperatureMireds on restart. matter.js guards its own
+   * `initializeColorTemperature()` with `!this.endpoint.ownerOfType(AggregatorEndpoint)` (matter.js PR #3048),
+   * so it never runs for a bridged endpoint — and every Matterbridge device sits under the aggregator. The
+   * guard sits inside that method, so it cannot be re-entered; the logic is mirrored here instead. It has no
+   * basis in the specification: Matter 1.6.0 § 3.2.7.23 excludes only OTA reboots, and Core § 7.12.1 counts
+   * "a program restart" as a restart. The attribute is still advertised as supported (CC.S.A4010), so without
+   * this override a controller can write it, read it back, and never see it take effect — which also fails
+   * TC_CC_6_5. StartUpColorTemperatureMireds defaults to null in every create*ColorControlClusterServer()
+   * helper, and null means "keep the previous value", so this is a no-op unless a controller has explicitly
+   * written a non-null value. Remove once matter.js applies StartUpColorTemperatureMireds on
+   * aggregator-owned endpoints itself.
+   *
    * @returns {MaybePromise} The result of the base class initialization.
    */
   override initialize(): MaybePromise {
     // v8 ignore next - only enabled under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) this.state.managedTransitionTimeHandling = true;
-    return super.initialize();
+    const result = super.initialize();
+    if (this.features.colorTemperature && !isSoftwareUpdateBoot(this.env)) {
+      const startUpMireds = this.state.startUpColorTemperatureMireds ?? null;
+      if (startUpMireds !== null) {
+        const crop = (mireds: number): number => Math.min(Math.max(mireds, this.minimumColorTemperatureMireds), this.maximumColorTemperatureMireds);
+        const currentMireds = crop(this.state.colorTemperatureMireds);
+        const targetMireds = crop(startUpMireds);
+        if (targetMireds !== currentMireds) {
+          // Matter 1.6.0 § 3.2.7.23: the startup value SHALL be reflected in ColorTemperatureMireds and
+          // ColorMode/EnhancedColorMode SHALL be set to 2 (ColorTemperatureMireds).
+          this.state.colorMode = ColorControl.ColorMode.ColorTemperatureMireds;
+          this.state.enhancedColorMode = ColorControl.EnhancedColorMode.ColorTemperatureMireds;
+          this.state.colorTemperatureMireds = targetMireds;
+        }
+      }
+    }
+    return result;
   }
 
   /**

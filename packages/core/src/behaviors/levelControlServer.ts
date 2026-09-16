@@ -29,7 +29,7 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
-import { MatterbridgeServer } from './matterbridgeServer.js';
+import { isSoftwareUpdateBoot, MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * LevelControl server that forwards level commands to the Matterbridge command handler.
@@ -44,12 +44,34 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * certification testing instead of jumping straight to the target value (see chipTests.md Known Issues).
    * Production behavior (matter.js's own default: immediate jump, no simulated transition) is unchanged.
    *
+   * Also re-applies StartUpCurrentLevel on restart. matter.js guards its own startup
+   * logic with `!this.endpoint.ownerOfType(AggregatorEndpoint)` (matter.js PR #3048), so it never runs for a
+   * bridged endpoint — and every Matterbridge device sits under the aggregator. That guard has no basis in
+   * the specification: Matter 1.6.0 § 1.6.6.15 excludes only OTA reboots, and Core § 7.12.1 counts "a program
+   * restart" as a restart. The attribute is still advertised as supported (LVL.S.A4000), so without this
+   * override a controller can write it, read it back, and never see it take effect. StartUpCurrentLevel
+   * defaults to null in createDefaultLevelControlClusterServer(), and null means "keep the previous value",
+   * so this is a no-op unless a controller has explicitly written a non-null value. Remove once matter.js
+   * applies StartUpCurrentLevel on aggregator-owned endpoints itself.
+   *
    * @returns {MaybePromise} The result of the base class initialization.
    */
   override initialize(): MaybePromise {
     // v8 ignore next - only enabled under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) this.state.managedTransitionTimeHandling = true;
-    return super.initialize();
+    const result = super.initialize();
+    if (this.features.lighting && !isSoftwareUpdateBoot(this.env)) {
+      // StartUpCurrentLevel only exists with the Lighting feature, which this class does not select at the
+      // type level (createDefaultLevelControlClusterServer() enables it at runtime), hence the assertion.
+      const state = this.state as unknown as { startUpCurrentLevel: number | null; currentLevel: number | null };
+      const startUpCurrentLevel = state.startUpCurrentLevel ?? null;
+      const currentLevel = state.currentLevel;
+      // Matter 1.6.0 § 1.6.6.15: 0 selects the minimum permitted level, null keeps the previous value, any
+      // other value is used as-is.
+      const targetLevel = startUpCurrentLevel === 0 ? this.minLevel : (startUpCurrentLevel ?? currentLevel);
+      if (targetLevel !== currentLevel) state.currentLevel = targetLevel;
+    }
+    return result;
   }
 
   /**

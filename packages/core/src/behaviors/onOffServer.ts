@@ -21,11 +21,12 @@
  * limitations under the License.
  */
 
+import type { MaybePromise } from '@matter/general';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { OnOff } from '@matter/types/clusters/on-off';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { MatterbridgeServer } from './matterbridgeServer.js';
+import { isSoftwareUpdateBoot, MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * OnOff server that forwards On/Off commands to the Matterbridge command handler.
@@ -36,6 +37,36 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Lighting) {
   /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
   declare readonly endpoint: MatterbridgeEndpoint;
+
+  /**
+   * Re-applies StartUpOnOff on restart.
+   *
+   * matter.js guards its own StartUpOnOff startup logic with `!this.endpoint.ownerOfType(AggregatorEndpoint)`
+   * (matter.js PR #3048), so it never runs for a bridged endpoint — and every Matterbridge device sits under
+   * the aggregator. That guard has no basis in the specification: Matter 1.6.0 § 1.5.6.5 excludes only OTA
+   * reboots, and Core § 7.12.1 counts "a program restart" as a restart. The attribute is still advertised as
+   * supported (OO.S.A4003), so without this override a controller can write it, read it back, and never see
+   * it take effect — which also fails Test_TC_OO_2_4.
+   *
+   * StartUpOnOff defaults to null in createDefaultOnOffClusterServer(), and null means "keep the previous
+   * value", so this is a no-op unless a controller has explicitly written a non-null value — which is exactly
+   * the request the attribute exists to express. Remove this override once matter.js applies StartUpOnOff on
+   * aggregator-owned endpoints itself.
+   *
+   * @returns {MaybePromise} The result of the base class initialization.
+   */
+  override initialize(): MaybePromise {
+    const result = super.initialize();
+    if (this.features.lighting && !isSoftwareUpdateBoot(this.env)) {
+      const startUpOnOff = this.state.startUpOnOff ?? null;
+      if (startUpOnOff !== null) {
+        const currentOnOff = this.state.onOff;
+        const targetOnOff = startUpOnOff === OnOff.StartUpOnOff.Toggle ? !currentOnOff : startUpOnOff === OnOff.StartUpOnOff.On;
+        if (targetOnOff !== currentOnOff) this.state.onOff = targetOnOff;
+      }
+    }
+    return result;
+  }
 
   /**
    * Forwards On requests to the Matterbridge command handler.
