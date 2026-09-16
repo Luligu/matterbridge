@@ -96,6 +96,8 @@ export interface CameraOptions extends MatterbridgeEndpointOptions {
   zoomMax?: number;
   /** Indicates the initial mechanical pan, tilt and zoom position */
   mptzPosition?: CameraAvSettingsUserLevelManagement.Mptz;
+  /** Indicates the maximum number of presets for the mechanical pan, tilt and zoom */
+  maxPresets?: number;
 
   /** Options for the werift WebRTC peer connection used by the WebRtcTransportProvider cluster. Default: both media kinds enabled with source injection disabled */
   weriftOfferOptions?: WeriftOfferOptions;
@@ -141,6 +143,7 @@ export class Camera extends MatterbridgeEndpoint {
    *  - tiltMin: -20, tiltMax: 90 (angular degrees)
    *  - zoomMax: 10
    *  - mptzPosition: { pan: 0, tilt: 0, zoom: 1 }
+   *  - maxPresets: 5
    *  - weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {Camera} The Camera instance.
@@ -178,6 +181,7 @@ export class Camera extends MatterbridgeEndpoint {
       tiltMax = 90,
       zoomMax = 10,
       mptzPosition = { pan: 0, tilt: 0, zoom: 1 },
+      maxPresets = 5,
       weriftOfferOptions,
       id,
       number,
@@ -222,7 +226,7 @@ export class Camera extends MatterbridgeEndpoint {
       microphoneCapabilities,
       snapshotCapabilities,
     });
-    if (ptz) createDefaultCameraAvSettingsUserLevelManagementClusterServer(this, { panMin, panMax, tiltMin, tiltMax, zoomMax, mptzPosition });
+    if (ptz) createDefaultCameraAvSettingsUserLevelManagementClusterServer(this, { panMin, panMax, tiltMin, tiltMax, zoomMax, mptzPosition, maxPresets });
     createDefaultWebRtcTransportProviderClusterServer(this, weriftOfferOptions);
     addWebRtcTransportRequestorClient(this);
     this.addRequiredClusters();

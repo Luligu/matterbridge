@@ -3275,6 +3275,66 @@
       "comment": "Steps 12/14 simulate a reboot by sending FaultInjection.FailAtFault (manufacturer-specific cluster 0xFFF1FC06 on endpoint 0) with kChipFault ids 34 (kFault_ClearInMemoryAllocatedVideoStreams) and 37 (kFault_LoadPersistentCameraAVSMAttributes). That cluster is a chip example-app debug hook into the C++ camera-app internals; Matterbridge doesn't implement it, so step 12 fails with UnsupportedCluster (0xc3). Gated on a cluster rather than a PICS flag, so no PICS change unlocks it. Also a PICS_SDK_CI_ONLY SDK-internal test, not a certification test (hence no TC_AVSM_<n>_<m> number)."
     },
     {
+      "name": "CameraAvSettingsUserLevelManagement attributes on PTZ Camera",
+      "test": "TC_AVSUM_2_1.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZSetPosition command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_2.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZRelativeMove command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_3.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZMoveToPreset command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_4.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZSavePreset command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_5.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZRemovePreset command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_6.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement DPTZSetViewport command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_7.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"],
+      "skip": true,
+      "comment": "Upstream test bug: the decorator reads @run_if_endpoint_matches(has_feature(AVSUM, kDigitalPTZ) and has_feature(AVSM, kVideo)). Python's \"and\" cannot be overloaded, so on two truthy matcher objects it evaluates to the right operand and the kDigitalPTZ requirement is silently discarded; only has_feature(AVSM, kVideo) gates the test. Endpoint 16011 has AVSM Video, so the test runs instead of self-skipping and the DPTZ commands fail with UnsupportedCommand (0x81) where it expects NotFound (0x8b). MatterbridgeCameraAvSettingsUserLevelManagementServer selects MechanicalPan/MechanicalTilt/MechanicalZoom/MechanicalPresets, not DigitalPTZ; AVSUM.S.F00=0 has no effect because the harness does not filter on the pics_TC_* lists. Correct upstream would be \"&\" (the matchers' __and__), as used elsewhere."
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement DPTZRelativeMove command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_8.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"],
+      "skip": true,
+      "comment": "Upstream test bug: the decorator reads @run_if_endpoint_matches(has_feature(AVSUM, kDigitalPTZ) and has_feature(AVSM, kVideo)). Python's \"and\" cannot be overloaded, so on two truthy matcher objects it evaluates to the right operand and the kDigitalPTZ requirement is silently discarded; only has_feature(AVSM, kVideo) gates the test. Endpoint 16011 has AVSM Video, so the test runs instead of self-skipping and the DPTZ commands fail with UnsupportedCommand (0x81) where it expects NotFound (0x8b). MatterbridgeCameraAvSettingsUserLevelManagementServer selects MechanicalPan/MechanicalTilt/MechanicalZoom/MechanicalPresets, not DigitalPTZ; AVSUM.S.F00=0 has no effect because the harness does not filter on the pics_TC_* lists. Correct upstream would be \"&\" (the matchers' __and__), as used elsewhere."
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZPosition persistence on PTZ Camera",
+      "test": "TC_AVSUM_2_9.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "skip": true,
+      "comment": "Upstream test bug: steps 19-21 are wrapped in \"if self.has_feature_dptz:\" with no else branch calling skip_step(19), skip_step(20), skip_step(21), so on a DUT without DigitalPTZ the test jumps from step 18 straight to self.step(22) and the framework aborts with \"Unexpected test step: 22 - steps not called in order\". MatterbridgeCameraAvSettingsUserLevelManagementServer selects MechanicalPan/MechanicalTilt/MechanicalZoom/MechanicalPresets, not DigitalPTZ, so this fires every run and no PICS change avoids it. The reboot itself (step 22, request_device_reboot()) would be served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online, but the test never reaches it."
+    },
+    {
       "name": "Chime attributes on Chime",
       "test": "TC_CHIME_2_1.py",
       "endpoint": 1607,
