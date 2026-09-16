@@ -4,7 +4,7 @@
 PICS_SDK_CI_ONLY=1
 AVSUM.S=1
 AVSUM.C=0
-AVSUM.S.F00=0 # DigitalPTZ
+AVSUM.S.F00=1 # DigitalPTZ
 AVSUM.S.F01=1 # MechanicalPan
 AVSUM.S.F02=1 # MechanicalTilt
 AVSUM.S.F03=1 # MechanicalZoom
