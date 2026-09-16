@@ -455,6 +455,7 @@
     "chip:test:commodity-tariff": "node scripts/run-matterbridge-chip-tests.mjs --test TC_SETRF_",
     "chip:test:avsm": "node scripts/run-matterbridge-chip-tests.mjs --test TC_AVSM_",
     "chip:test:avsum": "node scripts/run-matterbridge-chip-tests.mjs --test TC_AVSUM_",
+    "chip:test:webrtcp": "node scripts/run-matterbridge-chip-tests.mjs --test TC_WEBRTCP_",
     "chip:test:chime": "node scripts/run-matterbridge-chip-tests.mjs --test TC_CHIME_",
     "chip:test:switch": "node scripts/run-matterbridge-chip-tests.mjs --test TC_SWTCH",
     "chip:stop": "node scripts/run-matterbridge-chip-tests.mjs --stop",

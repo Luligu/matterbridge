@@ -1,6 +1,38 @@
-Chip tests run started at 2026-09-16T17:29:13.137Z
+Chip tests run started at 2026-09-16T19:21:40.810Z
 
-✅ Generic device basic composition (TC_DeviceBasicComposition.py)
+✅ WebRtcTransportProvider delayed processing of SolicitOffer on Camera (TC_WEBRTCP_2_1.py)
+✅ WebRtcTransportProvider immediate processing of SolicitOffer on Camera (TC_WEBRTCP_2_2.py)
+✅ WebRtcTransportProvider SDP Offer starting a new session on Camera (TC_WEBRTCP_2_3.py)
+✅ WebRtcTransportProvider SDP Offer on an existing session on Camera (TC_WEBRTCP_2_4.py)
+✅ WebRtcTransportProvider SolicitOffer and stream allocation interaction on Camera (TC_WEBRTCP_2_5.py)
+✅ WebRtcTransportProvider CameraAvStreamManagement cluster presence on Camera (TC_WEBRTCP_2_6.py)
+❌ WebRtcTransportProvider SolicitOffer with the physical privacy switch on on Camera (TC_WEBRTCP_2_7.py)
+   ↳ Drives HardPrivacyModeOn through the app pipe with SetHardPrivacyModeOn. handleChipTestAppPipeCommand() in chipTests.ts does not implement that command yet, so the write is logged and ignored.
+❌ WebRtcTransportProvider SolicitOffer with SoftRecordingPrivacyModeEnabled on Camera (TC_WEBRTCP_2_8.py)
+✅ WebRtcTransportProvider SolicitOffer ICEServers and ICETransportPolicy on Camera (TC_WEBRTCP_2_9.py)
+✅ WebRtcTransportProvider SolicitOffer OriginatingEndpointID storage on Camera (TC_WEBRTCP_2_10.py)
+✅ WebRtcTransportProvider deferred Offer command timing on Camera (TC_WEBRTCP_2_11.py)
+✅ WebRtcTransportProvider SolicitOffer resource exhaustion on Camera (TC_WEBRTCP_2_12.py)
+❌ WebRtcTransportProvider ProvideOffer with the physical privacy switch on on Camera (TC_WEBRTCP_2_13.py)
+   ↳ Drives HardPrivacyModeOn through the app pipe with SetHardPrivacyModeOn. handleChipTestAppPipeCommand() in chipTests.ts does not implement that command yet, so the write is logged and ignored.
+❌ WebRtcTransportProvider ProvideOffer with SoftRecordingPrivacyModeEnabled on Camera (TC_WEBRTCP_2_14.py)
+✅ WebRtcTransportProvider ProvideOffer OriginatingEndpointID storage on Camera (TC_WEBRTCP_2_15.py)
+❌ WebRtcTransportProvider ProvideOffer resource exhaustion on Camera (TC_WEBRTCP_2_16.py)
+✅ WebRtcTransportProvider ProvideOffer Answer command generation on Camera (TC_WEBRTCP_2_17.py)
+✅ WebRtcTransportProvider ProvideAnswer command processing on Camera (TC_WEBRTCP_2_18.py)
+✅ WebRtcTransportProvider ProvideAnswer with an invalid session on Camera (TC_WEBRTCP_2_19.py)
+✅ WebRtcTransportProvider ProvideICECandidates command processing on Camera (TC_WEBRTCP_2_20.py)
+✅ WebRtcTransportProvider ProvideICECandidates with an invalid session on Camera (TC_WEBRTCP_2_21.py)
+❌ WebRtcTransportProvider EndSession CurrentSessions removal on Camera (TC_WEBRTCP_2_22.py)
+❌ WebRtcTransportProvider EndSession stream reference counts on Camera (TC_WEBRTCP_2_23.py)
+❌ WebRtcTransportProvider SolicitOffer SFrame configuration handling on Camera (TC_WEBRTCP_2_24.py)
+❌ WebRtcTransportProvider ProvideOffer SFrame configuration handling on Camera (TC_WEBRTCP_2_25.py)
+❌ WebRtcTransportProvider delayed processing of SolicitOffer on release 1.5.1 or later on Camera (TC_WEBRTCP_2_27.py)
+✅ WebRtcTransportProvider immediate processing of SolicitOffer on release 1.5.1 or later on Camera (TC_WEBRTCP_2_28.py)
+✅ WebRtcTransportProvider SDP Offer starting a new session on release 1.5.1 or later on Camera (TC_WEBRTCP_2_29.py)
+✅ WebRtcTransportProvider SDP Offer on an existing session on release 1.5.1 or later on Camera (TC_WEBRTCP_2_30.py)
+✅ WebRtcTransportProvider SolicitOffer and stream allocation interaction on release 1.5.1 or later on Camera (TC_WEBRTCP_2_31.py)
+✅ WebRtcTransportProvider immediate processing of SolicitOffer with old stream attributes on release 1.5.1 or later on Camera (TC_WEBRTCP_2_32.py)
 
-Summary: 1/1 tests passed.
-Chip tests run ended at 2026-09-16T17:29:22.002Z (total duration 9s)
+Summary: 21/31 tests passed.
+Chip tests run ended at 2026-09-16T19:31:49.285Z (total duration 10m 08s)
