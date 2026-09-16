@@ -37,7 +37,8 @@
     "TC_MWOCTRL_2_2.py",
     "Test_TC_EEVSE_2_1.yaml",
     "TC_EEVSE_2_2.py",
-    "TC_AVSUM_2_7.py"
+    "TC_AVSUM_2_7.py",
+    "TC_WEBRTCP_2_16.py"
   ],
   "tests": [
     {
@@ -3392,8 +3393,8 @@
       "test": "TC_WEBRTCP_2_16.py",
       "endpoint": 1601,
       "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "skip": true,
-      "comment": "Hardcodes endpoint=1 on its ProvideOffer commands instead of using self.get_endpoint(), so it targets the aggregator rather than the camera and fails with UnsupportedCluster (0xc3) regardless of the \"endpoint\" set here. Fixable with a docker/chip-test/patches entry if the test is ever needed."
+      "resetBefore": true,
+      "comment": "Patched: upstream fills the DUT's session capacity with ProvideOffer on a hardcoded endpoint=1 in step 2, but checks for RESOURCE_EXHAUSTED on self.get_endpoint() in step 3, so the two steps target different endpoints. The patch changes step 2's endpoint=1 to endpoint, matching step 3. Note originatingEndpointID=1 is left alone: that one is the TH's own WebRtcTransportRequestor endpoint and is correctly 1."
     },
     {
       "name": "WebRtcTransportProvider ProvideOffer Answer command generation on Camera",

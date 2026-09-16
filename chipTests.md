@@ -842,6 +842,18 @@ matter.js rejects it from the model.
 
 Not yet reported upstream.
 
+### `TC_WEBRTCP_2_16.py`
+
+The test contradicts itself about which endpoint it is exercising. It resolves the endpoint under test up
+front (`endpoint = self.get_endpoint()`, i.e. `--endpoint 1601`), but step 2 fills the DUT's session capacity
+with a loop of `ProvideOffer` commands sent to a hardcoded `endpoint=1`, while step 3 — the step that asserts
+`RESOURCE_EXHAUSTED` — sends its extra `ProvideOffer` to the resolved `endpoint`. The two steps therefore
+target different endpoints. The patch changes step 2's `endpoint=1` to `endpoint`; nothing else is touched. In
+particular `originatingEndpointID=1` in the command payload is deliberately left alone: that field is the
+TH's own `WebRtcTransportRequestor` endpoint, not the DUT's, and is correctly 1.
+
+Not yet reported upstream.
+
 # Known Issues
 
 ## matter.js discovery

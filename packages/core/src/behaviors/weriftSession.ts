@@ -186,6 +186,20 @@ export class WeriftWebRtcSession {
   private readonly dtlsTransportsWithStateLogging = new Set<RTCDtlsTransport>();
 
   /**
+   * The local ICE candidates gathered so far, in the order werift discovered them.
+   *
+   * {@link createOffer} / {@link createAnswer} gather every candidate into the SDP they return (see the comments
+   * there), so this list is already complete by the time that SDP is sent. It is kept so the provider can also
+   * trickle the same candidates to the peer's WebRtcTransportRequestor via ICECandidates, which Matter 1.6.0
+   * § 11.4.3.2 expects the camera to send — see {@link localIceCandidates}.
+   *
+   * Matter 1.6.0 § 11.4.5.4.1 requires sdpMid/sdpMLineIndex to travel as named struct fields rather than being
+   * serialized into the candidate string, so all three are kept separately here. werift leaves either undefined when
+   * the candidate has no such association; the Matter struct spells that case as null.
+   */
+  private readonly gatheredIceCandidates: { candidate: string; sdpMid: string | null; sdpmLineIndex: number | null }[] = [];
+
+  /**
    * The fixed local UDP port range ICE binds its candidates to, from the `MATTERBRIDGE_ICE_PORT_RANGE` environment
    * variable in `min-max` form (e.g. `50000-50010`). Left unset, werift picks an ephemeral port per session, which a
    * container runtime cannot publish ahead of time; pinning the range lets a deployment publish exactly those UDP
@@ -247,6 +261,9 @@ export class WeriftWebRtcSession {
     // Log each discovered local candidate, or the end-of-candidates signal.
     this.peerConnection.onIceCandidate.subscribe((candidate) => {
       this.log.debug(candidate ? `Gathered local ICE candidate: ${candidate.candidate}` : 'ICE candidate gathering completed');
+      if (candidate) {
+        this.gatheredIceCandidates.push({ candidate: candidate.candidate, sdpMid: candidate.sdpMid ?? null, sdpmLineIndex: candidate.sdpMLineIndex ?? null });
+      }
     });
     // Log progress while ICE tests candidate pairs and establishes connectivity.
     this.peerConnection.iceConnectionStateChange.subscribe((state) => {
@@ -287,6 +304,16 @@ export class WeriftWebRtcSession {
         }
       });
     }
+  }
+
+  /**
+   * The local ICE candidates gathered for this session, shaped as Matter ICECandidateStruct fields.
+   *
+   * @returns {{ candidate: string; sdpMid: string | null; sdpmLineIndex: number | null }[]} A copy of the gathered
+   * candidates, empty until ICE gathering has produced any.
+   */
+  get localIceCandidates(): { candidate: string; sdpMid: string | null; sdpmLineIndex: number | null }[] {
+    return [...this.gatheredIceCandidates];
   }
 
   /**

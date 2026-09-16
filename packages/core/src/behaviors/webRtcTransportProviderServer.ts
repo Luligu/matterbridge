@@ -161,6 +161,41 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
   }
 
   /**
+   * Trickles this session's gathered local ICE candidates to the peer's WebRtcTransportRequestor via ICECandidates.
+   *
+   * Matter 1.6.0 § 11.4.3.1 describes the ICE exchange as bidirectional (ProvideICECandidates inbound, ICECandidates
+   * outbound), and § 11.4.3.2 expects the camera to be the side that trickles. The candidates are already embedded in
+   * the Offer/Answer SDP (see {@link WeriftWebRtcSession.createOffer}/{@link WeriftWebRtcSession.createAnswer}, which
+   * both return the post-gathering localDescription), so this invoke is redundant for a peer that reads them from the
+   * SDP — but a peer that waits for the trickle command never sees them otherwise. Re-sending a candidate is
+   * idempotent, so sending both is harmless.
+   *
+   * Sent only in reply to the peer's own ProvideICECandidates, never pushed straight after the Offer/Answer. Receiving
+   * the peer's candidates is the one signal that it has applied our SDP as its remote description; pushing ours before
+   * that reaches a peer mid-negotiation, and a libdatachannel-based controller aborts the process outright on it
+   * ("Got a remote candidate without remote description"). A peer that never trickles still gets every candidate, as
+   * they are already embedded in the Offer/Answer SDP.
+   *
+   * @param {Endpoint} requestorEndpoint - The peer's WebRtcTransportRequestor endpoint.
+   * @param {number} webRtcSessionId - The session the candidates belong to.
+   * @param {WeriftWebRtcSession} webRtcPeer - The werift session holding the gathered candidates.
+   * @returns {Promise<void>} Resolves once the invoke has been sent, or immediately if there is nothing to send.
+   */
+  /* v8 ignore next 12 -- only reachable once a real peer WebRtcTransportRequestor can be reached; see the v8 ignore
+   * comments at this method's call sites. */
+  async #trickleLocalIceCandidates(requestorEndpoint: Endpoint, webRtcSessionId: number, webRtcPeer: WeriftWebRtcSession): Promise<void> {
+    const iceCandidates = webRtcPeer.localIceCandidates;
+    // Matter 1.6.0 § 11.5.6.6: the ICECandidates list is constrained to min 1, so an empty gathering sends nothing.
+    if (iceCandidates.length === 0) return;
+    await requestorEndpoint.commandsOf(WebRtcTransportRequestorClient).iceCandidates({ webRtcSessionId, iceCandidates });
+    this.endpoint
+      .stateOf(MatterbridgeServer)
+      .log.info(
+        `MatterbridgeWebRtcTransportProviderServer: invoked ICECandidates with ${iceCandidates.length} local candidate(s) for session ${webRtcSessionId} on the peer's WebRtcTransportRequestor`,
+      );
+  }
+
+  /**
    * Resolves the peer's WebRtcTransportRequestor client endpoint by connecting directly to the peer node that sent
    * the current request (identified by peerNodeId/fabricIndex from the incoming session, and peerEndpointId from
    * originatingEndpointId) — WebRtcTransportProvider/Requestor address each other this way, comparable to the OTA
@@ -571,13 +606,15 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
   }
 
   /**
-   * Enforces {@link MAX_CONCURRENT_SESSIONS}: if `webRtcSessionId` (just added to `currentSessions` by the caller,
-   * before any werift peer connection exists for it — both call sites check this first) pushed the session count
-   * past the cap, evicts it immediately — removes it from `currentSessions` and invokes End on the peer's
-   * WebRtcTransportRequestor with reason `OutOfResources` (Matter 1.6 §11.4.5.2). The session is still accepted
-   * normally up to this point (a real SolicitOfferResponse/ProvideOfferResponse with a valid session id), matching
-   * the CHIP conformance suite's expectation that resource exhaustion is signaled by the device proactively ending
-   * the new session rather than by rejecting the command outright — the device just can't sustain it.
+   * Enforces {@link MAX_CONCURRENT_SESSIONS} for SolicitOffer: if `webRtcSessionId` (just added to `currentSessions`
+   * by the caller, before any werift peer connection exists for it) pushed the session count past the cap, evicts it
+   * immediately — removes it from `currentSessions` and invokes End on the peer's WebRtcTransportRequestor with
+   * reason `OutOfResources` (Matter 1.6 §11.4.5.2). The session is still accepted normally up to this point (a real
+   * SolicitOfferResponse with a valid session id), per Matter 1.6.0 § 11.5.6.1: "unable to provide another WebRTC
+   * session: Invoke End with Reason set to OutOfResources, and end processing with no other side effects".
+   *
+   * ProvideOffer deliberately does not use this: § 11.5.6.3 requires it to respond with a RESOURCE_EXHAUSTED status
+   * instead, which it does inline rather than accepting the session and ending it afterwards.
    *
    * @param {number} webRtcSessionId - The just-created session id to evict if it pushed the count over capacity.
    * @param {Endpoint | undefined} requestorEndpoint - The peer's WebRtcTransportRequestor endpoint, if reachable.
@@ -741,13 +778,14 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    * invokes Answer on it with the SDP answer generated by that peer connection. If no requestor is bound yet, the
    * Answer is silently skipped; this implementation has no mechanism to send it later once a binding is established.
    * If a null webRtcSessionId creates a new session that pushes the concurrent session count past
-   * {@link MAX_CONCURRENT_SESSIONS}, that new session is evicted instead (see {@link #evictIfOverCapacity}): the
-   * response below is still returned normally, but no SDP answer is ever generated or sent, and the peer instead
-   * receives a deferred End invoke with reason OutOfResources.
+   * {@link MAX_CONCURRENT_SESSIONS}, the command is rejected with a RESOURCE_EXHAUSTED status and the new session is
+   * rolled back, per Matter 1.6.0 § 11.5.6.3 — unlike SolicitOffer, which accepts the session and ends it afterwards
+   * with OutOfResources (see {@link #evictIfOverCapacity}).
    *
    * @param {WebRtcTransportProvider.ProvideOfferRequest} request - ProvideOffer request payload.
    * @returns {Promise<WebRtcTransportProvider.ProvideOfferResponse>} The session identifier the offer was recorded against.
    * @throws {StatusResponseError} With status NotFound if a non-null webRtcSessionId is not present in currentSessions.
+   * @throws {StatusResponseError} With status ResourceExhausted if a null webRtcSessionId would push the concurrent session count past {@link MAX_CONCURRENT_SESSIONS}.
    * @throws {StatusResponseError} With status InvalidCommand if webRtcSessionId is null, MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1, and none of videoStreams, audioStreams, videoStreamId or audioStreamId is present (see {@link #isStrictWebRtcTransport}).
    * @throws {StatusResponseError} With status DynamicConstraintError if webRtcSessionId is null, MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1, and streamUsage is not present in streamUsagePriorities (see {@link #validateStreamUsage}).
    * @throws {StatusResponseError} With status InvalidInState, AlreadyExists, or DynamicConstraintError if webRtcSessionId is null and MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1 (see {@link #resolveStrictStreamLists}/{@link #validateAllocatedStreamIds}).
@@ -806,10 +844,17 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
         },
       ];
 
-      const requestorEndpointForCapacityCheck = await this.#resolvePeerRequestorEndpoint(peerNodeId, fabricIndex, request.originatingEndpointId ?? EndpointNumber(0));
-      if (this.#evictIfOverCapacity(webRtcSessionId, requestorEndpointForCapacityCheck)) {
-        this.endpoint.emitCommand(WebRtcTransportProvider, 'provideOffer', request, this.context);
-        return { webRtcSessionId, ...this.#echoDeprecatedStreamIds(request, videoStreams, audioStreams) };
+      // Matter 1.6.0 § 11.5.6.3.12: If unable to provide another WebRTC session, respond with a response status of
+      // RESOURCE_EXHAUSTED. This is deliberately not SolicitOffer's behavior (§ 11.5.6.1 invokes End with
+      // OutOfResources on the peer and still responds successfully — see #evictIfOverCapacity): ProvideOffer rejects
+      // the command outright instead, so the session just added above is rolled back to leave no other side effects.
+      // The reference counts are not touched here, as they are only incremented below once the session is accepted.
+      if (this.state.currentSessions.length > MAX_CONCURRENT_SESSIONS) {
+        this.state.currentSessions = this.state.currentSessions.filter((session) => session.id !== webRtcSessionId);
+        throw new StatusResponseError(
+          `MatterbridgeWebRtcTransportProviderServer.provideOffer: cannot sustain more than MAX_CONCURRENT_SESSIONS (${MAX_CONCURRENT_SESSIONS}) concurrent webRTC sessions (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+          Status.ResourceExhausted,
+        );
       }
       // Matter 1.6.0 § 11.5.6.3.12: Increment ReferenceCount only when creating a new session.
       this.#updateStreamReferenceCounts(videoStreams, audioStreams, 1);
@@ -977,6 +1022,19 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
           }
         }),
       );
+
+      // Matter 1.6.0 § 11.4.3.2: the camera is the side expected to trickle via ICECandidates. The peer's own
+      // candidates arriving here are the signal that it has applied our SDP, so replying is safe — see
+      // #trickleLocalIceCandidates. Deferred for the same reason as the Offer/Answer invokes: the command response
+      // must reach the peer first.
+      const session = this.state.currentSessions.find((candidateSession) => candidateSession.id === request.webRtcSessionId);
+      if (session && !this.internal.trickledSessions.has(request.webRtcSessionId)) {
+        this.internal.trickledSessions.add(request.webRtcSessionId);
+        this.#invokeDeferred(async () => {
+          const requestorEndpoint = await this.#resolvePeerRequestorEndpoint(session.peerNodeId, session.fabricIndex, session.peerEndpointId);
+          if (requestorEndpoint) await this.#trickleLocalIceCandidates(requestorEndpoint, request.webRtcSessionId, webRtcPeer);
+        }, `ICECandidates for session ${request.webRtcSessionId}`);
+      }
     }
     this.endpoint.emitCommand(WebRtcTransportProvider, 'provideIceCandidates', request, this.context);
   }
@@ -1003,6 +1061,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     this.#updateStreamReferenceCounts(session.videoStreams, session.audioStreams, -1);
     // Matter 1.6.0 § 11.5.6.7.3: Remove the entry for WebRTCSessionID from CurrentSessions.
     this.state.currentSessions = this.state.currentSessions.filter((session) => session.id !== request.webRtcSessionId);
+    this.internal.trickledSessions.delete(request.webRtcSessionId);
     const webRtcPeer = this.internal.sessions.get(request.webRtcSessionId);
     if (webRtcPeer) {
       this.internal.sessions.delete(request.webRtcSessionId);
@@ -1039,6 +1098,12 @@ export namespace MatterbridgeWebRtcTransportProviderServer {
      * keyed by WebRTC session id.
      */
     sessions = new Map<number, WeriftWebRtcSession>();
+
+    /**
+     * The session ids this provider has already trickled its own ICE candidates to, so a peer that sends
+     * ProvideICECandidates more than once for a session does not get the same candidate list sent back each time.
+     */
+    trickledSessions = new Set<number>();
   }
   /* v8 ignore next -- compiler-generated fallback (`Foo || (Foo = {})`) for namespace/class declaration merging;
    * the class is always already defined by the time this runs, so the assignment branch is structurally unreachable. */

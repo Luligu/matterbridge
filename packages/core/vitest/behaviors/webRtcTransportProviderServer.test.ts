@@ -703,7 +703,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining('session 5 exceeds MAX_CONCURRENT_SESSIONS (5); evicting with WebRtcEndReason.OutOfResources'));
   });
 
-  it('should evict the newest session with OutOfResources when provideOffer exceeds MAX_CONCURRENT_SESSIONS', async () => {
+  it('should reject provideOffer with ResourceExhausted when it exceeds MAX_CONCURRENT_SESSIONS', async () => {
     const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcCapacityProvide' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
     endpoint.addRequiredClusterServers();
@@ -716,14 +716,14 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     }
     expect(endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions')).toHaveLength(5);
 
-    // The 6th session is accepted normally (a real session id is allocated) but immediately evicted since it pushes
-    // the count past MAX_CONCURRENT_SESSIONS=5; currentSessions stays capped at 5, no Answer is ever sent for it.
-    await expect(
-      endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: null, sdp: 'v=0 o=- offer', audioStreams: [0] }),
-    ).resolves.toBeUndefined();
+    // Matter 1.6.0 § 11.5.6.3: unlike solicitOffer above, the 6th provideOffer is rejected outright with
+    // RESOURCE_EXHAUSTED rather than accepted and ended afterwards, and the rolled-back session leaves
+    // currentSessions capped at 5.
+    await expect(endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: null, sdp: 'v=0 o=- offer', audioStreams: [0] })).rejects.toThrow(
+      'cannot sustain more than MAX_CONCURRENT_SESSIONS (5) concurrent webRTC sessions',
+    );
 
     expect(endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions')).toHaveLength(5);
-    expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining('session 5 exceeds MAX_CONCURRENT_SESSIONS (5); evicting with WebRtcEndReason.OutOfResources'));
   });
 
   it('should reject solicitOffer without videoStreams or audioStreams when the endpoint has no CameraAvStreamManagement cluster', async () => {
