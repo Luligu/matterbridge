@@ -1760,15 +1760,22 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
    *
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
+   *
+   * @remarks This method also increments the configuration version of the basic information server for the main server node, all device server nodes and all plugin server nodes
+   * before shutting down. The device server nodes are incremented before the plugin loop cause removeAllBridgedEndpoints() removes the devices from the DeviceManager.
    */
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
     const { wait } = await import('@matterbridge/utils/wait');
     this.log.info('Unregistering all devices and shutting down...');
     if (this.serverNode) await this.serverNode.setStateOf(BasicInformationServer, { configurationVersion: this.serverNode.state.basicInformation.configurationVersion + 1 });
+    for (const device of this.devices.array()) {
+      if (device.serverNode)
+        await device.serverNode.setStateOf(BasicInformationServer, { configurationVersion: device.serverNode.state.basicInformation.configurationVersion + 1 });
+    }
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
-      /* oxfmt-ignore */
-      if (plugin.serverNode) await plugin.serverNode.setStateOf(BasicInformationServer, { configurationVersion: plugin.serverNode.state.basicInformation.configurationVersion + 1 });
+      if (plugin.serverNode)
+        await plugin.serverNode.setStateOf(BasicInformationServer, { configurationVersion: plugin.serverNode.state.basicInformation.configurationVersion + 1 });
       const registeredDevices = plugin.registeredDevices;
       await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
       plugin.registeredDevices = registeredDevices;
@@ -3106,6 +3113,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(() => {
       this.log.notice(`Server node for ${storeId} is online`);
+      this.log.info(`Configuration version for server node ${storeId} is ${serverNode.state.basicInformation.configurationVersion}`);
+      if (hasParameter('configuration-version')) {
+        let configurationVersion = getIntParameter('configuration-version') ?? serverNode.state.basicInformation.configurationVersion + 1;
+        configurationVersion = Math.min(Math.max(configurationVersion, 1), UINT32_MAX);
+        fireAndForget(serverNode.setStateOf(BasicInformationServer, { configurationVersion }), this.log, `Failed to set configuration version for server node ${storeId}`);
+        this.log.notice(`Configuration version for server node ${storeId} is now ${configurationVersion}`);
+      }
       // v8 ignore if - cause the lifecycle.online event is triggered when the device is online, but it may not be commissioned yet
       if (serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is already commissioned.`);
@@ -3319,7 +3333,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.systemInformation.osRelease,
         plugin.description,
         plugin.homepage ?? 'https://matterbridge.io',
-        1,
+        plugin.configurationVersion,
       );
       plugin.serverNode = await this.createServerNode(
         plugin.storageContext,

@@ -68,7 +68,7 @@ import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidInteger, isValidString, parseVersionString } from '@matterbridge/utils/validate';
-import { wait, withTimeout } from '@matterbridge/utils/wait';
+import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, TimestampFormat, zb } from 'node-ansi-logger';
 // Node persist manager module
@@ -810,6 +810,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(() => {
       this.log.notice(`Server node for ${storeId} is online`);
+      this.log.info(`Configuration version for server node ${storeId} is ${serverNode.state.basicInformation.configurationVersion}`);
+      if (hasParameter('configuration-version')) {
+        let configurationVersion = getIntParameter('configuration-version') ?? serverNode.state.basicInformation.configurationVersion + 1;
+        configurationVersion = Math.min(Math.max(configurationVersion, 1), UINT32_MAX);
+        fireAndForget(serverNode.setStateOf(BasicInformationServer, { configurationVersion }), this.log, `Failed to set configuration version for server node ${storeId}`);
+        this.log.notice(`Configuration version for server node ${storeId} is now ${configurationVersion}`);
+      }
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
         this.advertisingNodes.set(storeId, Date.now());
@@ -1087,7 +1094,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         this.matterbridge.systemInformation.osRelease,
         plugin.description,
         plugin.homepage ?? 'https://matterbridge.io',
-        1,
+        plugin.configurationVersion,
       );
       this.serverNode = await this.createServerNode(
         this.port ? this.port++ : undefined,

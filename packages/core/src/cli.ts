@@ -329,6 +329,7 @@ function help(): void {
       --fixed_delay [seconds]: set a fixed delay in seconds before starting Matterbridge (default 120)
       --no-ansi:               disable ANSI color output in the logs
       --reset-sessions:        reset sessions and resumption records on shutdown (use only if your controller has issue reconnecting on restart)
+      --configuration-version: increment by one the configuration version of all the server nodes when they go online (add a value to set it instead, i.e. --configuration-version 5)
   `);
   process.exit(0);
 }

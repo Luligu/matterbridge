@@ -281,6 +281,40 @@ describe('Matterbridge Device serverMode=server', () => {
     expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(3);
   });
 
+  test('unregisterAndShutdownProcess increments the configuration version of the server nodes', async () => {
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const shutdownSpy = vi.spyOn(matterbridge.plugins, 'shutdown').mockResolvedValue(undefined);
+    // Record the configuration version when removeAllBridgedEndpoints() is called: in production it removes the devices from the DeviceManager,
+    // so the device server nodes must already be incremented at this point
+    let configurationVersionOnRemove: number | undefined;
+    // oxlint-disable-next-line typescript/no-misused-promises
+    const removeAllBridgedEndpointsSpy = vi.spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockImplementation(async () => {
+      configurationVersionOnRemove = serverDevice.serverNode?.state.basicInformation.configurationVersion;
+      return Promise.resolve();
+    });
+    try {
+      const matterbridgeConfigurationVersion = matterbridge.serverNode?.state.basicInformation.configurationVersion ?? 0;
+      expect(matterbridgeConfigurationVersion).toBeGreaterThan(0);
+      expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(3);
+
+      await matterbridge.unregisterAndShutdownProcess(0);
+
+      expect(matterbridge.serverNode?.state.basicInformation.configurationVersion).toBe(matterbridgeConfigurationVersion + 1);
+      expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(4);
+      expect(configurationVersionOnRemove).toBe(4);
+      expect(shutdownSpy).toHaveBeenCalled();
+      expect(removeAllBridgedEndpointsSpy).toHaveBeenCalledWith('serverdevicetest', 100);
+      expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 0);
+    } finally {
+      // Restore the mocks here so that a failure does not leak into the following tests
+      cleanupSpy.mockRestore();
+      shutdownSpy.mockRestore();
+      removeAllBridgedEndpointsSpy.mockRestore();
+    }
+  });
+
   test('Should log error if createDeviceServerNode fails', async () => {
     vi.spyOn(Matterbridge.prototype as any, 'createDeviceServerNode').mockImplementationOnce(() => {
       throw new Error('Test error creating server node');

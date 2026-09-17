@@ -17,6 +17,7 @@ import path from 'node:path';
 
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types';
+import { waiter } from '@matterbridge/utils';
 import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
@@ -156,6 +157,43 @@ describe('Matterbridge matterjs', () => {
 
     await serverNode.close();
   });
+
+  test('serverNode online sets the configuration version with -configuration-version', async () => {
+    const argv = process.argv;
+    // The configuration version of a new server node is always 1
+    const cases = [
+      { storeId: 'ConfigurationVersionSet', parameters: ['--configuration-version', '5'], configurationVersion: 5 },
+      { storeId: 'ConfigurationVersionIncremented', parameters: ['--configuration-version'], configurationVersion: 2 },
+      { storeId: 'ConfigurationVersionClamped', parameters: ['--configuration-version', '0'], configurationVersion: 1 },
+    ];
+    let port = MATTER_PORT + 2;
+    try {
+      for (const { storeId, parameters, configurationVersion } of cases) {
+        process.argv = [...argv, ...parameters];
+        const context = await (matterbridge as any).createServerNodeContext(
+          storeId,
+          'Configuration Version',
+          matterbridge.aggregatorDeviceType,
+          matterbridge.aggregatorVendorId,
+          matterbridge.aggregatorVendorName,
+          matterbridge.aggregatorProductId,
+          matterbridge.aggregatorProductName,
+        );
+        const serverNode = await (matterbridge as any).createServerNode(context, port++);
+        expect(serverNode.state.basicInformation.configurationVersion).toBe(1);
+
+        // The configuration version is set when the server node goes online
+        await (matterbridge as any).startServerNode(serverNode);
+        expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Configuration version for server node ${storeId} is now ${configurationVersion}`);
+        await waiter(`configuration version of ${storeId}`, () => serverNode.state.basicInformation.configurationVersion === configurationVersion, false, 5000, 100, false);
+
+        await (matterbridge as any).stopServerNode(serverNode);
+      }
+    } finally {
+      // Restore the command line here so that a failure does not leak into the following tests
+      process.argv = argv;
+    }
+  }, 60000);
 
   test('serverNode commissioned', () => {
     matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);

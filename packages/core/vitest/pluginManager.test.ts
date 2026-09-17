@@ -377,6 +377,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -407,6 +408,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -418,6 +420,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -429,6 +432,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -439,6 +443,7 @@ describe('PluginManager', () => {
     expect(plugins.array()).toEqual([
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         homepage: 'https://example.com',
@@ -450,6 +455,7 @@ describe('PluginManager', () => {
       },
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         homepage: 'https://example.com',
@@ -461,6 +467,7 @@ describe('PluginManager', () => {
       },
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         homepage: 'https://example.com',
@@ -474,6 +481,7 @@ describe('PluginManager', () => {
     expect(plugins.storagePluginArray()).toEqual([
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         name: 'matterbridge-mock1',
@@ -484,6 +492,7 @@ describe('PluginManager', () => {
       },
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         name: 'matterbridge-mock2',
@@ -494,6 +503,7 @@ describe('PluginManager', () => {
       },
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         name: 'matterbridge-mock3',
@@ -506,6 +516,7 @@ describe('PluginManager', () => {
     expect(plugins.apiPluginArray()).toEqual([
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         homepage: 'https://example.com',
@@ -517,6 +528,7 @@ describe('PluginManager', () => {
       },
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         homepage: 'https://example.com',
@@ -528,6 +540,7 @@ describe('PluginManager', () => {
       },
       {
         author: 'To update',
+        configurationVersion: 1,
         description: 'To update',
         enabled: true,
         homepage: 'https://example.com',
@@ -549,6 +562,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -567,6 +581,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -621,6 +636,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',
@@ -1185,6 +1201,7 @@ describe('PluginManager', () => {
         path: path.join('.cache', 'missing', name, 'package.json'),
         type: 'AnyPlatform',
         version: '1.0.0',
+        configurationVersion: 1,
         description: 'Test plugin',
         author: 'Test author',
         enabled: true,
@@ -1369,6 +1386,7 @@ describe('PluginManager', () => {
       enabled: true,
       type: 'Unknown' as any,
       version: '1.0.0',
+      configurationVersion: 1,
       description: 'To update',
       author: 'To update',
       homepage: 'https://example.com',

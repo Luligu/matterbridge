@@ -388,6 +388,42 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Removed mode server bridged endpoint`));
   });
 
+  test('unregisterAndShutdownProcess increments the configuration version of the plugin server nodes', async () => {
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const shutdownSpy = vi.spyOn(plugins, 'shutdown').mockResolvedValue(undefined);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const removeAllBridgedEndpointsSpy = vi.spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockResolvedValue(undefined);
+    try {
+      // In childbridge mode there is no Matterbridge server node: only the plugin server nodes are incremented
+      expect((matterbridge as any).serverNode).toBeUndefined();
+      const configurationVersions = new Map<string, number>();
+      for (const plugin of plugins.array()) {
+        expect(plugin.error).toBeFalsy();
+        expect(plugin.enabled).toBeTruthy();
+        expect(plugin.serverNode).toBeDefined();
+        configurationVersions.set(plugin.name, plugin.serverNode?.state.basicInformation.configurationVersion ?? 0);
+      }
+      expect(configurationVersions.get('matterbridge-mock4')).toBe(2);
+
+      await matterbridge.unregisterAndShutdownProcess(0);
+
+      for (const plugin of plugins.array()) {
+        expect(plugin.serverNode?.state.basicInformation.configurationVersion).toBe((configurationVersions.get(plugin.name) ?? 0) + 1);
+      }
+      expect(plugins.get('matterbridge-mock4')?.serverNode?.state.basicInformation.configurationVersion).toBe(3);
+      expect(shutdownSpy).toHaveBeenCalledTimes(4);
+      expect(removeAllBridgedEndpointsSpy).toHaveBeenCalledWith('matterbridge-mock1', 100);
+      expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 0);
+    } finally {
+      // Restore the mocks here so that a failure does not leak into the following tests
+      cleanupSpy.mockRestore();
+      shutdownSpy.mockRestore();
+      removeAllBridgedEndpointsSpy.mockRestore();
+    }
+  }, 60000);
+
   test('Matterbridge.destroyInstance() -childbridge mode', async () => {
     expect(matterbridge.plugins.size).toBe(4);
     expect(matterbridge.devices.size).toBe(4);

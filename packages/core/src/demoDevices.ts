@@ -208,6 +208,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     author: 'https://github.com/Luligu',
     enabled: false,
     private: true,
+    configurationVersion: 1,
     registeredDevices: 0,
     configJson: demoPluginConfig,
     schemaJson: demoPluginSchema,
