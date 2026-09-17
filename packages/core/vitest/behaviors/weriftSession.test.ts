@@ -12,6 +12,7 @@
 const NAME = 'WeriftSession';
 
 import { spawn, type ChildProcess } from 'node:child_process';
+import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
 import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/vitest-utils';
@@ -383,15 +384,67 @@ describe('WeriftWebRtcSession', () => {
       return [...sdp.matchAll(/^a=candidate:\S+ \d+ udp \d+ (\S+) (\d+) typ host/gm)].map((match) => ({ address: match[1], port: Number(match[2]) }));
     }
 
+    /**
+     * Tells whether a UDP port can be bound on this machine right now. A port can be unavailable because another
+     * process (or another vitest worker) holds it, or because the operating system reserves it: on Windows, Hyper-V
+     * and WSL exclude whole blocks of the dynamic range at boot, and a bind there fails with EACCES.
+     *
+     * @param {number} port - The UDP port to probe.
+     * @returns {Promise<boolean>} True when the port could be bound and released again.
+     */
+    async function canBindUdpPort(port: number): Promise<boolean> {
+      return new Promise((resolve) => {
+        const socket = createSocket('udp4');
+        socket.once('error', () => {
+          try {
+            socket.close();
+            // v8 ignore next 3 -- only reached when the failed socket is already closed
+          } catch {
+            // Already closed by the failed bind.
+          }
+          resolve(false);
+        });
+        socket.once('listening', () => socket.close(() => resolve(true)));
+        socket.bind(port);
+      });
+    }
+
+    /**
+     * Finds a contiguous range of bindable UDP ports, so the pinned-range test works on any machine instead of
+     * assuming a hard-coded range is free. A fixed range cannot be assumed: on Windows the Hyper-V/WSL port
+     * exclusions move on every boot, and every bind inside an excluded block fails, leaving werift with no host
+     * candidate at all.
+     *
+     * @param {number} size - How many consecutive ports the range must cover.
+     * @returns {Promise<[number, number]>} The inclusive bounds of a range whose ports were all bindable.
+     */
+    async function findFreeUdpPortRange(size: number): Promise<[number, number]> {
+      // Scanning from the start of the IANA dynamic range upwards keeps the search deterministic.
+      for (let min = 49_152; min + size - 1 <= 65_535; min += size) {
+        const max = min + size - 1;
+        let free = true;
+        for (let port = min; port <= max; port++) {
+          if (!(await canBindUdpPort(port))) {
+            free = false;
+            break;
+          }
+        }
+        if (free) return [min, max];
+      }
+      // v8 ignore next 2 -- unreachable on a machine with any free UDP ports
+      throw new Error(`No free UDP port range of ${size} ports found`);
+    }
+
     it('should bind host candidates inside the range when MATTERBRIDGE_ICE_PORT_RANGE is set', async () => {
-      vi.stubEnv('MATTERBRIDGE_ICE_PORT_RANGE', '51000-51010');
+      const [min, max] = await findFreeUdpPortRange(11);
+      vi.stubEnv('MATTERBRIDGE_ICE_PORT_RANGE', `${min}-${max}`);
       const session = new WeriftWebRtcSession(1, { ...options });
       try {
         const candidates = hostCandidates(await session.createOffer());
         expect(candidates.length).toBeGreaterThan(0);
         for (const candidate of candidates) {
-          expect(candidate.port).toBeGreaterThanOrEqual(51_000);
-          expect(candidate.port).toBeLessThanOrEqual(51_010);
+          expect(candidate.port).toBeGreaterThanOrEqual(min);
+          expect(candidate.port).toBeLessThanOrEqual(max);
         }
       } finally {
         await session.close();
