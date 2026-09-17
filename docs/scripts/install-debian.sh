@@ -3,13 +3,14 @@
 # Install Node.js (from the official tarball) and Bun on a Debian/Ubuntu container.
 #
 # Usage inside a container (runs as root):
-#   curl -fsSL https://matterbridge.io/scripts/install-debian.sh | bash
-#   curl -fsSL https://matterbridge.io/scripts/install-debian.sh | NODE_VERSION=24.10.0 TZ=Europe/Rome bash
+#   curl -4 -fsSL https://matterbridge.io/scripts/install-debian.sh | bash
+#   curl -4 -fsSL https://matterbridge.io/scripts/install-debian.sh | NODE_VERSION=24.10.0 TZ=Europe/Rome bash
 #
 # NODE_VERSION defaults to "lts" (newest Active/Maintenance LTS release). Use "latest" for the
 # newest release of any line, or an explicit version like 24.10.0.
 # TZ defaults to Europe/Brussels (CET/CEST). Legacy zone names like "CET" are not in Debian 13's
 # base tzdata package, so use region zones.
+# Downloads use IPv4 to avoid failing IPv6 connections in Docker on macOS.
 # New Bash shells retain TZ and use noninteractive package configuration defaults.
 #
 # Run from the repository root: local script, interactive shell afterwards:
@@ -17,8 +18,8 @@
 #   docker run -it --rm --pull always --hostname ubuntu --name ubuntu --network host -v "${PWD}/docs/scripts:/scripts:ro" ubuntu:latest bash -c 'bash /scripts/install-debian.sh && exec bash'
 #
 # Same, script fetched from the network (the base image has no curl yet):
-#   docker run -it --rm --pull always --hostname debian --name debian --network host debian:latest bash -c 'apt-get update && apt-get install -y curl && curl -fsSL https://matterbridge.io/scripts/install-debian.sh | bash && exec bash'
-#   docker run -it --rm --pull always --hostname ubuntu --name ubuntu --network host ubuntu:latest bash -c 'apt-get update && apt-get install -y curl && curl -fsSL https://matterbridge.io/scripts/install-debian.sh | bash && exec bash'
+#   docker run -it --rm --pull always --hostname debian --name debian --network host debian:latest bash -c 'apt-get update && apt-get install -y curl && curl -4 -fsSL https://matterbridge.io/scripts/install-debian.sh | bash && exec bash'
+#   docker run -it --rm --pull always --hostname ubuntu --name ubuntu --network host ubuntu:latest bash -c 'apt-get update && apt-get install -y curl && curl -4 -fsSL https://matterbridge.io/scripts/install-debian.sh | bash && exec bash'
 #
 # Re-enter the running container with an interactive Bash shell to load Bun:
 #   docker exec -it debian bash
@@ -62,7 +63,7 @@ done
 
 case "$NODE_VERSION" in
   lts | latest)
-    curl -fsSL https://nodejs.org/dist/index.json -o /tmp/node-index.json
+    curl -4 -fsSL https://nodejs.org/dist/index.json -o /tmp/node-index.json
     if [ "$NODE_VERSION" = "lts" ]; then
       # First entry whose "lts" field is a codename string rather than false.
       NODE_VERSION="$(sed -n '/"lts":"/{s/.*"version":"v\([^"]*\)".*/\1/p;q;}' /tmp/node-index.json)"
@@ -77,13 +78,13 @@ esac
 ARCH="$(uname -m | sed 's/x86_64/x64/; s/aarch64/arm64/; s/armv7l/armv7l/')"
 
 echo "==> Installing Node.js v$NODE_VERSION ($ARCH)"
-curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -o /tmp/node.tar.xz
+curl -4 -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${ARCH}.tar.xz" -o /tmp/node.tar.xz
 $SUDO tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1
 rm -f /tmp/node.tar.xz
 
 echo "==> Installing Bun"
 export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
-curl -fsSL https://bun.com/install | bash
+curl -4 -fsSL https://bun.com/install | bash
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Persist the install directory for interactive Bash shells, including custom BUN_INSTALL paths.

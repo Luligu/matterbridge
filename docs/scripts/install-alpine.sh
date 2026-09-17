@@ -5,18 +5,19 @@
 # Start with POSIX sh because the base image has no Bash; this script installs it.
 #
 # Usage inside a container (runs as root):
-#   curl -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh
-#   curl -fsSL https://matterbridge.io/scripts/install-alpine.sh | TZ=Europe/Rome sh
+#   curl -4 -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh
+#   curl -4 -fsSL https://matterbridge.io/scripts/install-alpine.sh | TZ=Europe/Rome sh
 #
 # Node.js comes from apk, so its version is whatever the running Alpine release ships.
 # TZ defaults to Europe/Brussels (CET/CEST); legacy zone names like "CET" are not shipped,
 # so use region zones.
+# Curl downloads use IPv4 to avoid failing IPv6 connections in Docker on macOS.
 #
 # Run from the repository root: local script, interactive shell afterwards:
 #   docker run -it --rm --pull always --hostname alpine --name alpine --network host -v "${PWD}/docs/scripts:/scripts:ro" alpine:latest sh -c 'sh /scripts/install-alpine.sh && exec bash'
 #
 # Same, script fetched from the network:
-#   docker run -it --rm --pull always --hostname alpine --name alpine --network host alpine:latest sh -c 'apk add --no-cache curl && curl -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh && exec bash'
+#   docker run -it --rm --pull always --hostname alpine --name alpine --network host alpine:latest sh -c 'apk add --no-cache curl && curl -4 -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh && exec bash'
 #
 # Re-enter the running container with Bash to load the saved Bun environment:
 #   docker exec -it alpine bash
@@ -54,7 +55,7 @@ $SUDO apk add --no-cache nodejs npm
 
 echo "==> Installing Bun"
 export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
-curl -fsSL https://bun.com/install | bash
+curl -4 -fsSL https://bun.com/install | bash
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 # Persist the install directory for interactive Bash shells.
