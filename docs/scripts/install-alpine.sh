@@ -2,7 +2,7 @@
 #
 # Install Node.js (from the Alpine repositories) and Bun on an Alpine container.
 #
-# POSIX sh on purpose: the alpine image has no bash, so this must run with "sh".
+# Start with POSIX sh because the base image has no Bash; this script installs it.
 #
 # Usage inside a container (runs as root):
 #   curl -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh
@@ -12,16 +12,16 @@
 # TZ defaults to Europe/Brussels (CET/CEST); legacy zone names like "CET" are not shipped,
 # so use region zones.
 #
-# One-shot container, script from a local copy, interactive shell afterwards:
-#   docker run -it --rm --pull always --hostname alpine --name alpine --network host \
-#     -v /c/Users/lligu/GitHub/matterbridge/docs/scripts:/scripts:ro alpine:latest \
-#     sh -c '/scripts/install-alpine.sh; exec sh'
+# Run from the repository root: local script, interactive shell afterwards:
+#   docker run -it --rm --pull always --hostname alpine --name alpine --network host -v "${PWD}/docs/scripts:/scripts:ro" alpine:latest sh -c 'sh /scripts/install-alpine.sh && exec bash'
 #
 # Same, script fetched from the network:
-#   docker run -it --rm --pull always --hostname alpine --name alpine --network host alpine:latest \
-#     sh -c 'apk add --no-cache curl && curl -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh; exec sh'
+#   docker run -it --rm --pull always --hostname alpine --name alpine --network host alpine:latest sh -c 'apk add --no-cache curl && curl -fsSL https://matterbridge.io/scripts/install-alpine.sh | sh && exec bash'
 #
-# Drop the trailing "; exec sh" (and -it) to run the script and exit.
+# Re-enter the running container with Bash to load the saved Bun environment:
+#   docker exec -it alpine bash
+#
+# Drop the trailing "&& exec bash" (and -it) to run the script and exit.
 #
 
 set -eu
@@ -43,13 +43,34 @@ echo "==> Setting timezone to $TZ"
 $SUDO ln -fs "/usr/share/zoneinfo/$TZ" /etc/localtime
 echo "$TZ" | $SUDO tee /etc/timezone >/dev/null
 
+# Load the persisted system timezone in new interactive Bash shells.
+TZ_PROFILE_EXPORT='export TZ="$(cat /etc/timezone)"'
+if ! grep -Fqx "$TZ_PROFILE_EXPORT" "$HOME/.bashrc" 2>/dev/null; then
+  printf '\n%s\n' "$TZ_PROFILE_EXPORT" >> "$HOME/.bashrc"
+fi
+
 echo "==> Installing Node.js and npm from the Alpine repositories"
 $SUDO apk add --no-cache nodejs npm
 
 echo "==> Installing Bun"
-curl -fsSL https://bun.com/install | bash
 export BUN_INSTALL="${BUN_INSTALL:-$HOME/.bun}"
+curl -fsSL https://bun.com/install | bash
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+# Persist the install directory for interactive Bash shells.
+# Single-quote the value so spaces and shell metacharacters remain literal.
+BUN_PROFILE_EXPORT="export BUN_INSTALL='$(printf '%s' "$BUN_INSTALL" | sed "s/'/'\\\\''/g")'"
+if ! grep -Fqx "$BUN_PROFILE_EXPORT" "$HOME/.bashrc" 2>/dev/null; then
+  {
+    printf '\n# Bun environment for Alpine shells\n%s\n' "$BUN_PROFILE_EXPORT"
+    cat <<'EOF'
+case ":$PATH:" in
+  *":$BUN_INSTALL/bin:"*) ;;
+  *) export PATH="$BUN_INSTALL/bin:$PATH" ;;
+esac
+EOF
+  } >> "$HOME/.bashrc"
+fi
 
 echo "==> Versions"
 node -v
@@ -57,4 +78,4 @@ npm -v
 bun --version
 
 echo
-echo "Open a new shell or run: export PATH=\"\$HOME/.bun/bin:\$PATH\"   (to get bun on PATH in sh)"
+echo 'Run: . "$HOME/.bashrc"   (to load Bun in the current shell), or open a new Bash shell'
