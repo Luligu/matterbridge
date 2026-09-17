@@ -3290,8 +3290,7 @@
       "name": "WebRtcTransportProvider immediate processing of SolicitOffer on Camera",
       "test": "TC_WEBRTCP_2_2.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SDP Offer starting a new session on Camera",
@@ -3318,8 +3317,7 @@
       "name": "WebRtcTransportProvider CameraAvStreamManagement cluster presence on Camera",
       "test": "TC_WEBRTCP_2_6.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SolicitOffer with the physical privacy switch on on Camera",
@@ -3341,29 +3339,25 @@
       "name": "WebRtcTransportProvider SolicitOffer ICEServers and ICETransportPolicy on Camera",
       "test": "TC_WEBRTCP_2_9.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SolicitOffer OriginatingEndpointID storage on Camera",
       "test": "TC_WEBRTCP_2_10.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider deferred Offer command timing on Camera",
       "test": "TC_WEBRTCP_2_11.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SolicitOffer resource exhaustion on Camera",
       "test": "TC_WEBRTCP_2_12.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider ProvideOffer with the physical privacy switch on on Camera",
@@ -3407,43 +3401,37 @@
       "name": "WebRtcTransportProvider ProvideAnswer command processing on Camera",
       "test": "TC_WEBRTCP_2_18.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider ProvideAnswer with an invalid session on Camera",
       "test": "TC_WEBRTCP_2_19.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider ProvideICECandidates command processing on Camera",
       "test": "TC_WEBRTCP_2_20.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider ProvideICECandidates with an invalid session on Camera",
       "test": "TC_WEBRTCP_2_21.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider EndSession CurrentSessions removal on Camera",
       "test": "TC_WEBRTCP_2_22.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider EndSession stream reference counts on Camera",
       "test": "TC_WEBRTCP_2_23.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SolicitOffer SFrame configuration handling on Camera",
@@ -3473,15 +3461,13 @@
       "name": "WebRtcTransportProvider immediate processing of SolicitOffer on release 1.5.1 or later on Camera",
       "test": "TC_WEBRTCP_2_28.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SDP Offer starting a new session on release 1.5.1 or later on Camera",
       "test": "TC_WEBRTCP_2_29.py",
       "endpoint": 1601,
-      "args": ["--PICS /root/webrtc-transport-provider.pics"],
-      "resetBefore": true
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
     },
     {
       "name": "WebRtcTransportProvider SDP Offer on an existing session on release 1.5.1 or later on Camera",

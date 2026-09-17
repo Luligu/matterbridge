@@ -531,6 +531,36 @@ minimal `MATTERBRIDGE_CHIP_TEST`-gated FaultInjection server for those two fault
 would make it runnable, and would be the only AVSM test that actually asserts allocated
 video streams survive a restart.
 
+### `TC_WEBRTCP_*` and `resetBefore`
+
+The WebRTC Transport Provider tests leave two kinds of residue behind: open WebRTC sessions
+(in-memory, cleared by the container restart alone) and the video/audio streams the DUT
+auto-allocates while serving `SolicitOffer`/`ProvideOffer` (persisted, cleared by
+`resetClusterGlobs`). A `resetBefore` on every entry is far more expensive than it needs to
+be — each one costs a container restart, which dominates the suite's runtime — so it is set
+only on the entries that empirically need a clean slate, verified by running the whole suite
+against a fresh container with the flags removed:
+
+- `TC_WEBRTCP_2_1` — first entry of the group, so it also clears whatever the `TC_AVSM_*`
+  tests before it left allocated.
+- `TC_WEBRTCP_2_3`, `TC_WEBRTCP_2_5` — assert `INVALID_IN_STATE` for an offer with null
+  stream ids, which only holds with no streams allocated.
+- `TC_WEBRTCP_2_4`, `TC_WEBRTCP_2_30`, `TC_WEBRTCP_2_31`, `TC_WEBRTCP_2_32` — read
+  `CurrentSessions` expecting 0 in step 1, and the `ProvideOffer` test before each of them
+  creates sessions it never ends.
+- `TC_WEBRTCP_2_15`, `TC_WEBRTCP_2_17` — follow a resource-exhaustion test
+  (`TC_WEBRTCP_2_12`, `TC_WEBRTCP_2_16`) that deliberately fills the DUT's session capacity
+  and never ends those sessions, so without a reset they fail with
+  `ResourceExhausted (0x89)`.
+- `TC_WEBRTCP_2_16` — its own capacity-filling loop needs the full capacity free.
+
+The rest need none: a test that ends the sessions it opens (`TC_WEBRTCP_2_18` through
+`TC_WEBRTCP_2_23`, `TC_WEBRTCP_2_28`) leaves the next one a clean enough state, and
+`SolicitOffer` alone does not add to `CurrentSessions`, which is why `TC_WEBRTCP_2_2` and
+`TC_WEBRTCP_2_29` pass directly after the session-leaking `TC_WEBRTCP_2_1`/`TC_WEBRTCP_2_28`.
+Re-verify this set with a full-suite run against a fresh container after changing the
+WebRTC session or stream-allocation behavior.
+
 ## Mid-test DUT reboots (restart-flag monitor)
 
 Several Python tests reboot the DUT mid-run to assert that state survives a restart:
