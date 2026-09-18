@@ -454,6 +454,29 @@ describe('MatterbridgeColorControlServer', () => {
       expect((await addLight('suCtSame', 250, 250)).mireds).toBe(250);
     });
 
+    it('switches ColorMode even when the startup value already matches', async () => {
+      const device = new MatterbridgeEndpoint([colorTemperatureLight, bridge], { id: 'suCtSameMode' });
+      device.createDefaultBridgedDeviceBasicInformationClusterServer('suCtSameMode', 'SN-suCtSameMode');
+      device.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation, ColorControl.Feature.ColorTemperature), {
+        colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
+        enhancedColorMode: ColorControl.EnhancedColorMode.CurrentHueAndCurrentSaturation,
+        colorCapabilities: { xy: false, hueSaturation: true, colorLoop: false, enhancedHue: false, colorTemperature: true },
+        options: { executeIfOff: false },
+        numberOfPrimaries: null,
+        colorTemperatureMireds: 250,
+        colorTempPhysicalMinMireds: 147,
+        colorTempPhysicalMaxMireds: 500,
+        coupleColorTempToLevelMinMireds: 147,
+        startUpColorTemperatureMireds: 250,
+        remainingTime: 0,
+      });
+      device.addRequiredClusterServers();
+      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(device.getAttribute(ColorControl, 'colorTemperatureMireds')).toBe(250);
+      expect(device.getAttribute(ColorControl, 'colorMode')).toBe(ColorControl.ColorMode.ColorTemperatureMireds);
+      expect(device.getAttribute(ColorControl, 'enhancedColorMode')).toBe(ColorControl.EnhancedColorMode.ColorTemperatureMireds);
+    });
+
     it('does not apply without the ColorTemperature feature', async () => {
       const device = new MatterbridgeEndpoint([colorTemperatureLight, bridge], { id: 'suCtNoFeature' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suCtNoFeature', 'SN-suCtNoFeature');

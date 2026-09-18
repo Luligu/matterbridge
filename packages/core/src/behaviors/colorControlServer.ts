@@ -71,15 +71,15 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
       const startUpMireds = this.state.startUpColorTemperatureMireds ?? null;
       if (startUpMireds !== null) {
         const crop = (mireds: number): number => Math.min(Math.max(mireds, this.minimumColorTemperatureMireds), this.maximumColorTemperatureMireds);
-        const currentMireds = crop(this.state.colorTemperatureMireds);
         const targetMireds = crop(startUpMireds);
-        if (targetMireds !== currentMireds) {
-          // Matter 1.6.0 § 3.2.7.23: the startup value SHALL be reflected in ColorTemperatureMireds and
-          // ColorMode/EnhancedColorMode SHALL be set to 2 (ColorTemperatureMireds).
-          this.state.colorMode = ColorControl.ColorMode.ColorTemperatureMireds;
-          this.state.enhancedColorMode = ColorControl.EnhancedColorMode.ColorTemperatureMireds;
-          this.state.colorTemperatureMireds = targetMireds;
-        }
+        // Matter 1.6.0 § 3.2.7.23: the startup value SHALL be reflected in ColorTemperatureMireds and, in addition,
+        // ColorMode/EnhancedColorMode SHALL be set to 2 (ColorTemperatureMireds). The mode switch is unconditional:
+        // it also applies when the startup value already equals the persisted ColorTemperatureMireds but the device
+        // was last in hue/saturation or x/y mode. matter.js's own initializeColorTemperature() guards all three
+        // writes with a target !== current check, so it leaves ColorMode stale in that case.
+        this.state.colorMode = ColorControl.ColorMode.ColorTemperatureMireds;
+        this.state.enhancedColorMode = ColorControl.EnhancedColorMode.ColorTemperatureMireds;
+        this.state.colorTemperatureMireds = targetMireds;
       }
     }
     return result;
