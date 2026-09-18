@@ -191,7 +191,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     this.endpoint
       .stateOf(MatterbridgeServer)
       .log.info(
-        `MatterbridgeWebRtcTransportProviderServer: invoked ICECandidates with ${iceCandidates.length} local candidate(s) for session ${webRtcSessionId} on the peer's WebRtcTransportRequestor`,
+        `MatterbridgeWebRtcTransportProviderServer: invoked ICECandidates with ${iceCandidates.length} local candidate(s) for session ${webRtcSessionId} on the peer's WebRtcTransportRequestor (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
   }
 
