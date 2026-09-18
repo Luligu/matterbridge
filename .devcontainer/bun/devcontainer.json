@@ -76,7 +76,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
     "pull": "docker pull luligu/matterbridge:bun-dev-container"
   },
   // On create, prepare the directories and install and build Matterbridge (runs inside the container)
-  "postCreateCommand": "bash .devcontainer/bun/post-create.sh",
+  "postCreateCommand": "post-create.sh --bun --matterbridge",
   // On start, install and build Matterbridge (runs inside the container)
   "postStartCommand": "post-start.sh --bun --matterbridge",
   "runArgs": [
