@@ -29,6 +29,24 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.11] - 2026-09-25
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.11.
+- [matterbridge]: Bump `@types/node` to v.26.6.1.
+- [matterbridge]: Bump `vitest` to v.5.0.1.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.1.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2002.
+- [frontend]: Bump `frontend` version to v.3.6.2.
+- [frontend]: Bump `@rjsf` to v.6.10.1.
+- [frontend]: Bump `react-router` to v.8.4.0.
+- [frontend]: Bump `@types/node` to v.26.6.1.
+- [frontend]: Bump `vitest` to v.5.0.1.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2002.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.10] - 2026-09-18
 
 ### Development News

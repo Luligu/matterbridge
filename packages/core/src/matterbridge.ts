@@ -3748,7 +3748,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     return sessions
       .filter((session) => session.isPeerActive)
       .map((session) => {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return {
           name: session.name,
           nodeId: session.nodeId.toString(),
@@ -3768,6 +3767,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
           lastActiveTimestamp: session.lastActiveTimestamp?.toString(),
           numberOfActiveSubscriptions: session.numberOfActiveSubscriptions,
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         } as SanitizedSession;
       });
   }
