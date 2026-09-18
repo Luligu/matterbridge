@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.11] - 2026-09-25
 
+### Fixed
+
+- [test-utils]: Fix test-utils typecheck.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.11.
