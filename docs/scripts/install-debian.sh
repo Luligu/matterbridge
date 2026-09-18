@@ -45,6 +45,7 @@ set -euo pipefail
 
 NODE_VERSION="${NODE_VERSION:-lts}"
 TZ="${TZ:-Europe/Brussels}"
+LANG="${LANG:-en_US.UTF-8}"
 INSTALL_STAMP="${INSTALL_STAMP:-/var/lib/matterbridge-install.done}"
 
 export DEBIAN_FRONTEND=noninteractive
@@ -61,7 +62,7 @@ if [ -e "$INSTALL_STAMP" ]; then
 else
   echo "==> Installing prerequisites"
   $SUDO apt-get update
-  $SUDO apt-get install -y --no-install-recommends tzdata curl ca-certificates xz-utils libatomic1 unzip iproute2
+  $SUDO apt-get install -y --no-install-recommends tzdata curl ca-certificates xz-utils libatomic1 unzip iproute2 locales
 
   echo "==> Setting timezone to $TZ"
   [ -f "/usr/share/zoneinfo/$TZ" ] || { echo "Unknown timezone: $TZ" >&2; exit 1; }
@@ -69,9 +70,16 @@ else
   $SUDO dpkg-reconfigure -f noninteractive tzdata
   printf '%s\n' "$TZ" | $SUDO tee /etc/timezone >/dev/null
 
+  echo "==> Setting locale to $LANG"
+  # Generate the locale before selecting it: the shell tools need the generated definition,
+  # and Node.js takes its default Intl locale from the environment.
+  echo "$LANG UTF-8" | $SUDO tee -a /etc/locale.gen >/dev/null
+  $SUDO locale-gen "$LANG"
+  $SUDO update-locale "LANG=$LANG"
+
   # Keep package configuration noninteractive in new Bash shells.
-  # Read TZ from the persisted system setting so timezone changes remain effective.
-  for SHELL_EXPORT in 'export DEBIAN_FRONTEND=noninteractive' 'export TZ="$(cat /etc/timezone)"'; do
+  # Read TZ and LANG from the persisted system settings so later changes remain effective.
+  for SHELL_EXPORT in 'export DEBIAN_FRONTEND=noninteractive' 'export TZ="$(cat /etc/timezone)"' 'export LANG="$(sed -n "s/^LANG=//p" /etc/default/locale)"'; do
     if ! grep -Fqx "$SHELL_EXPORT" "$HOME/.bashrc" 2>/dev/null; then
       printf '\n%s\n' "$SHELL_EXPORT" >> "$HOME/.bashrc"
     fi
@@ -130,6 +138,10 @@ EOF
   echo
   echo "Open a new shell or run: source ~/.bashrc   (to get bun on PATH)"
 fi
+
+# Use the generated locale for the container command too: it is exported only here so the
+# package tools above do not warn about a locale that does not exist yet.
+export LANG
 
 # Entrypoint mode: hand control to the container command when one was given.
 if [ "$#" -gt 0 ]; then

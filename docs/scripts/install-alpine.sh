@@ -39,6 +39,7 @@
 set -eu
 
 TZ="${TZ:-Europe/Brussels}"
+LANG="${LANG:-en_US.UTF-8}"
 INSTALL_STAMP="${INSTALL_STAMP:-/var/lib/matterbridge-install.done}"
 export TZ
 
@@ -59,10 +60,16 @@ else
   $SUDO ln -fs "/usr/share/zoneinfo/$TZ" /etc/localtime
   echo "$TZ" | $SUDO tee /etc/timezone >/dev/null
 
-  # Load the persisted system timezone in new interactive Bash shells.
+  # Load the persisted system timezone in new interactive Bash shells. musl has no locale
+  # definitions to generate, so LANG is only exported: Node.js reads it for its Intl default.
   TZ_PROFILE_EXPORT='export TZ="$(cat /etc/timezone)"'
   if ! grep -Fqx "$TZ_PROFILE_EXPORT" "$HOME/.bashrc" 2>/dev/null; then
     printf '\n%s\n' "$TZ_PROFILE_EXPORT" >> "$HOME/.bashrc"
+  fi
+
+  LANG_PROFILE_EXPORT="export LANG='$LANG'"
+  if ! grep -Fqx "$LANG_PROFILE_EXPORT" "$HOME/.bashrc" 2>/dev/null; then
+    printf '%s\n' "$LANG_PROFILE_EXPORT" >> "$HOME/.bashrc"
   fi
 
   echo "==> Installing Node.js and npm from the Alpine repositories"
@@ -100,6 +107,10 @@ EOF
   echo
   echo 'Run: . "$HOME/.bashrc"   (to load Bun in the current shell), or open a new Bash shell'
 fi
+
+# Use the generated locale for the container command too: it is exported only here so the
+# package tools above do not warn about a locale that does not exist yet.
+export LANG
 
 # Entrypoint mode: hand control to the container command when one was given.
 if [ "$#" -gt 0 ]; then
