@@ -31,10 +31,6 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.11] - 2026-09-25
 
-### Fixed
-
-- [test-utils]: Fix test-utils typecheck.
-
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.11.
@@ -48,6 +44,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `@types/node` to v.26.6.1.
 - [frontend]: Bump `vitest` to v.5.0.1.
 - [frontend]: Bump `oxlint-tsgolint` to v.7.0.2002.
+
+### Fixed
+
+- [test-utils]: Fix test-utils typecheck.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
