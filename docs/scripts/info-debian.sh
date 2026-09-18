@@ -34,6 +34,7 @@ case "$NODE_VERSION_OUTPUT" in
     case "$NPM_VERSION_OUTPUT" in
       [0-9]*)
         echo "🟣 Npm version: $NPM_VERSION_OUTPUT"
+        echo "🗃️ Npm cache: $(npm config get cache)"
         echo "📦 Npm global prefix: $(npm root -g)"
         ;;
     esac
@@ -43,5 +44,6 @@ esac
 if command -v bun >/dev/null 2>&1; then
   echo "🥟 Bun version: $(bun -v)"
   echo "📍 Bun location: $(command -v bun)"
+  echo "🗃️ Bun cache: ${BUN_INSTALL:-$HOME/.bun}/install/cache"
   echo "📦 Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
 fi

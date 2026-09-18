@@ -73,11 +73,15 @@ echo "Uptime: $(uptime -p || echo 'unavailable')"
 echo "Date: $(date)"
 if [ "$MODE" = "bun" ]; then
   echo "Bun version: $(bun -v)"
-  echo "Bun global cache: ${HOME}/.bun/install/cache"
+  echo "Bun location: $(command -v bun)"
+  echo "Bun cache: ${HOME}/.bun/install/cache"
+  echo "Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
 else
   echo "Node.js version: $(node -v)"
+  echo "Node.js location: $(command -v node)"
   echo "Npm version: $(npm -v)"
   echo "Npm cache: $(npm config get cache)"
+  echo "Npm global prefix: $(npm root -g)"
 fi
 echo ""
 
