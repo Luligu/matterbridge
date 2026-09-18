@@ -504,6 +504,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       author: plugin.author,
       enabled: plugin.enabled,
       private: plugin.private,
+      configurationVersion: plugin.configurationVersion,
     };
   }
 
@@ -522,6 +523,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       path: plugin.path,
       type: plugin.type,
       private: plugin.private,
+      configurationVersion: plugin.configurationVersion,
       latestVersion: plugin.latestVersion,
       devVersion: plugin.devVersion,
       homepage: plugin.homepage,
@@ -628,7 +630,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     }
     // Load the array from storage and convert it to a map
     const pluginsArray = await this.matterbridge.nodeContext.get<StoragePlugin[]>('plugins', []);
-    for (const plugin of pluginsArray) this._plugins.set(plugin.name, { ...plugin, private: plugin.private ?? false });
+    for (const plugin of pluginsArray) this._plugins.set(plugin.name, { ...plugin, private: plugin.private ?? false, configurationVersion: plugin.configurationVersion ?? 1 });
     this.log.debug(`Loaded ${BLUE}${pluginsArray.length}${db} plugins from storage`);
     return pluginsArray;
   }
@@ -657,6 +659,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         enabled: plugin.enabled,
         private: plugin.private,
         tarballPath: plugin.tarballPath,
+        configurationVersion: plugin.configurationVersion,
       });
     }
     await this.matterbridge.nodeContext.set<StoragePlugin[]>('plugins', plugins);
@@ -1149,6 +1152,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
         type: 'AnyPlatform',
         version: packageJson.version,
         private: packageJson.private || false,
+        configurationVersion: 1,
         description: packageJson.description,
         author: this.getAuthor(packageJson),
         homepage: this.getHomepage(packageJson),

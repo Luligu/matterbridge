@@ -1624,6 +1624,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         name: plugin.name,
         version: plugin.version,
         private: plugin.private,
+        configurationVersion: plugin.configurationVersion,
         description: plugin.description,
         author: plugin.author,
         homepage: plugin.homepage,

@@ -59,3 +59,6 @@ export * from './evse.js';
 export * from './heatPump.js';
 export * from './solarPower.js';
 export * from './waterHeater.js';
+
+// Chapter 16. Camera Device Types - Single class device types are exported from 'matterbridge/devices/camera'
+// (see ./camera/export.ts), to keep the WebRTC stack (werift) off the import path of this barrel.

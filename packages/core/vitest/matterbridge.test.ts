@@ -427,7 +427,7 @@ describe('Matterbridge', () => {
     expect(invalidServerNode.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBe(true);
     expect(invalidServerNode.state.powerSource.status).toBe(PowerSource.PowerSourceStatus.Active);
     expect(invalidServerNode.state.powerSource.order).toBe(0);
-    expect(invalidServerNode.state.powerSource.endpointList).toEqual([]);
+    expect(invalidServerNode.state.powerSource.endpointList).toEqual([0]);
     expect(invalidServerNode.state.powerSource.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
     expect(loggerWarnSpy).toHaveBeenCalledWith(' * Adding the PowerSource cluster server to the root endpoint.                           *');
     expect(loggerWarnSpy).toHaveBeenCalledWith('Invalid passcode -1 for server node Matterbridge. Passcode must be between 0 and 99999999. Generating a random passcode...');

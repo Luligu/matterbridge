@@ -55,7 +55,7 @@ import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, type ExposedFabricInformation, PaseClient } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
+import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
@@ -114,7 +114,7 @@ import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 // matterbridge
 import { DeviceManager } from './deviceManager.js';
 import { Frontend } from './frontend.js';
-import { addVirtualDevice, addVirtualDevices } from './helpers.js';
+import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './helpers.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
@@ -669,36 +669,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.matterbridgeCertDirectory = this.profile ? path.join(this.homeDirectory, '.mattercert', 'profiles', this.profile) : path.join(this.homeDirectory, '.mattercert');
     await createDirectory(this.matterbridgeCertDirectory, 'Matterbridge Matter Certificate Directory', this.log);
 
-    // Set the matterbridge root directory
+    // Set the matterbridge root directory. The install layout is probed on the file system: it depends on the package manager and not on the runtime
+    // that starts the cli, so `matterbridge` (node shebang) and `bunx --bun matterbridge` resolve the same directory for the same installation.
     const currentFileDirectory = path.dirname(fileURLToPath(import.meta.url));
     this.log.debug(`Determining root directory from currentFileDirectory = ${CYAN}${currentFileDirectory}${db}`);
-    // v8 ignore next - the following code is used to determine the root directory of the matterbridge application based on the current file directory. It is not coverable by tests.
-    if (
-      currentFileDirectory.endsWith(path.join('matterbridge', 'packages', 'core', 'src')) ||
-      currentFileDirectory.endsWith(path.join('matterbridge', 'packages', 'core', 'dist'))
-    ) {
-      // ...\matterbridge\packages\core\src on test
-      // ...\matterbridge\packages\core\dist on development
-      // test and development - adjust the path for packages core src/dist directory (3).
-      this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..');
-      this.log.debug(`Found packages core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-    } else if (currentFileDirectory.endsWith(path.join('matterbridge', 'dist'))) {
-      // ...\matterbridge\dist
-      // bundler - adjust the path for bundled core into Matterbridge's own dist directory (1).
-      this.rootDirectory = path.resolve(currentFileDirectory, '..');
-      this.log.debug(`Found bundled core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-    } else {
-      if (isBun()) {
-        // bun installs matterbridge into the global prefix alongside its own dependencies.
-        this.rootDirectory = path.join(getGlobalBunModules(), 'matterbridge');
-        this.log.debug(`Found bun global core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-      } else {
-        // node installs matterbridge into the global prefix and its own dependencies into ...\matterbridge\node_modules\@matterbridge\core\dist
-        // production - adjust the path for node_modules @matterbridge core dist directory (4).
-        this.rootDirectory = path.resolve(currentFileDirectory, '..', '..', '..', '..');
-        this.log.debug(`Found production core >>> root directory: ${CYAN}${this.rootDirectory}${db}`);
-      }
+    const rootDirectory = await resolveRootDirectory(currentFileDirectory);
+    // v8 ignore next 4 - the resolution of the root directory depends on the install layout. It is not coverable by tests.
+    if (rootDirectory === undefined) {
+      const message = `Cannot determine the matterbridge root directory from ${currentFileDirectory}: no matterbridge package.json found in the parent directories.`;
+      this.log.fatal(message);
+      throw new Error(message);
     }
+    this.rootDirectory = rootDirectory;
+    this.log.debug(`Found root directory: ${CYAN}${this.rootDirectory}${db}`);
 
     // Setup the matter environment with default values
     this.environment.vars.set('log.level', MatterLogLevel.DEBUG);
@@ -1777,15 +1760,22 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @param {number} [timeout] - The timeout duration to wait for the message exchange to complete in milliseconds. Default is 1000.
    *
    * @returns {Promise<void>} A promise that resolves when the cleanup is completed.
+   *
+   * @remarks This method also increments the configuration version of the basic information server for the main server node, all device server nodes and all plugin server nodes
+   * before shutting down. The device server nodes are incremented before the plugin loop cause removeAllBridgedEndpoints() removes the devices from the DeviceManager.
    */
   async unregisterAndShutdownProcess(timeout: number = 1000): Promise<void> {
     const { wait } = await import('@matterbridge/utils/wait');
     this.log.info('Unregistering all devices and shutting down...');
     if (this.serverNode) await this.serverNode.setStateOf(BasicInformationServer, { configurationVersion: this.serverNode.state.basicInformation.configurationVersion + 1 });
+    for (const device of this.devices.array()) {
+      if (device.serverNode)
+        await device.serverNode.setStateOf(BasicInformationServer, { configurationVersion: device.serverNode.state.basicInformation.configurationVersion + 1 });
+    }
     for (const plugin of this.plugins.array()) {
       if (plugin.error || !plugin.enabled) continue;
-      /* oxfmt-ignore */
-      if (plugin.serverNode) await plugin.serverNode.setStateOf(BasicInformationServer, { configurationVersion: plugin.serverNode.state.basicInformation.configurationVersion + 1 });
+      if (plugin.serverNode)
+        await plugin.serverNode.setStateOf(BasicInformationServer, { configurationVersion: plugin.serverNode.state.basicInformation.configurationVersion + 1 });
       const registeredDevices = plugin.registeredDevices;
       await this.plugins.shutdown(plugin, 'unregistering all devices and shutting down...', false, true);
       plugin.registeredDevices = registeredDevices;
@@ -2222,8 +2212,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.warn(' ***********************************************************************************');
       this.log.warn(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running chip test app pipe. *');
       this.log.warn(' ***********************************************************************************');
-      const { createChipTestAppPipe } = await import('./chipTests.js');
+      const { createChipTestAppPipe, createChipTestRestartFlag } = await import('./chipTests.js');
       createChipTestAppPipe(this);
+      createChipTestRestartFlag(this);
     }
 
     // Load and start all plugins without awaiting them to start
@@ -3090,7 +3081,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               status: PowerSource.PowerSourceStatus.Active,
               order: 0,
               description: 'AC Power',
-              endpointList: [],
+              // Matter 1.6.0 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
+              // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
+              endpointList: [EndpointNumber(0)],
               wiredCurrentType: PowerSource.WiredCurrentType.Ac,
             },
           }
@@ -3120,6 +3113,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
     serverNode.lifecycle.online.on(() => {
       this.log.notice(`Server node for ${storeId} is online`);
+      this.log.info(`Configuration version for server node ${storeId} is ${serverNode.state.basicInformation.configurationVersion}`);
+      if (hasParameter('configuration-version')) {
+        let configurationVersion = getIntParameter('configuration-version') ?? serverNode.state.basicInformation.configurationVersion + 1;
+        configurationVersion = Math.min(Math.max(configurationVersion, 1), UINT32_MAX);
+        fireAndForget(serverNode.setStateOf(BasicInformationServer, { configurationVersion }), this.log, `Failed to set configuration version for server node ${storeId}`);
+        this.log.notice(`Configuration version for server node ${storeId} is now ${configurationVersion}`);
+      }
       // v8 ignore if - cause the lifecycle.online event is triggered when the device is online, but it may not be commissioned yet
       if (serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is already commissioned.`);
@@ -3333,7 +3333,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.systemInformation.osRelease,
         plugin.description,
         plugin.homepage ?? 'https://matterbridge.io',
-        1,
+        plugin.configurationVersion,
       );
       plugin.serverNode = await this.createServerNode(
         plugin.storageContext,

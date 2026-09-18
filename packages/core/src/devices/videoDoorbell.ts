@@ -26,6 +26,7 @@ import { StreamUsage } from '@matter/types';
 import type { Semtag } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import type { EndpointNumber } from '@matter/types/datatype';
 import { fireAndForget } from '@matterbridge/utils';
 
 import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
@@ -39,10 +40,10 @@ import type { CameraOptions } from './camera.js';
 
 /**
  * Options for the mandatory Camera child endpoint created by {@link VideoDoorbell}. Same fields as
- * {@link CameraOptions}, minus the endpoint-identity and power-source options that only apply to the composed
- * root endpoint.
+ * {@link CameraOptions}, minus the storage-key, endpoint-mode and power-source options that only apply to the
+ * composed root endpoint. The endpoint number and the tagList still apply to the Camera child endpoint itself.
  */
-export type VideoDoorbellCameraOptions = Omit<CameraOptions, 'id' | 'number' | 'tagList' | 'mode' | 'powerSourceType'>;
+export type VideoDoorbellCameraOptions = Omit<CameraOptions, 'id' | 'mode' | 'powerSourceType'>;
 
 /**
  * Options for the mandatory Doorbell child endpoint created by {@link VideoDoorbell}.
@@ -53,6 +54,9 @@ export interface VideoDoorbellDoorbellOptions {
 
   /** The tagList associated with the doorbell, for disambiguation when more doorbells are added with {@link VideoDoorbell.addDoorbell}. Default: no tags */
   tagList?: Semtag[];
+
+  /** The endpoint number of the doorbell child endpoint. Default: the next available endpoint number */
+  number?: EndpointNumber;
 
   /** Identify time in seconds. Default: 0 */
   identifyTime?: number;
@@ -155,9 +159,11 @@ export class VideoDoorbell extends MatterbridgeEndpoint {
         { resolution: { width: 1920, height: 1080 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
       ],
       weriftOfferOptions,
+      number: cameraNumber,
+      tagList: cameraTagList = [],
     } = cameraOptions;
 
-    const cameraChild = this.addChildDeviceType('Camera', camera, {});
+    const cameraChild = this.addChildDeviceType('Camera', camera, { number: cameraNumber, ...(cameraTagList.length > 0 ? { tagList: cameraTagList } : {}) });
     cameraChild.log.logName = 'Camera';
     if (cameraIdentifyType !== Identify.IdentifyType.None) {
       cameraChild.createDefaultIdentifyClusterServer(cameraIdentifyTime, cameraIdentifyType);
@@ -182,17 +188,15 @@ export class VideoDoorbell extends MatterbridgeEndpoint {
     cameraChild.addRequiredClusters();
 
     /** First mandatory Doorbell child endpoint */
-    const { name: doorbellName = 'Doorbell', tagList: doorbellTagList = [], identifyTime = 0, identifyType = Identify.IdentifyType.None } = doorbellOptions;
-    this.addDoorbell(doorbellName, doorbellTagList, identifyTime, identifyType);
+    const { name: doorbellName = 'Doorbell', tagList: doorbellTagList = [], number: doorbellNumber, identifyTime = 0, identifyType = Identify.IdentifyType.None } = doorbellOptions;
+    this.addDoorbell(doorbellName, { tagList: doorbellTagList, number: doorbellNumber, identifyTime, identifyType });
   }
 
   /**
    * Adds a Doorbell child endpoint to the video doorbell.
    *
    * @param {string} name - The name of the doorbell.
-   * @param {Semtag[]} [tagList] - The tagList associated with the doorbell, for disambiguation when the video doorbell has more than one doorbell. Defaults to no tags.
-   * @param {number} [identifyTime] - Identify time in seconds. Defaults to 0.
-   * @param {Identify.IdentifyType} [identifyType] - Identify type. Defaults to Identify.IdentifyType.None.
+   * @param {VideoDoorbellDoorbellOptions} [options] - Optional configuration values. Missing fields use the defaults documented on {@link VideoDoorbellDoorbellOptions}.
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the doorbell.
    *
@@ -201,8 +205,9 @@ export class VideoDoorbell extends MatterbridgeEndpoint {
    * constructor already creates that mandatory doorbell; call this method to add further doorbells, for example to
    * disambiguate multiple doorbells with a tagList.
    */
-  addDoorbell(name: string, tagList: Semtag[] = [], identifyTime: number = 0, identifyType: Identify.IdentifyType = Identify.IdentifyType.None): MatterbridgeEndpoint {
-    const doorbellChild = this.addChildDeviceType(name, doorbell, tagList.length > 0 ? { tagList } : {});
+  addDoorbell(name: string, options: VideoDoorbellDoorbellOptions = {}): MatterbridgeEndpoint {
+    const { tagList = [], number, identifyTime = 0, identifyType = Identify.IdentifyType.None } = options;
+    const doorbellChild = this.addChildDeviceType(name, doorbell, { number, ...(tagList.length > 0 ? { tagList } : {}) });
     doorbellChild.log.logName = name;
     doorbellChild.createDefaultIdentifyClusterServer(identifyTime, identifyType);
     doorbellChild.createDefaultMomentarySwitchClusterServer();

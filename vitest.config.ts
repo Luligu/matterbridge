@@ -84,6 +84,7 @@ export default defineConfig({
         'src/vitest-utils/matter.ts', // Root package entrypoint re-export file
         'packages/core/src/behaviors/export.ts', // Core behavior barrel re-export file
         'packages/core/src/clusters/export.ts', // Root package entrypoint re-export file
+        'packages/core/src/devices/camera/export.ts', // Core devices camera barrel re-export file
         'packages/thread/src/export.ts', // Root package entrypoint re-export file
         'packages/core/src/matterbridgeEndpointTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover

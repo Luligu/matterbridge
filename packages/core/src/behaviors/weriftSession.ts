@@ -24,7 +24,6 @@
 
 import type { ChildProcess } from 'node:child_process';
 import { createSocket } from 'node:dgram';
-import { fileURLToPath } from 'node:url';
 
 import { fireAndForget, getErrorMessage } from '@matterbridge/utils';
 import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
@@ -42,19 +41,29 @@ type AudioSource = 'none' | 'test' | 'microphone' | 'rtsp';
  * Media kinds to negotiate when creating a real WebRTC offer for a WebRtcTransportProvider session.
  */
 export interface WeriftOfferOptions {
-  /** Whether to add a sendonly video transceiver to the offer. Overridden per request with the client's requested video streams. */
-  video: boolean;
-  /** Whether to add a sendonly audio transceiver to the offer. Overridden per request with the client's requested audio streams. */
-  audio: boolean;
+  /**
+   * Whether to add a sendonly video transceiver to an offer this session generates. Read only by
+   * {@link WeriftWebRtcSession.createOffer}: an answer takes its transceivers from the remote offer instead.
+   * Overridden per request with the client's requested video streams.
+   */
+  offerVideo: boolean;
+  /**
+   * Whether to add a sendonly audio transceiver to an offer this session generates. Read only by
+   * {@link WeriftWebRtcSession.createOffer}: an answer takes its transceivers from the remote offer instead.
+   * Overridden per request with the client's requested audio streams.
+   */
+  offerAudio: boolean;
   /**
    * Video source: no injected track (`none`), a synthetic
    * pattern (`test`), a local capture device (`webcam`), or an RTSP stream (`rtsp`). Use `none` to disable source injection.
+   * The CameraAvStreamManagement CaptureSnapshot command captures its JPEG from this same source unless the cluster has its own
+   * `snapshotSource`; with `none` and no `snapshotSource`, CaptureSnapshot fails.
    */
   videoSource: VideoSource;
   /**
    * Webcam device identifier or RTSP URL.
    * Webcam identifiers are a device path on Linux, an avfoundation index on macOS, or a dshow name on Windows.
-   * A missing device for webcam or RTSP capture currently falls back to the synthetic test pattern.
+   * A missing device for webcam or RTSP capture is a configuration error: no video track is injected.
    */
   videoSourceDevice?: string;
   /**
@@ -69,14 +78,14 @@ export interface WeriftOfferOptions {
    */
   videoBitrate?: number;
   /**
-   * Audio source: no injected track (`none`), the recorded
-   * voice clip (`test`), a local capture device (`microphone`), or an RTSP stream (`rtsp`). Use `none` to disable source injection.
+   * Audio source: no injected track (`none`), a synthetic
+   * tone (`test`), a local capture device (`microphone`), or an RTSP stream (`rtsp`). Use `none` to disable source injection.
    */
   audioSource: AudioSource;
   /**
    * Microphone device identifier or RTSP URL.
    * Microphone identifiers are an ALSA device on Linux, an avfoundation index on macOS, or a dshow name on Windows.
-   * A missing device for microphone or RTSP capture currently falls back to the recorded test voice clip.
+   * A missing device for microphone or RTSP capture is a configuration error: no audio track is injected.
    */
   audioSourceDevice?: string;
 }
@@ -102,12 +111,17 @@ export type WeriftOfferOverrides = Partial<WeriftOfferOptions>;
  * rtsp://user:password@host:554/path) for `rtsp`. The webcam capture resolution defaults to 640x480 and can be set
  * to 1280x720 or 1920x1080 with options.videoResolution.
  *
- * Similarly, the audio track can inject a recorded test-voice clip (e.g. for an Intercom's "Listen" live view) when
+ * Similarly, the audio track can inject a synthetic test tone (e.g. for an Intercom's "Listen" live view) when
  * `options.audioSource=test`, capture from a local microphone when the source is `microphone`, or pull
  * the audio from a real RTSP camera stream when the source is `rtsp`; unset or `none` negotiates the audio
  * transceiver without attaching a track. options.audioSourceDevice identifies the microphone device
  * (e.g. a hw:X,Y ALSA device on Linux, an avfoundation audio index on macOS, or a dshow device name on Windows) for
  * `microphone`, or the RTSP url for `rtsp`.
+ *
+ * A `webcam`/`rtsp`/`microphone` source whose device is missing, or whose capture isn't supported on this platform,
+ * is a configuration error: that track is simply not injected (logged as an error). The synthetic test pattern and
+ * test tone are never substituted for a real capture device, so a misconfigured camera is obvious instead of
+ * silently looking like a working one.
  */
 export class WeriftWebRtcSession {
   /**
@@ -172,6 +186,55 @@ export class WeriftWebRtcSession {
   private readonly dtlsTransportsWithStateLogging = new Set<RTCDtlsTransport>();
 
   /**
+   * The local ICE candidates gathered so far, in the order werift discovered them.
+   *
+   * {@link createOffer} / {@link createAnswer} gather every candidate into the SDP they return (see the comments
+   * there), so this list is already complete by the time that SDP is sent. It is kept so the provider can also
+   * trickle the same candidates to the peer's WebRtcTransportRequestor via ICECandidates, which Matter 1.6.0
+   * § 11.4.3.2 expects the camera to send — see {@link localIceCandidates}.
+   *
+   * Matter 1.6.0 § 11.4.5.4.1 requires sdpMid/sdpMLineIndex to travel as named struct fields rather than being
+   * serialized into the candidate string, so all three are kept separately here. werift leaves either undefined when
+   * the candidate has no such association; the Matter struct spells that case as null.
+   */
+  private readonly gatheredIceCandidates: { candidate: string; sdpMid: string | null; sdpmLineIndex: number | null }[] = [];
+
+  /**
+   * The fixed local UDP port range ICE binds its candidates to, from the `MATTERBRIDGE_ICE_PORT_RANGE` environment
+   * variable in `min-max` form (e.g. `50000-50010`). Left unset, werift picks an ephemeral port per session, which a
+   * container runtime cannot publish ahead of time; pinning the range lets a deployment publish exactly those UDP
+   * ports so a peer outside the container network can reach them. werift rejects a range whose bounds are equal.
+   *
+   * @returns {[number, number] | undefined} The parsed port range, or undefined when unset or malformed.
+   */
+  private static parseIcePortRange(): [number, number] | undefined {
+    const raw = process.env.MATTERBRIDGE_ICE_PORT_RANGE?.trim();
+    if (!raw) return undefined;
+    const match = /^(\d{1,5})-(\d{1,5})$/.exec(raw);
+    if (!match) return undefined;
+    const min = Number(match[1]);
+    const max = Number(match[2]);
+    if (min < 1024 || max > 65_535 || min >= max) return undefined;
+    return [min, max];
+  }
+
+  /**
+   * Extra local addresses advertised as ICE host candidates, from the comma-separated
+   * `MATTERBRIDGE_ICE_HOST_ADDRESSES` environment variable. A container on a bridge network only knows its private
+   * address, which a peer outside that network cannot route to; advertising the host address that forwards the
+   * published ICE ports gives such a peer a candidate it can actually reach.
+   *
+   * @returns {string[] | undefined} The parsed addresses, or undefined when unset or empty.
+   */
+  private static parseIceAdditionalHostAddresses(): string[] | undefined {
+    const addresses =
+      process.env.MATTERBRIDGE_ICE_HOST_ADDRESSES?.split(',')
+        .map((address) => address.trim())
+        .filter((address) => address.length > 0) ?? [];
+    return addresses.length > 0 ? addresses : undefined;
+  }
+
+  /**
    * Creates a new werift RTCPeerConnection configured with the codecs this session can negotiate and inject.
    *
    * @param {number} webRtcSessionId - The WebRtcTransportProvider session identifier this instance backs, used as this session's log name.
@@ -182,8 +245,15 @@ export class WeriftWebRtcSession {
     // Cloned so the per-session overrides applied by applyOptionOverrides never write back into the caller's object,
     // which is the endpoint's (immutable outside a transaction) behavior state.
     this.options = { ...options };
-    this.peerConnection = new RTCPeerConnection({ codecs: { audio: [useOPUS(), usePCMU()], video: [useH264(), useVP8()] } });
+    const icePortRange = WeriftWebRtcSession.parseIcePortRange();
+    const iceAdditionalHostAddresses = WeriftWebRtcSession.parseIceAdditionalHostAddresses();
+    this.peerConnection = new RTCPeerConnection({ codecs: { audio: [useOPUS(), usePCMU()], video: [useH264(), useVP8()] }, icePortRange, iceAdditionalHostAddresses });
     this.log = new AnsiLogger({ logName: `WebRTC session ${webRtcSessionId}`, logLevel: LogLevel.DEBUG, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS });
+    if (icePortRange || iceAdditionalHostAddresses) {
+      this.log.debug(
+        `ICE overrides: portRange=${icePortRange ? `${icePortRange[0]}-${icePortRange[1]}` : 'default'} additionalHostAddresses=${iceAdditionalHostAddresses?.join(', ') ?? 'none'}`,
+      );
+    }
     // Log when local ICE candidate discovery starts or completes.
     this.peerConnection.iceGatheringStateChange.subscribe((state) => {
       this.log.info(`ICE gathering state: ${state}`);
@@ -191,6 +261,9 @@ export class WeriftWebRtcSession {
     // Log each discovered local candidate, or the end-of-candidates signal.
     this.peerConnection.onIceCandidate.subscribe((candidate) => {
       this.log.debug(candidate ? `Gathered local ICE candidate: ${candidate.candidate}` : 'ICE candidate gathering completed');
+      if (candidate) {
+        this.gatheredIceCandidates.push({ candidate: candidate.candidate, sdpMid: candidate.sdpMid ?? null, sdpmLineIndex: candidate.sdpMLineIndex ?? null });
+      }
     });
     // Log progress while ICE tests candidate pairs and establishes connectivity.
     this.peerConnection.iceConnectionStateChange.subscribe((state) => {
@@ -231,6 +304,16 @@ export class WeriftWebRtcSession {
         }
       });
     }
+  }
+
+  /**
+   * The local ICE candidates gathered for this session, shaped as Matter ICECandidateStruct fields.
+   *
+   * @returns {{ candidate: string; sdpMid: string | null; sdpmLineIndex: number | null }[]} A copy of the gathered
+   * candidates, empty until ICE gathering has produced any.
+   */
+  get localIceCandidates(): { candidate: string; sdpMid: string | null; sdpmLineIndex: number | null }[] {
+    return [...this.gatheredIceCandidates];
   }
 
   /**
@@ -290,7 +373,7 @@ export class WeriftWebRtcSession {
 
   /**
    * Finds the first Opus codec negotiated on any audio transceiver, i.e. a codec ffmpeg can encode to for the
-   * injected test-voice audio track.
+   * injected audio track.
    *
    * @returns {RTCRtpCodecParameters | undefined} The preferred codec, or `undefined` if no audio transceiver
    * negotiated Opus.
@@ -383,8 +466,8 @@ export class WeriftWebRtcSession {
    * Resolves the ffmpeg input arguments and a human-readable description for the configured video source.
    *
    * Uses the synthetic moving test pattern for `test`, or options.videoSourceDevice for `webcam`/`rtsp`
-   * (the RTSP url for `rtsp`); falls back to the test pattern (logging a warning) if the device/url is missing or
-   * webcam capture isn't supported on this platform. The output resolution is resolved via
+   * (the RTSP url for `rtsp`); yields no source (logging an error) if the device/url is missing or webcam capture
+   * isn't supported on this platform, so a misconfigured camera is never silently replaced by the test pattern. The output resolution is resolved via
    * {@link getConfiguredVideoResolution}: a fixed options.videoResolution (640x480, 1280x720, or
    * 1920x1080) is used, while `auto` (or unset) falls back to 640x480. For `webcam` this selects the capture resolution directly; for
    * `rtsp` the camera streams at its own native resolution and is scaled to the resolved resolution with a `scale`
@@ -392,23 +475,23 @@ export class WeriftWebRtcSession {
    * options.videoBitrate, regardless of resolution.
    *
    * @param {'test' | 'webcam' | 'rtsp'} videoSource - The configured video source after `none` has been handled by the caller.
-   * @returns {{ args: string[]; description: string; bitrateKbps: number }} The ffmpeg input arguments, a description of the source for logging, and the target encoder bitrate.
+   * @returns {{ args: string[]; description: string; bitrateKbps: number } | undefined} The ffmpeg input arguments, a description of the source for logging, and the target encoder bitrate; `undefined` when the configured source is unusable and no track should be injected.
    */
-  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number } {
-    const testPatternInput = {
-      args: ['-re', '-f', 'lavfi', '-i', 'testsrc=size=640x480:rate=10'],
-      description: 'synthetic moving test pattern',
-      bitrateKbps: WeriftWebRtcSession.DEFAULT_BITRATE_KBPS,
-    };
+  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number } | undefined {
     if (videoSource === 'test') {
+      const testPatternInput = {
+        args: ['-re', '-f', 'lavfi', '-i', 'testsrc=size=640x480:rate=10'],
+        description: 'synthetic moving test pattern',
+        bitrateKbps: WeriftWebRtcSession.DEFAULT_BITRATE_KBPS,
+      };
       this.log.debug(`Test pattern params: resolution=640x480, description="${testPatternInput.description}", bitrateKbps=${testPatternInput.bitrateKbps}`);
       return testPatternInput;
     }
 
     const device = this.options.videoSourceDevice;
     if (!device) {
-      this.log.warn(`options.videoSource=${videoSource} requires options.videoSourceDevice to be set; falling back to the synthetic test video`);
-      return testPatternInput;
+      this.log.error(`options.videoSource=${videoSource} requires options.videoSourceDevice to be set; not injecting a video track`);
+      return undefined;
     }
 
     const resolution = this.getConfiguredVideoResolution();
@@ -430,9 +513,29 @@ export class WeriftWebRtcSession {
       case 'win32':
         return { args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`], description, bitrateKbps };
       default:
-        this.log.warn(`Webcam capture via ffmpeg is not supported on platform "${process.platform}"; falling back to the synthetic test video`);
-        return testPatternInput;
+        this.log.error(`Webcam capture via ffmpeg is not supported on platform "${process.platform}"; not injecting a video track`);
+        return undefined;
     }
+  }
+
+  /**
+   * Forwards an injected track's ffmpeg process stderr into this session's log.
+   *
+   * The generators are spawned with `-loglevel error`, so ffmpeg only writes here when something actually goes
+   * wrong (an unavailable capture device, an unreachable RTSP url, a missing encoder). Without this the stream
+   * would sit unread in the child's pipe: the process exits, the track carries no media, and nothing explains why,
+   * since the `error` event only covers failures to spawn at all. Logged at debug, so it costs nothing until the
+   * log level is raised to diagnose exactly that case.
+   *
+   * @param {ChildProcess} generator - The spawned ffmpeg process.
+   * @param {'video' | 'audio'} kind - The injected track kind, used to label the log line.
+   * @returns {void}
+   */
+  private logFfmpegStderr(generator: ChildProcess, kind: 'video' | 'audio'): void {
+    generator.stderr?.on('data', (chunk: Buffer) => {
+      const message = chunk.toString().trim();
+      if (message) this.log.debug(`Ffmpeg ${kind} generator: ${message}`);
+    });
   }
 
   /**
@@ -453,6 +556,7 @@ export class WeriftWebRtcSession {
     }
 
     const videoInput = this.buildFfmpegVideoInputArgs(videoSource);
+    if (!videoInput) return;
     this.log.debug(`Attempting to attach ${videoInput.description} video track at ${videoInput.bitrateKbps}kbps`);
 
     if (!hasFfmpeg()) {
@@ -490,6 +594,7 @@ export class WeriftWebRtcSession {
         `rtp://127.0.0.1:${udpPort}`,
       ];
       const generator = runFfmpeg(ffmpegArgs);
+      this.logFfmpegStderr(generator, 'video');
 
       /* v8 ignore start -- requires the spawned ffmpeg process itself to fail after hasFfmpeg already verified
        * it runs (e.g. the binary is removed between the check and this spawn), which this harness can't simulate
@@ -557,8 +662,18 @@ export class WeriftWebRtcSession {
     }
   }
 
-  /** Recorded test-voice clip (espeak-ng synthesized, checked into the repo) looped as the injected audio source. */
-  private static readonly TEST_VOICE_PATH = fileURLToPath(new URL('../../assets/test-voice.opus', import.meta.url));
+  /**
+   * ffmpeg `sine` lavfi graph used as the synthetic audio source: a continuous 440 Hz carrier whose presence proves
+   * the stream is flowing, plus the filter's built-in beep once per second (`beep_factor` times the carrier, so
+   * 1760 Hz) which proves it is advancing in real time rather than stalled on a buffer — the audible counterpart of
+   * the moving box in the video `testsrc` pattern.
+   *
+   * Generated rather than read from a file, so no media asset has to ship with the package. ffmpeg's `sine` filter
+   * is quiet: its carrier peaks near -18 dBFS, which is easy to miss on a phone speaker. The `volume=6dB` stage in
+   * the graph lifts the encoded result to about -2 dBFS peak, leaving headroom so the once-per-second beep (the
+   * loudest part) never clips.
+   */
+  private static readonly TEST_TONE_INPUT = 'sine=frequency=440:beep_factor=4:sample_rate=48000,volume=6dB';
 
   /**
    * Resolves the configured injected audio source.
@@ -582,25 +697,23 @@ export class WeriftWebRtcSession {
   /**
    * Resolves the ffmpeg input arguments and a human-readable description for the configured audio source.
    *
-   * Uses the recorded test-voice clip (looped) for `test`, or options.audioSourceDevice for
-   * `microphone`/`rtsp` (the RTSP url for `rtsp`); falls back to the test-voice clip (logging a warning) if the
-   * device/url is missing or microphone capture isn't supported on this platform.
+   * Uses the synthetic test tone ({@link TEST_TONE_INPUT}) for `test`, or options.audioSourceDevice for
+   * `microphone`/`rtsp` (the RTSP url for `rtsp`); yields no source (logging an error) if the device/url is missing
+   * or microphone capture isn't supported on this platform, so a misconfigured microphone is never silently replaced
+   * by the test tone.
    *
    * @param {'test' | 'microphone' | 'rtsp'} audioSource - The configured audio source after `none` has been handled by the caller.
-   * @returns {{ args: string[]; description: string; volumeFilter?: string }} The ffmpeg input arguments, a description of the source for logging, and an optional `-af` volume-boost filter (only for the test-voice clip, which was recorded quietly).
+   * @returns {{ args: string[]; description: string } | undefined} The ffmpeg input arguments and a description of the source for logging; `undefined` when the configured source is unusable and no track should be injected.
    */
-  private buildFfmpegAudioInputArgs(audioSource: 'test' | 'microphone' | 'rtsp'): { args: string[]; description: string; volumeFilter?: string } {
-    const testVoiceInput = {
-      args: ['-re', '-stream_loop', '-1', '-i', WeriftWebRtcSession.TEST_VOICE_PATH],
-      description: 'recorded test-voice clip',
-      volumeFilter: 'volume=6dB',
-    };
-    if (audioSource === 'test') return testVoiceInput;
+  private buildFfmpegAudioInputArgs(audioSource: 'test' | 'microphone' | 'rtsp'): { args: string[]; description: string } | undefined {
+    if (audioSource === 'test') {
+      return { args: ['-re', '-f', 'lavfi', '-i', WeriftWebRtcSession.TEST_TONE_INPUT], description: 'synthetic test tone' };
+    }
 
     const device = this.options.audioSourceDevice;
     if (!device) {
-      this.log.warn(`options.audioSource=${audioSource} requires options.audioSourceDevice to be set; falling back to the recorded test-voice clip`);
-      return testVoiceInput;
+      this.log.error(`options.audioSource=${audioSource} requires options.audioSourceDevice to be set; not injecting an audio track`);
+      return undefined;
     }
 
     if (audioSource === 'rtsp') {
@@ -619,13 +732,13 @@ export class WeriftWebRtcSession {
       case 'win32':
         return { args: ['-f', 'dshow', '-i', `audio=${device}`], description };
       default:
-        this.log.warn(`Microphone capture via ffmpeg is not supported on platform "${process.platform}"; falling back to the recorded test-voice clip`);
-        return testVoiceInput;
+        this.log.error(`Microphone capture via ffmpeg is not supported on platform "${process.platform}"; not injecting an audio track`);
+        return undefined;
     }
   }
 
   /**
-   * Attaches an injected audio track (test-voice clip, microphone, or RTSP camera audio, per
+   * Attaches an injected audio track (synthetic test tone, microphone, or RTSP camera audio, per
    * {@link buildFfmpegAudioInputArgs}) to the peer connection by spawning ffmpeg to encode into it over a local
    * UDP/RTP loop, so an end-to-end audio path (e.g. an Intercom's "Listen" live view) can be verified without a
    * real microphone capture pipeline. Mirrors {@link generateVideoTrack}; only injects when
@@ -643,6 +756,7 @@ export class WeriftWebRtcSession {
     }
 
     const audioInput = this.buildFfmpegAudioInputArgs(audioSource);
+    if (!audioInput) return;
     this.log.debug(`Attempting to attach ${audioInput.description} audio track`);
 
     if (!hasFfmpeg()) {
@@ -668,13 +782,17 @@ export class WeriftWebRtcSession {
         'error',
         ...audioInput.args,
         '-vn',
-        ...(audioInput.volumeFilter ? ['-af', audioInput.volumeFilter] : []),
         '-c:a',
         'libopus',
         '-b:a',
         '32k',
+        // Encode a single channel. RFC 7587 §7 fixes the Opus RTP encoding parameter at 2 whatever the stream
+        // actually carries (so codec.channels above is always 2 and must stay 2 on the track), while the real
+        // channel count is signalled by the `stereo` fmtp parameter, which defaults to 0 and which this answer
+        // never sets. Encoding two channels therefore hands the peer a stereo stream it negotiated as mono, and
+        // spends half the 32 kbps on a duplicate channel.
         '-ac',
-        String(channels),
+        '1',
         '-ar',
         String(clockRate),
         '-f',
@@ -684,6 +802,7 @@ export class WeriftWebRtcSession {
         `rtp://127.0.0.1:${udpPort}`,
       ];
       const generator = runFfmpeg(ffmpegArgs);
+      this.logFfmpegStderr(generator, 'audio');
 
       /* v8 ignore start -- requires the spawned ffmpeg process itself to fail after hasFfmpeg already verified
        * it runs (e.g. the binary is removed between the check and this spawn), which this harness can't simulate
@@ -760,8 +879,8 @@ export class WeriftWebRtcSession {
   async createOffer(overrides?: WeriftOfferOverrides): Promise<string> {
     this.applyOptionOverrides(overrides);
     const options = this.options;
-    this.log.debug(`CreateOffer requested (video=${options.video}, audio=${options.audio}, videoResolution=${options.videoResolution ?? 'undefined'})`);
-    if (options.video) {
+    this.log.debug(`CreateOffer requested (offerVideo=${options.offerVideo}, offerAudio=${options.offerAudio}, videoResolution=${options.videoResolution ?? 'undefined'})`);
+    if (options.offerVideo) {
       const preferredCodec = this.getPreferredInjectableVideoCodec();
       if (preferredCodec) {
         this.preferVideoCodecOnTransceivers(preferredCodec.mimeType.toLowerCase());
@@ -771,7 +890,7 @@ export class WeriftWebRtcSession {
       await this.generateVideoTrack(preferredCodec);
       if (!this.testVideoAttached) this.peerConnection.addTransceiver('video', { direction: 'sendonly' });
     }
-    if (options.audio) this.peerConnection.addTransceiver('audio', { direction: 'sendonly' });
+    if (options.offerAudio) this.peerConnection.addTransceiver('audio', { direction: 'sendonly' });
     const offer = await this.peerConnection.createOffer();
     await this.peerConnection.setLocalDescription(offer);
     // setLocalDescription gathers ICE candidates into the SDP it stores as localDescription; offer.sdp itself

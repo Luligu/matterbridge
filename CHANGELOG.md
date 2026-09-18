@@ -29,6 +29,63 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.10] - 2026-09-18
+
+### Development News
+
+- [chip]: Chime endpoint 1607 CHIP conformance is green ✅ for all automated harness tests covering the `Chime` cluster, including the optional `ChimeID` field of the `PlayChimeSound` command (`TC_CHIME_2_5.py`) and the `ChimeStartedPlaying` event (`TC_CHIME_2_6.py`).
+- [chip]: Momentary Switch endpoint 606 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster, including the `MomentarySwitch`, `MomentarySwitchRelease`, `MomentarySwitchLongPress` and `MomentarySwitchMultiPress` features, with its own `generic-switch-momentary.pics`.
+- [chip]: Latching Switch endpoint 6061 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster `LatchingSwitch` feature, with its own `generic-switch-latching.pics`.
+- [chip]: Generic Switch Button1 endpoint 6063 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster on a single-press momentary switch, with its own `generic-switch-single.pics`.
+- [chip]: Doorbell endpoint 1609 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Switch` cluster on the mandatory single-press momentary switch of the Doorbell device type.
+- [chip]: Camera endpoint 1601 CHIP conformance is green ✅ for all applicable automated harness tests covering the `CameraAvStreamManagement` cluster, including the `Video`, `Audio` and `Snapshot` features and the allocated stream and stream usage priority persistence tests (`TC_AVSM_2_18.py` to `TC_AVSM_2_21.py`), which reboot the DUT mid-test through `createChipTestRestartFlag()`, with its own `camera-av-stream-management.pics`.
+- [chip]: PTZ Camera endpoint 16011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `CameraAvSettingsUserLevelManagement` cluster `MechanicalPan`, `MechanicalTilt`, `MechanicalZoom`, `MechanicalPresets` and `DigitalPTZ` features, including the `MPTZPosition`, `MPTZPresets` and `DPTZStreams` persistence test (`TC_AVSUM_2_9.py`), which reboots the DUT mid-test through `createChipTestRestartFlag()`.
+- [chip]: Camera endpoint 1601 CHIP conformance is green ✅ for all applicable automated harness tests covering the `WebRtcTransportProvider` cluster, i.e. the full `SolicitOffer`, `ProvideOffer`, `ProvideAnswer`, `ProvideICECandidates` and `EndSession` command set and the `CurrentSessions` attribute (`TC_WEBRTCP_2_1.py` to `TC_WEBRTCP_2_32.py`).
+
+### Added
+
+- [demoDevices]: Add all the Chapter 16 Camera device types: Camera on endpoint 1601, a second PTZ Camera exposing the optional `CameraAvSettingsUserLevelManagement` cluster on endpoint 16011, the composed Floodlight Camera on endpoint 1602 (Camera 16021 and On/Off Light 16022), the composed Video Doorbell on endpoint 1603 (Camera 16031 and Doorbell 16032), Intercom on endpoint 1604, Audio Doorbell on endpoint 1605, Snapshot Camera on endpoint 1606, Chime on endpoint 1607, Camera Controller on endpoint 1608 and Doorbell on endpoint 1609. Endpoint 1601 keeps the plain defaults, while the other endpoints activate the two options adding an optional cluster: `ptz` (Camera AV Settings User Level Management on the Camera endpoints) and `identifyType` (Identify where it is optional, i.e. Camera, Intercom, Snapshot Camera and Chime).
+- [CameraAvSettingsUserLevelManagement]: Add the `MechanicalPresets` feature to `MatterbridgeCameraAvSettingsUserLevelManagementServer`: the `MaxPresets` and `MPTZPresets` attributes and the `MPTZMoveToPreset`, `MPTZSavePreset` and `MPTZRemovePreset` commands, implemented per Matter 1.6.0 § 11.3.7.3, § 11.3.7.4 and § 11.3.7.5. The `Camera` device type takes a new `maxPresets` option (default 5).
+- [CameraAvSettingsUserLevelManagement]: Add the `DigitalPTZ` feature to `MatterbridgeCameraAvSettingsUserLevelManagementServer`: the `DPTZStreams` attribute and the `DPTZSetViewport` and `DPTZRelativeMove` commands, implemented per Matter 1.6.0 § 11.3.7.6 and § 11.3.7.7.
+- [ColorControl]: Add startUpColorTemperatureMireds to ColorControl cluster helpers.
+- [matterbridge]: Add isSoftwareUpdateBoot and revert matter.js exclusion of startUpOnOff, startUpCurrentLevel and startUpColorTemperatureMireds in bridged devices.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.10.
+- [matterbridge]: Bump `@types/node` to v.26.5.1.
+- [matterbridge]: Bump `@types/bun` to v.1.4.2.
+- [matterbridge]: Bump `marked` to v.18.0.13.
+- [matterbridge]: Bump `oxfmt` to v.0.68.0.
+- [matterbridge]: Bump `oxlint` to v.1.83.0.
+- [matterbridge]: Bump `multer` to v.2.4.0.
+- [test-utils]: Bump `@types/bun` to v.1.4.2.
+- [utils]: Bump `@types/bun` to v.1.4.2.
+- [thread]: Bump `@zip.js/zip.js` to v.2.15.0.
+- [frontend]: Bump `frontend` version to v.3.6.1.
+- [frontend]: Bump `@rjsf/core` to v.6.10.0.
+- [frontend]: Bump `@rjsf/utils` to v.6.10.0.
+- [frontend]: Bump `@rjsf/validator-ajv8` to v.6.10.0.
+- [frontend]: Bump `react` to v.19.3.0.
+- [frontend]: Bump `react-dom` to v.19.3.0.
+- [frontend]: Bump `@types/node` to v.26.5.1.
+- [frontend]: Bump `@types/react` to v.19.3.0.
+- [frontend]: Bump `@types/react-dom` to v.19.3.0.
+- [frontend]: Bump `vite` to v.8.3.0.
+- [frontend]: Bump `oxfmt` to v.0.68.0.
+- [frontend]: Bump `oxlint` to v.1.83.0.
+- [docker]: Change the base image of the **s6-rc-legacy** docker image from `node:22-bullseye-slim` to `node:22-bookworm-slim`. Debian 11 (bullseye) reached end of life on 2026-08-31 and its security `Release` file expired on 2026-09-07, breaking `apt-get update` during the build. Debian 12 (bookworm) still provides the `armhf` port and `node:22` still publishes `linux/arm/v7`, so `arm64`, `amd64` and `arm/v7` support is unchanged.
+- [MatterbridgeEndpoint]: `createDefaultBridgedDeviceBasicInformationClusterServer()` takes a new optional trailing `productId` parameter and reports it on the `BridgedDeviceBasicInformation` cluster when it is a valid uint16. `ProductId` had `disallowConform` on this cluster up to Matter 1.3, but Matter 1.4 (cluster revision 4) changed it to `describedConform` (optional when bridging Matter devices), so it is now spec compliant to report it. The parameter is optional and appended at the end of the signature, so all the existing call sites are unaffected and the attribute stays absent unless a caller opts in. It is also passed through by `deserialize()` and by `MatterbridgePlatform`, so a stored device doesn't lose its `productId`. Thanks Ludovic BOUÉ.
+
+### Fixed
+
+- [WebRtcTransportProvider]: `MatterbridgeWebRtcTransportProviderServer` now invokes `ICECandidates` on the peer's `WebRtcTransportRequestor`, so the camera trickles its own ICE candidates as Matter 1.6.0 § 11.4.3.1 and § 11.4.3.2 expect. Only `Offer`, `Answer` and `End` were ever invoked before, so a controller that waits for the trickle command instead of reading the candidates out of the SDP never saw them. The candidates are sent in reply to the peer's own `ProvideICECandidates`, which is the signal that it has applied our SDP as its remote description: pushing them straight after the `Offer`/`Answer` reaches a peer mid-negotiation, and a libdatachannel based controller aborts on that. A peer that never trickles is unaffected, since the candidates are also embedded in the `Offer`/`Answer` SDP.
+- [WebRtcTransportProvider]: `MatterbridgeWebRtcTransportProviderServer.provideOffer()` now responds with `RESOURCE_EXHAUSTED` and rolls back the new session when it would exceed the concurrent session capacity, per Matter 1.6.0 § 11.5.6.3. It previously shared `solicitOffer()`'s behavior of accepting the session and ending it afterwards with `OutOfResources`, which § 11.5.6.1 defines for `SolicitOffer` only. `solicitOffer()` is unchanged.
+- [matterbridge]: The root directory is now resolved by probing the install layout on the file system instead of guessing it from the runtime and from a fixed number of parent directories.
+- [matterbridge]: Fix `ENOENT ... /apps/frontend/package.json` when `matterbridge` is started on node from a bun global install, and the same wrong root directory on any hoisted (flat) install and on a repository directory not named `matterbridge`.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.9] - 2026-09-11
 
 ### Development News

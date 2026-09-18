@@ -483,6 +483,23 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: Helpers",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--reporter",
+        "verbose",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--coverage.include=packages/core/src/helpers.ts",
+        "packages/core/vitest/helpers.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: DeviceManager",
       "type": "process",
       "command": "node",

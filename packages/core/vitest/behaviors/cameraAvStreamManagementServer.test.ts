@@ -9,7 +9,7 @@ const NAME = 'CameraAvStreamManagementServerBehavior';
 const MATTER_PORT = 6003;
 const MATTER_CREATE_ONLY = true;
 
-import { StreamUsage, ThreeLevelAuto } from '@matter/types';
+import { Status, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -24,13 +24,15 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import {
-  cameraColorTestJpegForResolution,
   createDefaultAudioCameraAvStreamManagementClusterServer,
   createDefaultCameraAvStreamManagementClusterServer,
   createDefaultIntercomCameraAvStreamManagementClusterServer,
   createDefaultSnapshotCameraAvStreamManagementClusterServer,
   MatterbridgeCameraAvStreamManagementServer,
 } from '../../src/behaviors/cameraAvStreamManagementServer.js';
+import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from '../../src/behaviors/snapshot.js';
+import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { AudioDoorbell } from '../../src/devices/audioDoorbell.js';
 import { Camera } from '../../src/devices/camera.js';
 import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
@@ -38,6 +40,11 @@ import { camera as cameraDeviceType, intercom as intercomDeviceType } from '../.
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 await setupTest(NAME);
+
+vi.mock('../../src/behaviors/snapshot.js', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../../src/behaviors/snapshot.js')>();
+  return { ...original, captureSnapshot: vi.fn() };
+});
 
 describe('MatterbridgeCameraAvStreamManagementServer', () => {
   let device: SnapshotCamera;
@@ -199,27 +206,90 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
     );
   });
 
-  it('should capture a snapshot using the requested stream and resolution', async () => {
+  it('should reject capturing a snapshot for the requested stream without a snapshotSource or a WebRtcTransportProvider cluster', async () => {
+    vi.mocked(captureSnapshot).mockClear();
+
     await expect(
       device.invokeBehaviorCommand(CameraAvStreamManagement, 'captureSnapshot', {
         snapshotStreamId: 0,
         requestedResolution: { width: 640, height: 480 },
       }),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow('cannot capture snapshot: no snapshotSource is configured and the endpoint has no WebRtcTransportProvider cluster to read the video source from');
 
+    expect(captureSnapshot).not.toHaveBeenCalled();
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('capturing snapshot 0'));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeCameraAvStreamManagementServer: captureSnapshot called with snapshotStreamId 0'));
+    expect(loggerErrorSpy).toHaveBeenCalledWith(
+      expect.stringContaining('cannot capture snapshot: no snapshotSource is configured and the endpoint has no WebRtcTransportProvider cluster'),
+    );
+    loggerErrorSpy.mockClear();
   });
 
-  it('should capture a snapshot using automatic stream selection', async () => {
+  it('should reject capturing a snapshot with automatic stream selection without a snapshotSource or a WebRtcTransportProvider cluster', async () => {
     await expect(
       device.invokeBehaviorCommand(CameraAvStreamManagement, 'captureSnapshot', {
         snapshotStreamId: null,
         requestedResolution: { width: 1280, height: 720 },
       }),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow('cannot capture snapshot: no snapshotSource is configured and the endpoint has no WebRtcTransportProvider cluster to read the video source from');
 
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('capturing snapshot auto'));
+    loggerErrorSpy.mockClear();
+  });
+
+  describe('captureSnapshot with a snapshotSource configured on the cluster', () => {
+    const captured = Buffer.from('captured-jpeg');
+    // The snapshot camera installs the Snapshot-only derivation, so its state must be addressed through that same feature set.
+    const snapshotServer = MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Snapshot);
+
+    /**
+     * Invokes CaptureSnapshot directly on the snapshot camera's behavior so the response is available to assert on.
+     *
+     * @returns {Promise<CameraAvStreamManagement.CaptureSnapshotResponse>} The command response.
+     */
+    async function capture(): Promise<CameraAvStreamManagement.CaptureSnapshotResponse> {
+      return device.act(async (agent) =>
+        agent.get(MatterbridgeCameraAvStreamManagementServer).captureSnapshot({ snapshotStreamId: 0, requestedResolution: { width: 640, height: 480 } }),
+      );
+    }
+
+    beforeEach(() => {
+      vi.mocked(captureSnapshot).mockReset();
+      vi.mocked(captureSnapshot).mockResolvedValue({ data: captured, byteLength: captured.length, width: 640, height: 480, quality: 6, downgraded: false });
+    });
+
+    afterAll(async () => {
+      await device.setStateOf(snapshotServer, { snapshotSource: undefined, snapshotSourceDevice: undefined });
+    });
+
+    it('should capture the synthetic test pattern for snapshotSource=test', async () => {
+      await device.setStateOf(snapshotServer, { snapshotSource: 'test' });
+
+      const response = await capture();
+
+      expect(captureSnapshot).toHaveBeenCalledWith({ src: TEST_SNAPSHOT_SOURCE, width: 640, height: 480 });
+      expect(response).toEqual({ data: captured, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, resolution: { width: 640, height: 480 } });
+    });
+
+    it.each([
+      ['webcam', '/dev/video0'],
+      ['rtsp', 'rtsp://user:pass@camera/stream'],
+    ] as const)('should capture from the configured device for snapshotSource=%s', async (snapshotSource, snapshotSourceDevice) => {
+      await device.setStateOf(snapshotServer, { snapshotSource, snapshotSourceDevice });
+
+      await capture();
+
+      expect(captureSnapshot).toHaveBeenCalledWith({ src: snapshotSourceDevice, width: 640, height: 480 });
+    });
+
+    it('should reject without capturing when snapshotSourceDevice is missing for snapshotSource=webcam', async () => {
+      await device.setStateOf(snapshotServer, { snapshotSource: 'webcam', snapshotSourceDevice: undefined });
+
+      await expect(capture()).rejects.toMatchObject({ code: Status.Failure, message: expect.stringContaining('snapshotSource=webcam requires snapshotSourceDevice to be set') });
+
+      expect(captureSnapshot).not.toHaveBeenCalled();
+      loggerErrorSpy.mockClear();
+    });
   });
 
   it('should reject capturing a snapshot with a snapshotStreamId not present in allocatedSnapshotStreams', async () => {
@@ -229,27 +299,6 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
         requestedResolution: { width: 640, height: 480 },
       }),
     ).rejects.toThrow('snapshot stream 77 is not present in allocatedSnapshotStreams');
-  });
-
-  it.each([
-    [
-      { width: 640, height: 480 },
-      { width: 640, height: 480 },
-    ],
-    [
-      { width: 1280, height: 720 },
-      { width: 1280, height: 720 },
-    ],
-    [
-      { width: 1920, height: 1080 },
-      { width: 1920, height: 1080 },
-    ],
-  ])('should return the calibration card matching a requested resolution of %o', (requestedResolution, expectedResolution) => {
-    expect(cameraColorTestJpegForResolution(requestedResolution).resolution).toEqual(expectedResolution);
-  });
-
-  it('should fall back to the 640x480 calibration card for a non-standard requested resolution', () => {
-    expect(cameraColorTestJpegForResolution({ width: 800, height: 600 }).resolution).toEqual({ width: 640, height: 480 });
   });
 
   it('should create and register a snapshot camera with no allocated streams for setStreamPriorities validation', async () => {
@@ -789,6 +838,118 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       if (originalSkip === undefined) delete process.env.MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT;
       else process.env.MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT = originalSkip;
     }
+  });
+
+  describe('captureSnapshot with a WebRtcTransportProvider video source', () => {
+    let webRtcCamera: Camera;
+    const request = { snapshotStreamId: null, requestedResolution: { width: 1920, height: 1080 } };
+    const captured = Buffer.from('captured-jpeg');
+
+    /**
+     * Updates the sibling WebRtcTransportProvider cluster's offer options on the test camera.
+     *
+     * @param {Partial<WeriftOfferOptions>} options - The offer options to override.
+     * @returns {Promise<void>} Resolves once the state has been written.
+     */
+    async function setVideoSource(options: Partial<WeriftOfferOptions>): Promise<void> {
+      const original = webRtcCamera.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions;
+      await webRtcCamera.setStateOf(MatterbridgeWebRtcTransportProviderServer, { weriftOfferOptions: { ...original, ...options } });
+    }
+
+    /**
+     * Invokes CaptureSnapshot directly on the behavior so the response is available to assert on.
+     *
+     * @returns {Promise<CameraAvStreamManagement.CaptureSnapshotResponse>} The command response.
+     */
+    async function capture(): Promise<CameraAvStreamManagement.CaptureSnapshotResponse> {
+      return webRtcCamera.act(async (agent) => agent.get(MatterbridgeCameraAvStreamManagementServer).captureSnapshot(request));
+    }
+
+    beforeAll(async () => {
+      webRtcCamera = new Camera('Camera Snapshot Source', 'CAMERA-SNAPSHOT-SOURCE', {
+        weriftOfferOptions: { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none' },
+      });
+      expect(await addDevice(aggregator, webRtcCamera)).toBeTruthy();
+    });
+
+    beforeEach(() => {
+      vi.mocked(captureSnapshot).mockReset();
+      vi.mocked(captureSnapshot).mockResolvedValue({ data: captured, byteLength: captured.length, width: 1920, height: 1080, quality: 6, downgraded: false });
+    });
+
+    it('should capture the synthetic test pattern for videoSource=test', async () => {
+      const response = await capture();
+
+      expect(captureSnapshot).toHaveBeenCalledWith({ src: TEST_SNAPSHOT_SOURCE, width: 1920, height: 1080 });
+      expect(response).toEqual({ data: captured, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, resolution: { width: 1920, height: 1080 } });
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('captured snapshot 13B at 1920x1080, quality 6 (endpoint'));
+    });
+
+    it('should capture from the configured device for videoSource=webcam', async () => {
+      await setVideoSource({ videoSource: 'webcam', videoSourceDevice: '/dev/video0' });
+
+      await capture();
+
+      expect(captureSnapshot).toHaveBeenCalledWith({ src: '/dev/video0', width: 1920, height: 1080 });
+    });
+
+    it('should capture from the configured url for videoSource=rtsp', async () => {
+      await setVideoSource({ videoSource: 'rtsp', videoSourceDevice: 'rtsp://user:pass@camera/stream' });
+
+      await capture();
+
+      expect(captureSnapshot).toHaveBeenCalledWith({ src: 'rtsp://user:pass@camera/stream', width: 1920, height: 1080 });
+    });
+
+    it.each(['webcam', 'rtsp'] as const)('should reject without capturing when the device is missing for videoSource=%s', async (videoSource) => {
+      await setVideoSource({ videoSource, videoSourceDevice: undefined });
+
+      await expect(capture()).rejects.toThrow(`cannot capture snapshot: weriftOfferOptions.videoSource=${videoSource} requires videoSourceDevice to be set`);
+
+      expect(captureSnapshot).not.toHaveBeenCalled();
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`weriftOfferOptions.videoSource=${videoSource} requires videoSourceDevice to be set`));
+      loggerErrorSpy.mockClear();
+    });
+
+    it('should report the derived height of a downgraded capture', async () => {
+      await setVideoSource({ videoSource: 'test' });
+      vi.mocked(captureSnapshot).mockResolvedValue({ data: captured, byteLength: captured.length, width: 640, height: -1, quality: 31, downgraded: true });
+
+      const response = await capture();
+
+      expect(response.resolution).toEqual({ width: 640, height: 360 });
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('captured snapshot 13B at 640x360, quality 31 (downgraded)'));
+    });
+
+    it('should reject with FAILURE when the capture fails', async () => {
+      vi.mocked(captureSnapshot).mockRejectedValue(new Error('Cannot capture snapshot: missing dependency ffmpeg'));
+
+      await expect(capture()).rejects.toMatchObject({
+        code: Status.Failure,
+        message: expect.stringContaining('snapshot capture failed: Cannot capture snapshot: missing dependency ffmpeg'),
+      });
+
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('snapshot capture failed: Cannot capture snapshot: missing dependency ffmpeg'));
+      loggerErrorSpy.mockClear();
+    });
+
+    it('should reject with FAILURE when the capture rejects with a non-Error value', async () => {
+      await setVideoSource({ videoSource: 'test' });
+      vi.mocked(captureSnapshot).mockRejectedValue('ffmpeg crashed');
+
+      await expect(capture()).rejects.toMatchObject({ code: Status.Failure, message: expect.stringContaining('snapshot capture failed: ffmpeg crashed') });
+
+      loggerErrorSpy.mockClear();
+    });
+
+    it('should reject without capturing for videoSource=none', async () => {
+      await setVideoSource({ videoSource: 'none' });
+
+      await expect(capture()).rejects.toMatchObject({ code: Status.Failure, message: expect.stringContaining('weriftOfferOptions.videoSource=none provides no video source') });
+
+      expect(captureSnapshot).not.toHaveBeenCalled();
+      loggerErrorSpy.mockClear();
+    });
   });
 
   it('should add createDefaultCameraAvStreamManagementClusterServer to an endpoint', () => {

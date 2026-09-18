@@ -26,7 +26,7 @@
 /* v8 ignore start - CHIP test glue only runs inside the chip-test Docker container, gated behind MATTERBRIDGE_CHIP_TEST */
 
 import { spawnSync } from 'node:child_process';
-import { closeSync, constants, existsSync, openSync, readSync, unlinkSync } from 'node:fs';
+import { closeSync, constants, existsSync, openSync, readFileSync, readSync, unlinkSync } from 'node:fs';
 
 import { Seconds, Time, type Timer } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
@@ -50,7 +50,9 @@ import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Switch } from '@matter/types/clusters/switch';
 import { TariffPriceType, TariffUnit } from '@matter/types/globals';
+import { wait } from '@matterbridge/utils/wait';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
@@ -58,6 +60,7 @@ import { cliEmitter } from './cliEmitter.js';
 import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { featuresFor } from './matterbridgeEndpointHelpers.js';
 
 type ChipTestAppPipeCommand = {
   Name?: string;
@@ -72,9 +75,26 @@ type ChipTestAppPipeCommand = {
   Param?: number;
   Error?: string;
   DoorOpen?: number;
+  ButtonId?: number;
+  LongPressDelayMillis?: number;
+  LongPressDurationMillis?: number;
+  FeatureMap?: number;
+  PositionId?: number;
+  MultiPressPressedTimeMillis?: number;
+  MultiPressReleasedTimeMillis?: number;
+  MultiPressNumPresses?: number;
+  MultiPressMax?: number;
 };
 
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
+// Written by MatterBaseTest.request_device_reboot() (matter/testing/matter_testing.py) whenever a Python test
+// is started with --restart-flag-file, and polled by createChipTestRestartFlag(). Must match the path passed
+// in chipTests.json's "args" for every test that reboots the DUT mid-run.
+const chipTestRestartFlagPath = '/tmp/matterbridge-chip-test-restart-flag';
+// The only flag content createChipTestRestartFlag() acts on. request_device_reboot() always writes exactly
+// this; request_device_factory_reset() writes "factory reset"/"factory reset app only" instead, which this
+// monitor deliberately does not implement (it would have to wipe the node storage and the fabrics).
+const chipTestRestartFlagText = 'restart';
 const chipTestValidEventTrigger = 0xfffffffffff10000n;
 const smokeCoAlarmWarningSmokeAlarmTrigger = 0x005c000000000090n;
 const smokeCoAlarmCriticalSmokeAlarmTrigger = 0x005c00000000009cn;
@@ -178,6 +198,17 @@ const smokeCoAlarmChipTestEnableKey = Uint8Array.from([0x00, 0x11, 0x22, 0x33, 0
 // MATTERBRIDGE_DEMO_DEVICES also created a device tree via createChipTestDevices() (chipTestDevices.ts).
 let chipTestMatterbridge: Matterbridge | undefined;
 let closeChipTestAppPipe: (() => void) | undefined;
+// The restart-flag poll timer and its state. Both are module level rather than per-instance on purpose: a
+// CHIP test restart is an in-process reload (Matterbridge.restartProcess() -> cleanup('restarting...', true)
+// -> cliEmitter 'restart' -> Matterbridge.loadInstance(true) in cli.ts), so the Node process — and this
+// module's state — outlives the Matterbridge instance that requested the restart. The timer is created once
+// and keeps polling across restarts, reading the current instance through chipTestMatterbridge.
+let chipTestRestartFlagTimer: ReturnType<typeof setInterval> | undefined;
+// True between requesting a restart and clearing the flag once the new instance's root server node is
+// online. Suppresses re-triggering off the same flag file while the restart is still in flight.
+let chipTestRestartPending = false;
+// Set once an unsupported flag content has been reported, so the 250 ms poll doesn't log it repeatedly.
+let chipTestRestartFlagWarned = false;
 let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
 // The endpoint chipTests.json's "endpoint" field names for whichever test is currently running, set via the
 // app-pipe "SetTestEndpoint" command (run-matterbridge-chip-tests.mjs writes it before every test, cleared —
@@ -218,6 +249,104 @@ export class MatterbridgeGeneralDiagnosticsServer extends GeneralDiagnosticsServ
     if (isChipTestEnableKey(keyData)) this.state.deviceTestEnableKey = keyData;
     return super.payloadTestRequest(request);
   }
+}
+
+/**
+ * Removes the CHIP test restart flag file, signalling to the waiting Python test that the reboot completed.
+ *
+ * @param {AnsiLogger} log - The logger to report a failed removal on.
+ */
+function removeChipTestRestartFlag(log: AnsiLogger): void {
+  try {
+    if (existsSync(chipTestRestartFlagPath)) unlinkSync(chipTestRestartFlagPath);
+  } catch (error) {
+    log.error(`Failed to remove CHIP test restart flag ${chipTestRestartFlagPath}: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+/**
+ * Starts the CHIP test restart-flag monitor, the backchannel behind MatterBaseTest.request_device_reboot().
+ *
+ * A handful of Python CHIP tests (TC_ACL_2_10, TC_AVSM_2_18 through TC_AVSM_2_21, TC_AVSUM_2_9, TC_BINFO_2_2
+ * and TC_CC_6_5) reboot the DUT mid-test to assert that state survives a restart. When started with
+ * --restart-flag-file, request_device_reboot() writes "restart" into that file, expires its CASE sessions,
+ * and then blocks in wait_for_restart_flag_file_removal() — whose contract is that the flag is removed only
+ * *after* the DUT has fully rebooted and is ready again, with a hard 30 s timeout. Without a monitor the
+ * tests instead fall into the manual branch, where wait_for_user_input() swallows the EOF this harness's
+ * closed stdin produces and the test continues as if a reboot had happened, passing vacuously.
+ *
+ * Restarting the container is not an option here: the entrypoint execs Matterbridge as PID 1, so the Python
+ * test — which runs inside that same container via docker exec — would be killed along with it. Instead this
+ * reuses Matterbridge's own frontend restart path (restartProcess(), i.e. /api/restart), which tears the
+ * instance down and reloads a fresh one in-process without ever exiting Node. The container, and the test,
+ * stay up while the DUT genuinely restarts and reloads its state from the node storage.
+ *
+ * Called from startBridge() alongside createChipTestAppPipe(), so it is gated behind MATTERBRIDGE_CHIP_TEST
+ * exactly like the app pipe, and re-entered on every startBridge() — including the one that follows a restart
+ * it requested. It relies on createChipTestAppPipe() having set chipTestMatterbridge first.
+ *
+ * @param {Matterbridge} matterbridge - The current Matterbridge instance.
+ */
+export function createChipTestRestartFlag(matterbridge: Matterbridge): void {
+  // Re-entered by the fresh instance after a restart this monitor requested. The flag is cleared only once
+  // the root server node is back online, since the test resumes reading attributes the moment it disappears.
+  if (chipTestRestartPending) {
+    const onOnline = (nodeId: string): void => {
+      // Filtered rather than a once() listener: in childbridge mode the plugin server nodes come online too,
+      // and only the root node coming back means the DUT is reachable again.
+      if (nodeId !== 'Matterbridge') return;
+      matterbridge.off('online', onOnline);
+      removeChipTestRestartFlag(matterbridge.log);
+      // Cleared only here, after the flag is gone. Clearing it on entry instead would let the poll below see
+      // the still-present flag and immediately request a second, spurious restart.
+      chipTestRestartPending = false;
+      matterbridge.log.notice(`CHIP test restart completed, cleared restart flag ${chipTestRestartFlagPath}`);
+    };
+    matterbridge.on('online', onOnline);
+  }
+
+  // The timer outlives each instance, so it is only ever created once.
+  if (chipTestRestartFlagTimer) return;
+
+  matterbridge.log.notice(`CHIP test restart flag monitor watching ${chipTestRestartFlagPath}`);
+  chipTestRestartFlagTimer = setInterval(() => {
+    const instance = chipTestMatterbridge;
+    if (!instance || chipTestRestartPending || !existsSync(chipTestRestartFlagPath)) return;
+
+    let flagText: string;
+    try {
+      flagText = readFileSync(chipTestRestartFlagPath, 'utf8').trim();
+    } catch (error) {
+      instance.log.error(`Failed to read CHIP test restart flag ${chipTestRestartFlagPath}: ${error instanceof Error ? error.message : String(error)}`);
+      return;
+    }
+
+    if (flagText !== chipTestRestartFlagText) {
+      // Left in place rather than cleared, so the test fails loudly on its own 30 s timeout instead of being
+      // told a factory reset it asked for had completed.
+      if (!chipTestRestartFlagWarned) {
+        chipTestRestartFlagWarned = true;
+        instance.log.warn(`Ignoring unsupported CHIP test restart flag content "${flagText}": only "${chipTestRestartFlagText}" is implemented`);
+      }
+      return;
+    }
+
+    chipTestRestartFlagWarned = false;
+    chipTestRestartPending = true;
+    instance.log.notice(`CHIP test restart requested via ${chipTestRestartFlagPath}, restarting Matterbridge...`);
+    instance.restartProcess().catch((error: unknown) => {
+      // Leave the flag in place so the test times out instead of resuming against a half-torn-down bridge.
+      chipTestRestartPending = false;
+      instance.log.error(`Failed to restart Matterbridge for the CHIP test restart flag: ${error instanceof Error ? error.message : String(error)}`);
+    });
+  }, 250);
+  chipTestRestartFlagTimer.unref();
+
+  cliEmitter.once('shutdown', () => {
+    if (chipTestRestartFlagTimer) clearInterval(chipTestRestartFlagTimer);
+    chipTestRestartFlagTimer = undefined;
+    removeChipTestRestartFlag(matterbridge.log);
+  });
 }
 
 function isChipTestEnableKey(keyData: Uint8Array): boolean {
@@ -1472,9 +1601,138 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
         `CHIP test app pipe OperationalStateChange(${command.Operation}${command.Param === undefined ? '' : `, ${command.Param}`}) applied on endpoint ${endpointId}`,
       );
       return;
+    case 'SimulateSwitchIdle':
+      // TC_SWTCH.py's _send_switch_idle_named_pipe_command(): return the button to the un-actuated position
+      // without generating any event, so the test can assert CurrentPosition is 0 before it presses anything.
+      await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
+      matterbridge.log.info(`CHIP test app pipe set Switch.CurrentPosition to 0 (idle) on endpoint ${endpointId}`);
+      return;
+    case 'SimulateLongPress':
+      await simulateChipTestSwitchLongPress(matterbridge, endpoint, endpointId, command);
+      return;
+    case 'SimulateLatchPosition': {
+      // TC_SWTCH.py's _send_latching_switch_named_pipe_command(): move a latching switch to a new position.
+      // Matter 1.6.0 § 1.13.7.1: SwitchLatched is generated when the switch is moved to a NEW position, so a
+      // command that re-states the position the switch is already in must stay silent. TC_SWTCH_2_2 relies on
+      // that: it parks the switch at position 0 (usually already the current value) and resets its event
+      // listener, so a spurious SwitchLatched(0) here would be read as the answer to its next position change.
+      const newPosition = command.PositionId ?? 0;
+      if (endpoint.getAttribute(Switch.id, 'currentPosition', matterbridge.log) === newPosition) {
+        matterbridge.log.info(`CHIP test app pipe left Switch latched at position ${newPosition} on endpoint ${endpointId}`);
+        return;
+      }
+      await endpoint.setAttribute(Switch.id, 'currentPosition', newPosition, matterbridge.log);
+      await endpoint.triggerEvent(Switch.id, 'switchLatched', { newPosition }, matterbridge.log);
+      matterbridge.log.info(`CHIP test app pipe latched Switch to position ${newPosition} on endpoint ${endpointId}`);
+      return;
+    }
+    case 'SimulateMultiPress':
+      await simulateChipTestSwitchMultiPress(matterbridge, endpoint, endpointId, command);
+      return;
     default:
       matterbridge.log.warn(`Ignoring unsupported CHIP test app pipe command: ${JSON.stringify(command)}`);
   }
+}
+
+/**
+ * Simulates a press-and-hold on a Switch endpoint, for TC_SWTCH.py's SimulateLongPress app pipe command
+ * (_send_long_press_named_pipe_command(), used by both _ask_for_long_press() and _ask_for_keep_pressed()).
+ *
+ * The command carries the press duration rather than a separate release command, so the whole press/release
+ * sequence is played out here: CurrentPosition moves to the pressed position and InitialPress is emitted
+ * immediately, then CurrentPosition returns to 0 after LongPressDurationMillis. TC_SWTCH_2_3 reads
+ * CurrentPosition while the press is still held, so the release must not happen before that delay elapses.
+ *
+ * Which release events accompany that sequence is decided by the endpoint's own Switch feature map, not by the
+ * command's FeatureMap field: emitting an event the cluster server never enabled would throw. For a
+ * MomentarySwitch-only endpoint (the CHIP Doorbell on endpoint 1609, see createDefaultMomentarySwitchClusterServer)
+ * that means InitialPress alone, which is exactly what TC_SWTCH_2_4 asserts when MSL/AS/MSR/MSM are all absent.
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint hosting the Switch cluster server.
+ * @param {number} endpointId - The endpoint number, for logging.
+ * @param {ChipTestAppPipeCommand} command - The SimulateLongPress app pipe command.
+ */
+async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpoint: MatterbridgeEndpoint, endpointId: number, command: ChipTestAppPipeCommand): Promise<void> {
+  if (!endpoint.hasClusterServer(Switch.id)) {
+    matterbridge.log.warn(`Ignoring SimulateLongPress CHIP test app pipe command on endpoint ${endpointId} without a Switch cluster server`);
+    return;
+  }
+  const features = featuresFor(endpoint, Switch.id);
+  const newPosition = command.ButtonId ?? 1;
+  const delayMs = command.LongPressDelayMillis ?? 0;
+  const durationMs = command.LongPressDurationMillis ?? 0;
+
+  await endpoint.setAttribute(Switch.id, 'currentPosition', newPosition, matterbridge.log);
+  await endpoint.triggerEvent(Switch.id, 'initialPress', { newPosition }, matterbridge.log);
+  matterbridge.log.info(`CHIP test app pipe pressed Switch position ${newPosition} on endpoint ${endpointId} for ${durationMs}ms`);
+
+  // Matter 1.6.0 § 1.13.7.3: LongPress is generated once the press has been held past the long-press threshold,
+  // i.e. LongPressDelayMillis into the LongPressDurationMillis the command asks us to hold for.
+  if (features.momentarySwitchLongPress) {
+    await wait(Math.min(delayMs, durationMs));
+    await endpoint.triggerEvent(Switch.id, 'longPress', { newPosition }, matterbridge.log);
+    await wait(Math.max(durationMs - delayMs, 0));
+  } else {
+    await wait(durationMs);
+  }
+
+  await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
+  // Matter 1.6.0 § 1.13.7.5/1.13.7.4: a release after a long press reports LongRelease when MSL is supported,
+  // and ShortRelease when only MSR is. With neither feature the position simply returns to 0 silently.
+  if (features.momentarySwitchLongPress) {
+    await endpoint.triggerEvent(Switch.id, 'longRelease', { previousPosition: newPosition }, matterbridge.log);
+  } else if (features.momentarySwitchRelease) {
+    await endpoint.triggerEvent(Switch.id, 'shortRelease', { previousPosition: newPosition }, matterbridge.log);
+  }
+  matterbridge.log.info(`CHIP test app pipe released Switch position ${newPosition} on endpoint ${endpointId}`);
+}
+
+/**
+ * Simulates a rapid sequence of press/release cycles on a Switch endpoint, for TC_SWTCH.py's SimulateMultiPress
+ * app pipe command (_send_multi_press_named_pipe_command(), used by TC_SWTCH_2_5).
+ *
+ * Matter 1.6.0 § 1.13.7: a multi-press sequence reports InitialPress on every press, MultiPressOngoing from the
+ * second press onwards, ShortRelease after each release when MSR is supported, and a single MultiPressComplete
+ * once the sequence ends. MultiPressComplete is emitted here rather than on a following SimulateSwitchIdle,
+ * because TC_SWTCH_2_5 calls _ask_for_switch_idle(omit_for_simulator=True) — which sends nothing at all under
+ * the button simulator — and then waits for the event.
+ *
+ * Both press counts are capped at MultiPressMax, whose constraint on CurrentNumberOfPressesCounted and
+ * TotalNumberOfPressesCounted is `max MultiPressMax` (Matter 1.6.0 § 1.13.7.6/1.13.7.7).
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @param {MatterbridgeEndpoint} endpoint - The endpoint hosting the Switch cluster server.
+ * @param {number} endpointId - The endpoint number, for logging.
+ * @param {ChipTestAppPipeCommand} command - The SimulateMultiPress app pipe command.
+ */
+async function simulateChipTestSwitchMultiPress(matterbridge: Matterbridge, endpoint: MatterbridgeEndpoint, endpointId: number, command: ChipTestAppPipeCommand): Promise<void> {
+  if (!endpoint.hasClusterServer(Switch.id)) {
+    matterbridge.log.warn(`Ignoring SimulateMultiPress CHIP test app pipe command on endpoint ${endpointId} without a Switch cluster server`);
+    return;
+  }
+  const features = featuresFor(endpoint, Switch.id);
+  const newPosition = command.ButtonId ?? 1;
+  const presses = Math.max(command.MultiPressNumPresses ?? 1, 1);
+  const pressedMs = command.MultiPressPressedTimeMillis ?? 0;
+  const releasedMs = command.MultiPressReleasedTimeMillis ?? 0;
+  const multiPressMax = endpoint.getAttribute(Switch.id, 'multiPressMax', matterbridge.log) ?? command.MultiPressMax ?? presses;
+
+  for (let press = 1; press <= presses; press++) {
+    await endpoint.setAttribute(Switch.id, 'currentPosition', newPosition, matterbridge.log);
+    await endpoint.triggerEvent(Switch.id, 'initialPress', { newPosition }, matterbridge.log);
+    if (press > 1) {
+      await endpoint.triggerEvent(Switch.id, 'multiPressOngoing', { newPosition, currentNumberOfPressesCounted: Math.min(press, multiPressMax) }, matterbridge.log);
+    }
+    await wait(pressedMs);
+    await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
+    if (features.momentarySwitchRelease) {
+      await endpoint.triggerEvent(Switch.id, 'shortRelease', { previousPosition: newPosition }, matterbridge.log);
+    }
+    await wait(releasedMs);
+  }
+  await endpoint.triggerEvent(Switch.id, 'multiPressComplete', { previousPosition: newPosition, totalNumberOfPressesCounted: Math.min(presses, multiPressMax) }, matterbridge.log);
+  matterbridge.log.info(`CHIP test app pipe completed ${presses} press(es) of Switch position ${newPosition} on endpoint ${endpointId}`);
 }
 
 function getChipTestEndpoint(matterbridge: Matterbridge, endpointId: number): MatterbridgeEndpoint | undefined {
@@ -1502,7 +1760,16 @@ function isChipTestAppPipeCommand(value: unknown): value is ChipTestAppPipeComma
     (!('SoilMoistureValue' in value) || typeof value.SoilMoistureValue === 'number') &&
     (!('Device' in value) || typeof value.Device === 'string') &&
     (!('Operation' in value) || typeof value.Operation === 'string') &&
-    (!('Param' in value) || typeof value.Param === 'number')
+    (!('Param' in value) || typeof value.Param === 'number') &&
+    (!('ButtonId' in value) || typeof value.ButtonId === 'number') &&
+    (!('LongPressDelayMillis' in value) || typeof value.LongPressDelayMillis === 'number') &&
+    (!('LongPressDurationMillis' in value) || typeof value.LongPressDurationMillis === 'number') &&
+    (!('FeatureMap' in value) || typeof value.FeatureMap === 'number') &&
+    (!('PositionId' in value) || typeof value.PositionId === 'number') &&
+    (!('MultiPressPressedTimeMillis' in value) || typeof value.MultiPressPressedTimeMillis === 'number') &&
+    (!('MultiPressReleasedTimeMillis' in value) || typeof value.MultiPressReleasedTimeMillis === 'number') &&
+    (!('MultiPressNumPresses' in value) || typeof value.MultiPressNumPresses === 'number') &&
+    (!('MultiPressMax' in value) || typeof value.MultiPressMax === 'number')
   );
 }
 // v8 ignore end

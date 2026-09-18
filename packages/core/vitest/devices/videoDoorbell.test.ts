@@ -19,6 +19,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { Switch } from '@matter/types/clusters/switch';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -157,10 +158,43 @@ describe('VideoDoorbell', () => {
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 
+  it('should create the child endpoints with explicit endpoint numbers', async () => {
+    const device = new VideoDoorbell('Video Doorbell Numbers', 'VIDEO-DOORBELL-NUMBERS', {
+      id: 'VideoDoorbellNumbers',
+      number: EndpointNumber(16_03),
+      cameraOptions: { number: EndpointNumber(16_03_1) },
+      doorbellOptions: { number: EndpointNumber(16_03_2) },
+    });
+    expect(device.number).toBe(EndpointNumber(16_03));
+    expect(device.getChildEndpointById('Camera')?.number).toBe(EndpointNumber(16_03_1));
+    expect(device.getChildEndpointById('Doorbell')?.number).toBe(EndpointNumber(16_03_2));
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+  });
+
+  it('should create the camera child endpoint with a tagList', async () => {
+    const device = new VideoDoorbell('Video Doorbell Camera Tags', 'VIDEO-DOORBELL-CAMERA-TAGS', {
+      cameraOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }] },
+    });
+    const cameraChild = device.getChildEndpointById('Camera');
+    expect(cameraChild).toBeDefined();
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }]);
+  });
+
+  it('should add an additional doorbell with an explicit endpoint number', async () => {
+    const device = new VideoDoorbell('Video Doorbell Doorbell Number', 'VIDEO-DOORBELL-DOORBELL-NUMBER');
+    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_3) });
+    expect(doorbellChild.number).toBe(EndpointNumber(16_03_3));
+
+    expect(await addDevice(aggregator, device)).toBeTruthy();
+  });
+
   it('should add additional doorbells with tags and trigger a switch event', async () => {
     const device = new VideoDoorbell('Video Doorbell Multi Doorbell', 'VIDEO-DOORBELL-MULTI-DOORBELL');
-    const left = device.addDoorbell('Left Doorbell', [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }]);
-    const right = device.addDoorbell('Right Doorbell', [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }]);
+    const left = device.addDoorbell('Left Doorbell', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }] });
+    const right = device.addDoorbell('Right Doorbell', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftDoorbell');
     expect(right.id).toBe('RightDoorbell');
 
@@ -184,7 +218,7 @@ describe('VideoDoorbell', () => {
   });
 
   it('should create a video doorbell device with custom werift offer options on the camera child', async () => {
-    const weriftOfferOptions: WeriftOfferOptions = { video: true, audio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
+    const weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
     const device = new VideoDoorbell('Video Doorbell Werift', 'VIDEO-DOORBELL-WERIFT', { cameraOptions: { weriftOfferOptions } });
 
     expect(await addDevice(aggregator, device)).toBeTruthy();

@@ -1,0 +1,28 @@
+# Camera endpoint 1601: Camera and MatterbridgeWebRtcTransportProviderServer.
+# These are the PICS gates consumed by the WEBRTCP Python tests; other capabilities
+# are checked against the live FeatureMap and AttributeList.
+PICS_SDK_CI_ONLY=1
+WEBRTCP.S=1
+WEBRTCP.C=0
+WEBRTCP.S.F00=0 # Metadata: createDefaultWebRtcTransportProviderClusterServer() requires the behavior with no features
+WEBRTCP.S.F02=0 # SFrame End-to-End Encryption: not a Matter 1.6.0 feature (the XML only defines bit 0, METADATA)
+WEBRTCP.S.A0000=1 # CurrentSessions
+WEBRTCP.S.C00.Rsp=1 # SolicitOffer
+WEBRTCP.S.C01.Tx=1 # SolicitOfferResponse
+WEBRTCP.S.C02.Rsp=1 # ProvideOffer
+WEBRTCP.S.C03.Tx=1 # ProvideOfferResponse
+WEBRTCP.S.C04.Rsp=1 # ProvideAnswer
+WEBRTCP.S.C05.Rsp=1 # ProvideICECandidates
+WEBRTCP.S.C06.Rsp=1 # EndSession
+# TC_WEBRTCP_2_18..2_21 gate the provider's ProvideAnswer/ProvideICECandidates on these WEBRTCR keys
+# instead of the WEBRTCP.S.C04/C05 ones. Kept in sync with the WEBRTCP values above.
+WEBRTCR.S.C04.Rsp=1 # ProvideAnswer
+WEBRTCR.S.C05.Rsp=1 # ProvideICECandidates
+# CameraAvStreamManagement gates used by the WEBRTCP tests; see camera-av-stream-management.pics.
+AVSM.S=1
+AVSM.S.F00=1 # Audio
+AVSM.S.F01=1 # Video
+AVSM.S.A0013=0 # SoftRecordingPrivacyModeEnabled: mandatory on PRIV, and the camera does not enable the Privacy feature
+AVSM.S.A0015=1 # HardPrivacyModeOn: optional, set by createDefaultCameraAvStreamManagementClusterServer()
+# PowerSource gate used by TC_WEBRTCP_2_1 and TC_WEBRTCP_2_11 to require a battery-powered camera.
+PS.S.F01=0 # Battery: the Camera device type on endpoint 1601 has no PowerSource cluster

@@ -23,13 +23,15 @@
  */
 
 import { WebRtcTransportRequestorServer } from '@matter/node/behaviors/web-rtc-transport-requestor';
-import type { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
-import { emitCommand } from '../matterbridgeEndpointHelpers.js';
 
 /** Notifies command subscribers after the default WebRTC requestor handles signaling. */
 export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportRequestorServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Handles Offer and notifies command subscribers after successful processing.
    *
@@ -38,7 +40,7 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    */
   override async offer(request: WebRtcTransportRequestor.OfferRequest): Promise<void> {
     await super.offer(request);
-    emitCommand(this.endpoint, WebRtcTransportRequestorServer.id, 'offer', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportRequestor, 'offer', request, this.context);
   }
 
   /**
@@ -49,7 +51,7 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    */
   override async answer(request: WebRtcTransportRequestor.AnswerRequest): Promise<void> {
     await super.answer(request);
-    emitCommand(this.endpoint, WebRtcTransportRequestorServer.id, 'answer', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportRequestor, 'answer', request, this.context);
   }
 
   /**
@@ -60,7 +62,7 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    */
   override async iceCandidates(request: WebRtcTransportRequestor.IceCandidatesRequest): Promise<void> {
     await super.iceCandidates(request);
-    emitCommand(this.endpoint, WebRtcTransportRequestorServer.id, 'iceCandidates', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportRequestor, 'iceCandidates', request, this.context);
   }
 
   /**
@@ -71,7 +73,7 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    */
   override async end(request: WebRtcTransportRequestor.EndRequest): Promise<void> {
     await super.end(request);
-    emitCommand(this.endpoint, WebRtcTransportRequestorServer.id, 'end', request, this.context);
+    this.endpoint.emitCommand(WebRtcTransportRequestor, 'end', request, this.context);
   }
 }
 

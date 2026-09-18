@@ -38,6 +38,12 @@ const QUALITIES = [6, 10, 14, 18, 24, 31] as const;
 const FALLBACK_WIDTH = 640;
 /** Seconds of initial frames to discard from a webcam before capturing, so auto-exposure/white-balance has warmed up. */
 const WEBCAM_WARMUP_SECONDS = 1;
+/**
+ * The {@link SnapshotRequest.src} value that captures the synthetic ffmpeg `testsrc` pattern instead of a real camera:
+ * the same lavfi generator the WebRTC session streams when `options.videoSource=test`, so a test snapshot looks like a
+ * still frame of the test video.
+ */
+export const TEST_SNAPSHOT_SOURCE = 'test';
 /** Maximum time, in milliseconds, allowed for a single ffmpeg snapshot attempt. */
 const CAPTURE_TIMEOUT_MS = 10_000;
 /** Grace period, in milliseconds, before forcibly killing ffmpeg after a capture timeout. */
@@ -50,7 +56,7 @@ const log = new AnsiLogger({ logName: 'Snapshot', logLevel: LogLevel.DEBUG, logN
  * Request for a {@link captureSnapshot} capture.
  */
 export interface SnapshotRequest {
-  /** The camera source: an `rtsp://` url, or a local webcam device name/path. */
+  /** The camera source: an `rtsp://` url, a local webcam device name/path, or {@link TEST_SNAPSHOT_SOURCE} for the synthetic test pattern. */
   src: string;
   /** The requested capture width, in pixels. */
   width: number;
@@ -79,8 +85,8 @@ export interface SnapshotResult {
 }
 
 /**
- * Captures a single JPEG snapshot from an RTSP or webcam source via ffmpeg, retrying at increasing compression (and,
- * as a last resort, at a downgraded resolution) until the result fits within maxBytes.
+ * Captures a single JPEG snapshot from an RTSP, webcam or synthetic test-pattern source via ffmpeg, retrying at
+ * increasing compression (and, as a last resort, at a downgraded resolution) until the result fits within maxBytes.
  *
  * @param {SnapshotRequest} request - The snapshot capture request.
  * @returns {Promise<SnapshotResult>} The captured snapshot.
@@ -138,20 +144,30 @@ export async function captureSnapshot(request: SnapshotRequest): Promise<Snapsho
 }
 
 /**
- * Builds the ffmpeg input arguments for a snapshot source: RTSP when `src` is an `rtsp://` url, otherwise a local
- * webcam device, using the platform-appropriate ffmpeg input format.
+ * Builds the ffmpeg input arguments for a snapshot source: the synthetic lavfi `testsrc` pattern when `src` is
+ * {@link TEST_SNAPSHOT_SOURCE}, RTSP when `src` is an `rtsp://` url, otherwise a local webcam device, using the
+ * platform-appropriate ffmpeg input format.
+ *
+ * The test pattern is generated directly at the requested size (so the later `scale` in grab() is a no-op and the
+ * frame matches the `testsrc` the WebRTC session streams for `options.videoSource=test`); when height is -1 (the
+ * Pass 2 downgrade fallback) it's generated at lavfi's default 320x240 and `scale=WIDTH:-1` preserves that 4:3
+ * aspect, mirroring how a webcam's default mode is handled below.
  *
  * Webcam captures discard the first {@link WEBCAM_WARMUP_SECONDS} of frames via `-ss` (which, for a live/non-seekable
  * input, makes ffmpeg decode-and-drop frames until that timestamp rather than seek): grabbing the very first frame
  * off a webcam is a well-known way to get a black/garbage frame while the sensor's auto-exposure is still settling.
  *
- * @param {string} src - The camera source: an `rtsp://` url, or a local webcam device name/path.
+ * @param {string} src - The camera source: an `rtsp://` url, a local webcam device name/path, or {@link TEST_SNAPSHOT_SOURCE}.
  * @param {number} width - The requested capture width, in pixels.
  * @param {number} height - The requested capture height, in pixels, or -1 when derived from the aspect ratio (see below).
  * @returns {string[]} The ffmpeg input arguments.
  * @throws {Error} If `src` is a webcam device and webcam capture isn't supported on this platform.
  */
 function buildInputArgs(src: string, width: number, height: number): string[] {
+  if (src === TEST_SNAPSHOT_SOURCE) {
+    const size = height === -1 ? '' : `=size=${width}x${height}`;
+    return ['-f', 'lavfi', '-i', `testsrc${size}`];
+  }
   if (src.startsWith('rtsp://')) {
     return ['-rtsp_transport', 'tcp', '-i', src];
   }
@@ -178,7 +194,7 @@ function buildInputArgs(src: string, width: number, height: number): string[] {
 /**
  * Spawns ffmpeg to grab a single JPEG frame from an RTSP or webcam source at the given resolution and quality.
  *
- * @param {string} src - The camera source: an `rtsp://` url, or a local webcam device name/path.
+ * @param {string} src - The camera source: an `rtsp://` url, a local webcam device name/path, or {@link TEST_SNAPSHOT_SOURCE}.
  * @param {number} width - The requested capture width, in pixels.
  * @param {number} height - The requested capture height, in pixels, or -1 to derive it from the aspect ratio.
  * @param {number} q - The ffmpeg `-q:v` quality value (lower is higher quality, larger output).
@@ -236,7 +252,7 @@ async function grab(src: string, width: number, height: number, q: number): Prom
   });
 }
 
-// Manual test entrypoint: run with `npm run build && node dist/behaviors/snapshot.js [source]`
+// Manual test entrypoint: run with `npm run build && node dist/behaviors/snapshot.js [source]` (`test` for the synthetic test pattern)
 /* v8 ignore start -- exercised manually with a real camera and ffmpeg, not by unit tests */
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const src = process.argv[2] ?? 'Surface Camera Front';

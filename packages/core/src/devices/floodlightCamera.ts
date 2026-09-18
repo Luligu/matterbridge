@@ -26,6 +26,7 @@ import { StreamUsage } from '@matter/types';
 import type { Semtag } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import type { EndpointNumber } from '@matter/types/datatype';
 import { fireAndForget } from '@matterbridge/utils';
 
 import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
@@ -39,10 +40,10 @@ import type { CameraOptions } from './camera.js';
 
 /**
  * Options for the mandatory Camera child endpoint created by {@link FloodlightCamera}. Same fields as
- * {@link CameraOptions}, minus the endpoint-identity and power-source options that only apply to the composed
- * root endpoint.
+ * {@link CameraOptions}, minus the storage-key, endpoint-mode and power-source options that only apply to the
+ * composed root endpoint. The endpoint number and the tagList still apply to the Camera child endpoint itself.
  */
-export type FloodlightCameraCameraOptions = Omit<CameraOptions, 'id' | 'number' | 'tagList' | 'mode' | 'powerSourceType'>;
+export type FloodlightCameraCameraOptions = Omit<CameraOptions, 'id' | 'mode' | 'powerSourceType'>;
 
 /**
  * Options for the mandatory On/Off Light child endpoint created by {@link FloodlightCamera}.
@@ -53,6 +54,9 @@ export interface FloodlightCameraLightOptions {
 
   /** The tagList associated with the light, for disambiguation when more lights are added with {@link FloodlightCamera.addLight}. Default: no tags */
   tagList?: Semtag[];
+
+  /** The endpoint number of the light child endpoint. Default: the next available endpoint number */
+  number?: EndpointNumber;
 
   /** The initial state of the light. Default: false */
   onOff?: boolean;
@@ -153,9 +157,11 @@ export class FloodlightCamera extends MatterbridgeEndpoint {
         { resolution: { width: 1920, height: 1080 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
       ],
       weriftOfferOptions,
+      number: cameraNumber,
+      tagList: cameraTagList = [],
     } = cameraOptions;
 
-    const cameraChild = this.addChildDeviceType('Camera', camera, {});
+    const cameraChild = this.addChildDeviceType('Camera', camera, { number: cameraNumber, ...(cameraTagList.length > 0 ? { tagList: cameraTagList } : {}) });
     cameraChild.log.logName = 'Camera';
     if (identifyType !== Identify.IdentifyType.None) {
       cameraChild.createDefaultIdentifyClusterServer(identifyTime, identifyType);
@@ -180,16 +186,15 @@ export class FloodlightCamera extends MatterbridgeEndpoint {
     cameraChild.addRequiredClusters();
 
     /** First mandatory Light child endpoint */
-    const { name: lightName = 'Light', tagList: lightTagList = [], onOff: lightOnOff = false } = lightOptions;
-    this.addLight(lightName, lightTagList, lightOnOff);
+    const { name: lightName = 'Light', tagList: lightTagList = [], number: lightNumber, onOff: lightOnOff = false } = lightOptions;
+    this.addLight(lightName, { tagList: lightTagList, number: lightNumber, onOff: lightOnOff });
   }
 
   /**
    * Adds an On/Off Light child endpoint to the floodlight camera.
    *
    * @param {string} name - The name of the light.
-   * @param {Semtag[]} [tagList] - The tagList associated with the light, for disambiguation when the floodlight camera has more than one light. Defaults to no tags.
-   * @param {boolean} [onOff] - The initial state of the light. Defaults to false.
+   * @param {FloodlightCameraLightOptions} [options] - Optional configuration values. Missing fields use the defaults documented on {@link FloodlightCameraLightOptions}.
    *
    * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the light.
    *
@@ -198,8 +203,9 @@ export class FloodlightCamera extends MatterbridgeEndpoint {
    * type. The constructor already creates that mandatory light; call this method to add further lights, for
    * example to disambiguate multiple floodlights with a tagList.
    */
-  addLight(name: string, tagList: Semtag[] = [], onOff: boolean = false): MatterbridgeEndpoint {
-    const light = this.addChildDeviceType(name, onOffLight, tagList.length > 0 ? { tagList } : {});
+  addLight(name: string, options: FloodlightCameraLightOptions = {}): MatterbridgeEndpoint {
+    const { tagList = [], number, onOff = false } = options;
+    const light = this.addChildDeviceType(name, onOffLight, { number, ...(tagList.length > 0 ? { tagList } : {}) });
     light.log.logName = name;
     light.createDefaultIdentifyClusterServer();
     light.createDefaultOnOffClusterServer(onOff);

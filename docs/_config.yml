@@ -27,53 +27,12 @@ plugins:
 github:
   repository_url: https://github.com/Luligu/matterbridge
 
-# Include and exclude files
-include:
-  - _pages
-exclude:
-  - node_modules/
-  - package.json
-  - package-lock.json
-  - tsconfig*.json
-  - jest.config.js
-  - eslint.config.js
-  - prettier.config.js
-  - vitest.config.ts
-  - '*.test.ts'
-  - coverage/
-  - dist/
-  - src/
-  - test/
-  - frontend/
-  - heap_profile/
-  - jest/
-  - systemd/
-  - vitest/
-  - bin/
-  - docker/
-
-# Collections
-collections:
-  pages:
-    output: true
-    permalink: /:name/
-
 # Default front matter
 defaults:
   - scope:
       path: ''
-      type: 'pages'
-    values:
-      layout: 'page'
-  - scope:
-      path: ''
     values:
       layout: 'default'
-
-# SEO settings
-twitter:
-  username:
-  card: summary_large_image
 
 social:
   name: Matterbridge

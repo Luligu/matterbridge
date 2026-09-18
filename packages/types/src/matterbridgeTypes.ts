@@ -174,6 +174,8 @@ export interface StoragePlugin {
   private: boolean;
   /** Path to the latest uploaded plugin tarball or undefined if not available */
   tarballPath?: string;
+  /** The configuration version of the plugin server node basic information cluster */
+  configurationVersion: number;
 }
 
 /** Define an interface for the system information */

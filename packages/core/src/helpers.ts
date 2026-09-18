@@ -21,6 +21,10 @@
  * limitations under the License.
  */
 
+// Node.js modules
+import fs from 'node:fs';
+import path from 'node:path';
+
 // @matter module
 import { Endpoint } from '@matter/node';
 import { BindingServer } from '@matter/node/behaviors/binding';
@@ -144,4 +148,50 @@ export async function addVirtualDevices(matterbridge: Matterbridge, aggregatorEn
       await matterbridge.updateProcess();
     });
   }
+}
+
+/**
+ * Checks if the given directory is the matterbridge package root directory.
+ *
+ * @param {string} directory - The directory to check.
+ * @returns {Promise<boolean>} True when the directory contains a package.json with the name `matterbridge`, false otherwise.
+ */
+async function isMatterbridgePackageDirectory(directory: string): Promise<boolean> {
+  try {
+    const packageJson = JSON.parse(await fs.promises.readFile(path.join(directory, 'package.json'), 'utf8'));
+    return packageJson?.name === 'matterbridge';
+  } catch {
+    return false; // Not a directory, no package.json or invalid json.
+  }
+}
+
+/**
+ * Resolves the matterbridge root directory (the directory that contains the matterbridge package.json and the apps/frontend directory)
+ * starting from the directory of the running @matterbridge/core module.
+ *
+ * The install layout is probed on the file system instead of being guessed from the runtime or from a fixed number of parent levels,
+ * since the layout depends on the package manager and not on the runtime that starts the cli:
+ *
+ * - development and test: `<root>/packages/core/{src,dist}`;
+ * - bundled core: `<root>/dist`;
+ * - nested layout (npm global without hoisting): `<root>/node_modules/@matterbridge/core/dist`;
+ * - flat layout (bun global, hoisted npm/bun local install): `<prefix>/node_modules/@matterbridge/core/dist` with the matterbridge package in `<prefix>/node_modules/matterbridge`.
+ *
+ * @param {string} currentFileDirectory - The directory of the running @matterbridge/core module.
+ * @param {number} [maxLevels] - The maximum number of parent directories to probe. Defaults to 10.
+ * @returns {Promise<string | undefined>} The matterbridge root directory, or undefined when it cannot be determined.
+ */
+export async function resolveRootDirectory(currentFileDirectory: string, maxLevels = 10): Promise<string | undefined> {
+  let directory = currentFileDirectory;
+  for (let level = 0; level < maxLevels; level++) {
+    // The directory itself is the matterbridge package: development, test, bundled core and nested layout.
+    if (await isMatterbridgePackageDirectory(directory)) return directory;
+    // The directory contains the matterbridge package in its node_modules: flat layout.
+    const nodeModulesDirectory = path.join(directory, 'node_modules', 'matterbridge');
+    if (await isMatterbridgePackageDirectory(nodeModulesDirectory)) return nodeModulesDirectory;
+    const parentDirectory = path.dirname(directory);
+    if (parentDirectory === directory) break; // Reached the file system root.
+    directory = parentDirectory;
+  }
+  return undefined;
 }

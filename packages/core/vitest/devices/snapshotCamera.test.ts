@@ -134,9 +134,15 @@ describe('SnapshotCamera', () => {
       maxNetworkBandwidth: 20000,
       supportedStreamUsages: [StreamUsage.Recording, StreamUsage.LiveView],
       streamUsagePriorities: [StreamUsage.LiveView, StreamUsage.Recording],
+      snapshotSource: 'webcam',
+      snapshotSourceDevice: '/dev/video0',
     });
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
+    // The device installs the Snapshot-only derivation, so the state must be addressed through that same feature set.
+    const snapshotServer = MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Snapshot);
+    expect(device.stateOf(snapshotServer).snapshotSource).toBe('webcam');
+    expect(device.stateOf(snapshotServer).snapshotSourceDevice).toBe('/dev/video0');
     expect(device.getAttribute(CameraAvStreamManagement, 'maxConcurrentEncoders')).toBe(2);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxEncodedPixelRate')).toBe(20000000);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(2048);

@@ -666,6 +666,7 @@ export class MatterbridgePlatform {
           device.productLabel === 'Matter Endpoint' ? 'Matter Bridged Endpoint' : device.productLabel,
           device.productUrl,
           device.configurationVersion,
+          device.productId,
         );
       }
     }

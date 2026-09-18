@@ -151,7 +151,7 @@ describe('AudioDoorbell', () => {
   });
 
   it('should create an audio doorbell device with custom werift offer options', async () => {
-    const weriftOfferOptions: WeriftOfferOptions = { video: false, audio: true, videoSource: 'none', audioSource: 'test' };
+    const weriftOfferOptions: WeriftOfferOptions = { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' };
     const device = new AudioDoorbell('Audio Doorbell Werift', 'AUDIO-DOORBELL-WERIFT', { weriftOfferOptions });
 
     expect(await addDevice(aggregator, device)).toBeTruthy();

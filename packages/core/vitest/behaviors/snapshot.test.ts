@@ -12,7 +12,7 @@ import { EventEmitter } from 'node:events';
 import { setupTest } from '@matterbridge/vitest-utils';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
-import { captureSnapshot } from '../../src/behaviors/snapshot.js';
+import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from '../../src/behaviors/snapshot.js';
 
 await setupTest(NAME);
 
@@ -162,6 +162,32 @@ describe('captureSnapshot', () => {
     } finally {
       Object.defineProperty(process, 'platform', { value: originalPlatform });
     }
+  });
+
+  it('should generate the synthetic test pattern at the requested size without webcam warm-up', async () => {
+    vi.mocked(runFfmpeg).mockImplementation(() => createFfmpegProcess(Buffer.alloc(100)));
+
+    const result = await captureSnapshot({ src: TEST_SNAPSHOT_SOURCE, width: 1280, height: 720 });
+
+    expect(result).toMatchObject({ width: 1280, height: 720, quality: 6, downgraded: false });
+    const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0];
+    if (!args) throw new Error('ffmpeg was not called');
+    const inputIndex = args.indexOf('-f');
+    expect(args.slice(inputIndex, inputIndex + 4)).toEqual(['-f', 'lavfi', '-i', 'testsrc=size=1280x720']);
+    expect(args).not.toContain('-ss');
+    expect(args).toContain('scale=1280:720');
+  });
+
+  it('should generate the test pattern at the default lavfi size during the fallback pass', async () => {
+    vi.mocked(runFfmpeg).mockImplementation(() => createFfmpegProcess(Buffer.alloc(101)));
+    for (let i = 0; i < 6; i++) vi.mocked(runFfmpeg).mockImplementationOnce(() => createFfmpegProcess(Buffer.alloc(101)));
+    vi.mocked(runFfmpeg).mockImplementationOnce(() => createFfmpegProcess(Buffer.alloc(100)));
+
+    const result = await captureSnapshot({ src: TEST_SNAPSHOT_SOURCE, width: 1920, height: 1080, maxBytes: 100 });
+
+    expect(result).toMatchObject({ width: 640, height: -1, downgraded: true });
+    expect(runFfmpeg).toHaveBeenCalledTimes(7);
+    expect(runFfmpeg).toHaveBeenLastCalledWith(expect.arrayContaining(['-f', 'lavfi', '-i', 'testsrc', 'scale=640:-1']));
   });
 
   it('should reject webcam capture on an unsupported platform', async () => {

@@ -3,7 +3,7 @@
  * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
  * @author Luca Liguori
  * @created 2026-08-17
- * @version 1.5.0
+ * @version 1.6.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -47,6 +47,7 @@ import { AirQuality } from '@matter/types/clusters/air-quality';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FanControl } from '@matter/types/clusters/fan-control';
+import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
@@ -58,18 +59,25 @@ import type { PlatformConfig, PlatformSchema } from '@matterbridge/types';
 import { getErrorMessage } from '@matterbridge/utils/error';
 
 import { AirConditioner } from './devices/airConditioner.js';
+import { AudioDoorbell } from './devices/audioDoorbell.js';
 import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
 import { BatteryStorage } from './devices/batteryStorage.js';
+import { Camera } from './devices/camera.js';
+import { CameraController } from './devices/cameraController.js';
 import { CastingVideoClient } from './devices/castingVideoClient.js';
 import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
+import { Chime } from './devices/chime.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
 import { Cooktop } from './devices/cooktop.js';
 import { Dishwasher } from './devices/dishwasher.js';
+import { Doorbell } from './devices/doorbell.js';
 import { ElectricalUtilityMeter } from './devices/electricalUtilityMeter.js';
 import { Evse } from './devices/evse.js';
 import { ExtractorHood } from './devices/extractorHood.js';
+import { FloodlightCamera } from './devices/floodlightCamera.js';
 import { HeatPump } from './devices/heatPump.js';
+import { Intercom } from './devices/intercom.js';
 import { IrrigationSystem } from './devices/irrigationSystem.js';
 import { LaundryDryer } from './devices/laundryDryer.js';
 import { LaundryWasher } from './devices/laundryWasher.js';
@@ -77,8 +85,10 @@ import { MicrowaveOven } from './devices/microwaveOven.js';
 import { Oven } from './devices/oven.js';
 import { Refrigerator } from './devices/refrigerator.js';
 import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
+import { SnapshotCamera } from './devices/snapshotCamera.js';
 import { SolarPower } from './devices/solarPower.js';
 import { Speaker } from './devices/speaker.js';
+import { VideoDoorbell } from './devices/videoDoorbell.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
 import { WaterHeater } from './devices/waterHeater.js';
 import type { Matterbridge } from './matterbridge.js';
@@ -143,6 +153,16 @@ const demoPluginSchema: PlatformSchema = {
   },
 };
 
+let demoPluginConfig: PlatformConfig = {
+  name: demoPluginName,
+  type: demoPluginType,
+  version: demoPluginVersion,
+  debug: false,
+  unregisterOnShutdown: false,
+  whiteList: [],
+  blackList: [],
+};
+
 export async function createDemoDevices(matterbridge: Matterbridge): Promise<void> {
   if (matterbridge.bridgeMode !== 'bridge') {
     matterbridge.log.error('Demo devices can only be created in bridge mode');
@@ -156,21 +176,11 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   }
   const configFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.config.json`);
   const schemaFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.schema.json`);
-  const defaultConfig: PlatformConfig = {
-    name: demoPluginName,
-    type: demoPluginType,
-    version: demoPluginVersion,
-    debug: false,
-    unregisterOnShutdown: false,
-    whiteList: [],
-    blackList: [],
-  };
-  let config = defaultConfig;
   try {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const storedConfig = JSON.parse(await readFile(configFile, 'utf8')) as PlatformConfig;
-    config = {
-      ...defaultConfig,
+    demoPluginConfig = {
+      ...demoPluginConfig,
       ...storedConfig,
       name: demoPluginName,
       type: demoPluginType,
@@ -183,7 +193,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') matterbridge.log.error(`Failed to read demo devices config ${configFile}: ${getErrorMessage(error)}`);
   }
   try {
-    await writeFile(configFile, JSON.stringify(config, null, 2), 'utf8');
+    await writeFile(configFile, JSON.stringify(demoPluginConfig, null, 2), 'utf8');
     await writeFile(schemaFile, JSON.stringify(demoPluginSchema, null, 2), 'utf8');
   } catch (error) {
     matterbridge.log.error(`Failed to write demo devices config or schema: ${getErrorMessage(error)}`);
@@ -198,8 +208,9 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     author: 'https://github.com/Luligu',
     enabled: false,
     private: true,
+    configurationVersion: 1,
     registeredDevices: 0,
-    configJson: config,
+    configJson: demoPluginConfig,
     schemaJson: demoPluginSchema,
     hasWhiteList: true,
     hasBlackList: true,
@@ -207,9 +218,9 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const whiteList = config.whiteList as string[];
+    const whiteList = demoPluginConfig.whiteList as string[];
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const blackList = config.blackList as string[];
+    const blackList = demoPluginConfig.blackList as string[];
     if (blackList.includes(deviceName)) {
       matterbridge.log.info(`Skipping demo device ${deviceName} because it is in the blacklist`);
       return;
@@ -363,36 +374,51 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultPowerSourceWiredClusterServer();
   await registerDevice(ep, 'Pump Controller', 'SWITCH-06-05');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06) });
+  // A single (non-composed) Generic Switch carrying the full-featured momentary switch: MomentarySwitch,
+  // MomentarySwitchRelease, MomentarySwitchLongPress and MomentarySwitchMultiPress, i.e. the feature set the
+  // Single/Double/Long event sequences of triggerSwitchEvent() need.
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'MomentarySwitch', number: EndpointNumber(6_06) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultSwitchClusterServer();
+  await registerDevice(ep, 'Momentary Switch', 'SWITCH-06-06');
+
+  // A single (non-composed) Generic Switch carrying the LatchingSwitch feature instead.
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('GenericSwitch')!, bridgedNode, powerSource], { id: 'LatchingSwitch', number: EndpointNumber(6_06_1) });
+  ep.createDefaultPowerSourceBatteryClusterServer();
+  ep.createDefaultLatchingSwitchClusterServer();
+  await registerDevice(ep, 'Latching Switch', 'SWITCH-06-06-1');
+
+  // A composed Generic Switch: an aggregator parent with one child endpoint per button.
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Aggregator')!, bridgedNode, powerSource], { id: 'GenericSwitch', number: EndpointNumber(6_06_2) });
   ep.createDefaultPowerSourceBatteryClusterServer();
   await ep.addFixedLabel('composed', 'GenericSwitch');
   // Each button combines a Switches-domain function tag with a Common Number position tag, per the Generic
   // Switch device type section's guidance on applying tags from multiple namespaces (Matter spec § 21).
   ep.addChildDeviceType('Button1', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_1),
+    number: EndpointNumber(6_06_3),
     tagList: [getSemtag(SwitchesTag.On), getSemtag(CommonNumberTag.One)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
   ep.addChildDeviceType('Button2', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_2),
+    number: EndpointNumber(6_06_4),
     tagList: [getSemtag(SwitchesTag.Off), getSemtag(CommonNumberTag.Two)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
   ep.addChildDeviceType('Button3', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_3),
+    number: EndpointNumber(6_06_5),
     tagList: [getSemtag(SwitchesTag.Up), getSemtag(CommonNumberTag.Three)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
   ep.addChildDeviceType('Button4', getSupportedDeviceType('GenericSwitch')!, {
-    number: EndpointNumber(6_06_4),
+    number: EndpointNumber(6_06_6),
     tagList: [getSemtag(SwitchesTag.Down), getSemtag(CommonNumberTag.Four)],
   })
     .createDefaultMomentarySwitchClusterServer()
     .addRequiredClusters();
-  await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06');
+  await registerDevice(ep, 'Generic Switch', 'SWITCH-06-06-2');
 
   // Chapter 7 - Sensor Devices
 
@@ -1040,5 +1066,112 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     tagList: [getSemtag(ElectricalMeasurementTag.Ac), getSemtag(PowerSourceTag.Ev), getSemtag(CommodityTariffFlowTag.Import), getSemtag(CommodityTariffChronologyTag.Upcoming)],
   });
   await registerDevice(electricalUtilityMeterEvEndpoint, 'Electrical Utility Meter Ev', 'ENERGY-14-10');
+
+  // Chapter 16 - Camera Device Types
+  //
+  // FloodlightCamera and VideoDoorbell are composed devices: their mandatory child endpoints are created by the
+  // device class, which takes their endpoint numbers from cameraOptions/lightOptions and cameraOptions/doorbellOptions.
+  // CameraController hosts the required WebRtcTransportRequestor server cluster and the required
+  // WebRtcTransportProvider client cluster.
+  //
+  // Chapter 16 has only two options activating an optional cluster: ptz, which adds Camera AV Settings User Level
+  // Management to a Camera endpoint, and identifyType, which adds Identify where it is optional (Camera, Intercom,
+  // Snapshot Camera and Chime; on the Doorbell, Audio Doorbell and Video Doorbell's doorbell child Identify is
+  // mandatory and always created). Camera on endpoint 1601 is kept with the plain defaults, and the other endpoints
+  // activate them.
+
+  ep = new Camera('Camera', 'CAMERA-16-01', {
+    id: 'Camera',
+    number: EndpointNumber(16_01),
+    weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
+  });
+  await registerDevice(ep, 'Camera', 'CAMERA-16-01');
+
+  ep = new Camera('Camera Ptz', 'CAMERA-16-01-1', {
+    id: 'CameraPtz',
+    number: EndpointNumber(16_01_1),
+    ptz: true,
+    identifyType: Identify.IdentifyType.VisibleIndicator,
+    weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
+  });
+  await registerDevice(ep, 'Camera Ptz', 'CAMERA-16-01-1');
+
+  ep = new FloodlightCamera('Floodlight Camera', 'CAMERA-16-02', {
+    id: 'FloodlightCamera',
+    number: EndpointNumber(16_02),
+    cameraOptions: {
+      number: EndpointNumber(16_02_1),
+      ptz: true,
+      identifyType: Identify.IdentifyType.VisibleIndicator,
+      weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
+    },
+    lightOptions: { number: EndpointNumber(16_02_2) },
+  });
+  await registerDevice(ep, 'Floodlight Camera', 'CAMERA-16-02');
+
+  ep = new VideoDoorbell('Video Doorbell', 'CAMERA-16-03', {
+    id: 'VideoDoorbell',
+    number: EndpointNumber(16_03),
+    cameraOptions: {
+      number: EndpointNumber(16_03_1),
+      ptz: true,
+      identifyType: Identify.IdentifyType.VisibleIndicator,
+      weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'test', audioSource: 'test' },
+    },
+    doorbellOptions: { number: EndpointNumber(16_03_2) },
+  });
+  await registerDevice(ep, 'Video Doorbell', 'CAMERA-16-03');
+
+  // Two Intercom endpoints are registered so a controller can bind them to each other: an Intercom both hosts and
+  // invokes WebRtcTransportProvider/WebRtcTransportRequestor, so a peer intercom is needed on the other side of the
+  // binding for a two-way call.
+  ep = new Intercom('Intercom I', 'CAMERA-16-04', {
+    id: 'Intercom',
+    number: EndpointNumber(16_04),
+    identifyType: Identify.IdentifyType.VisibleIndicator,
+    // Audio-only device type: no video transceiver is offered, and the audio track carries the synthetic test tone.
+    weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
+  });
+  await registerDevice(ep, 'Intercom I', 'CAMERA-16-04');
+
+  ep = new Intercom('Intercom II', 'CAMERA-16-04-1', {
+    id: 'IntercomII',
+    number: EndpointNumber(16_04_1),
+    identifyType: Identify.IdentifyType.VisibleIndicator,
+    weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
+  });
+  await registerDevice(ep, 'Intercom II', 'CAMERA-16-04-1');
+
+  ep = new AudioDoorbell('Audio Doorbell', 'CAMERA-16-05', {
+    id: 'AudioDoorbell',
+    number: EndpointNumber(16_05),
+    weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
+  });
+  await registerDevice(ep, 'Audio Doorbell', 'CAMERA-16-05');
+
+  ep = new SnapshotCamera('Snapshot Camera', 'CAMERA-16-06', {
+    id: 'SnapshotCamera',
+    number: EndpointNumber(16_06),
+    identifyType: Identify.IdentifyType.VisibleIndicator,
+    snapshotSource: 'test',
+  });
+  await registerDevice(ep, 'Snapshot Camera', 'CAMERA-16-06');
+
+  ep = new Chime('Chime', 'CAMERA-16-07', {
+    id: 'Chime',
+    number: EndpointNumber(16_07),
+    identifyType: Identify.IdentifyType.AudibleBeep,
+    installedChimeSounds: [
+      { chimeId: 0, name: 'Default Chime' },
+      { chimeId: 1, name: 'Westminster' },
+    ],
+  });
+  await registerDevice(ep, 'Chime', 'CAMERA-16-07');
+
+  ep = new CameraController('Camera Controller', 'CAMERA-16-08', { id: 'CameraController', number: EndpointNumber(16_08) });
+  await registerDevice(ep, 'Camera Controller', 'CAMERA-16-08');
+
+  ep = new Doorbell('Doorbell', 'CAMERA-16-09', { id: 'Doorbell', number: EndpointNumber(16_09) });
+  await registerDevice(ep, 'Doorbell', 'CAMERA-16-09');
 }
 // v8 ignore end

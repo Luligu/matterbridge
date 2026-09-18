@@ -209,6 +209,7 @@ from matter.testing.global_attribute_ids import (AttributeIdType, ClusterIdType,
                                                  attribute_id_type, cluster_id_type, command_id_type)
 from matter.testing.problem_notices import AttributePathLocation, ClusterPathLocation, CommandPathLocation, UnknownProblemLocation
 from matter.testing.runner import TestStep, default_matter_test_main
+from matter.testing.spec_parsing import build_xml_namespaces
 from matter.testing.taglist_and_topology_test import (create_device_type_list_for_root, create_device_type_lists,
                                                       find_tag_list_problems, find_tree_roots, flat_list_ok,
                                                       get_direct_children_of_root, parts_list_problems, separate_endpoint_types)
@@ -1068,31 +1069,14 @@ class TC_DeviceBasicComposition(BasicCompositionTests):
         ROOT_NODE_DEVICE_TYPE = 0x0016
         SECONDARY_NETWORK_INTERFACE_DEVICE_TYPE = 0x0019
 
-        COMMON_AREA_NAMESPACE_ID = 0x10
-        COMMON_CLOSURE_NAMESPACE_NAMESPACE_ID = 0x01
-        COMMON_COMPASS_DIRECTION_NAMESPACE_ID = 0x02
-        COMMON_COMPASS_LOCATION_NAMESPACE_ID = 0x03
-        COMMON_DIRECTION_NAMESPACE_ID = 0x04
-        COMMON_LANDMARK_NAMESPACE_ID = 0x11
-        COMMON_LEVEL_NAMESPACE_ID = 0x05
-        COMMON_LOCATION_NAMESPACE_ID = 0x06
-        COMMON_NUMBERNAME_SPACE_ID = 0x07
-        COMMON_POSITION_NAMESPACE_ID = 0x08
-        COMMON_RELATIVE_POSITION_ID = 0x12
-        ELECTRICAL_MEASUREMENT_NAMESPACE_ID = 0x0A
-        LAUNDRY_NAMESPACE_ID = 0x0E
-        POWER_SOURCE_NAMESPACE_ID = 0x0F
-        REFRIGERATOR_NAMESPACE_ID = 0x41
-        ROOM_AIRCONDITIONER_NAMESPACE_ID = 0x42
-        SWITCHES_NAMESPACE_ID = 0x43
-        CLOSURE_NAMESPACE_ID = 0x44
-        CLOSURE_PANEL_NAMESPACE_ID = 0x45
-        CLOSURE_COVERING_NAMESPACE_ID = 0x46
-        CLOSURE_WINDOW_NAMESPACE_ID = 0x47
-        CLOSURE_CABINET_NAMESPACE_ID = 0x48
-        COMMODITY_TARIFF_CHRONOLOGY_NAMESPACE_ID = 0x0B
-        COMMODITY_TARIFF_COMMODITY_NAMESPACE_ID = 0x0D
-        COMMODITY_TARIFF_FLOW_NAMESPACE_ID = 0x13
+        # Namespace IDs accepted for non-manufacturer-specific TagList entries come from the bundled data
+        # model's namespaces/*.xml, not a hand-coded whitelist, so namespaces added by a later spec revision
+        # are picked up automatically. This mirrors the upstream master fix (PR #73481); it is kept as a patch
+        # only because master reads self.xml_namespaces, which BasicCompositionTests does not populate in the
+        # v1.6-branch SDK this image is built from. The getattr below uses it as soon as it does exist.
+        xml_namespaces = getattr(self, 'xml_namespaces', None)
+        if xml_namespaces is None:
+            xml_namespaces, _ = build_xml_namespaces(self._get_dm())
 
         END_POINT_UNIQUE_ID_LENGTH_BYTES = 32
 
@@ -1250,31 +1234,7 @@ class TC_DeviceBasicComposition(BasicCompositionTests):
                     endpoint_id=endpoint_id))
 
                 if isinstance(tag_struct.mfgCode, Nullable):
-                    if tag_struct.namespaceID not in [COMMON_CLOSURE_NAMESPACE_NAMESPACE_ID,
-                                                      COMMON_COMPASS_DIRECTION_NAMESPACE_ID,
-                                                      COMMON_COMPASS_LOCATION_NAMESPACE_ID,
-                                                      COMMON_DIRECTION_NAMESPACE_ID,
-                                                      COMMON_LEVEL_NAMESPACE_ID,
-                                                      COMMON_LOCATION_NAMESPACE_ID,
-                                                      COMMON_NUMBERNAME_SPACE_ID,
-                                                      COMMON_POSITION_NAMESPACE_ID,
-                                                      ELECTRICAL_MEASUREMENT_NAMESPACE_ID,
-                                                      LAUNDRY_NAMESPACE_ID,
-                                                      POWER_SOURCE_NAMESPACE_ID,
-                                                      COMMON_AREA_NAMESPACE_ID,
-                                                      COMMON_LANDMARK_NAMESPACE_ID,
-                                                      COMMON_RELATIVE_POSITION_ID,
-                                                      REFRIGERATOR_NAMESPACE_ID,
-                                                      ROOM_AIRCONDITIONER_NAMESPACE_ID,
-                                                      SWITCHES_NAMESPACE_ID,
-                                                      CLOSURE_NAMESPACE_ID,
-                                                      CLOSURE_PANEL_NAMESPACE_ID,
-                                                      CLOSURE_COVERING_NAMESPACE_ID,
-                                                      CLOSURE_WINDOW_NAMESPACE_ID,
-                                                      CLOSURE_CABINET_NAMESPACE_ID,
-                                                      COMMODITY_TARIFF_CHRONOLOGY_NAMESPACE_ID,
-                                                      COMMODITY_TARIFF_COMMODITY_NAMESPACE_ID,
-                                                      COMMODITY_TARIFF_FLOW_NAMESPACE_ID]:
+                    if tag_struct.namespaceID not in xml_namespaces:
                         self.fail_current_test("Non manufacturer specific tag is not a tag from namespace defined in spec")
                 else:
 

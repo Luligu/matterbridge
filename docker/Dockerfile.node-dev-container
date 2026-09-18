@@ -1,4 +1,4 @@
-# docker/Dockerfile.node-dev-container v.2.0.1
+# docker/Dockerfile.node-dev-container v.2.2.0
 
 # This Dockerfile is used to build a development container for Node.js applications.
 # It is based on the official Node.js Docker image and includes additional tools and configurations for a better development experience.
@@ -56,6 +56,10 @@ RUN apt-get update \
   && echo "node ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/node \
   && chmod 0440 /etc/sudoers.d/node \
   && rm -rf /var/lib/apt/lists/*
+
+# Copy Dev Container lifecycle scripts
+COPY docker/devcontainer/*.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/install-matterbridge.sh /usr/local/bin/post-create.sh /usr/local/bin/post-start.sh
 
 USER node
 WORKDIR /home/node

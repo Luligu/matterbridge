@@ -190,6 +190,11 @@ Matterbridge exports from:
 
 - All single device classes like the Rvc, LaundryWasher, etc...
 
+**"matterbridge/devices/camera"**
+
+- All the Chapter 16 Camera device classes like the Camera, VideoDoorbell, etc... They are exported from a separate
+  path to keep the WebRTC stack (werift) off the import path of "matterbridge/devices".
+
 **"matterbridge/clusters"**
 
 - All clusters not present in matter.js or modified. It can be empty.

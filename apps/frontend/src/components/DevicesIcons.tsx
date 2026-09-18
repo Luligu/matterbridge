@@ -588,7 +588,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
       ))}
       {/* CameraController */}
       {deviceType===0x0147 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (
-        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<VideocamIcon/>} cluster={cluster} value={'Cam ctrl'}/>
+        <Render key={`${cluster.clusterId}-${cluster.attributeId}`} icon={<VideocamIcon/>} cluster={cluster} value={'Controller'}/>
       ))}
       {/* Chime */}
       {deviceType===0x0146 && clusters.filter(cluster => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'clusterRevision').map(cluster => (

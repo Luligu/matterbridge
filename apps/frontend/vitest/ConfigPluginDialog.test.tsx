@@ -30,6 +30,7 @@ describe('ConfigPluginDialog', () => {
     path: '/tmp/matterbridge-test',
     type: 'DynamicPlatform',
     version: '1.0.0',
+    configurationVersion: 1,
     description: 'Test plugin',
     author: 'Test Author',
     enabled: true,

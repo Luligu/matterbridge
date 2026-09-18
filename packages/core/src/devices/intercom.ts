@@ -102,7 +102,7 @@ export class Intercom extends MatterbridgeEndpoint {
    *  - microphoneCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
    *  - speakerCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
    *  - twoWayTalkSupport: CameraAvStreamManagement.TwoWayTalkSupportType.FullDuplex
-   *  - weriftOfferOptions: { video: true, audio: true, videoSource: 'none', audioSource: 'none' }
+   *  - weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' }
    *
    * @returns {Intercom} The Intercom instance.
    */

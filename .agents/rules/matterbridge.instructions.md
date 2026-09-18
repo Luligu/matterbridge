@@ -1,5 +1,5 @@
 ---
-description: 'How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package v.1.0.2'
+description: 'How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package v.1.0.3'
 ---
 
 # Matterbridge Endpoint Guide
@@ -10,6 +10,7 @@ Use this guide when writing Matterbridge code in this repository or when authori
 
 - Import core classes, endpoint helpers, and device type definitions from `matterbridge`.
 - Import single-class devices from `matterbridge/devices`.
+- Import the Chapter 16 Camera device classes from `matterbridge/devices/camera`.
 
 ```ts
 import {
@@ -233,7 +234,7 @@ Use a single-class device when:
 
 ## Single-class devices
 
-Single-class devices are exported from `matterbridge/devices`.
+Single-class devices are exported from `matterbridge/devices`, except the Chapter 16 Camera device classes, which are exported from `matterbridge/devices/camera` so that the WebRTC stack (werift) stays off the import path of `matterbridge/devices`.
 
 These classes already extend `MatterbridgeEndpoint` and usually do all of the following internally:
 
@@ -249,6 +250,7 @@ Current exported single-class devices:
 - Robotic: `RoboticVacuumCleaner`
 - Appliances: `AirConditioner`, `Cooktop`, `Dishwasher`, `ExtractorHood`, `LaundryDryer`, `LaundryWasher`, `MicrowaveOven`, `Oven`, `Refrigerator`
 - Energy: `BatteryStorage`, `Evse`, `HeatPump`, `SolarPower`, `WaterHeater`
+- Camera (from `matterbridge/devices/camera`): `AudioDoorbell`, `Camera`, `CameraController`, `Chime`, `Doorbell`, `FloodlightCamera`, `Intercom`, `SnapshotCamera`, `VideoDoorbell`
 
 ### Basic single-class example
 
@@ -323,5 +325,6 @@ For most plugins, follow this order:
 
 - Need a custom sensor, switch, or actuator with a few clusters: use `MatterbridgeEndpoint`.
 - Need a supported appliance, robotic, media, energy, closure, irrigation, or soil device: start with `matterbridge/devices`.
+- Need a camera, doorbell, intercom, or chime device: start with `matterbridge/devices/camera`.
 - Need one standalone accessory with its own server node: use `mode: 'server'` or a single-class device that exposes it.
 - Need multiple bridged devices in a plugin: use `MatterbridgeDynamicPlatform`.

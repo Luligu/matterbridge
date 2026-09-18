@@ -5,7 +5,16 @@
     "*.smokeCoAlarm.*",
     "*.DimmableLight.levelControl.*",
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
-    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode"
+    "*.RoboticVacuumCleaner.rvcCleanMode.currentMode",
+    "*.Chime.chime.*",
+    "*.switch.currentPosition",
+    "*.cameraAvStreamManagement.allocatedVideoStreams",
+    "*.cameraAvStreamManagement.allocatedAudioStreams",
+    "*.cameraAvStreamManagement.allocatedSnapshotStreams",
+    "*.cameraAvStreamManagement.streamUsagePriorities",
+    "*.cameraAvSettingsUserLevelManagement.dptzStreams",
+    "*.cameraAvSettingsUserLevelManagement.mptzPresets",
+    "*.cameraAvSettingsUserLevelManagement.mptzPosition"
   ],
   "patches": [
     "TC_DeviceBasicComposition.py",
@@ -27,7 +36,9 @@
     "Test_TC_DRYERCTRL_2_1.yaml",
     "TC_MWOCTRL_2_2.py",
     "Test_TC_EEVSE_2_1.yaml",
-    "TC_EEVSE_2_2.py"
+    "TC_EEVSE_2_2.py",
+    "TC_AVSUM_2_7.py",
+    "TC_WEBRTCP_2_16.py"
   ],
   "tests": [
     {
@@ -59,7 +70,7 @@
       "name": "BasicInformation attributes with node-as-subject on RootNode",
       "test": "TC_BINFO_2_2.py",
       "endpoint": 0,
-      "args": ["--PICS /root/matterbridge.pics"]
+      "args": ["--PICS /root/matterbridge.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"]
     },
     {
       "name": "BasicInformation ProductAppearance on RootNode",
@@ -151,7 +162,8 @@
     {
       "name": "AccessControl multi-fabric ACL/Extension write with server-as-subject",
       "test": "TC_ACL_2_10.py",
-      "endpoint": 0
+      "endpoint": 0,
+      "args": ["--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"]
     },
     {
       "name": "AccessControl Managed Device feature (ARL) on RootNode",
@@ -266,7 +278,7 @@
       "test": "TC_OPCREDS_3_8.py",
       "endpoint": 0,
       "skip": true,
-      "comment": "Fails at import time: ModuleNotFoundError: No module named 'nest_asyncio' — missing Python dependency in this image, unrelated to Matterbridge."
+      "comment": "Requires a single-fabric DUT: step 0 asserts exactly one entry in TrustedRootCertificates (TH1's), but this image is commissioned on two fabrics by design (chip-tool's alpha and the Python framework's default_controller), so it fails with 'Expecting exactly one root from TrustedRootCertificates (TH1's), got 2'. Unrelated to Matterbridge. The nest_asyncio dependency it imports is now kept in the image (see docker/Dockerfile.chip-test)."
     },
     {
       "name": "GeneralCommissioning attributes on RootNode",
@@ -1881,7 +1893,7 @@
       "endpoint": 401,
       "args": ["--PICS /root/on-off.pics"],
       "skip": true,
-      "comment": "Requires 6 real DUT reboots."
+      "comment": "Requires 6 real DUT reboots, and the restart-flag monitor cannot serve them: --restart-flag-file is a Python matter_testing facility, while this YAML test reboots either via SystemCommands.Reboot (PICS_SDK_CI_ONLY, which only restarts an app chip-tool itself spawned) or a LogCommands.UserPrompt on stdin (PICS_SKIP_SAMPLE_APP). Answering that prompt with canned input would fake the reboot, not perform one. It would fail anyway for the same reason as TC_CC_6_5: matter.js skips the StartUpOnOff/StartUpCurrentLevel/StartUpColorTemperatureMireds startup logic on any endpoint under an aggregator. Verified directly against endpoint 401 — with StartUpOnOff=1 and OnOff=false, a real reboot left OnOff false."
     },
     {
       "name": "OnOff scenes management interaction on OnOffLight",
@@ -2114,9 +2126,8 @@
       "test": "TC_CC_6_5.py",
       "endpoint": 403,
       "note": "Exercises CT: StartUpColorTemperatureMireds (A4010) applied to ColorTemperatureMireds on restart.",
-      "args": ["--PICS /root/color-control-ct.pics"],
-      "skip": true,
-      "comment": "Requires a real DUT reboot."
+      "args": ["--PICS /root/color-control-ct.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "comment": "Reboots the DUT via createChipTestRestartFlag(). matter.js skips StartUpColorTemperatureMireds on aggregator-owned endpoints (PR #3048), which has no basis in the spec, so MatterbridgeColorControlServer.initialize() re-applies it."
     },
     {
       "name": "ColorControl Enhanced MoveToHue functionality on ExtendedColorLightEnhancedEHSXYCT",
@@ -2326,6 +2337,92 @@
       "endpoint": 507,
       "note": "CountdownTime is always null on this endpoint (createDefaultOperationalStateClusterServer() never updates it), so every CountdownTime-report assertion self-skips; only the plain Start/Pause transitions are exercised.",
       "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "Switch attributes on Momentary Switch",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics"]
+    },
+    {
+      "name": "Switch momentary switch functionality on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
+    },
+    {
+      "name": "Switch momentary switch long press on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
+    },
+    {
+      "name": "Switch momentary switch multi press on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_5"]
+    },
+    {
+      "name": "Switch action switch multi press on Momentary Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_6"],
+      "skip": true,
+      "comment": "Gated on has_feature(Switch, kMomentarySwitchMultiPress) AND has_feature(Switch, kActionSwitch), both probed live on the DUT. Matterbridge never enables the ActionSwitch feature, so it always skips."
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Momentary Switch",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 606,
+      "args": ["--PICS /root/generic-switch-momentary.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
+    },
+    {
+      "name": "Switch attributes on Latching Switch",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 6061,
+      "args": ["--PICS /root/generic-switch-latching.pics"]
+    },
+    {
+      "name": "Switch latching switch functionality on Latching Switch",
+      "test": "TC_SWTCH.py",
+      "endpoint": 6061,
+      "args": ["--PICS /root/generic-switch-latching.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_2"]
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Latching Switch",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 6061,
+      "args": ["--PICS /root/generic-switch-latching.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
+    },
+    {
+      "name": "Switch attributes on Generic Switch Button1",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics"]
+    },
+    {
+      "name": "Switch momentary switch functionality on Generic Switch Button1",
+      "test": "TC_SWTCH.py",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
+    },
+    {
+      "name": "Switch momentary switch long press on Generic Switch Button1",
+      "test": "TC_SWTCH.py",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Generic Switch Button1",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 6063,
+      "args": ["--PICS /root/generic-switch-single.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
     },
     {
       "name": "RvcRunMode attributes on RoboticVacuumCleaner",
@@ -3032,6 +3129,483 @@
       "test": "TC_SETRF_3_1.py",
       "endpoint": 14092,
       "args": ["--PICS /root/commodity-tariff.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "CameraAvStreamManagement attributes on Camera",
+      "test": "TC_AVSM_2_1.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream allocation on Camera",
+      "test": "TC_AVSM_2_2.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream modification on Camera",
+      "test": "TC_AVSM_2_3.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream deallocation on Camera",
+      "test": "TC_AVSM_2_4.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement audio stream allocation on Camera",
+      "test": "TC_AVSM_2_5.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement audio stream deallocation on Camera",
+      "test": "TC_AVSM_2_6.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video stream allocation on Camera",
+      "test": "TC_AVSM_2_7.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--int-arg minFrameRate:20"],
+      "comment": "Use minFrameRate 20 so the resource-exhaustion check requests at most 55 fps, within the camera's advertised 60 fps maximum. The default 30 produces a 65 fps request and correctly receives DynamicConstraintError instead of ResourceExhausted."
+    },
+    {
+      "name": "CameraAvStreamManagement video stream modification on Camera",
+      "test": "TC_AVSM_2_8.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video stream deallocation on Camera",
+      "test": "TC_AVSM_2_9.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement CaptureSnapshot on Camera",
+      "test": "TC_AVSM_2_10.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement SetStreamPriorities on Camera",
+      "test": "TC_AVSM_2_11.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement writable attributes on Camera",
+      "test": "TC_AVSM_2_12.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video stream allocation reuse on Camera",
+      "test": "TC_AVSM_2_13.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement audio stream allocation reuse on Camera",
+      "test": "TC_AVSM_2_14.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream allocation reuse on Camera",
+      "test": "TC_AVSM_2_15.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement stream reference counts on Camera",
+      "test": "TC_AVSM_2_16.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "CameraAvStreamManagement soft privacy and livestream handling on Camera",
+      "test": "TC_AVSM_2_17.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "CameraAvStreamManagement allocated video stream persistence on Camera",
+      "test": "TC_AVSM_2_18.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement allocated audio stream persistence on Camera",
+      "test": "TC_AVSM_2_19.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement allocated snapshot stream persistence on Camera",
+      "test": "TC_AVSM_2_20.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement stream usage priority persistence on Camera",
+      "test": "TC_AVSM_2_21.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true,
+      "comment": "Reboots the DUT mid-test via request_device_reboot(). The restart flag is served by createChipTestRestartFlag() in chipTests.ts, which restarts Matterbridge in-process (restartProcess(), the /api/restart path) and clears the flag once the root server node is back online."
+    },
+    {
+      "name": "CameraAvStreamManagement snapshot stream reuse with intersecting parameter ranges on Camera",
+      "test": "TC_AVSM_StreamReuseRangeParams.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"]
+    },
+    {
+      "name": "CameraAvStreamManagement video streams persistence on Camera",
+      "test": "TC_AVSM_VideoStreamsPersistence.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/camera-av-stream-management.pics"],
+      "skip": true,
+      "comment": "Steps 12/14 simulate a reboot by sending FaultInjection.FailAtFault (manufacturer-specific cluster 0xFFF1FC06 on endpoint 0) with kChipFault ids 34 (kFault_ClearInMemoryAllocatedVideoStreams) and 37 (kFault_LoadPersistentCameraAVSMAttributes). That cluster is a chip example-app debug hook into the C++ camera-app internals; Matterbridge doesn't implement it, so step 12 fails with UnsupportedCluster (0xc3). Gated on a cluster rather than a PICS flag, so no PICS change unlocks it. Also a PICS_SDK_CI_ONLY SDK-internal test, not a certification test (hence no TC_AVSM_<n>_<m> number)."
+    },
+    {
+      "name": "WebRtcTransportProvider delayed processing of SolicitOffer on Camera",
+      "test": "TC_WEBRTCP_2_1.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider immediate processing of SolicitOffer on Camera",
+      "test": "TC_WEBRTCP_2_2.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SDP Offer starting a new session on Camera",
+      "test": "TC_WEBRTCP_2_3.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider SDP Offer on an existing session on Camera",
+      "test": "TC_WEBRTCP_2_4.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer and stream allocation interaction on Camera",
+      "test": "TC_WEBRTCP_2_5.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider CameraAvStreamManagement cluster presence on Camera",
+      "test": "TC_WEBRTCP_2_6.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer with the physical privacy switch on on Camera",
+      "test": "TC_WEBRTCP_2_7.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"],
+      "skip": true,
+      "comment": "Drives HardPrivacyModeOn through the app pipe with SetHardPrivacyModeOn, which handleChipTestAppPipeCommand() in chipTests.ts does not implement, so the write is logged and ignored and the SolicitOffer succeeds instead of failing. Unskip once that app-pipe command exists."
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer with SoftRecordingPrivacyModeEnabled on Camera",
+      "test": "TC_WEBRTCP_2_8.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "skip": true,
+      "comment": "Writes SoftRecordingPrivacyModeEnabled (AVSM 0x0013), which is mandatoryConform on the CameraAvStreamManagement PRIV feature. createDefaultCameraAvStreamManagementClusterServer() requires the behavior with Video, Audio, Snapshot and ImageControl only, so the attribute does not exist and the write fails. The test reads the FeatureMap but asserts the write succeeded instead of skipping, so the AVSM.S.A0013=0 PICS gate does not save it: pics_TC_* lists are metadata for get_test_info() and never auto-skip a test."
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer ICEServers and ICETransportPolicy on Camera",
+      "test": "TC_WEBRTCP_2_9.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer OriginatingEndpointID storage on Camera",
+      "test": "TC_WEBRTCP_2_10.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider deferred Offer command timing on Camera",
+      "test": "TC_WEBRTCP_2_11.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer resource exhaustion on Camera",
+      "test": "TC_WEBRTCP_2_12.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideOffer with the physical privacy switch on on Camera",
+      "test": "TC_WEBRTCP_2_13.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"],
+      "skip": true,
+      "comment": "Drives HardPrivacyModeOn through the app pipe with SetHardPrivacyModeOn, which handleChipTestAppPipeCommand() in chipTests.ts does not implement, so the write is logged and ignored and the ProvideOffer succeeds instead of failing. Unskip once that app-pipe command exists."
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideOffer with SoftRecordingPrivacyModeEnabled on Camera",
+      "test": "TC_WEBRTCP_2_14.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "skip": true,
+      "comment": "Writes SoftRecordingPrivacyModeEnabled (AVSM 0x0013), which is mandatoryConform on the CameraAvStreamManagement PRIV feature. createDefaultCameraAvStreamManagementClusterServer() requires the behavior with Video, Audio, Snapshot and ImageControl only, so the attribute does not exist and the write fails. See TC_WEBRTCP_2_8.py for why the AVSM.S.A0013=0 PICS gate does not skip it."
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideOffer OriginatingEndpointID storage on Camera",
+      "test": "TC_WEBRTCP_2_15.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideOffer resource exhaustion on Camera",
+      "test": "TC_WEBRTCP_2_16.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true,
+      "comment": "Patched: upstream fills the DUT's session capacity with ProvideOffer on a hardcoded endpoint=1 in step 2, but checks for RESOURCE_EXHAUSTED on self.get_endpoint() in step 3, so the two steps target different endpoints. The patch changes step 2's endpoint=1 to endpoint, matching step 3. Note originatingEndpointID=1 is left alone: that one is the TH's own WebRtcTransportRequestor endpoint and is correctly 1."
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideOffer Answer command generation on Camera",
+      "test": "TC_WEBRTCP_2_17.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideAnswer command processing on Camera",
+      "test": "TC_WEBRTCP_2_18.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideAnswer with an invalid session on Camera",
+      "test": "TC_WEBRTCP_2_19.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideICECandidates command processing on Camera",
+      "test": "TC_WEBRTCP_2_20.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideICECandidates with an invalid session on Camera",
+      "test": "TC_WEBRTCP_2_21.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider EndSession CurrentSessions removal on Camera",
+      "test": "TC_WEBRTCP_2_22.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider EndSession stream reference counts on Camera",
+      "test": "TC_WEBRTCP_2_23.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer SFrame configuration handling on Camera",
+      "test": "TC_WEBRTCP_2_24.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "skip": true,
+      "comment": "Tests SFrame end-to-end encryption, which is not in Matter 1.6.0: WebRTC_Provider.xml defines only feature bit 0 (METADATA). The test asserts DynamicConstraintError for an unsupported cipher suite, but the SFrameConfig field does not exist in this revision, so the command succeeds. Gated on WEBRTCP.S.F02 in its pics_TC_* list, which is metadata only and does not auto-skip."
+    },
+    {
+      "name": "WebRtcTransportProvider ProvideOffer SFrame configuration handling on Camera",
+      "test": "TC_WEBRTCP_2_25.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "skip": true,
+      "comment": "Tests SFrame end-to-end encryption, which is not in Matter 1.6.0: WebRTC_Provider.xml defines only feature bit 0 (METADATA). See TC_WEBRTCP_2_24.py."
+    },
+    {
+      "name": "WebRtcTransportProvider delayed processing of SolicitOffer on release 1.5.1 or later on Camera",
+      "test": "TC_WEBRTCP_2_27.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "skip": true,
+      "comment": "The test is buggy. It sends SolicitOffer with explicit videoStreams/audioStreams and then asserts deferredOffer is TRUE unconditionally. Matter 1.6.0 §11.5.6.1 sets DeferredOffer TRUE only \"If in standby mode\", and FALSE otherwise; §11.5.6.2.2 then requires the stream ids to be non-null when it is FALSE. A Matterbridge camera is never in standby, so returning FALSE here is spec-correct and the assert can never hold."
+    },
+    {
+      "name": "WebRtcTransportProvider immediate processing of SolicitOffer on release 1.5.1 or later on Camera",
+      "test": "TC_WEBRTCP_2_28.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SDP Offer starting a new session on release 1.5.1 or later on Camera",
+      "test": "TC_WEBRTCP_2_29.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"]
+    },
+    {
+      "name": "WebRtcTransportProvider SDP Offer on an existing session on release 1.5.1 or later on Camera",
+      "test": "TC_WEBRTCP_2_30.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider SolicitOffer and stream allocation interaction on release 1.5.1 or later on Camera",
+      "test": "TC_WEBRTCP_2_31.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "WebRtcTransportProvider immediate processing of SolicitOffer with old stream attributes on release 1.5.1 or later on Camera",
+      "test": "TC_WEBRTCP_2_32.py",
+      "endpoint": 1601,
+      "args": ["--PICS /root/webrtc-transport-provider.pics"],
+      "resetBefore": true
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement attributes on PTZ Camera",
+      "test": "TC_AVSUM_2_1.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZSetPosition command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_2.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZRelativeMove command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_3.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZMoveToPreset command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_4.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZSavePreset command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_5.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZRemovePreset command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_6.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement DPTZSetViewport command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_7.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement DPTZRelativeMove command validation on PTZ Camera",
+      "test": "TC_AVSUM_2_8.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics"]
+    },
+    {
+      "name": "CameraAvSettingsUserLevelManagement MPTZPosition persistence on PTZ Camera",
+      "test": "TC_AVSUM_2_9.py",
+      "endpoint": 16011,
+      "args": ["--PICS /root/camera-av-settings-user-level-management.pics", "--restart-flag-file /tmp/matterbridge-chip-test-restart-flag"],
+      "resetBefore": true
+    },
+    {
+      "name": "Chime attributes on Chime",
+      "test": "TC_CHIME_2_1.py",
+      "endpoint": 1607,
+      "args": ["--PICS /root/chime.pics"]
+    },
+    {
+      "name": "Chime Enabled attribute write on Chime",
+      "test": "TC_CHIME_2_2.py",
+      "endpoint": 1607,
+      "args": ["--PICS /root/chime.pics"]
+    },
+    {
+      "name": "Chime SelectedChime attribute write on Chime",
+      "test": "TC_CHIME_2_3.py",
+      "endpoint": 1607,
+      "args": ["--PICS /root/chime.pics"]
+    },
+    {
+      "name": "Chime PlayChimeSound command on Chime",
+      "test": "TC_CHIME_2_4.py",
+      "endpoint": 1607,
+      "args": ["--PICS /root/chime.pics"]
+    },
+    {
+      "name": "Chime PlayChimeSound command with ChimeID on Chime",
+      "test": "TC_CHIME_2_5.py",
+      "endpoint": 1607,
+      "args": ["--PICS /root/chime.pics"]
+    },
+    {
+      "name": "Chime ChimeStartedPlaying event on Chime",
+      "test": "TC_CHIME_2_6.py",
+      "endpoint": 1607,
+      "args": ["--PICS /root/chime.pics"]
+    },
+    {
+      "name": "Switch attributes on Doorbell",
+      "test": "Test_TC_SWTCH_2_1",
+      "endpoint": 1609,
+      "args": ["--PICS /root/generic-switch-single.pics"]
+    },
+    {
+      "name": "Switch momentary switch functionality on Doorbell",
+      "test": "TC_SWTCH.py",
+      "endpoint": 1609,
+      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_3"]
+    },
+    {
+      "name": "Switch momentary switch long press on Doorbell",
+      "test": "TC_SWTCH.py",
+      "endpoint": 1609,
+      "args": ["--PICS /root/generic-switch-single.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--tests test_TC_SWTCH_2_4"]
+    },
+    {
+      "name": "Switch primary functionality with client as DUT on Doorbell",
+      "test": "Test_TC_SWTCH_3_2",
+      "endpoint": 1609,
+      "args": ["--PICS /root/generic-switch-single.pics"],
+      "skip": true,
+      "comment": "Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH."
     }
   ]
 }

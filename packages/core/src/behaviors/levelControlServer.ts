@@ -3,7 +3,7 @@
  * @description This file contains the MatterbridgeLevelControlServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -25,32 +25,59 @@
 
 import type { MaybePromise } from '@matter/general';
 import { LevelControlServer } from '@matter/node/behaviors/level-control';
-import type { LevelControl } from '@matter/types/clusters/level-control';
+import { LevelControl } from '@matter/types/clusters/level-control';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
-import { MatterbridgeServer } from './matterbridgeServer.js';
+import { isSoftwareUpdateBoot, MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * LevelControl server that forwards level commands to the Matterbridge command handler.
  */
 export class MatterbridgeLevelControlServer extends LevelControlServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Enables managed transition-time handling under MATTERBRIDGE_CHIP_TEST only, so Move/MoveTo/Step
    * transitions actually animate CurrentLevel/RemainingTime over TransitionTime/Rate during CHIP
    * certification testing instead of jumping straight to the target value (see chipTests.md Known Issues).
    * Production behavior (matter.js's own default: immediate jump, no simulated transition) is unchanged.
    *
+   * Also re-applies StartUpCurrentLevel on restart. matter.js guards its own startup
+   * logic with `!this.endpoint.ownerOfType(AggregatorEndpoint)` (matter.js PR #3048), so it never runs for a
+   * bridged endpoint — and every Matterbridge device sits under the aggregator. That guard has no basis in
+   * the specification: Matter 1.6.0 § 1.6.6.15 excludes only OTA reboots, and Core § 7.12.1 counts "a program
+   * restart" as a restart. The attribute is still advertised as supported (LVL.S.A4000), so without this
+   * override a controller can write it, read it back, and never see it take effect. StartUpCurrentLevel
+   * defaults to null in createDefaultLevelControlClusterServer(), and null means "keep the previous value",
+   * so this is a no-op unless a controller has explicitly written a non-null value. Remove once matter.js
+   * applies StartUpCurrentLevel on aggregator-owned endpoints itself.
+   *
    * @returns {MaybePromise} The result of the base class initialization.
    */
   override initialize(): MaybePromise {
     // v8 ignore next - only enabled under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) this.state.managedTransitionTimeHandling = true;
-    return super.initialize();
+    const result = super.initialize();
+    if (this.features.lighting && !isSoftwareUpdateBoot(this.env)) {
+      // StartUpCurrentLevel only exists with the Lighting feature, which this class does not select at the
+      // type level (createDefaultLevelControlClusterServer() enables it at runtime), hence the assertion.
+      const state = this.state as unknown as { startUpCurrentLevel: number | null; currentLevel: number | null };
+      const startUpCurrentLevel = state.startUpCurrentLevel ?? null;
+      const currentLevel = state.currentLevel;
+      // Matter 1.6.0 § 1.6.6.15: 0 selects the minimum permitted level, null keeps the previous value, any
+      // other value is used as-is.
+      const targetLevel = startUpCurrentLevel === 0 ? this.minLevel : (startUpCurrentLevel ?? currentLevel);
+      if (targetLevel !== currentLevel) state.currentLevel = targetLevel;
+    }
+    return result;
   }
 
   /**
    * Forwards MoveToLevel requests to the Matterbridge command handler.
+   *
+   * The moveToLevel command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
    */
@@ -70,16 +97,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
     await super.moveToLevel(request);
+    this.endpoint.emitCommand(LevelControl, 'moveToLevel', request, this.context);
   }
 
   /**
    * Forwards MoveToLevelWithOnOff requests to the Matterbridge command handler.
+   *
+   * The moveToLevelWithOnOff command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.MoveToLevelRequest} request - Move-to-level request payload.
    */
@@ -99,16 +129,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
     await super.moveToLevelWithOnOff(request);
+    this.endpoint.emitCommand(LevelControl, 'moveToLevelWithOnOff', request, this.context);
   }
 
   /**
    * Forwards Move requests to the Matterbridge command handler.
+   *
+   * The move command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.MoveRequest} request - Move request payload.
    */
@@ -128,16 +161,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: move called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
     await super.move(request);
+    this.endpoint.emitCommand(LevelControl, 'move', request, this.context);
   }
 
   /**
    * Forwards MoveWithOnOff requests to the Matterbridge command handler.
+   *
+   * The moveWithOnOff command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.MoveRequest} request - Move request payload.
    */
@@ -157,16 +193,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
     await super.moveWithOnOff(request);
+    this.endpoint.emitCommand(LevelControl, 'moveWithOnOff', request, this.context);
   }
 
   /**
    * Forwards Step requests to the Matterbridge command handler.
+   *
+   * The step command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.StepRequest} request - Step request payload.
    */
@@ -186,16 +225,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: step called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
     await super.step(request);
+    this.endpoint.emitCommand(LevelControl, 'step', request, this.context);
   }
 
   /**
    * Forwards StepWithOnOff requests to the Matterbridge command handler.
+   *
+   * The stepWithOnOff command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.StepRequest} request - Step request payload.
    */
@@ -215,16 +257,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: stepWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
     await super.stepWithOnOff(request);
+    this.endpoint.emitCommand(LevelControl, 'stepWithOnOff', request, this.context);
   }
 
   /**
    * Forwards Stop requests to the Matterbridge command handler.
+   *
+   * The stop command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.StopRequest} request - Stop request payload.
    */
@@ -242,16 +287,19 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: stop called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
     await super.stop(request);
+    this.endpoint.emitCommand(LevelControl, 'stop', request, this.context);
   }
 
   /**
    * Forwards StopWithOnOff requests to the Matterbridge command handler.
+   *
+   * The stopWithOnOff command observable added by `subscribeCommand()` is emitted last, after the command handler and the state update.
    *
    * @param {LevelControl.StopRequest} request - Stop request payload.
    */
@@ -269,11 +317,12 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       request,
       cluster: LevelControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof LevelControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: stopWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
     await super.stopWithOnOff(request);
+    this.endpoint.emitCommand(LevelControl, 'stopWithOnOff', request, this.context);
   }
 }

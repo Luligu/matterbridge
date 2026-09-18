@@ -26,7 +26,7 @@ import {
   stopServerNode,
 } from '@matterbridge/vitest-utils/matter';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -147,5 +147,52 @@ describe('MatterbridgeLevelControlServer', () => {
       expect(data.attributes.currentLevel).toBe(1);
     });
     expectCurrentLevel(1);
+  });
+
+  describe('StartUpCurrentLevel', () => {
+    /**
+     * Adds a dimmable light with the given initial CurrentLevel and StartUpCurrentLevel, then returns the
+     * CurrentLevel attribute as it stands once the behavior has initialized.
+     *
+     * @param {string} id - Unique endpoint id.
+     * @param {number} currentLevel - The persisted CurrentLevel the endpoint starts from.
+     * @param {number | null} startUpCurrentLevel - The StartUpCurrentLevel value to apply on startup.
+     *
+     * @returns {Promise<unknown>} The CurrentLevel attribute after initialization.
+     */
+    const addLight = async (id: string, currentLevel: number, startUpCurrentLevel: number | null): Promise<unknown> => {
+      const device = new MatterbridgeEndpoint([extendedColorLight, bridge], { id });
+      device.createDefaultBridgedDeviceBasicInformationClusterServer(id, `SN-${id}`);
+      device.createDefaultLevelControlClusterServer(currentLevel, 1, 254, null, startUpCurrentLevel);
+      device.addRequiredClusterServers();
+      expect(await addDevice(aggregator, device)).toBeTruthy();
+      return device.getAttribute(LevelControl, 'currentLevel');
+    };
+
+    it('applies an explicit level', async () => {
+      expect(await addLight('suLevelValue', 100, 200)).toBe(200);
+    });
+
+    it('applies the minimum level when 0', async () => {
+      expect(await addLight('suLevelZero', 100, 0)).toBe(1);
+    });
+
+    it('keeps the previous value when null', async () => {
+      expect(await addLight('suLevelNull', 100, null)).toBe(100);
+    });
+
+    it('leaves CurrentLevel untouched when the startup value already matches', async () => {
+      expect(await addLight('suLevelSame', 100, 100)).toBe(100);
+    });
+
+    it('does not apply without the Lighting feature', async () => {
+      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suLevelNoLighting' });
+      device.createDefaultBridgedDeviceBasicInformationClusterServer('suLevelNoLighting', 'SN-suLevelNoLighting');
+      device.createOnOffClusterServer(false);
+      device.createLevelControlClusterServer(100);
+      device.addRequiredClusterServers();
+      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(device.getAttribute(LevelControl, 'currentLevel')).toBe(100);
+    });
   });
 });

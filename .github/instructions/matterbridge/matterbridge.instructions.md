@@ -1,5 +1,5 @@
 ---
-name: 'Matterbridge Endpoint Guide v.1.0.2'
+name: 'Matterbridge Endpoint Guide v.1.0.3'
 description: 'How to create MatterbridgeEndpoint instances, register them in Matterbridge plugins, and use the single-class devices exported by the package.'
 applyTo: 'packages/core/src/**'
 ---

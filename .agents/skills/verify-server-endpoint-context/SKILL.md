@@ -1,9 +1,9 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates. v.1.0.0
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.0
 ---
 
-# Verify server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates
+# Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
 
 Verify endpoint context in Matterbridge behavior server implementations.
 
@@ -41,6 +41,21 @@ Checks:
 - Do not require the fragment in a log or thrown value that has no textual message, but report that case separately for manual review.
 - Ignore comments, JSDoc examples, tests, generated output, and imported server implementations.
 
+Endpoint type narrowing:
+
+- Verify every server class in scope narrows the inherited `endpoint` getter once, as the first member of the class body, instead of asserting the type at each use:
+
+  ```typescript
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+  ```
+
+- `Behavior.endpoint` is a getter returning `Endpoint<EndpointType.Empty>` and `MatterbridgeEndpoint` is a subtype of it, so the narrowing is accepted. `declare` emits no runtime code, so the inherited getter is untouched and the declaration is purely a type-level assertion.
+- Verify `MatterbridgeEndpoint` is imported as a type-only import, for example `import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js'`. A value import creates an import cycle for every behavior that [matterbridgeEndpointHelpers.ts](../../../packages/core/src/matterbridgeEndpointHelpers.ts) imports.
+- Verify no `this.endpoint as MatterbridgeEndpoint` assertion remains in scope, including the `endpoint` property of the `device.commandHandler.executeHandler(...)` payload.
+- Verify a file-level `/* oxlint-disable typescript/no-unsafe-type-assertion */` suppression is removed once the file contains no remaining type assertion. Keep it only when an unrelated assertion still requires it.
+- Report a missing declaration, a remaining `as MatterbridgeEndpoint` assertion, a value import of `MatterbridgeEndpoint`, or an obsolete assertion suppression as an endpoint type narrowing violation.
+
 Plugin forwarding contract:
 
 - For every overridden Matter command handler in scope, verify that forwarding to the plugin through `device.commandHandler.executeHandler(...)` occurs immediately after the command-entry log.
@@ -51,6 +66,21 @@ Plugin forwarding contract:
 - Do not allow request validation, assertions, conditionals, early returns, thrown errors, state reads used for decisions, state changes, event emission, additional logging, or other side effects between the command-entry log and completion of the awaited forwarding call.
 - Verify all validation and state mutation occur only after the awaited forwarding call.
 - Report a missing command-entry log, command-entry log at a level other than `info`, missing forwarding call, non-awaited forwarding call, or any disallowed operation before forwarding completes as a plugin forwarding contract violation.
+
+Command observable emission:
+
+- Verify every overridden Matter command handler in scope emits the command observable added by `subscribeCommand()` as the very last call of the handler:
+
+  ```typescript
+  this.endpoint.emitCommand(OnOff, 'offWithEffect', request, this.context);
+  ```
+
+- Pass the cluster as the `ClusterType` exported by `@matter/types/clusters/<cluster>`, for example `OnOff` or `BooleanStateConfiguration`. Do not accept `<Cluster>.Cluster`, a behavior type, a behavior id such as `OnOffServer.id`, or a cluster name string: the `ClusterType` form keeps the command name and the request payload checked against the cluster definition.
+- Pass the exact command name of the enclosing handler, the request payload, and `this.context`. Use `{}` as the payload for commands that take no request.
+- Verify the call goes through the narrowed `this.endpoint`. Do not accept the `emitCommand` helper imported from [matterbridgeEndpointHelpers.ts](../../../packages/core/src/matterbridgeEndpointHelpers.ts) in a behavior that module imports, because the value import closes an import cycle.
+- Verify the emission comes after the awaited plugin forwarding, after every validation, and after every state update, including after the `await super.<command>()` call when the handler delegates to the base implementation. No statement may follow it.
+- Do not require an emission on a path that rejects the command with a Matter status error, discards it by cluster conformance, or returns early, for example the `MATTERBRIDGE_CHIP_TEST` branch that gates the plugin forwarder off. The observable reports commands that completed.
+- Report a missing emission, an emission that is not the last call, an emission placed before validation or state updates, a cluster passed in any form other than the `ClusterType`, a command name that does not match the enclosing handler, a missing `this.context`, or a direct helper import as a command observable emission violation.
 
 Matter specification comments:
 
@@ -68,7 +98,35 @@ Matter specification comments:
 - Do not accept method-level JSDoc, a distant block comment, a bare paragraph number, a comment without `Matter 1.6.0`, or a comment that describes implementation mechanics without explaining the specification rule.
 - Report a missing, misplaced, inaccurate, or incomplete specification comment as a Matter specification comment violation.
 
-Compliant examples from [booleanStateConfigurationServer.ts](../../../packages/core/src/behaviors/booleanStateConfigurationServer.ts):
+Compliant example from [onOffServer.ts](../../../packages/core/src/behaviors/onOffServer.ts), showing the narrowed endpoint, the forwarding order and the trailing emission:
+
+```typescript
+export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Lighting) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
+  override async offWithEffect(request: OnOff.OffWithEffectRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeOnOffServer: switching device off with effect ${request.effectIdentifier} and variant ${request.effectVariant} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('OnOff.offWithEffect', {
+      command: 'offWithEffect',
+      request,
+      cluster: OnOffServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint,
+      context: this.context,
+    });
+    device.log.debug(`MatterbridgeOnOffServer: offWithEffect called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.5.7.4.3: On receipt of OffWithEffect, when GlobalSceneControl is TRUE the server SHALL store its settings in the global scene, set GlobalSceneControl to FALSE, set OnOff to FALSE and OnTime to 0; otherwise it SHALL only set OnOff to FALSE.
+    await super.offWithEffect(request);
+    this.endpoint.emitCommand(OnOff, 'offWithEffect', request, this.context);
+  }
+}
+```
+
+Compliant validation and state update shape, adapted from [booleanStateConfigurationServer.ts](../../../packages/core/src/behaviors/booleanStateConfigurationServer.ts):
 
 ```typescript
 // Matter 1.6.0 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
@@ -89,7 +147,7 @@ override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmReq
     request,
     cluster: BooleanStateConfigurationServer.id,
     attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>,
-    endpoint: this.endpoint as MatterbridgeEndpoint,
+    endpoint: this.endpoint,
     context: this.context,
   });
   // Matter 1.6.0 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
@@ -98,6 +156,7 @@ override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmReq
   this.#assertSuppressAlarmAllowed(request.alarmsToSuppress);
   // Matter 1.6.0 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
   this.state.alarmsSuppressed = this.#mergeAlarmsSuppressed(request.alarmsToSuppress);
+  this.endpoint.emitCommand(BooleanStateConfiguration, 'suppressAlarm', request, this.context);
 }
 ```
 
@@ -106,11 +165,13 @@ Output requirements:
 - List each violation with a concise file and line reference, the log or throw kind, and the current message.
 - For each violation, identify whether the server-name prefix, endpoint suffix, or both are invalid.
 - List each plugin forwarding contract violation with the command handler, the invalid operation or ordering, and whether the command-entry log is missing or uses the wrong level, the forwarding call is missing, or forwarding is not awaited.
+- List each endpoint type narrowing violation with the server class and whether the declaration is missing, an `as MatterbridgeEndpoint` assertion remains, the import is not type-only, or an assertion suppression is now obsolete.
+- List each command observable emission violation with the command handler and whether the emission is missing, misplaced, or passes the cluster, command name, payload, or context in the wrong form.
 - List each Matter specification comment violation with the validation or state update, whether the comment is missing, misplaced, inaccurate, or incomplete, and the applicable Matter 1.6.0 paragraph when it can be determined.
 - Group results by `behaviors` and `devices`.
-- If no violations are found, explicitly state that every in-scope log and thrown error starts with the enclosing server name and ends with the required endpoint fragment, every command handler respects the plugin forwarding contract, and every Matter validation and state update has an accurate Matter 1.6.0 paragraph comment.
+- If no violations are found, explicitly state that every in-scope log and thrown error starts with the enclosing server name and ends with the required endpoint fragment, every server class narrows `endpoint` with the `declare` declaration and contains no `as MatterbridgeEndpoint` assertion, every command handler respects the plugin forwarding contract, every command handler emits its command observable as its last call using the `ClusterType`, and every Matter validation and state update has an accurate Matter 1.6.0 paragraph comment.
 - Do not modify files unless explicitly asked to fix the violations.
-- If fixes are requested, preserve each existing message where practical, prepend the exact enclosing server class name and `: `, append the exact endpoint fragment as the final message content, move awaited plugin forwarding before validation and state changes, add or correct concise Matter 1.6.0 paragraph comments immediately before validations and state updates, then re-run the full verification and report any remaining violations.
+- If fixes are requested, preserve each existing message where practical, prepend the exact enclosing server class name and `: `, append the exact endpoint fragment as the final message content, move awaited plugin forwarding before validation and state changes, add the `declare readonly endpoint: MatterbridgeEndpoint;` declaration and remove every `as MatterbridgeEndpoint` assertion and any assertion suppression it makes obsolete, add or move the `this.endpoint.emitCommand(<ClusterType>, '<command>', <request>, this.context)` call to the end of each command handler, add or correct concise Matter 1.6.0 paragraph comments immediately before validations and state updates, then re-run the full verification and report any remaining violations.
 
 Post-edit validation:
 

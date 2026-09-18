@@ -1,2 +1,14 @@
-# This image does not consume files from the build context.
-**
+# Build context ignore rules for docker/Dockerfile.node-dev-container ONLY.
+#
+# BuildKit automatically uses this file instead of the repo-root .dockerignore
+# when the build targets this Dockerfile (`-f docker/Dockerfile.node-dev-container`).
+# It fully replaces the root .dockerignore (no merge).
+#
+# This image provides a development container for Node.js applications. From the context
+# it copies only the devcontainer scripts in docker/devcontainer, so we ignore everything else.
+
+# Ignore everything...
+*
+
+# ...except the files this Dockerfile copies.
+!docker/devcontainer
