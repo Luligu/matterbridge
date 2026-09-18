@@ -12,6 +12,8 @@
 # base tzdata package, so use region zones.
 # Downloads use IPv4 to avoid failing IPv6 connections in Docker on macOS.
 # New Bash shells retain TZ and use noninteractive package configuration defaults.
+# info-debian.sh is installed to INFO_SCRIPT (default /usr/local/bin/info-debian.sh) and called
+# from ~/.bashrc, so every interactive Bash shell prints the environment banner.
 #
 # The install runs once and records INSTALL_STAMP (default /var/lib/matterbridge-install.done);
 # a later run with the stamp present skips straight to the container command. Delete the stamp
@@ -33,9 +35,8 @@
 #   docker run -it --pull always --hostname debian --name debian --network host --entrypoint bash debian:latest -c 'if [ ! -e /var/lib/matterbridge-install.done ]; then apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && curl -4 -fsSL https://matterbridge.io/scripts/install-debian.sh | bash || exit 1; fi; exec "$@"' _ bash
 #   docker run -it --pull always --hostname ubuntu --name ubuntu --network host --entrypoint bash ubuntu:latest -c 'if [ ! -e /var/lib/matterbridge-install.done ]; then apt-get update && apt-get install -y --no-install-recommends curl ca-certificates && curl -4 -fsSL https://matterbridge.io/scripts/install-debian.sh | bash || exit 1; fi; exec "$@"' _ bash
 #
-# Re-enter the running container with an interactive Bash shell to load Bun:
+# Re-enter the running container with an interactive Bash shell:
 #   docker exec -it debian bash
-# Re-enter the running Ubuntu container with an interactive Bash shell to load Bun:
 #   docker exec -it ubuntu bash
 #
 # Drop the trailing command argument (and -it) to run the script and exit.
@@ -47,6 +48,7 @@ NODE_VERSION="${NODE_VERSION:-lts}"
 TZ="${TZ:-Europe/Brussels}"
 LANG="${LANG:-en_US.UTF-8}"
 INSTALL_STAMP="${INSTALL_STAMP:-/var/lib/matterbridge-install.done}"
+INFO_SCRIPT="${INFO_SCRIPT:-/usr/local/bin/info-debian.sh}"
 
 export DEBIAN_FRONTEND=noninteractive
 export TZ
@@ -123,6 +125,25 @@ case ":$PATH:" in
   *) export PATH="$BUN_INSTALL/bin:$PATH" ;;
 esac
 EOF
+    } >> "$HOME/.bashrc"
+  fi
+
+  echo "==> Installing the banner script"
+  # Prefer the copy next to this script (mounted repository) and fall back to the published one.
+  INFO_SOURCE="$(dirname "$0")/info-debian.sh"
+  if [ -f "$INFO_SOURCE" ]; then
+    $SUDO cp "$INFO_SOURCE" "$INFO_SCRIPT"
+  else
+    $SUDO curl -4 -fsSL https://matterbridge.io/scripts/info-debian.sh -o "$INFO_SCRIPT"
+  fi
+  $SUDO chmod +x "$INFO_SCRIPT"
+
+  # Print the banner in interactive Bash shells only, so scp and other non-interactive
+  # sessions keep a clean stdout.
+  if ! grep -Fq "$INFO_SCRIPT" "$HOME/.bashrc" 2>/dev/null; then
+    {
+      printf '\n# Matterbridge container banner for interactive Bash shells\n'
+      printf 'case $- in *i*) [ -x %s ] && %s ;; esac\n' "$INFO_SCRIPT" "$INFO_SCRIPT"
     } >> "$HOME/.bashrc"
   fi
 
