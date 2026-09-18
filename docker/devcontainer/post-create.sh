@@ -3,6 +3,19 @@
 # docker/devcontainer/post-create.sh v.2.2.0
 
 # This script runs after the Dev Container is created to set up the dev container environment.
+#
+# Usage:
+#   post-create.sh <--bun|--node> [--plugin] [--dev|--main]
+#
+#   --bun | --node   runtime of the image; required.
+#   --plugin         plugin repository: also installs Matterbridge from the selected branch,
+#                    links it, builds the plugin frontend when present and adds the plugin.
+#   --dev | --main   branch used for the Matterbridge install; only with --plugin, default --dev.
+#
+# The dev container images copy this script to /usr/local/bin, so devcontainer.json can call it
+# from there:
+#   "postCreateCommand": "bash /usr/local/bin/post-create.sh --node"
+#   "postCreateCommand": "bash /usr/local/bin/post-create.sh --bun --plugin --dev"
 
 set -euo pipefail
 

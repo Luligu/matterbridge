@@ -78,7 +78,7 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // On create, prepare the directories and install and build Matterbridge (runs inside the container)
   "postCreateCommand": "bash .devcontainer/node/post-create.sh",
   // On start, install and build Matterbridge (runs inside the container)
-  "postStartCommand": "bash .devcontainer/node/post-start.sh",
+  "postStartCommand": "post-start.sh --node --matterbridge",
   "runArgs": [
     // Give the Docker container the same name as the repository (must be unique on host)
     "--name",
