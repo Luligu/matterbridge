@@ -30,6 +30,27 @@ echo "👤 User: $(whoami)"
 echo "🏷️ Hostname: $(hostname)"
 echo "📅 Date: $(date)"
 
+# Busybox has no "uptime -p", no "free -h" and no "ip route get", so the Alpine banner reads
+# /proc directly and picks the first global address from "ip addr", with hostname -i as fallback.
+UPTIME=$(awk '{ t = int($1); d = int(t / 86400); h = int((t % 86400) / 3600); m = int((t % 3600) / 60);
+  s = "up";
+  if (d > 0) s = s sprintf(" %d day%s,", d, (d == 1 ? "" : "s"));
+  if (d > 0 || h > 0) s = s sprintf(" %d hour%s,", h, (h == 1 ? "" : "s"));
+  print s sprintf(" %d minute%s", m, (m == 1 ? "" : "s")) }' /proc/uptime 2>/dev/null || true)
+echo "⏳ Uptime: ${UPTIME:-unavailable}"
+
+# MemAvailable is in kB, so the used value is derived from it rather than from the "free" output.
+MEMORY=$(awk '/^MemTotal:/ { total = $2 } /^MemAvailable:/ { available = $2 }
+  END { if (total > 0) print sprintf("%.1fGi / %.1fGi", (total - available) / 1048576, total / 1048576) }' /proc/meminfo 2>/dev/null || true)
+echo "🧠 Memory: ${MEMORY:-unavailable}"
+
+IPV4=$(ip -4 addr show 2>/dev/null | awk '$1 == "inet" && substr($2, 1, 4) != "127." { split($2, a, "/"); print a[1]; exit }' || true)
+[ -n "$IPV4" ] || IPV4=$(hostname -i 2>/dev/null | awk '{ print $1 }' || true)
+echo "🌐 IPv4: ${IPV4:-unavailable}"
+
+IPV6=$(ip -6 addr show 2>/dev/null | awk '$1 == "inet6" && substr($2, 1, 4) != "::1/" { split($2, a, "/"); printf "%s ", a[1] }' || true)
+echo "🌐 IPv6: ${IPV6:-none}"
+
 # Bun based images ship a "node" (and sometimes "npm") shim that forwards to bun, so the presence
 # of the command is not enough: accept it only when it answers with a real version string.
 NODE_VERSION_OUTPUT="$(node -v 2>/dev/null || true)"
@@ -53,4 +74,23 @@ if command -v bun >/dev/null 2>&1; then
   echo "📍 Bun location: $(command -v bun)"
   echo "🗃️ Bun cache: ${BUN_INSTALL:-$HOME/.bun}/install/cache"
   echo "📦 Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
+fi
+
+# The Docker CLI is only present when the image ships it (or when the socket is bind mounted),
+# so the version line is printed from the command output and falls back to a "not installed" note.
+if DOCKER_VER="$(docker -v 2>/dev/null)"; then
+  echo "🐳 $DOCKER_VER"
+  # The CLI can be installed without a reachable daemon (no bind mounted socket), so a failing
+  # "docker ps" is reported as such instead of being shown as an empty container list.
+  if DOCKER_PS="$(docker ps --format '{{.Names}} ({{.Image}}) - {{.Status}}' 2>/dev/null)"; then
+    if [ -n "$DOCKER_PS" ]; then
+      echo "$DOCKER_PS" | sed 's/^/  🚢 /'
+    else
+      echo "  🚢 No running containers"
+    fi
+  else
+    echo "  🚢 Docker daemon not reachable"
+  fi
+else
+  echo "🐳 Docker: not installed"
 fi

@@ -22,6 +22,10 @@ echo "🧩 Kernel Version: $(uname -r)"
 echo "👤 User: $(whoami)"
 echo "🏷️ Hostname: $(hostname)"
 echo "📅 Date: $(date)"
+echo "⏳ Uptime: $(uptime -p || echo 'unavailable')"
+echo "🧠 Memory: $(free -h | awk '/^Mem:/{print $3 " / " $2}')"
+echo "🌐 IPv4: $(ip -4 route get 1 2>/dev/null | awk '{print $7; exit}' || echo 'unavailable')"
+echo "🌐 IPv6: $(ip -6 addr show dev eth0 2>/dev/null | awk '/inet6/{gsub(/\/.*$/,"",$2); print $2}' | tr '\n' ' ' || echo 'none')"
 
 # Bun based images ship a "node" (and sometimes "npm") shim that forwards to bun, so the presence
 # of the command is not enough: accept it only when it answers with a real version string.
@@ -46,4 +50,23 @@ if command -v bun >/dev/null 2>&1; then
   echo "📍 Bun location: $(command -v bun)"
   echo "🗃️ Bun cache: ${BUN_INSTALL:-$HOME/.bun}/install/cache"
   echo "📦 Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
+fi
+
+# The Docker CLI is only present when the image ships it (or when the socket is bind mounted),
+# so the version line is printed from the command output and falls back to a "not installed" note.
+if DOCKER_VER="$(docker -v 2>/dev/null)"; then
+  echo "🐳 $DOCKER_VER"
+  # The CLI can be installed without a reachable daemon (no bind mounted socket), so a failing
+  # "docker ps" is reported as such instead of being shown as an empty container list.
+  if DOCKER_PS="$(docker ps --format '{{.Names}} ({{.Image}}) - {{.Status}}' 2>/dev/null)"; then
+    if [ -n "$DOCKER_PS" ]; then
+      echo "$DOCKER_PS" | sed 's/^/  🚢 /'
+    else
+      echo "  🚢 No running containers"
+    fi
+  else
+    echo "  🚢 Docker daemon not reachable"
+  fi
+else
+  echo "🐳 Docker: not installed"
 fi
