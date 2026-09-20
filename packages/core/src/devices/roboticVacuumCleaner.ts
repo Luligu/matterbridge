@@ -219,7 +219,13 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {ServiceArea.Progress[]} [progress] - The initial per-area progress for the robotic vacuum cleaner. When defined (even as an empty list), the ProgressReporting (PROG) feature is enabled. Defaults to undefined (PROG disabled).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number | null, supportedMaps?: ServiceArea.Map[], progress?: ServiceArea.Progress[]): this {
+  createDefaultServiceAreaClusterServer(
+    supportedAreas?: ServiceArea.Area[],
+    selectedAreas?: number[],
+    currentArea?: number | null,
+    supportedMaps?: ServiceArea.Map[],
+    progress?: ServiceArea.Progress[],
+  ): this {
     const defaultSupportedAreas: ServiceArea.Area[] = supportedAreas ?? [
       {
         areaId: 1,

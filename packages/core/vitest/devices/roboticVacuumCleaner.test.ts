@@ -260,7 +260,14 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     vi.clearAllMocks();
     const progress: ServiceArea.Progress[] = [];
     device.createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps, progress);
-    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), { currentArea: null, estimatedEndTime: null, selectedAreas: [], supportedAreas: [], supportedMaps: [], progress: [] });
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), {
+      currentArea: null,
+      estimatedEndTime: null,
+      selectedAreas: [],
+      supportedAreas: [],
+      supportedMaps: [],
+      progress: [],
+    });
     requireSpy.mockRestore();
   });
 

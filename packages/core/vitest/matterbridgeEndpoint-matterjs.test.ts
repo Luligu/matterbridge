@@ -1720,8 +1720,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(rvc.behaviors.has(ServiceAreaServer)).toBeTruthy();
     expect(rvc.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
     expect(rvc.behaviors.elementsOf(ServiceAreaServer).commands.has('selectAreas')).toBeTruthy();
-    expect((rvc.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0]);
-    expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
+    expect(rvc.behaviors.elementsOf(ServiceAreaServer).commands.has('skipArea')).toBeTruthy();
+    expect((rvc.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0, 2]);
+    expect((rvc.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1, 3]);
     vi.clearAllMocks();
     await rvc.invokeBehaviorCommand('serviceArea', 'ServiceArea.selectAreas', { newAreas: [1, 2, 3, 4] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [1, 2, 3, 4] (endpoint ${rvc.id}.${rvc.number})`);
@@ -1732,6 +1733,13 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [0, 5] (endpoint ${rvc.id}.${rvc.number})`);
     // Matter 1.6.0 § 1.17.7.1.2: an entry not matching any SupportedAreas AreaID is answered with UnsupportedArea, so SelectedAreas keeps its previous value.
     expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([1, 2, 3, 4]);
+
+    // Area 1 is in SelectedAreas, so skipping it is allowed. ProgressReporting is not enabled on this device, so the progress attribute stays undefined.
+    vi.clearAllMocks();
+    await rvc.invokeBehaviorCommand('serviceArea', 'ServiceArea.skipArea', { skippedArea: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: skipping area 1 (endpoint ${rvc.id}.${rvc.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: skipArea called with 1 (endpoint ${rvc.id}.${rvc.number})`);
+    expect((rvc.stateOf(ServiceAreaServer) as any).progress).toBeUndefined();
   });
 
   test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
