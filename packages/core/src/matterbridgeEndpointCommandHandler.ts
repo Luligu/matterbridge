@@ -950,9 +950,17 @@ export type CommandHandlerDataMap = {
 
   // Service Area
   'selectAreas': CommandHandlerData<'ServiceArea.selectAreas'>;
+  'skipArea': CommandHandlerData<'ServiceArea.skipArea'>;
   'ServiceArea.selectAreas': {
     command: 'selectAreas';
     request: ServiceArea.SelectAreasRequest;
+    cluster: 'serviceArea';
+    attributes: ClusterAttributeValues<(typeof ServiceArea)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'ServiceArea.skipArea': {
+    command: 'skipArea';
+    request: ServiceArea.SkipAreaRequest;
     cluster: 'serviceArea';
     attributes: ClusterAttributeValues<(typeof ServiceArea)['attributes']>;
     endpoint: MatterbridgeEndpoint;

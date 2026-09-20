@@ -137,7 +137,7 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(runModeSpy).toHaveBeenCalledWith(2, supportedRunModes);
     expect(cleanModeSpy).toHaveBeenCalledWith(2, supportedCleanModes);
     expect(operationalStateSpy).toHaveBeenCalledWith(phaseList, 0, operationalStateList, RvcOperationalState.OperationalState.Running);
-    expect(serviceAreaSpy).toHaveBeenCalledWith(supportedAreas, [8], 8, supportedMaps);
+    expect(serviceAreaSpy).toHaveBeenCalledWith(supportedAreas, [8], 8, supportedMaps, undefined);
 
     runModeSpy.mockRestore();
     cleanModeSpy.mockRestore();
@@ -256,6 +256,11 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
       ],
       supportedMaps: [],
     });
+    // Call with the progress option: the ProgressReporting feature is enabled and progress is forwarded as-is, even when empty.
+    vi.clearAllMocks();
+    const progress: ServiceArea.Progress[] = [];
+    device.createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps, progress);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), { currentArea: null, estimatedEndTime: null, selectedAreas: [], supportedAreas: [], supportedMaps: [], progress: [] });
     requireSpy.mockRestore();
   });
 
@@ -366,13 +371,13 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
         'rvcRunMode(0x54).featureMap(0xfffc)={ onOff: false, directModeChange: false }',
         'rvcRunMode(0x54).generatedCommandList(0xfff8)=[ 1 ]',
         "rvcRunMode(0x54).supportedModes(0x0)=[ { label: 'Idle', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Cleaning', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Mapping', mode: 3, modeTags: [ { mfgCode: undefined, value: 16386 } ] }, { label: 'SpotCleaning', mode: 4, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 7 } ] } ]",
-        'serviceArea(0x150).acceptedCommandList(0xfff9)=[ 0 ]',
+        'serviceArea(0x150).acceptedCommandList(0xfff9)=[ 0, 2 ]',
         'serviceArea(0x150).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
         'serviceArea(0x150).clusterRevision(0xfffd)=2',
         'serviceArea(0x150).currentArea(0x3)=1',
         'serviceArea(0x150).estimatedEndTime(0x4)=null',
         'serviceArea(0x150).featureMap(0xfffc)={ selectWhileRunning: false, progressReporting: false, maps: true }',
-        'serviceArea(0x150).generatedCommandList(0xfff8)=[ 1 ]',
+        'serviceArea(0x150).generatedCommandList(0xfff8)=[ 1, 3 ]',
         'serviceArea(0x150).selectedAreas(0x2)=[  ]',
         "serviceArea(0x150).supportedAreas(0x0)=[ { areaId: 1, mapId: null, areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: 52 }, landmarkInfo: null } }, { areaId: 2, mapId: null, areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: 47 }, landmarkInfo: null } }, { areaId: 3, mapId: null, areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: 7 }, landmarkInfo: null } }, { areaId: 4, mapId: null, areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: 6 }, landmarkInfo: null } } ]",
         'serviceArea(0x150).supportedMaps(0x1)=[  ]',
@@ -544,10 +549,12 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
 
   test('invoke MatterbridgeServiceAreaServer commands', async () => {
     expect(device.behaviors.has(ServiceAreaServer)).toBeTruthy();
-    expect(device.behaviors.has(MatterbridgeServiceAreaServer)).toBeTruthy();
+    // This device is built without the progress option, so the ServiceArea cluster server advertises Maps only, not ProgressReporting.
+    expect(device.behaviors.has(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps))).toBeTruthy();
     expect(device.behaviors.elementsOf(ServiceAreaServer).commands.has('selectAreas')).toBeTruthy();
-    expect((device.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0]);
-    expect((device.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1]);
+    expect(device.behaviors.elementsOf(ServiceAreaServer).commands.has('skipArea')).toBeTruthy();
+    expect((device.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0, 2]);
+    expect((device.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1, 3]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
@@ -557,6 +564,25 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [0, 5] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [0, 5] (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [0, 5] (endpoint ${device.id}.${device.number})`);
+
+    // SelectedAreas is still [1, 2, 3, 4] from the accepted selectAreas call above, so skipping a selected area succeeds.
+    vi.clearAllMocks();
+    const skipAreaCalls: Array<{ cluster: string; request: object }> = [];
+    device.addCommandHandler('skipArea', (data) => {
+      skipAreaCalls.push({ cluster: data.cluster, request: data.request });
+    });
+    const skippedResponse = await device.act(async (agent) => agent.get(MatterbridgeServiceAreaServer).skipArea({ skippedArea: 1 }));
+    expect(skippedResponse).toEqual({ status: ServiceArea.SkipAreaStatus.Success, statusText: '' });
+    expect(skipAreaCalls).toEqual([{ cluster: 'serviceArea', request: { skippedArea: 1 } }]);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: skipping area 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: skipArea called with 1 (endpoint ${device.id}.${device.number})`);
+    // ProgressReporting is not enabled on this device, so the progress attribute stays undefined instead of being updated.
+    expect((device.stateOf(ServiceAreaServer) as any).progress).toBeUndefined();
+
+    // 99 is not in SelectedAreas, so the request is refused.
+    vi.clearAllMocks();
+    const invalidSkippedResponse = await device.act(async (agent) => agent.get(MatterbridgeServiceAreaServer).skipArea({ skippedArea: 99 }));
+    expect(invalidSkippedResponse).toEqual({ status: ServiceArea.SkipAreaStatus.InvalidSkippedArea, statusText: 'AreaID 99 is not in the selected areas list' });
   });
 
   test('start the server node', async () => {
