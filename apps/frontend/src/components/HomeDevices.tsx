@@ -391,18 +391,23 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.id === uniqueId.current && msg.method === '/api/devices') {
         if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
         if (msg.response) {
+          // const start = new Date();
+          // console.log(`HomeDevices registering ${msg.response?.length} devices...`);
           // /api/devices is the complete, authoritative roster: every response replaces all 'device'-origin
           // rows wholesale (added, updated, or dropped to match exactly what it reports), while leaving
           // 'select'-origin rows alone, except pruning any now superseded by a device that just got registered.
           const registered: MixedApiDevices[] = (msg.response as ApiDevicesWithSelected[]).map((device) =>
             Object.assign(device, { selected: isSelected(device), origin: 'device' as const }),
           );
-          setFooterLeft(`Registered devices: ${registered.length}/${mixedDevices.length}`);
+          setFooterLeft('Registering devices...');
           setMixedDevices((prev) => {
             const registeredKeys = new Set(registered.map((d) => `${d.pluginName}::${d.serial}`));
             const keptSelectOnly = prev.filter((row) => row.origin === 'select' && !registeredKeys.has(`${row.pluginName}::${row.serial}`));
             return [...registered, ...keptSelectOnly];
           });
+          setFooterLeft('Registered devices:');
+          // const stop = new Date();
+          // console.log(`HomeDevices registered ${msg.response?.length} devices (took ${stop.getTime() - start.getTime()} ms)`);
         }
       } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
         if (debug || localDebug)
@@ -412,6 +417,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           );
         if (msg.response && msg.response.length > 0) {
           const pluginName = msg.response[0].pluginName;
+          // console.log(`HomeDevices registering selected devices for plugin ${pluginName}`);
+          // const start = new Date();
+          setFooterLeft(`Registering selected devices for ${pluginName}...`);
           setMixedDevices((prev) => {
             // This response lists every device the plugin knows, registered or not. Drop this plugin's
             // previous select-only rows, then add back only the devices not already covered by a
@@ -424,6 +432,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
               .map((device) => Object.assign(device, { selected: isSelected(device), origin: 'select' as const }));
             return [...withoutStaleSelectOnly, ...newSelectOnlyRows];
           });
+          setFooterLeft('Registered devices:');
+          // const stop = new Date();
+          // console.log(`HomeDevices registered selected devices for plugin ${pluginName} (took ${stop.getTime() - start.getTime()} ms)`);
         }
       }
     };
@@ -437,11 +448,24 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     };
   }, [addListener, removeListener, sendMessage, isSelected]);
 
+  // Refresh counts from the updated rows while preserving waiting and loading messages.
+  useEffect(() => {
+    setFooterLeft((current) => {
+      if (!current.startsWith('Registered devices:')) return current;
+
+      if (debug || localDebug) console.log('HomeDevices counting registered devices...');
+      const registeredCount = mixedDevices.filter((device) => device.origin === 'device').length;
+      return `Registered devices: ${registeredCount}/${mixedDevices.length}`;
+    });
+  }, [mixedDevices]);
+
   // Send API requests when online or mounting
   useEffect(() => {
     if (online) {
       if (debug || localDebug) console.log('HomeDevices sending /api/settings and /api/plugins requests');
+      setFooterLeft('Loading settings...');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      setFooterLeft('Loading plugins...');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
