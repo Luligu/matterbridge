@@ -12,6 +12,8 @@ import { type WsMessageApiRequest, type WsMessageApiResponse, type WsMessageErro
 import { MbfLsk } from '../utils/localStorage';
 import { UiContext } from './UiContext';
 
+const localDebug = false; // Set to true to enable debug logs only in WebSocket component
+
 type IntervalHandle = ReturnType<typeof window.setInterval>;
 type TimeoutHandle = ReturnType<typeof window.setTimeout>;
 
@@ -23,7 +25,7 @@ export interface WsLogMessage {
   message: string;
 }
 
-// TypeScript interfaces for context values
+// TypeScript interfaces for messages context values
 export interface WebSocketMessagesContextType {
   messages: WsLogMessage[];
   logLength: React.RefObject<number>;
@@ -38,6 +40,7 @@ export interface WebSocketMessagesContextType {
   filterLogMessages: (level: string, search: string) => void;
 }
 
+// TypeScript interfaces for context values
 export interface WebSocketContextType {
   logLength: React.RefObject<number>;
   logFilterLevel: string;
@@ -122,20 +125,23 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const pingIntervalSeconds = 60;
   const offlineTimeoutSeconds = 50;
   const startTimeoutSeconds = 300;
+  /* Messages counter interval setup */
   const messagesCounterSeconds = 10;
 
   useEffect(() => {
-    if (debug) console.log(`WebSocket messages started counter interval`);
+    if (debug || localDebug) console.log(`WebSocket started counter interval`);
     messagesCounterIntervalRef.current = setInterval(() => {
       if (messagesCounterRef.current > 0) {
-        if (debug)
-          console.log(`WebSocket messages received in the last ${messagesCounterSeconds} seconds: ${messagesCounterRef.current * (60 / messagesCounterSeconds)} messages/minute`);
+        if (debug || localDebug)
+          console.log(
+            `WebSocket received ${messagesCounterRef.current} messages in the last ${messagesCounterSeconds} seconds: ${messagesCounterRef.current * (60 / messagesCounterSeconds)} messages/minute`,
+          );
         messagesCounterRef.current = 0;
       }
     }, messagesCounterSeconds * 1000);
 
     return () => {
-      if (debug) console.log(`WebSocket messages stopped counter interval`);
+      if (debug || localDebug) console.log(`WebSocket stopped counter interval`);
       if (messagesCounterIntervalRef.current) clearInterval(messagesCounterIntervalRef.current);
       messagesCounterIntervalRef.current = null;
     };
@@ -154,7 +160,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const filterLogMessages = useCallback((level: string, search: string) => {
-    if (debug) console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}"...`);
+    if (debug || localDebug) console.log(`WebSocket filterLogMessages called with level "${level}" and search "${search}"...`);
     setMessages((prevMessages) => {
       return prevMessages.filter((msg) => {
         // Process log filtering by level. Leave 'spawn' and other system levels always visible
@@ -185,7 +191,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
               const regex = new RegExp(search.slice(1, -1), 'i');
               return !regex.test(msg.message) && !regex.test(msg.name);
             } catch (error) {
-              /*if (debug)*/ console.error(`WebSocket log search invalid regex filter "${search}":`, error);
+              /*if (debug || localDebug)*/ console.error(`WebSocket log search invalid regex filter "${search}":`, error);
               return false;
             }
           })()
@@ -200,16 +206,16 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const sendMessage = useCallback((message: WsMessageApiRequest) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       try {
-        if (debug) console.log(`WebSocket sending message with id ${message.id}:`, message);
+        if (debug || localDebug) console.log(`WebSocket sending message with id ${message.id}:`, message);
         if (message.id === undefined) message.id = uniqueIdRef.current;
         const msg = JSON.stringify(message);
         wsRef.current.send(msg);
-        if (debug) console.log(`WebSocket sent message:`, message);
+        if (debug || localDebug) console.log(`WebSocket sent message:`, message);
       } catch (error) {
-        if (debug) console.error(`WebSocket error sending message: ${String(error)}`);
+        if (debug || localDebug) console.error(`WebSocket error sending message: ${String(error)}`);
       }
     } else {
-      if (debug) console.error(`WebSocket message not sent, WebSocket not connected:`, message);
+      if (debug || localDebug) console.error(`WebSocket message not sent, WebSocket not connected:`, message);
     }
   }, []);
 
@@ -218,23 +224,23 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const addListener = useCallback((listener: (msg: WsMessageApiResponse) => void, id: number) => {
-    if (debug) console.log(`WebSocket addListener id ${id}:`, listener);
+    if (debug || localDebug) console.log(`WebSocket addListener id ${id}:`, listener);
     if (id === undefined || id === null || Number.isNaN(id) || id === 0) console.error(`WebSocket addListener called without id, listener not added:`, listener);
     // listenersRef.current = [...listenersRef.current, listener];
     listenersRef.current = [...listenersRef.current, { listener, id }];
-    if (debug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
+    if (debug || localDebug) console.log(`WebSocket addListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const removeListener = useCallback((listener: (msg: WsMessageApiResponse) => void) => {
-    if (debug) console.log(`WebSocket removeListener:`, listener);
+    if (debug || localDebug) console.log(`WebSocket removeListener:`, listener);
     listenersRef.current = listenersRef.current.filter((l) => l.listener !== listener);
-    if (debug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
+    if (debug || localDebug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
 
   const connectWebSocket = useCallback(() => {
     if (wssHost === '' || wssHost === null || wssHost === undefined) return;
     logMessage('WebSocket', `Connecting ${wssPassword ? `with password` : ''} to WebSocket: ${wssHost}`);
-    if (debug) console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
+    if (debug || localDebug) console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
     wsRef.current = new WebSocket(wssHost + (wssPassword ? `?password=${encodeURIComponent(wssPassword)}` : ''));
 
     wsRef.current.onmessage = (event) => {
@@ -243,29 +249,29 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       try {
         const msg: WsMessageApiResponse = JSON.parse(event.data);
         if (msg.id === undefined || msg.src === undefined || msg.dst === undefined) {
-          if (debug) console.error(`WebSocket undefined message id/src/dst:`, msg);
+          if (debug || localDebug) console.error(`WebSocket undefined message id/src/dst:`, msg);
           return;
         }
         if (msg.src !== 'Matterbridge' || msg.dst !== 'Frontend') {
-          if (debug) console.error(`WebSocket invalid message src/dst:`, msg);
+          if (debug || localDebug) console.error(`WebSocket invalid message src/dst:`, msg);
           return;
         }
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         if ((msg as unknown as WsMessageErrorApiResponse).error) {
-          if (debug) console.error(`WebSocket error message response:`, msg);
+          if (debug || localDebug) console.error(`WebSocket error message response:`, msg);
           return;
         }
         if (msg.id === uniqueIdRef.current && msg.method === 'pong' && msg.response === 'pong') {
-          if (debug) console.log(`WebSocket pong response message id ${msg.id}:`, msg);
+          if (debug || localDebug) console.log(`WebSocket pong response message id ${msg.id}:`, msg);
           if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           offlineTimeoutRef.current = null;
           return;
         } else if (msg.method === 'snackbar' && msg.response && msg.response.message) {
-          if (debug) console.log(`WebSocket message id ${msg.id} method ${msg.method}:`, msg);
+          if (debug || localDebug) console.log(`WebSocket message id ${msg.id} method ${msg.method}:`, msg);
           showSnackbarMessage(msg.response.message, msg.response.timeout, msg.response.severity);
           return;
         } else if (msg.method === 'close_snackbar' && msg.response && msg.response.message) {
-          if (debug) console.log(`WebSocket message id ${msg.id} method ${msg.method}:`, msg);
+          if (debug || localDebug) console.log(`WebSocket message id ${msg.id} method ${msg.method}:`, msg);
           closeSnackbarMessage(msg.response.message);
           return;
         } else if (msg.method === 'log') {
@@ -322,7 +328,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
                 const regex = new RegExp(logFilterSearchRef.current.slice(1, -1), 'i');
                 return !regex.test(msg.response.message) && !regex.test(msg.response.name);
               } catch (error) {
-                /*if (debug)*/ console.error(`WebSocket log search invalid regex filter "${logFilterSearchRef.current}":`, error);
+                /*if (debug || localDebug)*/ console.error(`WebSocket log search invalid regex filter "${logFilterSearchRef.current}":`, error);
                 return false;
               }
             })()
@@ -334,16 +340,16 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
 
           setMessages((prevMessages) => {
             const newMessages = [...prevMessages, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
-            if (debug) console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
+            if (debug || localDebug) console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
             // Check if the new array length exceeds the maximum allowed length plus 10%
             if (newMessages.length > logLength.current + (logLength.current * 10) / 100) {
-              if (debug) console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
+              if (debug || localDebug) console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
               return newMessages.slice(newMessages.length - logLength.current); // Keep only the last 'logLength' messages
             }
             return newMessages;
           });
         } else {
-          if (debug) console.log(`WebSocket received message id ${msg.id} method ${msg.method}:`, msg);
+          if (debug || localDebug) console.log(`WebSocket received message id ${msg.id} method ${msg.method}:`, msg);
           if (msg.id === 0) {
             listenersRef.current.forEach((listener) => listener.listener(msg)); // Notify all listeners for broadcast messages
           } else {
@@ -351,7 +357,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             if (listener) {
               listener.listener(msg); // Notify the specific listener
             } else {
-              if (debug) console.warn('WebSocket no listener found for message id %s:', msg.id, msg);
+              if (debug || localDebug) console.warn('WebSocket no listener found for message id %s:', msg.id, msg);
             }
           }
           return;
@@ -362,7 +368,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     };
 
     wsRef.current.onopen = () => {
-      if (debug) console.log(`WebSocket: Connected to WebSocket: ${wssHost}`);
+      if (debug || localDebug) console.log(`WebSocket: Connected to WebSocket: ${wssHost}`);
       logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
       setOnline(true);
       closeSnackbar();
@@ -374,7 +380,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           sendMessage({ id: uniqueIdRef.current, method: 'ping', src: 'Frontend', dst: 'Matterbridge', params: {} });
           if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           offlineTimeoutRef.current = setTimeout(() => {
-            if (debug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
+            if (debug || localDebug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
             logMessage('WebSocket', `No pong response received from WebSocket: ${wssHost}`);
             setOnline(false);
           }, 1000 * offlineTimeoutSeconds);
@@ -383,7 +389,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     };
 
     wsRef.current.onclose = () => {
-      if (debug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress ? 'with Ingress' : ''}: ${wssHost}`);
+      if (debug || localDebug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress ? 'with Ingress' : ''}: ${wssHost}`);
       logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
       setOnline(false);
       closeSnackbar();
@@ -404,14 +410,14 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     };
 
     wsRef.current.onerror = (error) => {
-      if (debug) console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
+      if (debug || localDebug) console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
       logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
     };
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [wssHost]); // Intentionally left out dependencies to avoid reconnect loops
 
   const attemptReconnect = useCallback(() => {
-    if (debug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
+    if (debug || localDebug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
     connectWebSocket();
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [connectWebSocket]);
