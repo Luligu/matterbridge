@@ -27,6 +27,13 @@ echo "🧠 Memory: $(free -h | awk '/^Mem:/{print $3 " / " $2}')"
 echo "🌐 IPv4: $(ip -4 route get 1 2>/dev/null | awk '{print $7; exit}' || echo 'unavailable')"
 echo "🌐 IPv6: $(ip -6 addr show dev eth0 2>/dev/null | awk '/inet6/{gsub(/\/.*$/,"",$2); print $2}' | tr '\n' ' ' || echo 'none')"
 
+# CPU temperature (if available)
+for zone in /sys/class/thermal/thermal_zone*; do
+  [ -r "$zone/temp" ] || continue
+  printf '🌡️ CPU Temp (%s): ' "$(cat "$zone/type")"
+  awk '{printf "%.1f°C\n", $1/1000}' "$zone/temp"
+done
+
 # Bun based images ship a "node" (and sometimes "npm") shim that forwards to bun, so the presence
 # of the command is not enough: accept it only when it answers with a real version string.
 NODE_VERSION_OUTPUT="$(node -v 2>/dev/null || true)"
