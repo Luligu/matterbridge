@@ -31,6 +31,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.11] - 2026-09-25
 
+### Development Breaking Changes
+
+- [matter]: Generate the Matter 1.6.1 data model with the data model script. See [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) for delta from 1.6.0.
+
+### Added
+
+- [matter]: Add the [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) document.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.11.
@@ -38,6 +46,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `vitest` to v.5.0.1.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.1.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2002.
+- [matter]: Update the data model script to support Matter 1.6.1 generation (new `systime-ms` datatype mapped to `SystimeMs`).
 - [frontend]: Bump `frontend` version to v.3.6.2.
 - [frontend]: Bump `@rjsf` to v.6.10.1.
 - [frontend]: Bump `react-router` to v.8.4.0.
