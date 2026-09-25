@@ -271,7 +271,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           showSnackbarMessage(msg.response.message, msg.response.timeout, msg.response.severity);
           return;
         } else if (msg.method === 'close_snackbar' && msg.response && msg.response.message) {
-          if (debug || localDebug) console.log(`WebSocket message id ${msg.id} method ${msg.method}:`, msg);
+          if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
           closeSnackbarMessage(msg.response.message);
           return;
         } else if (msg.method === 'log') {
