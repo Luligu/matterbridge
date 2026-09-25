@@ -96,6 +96,7 @@ describe('ConfigPluginDialog', () => {
     const addListener = vi.fn();
     const removeListener = vi.fn();
     const onClose = vi.fn();
+    const onSave = vi.fn();
 
     const renderResult = render(
       <WebSocketContext.Provider
@@ -108,11 +109,11 @@ describe('ConfigPluginDialog', () => {
           } as any
         }
       >
-        <ConfigPluginDialog open={true} onClose={onClose} plugin={plugin} />
+        <ConfigPluginDialog open={true} onClose={onClose} onSave={onSave} plugin={plugin} />
       </WebSocketContext.Provider>,
     );
 
-    return { ...renderResult, sendMessage, addListener, removeListener, onClose };
+    return { ...renderResult, sendMessage, addListener, removeListener, onClose, onSave };
   };
 
   const getListener = (addListener: ReturnType<typeof vi.fn>) => {
@@ -135,7 +136,7 @@ describe('ConfigPluginDialog', () => {
           } as any
         }
       >
-        <ConfigPluginDialog open={false} onClose={vi.fn()} plugin={plugin} />
+        <ConfigPluginDialog open={false} onClose={vi.fn()} onSave={vi.fn()} plugin={plugin} />
       </WebSocketContext.Provider>,
     );
 
@@ -672,7 +673,7 @@ describe('ConfigPluginDialog', () => {
       default: false,
     };
 
-    const { sendMessage, onClose } = renderDialog(plugin);
+    const { sendMessage, onClose, onSave } = renderDialog(plugin);
 
     fireEvent.click(screen.getByRole('button', { name: 'Turn On' }));
 
@@ -709,6 +710,7 @@ describe('ConfigPluginDialog', () => {
         method: '/api/savepluginconfig',
       }),
     );
+    expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'matterbridge-test' }));
     expect(onClose).toHaveBeenCalledTimes(2);
 
     const checkboxes = screen.getAllByRole('checkbox');

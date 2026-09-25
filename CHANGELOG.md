@@ -58,6 +58,12 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxlint` to v.1.85.0.
 - [frontend]: Bump `oxlint-tsgolint` to v.7.0.2003.
 
+### Fixed
+
+- [frontend]: Fix React Compiler `react/immutability` rule flags.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.11] - 2026-09-25
 
 ### Development Breaking Changes

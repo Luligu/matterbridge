@@ -83,7 +83,7 @@
     "react/jsx-no-literals": "off", // we allow string literals in JSX
     // TODO: Re-enable React Compiler diagnostics incrementally after the existing frontend violations have been addressed.
     "react/exhaustive-effect-dependencies": "error",
-    "react/immutability": "off",
+    "react/immutability": "error",
     "react/hooks": "off",
     "react/refs": "off",
     "react/set-state-in-effect": "off",

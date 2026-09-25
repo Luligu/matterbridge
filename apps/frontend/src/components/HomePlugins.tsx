@@ -524,6 +524,10 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     setOpenConfigPluginDialog(false);
   };
 
+  const handleSaveConfig = (configJson: ApiPlugin['configJson']) => {
+    setPlugins((prevPlugins) => prevPlugins.map((plugin) => (plugin.name === selectedPlugin?.name ? { ...plugin, configJson, restartRequired: true } : plugin)));
+  };
+
   if (debug) console.log('HomePlugins rendering...');
   if (!online) {
     return <Connecting />;
@@ -532,7 +536,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     <>
       <MbfWindow>
         {/* Config plugin dialog */}
-        {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} plugin={selectedPlugin} />}
+        {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} onSave={handleSaveConfig} plugin={selectedPlugin} />}
 
         <MbfTable<ApiPlugin> name="Plugins" columns={pluginsColumns} rows={plugins} footerRight="" footerLeft="" />
       </MbfWindow>

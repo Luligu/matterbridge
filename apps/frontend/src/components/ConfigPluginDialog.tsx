@@ -129,11 +129,12 @@ function hasSchemaPropertyArrayMultiSelect(
 export interface ConfigPluginDialogProps {
   open: boolean;
   onClose: () => void;
+  onSave: (configJson: ApiPlugin['configJson']) => void;
   plugin: ApiPlugin;
 }
 
 // oxlint-disable-next-line max-lines-per-function
-export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialogProps) => {
+export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPluginDialogProps) => {
   // Contexts
   const { sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
 
@@ -141,6 +142,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   const uniqueId = useRef(getUniqueId());
   const schemaRef = useRef({} as RJSFSchema);
   const uiSchemaRef = useRef({} as UiSchema);
+  const currentFormDataRef = useRef(plugin.configJson);
 
   // States
   const [formData, setFormData] = useState(plugin.configJson);
@@ -154,7 +156,10 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
 
   /** For ObjectFieldTemplate select from device list */
   const pendingAdditionalPropertyKeyRef = useRef('');
-  let currentFormData = plugin.configJson;
+
+  useEffect(() => {
+    currentFormDataRef.current = plugin.configJson;
+  }, [plugin]);
 
   // WebSocket message handler effect
   useEffect(() => {
@@ -259,7 +264,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   }, [addListener, formData, plugin, removeListener, schema, sendMessage, uiSchema]);
 
   const handleFormChange = (data: IChangeEvent, id?: string) => {
-    currentFormData = data.formData;
+    currentFormDataRef.current = data.formData;
     if (rjsfDebug) console.log(`handleFormChange id ${id} formData:`, data.formData);
   };
 
@@ -267,8 +272,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
     if (debug) console.log('ConfigPluginDialog handleSaveChanges:', data.formData);
     // Save the configuration
     setFormData(data.formData);
-    plugin.configJson = data.formData;
-    plugin.restartRequired = true;
+    onSave(data.formData);
     sendMessage({
       id: uniqueId.current,
       sender: 'ConfigPlugin',
@@ -1044,7 +1048,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
   function CheckboxWidget(props: WidgetProps) {
     const { id, name, value, schema, readonly, onChange } = props;
     if (rjsfDebug) console.log(`CheckboxWidget ${name}:`, props);
-    if (rjsfDebug) console.log(`CheckboxWidget formData:`, currentFormData);
+    if (rjsfDebug) console.log(`CheckboxWidget formData:`, currentFormDataRef.current);
 
     const [fieldValue, setFieldValue] = useState<string>();
 
@@ -1061,7 +1065,7 @@ export const ConfigPluginDialog = ({ open, onClose, plugin }: ConfigPluginDialog
         method: '/api/action',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormData, id },
+        params: { plugin: plugin.name, action: name, value: fieldValue, formData: currentFormDataRef.current, id },
       });
       if (schema.buttonClose === true) onClose();
       // oxlint-disable-next-line typescript/no-explicit-any
