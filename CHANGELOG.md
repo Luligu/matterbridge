@@ -33,6 +33,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
+### Added
+
+- [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.12.

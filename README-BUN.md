@@ -29,7 +29,7 @@ The image (tag **bun** 69 MB) includes only Matterbridge, using the latest relea
 docker pull luligu/matterbridge:bun && docker run --name matterbridge -v ~/Matterbridge:/root/Matterbridge -v ~/.matterbridge:/root/.matterbridge -v ~/.mattercert:/root/.mattercert --network host --restart always --stop-timeout 60 -d luligu/matterbridge:bun
 ```
 
-# Bun image installed from npm
+# Bun docker image
 
 The **bun** image installs the latest Matterbridge release from npm and runs it with the [Bun](https://bun.com) runtime.
 
