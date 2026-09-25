@@ -3,6 +3,8 @@
 Configuration log for a headless Raspberry Pi Zero 2 W intended to run **Matterbridge** only.
 Goal: maximise usable RAM, with zram as the only swap.
 
+![Raspberry Pi Zero 2 W running Matterbridge](https://matterbridge.io/screenshots/Raspi-zero-2w-matterbridge.jpg)
+
 - **Board:** Raspberry Pi Zero 2 W (512 MB physical RAM)
 - **OS:** Debian GNU/Linux 13 (Trixie), 64-bit
 - **Kernel:** 6.18.34+rpt-rpi-v8 (aarch64)
