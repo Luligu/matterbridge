@@ -38,6 +38,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [matter]: Add the [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) document.
+- [frontend]: Add loading messages in HomeDevices.
 
 ### Changed
 
