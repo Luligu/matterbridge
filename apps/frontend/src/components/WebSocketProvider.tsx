@@ -349,7 +349,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
             return newMessages;
           });
         } else {
-          if (debug || localDebug) console.log(`WebSocket received message id ${msg.id} method ${msg.method}:`, msg);
+          if (debug || localDebug) console.log('WebSocket received message id %s method %s:', String(msg.id), String(msg.method), msg);
           if (msg.id === 0) {
             listenersRef.current.forEach((listener) => listener.listener(msg)); // Notify all listeners for broadcast messages
           } else {
