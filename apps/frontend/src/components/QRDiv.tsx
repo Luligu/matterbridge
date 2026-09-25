@@ -73,6 +73,7 @@ function QRDiv({ id }: QRDivProps) {
       sendMessage({ id: uniqueId.current, sender: 'QRDiv', method: '/api/matter', src: 'Frontend', dst: 'Matterbridge', params: { id: id, server: true } });
     } else {
       if (debug) console.log('QRDiv id effect setting matter to null');
+      // oxlint-disable-next-line react/set-state-in-effect -- Clear cached node data when selection is removed so reselecting it cannot show stale pairing information.
       setMatter(null);
     }
   }, [id, sendMessage]);

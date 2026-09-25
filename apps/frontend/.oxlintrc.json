@@ -86,7 +86,7 @@
     "react/immutability": "error",
     "react/hooks": "off",
     "react/refs": "off",
-    "react/set-state-in-effect": "off",
+    "react/set-state-in-effect": "error",
     "react/rule-suppression": "off", // sometimes necessary to suppress specific React Compiler rules
     "react/todo": "off", // internal React Compiler limitations are not actionable application diagnostics
     "react/button-has-type": "warn" // native <button> defaults to type="submit" and can silently submit parent forms

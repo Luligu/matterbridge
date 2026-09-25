@@ -68,14 +68,7 @@ function Devices(): React.JSX.Element {
   // Send API requests when online
   useEffect(() => {
     if (online) {
-      /*
-        Clears the plugin filter options left over from the previous connection, so the dropdown
-        cannot offer plugins that may no longer exist, until /api/plugins answers below. The React
-        Compiler reports set-state-in-effect here, but this is the case the rule exempts: the effect
-        synchronizes with an external system (the WebSocket connection) and runs only when `online`
-        actually flips, never as part of a render cycle, so it cannot cascade.
-      */
-      /// oxlint-disable-next-line react/set-state-in-effect -- reset tied to the WebSocket connection; see the comment above
+      // oxlint-disable-next-line react/set-state-in-effect -- Clear stale plugin options on reconnect while awaiting the refreshed plugin list.
       setPlugins(['All plugins']);
       if (debug || localDebug) console.log(`Devices sending /api/plugins request with id ${uniqueId.current}`);
       sendMessage({ id: uniqueId.current, sender: 'Devices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });

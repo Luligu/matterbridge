@@ -449,22 +449,18 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   }, [addListener, removeListener, sendMessage, isSelected]);
 
   // Refresh counts from the updated rows while preserving waiting and loading messages.
-  useEffect(() => {
-    setFooterLeft((current) => {
-      if (!current.startsWith('Registered devices:')) return current;
-
-      if (debug || localDebug) console.log('HomeDevices counting registered devices...');
-      const registeredCount = mixedDevices.filter((device) => device.origin === 'device').length;
-      return `Registered devices: ${registeredCount}/${mixedDevices.length}`;
-    });
-  }, [mixedDevices]);
+  let displayFooterLeft = footerLeft;
+  if (footerLeft.startsWith('Registered devices:')) {
+    const registeredCount = mixedDevices.filter((device) => device.origin === 'device').length;
+    displayFooterLeft = `Registered devices: ${registeredCount}/${mixedDevices.length}`;
+  }
 
   // Send API requests when online or mounting
   useEffect(() => {
     if (online) {
       if (debug || localDebug) console.log('HomeDevices sending /api/settings and /api/plugins requests');
-      setFooterLeft('Loading settings...');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      // oxlint-disable-next-line react/set-state-in-effect -- Reset the footer when connecting so stale device counts are not shown while awaiting the refreshed plugin list.
       setFooterLeft('Loading plugins...');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
@@ -575,7 +571,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   return (
     <>
       <MbfWindow style={{ flex: '1 1 auto' }}>
-        <MbfTable name="Devices" getRowKey={getRowKey} rows={mixedDevices} columns={devicesColumns} footerLeft={footerLeft} footerRight={footerRight} />
+        <MbfTable name="Devices" getRowKey={getRowKey} rows={mixedDevices} columns={devicesColumns} footerLeft={displayFooterLeft} footerRight={footerRight} />
       </MbfWindow>
       <Dialog
         open={selectedDeviceFrontend !== null}

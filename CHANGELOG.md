@@ -61,6 +61,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [frontend]: Fix React Compiler `react/immutability` rule flags.
+- [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

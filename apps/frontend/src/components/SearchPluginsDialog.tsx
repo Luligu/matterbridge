@@ -437,6 +437,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       selectedPluginNameRef.current = '';
       controllerRef.current?.abort();
       controllerRef.current = null;
+      // oxlint-disable-next-line react/set-state-in-effect -- Reset the mounted dialog on every close path so reopening starts without stale results, selection, or progress.
       setRows([]);
       setLoading(false);
       setSelecting(false);

@@ -242,6 +242,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
       };
 
       moveUiPropertiesToUiSchema(schema, uiSchema);
+      // oxlint-disable-next-line react/set-state-in-effect -- Preserve existing form schema initialization until schema preparation is separated from the subscription effect.
       setUiSchema(uiSchema);
       schemaRef.current = schema; // We make sure state is updated
       uiSchemaRef.current = uiSchema; // We make sure state is updated
