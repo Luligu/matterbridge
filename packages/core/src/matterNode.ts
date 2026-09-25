@@ -1540,7 +1540,6 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     return sessions
       .filter((session) => session.isPeerActive)
       .map((session) => {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         return {
           name: session.name,
           nodeId: session.nodeId.toString(),
@@ -1560,6 +1559,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
           lastActiveTimestamp: session.lastActiveTimestamp?.toString(),
           numberOfActiveSubscriptions: session.numberOfActiveSubscriptions,
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         } as SanitizedSession;
       });
   }

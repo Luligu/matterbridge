@@ -1,5 +1,8 @@
-// VS Code settings native v.1.0.11
+// VS Code settings native v.1.0.12
 {
+  "npm.packageManager": "npm",
+  // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
+  "npm.scriptRunner": "npm",
   "eslint.enable": false,
   "prettier.enable": false,
   "oxc.enable": true,

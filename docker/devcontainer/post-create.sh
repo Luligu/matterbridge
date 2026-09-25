@@ -3,11 +3,27 @@
 # docker/devcontainer/post-create.sh v.2.2.0
 
 # This script runs after the Dev Container is created to set up the dev container environment.
+#
+# Usage:
+#   post-create.sh <--bun|--node> [--plugin|--matterbridge] [--dev|--main]
+#
+#   --bun | --node   runtime of the image; required.
+#   --plugin         plugin repository: also installs Matterbridge from the selected branch,
+#                    links it, builds the plugin frontend when present and adds the plugin.
+#   --matterbridge   Matterbridge repository.
+#   --dev | --main   branch used for the Matterbridge install; only with --plugin, default --dev.
+#
+# The dev container images copy this script to /usr/local/bin, so devcontainer.json can call it
+# from there:
+#   "postCreateCommand": "bash /usr/local/bin/post-create.sh --node"
+#   "postCreateCommand": "bash /usr/local/bin/post-create.sh --bun --plugin --dev"
+#   "postCreateCommand": "bash /usr/local/bin/post-create.sh --node --matterbridge"
 
 set -euo pipefail
 
 MODE=""
 PLUGIN=false
+MATTERBRIDGE=false
 BRANCH="dev"
 
 for arg in "$@"; do
@@ -21,6 +37,9 @@ for arg in "$@"; do
     --plugin)
       PLUGIN=true
       ;;
+    --matterbridge)
+      MATTERBRIDGE=true
+      ;;
     --dev)
       BRANCH="dev"
       ;;
@@ -29,14 +48,14 @@ for arg in "$@"; do
       ;;
     *)
       echo "Unknown argument: $arg" >&2
-      echo "Usage: post-create.sh <--bun|--node> [--plugin] [--dev|--main]" >&2
+      echo "Usage: post-create.sh <--bun|--node> [--plugin|--matterbridge] [--dev|--main]" >&2
       exit 1
       ;;
   esac
 done
 
 if [ -z "$MODE" ]; then
-  echo "Usage: post-create.sh <--bun|--node> [--plugin] [--dev|--main]" >&2
+  echo "Usage: post-create.sh <--bun|--node> [--plugin|--matterbridge] [--dev|--main]" >&2
   exit 1
 fi
 
@@ -45,6 +64,9 @@ if [ "$PLUGIN" = true ]; then
   TARGET="plugin"
   echo "Welcome to Matterbridge Plugin Dev Container (post-create.sh)"
 else
+  if [ "$MATTERBRIDGE" = true ]; then
+    TARGET="Matterbridge"
+  fi
   echo "Welcome to Matterbridge Dev Container (post-create.sh)"
 fi
 
@@ -59,11 +81,15 @@ echo "Uptime: $(uptime -p || echo 'unavailable')"
 echo "Date: $(date)"
 if [ "$MODE" = "bun" ]; then
   echo "Bun version: $(bun -v)"
-  echo "Bun global cache: ${HOME}/.bun/install/cache"
+  echo "Bun location: $(command -v bun)"
+  echo "Bun cache: ${HOME}/.bun/install/cache"
+  echo "Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
 else
   echo "Node.js version: $(node -v)"
+  echo "Node.js location: $(command -v node)"
   echo "Npm version: $(npm -v)"
   echo "Npm cache: $(npm config get cache)"
+  echo "Npm global prefix: $(npm root -g)"
 fi
 echo ""
 
@@ -77,7 +103,7 @@ step() {
 workspace_paths=("$PWD/node_modules" "$PWD/.cache")
 home_paths=("$HOME/.claude" "$HOME/.codex" "$HOME/.gemini" "$HOME/.agents" "$HOME/.bash-cache" "$HOME/.npm" "$HOME/.bun" "$HOME/.bun/install/cache" "$HOME/.vscode-server/extensions")
 
-if [ "$PLUGIN" = true ]; then
+if [ "$PLUGIN" = true ] || [ "$MATTERBRIDGE" = true ]; then
   workspace_paths+=("$PWD/apps/frontend/node_modules")
   home_paths+=("$HOME/Matterbridge" "$HOME/.matterbridge" "$HOME/.mattercert")
 fi
@@ -122,13 +148,13 @@ if [ "$PLUGIN" = true ]; then
   step "Linking Matterbridge..."
   if [ "$MODE" = "bun" ]; then
     if ! bun link matterbridge; then
-      echo "Retrying link with elevated permissions..."
+      step "Retrying link with elevated permissions..."
       sudo bun link matterbridge
       sudo chown -R bun:bun ./node_modules
     fi
   else
     if ! npm link matterbridge --no-fund --no-audit; then
-      echo "Retrying link with elevated permissions..."
+      step "Retrying link with elevated permissions..."
       sudo npm link matterbridge --no-fund --no-audit
       sudo chown -R node:node ./node_modules
     fi
@@ -142,10 +168,10 @@ else
   npm run build
 fi
 
-if [ "$PLUGIN" = true ]; then
-  echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "${STEP}.post-create - Checking for the plugin frontend..."
+if [ "$PLUGIN" = true ] || [ "$MATTERBRIDGE" = true ]; then
+  step "Checking for the ${TARGET} frontend..."
   if [ -f apps/frontend/package.json ]; then
-    echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "${STEP}.post-create - Building the plugin frontend..."
+    step "Building the ${TARGET} frontend..."
     cd apps/frontend
     if [ "$MODE" = "bun" ]; then
       [ -f package-lock.json ] && mv package-lock.json package-lock.json.bak || true
@@ -156,8 +182,9 @@ if [ "$PLUGIN" = true ]; then
     fi
     cd ../..
   fi
-  STEP=$((STEP + 1))
+fi
 
+if [ "$PLUGIN" = true ]; then
   step "Adding the plugin to Matterbridge..."
   if [ "$MODE" = "bun" ]; then
     bun run add

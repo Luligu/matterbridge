@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/frontend",
-  "version": "3.6.1",
+  "version": "3.6.2",
   "description": "Matterbridge frontend application",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -84,29 +84,29 @@
     "@mdi/react": "1.6.1",
     "@mui/icons-material": "9.4.0",
     "@mui/material": "9.4.0",
-    "@rjsf/core": "6.10.0",
-    "@rjsf/utils": "6.10.0",
-    "@rjsf/validator-ajv8": "6.10.0",
+    "@rjsf/core": "6.10.1",
+    "@rjsf/utils": "6.10.1",
+    "@rjsf/validator-ajv8": "6.10.1",
     "notistack": "3.0.2",
     "qrcode.react": "4.2.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "react-router": "8.3.1"
+    "react-router": "8.4.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
-    "@types/node": "26.5.1",
+    "@types/node": "26.6.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "globals": "17.12.0",
     "jsdom": "30.0.1",
     "vite": "8.3.0",
-    "vitest": "5.0.0",
+    "vitest": "5.0.1",
     "typescript": "7.0.2",
     "oxfmt": "0.68.0",
     "oxlint": "1.83.0",
-    "oxlint-tsgolint": "7.0.2001"
+    "oxlint-tsgolint": "7.0.2002"
   }
 }

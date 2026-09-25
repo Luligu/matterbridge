@@ -115,12 +115,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
   const { mobile } = useContext(UiContext);
 
-  // States
-  const [restart, setRestart] = useState(false); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
-  const [loading, setLoading] = useState(true); // Loading state, used in the footer sx. Set to false when all plugins are loaded.
+  // States: `Registered devices: ${registeredCount.toString()}/${mixedDevices.length.toString()}`
+  const [footerLeft, setFooterLeft] = useState('Waiting for the plugins to fully load...'); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
+  const [footerRight, setFooterRight] = useState(''); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
   const [settings, setSettings] = useState<ApiSettings | null>(null); // Settings from /api/settings response
   const [plugins, setPlugins] = useState<ExtendedBaseRegisteredPlugin[]>([]);
-  const [registeredCount, setRegisteredCount] = useState(0); // Count from the last /api/devices response, for the footer.
   const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table shows these: registered devices plus not-yet-registered selectable ones.
   const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
   const [_status, setStatus] = useState<BridgeStatus>('inactive');
@@ -304,7 +303,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       // if (debug || localDebug) console.log('HomeDevices received WebSocket Message:', msg);
       // Broadcast messages
-      // 'settings' | 'plugins' | 'devices' | 'matter';
+      // Broadcast messages refresh_required:'settings' | 'plugins' | 'devices' | 'matter'
       if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
         if (msg.response.changed === 'plugins' && msg.response.lock) {
           if (debug || localDebug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} lock=${msg.response.lock} skipping /api/plugins request`);
@@ -327,10 +326,10 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         });
       } else if (msg.method === 'restart_required') {
         if (debug || localDebug) console.log('HomeDevices received restart_required');
-        setRestart(true);
+        setFooterRight('Restart Required');
       } else if (msg.method === 'restart_not_required') {
         if (debug || localDebug) console.log('HomeDevices received restart_not_required');
-        setRestart(false);
+        setFooterRight('');
       } else if (msg.method === 'matterbridge_status_update') {
         if (debug || localDebug) console.log(`HomeDevices received matterbridge_status_update: ${msg.response.status}`);
         setStatus(msg.response.status);
@@ -358,7 +357,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       if (msg.id === uniqueId.current && msg.method === '/api/settings') {
         if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
         setSettings(msg.response);
-        setRestart(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired);
+        setFooterRight(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired ? 'Restart Required' : '');
         setStatus(msg.response.matterbridgeInformation.bridgeStatus);
       } else if (msg.id === uniqueId.current && msg.method === '/api/plugins') {
         if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} plugins:`, msg.response);
@@ -374,10 +373,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           if (!running) return; // Do nothing until all plugins are loaded and started and not in error state
 
           if (debug || localDebug) console.log(`HomeDevices reset plugins and mixedDevices, starting a fresh load cycle`);
-          setLoading(false); // Set loading to false only when all plugins are loaded. Used in the footerLeft.
+          setFooterLeft('Loading devices...');
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
-          setRegisteredCount(0);
           setMixedDevices([]); // Full reload: start from a clean slate so a plugin that's no longer running doesn't leave stale rows behind.
           // Request all the devices
           sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -393,18 +391,23 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.id === uniqueId.current && msg.method === '/api/devices') {
         if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
         if (msg.response) {
+          // const start = new Date();
+          // console.log(`HomeDevices registering ${msg.response?.length} devices...`);
           // /api/devices is the complete, authoritative roster: every response replaces all 'device'-origin
           // rows wholesale (added, updated, or dropped to match exactly what it reports), while leaving
           // 'select'-origin rows alone, except pruning any now superseded by a device that just got registered.
           const registered: MixedApiDevices[] = (msg.response as ApiDevicesWithSelected[]).map((device) =>
             Object.assign(device, { selected: isSelected(device), origin: 'device' as const }),
           );
-          setRegisteredCount(registered.length);
+          setFooterLeft('Registering devices...');
           setMixedDevices((prev) => {
             const registeredKeys = new Set(registered.map((d) => `${d.pluginName}::${d.serial}`));
             const keptSelectOnly = prev.filter((row) => row.origin === 'select' && !registeredKeys.has(`${row.pluginName}::${row.serial}`));
             return [...registered, ...keptSelectOnly];
           });
+          setFooterLeft('Registered devices:');
+          // const stop = new Date();
+          // console.log(`HomeDevices registered ${msg.response?.length} devices (took ${stop.getTime() - start.getTime()} ms)`);
         }
       } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
         if (debug || localDebug)
@@ -414,6 +417,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           );
         if (msg.response && msg.response.length > 0) {
           const pluginName = msg.response[0].pluginName;
+          // console.log(`HomeDevices registering selected devices for plugin ${pluginName}`);
+          // const start = new Date();
+          setFooterLeft(`Registering selected devices for ${pluginName}...`);
           setMixedDevices((prev) => {
             // This response lists every device the plugin knows, registered or not. Drop this plugin's
             // previous select-only rows, then add back only the devices not already covered by a
@@ -426,6 +432,9 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
               .map((device) => Object.assign(device, { selected: isSelected(device), origin: 'select' as const }));
             return [...withoutStaleSelectOnly, ...newSelectOnlyRows];
           });
+          setFooterLeft('Registered devices:');
+          // const stop = new Date();
+          // console.log(`HomeDevices registered selected devices for plugin ${pluginName} (took ${stop.getTime() - start.getTime()} ms)`);
         }
       }
     };
@@ -439,11 +448,24 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     };
   }, [addListener, removeListener, sendMessage, isSelected]);
 
+  // Refresh counts from the updated rows while preserving waiting and loading messages.
+  useEffect(() => {
+    setFooterLeft((current) => {
+      if (!current.startsWith('Registered devices:')) return current;
+
+      if (debug || localDebug) console.log('HomeDevices counting registered devices...');
+      const registeredCount = mixedDevices.filter((device) => device.origin === 'device').length;
+      return `Registered devices: ${registeredCount}/${mixedDevices.length}`;
+    });
+  }, [mixedDevices]);
+
   // Send API requests when online or mounting
   useEffect(() => {
     if (online) {
       if (debug || localDebug) console.log('HomeDevices sending /api/settings and /api/plugins requests');
+      setFooterLeft('Loading settings...');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      setFooterLeft('Loading plugins...');
       sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
   }, [online, sendMessage]);
@@ -553,14 +575,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   return (
     <>
       <MbfWindow style={{ flex: '1 1 auto' }}>
-        <MbfTable
-          name="Devices"
-          getRowKey={getRowKey}
-          rows={mixedDevices}
-          columns={devicesColumns}
-          footerLeft={loading ? 'Waiting for the plugins to fully load...' : `Registered devices: ${registeredCount.toString()}/${mixedDevices.length.toString()}`}
-          footerRight={restart ? 'Restart required' : ''}
-        />
+        <MbfTable name="Devices" getRowKey={getRowKey} rows={mixedDevices} columns={devicesColumns} footerLeft={footerLeft} footerRight={footerRight} />
       </MbfWindow>
       <Dialog
         open={selectedDeviceFrontend !== null}

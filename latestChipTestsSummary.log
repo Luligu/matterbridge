@@ -1,4 +1,4 @@
-Chip tests run started at 2026-09-14T08:52:48.698Z
+Chip tests run started at 2026-09-18T05:47:26.194Z
 
 ✅ Generic device basic composition (TC_DeviceBasicComposition.py)
 ✅ Generic device conformance (TC_DeviceConformance.py)
@@ -50,7 +50,7 @@ Chip tests run started at 2026-09-14T08:52:48.698Z
    ↳ Every step in this YAML is disabled:true (manual verification procedure, no automated assertions).
 ✅ OperationalCredentials UpdateFabricLabel on RootNode (Test_TC_OPCREDS_3_7)
 ⏭️ OperationalCredentials VID verification statement on RootNode (TC_OPCREDS_3_8.py)
-   ↳ Fails at import time: ModuleNotFoundError: No module named 'nest_asyncio' — missing Python dependency in this image, unrelated to Matterbridge.
+   ↳ Requires a single-fabric DUT: step 0 asserts exactly one entry in TrustedRootCertificates (TH1's), but this image is commissioned on two fabrics by design (chip-tool's alpha and the Python framework's default_controller), so it fails with 'Expecting exactly one root from TrustedRootCertificates (TH1's), got 2'. Unrelated to Matterbridge. The nest_asyncio dependency it imports is now kept in the image (see docker/Dockerfile.chip-test).
 ✅ GeneralCommissioning attributes on RootNode (TC_CGEN_2_1.py)
 ✅ GeneralCommissioning ArmFailSafe command on RootNode (TC_CGEN_2_2.py)
 ✅ GeneralCommissioning OpenCommissioningWindow error conditions on RootNode (TC_CGEN_2_4.py)
@@ -334,7 +334,7 @@ Chip tests run started at 2026-09-14T08:52:48.698Z
 ✅ OnOff primary functionality on OnOffLight (Test_TC_OO_2_2)
 ✅ OnOff secondary (Lighting) functionality on OnOffLight (Test_TC_OO_2_3)
 ⏭️ OnOff startup functionality on OnOffLight (Test_TC_OO_2_4)
-   ↳ Requires 6 real DUT reboots.
+   ↳ Requires 6 real DUT reboots, and the restart-flag monitor cannot serve them: --restart-flag-file is a Python matter_testing facility, while this YAML test reboots either via SystemCommands.Reboot (PICS_SDK_CI_ONLY, which only restarts an app chip-tool itself spawned) or a LogCommands.UserPrompt on stdin (PICS_SKIP_SAMPLE_APP). Answering that prompt with canned input would fake the reboot, not perform one. It would fail anyway for the same reason as TC_CC_6_5: matter.js skips the StartUpOnOff/StartUpCurrentLevel/StartUpColorTemperatureMireds startup logic on any endpoint under an aggregator. Verified directly against endpoint 401 — with StartUpOnOff=1 and OnOff=false, a real reboot left OnOff false.
 ✅ OnOff scenes management interaction on OnOffLight (TC_OO_2_7.py)
 ⏭️ OnOff OffOnly feature on OnOffLight (Test_TC_OO_2_6)
    ↳ Requires OO.S.F02 (OffOnly), mutually exclusive with the OO.S.F00 (Lighting) feature createDefaultOnOffClusterServer() actually enables on OnOffLight — permanently inapplicable given this device's feature set, not a PICS omission to fix.
@@ -374,8 +374,7 @@ Chip tests run started at 2026-09-14T08:52:48.698Z
 ✅ ColorControl Color Temperature MoveTo functionality on ColorTemperatureLight (Test_TC_CC_6_1)
 ✅ ColorControl Color Temperature Move functionality on ColorTemperatureLight (Test_TC_CC_6_2)
 ✅ ColorControl Color Temperature Step functionality on ColorTemperatureLight (Test_TC_CC_6_3)
-⏭️ ColorControl StartUpColorTemperatureMireds across a DUT reboot on ColorTemperatureLight (TC_CC_6_5.py)
-   ↳ Requires a real DUT reboot.
+✅ ColorControl StartUpColorTemperatureMireds across a DUT reboot on ColorTemperatureLight (TC_CC_6_5.py)
 ✅ ColorControl Enhanced MoveToHue functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_1)
 ✅ ColorControl Enhanced MoveHue functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_2)
 ✅ ColorControl Enhanced Step functionality on ExtendedColorLightEnhancedEHSXYCT (Test_TC_CC_7_3)
@@ -406,6 +405,23 @@ Chip tests run started at 2026-09-14T08:52:48.698Z
 ✅ OperationalState OperationalError event on IrrigationSystem (TC_OPSTATE_2_4.py)
 ✅ OperationalState OperationCompletion event on IrrigationSystem (TC_OPSTATE_2_5.py)
 ✅ OperationalState CountdownTime reporting on IrrigationSystem (TC_OPSTATE_2_6.py)
+✅ Switch attributes on Momentary Switch (Test_TC_SWTCH_2_1)
+✅ Switch momentary switch functionality on Momentary Switch (TC_SWTCH.py)
+✅ Switch momentary switch long press on Momentary Switch (TC_SWTCH.py)
+✅ Switch momentary switch multi press on Momentary Switch (TC_SWTCH.py)
+⏭️ Switch action switch multi press on Momentary Switch (TC_SWTCH.py)
+   ↳ Gated on has_feature(Switch, kMomentarySwitchMultiPress) AND has_feature(Switch, kActionSwitch), both probed live on the DUT. Matterbridge never enables the ActionSwitch feature, so it always skips.
+⏭️ Switch primary functionality with client as DUT on Momentary Switch (Test_TC_SWTCH_3_2)
+   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
+✅ Switch attributes on Latching Switch (Test_TC_SWTCH_2_1)
+✅ Switch latching switch functionality on Latching Switch (TC_SWTCH.py)
+⏭️ Switch primary functionality with client as DUT on Latching Switch (Test_TC_SWTCH_3_2)
+   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
+✅ Switch attributes on Generic Switch Button1 (Test_TC_SWTCH_2_1)
+✅ Switch momentary switch functionality on Generic Switch Button1 (TC_SWTCH.py)
+✅ Switch momentary switch long press on Generic Switch Button1 (TC_SWTCH.py)
+⏭️ Switch primary functionality with client as DUT on Generic Switch Button1 (Test_TC_SWTCH_3_2)
+   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
 ✅ RvcRunMode attributes on RoboticVacuumCleaner (TC_RVCRUNM_1_2.py)
 ✅ RvcRunMode ChangeToMode on RoboticVacuumCleaner (TC_RVCRUNM_2_1.py)
 ✅ RvcRunMode mode transitions on RoboticVacuumCleaner (TC_RVCRUNM_2_2.py)
@@ -534,6 +550,88 @@ Chip tests run started at 2026-09-14T08:52:48.698Z
 ✅ CommodityTariff commands on Electrical Energy Tariff (TC_SETRF_2_2.py)
 ✅ CommodityTariff primary functionality on Electrical Energy Tariff (TC_SETRF_2_3.py)
 ✅ CommodityTariff subscription report verification on Electrical Energy Tariff (TC_SETRF_3_1.py)
+✅ CameraAvStreamManagement attributes on Camera (TC_AVSM_2_1.py)
+✅ CameraAvStreamManagement snapshot stream allocation on Camera (TC_AVSM_2_2.py)
+✅ CameraAvStreamManagement snapshot stream modification on Camera (TC_AVSM_2_3.py)
+✅ CameraAvStreamManagement snapshot stream deallocation on Camera (TC_AVSM_2_4.py)
+✅ CameraAvStreamManagement audio stream allocation on Camera (TC_AVSM_2_5.py)
+✅ CameraAvStreamManagement audio stream deallocation on Camera (TC_AVSM_2_6.py)
+✅ CameraAvStreamManagement video stream allocation on Camera (TC_AVSM_2_7.py)
+✅ CameraAvStreamManagement video stream modification on Camera (TC_AVSM_2_8.py)
+✅ CameraAvStreamManagement video stream deallocation on Camera (TC_AVSM_2_9.py)
+✅ CameraAvStreamManagement CaptureSnapshot on Camera (TC_AVSM_2_10.py)
+✅ CameraAvStreamManagement SetStreamPriorities on Camera (TC_AVSM_2_11.py)
+✅ CameraAvStreamManagement writable attributes on Camera (TC_AVSM_2_12.py)
+✅ CameraAvStreamManagement video stream allocation reuse on Camera (TC_AVSM_2_13.py)
+✅ CameraAvStreamManagement audio stream allocation reuse on Camera (TC_AVSM_2_14.py)
+✅ CameraAvStreamManagement snapshot stream allocation reuse on Camera (TC_AVSM_2_15.py)
+✅ CameraAvStreamManagement stream reference counts on Camera (TC_AVSM_2_16.py)
+✅ CameraAvStreamManagement soft privacy and livestream handling on Camera (TC_AVSM_2_17.py)
+✅ CameraAvStreamManagement allocated video stream persistence on Camera (TC_AVSM_2_18.py)
+✅ CameraAvStreamManagement allocated audio stream persistence on Camera (TC_AVSM_2_19.py)
+✅ CameraAvStreamManagement allocated snapshot stream persistence on Camera (TC_AVSM_2_20.py)
+✅ CameraAvStreamManagement stream usage priority persistence on Camera (TC_AVSM_2_21.py)
+✅ CameraAvStreamManagement snapshot stream reuse with intersecting parameter ranges on Camera (TC_AVSM_StreamReuseRangeParams.py)
+⏭️ CameraAvStreamManagement video streams persistence on Camera (TC_AVSM_VideoStreamsPersistence.py)
+   ↳ Steps 12/14 simulate a reboot by sending FaultInjection.FailAtFault (manufacturer-specific cluster 0xFFF1FC06 on endpoint 0) with kChipFault ids 34 (kFault_ClearInMemoryAllocatedVideoStreams) and 37 (kFault_LoadPersistentCameraAVSMAttributes). That cluster is a chip example-app debug hook into the C++ camera-app internals; Matterbridge doesn't implement it, so step 12 fails with UnsupportedCluster (0xc3). Gated on a cluster rather than a PICS flag, so no PICS change unlocks it. Also a PICS_SDK_CI_ONLY SDK-internal test, not a certification test (hence no TC_AVSM_<n>_<m> number).
+✅ WebRtcTransportProvider delayed processing of SolicitOffer on Camera (TC_WEBRTCP_2_1.py)
+✅ WebRtcTransportProvider immediate processing of SolicitOffer on Camera (TC_WEBRTCP_2_2.py)
+✅ WebRtcTransportProvider SDP Offer starting a new session on Camera (TC_WEBRTCP_2_3.py)
+✅ WebRtcTransportProvider SDP Offer on an existing session on Camera (TC_WEBRTCP_2_4.py)
+✅ WebRtcTransportProvider SolicitOffer and stream allocation interaction on Camera (TC_WEBRTCP_2_5.py)
+✅ WebRtcTransportProvider CameraAvStreamManagement cluster presence on Camera (TC_WEBRTCP_2_6.py)
+⏭️ WebRtcTransportProvider SolicitOffer with the physical privacy switch on on Camera (TC_WEBRTCP_2_7.py)
+   ↳ Drives HardPrivacyModeOn through the app pipe with SetHardPrivacyModeOn, which handleChipTestAppPipeCommand() in chipTests.ts does not implement, so the write is logged and ignored and the SolicitOffer succeeds instead of failing. Unskip once that app-pipe command exists.
+⏭️ WebRtcTransportProvider SolicitOffer with SoftRecordingPrivacyModeEnabled on Camera (TC_WEBRTCP_2_8.py)
+   ↳ Writes SoftRecordingPrivacyModeEnabled (AVSM 0x0013), which is mandatoryConform on the CameraAvStreamManagement PRIV feature. createDefaultCameraAvStreamManagementClusterServer() requires the behavior with Video, Audio, Snapshot and ImageControl only, so the attribute does not exist and the write fails. The test reads the FeatureMap but asserts the write succeeded instead of skipping, so the AVSM.S.A0013=0 PICS gate does not save it: pics_TC_* lists are metadata for get_test_info() and never auto-skip a test.
+✅ WebRtcTransportProvider SolicitOffer ICEServers and ICETransportPolicy on Camera (TC_WEBRTCP_2_9.py)
+✅ WebRtcTransportProvider SolicitOffer OriginatingEndpointID storage on Camera (TC_WEBRTCP_2_10.py)
+✅ WebRtcTransportProvider deferred Offer command timing on Camera (TC_WEBRTCP_2_11.py)
+✅ WebRtcTransportProvider SolicitOffer resource exhaustion on Camera (TC_WEBRTCP_2_12.py)
+⏭️ WebRtcTransportProvider ProvideOffer with the physical privacy switch on on Camera (TC_WEBRTCP_2_13.py)
+   ↳ Drives HardPrivacyModeOn through the app pipe with SetHardPrivacyModeOn, which handleChipTestAppPipeCommand() in chipTests.ts does not implement, so the write is logged and ignored and the ProvideOffer succeeds instead of failing. Unskip once that app-pipe command exists.
+⏭️ WebRtcTransportProvider ProvideOffer with SoftRecordingPrivacyModeEnabled on Camera (TC_WEBRTCP_2_14.py)
+   ↳ Writes SoftRecordingPrivacyModeEnabled (AVSM 0x0013), which is mandatoryConform on the CameraAvStreamManagement PRIV feature. createDefaultCameraAvStreamManagementClusterServer() requires the behavior with Video, Audio, Snapshot and ImageControl only, so the attribute does not exist and the write fails. See TC_WEBRTCP_2_8.py for why the AVSM.S.A0013=0 PICS gate does not skip it.
+✅ WebRtcTransportProvider ProvideOffer OriginatingEndpointID storage on Camera (TC_WEBRTCP_2_15.py)
+✅ WebRtcTransportProvider ProvideOffer resource exhaustion on Camera (TC_WEBRTCP_2_16.py)
+✅ WebRtcTransportProvider ProvideOffer Answer command generation on Camera (TC_WEBRTCP_2_17.py)
+✅ WebRtcTransportProvider ProvideAnswer command processing on Camera (TC_WEBRTCP_2_18.py)
+✅ WebRtcTransportProvider ProvideAnswer with an invalid session on Camera (TC_WEBRTCP_2_19.py)
+✅ WebRtcTransportProvider ProvideICECandidates command processing on Camera (TC_WEBRTCP_2_20.py)
+✅ WebRtcTransportProvider ProvideICECandidates with an invalid session on Camera (TC_WEBRTCP_2_21.py)
+✅ WebRtcTransportProvider EndSession CurrentSessions removal on Camera (TC_WEBRTCP_2_22.py)
+✅ WebRtcTransportProvider EndSession stream reference counts on Camera (TC_WEBRTCP_2_23.py)
+⏭️ WebRtcTransportProvider SolicitOffer SFrame configuration handling on Camera (TC_WEBRTCP_2_24.py)
+   ↳ Tests SFrame end-to-end encryption, which is not in Matter 1.6.0: WebRTC_Provider.xml defines only feature bit 0 (METADATA). The test asserts DynamicConstraintError for an unsupported cipher suite, but the SFrameConfig field does not exist in this revision, so the command succeeds. Gated on WEBRTCP.S.F02 in its pics_TC_* list, which is metadata only and does not auto-skip.
+⏭️ WebRtcTransportProvider ProvideOffer SFrame configuration handling on Camera (TC_WEBRTCP_2_25.py)
+   ↳ Tests SFrame end-to-end encryption, which is not in Matter 1.6.0: WebRTC_Provider.xml defines only feature bit 0 (METADATA). See TC_WEBRTCP_2_24.py.
+⏭️ WebRtcTransportProvider delayed processing of SolicitOffer on release 1.5.1 or later on Camera (TC_WEBRTCP_2_27.py)
+   ↳ The test is buggy. It sends SolicitOffer with explicit videoStreams/audioStreams and then asserts deferredOffer is TRUE unconditionally. Matter 1.6.0 §11.5.6.1 sets DeferredOffer TRUE only "If in standby mode", and FALSE otherwise; §11.5.6.2.2 then requires the stream ids to be non-null when it is FALSE. A Matterbridge camera is never in standby, so returning FALSE here is spec-correct and the assert can never hold.
+✅ WebRtcTransportProvider immediate processing of SolicitOffer on release 1.5.1 or later on Camera (TC_WEBRTCP_2_28.py)
+✅ WebRtcTransportProvider SDP Offer starting a new session on release 1.5.1 or later on Camera (TC_WEBRTCP_2_29.py)
+✅ WebRtcTransportProvider SDP Offer on an existing session on release 1.5.1 or later on Camera (TC_WEBRTCP_2_30.py)
+✅ WebRtcTransportProvider SolicitOffer and stream allocation interaction on release 1.5.1 or later on Camera (TC_WEBRTCP_2_31.py)
+✅ WebRtcTransportProvider immediate processing of SolicitOffer with old stream attributes on release 1.5.1 or later on Camera (TC_WEBRTCP_2_32.py)
+✅ CameraAvSettingsUserLevelManagement attributes on PTZ Camera (TC_AVSUM_2_1.py)
+✅ CameraAvSettingsUserLevelManagement MPTZSetPosition command validation on PTZ Camera (TC_AVSUM_2_2.py)
+✅ CameraAvSettingsUserLevelManagement MPTZRelativeMove command validation on PTZ Camera (TC_AVSUM_2_3.py)
+✅ CameraAvSettingsUserLevelManagement MPTZMoveToPreset command validation on PTZ Camera (TC_AVSUM_2_4.py)
+✅ CameraAvSettingsUserLevelManagement MPTZSavePreset command validation on PTZ Camera (TC_AVSUM_2_5.py)
+✅ CameraAvSettingsUserLevelManagement MPTZRemovePreset command validation on PTZ Camera (TC_AVSUM_2_6.py)
+✅ CameraAvSettingsUserLevelManagement DPTZSetViewport command validation on PTZ Camera (TC_AVSUM_2_7.py)
+✅ CameraAvSettingsUserLevelManagement DPTZRelativeMove command validation on PTZ Camera (TC_AVSUM_2_8.py)
+✅ CameraAvSettingsUserLevelManagement MPTZPosition persistence on PTZ Camera (TC_AVSUM_2_9.py)
+✅ Chime attributes on Chime (TC_CHIME_2_1.py)
+✅ Chime Enabled attribute write on Chime (TC_CHIME_2_2.py)
+✅ Chime SelectedChime attribute write on Chime (TC_CHIME_2_3.py)
+✅ Chime PlayChimeSound command on Chime (TC_CHIME_2_4.py)
+✅ Chime PlayChimeSound command with ChimeID on Chime (TC_CHIME_2_5.py)
+✅ Chime ChimeStartedPlaying event on Chime (TC_CHIME_2_6.py)
+✅ Switch attributes on Doorbell (Test_TC_SWTCH_2_1)
+✅ Switch momentary switch functionality on Doorbell (TC_SWTCH.py)
+✅ Switch momentary switch long press on Doorbell (TC_SWTCH.py)
+⏭️ Switch primary functionality with client as DUT on Doorbell (Test_TC_SWTCH_3_2)
+   ↳ Client-as-DUT test (requires SWTCH.C). Matterbridge exposes a Switch server, never a Switch client, and the YAML is a manual verification script needing a separate reference app as TH.
 
-Summary: 380/381 tests passed (76 skipped).
-Chip tests run ended at 2026-09-14T09:50:30.219Z (total duration 57m 42s)
+Summary: 454/455 tests passed (88 skipped).
+Chip tests run ended at 2026-09-18T06:51:32.621Z (total duration 1h 04m 06s)
