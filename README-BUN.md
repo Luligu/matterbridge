@@ -111,6 +111,14 @@ npm run docker:exec:localbun    # open a shell in the running container
 npm run docker:log:localbun     # follow the container logs
 ```
 
+# Bun projects
+
+## Matterbridge on a Raspberry Pi Zero 2 W
+
+A headless Pi Zero 2 W (512 MB RAM) running Matterbridge on Bun, with zram swap, a trimmed service list, and the graphics stack disabled to free RAM. Tested with a bridge of 50 devices.
+
+See [Matterbridge on a Raspberry Pi Zero 2 W](Raspi-zero-2w-matterbridge.md) for the full setup.
+
 # Status
 
 The core bridge runs on Bun: it creates its directories, initializes the Matter
