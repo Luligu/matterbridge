@@ -410,7 +410,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     };
 
     wsRef.current.onerror = (error) => {
-      if (debug || localDebug) console.error(`WebSocket: WebSocket error connecting to ${wssHost}:`, error);
+      if (debug || localDebug) console.error('WebSocket: WebSocket error connecting to %s:', wssHost, error);
       logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
     };
     // oxlint-disable-next-line react-hooks/exhaustive-deps
