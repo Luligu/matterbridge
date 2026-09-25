@@ -56,7 +56,7 @@ if [ -e "$INSTALL_STAMP" ]; then
   echo "==> Already installed ($INSTALL_STAMP), skipping the installation"
 else
   echo "==> Installing prerequisites"
-  $SUDO apk add --no-cache ca-certificates curl tzdata unzip bash libstdc++ libgcc iproute2
+  $SUDO apk add --no-cache ca-certificates curl tzdata unzip bash libstdc++ libgcc iproute2 procps-ng less nano
 
   echo "==> Setting timezone to $TZ"
   [ -f "/usr/share/zoneinfo/$TZ" ] || { echo "Unknown timezone: $TZ" >&2; exit 1; }
