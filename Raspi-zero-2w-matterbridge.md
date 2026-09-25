@@ -1,4 +1,4 @@
-# Raspberry Pi Zero 2 W — Matterbridge Host Setup
+# Raspberry Pi Zero 2 W — Matterbridge on Bun Host Setup
 
 Configuration log for a headless Raspberry Pi Zero 2 W intended to run **Matterbridge** only.
 Goal: maximise usable RAM, with zram as the only swap.
