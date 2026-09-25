@@ -7,6 +7,29 @@
 
 ---
 
+# What is Bun
+
+[Bun](https://bun.com) is an all-in-one JavaScript and TypeScript toolkit: a runtime, package manager, bundler, and test runner in a single executable. It is designed as a drop-in replacement for Node.js and runs most npm packages and Node.js APIs unchanged.
+
+## Why it is so fast
+
+- It runs on **JavaScriptCore**, the engine behind Safari, which is tuned for fast startup and low memory use.
+- It is written in **Zig**, a low-level systems language, so the core APIs (file system, networking, HTTP, WebSocket) are native code, not JavaScript layers.
+- It runs **TypeScript directly**, without a separate compile step.
+- Its **package manager** uses a global cache and hard links, so installs are much faster than npm.
+
+## Why I invest in Bun
+
+I believe Bun is the future of the JavaScript runtime. In December 2025 [Anthropic acquired Bun](https://bun.com/blog/bun-joins-anthropic), and it now powers Claude Code and the Claude Agent SDK. Bun stays open source and MIT-licensed, and now has long-term backing. That is why I spend time making Matterbridge and its plugins run well on Bun.
+
+## Bun documentation
+
+- [Bun docs](https://bun.com/docs)
+- [Installation](https://bun.com/docs/installation)
+- [Runtime](https://bun.com/docs/runtime)
+- [Node.js compatibility](https://bun.com/docs/runtime/nodejs-compat)
+- [Package manager](https://bun.com/docs/pm/cli/install)
+
 # Run matterbridge with bun
 
 ## Install matterbridge globally with bun

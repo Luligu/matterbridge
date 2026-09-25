@@ -135,6 +135,25 @@
 <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/ESM-Node.js-339933?logo=node.js&amp;logoColor=white" alt="ESM"></a>
 <a href="https://bun.com"><img src="https://img.shields.io/badge/ESM-Bun-000000?logo=bun&amp;logoColor=white" alt="ESM"></a></p>
 <hr>
+<h1 id="what-is-bun">What is Bun</h1>
+<p><a href="https://bun.com">Bun</a> is an all-in-one JavaScript and TypeScript toolkit: a runtime, package manager, bundler, and test runner in a single executable. It is designed as a drop-in replacement for Node.js and runs most npm packages and Node.js APIs unchanged.</p>
+<h2 id="why-it-is-so-fast">Why it is so fast</h2>
+<ul>
+<li>It runs on <strong>JavaScriptCore</strong>, the engine behind Safari, which is tuned for fast startup and low memory use.</li>
+<li>It is written in <strong>Zig</strong>, a low-level systems language, so the core APIs (file system, networking, HTTP, WebSocket) are native code, not JavaScript layers.</li>
+<li>It runs <strong>TypeScript directly</strong>, without a separate compile step.</li>
+<li>Its <strong>package manager</strong> uses a global cache and hard links, so installs are much faster than npm.</li>
+</ul>
+<h2 id="why-i-invest-in-bun">Why I invest in Bun</h2>
+<p>I believe Bun is the future of the JavaScript runtime. In December 2025 <a href="https://bun.com/blog/bun-joins-anthropic">Anthropic acquired Bun</a>, and it now powers Claude Code and the Claude Agent SDK. Bun stays open source and MIT-licensed, and now has long-term backing. That is why I spend time making Matterbridge and its plugins run well on Bun.</p>
+<h2 id="bun-documentation">Bun documentation</h2>
+<ul>
+<li><a href="https://bun.com/docs">Bun docs</a></li>
+<li><a href="https://bun.com/docs/installation">Installation</a></li>
+<li><a href="https://bun.com/docs/runtime">Runtime</a></li>
+<li><a href="https://bun.com/docs/runtime/nodejs-compat">Node.js compatibility</a></li>
+<li><a href="https://bun.com/docs/pm/cli/install">Package manager</a></li>
+</ul>
 <h1 id="run-matterbridge-with-bun">Run matterbridge with bun</h1>
 <h2 id="install-matterbridge-globally-with-bun">Install matterbridge globally with bun</h2>
 <pre><code class="language-shell">bun add matterbridge --global --omit=dev
