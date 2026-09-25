@@ -84,7 +84,7 @@
     // TODO: Re-enable React Compiler diagnostics incrementally after the existing frontend violations have been addressed.
     "react/exhaustive-effect-dependencies": "error",
     "react/immutability": "error",
-    "react/hooks": "off",
+    "react/hooks": "error",
     "react/refs": "off",
     "react/set-state-in-effect": "error",
     "react/rule-suppression": "off", // sometimes necessary to suppress specific React Compiler rules

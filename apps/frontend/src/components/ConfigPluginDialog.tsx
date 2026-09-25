@@ -1,4 +1,5 @@
 // oxlint-disable max-lines unicorn/no-array-for-each
+// oxlint-disable react/hooks -- RJSF renders the nested templates/widgets as components with per-instance hooks; retain this structure pending extraction to module scope to stabilize component identities.
 
 // TODO: verify each rule
 // oxlint-disable react/no-unstable-nested-components
