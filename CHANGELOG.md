@@ -33,6 +33,27 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.12.
+- [matterbridge]: Bump `@types/node` to v.26.6.2.
+- [matterbridge]: Bump `vitest` to v.5.0.2.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.2.
+- [matterbridge]: Bump `marked` to v.18.0.14.
+- [matterbridge]: Bump `oxfmt` to v.0.70.0.
+- [matterbridge]: Bump `oxlint` to v.1.85.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
+- [thread]: Bump `@zip.js/zip.js` to v.2.18.2.
+- [frontend]: Bump `frontend` version to v.3.6.3.
+- [frontend]: Bump `@types/node` to v.26.6.2.
+- [frontend]: Bump `jsdom` to v.30.1.1.
+- [frontend]: Update the `MbfWindow` test expectations for jsdom's numeric computed `font-weight` values.
+- [frontend]: Bump `vite` to v.8.3.1.
+- [frontend]: Bump `vitest` to v.5.0.2.
+- [frontend]: Bump `oxfmt` to v.0.70.0.
+- [frontend]: Bump `oxlint` to v.1.85.0.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2003.
+
 ## [3.10.11] - 2026-09-25
 
 ### Development Breaking Changes

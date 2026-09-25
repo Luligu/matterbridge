@@ -155,8 +155,8 @@
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
     "@types/multer": "2.2.0",
-    "@types/node": "26.6.1",
+    "@types/node": "26.6.2",
     "@types/ws": "8.18.1",
-    "vitest": "5.0.1"
+    "vitest": "5.0.2"
   }
 }

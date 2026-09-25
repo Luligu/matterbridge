@@ -482,14 +482,14 @@
   "devDependencies": {
     "@matter/main": "0.17.9",
     "@types/bun": "1.4.2",
-    "@types/node": "26.6.1",
-    "@vitest/coverage-v8": "5.0.1",
+    "@types/node": "26.6.2",
+    "@vitest/coverage-v8": "5.0.2",
     "cross-spawn": "7.0.6",
-    "marked": "18.0.13",
-    "oxfmt": "0.68.0",
-    "oxlint": "1.83.0",
-    "oxlint-tsgolint": "7.0.2002",
+    "marked": "18.0.14",
+    "oxfmt": "0.70.0",
+    "oxlint": "1.85.0",
+    "oxlint-tsgolint": "7.0.2003",
     "typescript": "7.0.2",
-    "vitest": "5.0.1"
+    "vitest": "5.0.2"
   }
 }
