@@ -15,17 +15,17 @@ Goal: maximise usable RAM, with zram as the only swap.
 
 ## Summary of what changed
 
-| Area                    | Before                           | After                                               |
-| ----------------------- | -------------------------------- | --------------------------------------------------- |
+| Area                    | Before                           | After                                                    |
+| ----------------------- | -------------------------------- | -------------------------------------------------------- |
 | Swap                    | zram only (~415 MB, PRIO 100)    | zram only (231 MB = `min(ram / 2, 512)`, zstd, PRIO 100) |
-| `vm.swappiness`         | default (60)                     | 10                                                  |
-| GPU firmware split      | 64 MB (`arm=448M`)               | 16 MB (`arm=496M`)                                  |
-| CMA reservation         | 256 MB                           | 64 MB                                               |
-| KMS graphics driver     | enabled                          | disabled (headless)                                 |
-| Usable RAM (`MemTotal`) | ~415 Mi                          | ~462 Mi                                             |
-| Boot target             | graphical.target                 | multi-user.target (console)                         |
-| Running services        | desktop stack (VNC, audio, NFS…) | 13 essential units                                  |
-| RAM used at idle        | ~219 Mi                          | ~143 Mi (≈ +75 Mi free)                             |
+| `vm.swappiness`         | default (60)                     | 10                                                       |
+| GPU firmware split      | 64 MB (`arm=448M`)               | 16 MB (`arm=496M`)                                       |
+| CMA reservation         | 256 MB                           | 64 MB                                                    |
+| KMS graphics driver     | enabled                          | disabled (headless)                                      |
+| Usable RAM (`MemTotal`) | ~415 Mi                          | ~462 Mi                                                  |
+| Boot target             | graphical.target                 | multi-user.target (console)                              |
+| Running services        | desktop stack (VNC, audio, NFS…) | 13 essential units                                       |
+| RAM used at idle        | ~219 Mi                          | ~143 Mi (≈ +75 Mi free)                                  |
 
 ---
 

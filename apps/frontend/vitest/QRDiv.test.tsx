@@ -175,16 +175,20 @@ describe('QRDiv', () => {
   test.each([false, true])('should count active sessions and subscriptions and confirm fabric removal with debug=%s', (debug) => {
     appState.debug = debug;
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const fabric = {
-      fabricIndex: 1,
+    const fabric: ApiMatter['fabricInformations'][number] = {
+      fabricIndex: 1 as unknown as ApiMatter['fabricInformations'][number]['fabricIndex'],
       fabricId: '1',
       nodeId: '1',
       rootNodeId: '2',
-      rootVendorId: 65521,
+      rootVendorId: 65521 as unknown as ApiMatter['fabricInformations'][number]['rootVendorId'],
       rootVendorName: 'Test vendor',
       label: 'Living room',
-    } as ApiMatter['fabricInformations'][number];
-    const otherFabric = { ...fabric, fabricIndex: 2, label: '' } as ApiMatter['fabricInformations'][number];
+    };
+    const otherFabric: ApiMatter['fabricInformations'][number] = {
+      ...fabric,
+      fabricIndex: 2 as unknown as ApiMatter['fabricInformations'][number]['fabricIndex'],
+      label: '',
+    };
     const session: ApiMatter['sessionInformations'][number] = {
       name: 'session',
       nodeId: '1',
