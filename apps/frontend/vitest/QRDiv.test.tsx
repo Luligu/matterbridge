@@ -175,21 +175,21 @@ describe('QRDiv', () => {
   test.each([false, true])('should count active sessions and subscriptions and confirm fabric removal with debug=%s', (debug) => {
     appState.debug = debug;
     vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const fabric: ApiMatter['fabricInformations'][number] = {
-      fabricIndex: 1 as unknown as ApiMatter['fabricInformations'][number]['fabricIndex'],
+    const fabric = {
+      fabricIndex: 1,
       fabricId: '1',
       nodeId: '1',
       rootNodeId: '2',
-      rootVendorId: 65521 as unknown as ApiMatter['fabricInformations'][number]['rootVendorId'],
+      rootVendorId: 65521,
       rootVendorName: 'Test vendor',
       label: 'Living room',
     };
-    const otherFabric: ApiMatter['fabricInformations'][number] = {
+    const otherFabric = {
       ...fabric,
-      fabricIndex: 2 as unknown as ApiMatter['fabricInformations'][number]['fabricIndex'],
+      fabricIndex: 2,
       label: '',
     };
-    const session: ApiMatter['sessionInformations'][number] = {
+    const session = {
       name: 'session',
       nodeId: '1',
       peerNodeId: '2',
@@ -199,20 +199,25 @@ describe('QRDiv', () => {
       lastActiveTimestamp: '',
       numberOfActiveSubscriptions: 3,
     };
-    const { update, sendMessage, showConfirmCancelDialog } = renderQRDiv();
-    update(
-      createMatter({
-        commissioned: true,
-        fabricInformations: [fabric, otherFabric],
-        sessionInformations: [
-          session,
-          { ...session, numberOfActiveSubscriptions: 0 },
-          { ...session, isPeerActive: false },
-          { ...session, fabric: otherFabric, isPeerActive: false },
-          { ...session, fabric: undefined },
-        ],
-      }),
-    );
+    const { receive, sendMessage, showConfirmCancelDialog } = renderQRDiv();
+    receive({
+      method: 'refresh_required',
+      response: {
+        changed: 'matter',
+        matter: {
+          ...createMatter(),
+          commissioned: true,
+          fabricInformations: [fabric, otherFabric],
+          sessionInformations: [
+            session,
+            { ...session, numberOfActiveSubscriptions: 0 },
+            { ...session, isPeerActive: false },
+            { ...session, fabric: otherFabric, isPeerActive: false },
+            { ...session, fabric: undefined },
+          ],
+        },
+      },
+    });
     expect(screen.getAllByText('Vendor: 65521 Test vendor')).toHaveLength(2);
     expect(screen.getByText('Label: Living room')).toBeInTheDocument();
     expect(screen.queryByText('Label:')).not.toBeInTheDocument();
