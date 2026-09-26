@@ -65,7 +65,7 @@
     "test": "vitest run",
     "test:watch": "vitest --reporter verbose",
     "test:verbose": "vitest run --reporter verbose",
-    "test:coverage": "vitest run --reporter verbose --coverage",
+    "test:coverage": "vitest run --reporter verbose --coverage --coverage.thresholds.functions=100 --coverage.thresholds.lines=100",
     "clean": "node ../../scripts/clean.mjs",
     "cleanBuild": "npm run clean && npm run build",
     "deepClean": "node ../../scripts/deep-clean.mjs",

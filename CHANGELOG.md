@@ -57,6 +57,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
 - [thread]: Bump `@zip.js/zip.js` to v.2.18.2.
 - [frontend]: Bump `frontend` version to v.3.6.3.
+- [frontend]: Require 100% line and function coverage in `test:coverage`.
 - [frontend]: Bump `@types/node` to v.26.6.2.
 - [frontend]: Bump `jsdom` to v.30.1.1.
 - [frontend]: Update the `MbfWindow` test expectations for jsdom's numeric computed `font-weight` values.
