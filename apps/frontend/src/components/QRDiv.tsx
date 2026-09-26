@@ -1,5 +1,3 @@
-// oxlint-disable no-empty-function
-
 // @mdi/js
 import { mdiShareOutline, mdiContentCopy, mdiShareOffOutline, mdiRestart, mdiDeleteForeverOutline } from '@mdi/js';
 import { Icon } from '@mdi/react';
@@ -60,7 +58,7 @@ function QRDiv({ id }: QRDivProps) {
   // Ui context
   const { mobile, showConfirmCancelDialog } = useContext(UiContext);
 
-  if (debug) console.log(`QRDiv loading with id = "${id}" storeId = "${storeIdRef.current}" timeout = ${advertiseTimeoutRef.current ? 'set' : 'none'} and  matter:`, matter);
+  if (debug) console.log(`QRDiv loading with id = "${id}" and matter:`, matter);
 
   // Request server data when id changes
   useEffect(() => {
@@ -179,7 +177,7 @@ function QRDiv({ id }: QRDivProps) {
         <MbfWindowHeader style={{ height: '30px', justifyContent: 'space-between' }}>
           <MbfWindowHeaderText>Server node</MbfWindowHeaderText>
         </MbfWindowHeader>
-        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
+        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{matter.id}</MbfWindowText>
         <MbfWindowText style={{ fontWeight: 'bold' }}>Server offline</MbfWindowText>
         <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
           <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>
@@ -201,7 +199,7 @@ function QRDiv({ id }: QRDivProps) {
             </IconButton>
           </MbfWindowIcons>
         </MbfWindowHeader>
-        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
+        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{matter.id}</MbfWindowText>
         <QRCodeSVG value={matter.qrPairingCode} size={256} level='M' fgColor={'var(--div-text-color)'} bgColor={'var(--div-bg-color)'} style={{ margin: '20px' }} />
         <MbfWindowFooter style={{ justifyContent: 'space-between' }}>
           <MbfWindowFooterText style={{ fontWeight: 'normal', color: 'var(--div-text-color)' }}>Manual pairing code: {formatManualCode(matter.manualPairingCode)}</MbfWindowFooterText>
@@ -230,14 +228,14 @@ function QRDiv({ id }: QRDivProps) {
             </IconButton>
           </MbfWindowIcons>
         </MbfWindowHeader>
-        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
+        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{matter.id}</MbfWindowText>
         <MbfWindowContent style={{ flexDirection: 'column', justifyContent: 'flex-start', flex: '1 1 auto', overflow: 'auto', padding: '0px 0px 10px 0px', gap: '0px' }}>
           {matter.fabricInformations.map((fabric, index) => (
             <div key={index} style={{ margin: '0px', padding: '10px', gap: '0px', color: 'var(--div-text-color)', backgroundColor: 'var(--div-bg-color)', textAlign: 'left', fontSize: '14px' }}>
               <div style={{ marginLeft: '20px', marginBottom: '10px', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: '20px', alignItems: 'center' }}>
                 <p className="status-blue" style={{ margin: '0px', padding: '3px 10px', width: '200px', fontSize: '14px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)' }}>Fabric: {fabric.fabricIndex}</p>
                 <Tooltip title="Remove the fabric. You will also need to remove it from the controller." arrow>
-                  <IconButton aria-label="remove the fabric" size="small" onClick={() => showConfirmCancelDialog('Remove fabric','Are you sure you want to remove this fabric? You will also need to remove it from the controller.', 'RemoveFabric', () => handleRemoveFabric(fabric.fabricIndex), () => { })} sx={{ ...iconBtnSx, padding: '2px' }}>
+                  <IconButton aria-label="remove the fabric" size="small" onClick={() => showConfirmCancelDialog('Remove fabric','Are you sure you want to remove this fabric? You will also need to remove it from the controller.', 'RemoveFabric', () => handleRemoveFabric(fabric.fabricIndex), () => undefined)} sx={{ ...iconBtnSx, padding: '2px' }}>
                     <Icon path={mdiDeleteForeverOutline} size={1} />
                   </IconButton>
                 </Tooltip>
@@ -264,7 +262,7 @@ function QRDiv({ id }: QRDivProps) {
         <MbfWindowHeader>
           <MbfWindowHeaderText>QR pairing code</MbfWindowHeaderText>
         </MbfWindowHeader>
-        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{storeIdRef.current}</MbfWindowText>
+        <MbfWindowText style={{ maxWidth: '280px', fontWeight: 'bold', color: 'var(--secondary-color)' }}>{matter.id}</MbfWindowText>
         <Button onClick={handleStartCommissioningClick} endIcon={<Icon path={mdiShareOutline} size={1}/>} style={{ margin: '20px', color: 'var(--main-button-color)', backgroundColor: 'var(--main-button-bg-color)', height: '30px', minWidth: '90px' }}>Turn on pairing</Button>
         <MbfWindowFooter style={{ justifyContent: 'center', height: 'auto', minHeight: '30px' }}>
           <MbfWindowFooterText style={{ fontWeight: 'normal', overflowWrap: 'anywhere', textAlign: 'center' }}>Serial number: {matter.serialNumber}</MbfWindowFooterText>

@@ -933,7 +933,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <Tooltip title="Select the plugin and close the dialog. Double-click a row to select and close the dialog.">
-          <Button variant="contained" onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
+          <Button variant="contained" onClick={handleSelect} disabled={!pluginName || selecting}>
             Select
           </Button>
         </Tooltip>

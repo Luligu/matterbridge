@@ -36,6 +36,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
+- [frontend]: Add unit tests for `QRDiv` node switching and stale message handling, and `SearchPluginsDialog` selection, button state, and reset on reopen.
 
 ### Changed
 
@@ -63,6 +64,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Fix React Compiler `react/immutability` rule flags.
 - [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
 - [frontend]: Fix React Compiler `react/hooks` rule flags.
+- [frontend]: Fix React Compiler `react/refs` rule flags.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
