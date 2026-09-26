@@ -42,6 +42,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add and expand `Header`, `HomePlugins`, and `HomeLogs` tests for connection state, WebSocket listener lifecycle, controls and links, plugin metadata and frontends, and log preferences.
 - [frontend]: Add `InstallProgressDialog` and `NetworkConfigDialog` tests for rendering, actions, close behavior, saved preferences, scrolling, and network configuration state.
 - [frontend]: Add `MatterbridgeInfoTable` and `SystemInfoTable` tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.
+- [frontend]: Add `WebSocketLogs` tests for badge colors and metadata, message updates, auto-scroll throttling, hover and touch behavior, and pending scrolls after unmount.
+- [frontend]: Add `WebSocketProvider` tests for connection state, authentication, message validation and routing, listener lifecycle, log filtering and buffer limits, UI notifications, heartbeat timeouts, and reconnection retries.
 
 ### Changed
 
