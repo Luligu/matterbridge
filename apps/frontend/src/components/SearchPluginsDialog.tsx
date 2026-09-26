@@ -785,6 +785,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             index += 1;
 
             const packageName = packagesNeedingFetchList[rowIndex];
+            /* v8 ignore next 3 -- defensive check */
             if (!packageName) {
               continue;
             }

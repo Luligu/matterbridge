@@ -1141,6 +1141,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     ...textFieldProps
   }: WidgetProps) {
     const { enumOptions, enumDisabled, emptyValue: optEmptyVal } = options;
+    /* v8 ignore if -- debug only */
     if (rjsfDebug)
       console.log(`SelectWidget ${name}:`, {
         schema,

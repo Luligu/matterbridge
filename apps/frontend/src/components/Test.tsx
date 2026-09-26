@@ -10,6 +10,7 @@ import { WebSocketContext } from './WebSocketProvider';
 
 const localDebug = false; // Set to true to enable local debug logging
 
+// v8 ignore next line -- No test here
 function Test() {
   // WebSocket context
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);

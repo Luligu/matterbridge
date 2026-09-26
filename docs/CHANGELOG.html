@@ -157,7 +157,12 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[bun]: Bun support is now available for production use, either as a <a href="README-BUN.html#run-matterbridge-with-bun">standalone installation</a> on a host with only Bun installed or through the <a href="./README-BUN.html#run-matterbridge-with-the-bun-docker-hub-image"><code>bun</code></a> and <code>bundev</code> Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.</li>
-<li>[frontend]: Add unit tests for <code>QRDiv</code> node switching and stale message handling, and <code>SearchPluginsDialog</code> selection, button state, and reset on reopen.</li>
+<li>[frontend]: Add and expand unit tests for <code>QRDiv</code> node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.</li>
+<li>[frontend]: Expand <code>SearchPluginsDialog</code> tests for selection and reset on reopen, npm cache validation, metadata and version loading, download retries, request cancellation, link validation, and mobile layout.</li>
+<li>[frontend]: Expand <code>ConfigPluginDialog</code> tests for form submission and cancellation, missing configuration, schema UI properties, custom RJSF templates and widgets, and WebSocket response filtering.</li>
+<li>[frontend]: Add and expand <code>Header</code>, <code>HomePlugins</code>, and <code>HomeLogs</code> tests for connection state, WebSocket listener lifecycle, controls and links, plugin metadata and frontends, and log preferences.</li>
+<li>[frontend]: Add <code>InstallProgressDialog</code> and <code>NetworkConfigDialog</code> tests for rendering, actions, close behavior, saved preferences, scrolling, and network configuration state.</li>
+<li>[frontend]: Add <code>MatterbridgeInfoTable</code> and <code>SystemInfoTable</code> tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

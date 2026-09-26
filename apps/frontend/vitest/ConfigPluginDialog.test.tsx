@@ -1,5 +1,17 @@
 import '@testing-library/jest-dom';
 
+import { getDefaultRegistry, type FormProps } from '@rjsf/core';
+import {
+  createSchemaUtils,
+  type BaseInputTemplateProps,
+  type DescriptionFieldProps,
+  type FieldHelpProps,
+  type FieldTemplateProps,
+  type TemplatesType,
+  type TitleFieldProps,
+  type WidgetProps,
+} from '@rjsf/utils';
+import validator from '@rjsf/validator-ajv8';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +19,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConfigPluginDialog } from '../src/components/ConfigPluginDialog';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
 import type { ApiPlugin } from '../src/utils/backendShared';
+
+const formCapture = vi.hoisted(() => ({ props: undefined as FormProps | undefined }));
+
+const getCapturedTemplates = () => formCapture.props!.templates as TemplatesType;
+const createRegistry = () => ({ ...getDefaultRegistry(), schemaUtils: createSchemaUtils(validator, {}) });
+
+vi.mock('@rjsf/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@rjsf/core')>();
+  return {
+    ...actual,
+    default: (props: FormProps) => {
+      formCapture.props = props;
+      return <actual.default {...props} />;
+    },
+  };
+});
 
 vi.mock('../src/appState', () => ({
   debug: false,
@@ -23,6 +51,7 @@ vi.mock('@mui/material/Dialog', () => ({
 describe('ConfigPluginDialog', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    formCapture.props = undefined;
   });
 
   const createPlugin = (): ApiPlugin => ({
@@ -121,6 +150,297 @@ describe('ConfigPluginDialog', () => {
     expect(listener).toBeTypeOf('function');
     return listener;
   };
+
+  it.each(['configJson', 'schemaJson'] as const)('should render nothing and skip selector requests when %s is missing', (property) => {
+    const plugin = createPlugin();
+    plugin[property] = undefined;
+    const { sendMessage, addListener, removeListener, unmount } = renderDialog(plugin);
+    expect(screen.queryByTestId('dialog')).not.toBeInTheDocument();
+    expect(sendMessage).not.toHaveBeenCalled();
+    const listener = getListener(addListener);
+    unmount();
+    expect(removeListener).toHaveBeenCalledWith(listener);
+  });
+
+  it('should close without saving when Cancel is clicked', () => {
+    const { onClose, onSave, sendMessage } = renderDialog();
+    sendMessage.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(onSave).not.toHaveBeenCalled();
+    expect(sendMessage).not.toHaveBeenCalled();
+  });
+
+  it('should submit edited text, numeric zero, and checkbox values', async () => {
+    const plugin = createPlugin();
+    plugin.configJson = extendConfig(plugin, { count: 1, enabledSetting: false });
+    plugin.schemaJson = {
+      type: 'object',
+      properties: {
+        name: { type: 'string', title: 'Plugin name' },
+        count: { type: 'number', title: 'Count' },
+        enabledSetting: { type: 'boolean', title: 'Enabled setting', description: 'Enable this setting' },
+      },
+    };
+    const { onSave, onClose, sendMessage } = renderDialog(plugin);
+    const name = screen.getByPlaceholderText('Plugin name');
+    fireEvent.focus(name);
+    fireEvent.change(name, { target: { value: 'matterbridge-edited' } });
+    fireEvent.blur(name);
+    fireEvent.change(screen.getByPlaceholderText('Count'), { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('checkbox'));
+    expect(screen.getByPlaceholderText('Count')).toHaveValue('0');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'matterbridge-edited', count: 0, enabledSetting: true })));
+    expect(onClose).toHaveBeenCalledOnce();
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ method: '/api/savepluginconfig', params: { pluginName: 'matterbridge-edited', formData: onSave.mock.calls[0][0] } }),
+    );
+  });
+
+  it('should disable an action field button again when its input is cleared', () => {
+    const plugin = createPlugin();
+    plugin.configJson = extendConfig(plugin, { action: false });
+    plugin.schemaJson = {
+      type: 'object',
+      properties: { action: { type: 'boolean', description: 'Send an action', buttonField: 'Send action', textPlaceholder: 'Action argument' } },
+    };
+    const { sendMessage, onClose, onSave } = renderDialog(plugin);
+    const button = screen.getByRole('button', { name: 'Send action' });
+    const input = screen.getByPlaceholderText('Action argument');
+    expect(button).toBeDisabled();
+    fireEvent.change(input, { target: { value: 'value' } });
+    expect(button).toBeEnabled();
+    fireEvent.change(input, { target: { value: '' } });
+    expect(button).toBeDisabled();
+    fireEvent.change(input, { target: { value: 'new value' } });
+    fireEvent.click(button);
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/action', params: expect.objectContaining({ action: 'action', value: 'new value' }) }));
+    expect(onSave).not.toHaveBeenCalled();
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it('should retain hidden field content without displaying its wrapper', () => {
+    const { unmount } = renderDialog();
+    const Field = getCapturedTemplates().FieldTemplate;
+    unmount();
+    const props = {
+      id: 'hidden',
+      hidden: true,
+      schema: {},
+      registry: createRegistry(),
+      children: <input aria-label="Hidden field" defaultValue="hidden value" />,
+    } as FieldTemplateProps;
+    render(<Field {...props} />);
+    expect(screen.getByLabelText('Hidden field')).toHaveValue('hidden value');
+    expect(screen.getByLabelText('Hidden field')).not.toBeVisible();
+  });
+
+  it('should render registered title, description, and help templates only when content exists', () => {
+    const { unmount } = renderDialog();
+    const templates = getCapturedTemplates();
+    unmount();
+    const Title = templates.TitleFieldTemplate;
+    const Description = templates.DescriptionFieldTemplate;
+    const Help = templates.FieldHelpTemplate;
+    const registry = createRegistry();
+    const titleProps: TitleFieldProps = { id: 'title', title: 'Template title', required: true, schema: {}, registry };
+    const descriptionProps: DescriptionFieldProps = { id: 'description', description: 'Template description', schema: {}, registry };
+    const helpProps: FieldHelpProps = { fieldPathId: { $id: 'help', path: [] }, help: 'Template help', schema: {}, registry };
+    const { rerender, container } = render(
+      <>
+        <Title {...titleProps} />
+        <Description {...descriptionProps} />
+        <Help {...helpProps} />
+      </>,
+    );
+    expect(screen.getByText(/Template title/)).toHaveTextContent('***');
+    expect(screen.getByText('Template description')).toBeInTheDocument();
+    expect(screen.getByText('Template help')).toBeInTheDocument();
+    rerender(
+      <>
+        <Title {...titleProps} title="" />
+        <Description {...descriptionProps} description="" />
+        <Help {...helpProps} help="" />
+      </>,
+    );
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it('should forward clicks through registered array controls and honor hidden submit options', () => {
+    const { unmount, onClose } = renderDialog();
+    const buttons = getCapturedTemplates().ButtonTemplates;
+    unmount();
+    const Add = buttons.AddButton;
+    const MoveUp = buttons.MoveUpButton;
+    const MoveDown = buttons.MoveDownButton;
+    const Submit = buttons.SubmitButton;
+    const onAdd = vi.fn();
+    const onUp = vi.fn();
+    const onDown = vi.fn();
+    const registry = createRegistry();
+    const { rerender, container } = render(
+      <>
+        <Add onClick={onAdd} registry={registry} />
+        <MoveUp onClick={onUp} registry={registry} />
+        <MoveDown onClick={onDown} registry={registry} />
+      </>,
+    );
+    const controls = screen.getAllByRole('button');
+    for (const control of controls) fireEvent.click(control);
+    expect(onAdd).toHaveBeenCalledOnce();
+    expect(onUp).toHaveBeenCalledOnce();
+    expect(onDown).toHaveBeenCalledOnce();
+    rerender(<Submit registry={registry} uiSchema={{ 'ui:submitButtonOptions': { norender: true } }} />);
+    expect(container).toBeEmptyDOMElement();
+    rerender(<Submit registry={registry} uiSchema={{ 'ui:submitButtonOptions': { submitText: 'Save settings' } }} />);
+    expect(screen.getByRole('button', { name: 'Save settings' })).toHaveAttribute('type', 'submit');
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('should suppress registered array title and description templates', () => {
+    const { unmount } = renderDialog();
+    const templates = getCapturedTemplates();
+    unmount();
+    const Title = templates.ArrayFieldTitleTemplate;
+    const Description = templates.ArrayFieldDescriptionTemplate;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const props = { fieldPathId: { $id: 'array', path: [] }, title: 'Array title', description: 'Array description', schema: {}, registry: createRegistry() };
+    const { container } = render(
+      <>
+        <Title {...props} />
+        <Description {...props} />
+      </>,
+    );
+    expect(container).toBeEmptyDOMElement();
+    expect(log).toHaveBeenCalledWith('ArrayFieldTitleTemplate:', expect.objectContaining({ title: 'Array title' }));
+    expect(log).toHaveBeenCalledWith('ArrayFieldDescriptionTemplate:', expect.objectContaining({ description: 'Array description' }));
+    log.mockRestore();
+  });
+
+  it('should honor base input overrides, password autocomplete, and empty values', () => {
+    const { unmount } = renderDialog();
+    const Input = getCapturedTemplates().BaseInputTemplate;
+    unmount();
+    const onChange = vi.fn();
+    const onChangeOverride = vi.fn();
+    const onBlur = vi.fn();
+    const onFocus = vi.fn();
+    const props: BaseInputTemplateProps = {
+      id: 'password',
+      name: 'password',
+      label: 'Password',
+      placeholder: 'Enter password',
+      type: 'password',
+      value: 'secret',
+      schema: {},
+      options: { emptyValue: 'empty' },
+      registry: createRegistry(),
+      onChange,
+      onBlur,
+      onFocus,
+    };
+    const { rerender } = render(<Input {...props} />);
+    const input = screen.getByPlaceholderText('Enter password');
+    expect(input).toHaveAttribute('autocomplete', 'current-password');
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    expect(onFocus).toHaveBeenCalledWith('password', 'secret');
+    expect(onBlur).toHaveBeenCalledWith('password', 'secret');
+    fireEvent.change(input, { target: { value: '' } });
+    expect(onChange).toHaveBeenCalledExactlyOnceWith('empty');
+    onChange.mockClear();
+    rerender(<Input {...props} onChangeOverride={onChangeOverride} />);
+    fireEvent.change(screen.getByPlaceholderText('Enter password'), { target: { value: 'changed' } });
+    expect(onChangeOverride).toHaveBeenCalledOnce();
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(<Input {...props} readonly />);
+    expect(screen.getByPlaceholderText('Enter password')).toBeDisabled();
+  });
+
+  it('should handle single enum selection, focus, blur, and disabled options', async () => {
+    const { unmount } = renderDialog();
+    const Select = formCapture.props!.widgets!.SelectWidget as React.ComponentType<WidgetProps>;
+    unmount();
+    const onChange = vi.fn();
+    const onBlur = vi.fn();
+    const onFocus = vi.fn();
+    const props: WidgetProps = {
+      id: 'mode',
+      name: 'mode',
+      label: 'Mode',
+      schema: { type: 'string' },
+      value: 'auto',
+      options: {
+        enumOptions: [
+          { value: 'auto', label: 'Automatic' },
+          { value: 'manual', label: 'Manual' },
+        ],
+        enumDisabled: ['manual'],
+      },
+      registry: createRegistry(),
+      onChange,
+      onBlur,
+      onFocus,
+    };
+    const { rerender } = render(<Select {...props} />);
+    const input = screen.getByRole('combobox');
+    fireEvent.focus(input);
+    fireEvent.blur(input);
+    expect(onFocus).toHaveBeenCalledWith('mode', undefined);
+    expect(onBlur).toHaveBeenCalledWith('mode', 'auto');
+    fireEvent.mouseDown(screen.getByRole('combobox'));
+    expect(await screen.findByRole('option', { name: 'Manual' })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('option', { name: 'Automatic' }));
+    rerender(<Select {...props} value={undefined} readonly />);
+    expect(screen.getByRole('combobox')).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('should move nested and composite schema UI properties into the UI schema', () => {
+    const plugin = createPlugin();
+    plugin.schemaJson = {
+      type: 'object',
+      properties: {
+        nested: { type: 'object', properties: { value: { type: 'string', 'ui:help': 'Nested help', 'ui:placeholder': 'Nested value' } } },
+        items: { type: 'array', items: { type: 'object', properties: { value: { type: 'string', 'ui:help': 'Item help' } } } },
+      },
+      allOf: [{ properties: { all: { type: 'string', 'ui:help': 'All help' } } }],
+      anyOf: [{ properties: { any: { type: 'string', 'ui:help': 'Any help' } } }],
+      oneOf: [{ properties: { one: { type: 'string', 'ui:help': 'One help' } } }],
+    };
+    plugin.configJson = extendConfig(plugin, { items: [], nested: {} });
+    renderDialog(plugin);
+    expect(formCapture.props!.uiSchema).toMatchObject({
+      nested: { value: { 'ui:help': 'Nested help', 'ui:placeholder': 'Nested value' } },
+      items: { value: { 'ui:help': 'Item help' } },
+      all: { 'ui:help': 'All help' },
+      any: { 'ui:help': 'Any help' },
+      one: { 'ui:help': 'One help' },
+    });
+    expect(JSON.stringify(plugin.schemaJson)).not.toContain('ui:');
+  });
+
+  it('should ignore selector responses from other senders, destinations, or request IDs', () => {
+    const plugin = createPlugin();
+    plugin.schemaJson = { type: 'object', properties: { devices: { type: 'array', title: 'Devices', items: { type: 'string' }, selectFrom: 'name' } } };
+    plugin.configJson = extendConfig(plugin, { devices: [] });
+    const { addListener } = renderDialog(plugin);
+    const listener = getListener(addListener);
+    const message = { id: 1234, src: 'Matterbridge', dst: 'Frontend', method: '/api/select/devices', response: [{ serial: 'valid', name: 'Valid device' }] };
+    listener(message);
+    for (const overrides of [{ src: 'Other' }, { dst: 'Other' }, { id: 0 }, { id: 9999 }, { method: '/api/other' }]) {
+      listener({ ...message, ...overrides, response: [{ serial: 'invalid', name: 'Invalid device' }] });
+    }
+    listener({ ...message, response: null });
+    listener({ ...message, method: '/api/select/entities', response: null });
+    const section = screen.getByText('Devices').closest('div')!.parentElement!;
+    fireEvent.click(within(section).getAllByRole('button')[0]);
+    expect(screen.getByText('Valid device')).toBeInTheDocument();
+    expect(screen.queryByText('Invalid device')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByText('Select a device')).not.toBeInTheDocument();
+  });
 
   it('returns null when the dialog is closed', () => {
     const plugin = createPlugin();

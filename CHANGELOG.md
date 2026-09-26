@@ -36,7 +36,12 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
-- [frontend]: Add unit tests for `QRDiv` node switching and stale message handling, and `SearchPluginsDialog` selection, button state, and reset on reopen.
+- [frontend]: Add and expand unit tests for `QRDiv` node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.
+- [frontend]: Expand `SearchPluginsDialog` tests for selection and reset on reopen, npm cache validation, metadata and version loading, download retries, request cancellation, link validation, and mobile layout.
+- [frontend]: Expand `ConfigPluginDialog` tests for form submission and cancellation, missing configuration, schema UI properties, custom RJSF templates and widgets, and WebSocket response filtering.
+- [frontend]: Add and expand `Header`, `HomePlugins`, and `HomeLogs` tests for connection state, WebSocket listener lifecycle, controls and links, plugin metadata and frontends, and log preferences.
+- [frontend]: Add `InstallProgressDialog` and `NetworkConfigDialog` tests for rendering, actions, close behavior, saved preferences, scrolling, and network configuration state.
+- [frontend]: Add `MatterbridgeInfoTable` and `SystemInfoTable` tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.
 
 ### Changed
 
