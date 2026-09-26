@@ -55,6 +55,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxfmt` to v.0.70.0.
 - [matterbridge]: Bump `oxlint` to v.1.85.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
+- [scripts]: Update `clean.mjs` and `deep-clean.mjs` to v.1.2.0: log every removed path under its directory with a red dash (the emptied `.cache` and `node_modules` contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor `NO_COLOR` and redirected output.
 - [thread]: Bump `@zip.js/zip.js` to v.2.18.2.
 - [frontend]: Bump `frontend` version to v.3.6.3.
 - [frontend]: Require 100% line and function coverage in `test:coverage`.
