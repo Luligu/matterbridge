@@ -109,6 +109,15 @@ describe('Mdns', () => {
     expect(newOffset).toBe(encoded.length);
   });
 
+  it('should write the UTF-8 byte length of each label when the name contains non-ASCII characters', () => {
+    const encoded = mdns.encodeDnsName('Küche.local');
+    // 'Küche' is 5 characters but 6 UTF-8 bytes ('ü' = c3 bc), so its length byte must be 06
+    expect(encoded).toEqual(Buffer.from('064bc3bc636865056c6f63616c00', 'hex'));
+    const { name: decoded, newOffset } = mdns.decodeDnsName(encoded, 0);
+    expect(decoded).toBe('Küche.local');
+    expect(newOffset).toBe(encoded.length);
+  });
+
   describe('encodeTxtRdata', () => {
     it('should encode an empty TXT array as an empty buffer', () => {
       const rdata = mdns.encodeTxtRdata([]);

@@ -613,9 +613,11 @@ export class Mdns extends Multicast {
   encodeDnsName(name: string): Buffer {
     const labels = name.split('.');
     const buffers: Buffer[] = labels.map((label) => {
+      // The length byte counts the UTF-8 bytes of the label, not its characters (e.g. 'ü' is 1 character but 2 bytes).
+      const labelBuf = Buffer.from(label, 'utf8');
       const lenBuf = Buffer.alloc(1);
-      lenBuf.writeUInt8(label.length, 0);
-      return Buffer.concat([lenBuf, Buffer.from(label)]);
+      lenBuf.writeUInt8(labelBuf.length, 0);
+      return Buffer.concat([lenBuf, labelBuf]);
     });
     // Append the null byte to terminate the name.
     return Buffer.concat([...buffers, Buffer.from([0])]);

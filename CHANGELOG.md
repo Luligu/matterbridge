@@ -72,6 +72,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [dgram]: Fix `encodeDnsName` in `mdns.ts` writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.
 - [frontend]: Fix React Compiler `react/immutability` rule flags.
 - [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
 - [frontend]: Fix React Compiler `react/hooks` rule flags.
