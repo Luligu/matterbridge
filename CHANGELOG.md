@@ -57,6 +57,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
 - [scripts]: Update `clean.mjs` and `deep-clean.mjs` to v.1.2.0: log every removed path under its directory with a red dash (the emptied `.cache` and `node_modules` contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor `NO_COLOR` and redirected output.
 - [thread]: Bump `@zip.js/zip.js` to v.2.18.2.
+- [utils]: Update `runtimeBun.ts` to v.1.0.1: `sleep()` on Node now uses `setTimeout` from `node:timers/promises`.
 - [frontend]: Bump `frontend` version to v.3.6.3.
 - [frontend]: Require 100% line and function coverage in `test:coverage`.
 - [frontend]: Bump `@types/node` to v.26.6.2.
