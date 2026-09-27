@@ -6,7 +6,7 @@
 
 import type dgram from 'node:dgram';
 
-import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from '../src/mdns.js';
+import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './vitestSetupTest.js';
 
 // Mock node:dgram so the Mdns constructor does not open a real socket. Unlike Jest's automock,
@@ -414,9 +414,9 @@ describe('Mdns', () => {
           '0001', // NSCOUNT
           '0001', // ARCOUNT
           `${aLocal}00ff8001`, // Question: a.local ANY IN|QU
-          `${aLocal}000100010000003c0004c0a8010a`, // Known answer: a.local A IN ttl 60 192.168.1.10
-          `${aLocal}00018001000000780004c0a8010b`, // Authority: a.local A IN|FLUSH ttl 120 192.168.1.11
-          `${aLocal}00100001000011940000`, // Additional: a.local TXT IN ttl 4500 empty
+          'c00c000100010000003c0004c0a8010a', // Known answer: a.local (pointer to the question name at 12) A IN ttl 60 192.168.1.10
+          'c00c00018001000000780004c0a8010b', // Authority: a.local (pointer) A IN|FLUSH ttl 120 192.168.1.11
+          'c00c00100001000011940000', // Additional: a.local (pointer) TXT IN ttl 4500 empty
         ),
       );
       expect(mockSocket.send).toHaveBeenCalledWith(query, 0, query.length, 5353, '224.0.0.251', expect.any(Function));
@@ -442,8 +442,8 @@ describe('Mdns', () => {
           '0001', // NSCOUNT
           '0001', // ARCOUNT
           `${aLocal}00018001000000780004c0a8010a`, // Answer: a.local A IN|FLUSH ttl 120 192.168.1.10
-          `${aLocal}000100010000003c0004c0a8010b`, // Authority: a.local A IN ttl 60 192.168.1.11
-          `${aLocal}00100001000011940000`, // Additional: a.local TXT IN ttl 4500 empty
+          'c00c000100010000003c0004c0a8010b', // Authority: a.local (pointer to the answer name at 12) A IN ttl 60 192.168.1.11
+          'c00c00100001000011940000', // Additional: a.local (pointer) TXT IN ttl 4500 empty
         ),
       );
       expect(mockSocket.send).toHaveBeenCalledWith(response, 0, response.length, 5353, '224.0.0.251', expect.any(Function));
@@ -486,6 +486,95 @@ describe('Mdns', () => {
         expect(decoded.additionals).toEqual(section === 'additionals' ? [decodedA, decodedB] : []);
       });
     }
+  });
+
+  describe('name compression', () => {
+    const hex = (...parts: string[]): Buffer<ArrayBuffer> => Buffer.from(parts.join(''), 'hex');
+
+    it('should register every suffix and replace the longest known suffix with a pointer', () => {
+      const compression = new Map<string, number>();
+      expect(mdns.encodeDnsName('a._http._tcp.local', compression, 12)).toEqual(mdns.encodeDnsName('a._http._tcp.local'));
+      expect(compression).toEqual(
+        new Map([
+          ['a._http._tcp.local', 12],
+          ['_http._tcp.local', 14],
+          ['_tcp.local', 20],
+          ['local', 25],
+        ]),
+      );
+      expect(mdns.encodeDnsName('b._http._tcp.local', compression, 40)).toEqual(hex('0162', 'c00e')); // 'b' + pointer to '_http._tcp.local' at 14
+      expect(mdns.encodeDnsName('a._http._tcp.local', compression, 44)).toEqual(hex('c00c')); // Whole name already written at 12
+      expect(compression.get('b._http._tcp.local')).toBe(40);
+    });
+
+    it('should not register suffixes at offsets a pointer cannot reach', () => {
+      const compression = new Map<string, number>();
+      expect(mdns.encodeDnsName('a.local', compression, 0x3ffe)).toEqual(mdns.encodeDnsName('a.local'));
+      expect(compression).toEqual(new Map([['a.local', 0x3ffe]])); // 'local' would be at 0x4000
+    });
+
+    it('should encode the empty name without compression', () => {
+      const compression = new Map<string, number>();
+      expect(mdns.encodeDnsName('', compression, 12)).toEqual(mdns.encodeDnsName(''));
+      expect(compression.size).toBe(0);
+    });
+
+    it('should compress the domain name in the rdata of a PTR record', () => {
+      const response = mdns.sendResponse([
+        { name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeDnsName('inst._http._tcp.local') },
+      ]);
+      expect(response).toEqual(
+        hex(
+          '000084000000000100000000', // Header: QR + AA, ANCOUNT 1
+          '055f68747470045f746370056c6f63616c00', // Owner name: _http._tcp.local at 12
+          '000c000100000078', // PTR IN ttl 120
+          '0007', // RDLENGTH: 'inst' + pointer
+          '04696e7374c00c', // rdata: 'inst' + pointer to '_http._tcp.local' at 12
+        ),
+      );
+      expect(mdns.decodeMdnsMessage(response).answers?.[0].data).toBe('inst._http._tcp.local');
+    });
+
+    it('should compress the target in the rdata of a SRV record', () => {
+      const response = mdns.sendResponse([
+        { name: 'host.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeA('192.168.1.10') },
+        { name: 'inst._http._tcp.local', rtype: DnsRecordType.SRV, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeSrvRdata(0, 0, 8080, 'host.local') },
+      ]);
+      expect(response.subarray(38)).toEqual(
+        hex(
+          '04696e7374055f68747470045f746370c011', // Owner name: 'inst._http._tcp' + pointer to 'local' at 17
+          '0021000100000078', // SRV IN ttl 120
+          '0008', // RDLENGTH: priority, weight, port + pointer
+          '000000001f90c00c', // rdata: 0, 0, 8080 + pointer to 'host.local' at 12
+        ),
+      );
+      expect(mdns.decodeMdnsMessage(response).answers?.[1].data).toBe(JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }));
+    });
+
+    it('should send the rdata unchanged when it is not exactly an uncompressed name', () => {
+      const trailing = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([1])]);
+      const invalid = Buffer.from([5, 1]); // Label length beyond the rdata
+      for (const rdata of [trailing, invalid, Buffer.alloc(0)]) {
+        const compression = new Map<string, number>([['foo.local', 12]]);
+        const record = mdns.encodeResourceRecord({ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }, compression, 40);
+        expect(record).toEqual(Buffer.concat([hex('c00c', '000c000100000078'), Buffer.from([0, rdata.length]), rdata]));
+      }
+    });
+
+    it('should fit 29 Matter known answers in a 1428-byte query as a compressing sender does', () => {
+      const answers = Array.from({ length: 29 }, (_, i) => ({
+        name: '_matter._tcp.local',
+        rtype: DnsRecordType.PTR,
+        rclass: DnsClass.IN,
+        ttl: 117,
+        rdata: mdns.encodeDnsName(`CAD2FA0F285B2850-${i.toString(16).toUpperCase().padStart(16, '0')}._matter._tcp.local`),
+      }));
+      const query = mdns.sendQuery([{ name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN }], answers);
+      // Header 12 + question 24 + 29 answers of 48 bytes (pointer owner 2 + fields 10 + rdata 34 + pointer 2)
+      expect(query.length).toBe(1428);
+      expect(query.length).toBeLessThanOrEqual(MDNS_MAX_MESSAGE_LENGTH);
+      expect(mdns.decodeMdnsMessage(query).answers?.map((answer) => answer.data)).toEqual(answers.map((answer) => mdns.decodeDnsName(answer.rdata, 0).name));
+    });
   });
 
   it('should send a response and log', () => {

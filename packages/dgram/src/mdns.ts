@@ -607,18 +607,33 @@ export class Mdns extends Multicast {
    * For example, "example.local" becomes:
    * [7] "example" [5] "local" [0]
    *
+   * With a compression table (RFC 1035 §4.1.4, RFC 6762 §18.14), the longest suffix of the name already written in the
+   * message is replaced by a 2-byte pointer, and the suffixes written here are added to the table.
+   *
    * @param {string} name - The domain name to encode.
+   * @param {Map<string, number>} [compression] - Optional compression table of the message: name suffix to its offset in the message.
+   * @param {number} [offset] - The offset in the message where the name is written (default 0). Used only with a compression table.
    * @returns {Buffer} The encoded domain name as a Buffer.
    */
-  encodeDnsName(name: string): Buffer {
+  encodeDnsName(name: string, compression?: Map<string, number>, offset: number = 0): Buffer {
     const labels = name.split('.');
-    const buffers: Buffer[] = labels.map((label) => {
+    const buffers: Buffer[] = [];
+    let length = 0;
+    for (const [index, label] of labels.entries()) {
+      if (compression && label !== '') {
+        const suffix = labels.slice(index).join('.');
+        const pointer = compression.get(suffix);
+        if (pointer !== undefined) return Buffer.concat([...buffers, Buffer.from([0xc0 | (pointer >> 8), pointer & 0xff])]);
+        // A pointer has 14 bits, so only offsets below 0x4000 can be referenced.
+        if (offset + length < 0x4000) compression.set(suffix, offset + length);
+      }
       // The length byte counts the UTF-8 bytes of the label, not its characters (e.g. 'ü' is 1 character but 2 bytes).
       const labelBuf = Buffer.from(label, 'utf8');
       const lenBuf = Buffer.alloc(1);
       lenBuf.writeUInt8(labelBuf.length, 0);
-      return Buffer.concat([lenBuf, labelBuf]);
-    });
+      buffers.push(lenBuf, labelBuf);
+      length += 1 + labelBuf.length;
+    }
     // Append the null byte to terminate the name.
     return Buffer.concat([...buffers, Buffer.from([0])]);
   }
@@ -733,12 +748,36 @@ export class Mdns extends Multicast {
   /**
    * Encodes a DNS resource record.
    *
+   * With a compression table, the owner name is compressed, and so is the domain name in the rdata of PTR records and
+   * the target in the rdata of SRV records (RFC 6762 §18.14).
+   *
    * @param {{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }} record - The record to encode. If flush is true, the DnsClassFlag.FLUSH cache-flush flag is added to rclass (default false).
+   * @param {Map<string, number>} [compression] - Optional compression table of the message (see {@link Mdns.encodeDnsName}).
+   * @param {number} [offset] - The offset in the message where the record is written (default 0). Used only with a compression table.
    * @returns {Buffer} The encoded resource record: name, type, class, TTL, RDLENGTH and rdata.
    */
-  encodeResourceRecord({ name, rtype, rclass, flush = false, ttl, rdata }: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }): Buffer {
+  encodeResourceRecord(
+    { name, rtype, rclass, flush = false, ttl, rdata }: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer },
+    compression?: Map<string, number>,
+    offset: number = 0,
+  ): Buffer {
     // Encode the domain name in DNS label format.
-    const rname = this.encodeDnsName(name);
+    const rname = this.encodeDnsName(name, compression, offset);
+
+    // Compress the domain name in the rdata of PTR (at 0) and SRV (after priority, weight and port, at 6) records.
+    const nameStart = rtype === (DnsRecordType.PTR as number) ? 0 : rtype === (DnsRecordType.SRV as number) ? 6 : -1;
+    if (compression && nameStart >= 0) {
+      let rdataName: string | undefined;
+      try {
+        rdataName = this.decodeDnsName(rdata, nameStart).name;
+      } catch {
+        rdataName = undefined; // Not a valid name: the rdata is sent unchanged.
+      }
+      // Only when the rdata is exactly the uncompressed name, so that any other rdata is sent unchanged.
+      if (rdataName !== undefined && this.encodeDnsName(rdataName).equals(rdata.subarray(nameStart))) {
+        rdata = Buffer.concat([rdata.subarray(0, nameStart), this.encodeDnsName(rdataName, compression, offset + rname.length + 10 + nameStart)]);
+      }
+    }
 
     // Prepare the fixed part of the resource record:
     // - 2 bytes for rtype,
@@ -910,16 +949,25 @@ export class Mdns extends Multicast {
     header.writeUInt16BE(authorities.length, 8); // NSCOUNT: number of authority records.
     header.writeUInt16BE(additionals.length, 10); // ARCOUNT: number of additional records.
 
+    // Compress the names (RFC 6762 §18.14): each part is encoded at its offset in the message, after the 12-byte header.
+    const compression = new Map<string, number>();
+    let offset = 12;
+
     const questionBuffers = questions.map(({ name, type: qtype, class: qclass, unicastResponse = false }) => {
-      const qname = this.encodeDnsName(name);
+      const qname = this.encodeDnsName(name, compression, offset);
       const qfields = Buffer.alloc(4);
       qfields.writeUInt16BE(qtype, 0);
       // oxlint-disable-next-line oxc/bad-bitwise-operator
       qfields.writeUInt16BE(unicastResponse ? qclass | DnsClassFlag.QU : qclass, 2);
+      offset += qname.length + 4;
       return Buffer.concat([qname, qfields]);
     });
 
-    const recordBuffers = [...answers, ...authorities, ...additionals].map((record) => this.encodeResourceRecord(record));
+    const recordBuffers = [...answers, ...authorities, ...additionals].map((record) => {
+      const recordBuffer = this.encodeResourceRecord(record, compression, offset);
+      offset += recordBuffer.length;
+      return recordBuffer;
+    });
 
     // Concatenate header, questions and records (answers, authorities, additionals in order) to form the complete mDNS query packet.
     const query = Buffer.concat([header, ...questionBuffers, ...recordBuffers]);
@@ -976,7 +1024,14 @@ export class Mdns extends Multicast {
     header.writeUInt16BE(authorities.length, 8); // NSCOUNT: number of authority records.
     header.writeUInt16BE(additionals.length, 10); // ARCOUNT: number of additional records.
 
-    const recordBuffers = [...answers, ...authorities, ...additionals].map((record) => this.encodeResourceRecord(record));
+    // Compress the names (RFC 6762 §18.14): each record is encoded at its offset in the message, after the 12-byte header.
+    const compression = new Map<string, number>();
+    let offset = 12;
+    const recordBuffers = [...answers, ...authorities, ...additionals].map((record) => {
+      const recordBuffer = this.encodeResourceRecord(record, compression, offset);
+      offset += recordBuffer.length;
+      return recordBuffer;
+    });
 
     // Concatenate header and records (answers, authorities, additionals in order) to form the complete mDNS response packet.
     const response = Buffer.concat([header, ...recordBuffers]);
