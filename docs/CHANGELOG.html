@@ -177,6 +177,7 @@
 <li>[matterbridge]: Bump <code>oxlint</code> to v.1.85.0.</li>
 <li>[matterbridge]: Bump <code>oxlint-tsgolint</code> to v.7.0.2003.</li>
 <li>[dgram]: Update <code>mdns.ts</code> to v.1.1.0: <code>sendQuery</code> and <code>sendResponse</code> accept optional answers (known answers in queries), authorities and additionals, records accept an optional <code>flush</code> flag, and add the <code>DnsHeaderFlag</code> enum and the <code>MDNS_MAX_MESSAGE_LENGTH</code> and <code>MDNS_MAX_RESOURCE_RECORD_LENGTH</code> constants.</li>
+<li>[dgram]: <code>sendQuery</code> and <code>sendResponse</code> in <code>mdns.ts</code> compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.</li>
 <li>[scripts]: Update <code>clean.mjs</code> and <code>deep-clean.mjs</code> to v.1.2.0: log every removed path under its directory with a red dash (the emptied <code>.cache</code> and <code>node_modules</code> contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor <code>NO_COLOR</code> and redirected output.</li>
 <li>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.18.2.</li>
 <li>[utils]: Update <code>runtimeBun.ts</code> to v.1.0.1: <code>sleep()</code> on Node now uses <code>setTimeout</code> from <code>node:timers/promises</code>.</li>
@@ -193,6 +194,7 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[dgram]: Fix <code>encodeDnsName</code> in <code>mdns.ts</code> writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.</li>
 <li>[frontend]: Fix React Compiler <code>react/immutability</code> rule flags.</li>
 <li>[frontend]: Fix React Compiler <code>react/set-state-in-effect</code> rule flags.</li>
 <li>[frontend]: Fix React Compiler <code>react/hooks</code> rule flags.</li>
