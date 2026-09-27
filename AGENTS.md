@@ -46,18 +46,23 @@ The following workflows are available as skills in [.agents/skills](./.agents/sk
 - `$verify-server-endpoint-context` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates.
 - `$verify-version-alignment` for verifying package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version.
 
-## Matter Specs
+## Matter Specification
 
-These HTML specifications are taken from the Connectivity Standards Alliance specification site (https://csa-iot.org/developer-resource/specifications-download-request/), one copy per Matter release.
+These specifications are taken from the Connectivity Standards Alliance specification site (https://csa-iot.org/developer-resource/specifications-download-request/), one copy per Matter release.
 
-- The full Matter 1.6.0 specifications are available locally as HTML files under [chip/1.6.0/specs](chip/1.6.0/specs/). Treat those HTML specs as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
-- The full Matter 1.5.1 specifications are available locally as HTML files under [chip/1.5.1/specs](chip/1.5.1/specs/). Use those HTML specs for historical comparisons and delta analysis against Matter 1.6.0, but keep 1.6.0 as the authoritative source.
-- The full Matter 1.4.2 specifications are also available locally as HTML files under [chip/1.4.2/specs](chip/1.4.2/specs/). Use those HTML specs for historical comparisons and delta analysis against Matter 1.6.0, but keep 1.6.0 as the authoritative source.
+- The full Matter 1.6.1 specifications are available locally under [chip/1.6.1/specs](./chip/1.6.1/specs/). Treat them as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
+  - Read and search the Markdown files (`Matter-1.6.1-<spec>.md`): UTF-8 text with the headings and tables of the spec, converted from the PDFs and cross-checked against the XML definitions.
+  - For a figure (diagrams, device composition drawings), use the HTML files, since the Markdown has no images but keeps the captions (`Figure 2. Example of an Irrigation System`): find the caption in `Matter-1.6.1-<spec>.html`; the image is the `<img>` just before it, in the `Matter-1.6.1-<spec>_files/` folder (e.g. `image006.gif`).
+  - The PDFs are the original documents the Markdown is converted from.
+- The full Matter 1.6.0 specifications are available locally under [chip/1.6.0/specs](./chip/1.6.0/specs/), with the same layout as 1.6.1: Markdown for reading and searching, HTML for the figures, PDF as the original. CSA names the files of this release `Matter-1.6-<spec>` (without `.0`). Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The full Matter 1.5.1 specifications are available locally under [chip/1.5.1/specs](./chip/1.5.1/specs/), with the same layout as 1.6.1: Markdown for reading and searching, HTML for the figures, PDF as the original. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The full Matter 1.5.0 specifications are available locally under [chip/1.5.0/specs](./chip/1.5.0/specs/) as Markdown for reading and searching, and PDF as the original; there is no HTML, so no separate figures. CSA names the files of this release `Matter-1.5-<spec>` (without `.0`). Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
 
 ## Matter XML Definitions
 
-These XML files are taken from the [project-chip/connectedhomeip](https://github.com/project-chip/connectedhomeip) repository (`src/app/zap-templates/zcl/data-model/chip`), one copy per Matter release.
+These XML files are taken from the [project-chip/connectedhomeip](https://github.com/project-chip/connectedhomeip) repository (`data_model/<version>`, e.g. [data_model/1.6.1](https://github.com/project-chip/connectedhomeip/tree/master/data_model/1.6.1)), one copy per Matter release.
 
-- The Matter 1.6.0 XML cluster, device type and namespace definitions are available locally under [chip/1.6.0/xml](chip/1.6.0/xml/): clusters in [chip/1.6.0/xml/clusters](chip/1.6.0/xml/clusters/), device types in [chip/1.6.0/xml/device_types](chip/1.6.0/xml/device_types/), namespaces in [chip/1.6.0/xml/namespaces](chip/1.6.0/xml/namespaces/), plus the id maps [cluster_ids.json](chip/1.6.0/xml/cluster_ids.json) and [device_type_ids.json](chip/1.6.0/xml/device_type_ids.json). Treat those XML files as the authoritative machine-readable source, together with the 1.6.0 HTML specs.
-- The Matter 1.5.1 XML definitions are available under [chip/1.5.1/xml](chip/1.5.1/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.0, but keep 1.6.0 as the authoritative source.
-- The Matter 1.4.2 XML definitions are available under [chip/1.4.2/xml](chip/1.4.2/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.0, but keep 1.6.0 as the authoritative source.
+- The Matter 1.6.1 XML cluster, device type and namespace definitions are available locally under [chip/1.6.1/xml](./chip/1.6.1/xml/): clusters in [chip/1.6.1/xml/clusters](./chip/1.6.1/xml/clusters/), device types in [chip/1.6.1/xml/device_types](./chip/1.6.1/xml/device_types/), namespaces in [chip/1.6.1/xml/namespaces](./chip/1.6.1/xml/namespaces/), plus the id maps [cluster_ids.json](./chip/1.6.1/xml/cluster_ids.json) and [device_type_ids.json](./chip/1.6.1/xml/device_type_ids.json). Treat those XML files as the authoritative machine-readable source, together with the 1.6.1 HTML specs.
+- The Matter 1.6.0 XML definitions are available under [chip/1.6.0/xml](./chip/1.6.0/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The Matter 1.5.1 XML definitions are available under [chip/1.5.1/xml](./chip/1.5.1/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The Matter 1.5.0 XML definitions are available under [chip/1.5.0/xml](./chip/1.5.0/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
