@@ -3,7 +3,7 @@
  * @description This file contains the class Mdns.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.1
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -36,6 +36,21 @@ import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'no
 
 // matterbridge
 import { Multicast } from './multicast.js';
+
+/**
+ * Maximum length in bytes of an mDNS message that fits in a single unfragmented packet (RFC 6762 §17).
+ * It is the Ethernet MTU (1500) less the IPv6 header (40) and the UDP header (8), so it is valid for both IPv4 and IPv6.
+ * Records that do not fit in one message must be split across several messages.
+ */
+export const MDNS_MAX_MESSAGE_LENGTH = 1500 - 40 - 8; // 1452
+
+/**
+ * Maximum length in bytes of a single encoded resource record: the largest record that fits alone in one
+ * unfragmented message, i.e. {@link MDNS_MAX_MESSAGE_LENGTH} less the DNS header (12).
+ * RFC 6762 §17 would allow a larger record sent alone with IP fragmentation (up to 9000 bytes per packet),
+ * but it discourages it because many simple devices do not reassemble IP fragments, so it is not supported.
+ */
+export const MDNS_MAX_RESOURCE_RECORD_LENGTH = MDNS_MAX_MESSAGE_LENGTH - 12; // 1440
 
 export enum DnsRecordType {
   A = 1,
@@ -138,35 +153,147 @@ export enum DnsClass {
   ANY = 255, // Any class
 }
 
+/**
+ * mDNS flags carried in the top bit (0x8000) of the 16-bit class field (RFC 6762).
+ * The same bit has a different meaning in questions and in resource records.
+ * Mask it off (`cls & 0x7fff`) to get the actual {@link DnsClass}.
+ */
 export enum DnsClassFlag {
-  FLUSH = 0x8000, // For answers (resource records)
-  QU = 0x8000, // For questions (unicast response preferred)
+  /**
+   * Cache-flush bit, used in resource records (answer, authority and additional sections) (RFC 6762 §10.2).
+   * The sender declares the record set unique: receivers must replace every cached record with the same
+   * name, type and class that is older than 1 second with the records in this response.
+   * Set it on unique records (SRV, TXT, A, AAAA of your own host), never on shared records (e.g. service PTR).
+   */
+  FLUSH = 0x8000,
+  /**
+   * Unicast-response bit, used in questions (RFC 6762 §5.4).
+   * The querier asks responders to answer with a unicast packet to its source address and port instead of multicast.
+   * Typically set on the first query after startup or network change, to reduce multicast traffic.
+   * It is a preference, not a guarantee: a responder that has not multicast the record within the last
+   * quarter of its TTL multicasts the answer anyway, so other hosts can refresh their caches.
+   */
+  QU = 0x8000,
 }
 
+/**
+ * Bits and masks of the 16-bit flags field of the DNS header (RFC 1035 §4.1.1, RFC 2535 §6.1), with the mDNS rules of RFC 6762 §18.
+ * See {@link MdnsMessage} for the meaning of each field.
+ */
+export enum DnsHeaderFlag {
+  /** QR (Query/Response) bit 15: 0 in queries, 1 in responses (RFC 6762 §18.2). */
+  QR = 0x8000,
+  /** OPCODE mask, bits 14-11: MUST be 0 (standard query); messages with a non-zero OPCODE are silently ignored (RFC 6762 §18.3). */
+  OPCODE = 0x7800,
+  /** AA (Authoritative Answer) bit 10: 0 in queries, 1 in responses (RFC 6762 §18.4). */
+  AA = 0x0400,
+  /** TC (Truncated) bit 9: in queries, more Known-Answer packets follow; 0 in multicast responses (RFC 6762 §7.2, §18.5). */
+  TC = 0x0200,
+  /** RD (Recursion Desired) bit 8: SHOULD be 0, ignored on reception (RFC 6762 §18.6). */
+  RD = 0x0100,
+  /** RA (Recursion Available) bit 7: MUST be 0, ignored on reception (RFC 6762 §18.7). */
+  RA = 0x0080,
+  /** Z (Zero) bit 6: MUST be 0, ignored on reception (RFC 6762 §18.8). */
+  Z = 0x0040,
+  /** AD (Authentic Data) bit 5: MUST be 0, ignored on reception (RFC 6762 §18.9). */
+  AD = 0x0020,
+  /** CD (Checking Disabled) bit 4: MUST be 0, ignored on reception (RFC 6762 §18.10). */
+  CD = 0x0010,
+  /** RCODE (Response Code) mask, bits 3-0: MUST be 0; messages with a non-zero RCODE are silently ignored (RFC 6762 §18.11). */
+  RCODE = 0x000f,
+}
+
+/**
+ * A decoded mDNS message: the DNS header fields (RFC 1035 §4.1.1) with the mDNS rules of RFC 6762 §18, and the four sections.
+ */
 export interface MdnsMessage {
+  /**
+   * ID (Query Identifier), header bytes 0-1 (RFC 6762 §18.1).
+   * - In multicast queries: SHOULD be zero on transmission.
+   * - In multicast responses (including unsolicited ones): MUST be zero on transmission and MUST be ignored on reception.
+   * - In legacy unicast responses: MUST match the ID of the query being answered.
+   */
   id: number;
-  qr: number; // 0 for query, 1 for response
-  opcode: number; // Operation Code = 0 for standard query
-  aa: boolean; // Authoritative Answer flag
-  tc: boolean; // Truncated message flag
-  rd: boolean; // Recursion Desired flag
-  ra: boolean; // Recursion Available flag
-  z: number; // Reserved bits
-  rcode: number; // Response Code = 0 for no error
-  qdCount: number; // Question Count
-  anCount: number; // Answer Record Count
-  nsCount: number; // Authority Record Count
-  arCount: number; // Additional Record Count
+  /**
+   * QR (Query/Response) bit, bit 15 of the header flags (0x8000) (RFC 6762 §18.2).
+   * 0 in query messages, 1 in response messages.
+   */
+  qr: number;
+  /**
+   * OPCODE, bits 14-11 of the header flags (0x7800) (RFC 6762 §18.3).
+   * MUST be zero (standard query) on transmission; messages received with a non-zero OPCODE MUST be silently ignored.
+   */
+  opcode: number;
+  /**
+   * AA (Authoritative Answer) bit, bit 10 of the header flags (0x0400) (RFC 6762 §18.4).
+   * - In queries: MUST be zero on transmission and MUST be ignored on reception.
+   * - In responses: MUST be one on transmission (there is no "better" source for .local names) and MUST be ignored on reception.
+   */
+  aa: boolean;
+  /**
+   * TC (Truncated) flag, bit 9 of the header flags (0x0200) (RFC 6762 §18.5).
+   * - In queries: more Known-Answer records follow shortly (RFC 6762 §7.2). A querier whose known answers do not fit
+   *   in one packet sets TC and immediately sends further query packets with no questions and more known answers,
+   *   setting TC on every packet except the last. A responder seeing TC defers its answer by a random 400-500 ms
+   *   (extended after each further TC packet) and drops any answer listed in the following Known-Answer packets.
+   * - In multicast responses: MUST be zero on transmission and MUST be ignored on reception.
+   * - In legacy unicast responses: as in unicast DNS, the response did not fit in one packet and the querier SHOULD retry over TCP.
+   */
+  tc: boolean;
+  /**
+   * RD (Recursion Desired) bit, bit 8 of the header flags (0x0100) (RFC 6762 §18.6).
+   * SHOULD be zero on transmission and MUST be ignored on reception, in queries and responses.
+   */
+  rd: boolean;
+  /**
+   * RA (Recursion Available) bit, bit 7 of the header flags (0x0080) (RFC 6762 §18.7).
+   * MUST be zero on transmission and MUST be ignored on reception, in queries and responses.
+   */
+  ra: boolean;
+  /**
+   * Bits 6-4 of the header flags (0x0070): Z (bit 6), AD (Authentic Data, bit 5) and CD (Checking Disabled, bit 4)
+   * (RFC 6762 §18.8, §18.9, §18.10). All MUST be zero on transmission and MUST be ignored on reception.
+   */
+  z: number;
+  /**
+   * RCODE (Response Code), bits 3-0 of the header flags (0x000f) (RFC 6762 §18.11).
+   * MUST be zero on transmission; messages received with a non-zero RCODE MUST be silently ignored.
+   */
+  rcode: number;
+  /**
+   * QDCOUNT, header bytes 4-5: number of entries in the Question Section.
+   * Multicast responses MUST NOT contain questions (RFC 6762 §6); continuation Known-Answer packets have none (RFC 6762 §7.2).
+   */
+  qdCount: number;
+  /**
+   * ANCOUNT, header bytes 6-7: number of records in the Answer Section.
+   * In queries these are the Known-Answer records (RFC 6762 §7.1).
+   */
+  anCount: number;
+  /**
+   * NSCOUNT, header bytes 8-9: number of records in the Authority Section.
+   * In probe queries these are the proposed records used for the simultaneous probe tiebreak (RFC 6762 §8.2).
+   */
+  nsCount: number;
+  /**
+   * ARCOUNT, header bytes 10-11: number of records in the Additional Section.
+   * In responses these are records the querier is likely to need next (e.g. SRV, TXT, A, AAAA after a PTR) (RFC 6762 §6).
+   */
+  arCount: number;
+  /** Question Section: the decoded questions (qdCount entries). */
   questions?: DnsQuestion[];
+  /** Answer Section: the decoded answers, or the Known-Answer records in a query (anCount entries). */
   answers?: MdnsRecord[];
+  /** Authority Section: the decoded authority records, or the probe tiebreak records in a query (nsCount entries). */
   authorities?: MdnsRecord[];
+  /** Additional Section: the decoded additional records (arCount entries). */
   additionals?: MdnsRecord[];
 }
 
 interface DnsQuestion {
   name: string;
-  type: number;
-  class: number;
+  type: DnsRecordType;
+  class: DnsClass;
 }
 
 interface MdnsRecord {
@@ -202,7 +329,7 @@ export function isMdnsQuery(message: Buffer): boolean {
   const id = message.readUInt16BE(0);
   const flags = message.readUInt16BE(2);
 
-  const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response.
+  const qr = (flags & DnsHeaderFlag.QR) >> 15; // Bit 15: 0=query, 1=response.
   return id == 0 && qr === 0;
 }
 
@@ -217,7 +344,7 @@ export function isMdnsResponse(message: Buffer): boolean {
   const id = message.readUInt16BE(0);
   const flags = message.readUInt16BE(2);
 
-  const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response.
+  const qr = (flags & DnsHeaderFlag.QR) >> 15; // Bit 15: 0=query, 1=response.
   return id == 0 && qr === 1;
 }
 
@@ -348,14 +475,14 @@ export class Mdns extends Multicast {
     const id = msg.readUInt16BE(0);
     const flags = msg.readUInt16BE(2);
 
-    const qr = (flags & 0x8000) >> 15; // Bit 15: 0=query, 1=response (QR = Query/Response).
-    const opcode = (flags & 0x7800) >> 11; // Bits 14-11 (OPCODE: kind of query; in mDNS this is typically 0 = standard query).
-    const aa = Boolean(flags & 0x0400); // Bit 10 (AA: Authoritative Answer; sender claims authority for the name).
-    const tc = Boolean(flags & 0x0200); // Bit 9 (TC: TrunCation; message was truncated due to length limits).
-    const rd = Boolean(flags & 0x0100); // Bit 8 (RD: Recursion Desired; usually 0 in mDNS).
-    const ra = Boolean(flags & 0x0080); // Bit 7 (RA: Recursion Available; meaningful for recursive resolvers, usually 0 in mDNS).
-    const z = (flags & 0x0070) >> 4; // Bits 6-4 (Z: reserved in DNS; should be 0 in classic DNS/mDNS).
-    const rcode = flags & 0x000f; // Bits 3-0 (RCODE: Response Code; 0 = NoError, 3 = NXDomain, etc).
+    const qr = (flags & DnsHeaderFlag.QR) >> 15; // Bit 15: 0=query, 1=response (QR = Query/Response).
+    const opcode = (flags & DnsHeaderFlag.OPCODE) >> 11; // Bits 14-11 (OPCODE: kind of query; in mDNS this is typically 0 = standard query).
+    const aa = Boolean(flags & DnsHeaderFlag.AA); // Bit 10 (AA: Authoritative Answer; sender claims authority for the name).
+    const tc = Boolean(flags & DnsHeaderFlag.TC); // Bit 9 (TC: TrunCation; message was truncated due to length limits).
+    const rd = Boolean(flags & DnsHeaderFlag.RD); // Bit 8 (RD: Recursion Desired; usually 0 in mDNS).
+    const ra = Boolean(flags & DnsHeaderFlag.RA); // Bit 7 (RA: Recursion Available; meaningful for recursive resolvers, usually 0 in mDNS).
+    const z = (flags & (DnsHeaderFlag.Z | DnsHeaderFlag.AD | DnsHeaderFlag.CD)) >> 4; // Bits 6-4 (Z, AD and CD: should be 0 in mDNS).
+    const rcode = flags & DnsHeaderFlag.RCODE; // Bits 3-0 (RCODE: Response Code; 0 = NoError, 3 = NXDomain, etc).
 
     const qdCount = msg.readUInt16BE(4);
     const anCount = msg.readUInt16BE(6);
@@ -602,6 +729,32 @@ export class Mdns extends Multicast {
   }
 
   /**
+   * Encodes a DNS resource record.
+   *
+   * @param {{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }} record - The record to encode. If flush is true, the DnsClassFlag.FLUSH cache-flush flag is added to rclass (default false).
+   * @returns {Buffer} The encoded resource record: name, type, class, TTL, RDLENGTH and rdata.
+   */
+  encodeResourceRecord({ name, rtype, rclass, flush = false, ttl, rdata }: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }): Buffer {
+    // Encode the domain name in DNS label format.
+    const rname = this.encodeDnsName(name);
+
+    // Prepare the fixed part of the resource record:
+    // - 2 bytes for rtype,
+    // - 2 bytes for rclass,
+    // - 4 bytes for TTL,
+    // - 2 bytes for RDLENGTH (length of the rdata).
+    const recordFixed = Buffer.alloc(10);
+    recordFixed.writeUInt16BE(rtype, 0); // Record type.
+    // oxlint-disable-next-line oxc/bad-bitwise-operator
+    recordFixed.writeUInt16BE(flush ? rclass | DnsClassFlag.FLUSH : rclass, 2); // Record class.
+    recordFixed.writeUInt32BE(ttl, 4); // Time-to-live.
+    recordFixed.writeUInt16BE(rdata.length, 8); // RDLENGTH.
+
+    // Concatenate the record: encoded name, fixed fields, and resource data.
+    return Buffer.concat([rname, recordFixed, rdata]);
+  }
+
+  /**
    * Decodes a DNS resource record.
    *
    * @param {Buffer} msg - The full mDNS message buffer.
@@ -728,20 +881,32 @@ export class Mdns extends Multicast {
    *
    * @param {Array<{ name: string; type: number; class: number; unicastResponse?: boolean }>} questions - Array of questions
    * to include in the query.
+   * @param {Array<{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }>} [answers] - Optional array of known-answer records
+   * (RFC 6762 §7.1: records the querier already has in cache, with their remaining TTL). Defaults to an empty array.
+   * @param {Array<{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }>} [authorities] - Optional array of authority records
+   * (RFC 6762 §8.2: the proposed records of a probe query). Defaults to an empty array.
+   * @param {Array<{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }>} [additionals] - Optional array of additional records
+   * (e.g. an EDNS0 OPT record). Defaults to an empty array.
    * @returns {Buffer<ArrayBuffer>} The constructed query buffer.
    *
    * @remarks
    * Each question should have a name (e.g., "_http._tcp.local"), type (e.g., DnsRecordType.PTR), class (e.g., DnsClass.IN),
    * and an optional unicastResponse flag (this will add the DnsClassFlag.QU flag to the query).
+   * The records have the same shape as in {@link Mdns.sendResponse}.
    */
-  sendQuery(questions: { name: string; type: number; class: number; unicastResponse?: boolean }[]): Buffer<ArrayBuffer> {
+  sendQuery(
+    questions: { name: string; type: number; class: number; unicastResponse?: boolean }[],
+    answers: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }[] = [],
+    authorities: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }[] = [],
+    additionals: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }[] = [],
+  ): Buffer<ArrayBuffer> {
     const header = Buffer.alloc(12);
     header.writeUInt16BE(0, 0); // ID
     header.writeUInt16BE(0, 2); // Flags
     header.writeUInt16BE(questions.length, 4); // QDCOUNT
-    header.writeUInt16BE(0, 6); // ANCOUNT
-    header.writeUInt16BE(0, 8); // NSCOUNT
-    header.writeUInt16BE(0, 10); // ARCOUNT
+    header.writeUInt16BE(answers.length, 6); // ANCOUNT: number of known-answer records.
+    header.writeUInt16BE(authorities.length, 8); // NSCOUNT: number of authority records.
+    header.writeUInt16BE(additionals.length, 10); // ARCOUNT: number of additional records.
 
     const questionBuffers = questions.map(({ name, type: qtype, class: qclass, unicastResponse = false }) => {
       const qname = this.encodeDnsName(name);
@@ -752,7 +917,10 @@ export class Mdns extends Multicast {
       return Buffer.concat([qname, qfields]);
     });
 
-    const query = Buffer.concat([header, ...questionBuffers]);
+    const recordBuffers = [...answers, ...authorities, ...additionals].map((record) => this.encodeResourceRecord(record));
+
+    // Concatenate header, questions and records (answers, authorities, additionals in order) to form the complete mDNS query packet.
+    const query = Buffer.concat([header, ...questionBuffers, ...recordBuffers]);
     if (hasParameter('v') || hasParameter('verbose')) {
       const decoded = this.decodeMdnsMessage(query);
       this.logMdnsMessage(decoded, undefined, `Sending query mDNS message (${query.length} bytes)`);
@@ -773,14 +941,26 @@ export class Mdns extends Multicast {
   /**
    * Constructs an mDNS response packet and sends it to the multicast address and port.
    *
-   * @param {Array<{ name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }>} answers - Array of answer records.
+   * @param {Array<{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }>} answers - Array of answer records.
+   * @param {Array<{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }>} [authorities] - Optional array of authority records
+   * (e.g. the proposed records of a probe tiebreak). Defaults to an empty array.
+   * @param {Array<{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }>} [additionals] - Optional array of additional records
+   * (e.g. the SRV, TXT, A and AAAA records that accompany a PTR answer). Defaults to an empty array.
    * @returns {Buffer<ArrayBuffer>} The constructed response buffer.
+   *
+   * @remarks
+   * Each record should have a name (e.g., "_http._tcp.local"), rtype (e.g., DnsRecordType.PTR), rclass (e.g., DnsClass.IN),
+   * an optional flush flag (default false, when true it adds the DnsClassFlag.FLUSH cache-flush flag to rclass), ttl and rdata.
    *
    * @example
    *   const ptrRdata = mdnsIpv4.encodeDnsName('matterbridge._http._tcp.local');
    *   mdnsIpv4.sendResponse([{ name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);
    */
-  sendResponse(answers: { name: string; rtype: number; rclass: number; ttl: number; rdata: Buffer }[]): Buffer<ArrayBuffer> {
+  sendResponse(
+    answers: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }[],
+    authorities: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }[] = [],
+    additionals: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }[] = [],
+  ): Buffer<ArrayBuffer> {
     if (!Array.isArray(answers) || answers.length === 0) {
       throw new Error('sendResponse requires a non-empty answers array');
     }
@@ -788,33 +968,16 @@ export class Mdns extends Multicast {
     const header = Buffer.alloc(12);
     header.writeUInt16BE(0, 0); // ID is set to 0 in mDNS.
     // Set flags: QR (response) bit and AA (authoritative answer) bit.
-    header.writeUInt16BE(0x8400, 2);
+    header.writeUInt16BE(DnsHeaderFlag.QR | DnsHeaderFlag.AA, 2);
     header.writeUInt16BE(0, 4); // QDCOUNT: 0 questions in response.
     header.writeUInt16BE(answers.length, 6); // ANCOUNT: number of answer records.
-    header.writeUInt16BE(0, 8); // NSCOUNT: 0 authority records.
-    header.writeUInt16BE(0, 10); // ARCOUNT: 0 additional records.
+    header.writeUInt16BE(authorities.length, 8); // NSCOUNT: number of authority records.
+    header.writeUInt16BE(additionals.length, 10); // ARCOUNT: number of additional records.
 
-    const answerBuffers = answers.map(({ name, rtype, rclass, ttl, rdata }) => {
-      // Encode the domain name in DNS label format.
-      const aname = this.encodeDnsName(name);
+    const recordBuffers = [...answers, ...authorities, ...additionals].map((record) => this.encodeResourceRecord(record));
 
-      // Prepare the fixed part of the answer record:
-      // - 2 bytes for qtype,
-      // - 2 bytes for qclass,
-      // - 4 bytes for TTL,
-      // - 2 bytes for RDLENGTH (length of the rdata).
-      const answerFixed = Buffer.alloc(10);
-      answerFixed.writeUInt16BE(rtype, 0); // Record type.
-      answerFixed.writeUInt16BE(rclass, 2); // Record class.
-      answerFixed.writeUInt32BE(ttl, 4); // Time-to-live.
-      answerFixed.writeUInt16BE(rdata.length, 8); // RDLENGTH.
-
-      // Concatenate the answer: encoded name, fixed fields, and resource data.
-      return Buffer.concat([aname, answerFixed, rdata]);
-    });
-
-    // Concatenate header and answers to form the complete mDNS response packet.
-    const response = Buffer.concat([header, ...answerBuffers]);
+    // Concatenate header and records (answers, authorities, additionals in order) to form the complete mDNS response packet.
+    const response = Buffer.concat([header, ...recordBuffers]);
     if (hasParameter('v') || hasParameter('verbose')) {
       const decoded = this.decodeMdnsMessage(response);
       this.logMdnsMessage(decoded, undefined, `Sending response mDNS message (${response.length} bytes)`);
