@@ -1,6 +1,6 @@
 /**
  * remove-workflows.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Removes GitHub Actions workflow runs that are older than one week, plus all
  * cancelled workflow runs regardless of age.
@@ -12,8 +12,6 @@
  *   gh CLI installed and authenticated
  *   git remote.origin.url configured, or package.json repository.url set
  */
-
-/* eslint-disable no-console */
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';

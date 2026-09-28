@@ -1,6 +1,6 @@
 /**
  * run-matterbridge-chip-tests.mjs
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Manage the `luligu/matterbridge:chip-test` docker container and run the Matter CHIP test suite defined
  * in chipTests.json, logging full results to chipTests.log and just the pass/fail summary to
@@ -115,8 +115,6 @@
  * after every --start.
  */
 
-/* eslint-disable no-console */
-
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -206,7 +204,6 @@ function sleepSync(ms) {
 // which can split matched text across escape sequences (e.g. "Matterbridge " <esc> "is online"); strip them
 // before pattern-matching captured output.
 function stripAnsi(text) {
-  // eslint-disable-next-line no-control-regex
   return text.replace(/\x1b\[[0-9;]*[a-zA-Z]/g, '');
 }
 
@@ -358,12 +355,10 @@ const unpairPythonFabricScript = `from matter.testing.decorators import async_te
 from matter.testing.matter_testing import MatterBaseTest
 from matter.testing.runner import default_matter_test_main
 
-
 class UnpairDefaultFabric(MatterBaseTest):
     @async_test_body
     async def test_unpair(self):
         await self.default_controller.UnpairDevice(self.dut_node_id)
-
 
 if __name__ == "__main__":
     default_matter_test_main()

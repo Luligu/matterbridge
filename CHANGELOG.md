@@ -45,9 +45,16 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add `MatterbridgeInfoTable` and `SystemInfoTable` tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.
 - [frontend]: Add `WebSocketLogs` tests for badge colors and metadata, message updates, auto-scroll throttling, hover and touch behavior, and pending scrolls after unmount.
 - [frontend]: Add `WebSocketProvider` tests for connection state, authentication, message validation and routing, listener lifecycle, log filtering and buffer limits, UI notifications, heartbeat timeouts, and reconnection retries.
+- [agents]: Add [`commit message instructions`](.github/commit-message-instructions.md) v.1.0.0 for the VS Code Copilot "Generate Commit Message" button (Conventional Commits).
 
 ### Changed
 
+- [vscode]: Update `.vscode/settings.json` to v.1.0.14: point the Copilot "Generate Commit Message" button to `.github/commit-message-instructions.md`, ask before running `mb-run` and before dependency installs and removals, and approve `find`, `bun test`, `npm run test:watch` and `npm run test:verbose`.
+- [antigravity]: Update `.antigravity/settings.json` to v.1.0.5: ask before running `mb-run`, allow `find` and the read-only git commands, and remove the obsolete sandboxing comments.
+- [scripts]: Update `scripts/clean.mjs` and `scripts/deep-clean.mjs` to v.1.3.0: add `--help` and `--version` and reject unknown arguments.
+- [scripts]: Remove the obsolete `eslint-disable` comments from the vendored scripts, the workspace `downloads.mjs` scripts and the repository scripts.
+- [data-model]: Emit `oxlint-disable typescript/no-empty-object-type` instead of the obsolete `eslint-disable` in the generated `matterClusterTypes.ts`.
+- [styleguide]: Update [`STYLEGUIDE.md`](STYLEGUIDE.md) to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.12.
 - [matterbridge]: Bump `@types/node` to v.26.6.2.
 - [matterbridge]: Bump `vitest` to v.5.0.2.

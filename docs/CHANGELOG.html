@@ -166,9 +166,16 @@
 <li>[frontend]: Add <code>MatterbridgeInfoTable</code> and <code>SystemInfoTable</code> tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.</li>
 <li>[frontend]: Add <code>WebSocketLogs</code> tests for badge colors and metadata, message updates, auto-scroll throttling, hover and touch behavior, and pending scrolls after unmount.</li>
 <li>[frontend]: Add <code>WebSocketProvider</code> tests for connection state, authentication, message validation and routing, listener lifecycle, log filtering and buffer limits, UI notifications, heartbeat timeouts, and reconnection retries.</li>
+<li>[agents]: Add <a href=".github/commit-message-instructions.html"><code>commit message instructions</code></a> v.1.0.0 for the VS Code Copilot &quot;Generate Commit Message&quot; button (Conventional Commits).</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[vscode]: Update <code>.vscode/settings.json</code> to v.1.0.14: point the Copilot &quot;Generate Commit Message&quot; button to <code>.github/commit-message-instructions.html</code>, ask before running <code>mb-run</code> and before dependency installs and removals, and approve <code>find</code>, <code>bun test</code>, <code>npm run test:watch</code> and <code>npm run test:verbose</code>.</li>
+<li>[antigravity]: Update <code>.antigravity/settings.json</code> to v.1.0.5: ask before running <code>mb-run</code>, allow <code>find</code> and the read-only git commands, and remove the obsolete sandboxing comments.</li>
+<li>[scripts]: Update <code>scripts/clean.mjs</code> and <code>scripts/deep-clean.mjs</code> to v.1.3.0: add <code>--help</code> and <code>--version</code> and reject unknown arguments.</li>
+<li>[scripts]: Remove the obsolete <code>eslint-disable</code> comments from the vendored scripts, the workspace <code>downloads.mjs</code> scripts and the repository scripts.</li>
+<li>[data-model]: Emit <code>oxlint-disable typescript/no-empty-object-type</code> instead of the obsolete <code>eslint-disable</code> in the generated <code>matterClusterTypes.ts</code>.</li>
+<li>[styleguide]: Update <a href="STYLEGUIDE.html"><code>STYLEGUIDE.html</code></a> to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.12.</li>
 <li>[matterbridge]: Bump <code>@types/node</code> to v.26.6.2.</li>
 <li>[matterbridge]: Bump <code>vitest</code> to v.5.0.2.</li>

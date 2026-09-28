@@ -1,6 +1,6 @@
 /**
  * downloads.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Prints daily npm downloads for the last month for the package in ../package.json.
  *
@@ -10,8 +10,6 @@
  * Requirements:
  *   Node.js 18+ (for global fetch)
  */
-
-/* eslint-disable no-console */
 
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';

@@ -1,6 +1,6 @@
 /**
  * version.mjs
- * Version: 1.0.2
+ * Version: 1.0.3
  *
  * Updates package.json version to:
  *   <baseVersion>-<dev|edge|git|local|bun>-<yyyymmdd>-<7charSha>
@@ -8,9 +8,6 @@
  * Usage:
  *   node scripts/version.mjs <dev|edge|git|local|bun> [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';

@@ -1,6 +1,6 @@
 /**
  * deep-clean.mjs
- * Version: 1.2.0
+ * Version: 1.3.0
  *
  * Dependency-free replacement for:
  *   npx shx rm -rf *.tsbuildinfo dist build coverage jest temp bun.lock package-lock.json npm-shrinkwrap.json \
@@ -22,15 +22,65 @@
  * Usage:
  *   node scripts/deep-clean.mjs
  *   node scripts/deep-clean.mjs --workspaces
+ *   node scripts/deep-clean.mjs --version
+ *   node scripts/deep-clean.mjs --help
+ *
+ * Unknown arguments are rejected with exit code 1, so a mistyped flag never starts a clean.
  */
 
 import { existsSync, lstatSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
-const version = '1.2.0';
+const version = '1.3.0';
+const scriptName = path.basename(import.meta.filename);
 
-// oxlint-disable-next-line no-console
-console.log(`${path.basename(import.meta.filename)} v.${version}`);
+/**
+ * Handle the command line arguments.
+ *
+ * @returns {boolean} True when the clean should run, false after printing the version, the help or an argument error.
+ */
+const handleArgs = () => {
+  const args = process.argv.slice(2);
+  const knownArgs = new Set(['--workspaces', '--version', '-v', '--help', '-h']);
+  const unknownArgs = args.filter((arg) => !knownArgs.has(arg));
+  if (unknownArgs.length > 0) {
+    // oxlint-disable-next-line no-console
+    console.error(`Unknown argument${unknownArgs.length === 1 ? '' : 's'}: ${unknownArgs.join(', ')}. Run with --help for usage.`);
+    process.exitCode = 1;
+    return false;
+  }
+
+  if (args.includes('--version') || args.includes('-v')) {
+    // oxlint-disable-next-line no-console
+    console.log(version);
+    return false;
+  }
+
+  if (args.includes('--help') || args.includes('-h')) {
+    // oxlint-disable-next-line no-console
+    console.log(`${scriptName} v.${version}
+
+Remove every *.tsbuildinfo file, the build/test output directories and the lock files,\nand empty .cache and node_modules.
+
+Usage:
+  node scripts/${scriptName} [options]
+
+Options:
+  --workspaces   Also clean every workspace listed in the root package.json
+  --version, -v  Show the script version
+  --help, -h     Show this help message`);
+    return false;
+  }
+
+  return true;
+};
+
+const shouldClean = handleArgs();
+
+if (shouldClean) {
+  // oxlint-disable-next-line no-console
+  console.log(`${scriptName} v.${version}`);
+}
 
 const start = performance.now();
 const root = process.cwd();
@@ -154,14 +204,16 @@ const getWorkspaceDirs = () => {
   return dirs;
 };
 
-clean(root, false);
+if (shouldClean) {
+  clean(root, false);
 
-if (process.argv.includes('--workspaces')) {
-  for (const workspaceDir of getWorkspaceDirs()) {
-    clean(workspaceDir, true);
+  if (process.argv.includes('--workspaces')) {
+    for (const workspaceDir of getWorkspaceDirs()) {
+      clean(workspaceDir, true);
+    }
   }
-}
 
-const elapsed = `${Math.round(performance.now() - start)}ms`;
-// oxlint-disable-next-line no-console
-console.log(removed === 0 ? `Nothing to clean in ${elapsed}.` : `Cleaned ${removed} path${removed === 1 ? '' : 's'} in ${elapsed}.`);
+  const elapsed = `${Math.round(performance.now() - start)}ms`;
+  // oxlint-disable-next-line no-console
+  console.log(removed === 0 ? `Nothing to clean in ${elapsed}.` : `Cleaned ${removed} path${removed === 1 ? '' : 's'} in ${elapsed}.`);
+}

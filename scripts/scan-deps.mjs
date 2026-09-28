@@ -1,6 +1,6 @@
 /**
  * scan-deps.mjs
- * Version: 1.1.0
+ * Version: 1.1.1
  *
  * Dependency-free scanner that checks declared/referenced dependency hygiene
  * for the `@matter/*` and `@matterbridge/*` imports across the monorepo.
@@ -37,9 +37,6 @@
  * Usage:
  *   node scripts/scan-deps.mjs
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';

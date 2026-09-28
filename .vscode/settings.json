@@ -1,4 +1,4 @@
-// VS Code settings native v.1.0.12
+// VS Code settings native v.1.0.14
 {
   "npm.packageManager": "npm",
   // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
@@ -46,6 +46,7 @@
   "chat.useCustomizationsInParentRepositories": true, // Default false.
   "chat.useAgentsMdFile": true, // Load AGENTS.md at the workspace root as always-on instructions.
   "chat.useNestedAgentsMdFiles": true, // Also load nested AGENTS.md files in subfolders. Experimental.
+  "github.copilot.chat.commitMessageGeneration.instructions": [{ "file": ".github/commit-message-instructions.md" }], // Conventional Commits for the Source Control "Generate Commit Message" button.
   "chat.tools.terminal.autoApprove": {
     // Denied: raw tool invocations must go through the npm scripts (AGENTS.md hard rule).
     "npx tsc": false,
@@ -72,6 +73,19 @@
     "git reflog delete": false,
     // Denied: applies automatic fixes, so it needs an explicit confirmation.
     "npm run lint:fix": false,
+    // Ask: dependency changes need an explicit confirmation.
+    "npm install": false,
+    "npm i": false,
+    "npm uninstall": false,
+    "bun install": false,
+    "bun i": false,
+    "bun uninstall": false,
+    "bun add": false,
+    "bun remove": false,
+    // Ask: mb-run rewrites vendored files and package.json.
+    "mb-run": false,
+    "npx mb-run": false,
+    "bunx mb-run": false,
     // Ask: external network fetches and container runs.
     "curl": false,
     "Invoke-WebRequest": false,
@@ -84,13 +98,17 @@
     "npm run format": true,
     "npm run format:check": true,
     "npm run test": true,
+    "npm run test:watch": true,
+    "npm run test:verbose": true,
     "npm run test:coverage": true,
     "npm run update-htmls": true,
+    "bun test": true,
     // Approved: read-only shell utilities.
     "cat": true,
     "ls": true,
     "head": true,
     "tail": true,
+    "find": true,
     "grep": true,
     "echo": true,
     "cd": true,

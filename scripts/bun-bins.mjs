@@ -1,15 +1,12 @@
 /**
  * bun-bins.mjs
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Rewrites shebangs in bin files from Node to Bun.
  *
  * Usage:
  *   node scripts/bun-bins.mjs [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
