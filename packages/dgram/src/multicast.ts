@@ -3,7 +3,7 @@
  * @description This file contains the class Multicast.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -24,6 +24,7 @@
 /* oxlint-disable unicorn/no-negated-condition */
 
 // Node.js imports
+import type { SocketType } from 'node:dgram';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
@@ -57,7 +58,7 @@ export class Multicast extends Dgram {
    * @param {string} name - The name of the socket.
    * @param {string} multicastAddress - The multicast address to join.
    * @param {number} multicastPort - The port number to bind to.
-   * @param {'udp4' | 'udp6'} socketType - The type of the socket (IPv4 or IPv6).
+   * @param {SocketType} socketType - The type of the socket (IPv4 or IPv6).
    * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
    * @param {string} [interfaceName] - The name of the network interface to bind to. If provided, the interfaceAddress will be determined based on this name if not explicitly provided.
    * @param {string} [interfaceAddress] - The address of the network interface to bind to. If not provided, it will be determined based on the interfaceName.
@@ -67,7 +68,7 @@ export class Multicast extends Dgram {
     name: string,
     multicastAddress: string,
     multicastPort: number,
-    socketType: 'udp4' | 'udp6',
+    socketType: SocketType,
     reuseAddr: boolean | undefined = true,
     interfaceName?: string,
     interfaceAddress?: string,

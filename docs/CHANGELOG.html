@@ -157,6 +157,7 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[bun]: Bun support is now available for production use, either as a <a href="README-BUN.html#run-matterbridge-with-bun">standalone installation</a> on a host with only Bun installed or through the <a href="./README-BUN.html#run-matterbridge-with-the-bun-docker-hub-image"><code>bun</code></a> and <code>bundev</code> Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.</li>
+<li>[dgram]: Add <code>isFirstOnPort()</code> to <code>mdns.ts</code> (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its <code>mdns.port.test.ts</code> test.</li>
 <li>[frontend]: Add and expand unit tests for <code>QRDiv</code> node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.</li>
 <li>[frontend]: Expand <code>SearchPluginsDialog</code> tests for selection and reset on reopen, npm cache validation, metadata and version loading, download retries, request cancellation, link validation, and mobile layout.</li>
 <li>[frontend]: Expand <code>ConfigPluginDialog</code> tests for form submission and cancellation, missing configuration, schema UI properties, custom RJSF templates and widgets, and WebSocket response filtering.</li>
@@ -178,6 +179,8 @@
 <li>[matterbridge]: Bump <code>oxlint-tsgolint</code> to v.7.0.2003.</li>
 <li>[dgram]: Update <code>mdns.ts</code> to v.1.1.0: <code>sendQuery</code> and <code>sendResponse</code> accept optional answers (known answers in queries), authorities and additionals, records accept an optional <code>flush</code> flag, and add the <code>DnsHeaderFlag</code> enum and the <code>MDNS_MAX_MESSAGE_LENGTH</code> and <code>MDNS_MAX_RESOURCE_RECORD_LENGTH</code> constants.</li>
 <li>[dgram]: <code>sendQuery</code> and <code>sendResponse</code> in <code>mdns.ts</code> compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.</li>
+<li>[dgram]: Update <code>dgram.ts</code> to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.</li>
+<li>[dgram]: Use the Node.js <code>SocketType</code> type in <code>dgram.ts</code>, <code>coap.ts</code>, <code>mdns.ts</code>, <code>multicast.ts</code> and <code>unicast.ts</code>.</li>
 <li>[scripts]: Update <code>clean.mjs</code> and <code>deep-clean.mjs</code> to v.1.2.0: log every removed path under its directory with a red dash (the emptied <code>.cache</code> and <code>node_modules</code> contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor <code>NO_COLOR</code> and redirected output.</li>
 <li>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.18.2.</li>
 <li>[utils]: Update <code>runtimeBun.ts</code> to v.1.0.1: <code>sleep()</code> on Node now uses <code>setTimeout</code> from <code>node:timers/promises</code>.</li>

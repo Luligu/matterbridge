@@ -36,6 +36,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
+- [dgram]: Add `isFirstOnPort()` to `mdns.ts` (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its `mdns.port.test.ts` test.
 - [frontend]: Add and expand unit tests for `QRDiv` node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.
 - [frontend]: Expand `SearchPluginsDialog` tests for selection and reset on reopen, npm cache validation, metadata and version loading, download retries, request cancellation, link validation, and mobile layout.
 - [frontend]: Expand `ConfigPluginDialog` tests for form submission and cancellation, missing configuration, schema UI properties, custom RJSF templates and widgets, and WebSocket response filtering.
@@ -57,6 +58,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
 - [dgram]: Update `mdns.ts` to v.1.1.0: `sendQuery` and `sendResponse` accept optional answers (known answers in queries), authorities and additionals, records accept an optional `flush` flag, and add the `DnsHeaderFlag` enum and the `MDNS_MAX_MESSAGE_LENGTH` and `MDNS_MAX_RESOURCE_RECORD_LENGTH` constants.
 - [dgram]: `sendQuery` and `sendResponse` in `mdns.ts` compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.
+- [dgram]: Update `dgram.ts` to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.
+- [dgram]: Use the Node.js `SocketType` type in `dgram.ts`, `coap.ts`, `mdns.ts`, `multicast.ts` and `unicast.ts`.
 - [scripts]: Update `clean.mjs` and `deep-clean.mjs` to v.1.2.0: log every removed path under its directory with a red dash (the emptied `.cache` and `node_modules` contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor `NO_COLOR` and redirected output.
 - [thread]: Bump `@zip.js/zip.js` to v.2.18.2.
 - [utils]: Update `runtimeBun.ts` to v.1.0.1: `sleep()` on Node now uses `setTimeout` from `node:timers/promises`.

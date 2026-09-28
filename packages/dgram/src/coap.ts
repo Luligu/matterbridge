@@ -3,7 +3,7 @@
  * @description This file contains the class Coap.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -25,6 +25,7 @@
 
 // Node.js imports
 import type dgram from 'node:dgram';
+import type { SocketType } from 'node:dgram';
 
 // @matterbridge
 import { getErrorMessage } from '@matterbridge/utils/error';
@@ -171,7 +172,7 @@ export class Coap extends Multicast {
    * @param {string} name - Logger/instance name.
    * @param {string} multicastAddress - Multicast address.
    * @param {number} multicastPort - Multicast port.
-   * @param {'udp4' | 'udp6'} socketType - Socket type.
+   * @param {SocketType} socketType - Socket type.
    * @param {boolean | undefined} [reuseAddr] - Whether to reuse the address. Defaults to true.
    * @param {string} [interfaceName] - Optional network interface name.
    * @param {string} [interfaceAddress] - Optional interface address.
@@ -180,7 +181,7 @@ export class Coap extends Multicast {
     name: string,
     multicastAddress: string,
     multicastPort: number,
-    socketType: 'udp4' | 'udp6',
+    socketType: SocketType,
     reuseAddr: boolean | undefined = true,
     interfaceName?: string,
     interfaceAddress?: string,

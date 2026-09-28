@@ -3,7 +3,7 @@
  * @description This file contains the class Mdns.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.1.0
+ * @version 1.1.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,7 +26,7 @@
 /* oxlint-disable typescript/no-duplicate-enum-values */
 
 // Node.js imports
-import type dgram from 'node:dgram';
+import dgram, { type SocketType } from 'node:dgram';
 
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';
@@ -35,7 +35,7 @@ import { getErrorMessage } from '@matterbridge/utils/error';
 import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
 
 // matterbridge
-import { Multicast } from './multicast.js';
+import { MDNS_MULTICAST_PORT, Multicast } from './multicast.js';
 
 /**
  * Maximum length in bytes of an mDNS message that fits in a single unfragmented packet (RFC 6762 §17).
@@ -349,6 +349,29 @@ export function isMdnsResponse(message: Buffer): boolean {
 }
 
 /**
+ * Returns true when no other socket is bound to the port, by binding it without address reuse (RFC 6762 §15.1).
+ * Unicast packets are delivered only to one of the sockets bound to a port, so only the first one can ask for unicast responses.
+ * Call it before binding your own sockets to the port, or it finds them.
+ *
+ * @param {SocketType} socketType - The socket type to check.
+ * @param {number} [port] - The port to check. Defaults to the mDNS port 5353.
+ * @returns {Promise<boolean>} True if the port is free.
+ */
+export async function isFirstOnPort(socketType: SocketType, port: number = MDNS_MULTICAST_PORT): Promise<boolean> {
+  return new Promise<boolean>((resolve) => {
+    const probe = dgram.createSocket({ type: socketType, reuseAddr: false });
+    probe.once('error', () => {
+      probe.close();
+      resolve(false); // EADDRINUSE: someone is already on the port
+    });
+    probe.bind(port, socketType === 'udp4' ? '0.0.0.0' : '::', () => {
+      probe.close();
+      resolve(true);
+    });
+  });
+}
+
+/**
  * Multicast mDNS helper that tracks device queries/responses and applies filters.
  */
 export class Mdns extends Multicast {
@@ -363,7 +386,7 @@ export class Mdns extends Multicast {
    * @param {string} name - The internal name of the mDNS server for the logs.
    * @param {string} multicastAddress - The multicast address for mDNS (i.e. 224.0.0.251 for udp4 or ff02::fb for udp6).
    * @param {number} multicastPort - The port for mDNS (i.e. 5353).
-   * @param {('udp4' | 'udp6')} socketType - The type of socket to create (either 'udp4' or 'udp6').
+   * @param {SocketType} socketType - The type of socket to create (either 'udp4' or 'udp6').
    * @param {boolean} [reuseAddr] - Whether to reuse the address. Defaults to true.
    * @param {string} [interfaceName] - The optional name of the network interface to use.
    * @param {string} [interfaceAddress] - The optional IP address of the network interface to use.
@@ -373,7 +396,7 @@ export class Mdns extends Multicast {
     name: string,
     multicastAddress: string,
     multicastPort: number,
-    socketType: 'udp4' | 'udp6',
+    socketType: SocketType,
     reuseAddr: boolean | undefined = true,
     interfaceName?: string,
     interfaceAddress?: string,
