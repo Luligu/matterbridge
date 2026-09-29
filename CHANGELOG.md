@@ -72,6 +72,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils]: Update `runtimeBun.ts` to v.1.0.1: `sleep()` on Node now uses `setTimeout` from `node:timers/promises`.
 - [frontend]: Bump `frontend` version to v.3.6.3.
 - [frontend]: Require 100% line and function coverage in `test:coverage`.
+- [devcontainer]: Update `post-create.sh` to v.2.3.0: add the workspace to the git `safe.directory` list to avoid the "detected dubious ownership" error on macOS bind mounts.
 - [frontend]: Bump `@types/node` to v.26.6.2.
 - [frontend]: Bump `jsdom` to v.30.1.1.
 - [frontend]: Update the `MbfWindow` test expectations for jsdom's numeric computed `font-weight` values.
