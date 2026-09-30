@@ -79,6 +79,7 @@ const FILES_TO_RENDER = [
   { source: 'README-WINDOWS.md', target: 'README-WINDOWS.html' },
   { source: 'README-BUN.md', target: 'README-BUN.html' },
   { source: 'Raspi-zero-2w-matterbridge.md', target: 'Raspi-zero-2w-matterbridge.html' },
+  { source: 'Raspi-4b-matterbridge.md', target: 'Raspi-4b-matterbridge.html' },
   { source: 'README.md', target: 'README.html' },
   { source: 'CHANGELOG.md', target: 'CHANGELOG.html' },
   { source: 'CONTRIBUTING.md', target: 'CONTRIBUTING.html' },

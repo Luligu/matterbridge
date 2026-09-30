@@ -383,12 +383,9 @@ server node online and commissionable. Frontend on `http://raspi4.local:8283`.
 
 ## 10. Full upgrade
 
-Non-interactive; `--force-confold` keeps any locally changed config file:
-
 ```bash
-sudo apt-get update
-sudo DEBIAN_FRONTEND=noninteractive apt-get full-upgrade -y \
-  -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold
+sudo apt update
+sudo apt full-upgrade -y
 sudo reboot        # raspi-firmware and the initramfs were updated
 ```
 

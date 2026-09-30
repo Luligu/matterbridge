@@ -119,6 +119,12 @@ A headless Pi Zero 2 W (512 MB RAM) running Matterbridge on Bun, with zram swap,
 
 See [Matterbridge on a Raspberry Pi Zero 2 W](Raspi-zero-2w-matterbridge.md) for the full setup.
 
+## Matterbridge on a Raspberry Pi 4 Model B
+
+A headless Pi 4 Model B (8 GB RAM) running Matterbridge on Bun as the only runtime, with no swap, no Docker, passwordless sudo, a trimmed service list, and the graphics stack disabled.
+
+See [Matterbridge on a Raspberry Pi 4 Model B](Raspi-4b-matterbridge.md) for the full setup.
+
 # Status
 
 The core bridge runs on Bun: it creates its directories, initializes the Matter

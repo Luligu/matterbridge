@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 id="raspberry-pi-4-model-b-matterbridge-on-bun-host-setup">Raspberry Pi 4 Model B — Matterbridge on Bun Host Setup</h1>
+<p>Configuration log for a headless Raspberry Pi 4 Model B intended to run <strong>Matterbridge</strong> only.
+Goal: fully headless, lean, no swap (8 GB of RAM makes it useless), passwordless sudo, Bun as the only runtime, no Docker.</p>
+<ul>
+<li><strong>Board:</strong> Raspberry Pi 4 Model B Rev 1.5 (8 GB physical RAM)</li>
+<li><strong>OS:</strong> Debian GNU/Linux 13 (Trixie), 64-bit</li>
+<li><strong>Kernel:</strong> 6.18.50+rpt-rpi-v8 (aarch64)</li>
+<li><strong>Role:</strong> Headless — no monitor, no camera, no peripherals; accessed over SSH</li>
+<li><strong>Date:</strong> 30 Sep 2026</li>
+</ul>
+<hr>
+<h2 id="summary-of-what-changed">Summary of what changed</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Before</th>
+<th>After</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Swap</td>
+<td>zram 2 GB + <code>/var/swap</code> 2 GB (<code>zram+file</code>)</td>
+<td>none (<code>rpi-swap</code> <code>Mechanism=none</code>)</td>
+</tr>
+<tr>
+<td>sudo</td>
+<td>password required</td>
+<td>passwordless for <code>lligu</code></td>
+</tr>
+<tr>
+<td>GPU firmware split</td>
+<td>76 MB (<code>arm=948M</code>)</td>
+<td>16 MB (<code>arm=998M</code>)</td>
+</tr>
+<tr>
+<td>CMA reservation</td>
+<td>512 MB</td>
+<td>64 MB</td>
+</tr>
+<tr>
+<td>KMS graphics driver</td>
+<td>enabled</td>
+<td>disabled (headless)</td>
+</tr>
+<tr>
+<td>Boot target</td>
+<td>graphical.target</td>
+<td>multi-user.target (console)</td>
+</tr>
+<tr>
+<td>Running services</td>
+<td>desktop stack (lightdm, audio, NFS, CUPS…)</td>
+<td>13 essential units</td>
+</tr>
+<tr>
+<td>RAM used at idle</td>
+<td>~539 Mi</td>
+<td>~188 Mi (~351 Mi with Matterbridge running)</td>
+</tr>
+<tr>
+<td>Journal</td>
+<td>volatile (RAM), forwarded to syslog</td>
+<td>persistent on disk, 3 days, 100 MB cap</td>
+</tr>
+<tr>
+<td>Runtime</td>
+<td>none</td>
+<td>Bun 1.4.2 only (no Node.js, no Docker)</td>
+</tr>
+<tr>
+<td>Matterbridge</td>
+<td>—</td>
+<td>3.10.11, systemd user service with lingering</td>
+</tr>
+<tr>
+<td>Disk used (<code>/</code>)</td>
+<td>6.7 GB</td>
+<td>5.0 GB</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="1-starting-point">1. Starting point</h2>
+<pre><code class="language-bash">cat /proc/device-tree/model
+free -h
+cat /proc/swaps
+ls -l /var/swap
+dpkg -l | grep -iE &#39;zram|dphys&#39;
+systemctl get-default
+grep -vE &#39;^\s*(#|$)&#39; /boot/firmware/config.txt
+grep -i cma /proc/meminfo
+vcgencmd get_mem arm &amp;&amp; vcgencmd get_mem gpu
+systemctl list-units --type=service --state=running --no-legend | wc -l
+</code></pre>
+<p>Result:</p>
+<ul>
+<li><code>MemTotal</code> 7.6 Gi, ~539 Mi used at idle</li>
+<li>zram swap <code>/dev/zram0</code> (2 GB, PRIO 100) from <code>systemd-zram-generator</code>, plus a 2 GB <code>/var/swap</code> file on the SD card</li>
+<li>boot target <code>graphical.target</code> (the SD card was flashed with the <strong>Desktop</strong> image)</li>
+<li><code>dtoverlay=vc4-kms-v3d</code> with <code>CmaTotal</code> 512 MB, firmware split <code>arm=948M</code> / <code>gpu=76M</code></li>
+<li>20 running services</li>
+</ul>
+<hr>
+<h2 id="2-passwordless-sudo">2. Passwordless sudo</h2>
+<p>A sudoers drop-in, validated by <code>visudo</code> (needs the password this one last time):</p>
+<pre><code class="language-bash">echo &quot;lligu ALL=(ALL) NOPASSWD: ALL&quot; | sudo tee /etc/sudoers.d/010_lligu-nopasswd &gt;/dev/null
+sudo chmod 0440 /etc/sudoers.d/010_lligu-nopasswd
+sudo visudo -c        # -&gt; /etc/sudoers.d/010_lligu-nopasswd: parsed OK
+</code></pre>
+<p>Verify:</p>
+<pre><code class="language-bash">sudo -n true &amp;&amp; echo OK
+</code></pre>
+<hr>
+<h2 id="3-no-swap">3. No swap</h2>
+<p>With 8 GB of RAM, swap is useless here. On Trixie the swap is managed by <code>rpi-swap</code>
+(<code>/etc/rpi/swap.conf</code>): the default <code>Mechanism=auto</code> means <code>zram+file</code>, a zram device
+with <code>/var/swap</code> as the writeback file. <code>Mechanism=none</code> (see <code>man swap.conf</code>) turns it
+off and removes the swap file at the next boot:</p>
+<pre><code class="language-bash">sudo install -d -m 0755 /etc/rpi/swap.conf.d
+printf &#39;[Main]\nMechanism=none\n&#39; | sudo tee /etc/rpi/swap.conf.d/99-noswap.conf
+sudo reboot
+</code></pre>
+<h3 id="verification">Verification</h3>
+<pre><code class="language-bash">free -h
+cat /proc/swaps
+ls -l /var/swap
+</code></pre>
+<p>Result after reboot: <code>Swap: 0B</code>, <code>/proc/swaps</code> empty, <code>/var/swap</code> removed (2 GB of SD card freed).</p>
+<hr>
+<h2 id="4-disable-the-graphics-stack-headless">4. Disable the graphics stack (headless)</h2>
+<p>On Trixie the stock <code>dtoverlay=vc4-kms-v3d</code> loads the KMS graphics driver, which on the
+Pi 4 reserves <strong>512 MB of CMA</strong>. The firmware also reserved <strong>76 MB</strong> for the GPU
+(<code>arm=948M</code>). None of this is needed on a headless Matterbridge node.</p>
+<h3 id="edit-bootfirmwareconfigtxt">Edit <code>/boot/firmware/config.txt</code></h3>
+<p>Backup first:</p>
+<pre><code class="language-bash">sudo cp /boot/firmware/config.txt /boot/firmware/config.txt.bak
+sudo nano /boot/firmware/config.txt
+</code></pre>
+<p>Changes made (top, non-conditional section only):</p>
+<pre><code>camera_auto_detect=0      # was 1 (no camera attached)
+display_auto_detect=0     # was 1 (no display attached)
+
+# Minimum GPU split (headless, KMS off)
+gpu_mem=16                # new line — loads the cut-down firmware start4cd.elf
+
+# was: dtoverlay=vc4-kms-v3d
+#dtoverlay=vc4-kms-v3d
+# was: max_framebuffers=2
+#max_framebuffers=2
+</code></pre>
+<p><strong>Left untouched:</strong> <code>dtparam=audio=on</code>, <code>auto_initramfs=1</code>, <code>disable_fw_kms_setup=1</code>,
+<code>arm_64bit=1</code>, <code>disable_overscan=1</code>, <code>arm_boost=1</code>, and all conditional blocks (<code>[cm4]</code>,
+<code>[cm5]</code>, <code>[pi5]</code>, <code>[all]</code>), which do not apply to the Pi 4 B.</p>
+<p>The reboot is done together with the next step.</p>
+<h3 id="verification-1">Verification</h3>
+<pre><code class="language-bash">free -h
+vcgencmd get_mem arm &amp;&amp; vcgencmd get_mem gpu
+grep -i cma /proc/meminfo
+</code></pre>
+<p>Results after reboot:</p>
+<ul>
+<li><code>arm=998M</code> (was 948M), <code>gpu=16M</code> (was 76M)</li>
+<li><code>CmaTotal</code> = <strong>65536 kB (64 MB)</strong> (was 512 MB)</li>
+<li><code>MemTotal</code> 7.7 Gi (was 7.6 Gi)</li>
+</ul>
+<hr>
+<h2 id="5-trim-running-services-desktop-image-headless">5. Trim running services (Desktop image → headless)</h2>
+<p>This SD card was flashed with the <strong>Desktop</strong> image: <code>lightdm</code> started a desktop session
+(with <code>gvfs-*</code>, <code>xdg-desktop-portal*</code>, <code>accounts-daemon</code>, <code>udisks2</code>) plus an audio stack,
+NFS/RPC and CUPS printing — none of it needed for a headless Matterbridge node.</p>
+<pre><code class="language-bash">systemctl list-units --type=service --state=running
+systemctl --user list-units --type=service --state=running
+systemctl list-units --type=socket --state=active
+systemctl get-default        # was: graphical.target
+</code></pre>
+<h3 id="stop-the-desktop-from-launching-at-boot">Stop the desktop from launching at boot</h3>
+<p>Switches the default boot target to console-only, so <code>lightdm</code> and the whole desktop
+session never start:</p>
+<pre><code class="language-bash">sudo systemctl set-default multi-user.target
+</code></pre>
+<p>Reversible anytime with <code>sudo systemctl set-default graphical.target</code>.</p>
+<h3 id="remove-nfs-rpc-not-used">Remove NFS / RPC (not used)</h3>
+<pre><code class="language-bash">sudo systemctl disable --now nfs-blkmap.service rpcbind.service rpcbind.socket
+sudo systemctl stop rpcbind.socket      # socket lingers in the current session
+</code></pre>
+<h3 id="remove-cups-printing-not-used">Remove CUPS printing (not used)</h3>
+<pre><code class="language-bash">sudo systemctl disable --now cups.socket cups.path cups.service cups-browsed.service
+</code></pre>
+<p>Verify:</p>
+<pre><code class="language-bash">systemctl is-active  rpcbind.service rpcbind.socket nfs-blkmap.service cups.socket cups.service cups-browsed.service   # -&gt; inactive
+systemctl is-enabled rpcbind.service rpcbind.socket nfs-blkmap.service cups.socket cups.service cups-browsed.service   # -&gt; disabled
+</code></pre>
+<h3 id="mask-the-audio-stack-user-services">Mask the audio stack (user services)</h3>
+<p>Four PipeWire units plus sockets so nothing socket-activates them back:</p>
+<pre><code class="language-bash">systemctl --user mask pipewire.service pipewire-pulse.service wireplumber.service \
+  filter-chain.service pipewire.socket pipewire-pulse.socket
+</code></pre>
+<h3 id="bluetooth-kept">Bluetooth — KEPT</h3>
+<p><code>bluetooth.service</code> was <strong>left running</strong>, as on the Zero 2 W: some device plugins may use
+BLE. To disable later if no plugin needs it: <code>sudo systemctl disable --now bluetooth.service</code>.</p>
+<h3 id="services-that-must-stay-do-not-touch">Services that MUST stay (do not touch)</h3>
+<p><code>avahi-daemon</code> (critical — Matter/mDNS lifeline), <code>dbus</code>, <code>NetworkManager</code>,
+<code>wpa_supplicant</code>, <code>ssh</code>, <code>cron</code>, <code>getty@tty1</code> (console login), the <code>systemd-*</code> core
+(<code>journald</code>, <code>logind</code>, <code>timesyncd</code>, <code>udevd</code>), and <code>user@1000</code>.</p>
+<h3 id="result-after-reboot">Result after reboot</h3>
+<pre><code class="language-bash">sudo reboot
+free -h
+systemctl list-units --type=service --state=running
+systemctl --failed
+</code></pre>
+<ul>
+<li><code>used</code> fell from ~539 Mi to <strong>188 Mi</strong></li>
+<li>running services dropped from 20 to <strong>13 essential units</strong>, no failed units</li>
+<li>user services: only <code>dbus</code> and <code>mpris-proxy</code> (Bluetooth media control) left</li>
+<li>SSH and avahi unaffected</li>
+</ul>
+<pre><code class="language-text">               total        used        free      shared  buff/cache   available
+Mem:           7.7Gi       188Mi       7.4Gi       8.8Mi       165Mi       7.5Gi
+Swap:             0B          0B          0B
+</code></pre>
+<hr>
+<h2 id="6-keep-the-journal-on-disk-with-limits">6. Keep the journal on disk, with limits</h2>
+<p>Raspberry Pi OS ships <code>/usr/lib/systemd/journald.conf.d/40-rpi-volatile-storage.conf</code>
+(<code>Storage=volatile</code>, journal in RAM only). A drop-in in <code>/etc</code> switches it to disk, with
+compression, 3 days of retention and size caps:</p>
+<pre><code class="language-bash"># 1. create BOTH directories
+sudo install -d -m 0755 /etc/systemd/journald.conf.d          # the drop-in dir
+sudo install -d -g systemd-journal -m 2755 /var/log/journal   # the persistent journal dir
+
+# 2. write the drop-in
+sudo tee /etc/systemd/journald.conf.d/99-matterbridge.conf &gt;/dev/null &lt;&lt;&#39;EOT&#39;
+[Journal]
+# Store logs persistently in /var/log/journal so they survive reboots.
+Storage=persistent
+# Compress logs to save space.
+Compress=yes
+# Keep logs for a maximum of 3 days.
+MaxRetentionSec=3days
+# Rotate logs daily within the 3-day retention period.
+MaxFileSec=1day
+# Disable forwarding to syslog to prevent duplicate logging.
+ForwardToSyslog=no
+# Limit persistent logs on disk in /var/log/journal to 100 MB.
+SystemMaxUse=100M
+# Limit runtime logs in RAM in /run/log/journal to 10 MB.
+RuntimeMaxUse=10M
+EOT
+</code></pre>
+<p>Drop-ins are applied in filename order across <code>/usr/lib</code> and <code>/etc</code>, so the packaged
+<code>/usr/lib/systemd/journald.conf.d/syslog.conf</code> (<code>ForwardToSyslog=yes</code>) sorts after
+<code>99-matterbridge.conf</code> and wins. No syslog daemon is installed, so it is overridden by a
+file with the same name in <code>/etc</code>:</p>
+<pre><code class="language-bash"># 3. override the packaged syslog.conf
+printf &#39;[Journal]\n# Overrides /usr/lib/systemd/journald.conf.d/syslog.conf: no syslog daemon is installed.\nForwardToSyslog=no\n&#39; \
+  | sudo tee /etc/systemd/journald.conf.d/syslog.conf &gt;/dev/null
+
+# 4. apply + verify
+sudo systemctl restart systemd-journald &amp;&amp; sudo journalctl --flush
+sudo systemd-analyze cat-config systemd/journald.conf | grep -E &#39;^# /|^(Storage|ForwardToSyslog)=&#39;
+journalctl --disk-usage
+</code></pre>
+<p>Result: <code>Storage=persistent</code> and <code>ForwardToSyslog=no</code> are the last values applied; the
+journal is in <code>/var/log/journal</code>.</p>
+<hr>
+<h2 id="7-bun-as-the-only-runtime">7. Bun as the only runtime</h2>
+<p>Checked first that there is no other runtime or container engine:</p>
+<pre><code class="language-bash">for c in node nodejs npm bun docker podman containerd; do printf &#39;%-11s &#39; $c; command -v $c || echo &#39;-&#39;; done
+</code></pre>
+<p>Result: none installed (<code>curl</code> and <code>unzip</code>, needed by the installer, are present).</p>
+<p>Install Bun with the official installer (to <code>~/.bun</code>, no sudo):</p>
+<pre><code class="language-bash">curl -fsSL https://bun.sh/install | bash
+source ~/.bashrc
+bun --version        # -&gt; 1.4.2
+</code></pre>
+<p>The installer adds <code>BUN_INSTALL</code> and <code>~/.bun/bin</code> to <code>PATH</code> at the end of <code>~/.bashrc</code>, so
+they are set in interactive shells only (Debian&#39;s <code>.bashrc</code> returns early for
+non-interactive ones, e.g. <code>ssh raspi4 &#39;bun …&#39;</code>). <code>~/.bun</code> takes 76 MB.</p>
+<hr>
+<h2 id="8-install-matterbridge">8. Install Matterbridge</h2>
+<p>Fresh host, so there is no previous service to stop or global package to remove.</p>
+<pre><code class="language-bash">cd ~
+# ✅ Creates all needed dirs
+mkdir -p ~/Matterbridge ~/.matterbridge ~/.mattercert
+# ✅ Ensures ownership
+chown -R $USER:$USER ~/Matterbridge ~/.matterbridge ~/.mattercert
+# ✅ Secure permissions
+chmod -R 755 ~/Matterbridge ~/.matterbridge ~/.mattercert
+# ✅ Install matterbridge and mb-service in the Bun global node_modules (~/.bun/install/global), no sudo
+bun add matterbridge mb-service-linux --global --omit=dev
+# ✅ Clear bash command cache as a precaution
+hash -r
+# ✅ Check which matterbridge -&gt; ~/.bun/bin/matterbridge
+which matterbridge
+# ✅ Check which mb-service -&gt; ~/.bun/bin/mb-service
+which mb-service
+# ✅ Will output the matterbridge version
+bunx --bun matterbridge --version
+</code></pre>
+<p>Result: <code>matterbridge@3.10.11</code> and <code>mb-service-linux@2.0.4</code> installed (143 packages).</p>
+<hr>
+<h2 id="9-matterbridge-service-systemd-user-unit">9. Matterbridge service (systemd user unit)</h2>
+<p>Run without sudo, <code>mb-service create</code> writes a <strong>user</strong> unit in
+<code>~/.config/systemd/user/matterbridge.service</code>. The <code>mb-service</code> bin has a <code>node</code> shebang
+and there is no Node.js here, so it is always run through <code>bunx --bun</code>:</p>
+<pre><code class="language-bash"># ✅ Will create the service file
+bunx --bun mb-service create
+</code></pre>
+<p>The unit uses absolute paths, so it does not depend on <code>~/.bashrc</code>:</p>
+<pre><code class="language-ini">Environment=&quot;PATH=%h/.bun/bin:/usr/local/bin:/usr/bin:/bin&quot;
+ExecStart=%h/.bun/bin/bun --bun %h/.bun/bin/matterbridge --service
+WorkingDirectory=/home/lligu/Matterbridge
+</code></pre>
+<p>A user service runs only while the user manager is up. Lingering starts it at boot,
+without any login — required on a headless host:</p>
+<pre><code class="language-bash">sudo loginctl enable-linger lligu
+loginctl show-user lligu -p Linger        # -&gt; Linger=yes
+</code></pre>
+<p>Enable and start:</p>
+<pre><code class="language-bash">bunx --bun mb-service enable
+bunx --bun mb-service start
+bunx --bun mb-service status
+journalctl --user -u matterbridge -n 1000 -f --output cat
+</code></pre>
+<p>Result: <code>active (running)</code>, main process <code>bun --bun ~/.bun/bin/matterbridge --service</code>,
+server node online and commissionable. Frontend on <code>http://raspi4.local:8283</code>.</p>
+<hr>
+<h2 id="10-full-upgrade">10. Full upgrade</h2>
+<pre><code class="language-bash">sudo apt update
+sudo apt full-upgrade -y
+sudo reboot        # raspi-firmware and the initramfs were updated
+</code></pre>
+<p>Result (30 Sep 2026): 86 packages upgraded, including <code>raspi-firmware</code> and <code>rpi-eeprom</code>.
+After the reboot the setup is intact: no swap, <code>multi-user.target</code>, <code>gpu=16M</code>, 13 running
+services, no failed units, Matterbridge <code>active</code>.</p>
+<h3 id="bootloader-eeprom">Bootloader EEPROM</h3>
+<p>The upgrade brings a new <code>rpi-eeprom</code>, which does not flash the bootloader by itself:</p>
+<pre><code class="language-bash">sudo rpi-eeprom-update        # status
+sudo rpi-eeprom-config        # current bootloader config
+</code></pre>
+<p>Result (30 Sep 2026):</p>
+<pre><code class="language-text">BOOTLOADER: update available
+   CURRENT: Sun 17 May 19:13:18 UTC 2026 (1779045198)
+    LATEST: Wed 23 Sep 12:02:14 UTC 2026 (1790164934)
+   RELEASE: default (/usr/lib/firmware/raspberrypi/bootloader-2711/default)
+  VL805_FW: Using bootloader EEPROM
+     VL805: up to date
+</code></pre>
+<p>Bootloader config is the stock one: <code>BOOT_UART=0</code>, <code>WAKE_ON_GPIO=1</code>, <code>POWER_OFF_ON_HALT=0</code>.</p>
+<p>To install the update (it is staged and flashed at the next boot):</p>
+<pre><code class="language-bash">sudo rpi-eeprom-update -a
+sudo reboot
+sudo rpi-eeprom-update        # -&gt; BOOTLOADER: up to date
+</code></pre>
+<p>Result after reboot: <code>BOOTLOADER: up to date</code>, <code>CURRENT: Wed 23 Sep 12:02:14 UTC 2026</code>;
+the staging files (<code>pieeprom.upd</code>, <code>recovery.bin</code>) were removed from <code>/boot/firmware</code> and
+Matterbridge came back <code>active</code>.</p>
+<hr>
+<h2 id="final-state">Final state</h2>
+<p>After a reboot, Matterbridge starts on its own:</p>
+<pre><code class="language-bash">free -h
+systemctl list-units --type=service --state=running
+systemctl --user list-units --type=service --state=running
+ps -o rss=,cmd= -C bun
+</code></pre>
+<ul>
+<li><strong>7.7 Gi total RAM</strong>, ~351 Mi used with Matterbridge running, no swap</li>
+<li>Bun (Matterbridge) uses ~205 MB RSS</li>
+<li><strong>13 running system services</strong>, user services <code>dbus</code>, <code>matterbridge</code>, <code>mpris-proxy</code>; no failed units</li>
+</ul>
+<pre><code class="language-text">               total        used        free      shared  buff/cache   available
+Mem:           7.7Gi       351Mi       7.2Gi       828Ki       240Mi       7.3Gi
+Swap:             0B          0B          0B
+</code></pre>
+<hr>
+<h2 id="recovery-notes">Recovery notes</h2>
+<ul>
+<li><code>config.txt</code> backup: <code>/boot/firmware/config.txt.bak</code></li>
+<li>Swap back to the default: <code>sudo rm /etc/rpi/swap.conf.d/99-noswap.conf &amp;&amp; sudo reboot</code></li>
+<li>Desktop back: <code>sudo systemctl set-default graphical.target</code> and uncomment <code>dtoverlay=vc4-kms-v3d</code></li>
+<li>The box is reached only over SSH, which does not depend on the display driver — so
+disabling KMS cannot lock you out.</li>
+<li>Console autologin on tty1 (<code>/etc/systemd/system/getty@tty1.service.d/autologin.conf</code>, set by
+the Desktop image) is <strong>kept on purpose</strong> for emergency access with a keyboard and screen.
+With passwordless sudo that is a root shell, so the board must stay physically secure.</li>
+<li>If the SD card is unbootable, edit <code>config.txt</code> directly on the boot partition from
+another machine.</li>
+</ul>
+<hr>
+<h2 id="next-steps-post-setup-housekeeping">Next steps (post-setup housekeeping)</h2>
+<p>Run once Matterbridge has been running for a while:</p>
+<pre><code class="language-bash">df -h /
+sudo apt autoremove --purge
+sudo apt clean
+sudo journalctl --vacuum-size=50M
+</code></pre>
+<p>Checked right after the setup (30 Sep 2026): nothing to do yet — <code>apt-get -s autoremove --purge</code>
+lists 0 packages, <code>/var/cache/apt/archives</code> is empty and the journal is ~16 MB.</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>
