@@ -6,7 +6,7 @@
 
 const NAME = 'MatterbridgeDevicetypesXmlRevision';
 
-// Cross-check device type revisions between official Matter 1.6.0 XML and Matterbridge definitions
+// Cross-check device type revisions between official Matter 1.6.1 XML and Matterbridge definitions
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -123,14 +123,7 @@ import type { DeviceTypeDefinition } from '../src/matterbridgeDeviceTypes.js';
 
 await setupTest(NAME, false);
 
-const XML_DEVICE_TYPES_DIR = path.join('chip', '1.6.0', 'xml', 'device_types');
-
-// Device type codes where the chip XML has an incorrect revision.
-// The override value is the correct revision per the Matter spec.
-const XML_REVISION_OVERRIDES = new Map<number, number>([
-  [0x0141, 2], // audioDoorbell: XML says 1, spec says 2
-  [0x0148, 2], // doorbell: XML says 1, spec says 2
-]);
+const XML_DEVICE_TYPES_DIR = path.join('chip', '1.6.1', 'xml', 'device_types');
 
 // Device type codes where the chip XML has an incorrect name.
 // The override value is the Matterbridge canonical name.
@@ -203,13 +196,13 @@ async function buildXmlIndex(): Promise<Map<number, XmlDeviceTypeInfo>> {
 
 // oxlint-disable-next-line unicorn/no-negated-condition
 if (!hasXmlDir) {
-  describe('Matter 1.6.0 XML vs Matterbridge device type revisions dummy', () => {
+  describe('Matter 1.6.1 XML vs Matterbridge device type revisions dummy', () => {
     test(`Skipped: missing ${XML_DEVICE_TYPES_DIR}`, () => {
       expect(true).toBe(true);
     });
   });
 } else {
-  describe('Matter 1.6.0 XML vs Matterbridge device type revisions', () => {
+  describe('Matter 1.6.1 XML vs Matterbridge device type revisions', () => {
     let xmlIndex: Map<number, XmlDeviceTypeInfo>;
     beforeAll(async () => {
       xmlIndex = await buildXmlIndex();
@@ -330,7 +323,7 @@ if (!hasXmlDir) {
       ['doorbell', doorbell],
     ];
 
-    test.each(cases)('Device type %s matches Matter 1.6.0 XML (id, revision, name, deviceClass, deviceScope)', (display, mb) => {
+    test.each(cases)('Device type %s matches Matter 1.6.1 XML (id, revision, name, deviceClass, deviceScope)', (display, mb) => {
       const xmlInfo = xmlIndex.get(mb.code);
       if (!xmlInfo) {
         // oxlint-disable-next-line no-console
@@ -338,7 +331,7 @@ if (!hasXmlDir) {
         return;
       }
       expect(mb.code).toBe(xmlInfo.id);
-      expect(mb.revision).toBe(XML_REVISION_OVERRIDES.get(mb.code) ?? xmlInfo.revision);
+      expect(mb.revision).toBe(xmlInfo.revision);
       expect(mb.name).toBe(XML_DEVICE_NAME_OVERRIDES.get(mb.code) ?? xmlInfo.name.replace(/[\s/-]/g, ''));
       expect(mb.deviceClass).toBe(DEVICE_CLASS_OVERRIDES.get(mb.code) ?? XML_CLASS_TO_DEVICE_CLASS[xmlInfo.class ?? '']);
       expect(mb.deviceScope).toBe(XML_SCOPE_TO_DEVICE_SCOPE[xmlInfo.scope ?? '']);

@@ -124,7 +124,7 @@ describe('Matterbridge ' + NAME, () => {
       [
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 4 } ]',
         'descriptor(0x1d).serverList(0x1)=[ 3, 4, 6, 29, 98 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',

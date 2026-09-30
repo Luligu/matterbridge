@@ -170,37 +170,80 @@
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
-<li>[vscode]: Update <code>.vscode/settings.json</code> to v.1.0.14: point the Copilot &quot;Generate Commit Message&quot; button to <code>.github/commit-message-instructions.html</code>, ask before running <code>mb-run</code> and before dependency installs and removals, and approve <code>find</code>, <code>bun test</code>, <code>npm run test:watch</code> and <code>npm run test:verbose</code>.</li>
-<li>[antigravity]: Update <code>.antigravity/settings.json</code> to v.1.0.5: ask before running <code>mb-run</code>, allow <code>find</code> and the read-only git commands, and remove the obsolete sandboxing comments.</li>
-<li>[scripts]: Update <code>scripts/clean.mjs</code> and <code>scripts/deep-clean.mjs</code> to v.1.3.0: add <code>--help</code> and <code>--version</code> and reject unknown arguments.</li>
-<li>[scripts]: Remove the obsolete <code>eslint-disable</code> comments from the vendored scripts, the workspace <code>downloads.mjs</code> scripts and the repository scripts.</li>
-<li>[data-model]: Emit <code>oxlint-disable typescript/no-empty-object-type</code> instead of the obsolete <code>eslint-disable</code> in the generated <code>matterClusterTypes.ts</code>.</li>
-<li>[styleguide]: Update <a href="STYLEGUIDE.html"><code>STYLEGUIDE.html</code></a> to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.</li>
-<li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.12.</li>
-<li>[matterbridge]: Bump <code>@types/node</code> to v.26.6.2.</li>
-<li>[matterbridge]: Bump <code>vitest</code> to v.5.0.2.</li>
-<li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.5.0.2.</li>
-<li>[matterbridge]: Bump <code>marked</code> to v.18.0.14.</li>
-<li>[matterbridge]: Bump <code>oxfmt</code> to v.0.70.0.</li>
-<li>[matterbridge]: Bump <code>oxlint</code> to v.1.85.0.</li>
-<li>[matterbridge]: Bump <code>oxlint-tsgolint</code> to v.7.0.2003.</li>
-<li>[dgram]: Update <code>mdns.ts</code> to v.1.1.0: <code>sendQuery</code> and <code>sendResponse</code> accept optional answers (known answers in queries), authorities and additionals, records accept an optional <code>flush</code> flag, and add the <code>DnsHeaderFlag</code> enum and the <code>MDNS_MAX_MESSAGE_LENGTH</code> and <code>MDNS_MAX_RESOURCE_RECORD_LENGTH</code> constants.</li>
-<li>[dgram]: <code>sendQuery</code> and <code>sendResponse</code> in <code>mdns.ts</code> compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.</li>
-<li>[dgram]: Update <code>dgram.ts</code> to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.</li>
-<li>[dgram]: Use the Node.js <code>SocketType</code> type in <code>dgram.ts</code>, <code>coap.ts</code>, <code>mdns.ts</code>, <code>multicast.ts</code> and <code>unicast.ts</code>.</li>
-<li>[scripts]: Update <code>clean.mjs</code> and <code>deep-clean.mjs</code> to v.1.2.0: log every removed path under its directory with a red dash (the emptied <code>.cache</code> and <code>node_modules</code> contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor <code>NO_COLOR</code> and redirected output.</li>
-<li>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.18.2.</li>
-<li>[utils]: Update <code>runtimeBun.ts</code> to v.1.0.1: <code>sleep()</code> on Node now uses <code>setTimeout</code> from <code>node:timers/promises</code>.</li>
-<li>[frontend]: Bump <code>frontend</code> version to v.3.6.3.</li>
-<li>[frontend]: Require 100% line and function coverage in <code>test:coverage</code>.</li>
-<li>[frontend]: Bump <code>@types/node</code> to v.26.6.2.</li>
-<li>[frontend]: Bump <code>jsdom</code> to v.30.1.1.</li>
-<li>[frontend]: Update the <code>MbfWindow</code> test expectations for jsdom&#39;s numeric computed <code>font-weight</code> values.</li>
-<li>[frontend]: Bump <code>vite</code> to v.8.3.1.</li>
-<li>[frontend]: Bump <code>vitest</code> to v.5.0.2.</li>
-<li>[frontend]: Bump <code>oxfmt</code> to v.0.70.0.</li>
-<li>[frontend]: Bump <code>oxlint</code> to v.1.85.0.</li>
-<li>[frontend]: Bump <code>oxlint-tsgolint</code> to v.7.0.2003.</li>
+<li><p>[tests]: Verify Level Control ignores Step while off unless ExecuteIfOff is true, without changing OnOff state.</p>
+</li>
+<li><p>[tests]: Correct Door Lock scheduling features and existing-user credential requests, and verify command response statuses.</p>
+</li>
+<li><p>[tests]: Migrate electrical utility meter fixtures and responses to the matter.js 0.18 commodity field names.</p>
+</li>
+<li><p>[devices]: Align device type revisions and XML comparison tests with Matter 1.6.1.</p>
+</li>
+<li><p>[matter.js]: Adapt commodity field names and optional thermostat schedules to the 0.18 dev API.</p>
+</li>
+<li><p>[vscode]: Update <code>.vscode/settings.json</code> to v.1.0.14: point the Copilot &quot;Generate Commit Message&quot; button to <code>.github/commit-message-instructions.html</code>, ask before running <code>mb-run</code> and before dependency installs and removals, and approve <code>find</code>, <code>bun test</code>, <code>npm run test:watch</code> and <code>npm run test:verbose</code>.</p>
+</li>
+<li><p>[antigravity]: Update <code>.antigravity/settings.json</code> to v.1.0.5: ask before running <code>mb-run</code>, allow <code>find</code> and the read-only git commands, and remove the obsolete sandboxing comments.</p>
+</li>
+<li><p>[scripts]: Update <code>scripts/clean.mjs</code> and <code>scripts/deep-clean.mjs</code> to v.1.3.0: add <code>--help</code> and <code>--version</code> and reject unknown arguments.</p>
+</li>
+<li><p>[scripts]: Remove the obsolete <code>eslint-disable</code> comments from the vendored scripts, the workspace <code>downloads.mjs</code> scripts and the repository scripts.</p>
+</li>
+<li><p>[data-model]: Emit <code>oxlint-disable typescript/no-empty-object-type</code> instead of the obsolete <code>eslint-disable</code> in the generated <code>matterClusterTypes.ts</code>.</p>
+</li>
+<li><p>[styleguide]: Update <a href="STYLEGUIDE.html"><code>STYLEGUIDE.html</code></a> to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.12.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>@types/node</code> to v.26.6.2.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>vitest</code> to v.5.0.2.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.5.0.2.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>marked</code> to v.18.0.14.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>oxfmt</code> to v.0.70.0.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>oxlint</code> to v.1.85.0.</p>
+</li>
+<li><p>[matterbridge]: Bump <code>oxlint-tsgolint</code> to v.7.0.2003.</p>
+</li>
+<li><p>[dgram]: Update <code>mdns.ts</code> to v.1.1.0: <code>sendQuery</code> and <code>sendResponse</code> accept optional answers (known answers in queries), authorities and additionals, records accept an optional <code>flush</code> flag, and add the <code>DnsHeaderFlag</code> enum and the <code>MDNS_MAX_MESSAGE_LENGTH</code> and <code>MDNS_MAX_RESOURCE_RECORD_LENGTH</code> constants.</p>
+</li>
+<li><p>[dgram]: <code>sendQuery</code> and <code>sendResponse</code> in <code>mdns.ts</code> compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.</p>
+</li>
+<li><p>[dgram]: Update <code>dgram.ts</code> to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.</p>
+</li>
+<li><p>[dgram]: Use the Node.js <code>SocketType</code> type in <code>dgram.ts</code>, <code>coap.ts</code>, <code>mdns.ts</code>, <code>multicast.ts</code> and <code>unicast.ts</code>.</p>
+</li>
+<li><p>[scripts]: Update <code>clean.mjs</code> and <code>deep-clean.mjs</code> to v.1.2.0: log every removed path under its directory with a red dash (the emptied <code>.cache</code> and <code>node_modules</code> contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor <code>NO_COLOR</code> and redirected output.</p>
+</li>
+<li><p>[thread]: Bump <code>@zip.js/zip.js</code> to v.2.18.2.</p>
+</li>
+<li><p>[utils]: Update <code>runtimeBun.ts</code> to v.1.0.1: <code>sleep()</code> on Node now uses <code>setTimeout</code> from <code>node:timers/promises</code>.</p>
+</li>
+<li><p>[frontend]: Bump <code>frontend</code> version to v.3.6.3.</p>
+</li>
+<li><p>[frontend]: Require 100% line and function coverage in <code>test:coverage</code>.</p>
+</li>
+<li><p>[devcontainer]: Update <code>post-create.sh</code> to v.2.3.0: add the workspace to the git <code>safe.directory</code> list to avoid the &quot;detected dubious ownership&quot; error on macOS bind mounts.</p>
+</li>
+<li><p>[frontend]: Bump <code>@types/node</code> to v.26.6.2.</p>
+</li>
+<li><p>[frontend]: Bump <code>jsdom</code> to v.30.1.1.</p>
+</li>
+<li><p>[frontend]: Update the <code>MbfWindow</code> test expectations for jsdom&#39;s numeric computed <code>font-weight</code> values.</p>
+</li>
+<li><p>[frontend]: Bump <code>vite</code> to v.8.3.1.</p>
+</li>
+<li><p>[frontend]: Bump <code>vitest</code> to v.5.0.2.</p>
+</li>
+<li><p>[frontend]: Bump <code>oxfmt</code> to v.0.70.0.</p>
+</li>
+<li><p>[frontend]: Bump <code>oxlint</code> to v.1.85.0.</p>
+</li>
+<li><p>[frontend]: Bump <code>oxlint-tsgolint</code> to v.7.0.2003.</p>
+</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>

@@ -1074,7 +1074,7 @@ async function handleMeterIdentificationTestEventTrigger(eventTrigger: bigint): 
 // trigger restores the original null values.
 const commodityMeteringFakeValues = {
   maximumMeteredQuantities: 8,
-  meteredQuantity: [{ tariffComponentIDs: [1], quantity: 1_234 }],
+  meteredQuantity: [{ tariffComponentIds: [1], quantity: 1_234 }],
   meteredQuantityTimestamp: Math.floor(Date.now() / 1000),
   tariffUnit: TariffUnit.KWh,
 };
@@ -1180,8 +1180,8 @@ const commodityTariffTariffComponents = [
   },
 ];
 const commodityTariffTariffPeriods = [
-  { label: 'Morning', dayEntryIDs: [1], tariffComponentIDs: [100] },
-  { label: 'Afternoon', dayEntryIDs: [2], tariffComponentIDs: [101] },
+  { label: 'Morning', dayEntryIds: [1], tariffComponentIds: [100] },
+  { label: 'Afternoon', dayEntryIds: [2], tariffComponentIds: [101] },
 ];
 const commodityTariffClearedValues = {
   tariffInfo: null,
@@ -1235,13 +1235,13 @@ function buildCommodityTariffFakeValues(
   // this fake data can produce, which get_day_pattern_IDs_for_active_calendar_period() (TC_SETRF_TestBase.py)
   // requires to resolve the active calendar period.
   const tariffStartDate = anchor - 365 * 86_400;
-  const dayOf = (offset: number): CommodityTariff.Day => ({ date: anchor + offset * 86_400, dayType: CommodityTariff.DayType.Standard, dayEntryIDs: [1, 2] });
+  const dayOf = (offset: number): CommodityTariff.Day => ({ date: anchor + offset * 86_400, dayType: CommodityTariff.DayType.Standard, dayEntryIds: [1, 2] });
   const entryDate = (offset: number, idx: number): number => anchor + offset * 86_400 + commodityTariffDayEntries[idx].startTime * 60;
   const nextEntry = entryIndex === commodityTariffDayEntries.length - 1 ? { offset: dayOffset + 1, idx: 0 } : { offset: dayOffset, idx: entryIndex + 1 };
   const tariffComponentsFor = (dayEntryId: number): CommodityTariff.TariffComponent[] =>
     commodityTariffTariffPeriods
-      .filter((period) => period.dayEntryIDs.includes(dayEntryId))
-      .flatMap((period) => period.tariffComponentIDs)
+      .filter((period) => period.dayEntryIds.includes(dayEntryId))
+      .flatMap((period) => period.tariffComponentIds)
       .map((id) => commodityTariffTariffComponents.find((component) => component.tariffComponentId === id))
       .filter((component): component is (typeof commodityTariffTariffComponents)[number] => component !== undefined);
 
@@ -1255,12 +1255,12 @@ function buildCommodityTariffFakeValues(
     tariffUnit: TariffUnit.KWh,
     startDate: tariffStartDate,
     dayEntries: commodityTariffDayEntries,
-    dayPatterns: [{ dayPatternId: commodityTariffDayPatternId, daysOfWeek: commodityTariffAllDaysOfWeek, dayEntryIDs: [1, 2] }],
-    calendarPeriods: [{ startDate: tariffStartDate, dayPatternIDs: [commodityTariffDayPatternId] }],
+    dayPatterns: [{ dayPatternId: commodityTariffDayPatternId, daysOfWeek: commodityTariffAllDaysOfWeek, dayEntryIds: [1, 2] }],
+    calendarPeriods: [{ startDate: tariffStartDate, dayPatternIds: [commodityTariffDayPatternId] }],
     // A single day 30 days in the past — clear of any CurrentDay/NextDay date this fake data can produce — so
     // IndividualDays also differs from its null default (see the tariffStartDate comment above for why that
     // matters), while still trivially satisfying "the DayStruct in this list shall not overlap".
-    individualDays: [{ date: anchor - 30 * 86_400, dayType: CommodityTariff.DayType.Holiday, dayEntryIDs: [1, 2] }],
+    individualDays: [{ date: anchor - 30 * 86_400, dayType: CommodityTariff.DayType.Holiday, dayEntryIds: [1, 2] }],
     currentDay: dayOf(dayOffset),
     nextDay: dayOf(dayOffset + 1),
     currentDayEntry: commodityTariffDayEntries[entryIndex],

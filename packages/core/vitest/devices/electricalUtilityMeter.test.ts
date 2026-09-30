@@ -54,7 +54,7 @@ describe('Matterbridge ' + NAME, () => {
   const explicitCurrentPrice = { periodStart: 1_700_000_000, periodEnd: null, price: 2000 };
   const dayEntries = [{ dayEntryId: 1, startTime: 0 }];
   const tariffComponents = [{ tariffComponentId: 1, price: { priceType: TariffPriceType.Standard, price: 2000 }, threshold: null, label: 'Standard' }];
-  const tariffPeriods = [{ label: 'Standard', dayEntryIDs: [1], tariffComponentIDs: [1] }];
+  const tariffPeriods = [{ label: 'Standard', dayEntryIds: [1], tariffComponentIds: [1] }];
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -157,7 +157,7 @@ describe('Matterbridge ' + NAME, () => {
       power: 460_000,
       energyImported: 1_000_000,
       energyExported: 0,
-      meteredQuantity: [{ tariffComponentIDs: [1], quantity: 12.5 }],
+      meteredQuantity: [{ tariffComponentIds: [1], quantity: 12.5 }],
       meteredQuantityTimestamp: 1_700_000_000,
       tariffUnit: TariffUnit.KWh,
       maximumMeteredQuantities: 1,
@@ -175,7 +175,7 @@ describe('Matterbridge ' + NAME, () => {
       cumulativeEnergyExported: { energy: 0 },
     });
     expect(explicitMeter.getClusterServerOptions(CommodityMetering.id)).toMatchObject({
-      meteredQuantity: [{ tariffComponentIDs: [1], quantity: 12.5 }],
+      meteredQuantity: [{ tariffComponentIds: [1], quantity: 12.5 }],
       meteredQuantityTimestamp: 1_700_000_000,
       tariffUnit: TariffUnit.KWh,
       maximumMeteredQuantities: 1,
@@ -281,7 +281,7 @@ describe('Matterbridge ' + NAME, () => {
     // the enabled features, a path construction-time state doesn't hit), and a second require() call on an
     // already-required behavior would not apply new options either. Also exercises
     // MatterbridgeCommodityTariffServer.getTariffComponent/getDayEntry for command coverage.
-    const day: CommodityTariff.Day = { date: 1_700_000_000, dayType: CommodityTariff.DayType.Standard, dayEntryIDs: [1] };
+    const day: CommodityTariff.Day = { date: 1_700_000_000, dayType: CommodityTariff.DayType.Standard, dayEntryIds: [1] };
     commandTariff = device.addElectricalEnergyTariff('Electrical Energy Tariff Commands', {
       tariffLabel: 'Standard',
       providerName: 'Provider',
@@ -290,9 +290,9 @@ describe('Matterbridge ' + NAME, () => {
       startDate: 1_700_000_000,
       dayEntries,
       dayPatterns: [
-        { dayPatternId: 1, daysOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, dayEntryIDs: [1] },
+        { dayPatternId: 1, daysOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, dayEntryIds: [1] },
       ],
-      calendarPeriods: [{ startDate: null, dayPatternIDs: [1] }],
+      calendarPeriods: [{ startDate: null, dayPatternIds: [1] }],
       individualDays: [day],
       currentDay: day,
       nextDay: day,
@@ -308,7 +308,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(commandTariff.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
       startDate: 1_700_000_000,
       dayEntries,
-      calendarPeriods: [{ startDate: null, dayPatternIDs: [1] }],
+      calendarPeriods: [{ startDate: null, dayPatternIds: [1] }],
       individualDays: [day],
       currentDay: day,
       nextDay: day,
@@ -364,7 +364,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('MatterbridgeCommodityTariffServer getTariffComponent and getDayEntry', async () => {
     const found = await commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }));
-    expect(found).toEqual({ label: 'Standard', dayEntryIDs: [1], tariffComponent: tariffComponents[0] });
+    expect(found).toEqual({ label: 'Standard', dayEntryIds: [1], tariffComponent: tariffComponents[0] });
 
     await expect(commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 99 }))).rejects.toThrow(
       /no TariffComponent with id 99/,
@@ -378,7 +378,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('MatterbridgeCommodityTariffServer getTariffComponent falls back when no owning tariffPeriod exists', async () => {
     const found = await noPeriodTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }));
-    expect(found).toEqual({ label: null, dayEntryIDs: [], tariffComponent: tariffComponents[0] });
+    expect(found).toEqual({ label: null, dayEntryIds: [], tariffComponent: tariffComponents[0] });
   });
 
   test('MatterbridgeCommodityTariffServer getTariffComponent/getDayEntry reject against an unscheduled tariff', async () => {

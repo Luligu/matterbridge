@@ -116,8 +116,8 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
         `MatterbridgeCommodityTariffServer: no TariffComponent with id ${request.tariffComponentId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIDs.includes(request.tariffComponentId));
-    return { label: period?.label ?? null, dayEntryIDs: period?.dayEntryIDs ?? [], tariffComponent };
+    const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIds.includes(request.tariffComponentId));
+    return { label: period?.label ?? null, dayEntryIds: period?.dayEntryIds ?? [], tariffComponent };
   }
 
   /**

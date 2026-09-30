@@ -118,13 +118,32 @@ describe('MatterbridgeLevelControlServer', () => {
       expect(data.attributes.currentLevel).toBe(254);
     });
     expectCurrentLevel(1);
+    // Matter 1.6.1 § 1.6.4.1.2: WithOnOff commands turn the device off at the minimum level.
+    expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
 
-    const stepRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, false);
-    await expectCommand(light, LevelControl, 'LevelControl.step', stepRequest, (data) => {
-      expect(data.cluster).toBe('levelControl');
-      expect(data.attributes.currentLevel).toBe(1);
-    });
-    expectCurrentLevel(11);
+    // Use one handler for both requests: expectCommand only supports one invocation per command/endpoint.
+    const stepHandler = vi.fn();
+    light.addCommandHandler('LevelControl.step', stepHandler);
+    try {
+      // § 1.6.6.9: a plain Step must be ignored while off when ExecuteIfOff is false.
+      const stepRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, false);
+      stepRequest.optionsMask.executeIfOff = true;
+      await light.invokeBehaviorCommand(LevelControl, 'step', stepRequest);
+      expect(stepHandler).toHaveBeenCalledTimes(1);
+      expect(stepHandler).toHaveBeenLastCalledWith(expect.objectContaining({ endpoint: light, cluster: 'levelControl', request: stepRequest }));
+      expectCurrentLevel(1);
+      expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
+
+      // With ExecuteIfOff true, a plain Step changes the level but must not change OnOff.
+      const stepWhileOffRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, true);
+      await light.invokeBehaviorCommand(LevelControl, 'step', stepWhileOffRequest);
+      expect(stepHandler).toHaveBeenCalledTimes(2);
+      expect(stepHandler).toHaveBeenLastCalledWith(expect.objectContaining({ endpoint: light, cluster: 'levelControl', request: stepWhileOffRequest }));
+      expectCurrentLevel(11);
+      expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
+    } finally {
+      light.removeCommandHandler('LevelControl.step', stepHandler);
+    }
 
     const stepWithOnOffRequest = getStepRequest(LevelControl.StepMode.Down, 10, 3, false);
     await expectCommand(light, LevelControl, 'LevelControl.stepWithOnOff', stepWithOnOffRequest, (data) => {
@@ -132,6 +151,7 @@ describe('MatterbridgeLevelControlServer', () => {
       expect(data.attributes.currentLevel).toBe(11);
     });
     expectCurrentLevel(1);
+    expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
 
     // Stop/StopWithOnOff cancel an in-flight transition; with none running they leave the level where it is.
     const stopRequest = getStopRequest(false);

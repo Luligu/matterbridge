@@ -346,7 +346,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
-    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 4 }] });
 
     expect(() => assertMatterbridgeEndpoint(device)).not.toThrow();
     expect(() => assertMatterbridgeEndpoint({})).toThrow();
@@ -396,7 +396,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
-    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 4 }] });
 
     await add(device);
   });
@@ -417,7 +417,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
-    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 4 }] });
 
     await add(device);
   });
@@ -439,7 +439,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer('descriptor', 'TagList')).toBe(true);
     expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({
       tagList: [{ mfgCode: null, namespaceId: 7, tag: 1, label: 'Light2' }],
-      deviceTypeList: [{ deviceType: 256, revision: 3 }],
+      deviceTypeList: [{ deviceType: 256, revision: 4 }],
     });
 
     await add(device);
@@ -460,7 +460,7 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.hasAttributeServer('Descriptor', 'DeviceTypeList')).toBe(true);
     expect(device.hasAttributeServer('descriptor', 'tagList')).toBe(false);
-    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 3 }] });
+    expect(device.behaviors.optionsFor(DescriptorBehavior)).toEqual({ deviceTypeList: [{ deviceType: 256, revision: 4 }] });
 
     expect(device.getDeviceTypes()).toEqual([deviceType]);
 

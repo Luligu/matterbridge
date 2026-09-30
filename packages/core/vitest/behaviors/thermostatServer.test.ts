@@ -357,6 +357,7 @@ describe('MatterbridgeThermostatServer', () => {
   test('ScheduleThermostat server', async () => {
     thermostatSchedule = createScheduleThermostatEndpoint('thermostatScheduleBehavior');
     expect(await addDevice(aggregator, thermostatSchedule)).toBeTruthy();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, 'Thermostat schedule support is purely provisional and will not be ready before Matter 1.7.0.');
 
     const scheduleThermostatBehavior = MatterbridgeThermostatServer.with(
       Thermostat.Feature.Heating,

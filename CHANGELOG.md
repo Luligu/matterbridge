@@ -49,6 +49,18 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [thermostat]: Warn at runtime that schedule support is purely provisional and will not be ready before Matter 1.7.0.
+
+- [tests]: Verify Level Control ignores Step while off unless ExecuteIfOff is true, without changing OnOff state.
+
+- [tests]: Correct Door Lock scheduling features and existing-user credential requests, and verify command response statuses.
+
+- [tests]: Migrate electrical utility meter fixtures and responses to the matter.js 0.18 commodity field names.
+
+- [devices]: Align device type revisions and XML comparison tests with Matter 1.6.1.
+
+- [matter.js]: Adapt commodity field names and optional thermostat schedules to the 0.18 dev API.
+
 - [vscode]: Update `.vscode/settings.json` to v.1.0.14: point the Copilot "Generate Commit Message" button to `.github/commit-message-instructions.md`, ask before running `mb-run` and before dependency installs and removals, and approve `find`, `bun test`, `npm run test:watch` and `npm run test:verbose`.
 - [antigravity]: Update `.antigravity/settings.json` to v.1.0.5: ask before running `mb-run`, allow `find` and the read-only git commands, and remove the obsolete sandboxing comments.
 - [scripts]: Update `scripts/clean.mjs` and `scripts/deep-clean.mjs` to v.1.3.0: add `--help` and `--version` and reject unknown arguments.

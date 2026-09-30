@@ -48,6 +48,10 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
    */
   override async initialize(): Promise<void> {
     await super.initialize();
+    if (this.features.matterScheduleConfiguration) {
+      const device = this.endpoint.stateOf(MatterbridgeServer);
+      device.log.warn('Thermostat schedule support is purely provisional and will not be ready before Matter 1.7.0.');
+    }
     // Pass an unbound method reference, matching matter.js's own reactor registrations (e.g. ThermostatServer's
     // `this.reactTo(this.events.presets$AtomicChanged, this.#handlePresetsChanged)`): the Reactors system rebinds
     // `this` to a fresh, correctly-scoped behavior instance for each reaction via `reactor.bind(behavior)`. Wrapping
@@ -188,7 +192,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       endpoint: this.endpoint as MatterbridgeEndpoint,
       context: this.context,
     });
-    const schedule = this.state.schedules.find((s) => s.scheduleHandle !== null && Bytes.areEqual(s.scheduleHandle, request.scheduleHandle));
+    const schedule = this.state.schedules?.find((s) => s.scheduleHandle !== null && Bytes.areEqual(s.scheduleHandle, request.scheduleHandle));
     // Matter 1.6.0 § 4.3.12.2.2: reject with INVALID_COMMAND if no Schedules entry has a ScheduleHandle matching the request.
     if (schedule === undefined) {
       throw new StatusResponseError(

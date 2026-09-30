@@ -345,7 +345,7 @@ describe('Matterbridge device cluster mappings', () => {
     expect(failures).toEqual([
       // Failures are listed in device-definition order; for each device: server checks then client checks
       'rootNode: required mismatch -> mb=[] md=[31,40,48,51,60,62,63]', // omitted to avoid imports
-      'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,2049,2050]', // omitted to avoid imports
+      'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,101,2049,2050]', // omitted to avoid imports
       'rootNode: client optional mismatch -> mb=[] md=[56]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler and just one in matter.js

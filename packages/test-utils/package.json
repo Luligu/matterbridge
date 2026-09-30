@@ -83,7 +83,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.17.9",
+    "@matter/main": "0.18.0-alpha.0-20260928-23865781d",
     "@matterbridge/types": "3.10.12",
     "@matterbridge/utils": "3.10.12",
     "node-ansi-logger": "3.3.1"
