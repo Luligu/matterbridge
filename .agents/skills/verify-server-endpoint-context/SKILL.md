@@ -1,6 +1,6 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.3
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.4
 ---
 
 # Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
@@ -38,6 +38,7 @@ Checks:
 - Follow local variables and simple helper methods when needed so multiline calls, template literals, and indirectly constructed error messages are not missed.
 - Do not accept a missing or abbreviated server name, text before the server name, a prefix that does not match the enclosing server class name exactly, a method segment that does not match the enclosing method name exactly, a method segment not separated from the server name by a single dot, a prefix whose colon and space separator is missing so the prefix runs into the message text, or an uppercase first letter immediately after the prefix's colon and space (for example `MatterbridgeEnergyEvseServer: Disable charging` is a violation; `MatterbridgeEnergyEvseServer: disable charging` is compliant, and `MatterbridgeWebRtcTransportProviderServer.solicitOffer requires at least one stream` is a violation because it has no colon and space separator; `MatterbridgeWebRtcTransportProviderServer.solicitOffer: requires at least one stream` is compliant).
 - Do not accept alternate endpoint formats, missing parentheses, a colon separator, `endpoint.id`, `endpoint.number`, messages containing only one endpoint component, or any text after the endpoint fragment's closing parenthesis.
+- Accept `(endpoint ${endpointLabel})` only in a log written from a deferred callback (a timer, an un-awaited promise or similar) that can run after the command's behavior context has exited, where `endpointLabel` is a local `const endpointLabel = \`${this.endpoint.maybeId}.${this.endpoint.maybeNumber}\`` captured synchronously before the deferral, with a comment explaining why. Report a label used in a synchronous log, a label built any other way, or a captured label without that comment as a violation.
 - Do not require the fragment in a log or thrown value that has no textual message, but report that case separately for manual review.
 - Ignore comments, JSDoc examples, tests, generated output, and imported server implementations.
 
