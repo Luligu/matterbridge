@@ -5,4 +5,4 @@ Apply the [shared agent instructions](../AGENTS.md) to all work in this reposito
 ## Copilot specifics
 
 - The rule files AGENTS.md lists under [.agents/rules](../.agents/rules/) are mirrored by [.github/instructions](instructions/), which apply automatically to the file types they are scoped to.
-- The skills it lists under [.agents/skills](../.agents/skills/) are also available as agent skills in [.github/skills](skills/), invocable as slash commands and discovered automatically: `/verify-agent-context`, `/matterjs-pr-workflow`, `/verify-npm-alignment`, `/verify-server-endpoint-context`, `/verify-version-alignment`.
+- The skills it lists under [.agents/skills](../.agents/skills/) are also available as agent skills in [.github/skills](skills/), invocable as slash commands and discovered automatically.

@@ -1,18 +1,21 @@
 /**
  * Data model script.
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * This script will fetch from the connectedhomeip GitHub repository the data model files and convert them to JSON.
  *
  * It supports environment variables to customize the version and output paths.
  *
- * MATTER_DATA_MODEL_VERSION - The default version is 1.5.0.
+ * MATTER_DATA_MODEL_VERSION - The default version is 1.6.1.
  * MATTER_DATA_MODEL_XML_OUT - Where to store the downloaded XMLs (default: chip/<version>/xml).
+ *
+ * Namespaces have no id list in the repository, so the namespace files are hardcoded in `namespacesFiles`.
+ * Always check the hardcoded list against the namespaces folder when changing version:
+ * https://github.com/project-chip/connectedhomeip/tree/master/data_model/<version>/namespaces
+ * (for x.y.0 releases the remote folder is x.y, e.g. data_model/1.6/namespaces).
  */
 
-/* eslint-disable no-console */
-
-const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.5.1';
+const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.6.1';
 const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
 const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/`;
 const DATA_MODEL_PATHS = {
@@ -406,6 +409,7 @@ const MATTER_DATATYPE_TS_MAP = {
   'elapsed-s': 'ElapsedS',
   'epoch-us': 'EpochUs',
   'posix-ms': 'PosixMs',
+  'systime-ms': 'SystimeMs',
 
   // Compact temperature aliases (0.1°C resolution, value = °C × 10)
   'signedtemperature': 'SignedTemperature10Ths',
@@ -1083,7 +1087,7 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages, 
   lines.push(` * @remarks Matter data model version: ${versionLabel}`);
   lines.push(' */');
   lines.push('');
-  lines.push('/* eslint-disable @typescript-eslint/no-empty-object-type */');
+  lines.push('/* oxlint-disable typescript/no-empty-object-type */');
 
   // Keep import order compatible with simple-import-sort.
   if (usesMatterBytes) {
@@ -1115,6 +1119,9 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages, 
   lines.push('');
   lines.push('/** Posix time in milliseconds since the Unix epoch (1970-01-01 00:00:00 UTC). */');
   lines.push('export type PosixMs = number | bigint;');
+  lines.push('');
+  lines.push('/** System time in milliseconds since node boot. */');
+  lines.push('export type SystimeMs = number | bigint;');
   lines.push('');
   lines.push('/** Elapsed time in seconds. */');
   lines.push('export type ElapsedS = number;');
@@ -3104,6 +3111,8 @@ const parseClusterXml = (xmlContent, contextLabel) => {
 };
 
 /** Fetch all namespaces */
+
+// Hardcoded list: always check it against https://github.com/project-chip/connectedhomeip/tree/master/data_model/<version>/namespaces
 
 const namespacesFiles = [
   'Namespace-Closure-Cabinet.xml',

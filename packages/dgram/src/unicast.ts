@@ -3,7 +3,7 @@
  * @description This file contains the class Unicast.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,7 +22,7 @@
  */
 
 // Node.js imports
-import type { RemoteInfo } from 'node:dgram';
+import type { RemoteInfo, SocketType } from 'node:dgram';
 import type { AddressInfo } from 'node:net';
 
 // AnsiLogger imports
@@ -41,13 +41,13 @@ export class Unicast extends Dgram {
    * Creates an instance of Unicast.
    *
    * @param {string} name - The name of the socket.
-   * @param {'udp4' | 'udp6'} socketType - The type of the socket (IPv4 or IPv6).
+   * @param {SocketType} socketType - The type of the socket (IPv4 or IPv6).
    * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
    * @param {string} [interfaceName] - The name of the network interface to bind to. If provided, the interfaceAddress will be determined based on this name if not explicitly provided.
    * @param {string} [interfaceAddress] - The address of the network interface to bind to. If not provided, it will be determined based on the interfaceName.
    * @param {number} [port] - The port number to bind to. If not provided, it will bind to any available port.
    */
-  constructor(name: string, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string, port?: number) {
+  constructor(name: string, socketType: SocketType, reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string, port?: number) {
     super(name, socketType, reuseAddr, interfaceName, interfaceAddress);
     this.port = port;
   }

@@ -1,15 +1,12 @@
 /**
  * prune-releases.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Prunes old releases for a given tag prefix.
  *
  * Usage:
  *   node scripts/prune-releases.mjs [--help|-h] [--dry-run|-n] <tag-prefix-to-keep>
  */
-
-/* eslint-disable jsdoc/require-jsdoc */
-/* eslint-disable no-console */
 
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';

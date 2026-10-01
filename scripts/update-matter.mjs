@@ -1,6 +1,6 @@
 /**
  * update-matter.mjs
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Updates @matter/main for the root package and every workspace that already
  * declares @matter/main or one of the obsolete split @matter packages.
@@ -9,9 +9,6 @@
  * Usage:
  *   node scripts/update-matter.mjs <latest|dev|loc> [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -62,7 +59,6 @@ async function findWorkspacePackageJsonPaths(repoRoot, patterns) {
   }
 
   if (globPatterns.length > 0) {
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- this script always runs on current LTS
     for await (const match of fs.glob(globPatterns, { cwd: repoRoot, exclude: (entry) => entry.split(/[\\/]/).includes('node_modules') })) {
       packageJsonPaths.push(path.resolve(repoRoot, match));
     }

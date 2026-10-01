@@ -29,6 +29,107 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.12] - Dev branch
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+### Added
+
+- [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
+- [dgram]: Add `isFirstOnPort()` to `mdns.ts` (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its `mdns.port.test.ts` test.
+- [frontend]: Add and expand unit tests for `QRDiv` node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.
+- [frontend]: Expand `SearchPluginsDialog` tests for selection and reset on reopen, npm cache validation, metadata and version loading, download retries, request cancellation, link validation, and mobile layout.
+- [frontend]: Expand `ConfigPluginDialog` tests for form submission and cancellation, missing configuration, schema UI properties, custom RJSF templates and widgets, and WebSocket response filtering.
+- [frontend]: Add and expand `Header`, `HomePlugins`, and `HomeLogs` tests for connection state, WebSocket listener lifecycle, controls and links, plugin metadata and frontends, and log preferences.
+- [frontend]: Add `InstallProgressDialog` and `NetworkConfigDialog` tests for rendering, actions, close behavior, saved preferences, scrolling, and network configuration state.
+- [frontend]: Add `MatterbridgeInfoTable` and `SystemInfoTable` tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.
+- [frontend]: Add `WebSocketLogs` tests for badge colors and metadata, message updates, auto-scroll throttling, hover and touch behavior, and pending scrolls after unmount.
+- [frontend]: Add `WebSocketProvider` tests for connection state, authentication, message validation and routing, listener lifecycle, log filtering and buffer limits, UI notifications, heartbeat timeouts, and reconnection retries.
+- [agents]: Add [`commit message instructions`](.github/commit-message-instructions.md) v.1.0.0 for the VS Code Copilot "Generate Commit Message" button (Conventional Commits).
+
+### Changed
+
+- [vscode]: Update `.vscode/settings.json` to v.1.0.14: point the Copilot "Generate Commit Message" button to `.github/commit-message-instructions.md`, ask before running `mb-run` and before dependency installs and removals, and approve `find`, `bun test`, `npm run test:watch` and `npm run test:verbose`.
+- [antigravity]: Update `.antigravity/settings.json` to v.1.0.5: ask before running `mb-run`, allow `find` and the read-only git commands, and remove the obsolete sandboxing comments.
+- [scripts]: Update `scripts/clean.mjs` and `scripts/deep-clean.mjs` to v.1.3.0: add `--help` and `--version` and reject unknown arguments.
+- [scripts]: Remove the obsolete `eslint-disable` comments from the vendored scripts, the workspace `downloads.mjs` scripts and the repository scripts.
+- [data-model]: Emit `oxlint-disable typescript/no-empty-object-type` instead of the obsolete `eslint-disable` in the generated `matterClusterTypes.ts`.
+- [styleguide]: Update [`STYLEGUIDE.md`](STYLEGUIDE.md) to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.12.
+- [matterbridge]: Bump `@types/node` to v.26.6.3.
+- [matterbridge]: Bump `vitest` to v.5.0.3.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.3.
+- [matterbridge]: Bump `marked` to v.18.0.14.
+- [matterbridge]: Bump `oxfmt` to v.0.71.0.
+- [matterbridge]: Bump `oxlint` to v.1.86.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
+- [core]: Bump `ws` to v.8.22.0.
+- [core]: Bump `@types/ws` to v.8.18.2.
+- [core]: Bump `@types/multer` to v.2.3.0.
+- [types]: Suppress the new oxlint `no-generated-empty-object-type` rule in `broadcastServerTypes.ts`.
+- [dgram]: Update `mdns.ts` to v.1.1.0: `sendQuery` and `sendResponse` accept optional answers (known answers in queries), authorities and additionals, records accept an optional `flush` flag, and add the `DnsHeaderFlag` enum and the `MDNS_MAX_MESSAGE_LENGTH` and `MDNS_MAX_RESOURCE_RECORD_LENGTH` constants.
+- [dgram]: `sendQuery` and `sendResponse` in `mdns.ts` compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.
+- [dgram]: Update `dgram.ts` to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.
+- [dgram]: Use the Node.js `SocketType` type in `dgram.ts`, `coap.ts`, `mdns.ts`, `multicast.ts` and `unicast.ts`.
+- [scripts]: Update `clean.mjs` and `deep-clean.mjs` to v.1.2.0: log every removed path under its directory with a red dash (the emptied `.cache` and `node_modules` contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor `NO_COLOR` and redirected output.
+- [thread]: Bump `@zip.js/zip.js` to v.2.22.0.
+- [utils]: Update `runtimeBun.ts` to v.1.0.1: `sleep()` on Node now uses `setTimeout` from `node:timers/promises`.
+- [frontend]: Bump `frontend` version to v.3.6.3.
+- [frontend]: Require 100% line and function coverage in `test:coverage`.
+- [devcontainer]: Update `post-create.sh` to v.2.3.0: add the workspace to the git `safe.directory` list to avoid the "detected dubious ownership" error on macOS bind mounts.
+- [frontend]: Bump `@types/node` to v.26.6.3.
+- [frontend]: Bump `jsdom` to v.30.1.1.
+- [frontend]: Update the `MbfWindow` test expectations for jsdom's numeric computed `font-weight` values.
+- [frontend]: Bump `vite` to v.8.3.1.
+- [frontend]: Bump `vitest` to v.5.0.3.
+- [frontend]: Add `@vitest/coverage-v8` v.5.0.3 to the devDependencies instead of resolving it from the root workspace.
+- [frontend]: Bump `oxfmt` to v.0.71.0.
+- [frontend]: Bump `oxlint` to v.1.86.0.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2003.
+
+### Fixed
+
+- [dgram]: Fix `encodeDnsName` in `mdns.ts` writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.
+- [frontend]: Fix React Compiler `react/immutability` rule flags.
+- [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
+- [frontend]: Fix React Compiler `react/hooks` rule flags.
+- [frontend]: Fix React Compiler `react/refs` rule flags.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.10.11] - 2026-09-25
+
+### Development Breaking Changes
+
+- [matter]: Generate the Matter 1.6.1 data model with the data model script. See [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) for delta from 1.6.0.
+
+### Added
+
+- [matter]: Add the [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) document.
+- [frontend]: Add loading messages in HomeDevices.
+- [devcontainer]: Add Dev Container 2.1.1.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.11.
+- [matterbridge]: Bump `@types/node` to v.26.6.1.
+- [matterbridge]: Bump `vitest` to v.5.0.1.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.1.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2002.
+- [matter]: Update the data model script to support Matter 1.6.1 generation (new `systime-ms` datatype mapped to `SystimeMs`).
+- [frontend]: Bump `frontend` version to v.3.6.2.
+- [frontend]: Bump `@rjsf` to v.6.10.1.
+- [frontend]: Bump `react-router` to v.8.4.0.
+- [frontend]: Bump `@types/node` to v.26.6.1.
+- [frontend]: Bump `vitest` to v.5.0.1.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2002.
+
+### Fixed
+
+- [test-utils]: Fix test-utils typecheck.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.10] - 2026-09-18
 
 ### Development News

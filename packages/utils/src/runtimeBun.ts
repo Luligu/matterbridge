@@ -3,7 +3,7 @@
  * @description This file contains Bun runtime helpers.
  * @author Luca Liguori
  * @created 2026-06-24
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -25,6 +25,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { setTimeout as delay } from 'node:timers/promises';
 
 import { logModuleLoaded } from './loader.js';
 import { isValidObject, isValidString } from './validate.js';
@@ -166,7 +167,7 @@ export function nanoseconds(): number {
 }
 
 /**
- * Async sleep. `Bun.sleep()` on Bun, a `setTimeout` promise on Node.
+ * Async sleep. `Bun.sleep()` on Bun, `node:timers/promises` setTimeout on Node.
  *
  * @param {number} ms - The number of milliseconds to sleep.
  * @returns {Promise<void>} A promise that resolves after the specified duration.
@@ -175,7 +176,7 @@ export function nanoseconds(): number {
  */
 export async function sleep(ms: number): Promise<void> {
   if (HAS_BUN_GLOBAL) return Bun.sleep(ms);
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return delay(ms);
 }
 
 /**

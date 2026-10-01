@@ -1,15 +1,12 @@
 /**
  * publish-workspaces.mjs
- * Version: 1.2.0
+ * Version: 1.2.1
  *
  * Publishes all workspace packages to npm.
  *
  * Usage:
  *   node scripts/publish-workspaces.mjs [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
@@ -79,7 +76,6 @@ function getWorkspacePatterns(rootPkg) {
 }
 
 function hasGlobChars(pattern) {
-  // eslint-disable-next-line no-useless-escape
   return /[\*\?\[\]]/.test(String(pattern ?? ''));
 }
 
@@ -100,7 +96,6 @@ async function findWorkspacePackageJsonPaths(repoRoot, workspacePatterns) {
 
   const globMatches = [];
   if (globPatterns.length > 0) {
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- this script always runs on current LTS
     for await (const match of fs.glob(globPatterns, {
       cwd: repoRoot,
       exclude: (entry) => entry.split(/[\\/]/).includes('node_modules'),

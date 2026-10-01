@@ -4,6 +4,18 @@
 
 # This script globally installs Matterbridge from the given branch (main or dev).
 # To be used only inside the Dev Container with the mounted matterbridge volume.
+#
+# Usage:
+#   install-matterbridge.sh <main|dev> <--bun|--node>
+#
+#   main | dev      branch to clone, build and link globally.
+#   --bun | --node  runtime used to install, build and link; must match the image.
+#
+# The dev container images copy this script to /usr/local/bin, so it is available on PATH.
+# post-create.sh --plugin calls it, and it can also be run by hand to refresh the global
+# Matterbridge install:
+#   bash /usr/local/bin/install-matterbridge.sh dev --node
+#   bash /usr/local/bin/install-matterbridge.sh main --bun
 
 set -euo pipefail
 

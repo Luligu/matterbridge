@@ -31,7 +31,7 @@ describe('MbfWindow components', () => {
   it('renders MbfWindowHeaderText and merges style', () => {
     const { getByText, container } = render(<MbfWindowHeaderText style={{ fontSize: '20px' }}>HeaderText</MbfWindowHeaderText>);
     expect(getByText('HeaderText')).toBeInTheDocument();
-    expect(container.firstChild).toHaveStyle({ fontSize: '20px', fontWeight: 'bold' });
+    expect(container.firstChild).toHaveStyle({ fontSize: '20px', fontWeight: '700' });
   });
 
   it('renders MbfWindowFooter and merges style', () => {
@@ -43,13 +43,13 @@ describe('MbfWindow components', () => {
   it('renders MbfWindowFooterText and merges style', () => {
     const { getByText, container } = render(<MbfWindowFooterText style={{ fontSize: '18px' }}>FooterText</MbfWindowFooterText>);
     expect(getByText('FooterText')).toBeInTheDocument();
-    expect(container.firstChild).toHaveStyle({ fontSize: '18px', fontWeight: 'bold' });
+    expect(container.firstChild).toHaveStyle({ fontSize: '18px', fontWeight: '700' });
   });
 
   it('renders MbfWindowText and merges style', () => {
     const { getByText, container } = render(<MbfWindowText style={{ fontSize: '18px' }}>WindowText</MbfWindowText>);
     expect(getByText('WindowText')).toBeInTheDocument();
-    expect(container.firstChild).toHaveStyle({ fontSize: '18px', fontWeight: 'normal' });
+    expect(container.firstChild).toHaveStyle({ fontSize: '18px', fontWeight: '400' });
   });
 
   it('renders MbfWindowIcons with children', () => {

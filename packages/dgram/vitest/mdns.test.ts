@@ -6,7 +6,7 @@
 
 import type dgram from 'node:dgram';
 
-import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns } from '../src/mdns.js';
+import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './vitestSetupTest.js';
 
 // Mock node:dgram so the Mdns constructor does not open a real socket. Unlike Jest's automock,
@@ -106,6 +106,15 @@ describe('Mdns', () => {
     const { name: decoded, newOffset } = mdns.decodeDnsName(encoded, 0);
     expect(decoded).toBe(name);
     expect(encoded[encoded.length - 1]).toBe(0);
+    expect(newOffset).toBe(encoded.length);
+  });
+
+  it('should write the UTF-8 byte length of each label when the name contains non-ASCII characters', () => {
+    const encoded = mdns.encodeDnsName('Küche.local');
+    // 'Küche' is 5 characters but 6 UTF-8 bytes ('ü' = c3 bc), so its length byte must be 06
+    expect(encoded).toEqual(Buffer.from('064bc3bc636865056c6f63616c00', 'hex'));
+    const { name: decoded, newOffset } = mdns.decodeDnsName(encoded, 0);
+    expect(decoded).toBe('Küche.local');
     expect(newOffset).toBe(encoded.length);
   });
 
@@ -331,6 +340,243 @@ describe('Mdns', () => {
     expect(loggerDebugSpy).toHaveBeenCalled();
   });
 
+  it('should send a query with known answers, authorities and additionals when they are provided', () => {
+    const ptrRdata = mdns.encodeDnsName('instance._http._tcp.local');
+    const srvRdata = mdns.encodeSrvRdata(0, 0, 8080, 'host.local');
+    const aRdata = mdns.encodeA('192.168.1.10');
+
+    const query = mdns.sendQuery(
+      [{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN }],
+      [{ name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 100, rdata: ptrRdata }],
+      [{ name: 'instance._http._tcp.local', rtype: DnsRecordType.SRV, rclass: DnsClass.IN, flush: true, ttl: 120, rdata: srvRdata }],
+      [{ name: 'host.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: aRdata }],
+    );
+
+    expect(mockSocket.send.mock.calls[0][0]).toBe(query);
+    expect(query.readUInt16BE(2)).toBe(0); // Flags: QR=0 (query)
+    expect(query.readUInt16BE(4)).toBe(1); // QDCOUNT
+    expect(query.readUInt16BE(6)).toBe(1); // ANCOUNT
+    expect(query.readUInt16BE(8)).toBe(1); // NSCOUNT
+    expect(query.readUInt16BE(10)).toBe(1); // ARCOUNT
+    const decoded = mdns.decodeMdnsMessage(query);
+    expect(decoded.questions).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
+    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, ttl: 100, data: 'instance._http._tcp.local' }]);
+    expect(decoded.authorities).toMatchObject([
+      { name: 'instance._http._tcp.local', type: DnsRecordType.SRV, ttl: 120, data: JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }) },
+    ]);
+    expect(mdns.dnsResponseClassToString(decoded.authorities?.[0].class ?? 0)).toBe('IN|FLUSH');
+    expect(decoded.additionals).toEqual([{ name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.10' }]);
+  });
+
+  describe('encoding of resource records, queries and responses', () => {
+    // Hex helpers for the expected wire format.
+    const aLocal = '0161056c6f63616c00'; // 'a.local' in DNS label format
+    const hex = (...parts: string[]): Buffer<ArrayBuffer> => Buffer.from(parts.join(''), 'hex');
+
+    it('should encode a resource record byte by byte when flush is not set', () => {
+      const record = mdns.encodeResourceRecord({ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeA('192.168.1.10') });
+      expect(record).toEqual(hex(aLocal, '0001', '0001', '00000078', '0004', 'c0a8010a'));
+    });
+
+    it('should encode a resource record with the same bytes when flush is explicitly false', () => {
+      const record = mdns.encodeResourceRecord({ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, flush: false, ttl: 120, rdata: mdns.encodeA('192.168.1.10') });
+      expect(record).toEqual(hex(aLocal, '0001', '0001', '00000078', '0004', 'c0a8010a'));
+    });
+
+    it('should set the cache-flush bit in the class when flush is true', () => {
+      const record = mdns.encodeResourceRecord({ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, flush: true, ttl: 120, rdata: mdns.encodeA('192.168.1.10') });
+      expect(record).toEqual(hex(aLocal, '0001', '8001', '00000078', '0004', 'c0a8010a'));
+    });
+
+    it('should keep the cache-flush bit when rclass already has it and flush is false', () => {
+      const record = mdns.encodeResourceRecord({ name: 'a.local', rtype: DnsRecordType.A, rclass: 0x8001, ttl: 120, rdata: mdns.encodeA('192.168.1.10') });
+      expect(record).toEqual(hex(aLocal, '0001', '8001', '00000078', '0004', 'c0a8010a'));
+    });
+
+    it('should encode a goodbye record with ttl 0 and empty rdata', () => {
+      const record = mdns.encodeResourceRecord({ name: 'a.local', rtype: DnsRecordType.TXT, rclass: DnsClass.IN, ttl: 0, rdata: Buffer.alloc(0) });
+      expect(record).toEqual(hex(aLocal, '0010', '0001', '00000000', '0000'));
+    });
+
+    it('should build the exact query packet with a QU question, a known answer, an authority and an additional', () => {
+      const query = mdns.sendQuery(
+        [{ name: 'a.local', type: DnsRecordType.ANY, class: DnsClass.IN, unicastResponse: true }],
+        [{ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 60, rdata: mdns.encodeA('192.168.1.10') }],
+        [{ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, flush: true, ttl: 120, rdata: mdns.encodeA('192.168.1.11') }],
+        [{ name: 'a.local', rtype: DnsRecordType.TXT, rclass: DnsClass.IN, ttl: 4500, rdata: Buffer.alloc(0) }],
+      );
+      expect(query).toEqual(
+        hex(
+          '0000', // ID
+          '0000', // Flags: standard query
+          '0001', // QDCOUNT
+          '0001', // ANCOUNT
+          '0001', // NSCOUNT
+          '0001', // ARCOUNT
+          `${aLocal}00ff8001`, // Question: a.local ANY IN|QU
+          'c00c000100010000003c0004c0a8010a', // Known answer: a.local (pointer to the question name at 12) A IN ttl 60 192.168.1.10
+          'c00c00018001000000780004c0a8010b', // Authority: a.local (pointer) A IN|FLUSH ttl 120 192.168.1.11
+          'c00c00100001000011940000', // Additional: a.local (pointer) TXT IN ttl 4500 empty
+        ),
+      );
+      expect(mockSocket.send).toHaveBeenCalledWith(query, 0, query.length, 5353, '224.0.0.251', expect.any(Function));
+      // Verbose logging (--verbose is set for this suite) logs every section
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Question: '));
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Answer: '));
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Authority: '));
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Additional: '));
+    });
+
+    it('should build the exact response packet with a flushed answer, an authority and an additional', () => {
+      const response = mdns.sendResponse(
+        [{ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, flush: true, ttl: 120, rdata: mdns.encodeA('192.168.1.10') }],
+        [{ name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 60, rdata: mdns.encodeA('192.168.1.11') }],
+        [{ name: 'a.local', rtype: DnsRecordType.TXT, rclass: DnsClass.IN, ttl: 4500, rdata: Buffer.alloc(0) }],
+      );
+      expect(response).toEqual(
+        hex(
+          '0000', // ID
+          '8400', // Flags: QR response + AA
+          '0000', // QDCOUNT
+          '0001', // ANCOUNT
+          '0001', // NSCOUNT
+          '0001', // ARCOUNT
+          `${aLocal}00018001000000780004c0a8010a`, // Answer: a.local A IN|FLUSH ttl 120 192.168.1.10
+          'c00c000100010000003c0004c0a8010b', // Authority: a.local (pointer to the answer name at 12) A IN ttl 60 192.168.1.11
+          'c00c00100001000011940000', // Additional: a.local (pointer) TXT IN ttl 4500 empty
+        ),
+      );
+      expect(mockSocket.send).toHaveBeenCalledWith(response, 0, response.length, 5353, '224.0.0.251', expect.any(Function));
+    });
+
+    const recordA = { name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: Buffer.from([192, 168, 1, 10]) };
+    const recordB = { name: 'b.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: Buffer.from([192, 168, 1, 11]) };
+    const decodedA = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.10' };
+    const decodedB = { name: 'b.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.11' };
+    const question = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN };
+
+    for (const section of ['answers', 'authorities', 'additionals'] as const) {
+      it(`should send a query with only ${section} when the other record sections are empty`, () => {
+        const records = [recordA, recordB];
+        const query = mdns.sendQuery([question], section === 'answers' ? records : [], section === 'authorities' ? records : [], section === 'additionals' ? records : []);
+        expect(query.readUInt16BE(4)).toBe(1); // QDCOUNT
+        expect(query.readUInt16BE(6)).toBe(section === 'answers' ? 2 : 0); // ANCOUNT
+        expect(query.readUInt16BE(8)).toBe(section === 'authorities' ? 2 : 0); // NSCOUNT
+        expect(query.readUInt16BE(10)).toBe(section === 'additionals' ? 2 : 0); // ARCOUNT
+        const decoded = mdns.decodeMdnsMessage(query);
+        expect(decoded.questions).toEqual([question]);
+        expect(decoded.answers).toEqual(section === 'answers' ? [decodedA, decodedB] : []);
+        expect(decoded.authorities).toEqual(section === 'authorities' ? [decodedA, decodedB] : []);
+        expect(decoded.additionals).toEqual(section === 'additionals' ? [decodedA, decodedB] : []);
+      });
+    }
+
+    for (const section of ['authorities', 'additionals'] as const) {
+      it(`should send a response with only ${section} besides the answers when the other section is empty`, () => {
+        const records = [recordA, recordB];
+        const response = mdns.sendResponse([recordA], section === 'authorities' ? records : [], section === 'additionals' ? records : []);
+        expect(response.readUInt16BE(4)).toBe(0); // QDCOUNT
+        expect(response.readUInt16BE(6)).toBe(1); // ANCOUNT
+        expect(response.readUInt16BE(8)).toBe(section === 'authorities' ? 2 : 0); // NSCOUNT
+        expect(response.readUInt16BE(10)).toBe(section === 'additionals' ? 2 : 0); // ARCOUNT
+        const decoded = mdns.decodeMdnsMessage(response);
+        expect(decoded.questions).toEqual([]);
+        expect(decoded.answers).toEqual([decodedA]);
+        expect(decoded.authorities).toEqual(section === 'authorities' ? [decodedA, decodedB] : []);
+        expect(decoded.additionals).toEqual(section === 'additionals' ? [decodedA, decodedB] : []);
+      });
+    }
+  });
+
+  describe('name compression', () => {
+    const hex = (...parts: string[]): Buffer<ArrayBuffer> => Buffer.from(parts.join(''), 'hex');
+
+    it('should register every suffix and replace the longest known suffix with a pointer', () => {
+      const compression = new Map<string, number>();
+      expect(mdns.encodeDnsName('a._http._tcp.local', compression, 12)).toEqual(mdns.encodeDnsName('a._http._tcp.local'));
+      expect(compression).toEqual(
+        new Map([
+          ['a._http._tcp.local', 12],
+          ['_http._tcp.local', 14],
+          ['_tcp.local', 20],
+          ['local', 25],
+        ]),
+      );
+      expect(mdns.encodeDnsName('b._http._tcp.local', compression, 40)).toEqual(hex('0162', 'c00e')); // 'b' + pointer to '_http._tcp.local' at 14
+      expect(mdns.encodeDnsName('a._http._tcp.local', compression, 44)).toEqual(hex('c00c')); // Whole name already written at 12
+      expect(compression.get('b._http._tcp.local')).toBe(40);
+    });
+
+    it('should not register suffixes at offsets a pointer cannot reach', () => {
+      const compression = new Map<string, number>();
+      expect(mdns.encodeDnsName('a.local', compression, 0x3ffe)).toEqual(mdns.encodeDnsName('a.local'));
+      expect(compression).toEqual(new Map([['a.local', 0x3ffe]])); // 'local' would be at 0x4000
+    });
+
+    it('should encode the empty name without compression', () => {
+      const compression = new Map<string, number>();
+      expect(mdns.encodeDnsName('', compression, 12)).toEqual(mdns.encodeDnsName(''));
+      expect(compression.size).toBe(0);
+    });
+
+    it('should compress the domain name in the rdata of a PTR record', () => {
+      const response = mdns.sendResponse([
+        { name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeDnsName('inst._http._tcp.local') },
+      ]);
+      expect(response).toEqual(
+        hex(
+          '000084000000000100000000', // Header: QR + AA, ANCOUNT 1
+          '055f68747470045f746370056c6f63616c00', // Owner name: _http._tcp.local at 12
+          '000c000100000078', // PTR IN ttl 120
+          '0007', // RDLENGTH: 'inst' + pointer
+          '04696e7374c00c', // rdata: 'inst' + pointer to '_http._tcp.local' at 12
+        ),
+      );
+      expect(mdns.decodeMdnsMessage(response).answers?.[0].data).toBe('inst._http._tcp.local');
+    });
+
+    it('should compress the target in the rdata of a SRV record', () => {
+      const response = mdns.sendResponse([
+        { name: 'host.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeA('192.168.1.10') },
+        { name: 'inst._http._tcp.local', rtype: DnsRecordType.SRV, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeSrvRdata(0, 0, 8080, 'host.local') },
+      ]);
+      expect(response.subarray(38)).toEqual(
+        hex(
+          '04696e7374055f68747470045f746370c011', // Owner name: 'inst._http._tcp' + pointer to 'local' at 17
+          '0021000100000078', // SRV IN ttl 120
+          '0008', // RDLENGTH: priority, weight, port + pointer
+          '000000001f90c00c', // rdata: 0, 0, 8080 + pointer to 'host.local' at 12
+        ),
+      );
+      expect(mdns.decodeMdnsMessage(response).answers?.[1].data).toBe(JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }));
+    });
+
+    it('should send the rdata unchanged when it is not exactly an uncompressed name', () => {
+      const trailing = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([1])]);
+      const invalid = Buffer.from([5, 1]); // Label length beyond the rdata
+      for (const rdata of [trailing, invalid, Buffer.alloc(0)]) {
+        const compression = new Map<string, number>([['foo.local', 12]]);
+        const record = mdns.encodeResourceRecord({ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }, compression, 40);
+        expect(record).toEqual(Buffer.concat([hex('c00c', '000c000100000078'), Buffer.from([0, rdata.length]), rdata]));
+      }
+    });
+
+    it('should fit 29 Matter known answers in a 1428-byte query as a compressing sender does', () => {
+      const answers = Array.from({ length: 29 }, (_, i) => ({
+        name: '_matter._tcp.local',
+        rtype: DnsRecordType.PTR,
+        rclass: DnsClass.IN,
+        ttl: 117,
+        rdata: mdns.encodeDnsName(`CAD2FA0F285B2850-${i.toString(16).toUpperCase().padStart(16, '0')}._matter._tcp.local`),
+      }));
+      const query = mdns.sendQuery([{ name: '_matter._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN }], answers);
+      // Header 12 + question 24 + 29 answers of 48 bytes (pointer owner 2 + fields 10 + rdata 34 + pointer 2)
+      expect(query.length).toBe(1428);
+      expect(query.length).toBeLessThanOrEqual(MDNS_MAX_MESSAGE_LENGTH);
+      expect(mdns.decodeMdnsMessage(query).answers?.map((answer) => answer.data)).toEqual(answers.map((answer) => mdns.decodeDnsName(answer.rdata, 0).name));
+    });
+  });
+
   it('should send a response and log', () => {
     const rdata = mdns.encodeDnsName('foo.local');
     mdns.sendResponse([{ name: 'foo.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata }]);
@@ -356,6 +602,44 @@ describe('Mdns', () => {
     expect(decoded.answers?.length).toBe(2);
     expect(decoded.answers?.[0].name).toBe('_http._tcp.local');
     expect(decoded.answers?.[0].type).toBe(DnsRecordType.PTR);
+  });
+
+  it('should send a response with authorities and additionals when they are provided', () => {
+    const ptrRdata = mdns.encodeDnsName('instance._http._tcp.local');
+    const srvRdata = mdns.encodeSrvRdata(0, 0, 8080, 'host.local');
+    const txtRdata = mdns.encodeTxtRdata(['path=/']);
+    const aRdata = mdns.encodeA('192.168.1.10');
+
+    mdns.sendResponse(
+      [{ name: '_http._tcp.local', rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }],
+      [{ name: 'instance._http._tcp.local', rtype: DnsRecordType.SRV, rclass: DnsClass.IN, ttl: 120, rdata: srvRdata }],
+      [
+        { name: 'instance._http._tcp.local', rtype: DnsRecordType.TXT, rclass: DnsClass.IN, flush: true, ttl: 4500, rdata: txtRdata },
+        { name: 'host.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: aRdata },
+      ],
+    );
+
+    const responseBuffer = mockSocket.send.mock.calls[0][0] as Buffer;
+    expect(responseBuffer.readUInt16BE(6)).toBe(1); // ANCOUNT
+    expect(responseBuffer.readUInt16BE(8)).toBe(1); // NSCOUNT
+    expect(responseBuffer.readUInt16BE(10)).toBe(2); // ARCOUNT
+    const decoded = mdns.decodeMdnsMessage(responseBuffer);
+    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, ttl: 120, data: 'instance._http._tcp.local' }]);
+    expect(decoded.authorities).toEqual([
+      {
+        name: 'instance._http._tcp.local',
+        type: DnsRecordType.SRV,
+        class: DnsClass.IN,
+        ttl: 120,
+        data: JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }),
+      },
+    ]);
+    expect(decoded.additionals).toMatchObject([
+      { name: 'instance._http._tcp.local', type: DnsRecordType.TXT, ttl: 4500, data: 'path=/' },
+      { name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.10' },
+    ]);
+    expect(mdns.dnsResponseClassToString(decoded.additionals?.[0].class ?? 0)).toBe('IN|FLUSH');
+    expect(mdns.dnsResponseClassToString(decoded.additionals?.[1].class ?? 0)).toBe('IN');
   });
 
   it('should throw if sendResponse answers array is empty', () => {

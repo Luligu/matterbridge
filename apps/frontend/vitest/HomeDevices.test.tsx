@@ -301,7 +301,7 @@ describe('HomeDevices', () => {
   it('shows the loading footer message until the plugins finish loading, then the registered devices count', () => {
     const { sendWebSocketMessage } = renderComponent();
 
-    expect(screen.getByTestId('footer-left')).toHaveTextContent('Waiting for the plugins to fully load...');
+    expect(screen.getByTestId('footer-left')).toHaveTextContent('Loading plugins...');
 
     sendWebSocketMessage({ id: 7, method: '/api/plugins', response: plugins });
     sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ pluginName: 'matterbridge-test', name: 'Test Device', serial: 'test1' }] });
@@ -326,14 +326,14 @@ describe('HomeDevices', () => {
     });
 
     expect(sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
-    expect(screen.getByTestId('footer-left')).toHaveTextContent('Waiting for the plugins to fully load...');
+    expect(screen.getByTestId('footer-left')).toHaveTextContent('Loading plugins...');
   });
 
   it('shows a restart required footer message on restart_required and clears it on restart_not_required', () => {
     const { sendWebSocketMessage } = renderWithDevice('/plugins/matterbridge-test');
 
     sendWebSocketMessage({ id: 0, method: 'restart_required' });
-    expect(screen.getByTestId('footer-right')).toHaveTextContent('Restart required');
+    expect(screen.getByTestId('footer-right')).toHaveTextContent('Restart Required');
 
     sendWebSocketMessage({ id: 0, method: 'restart_not_required' });
     expect(screen.getByTestId('footer-right')).toHaveTextContent('');
@@ -614,7 +614,7 @@ describe('HomeDevices', () => {
       method: '/api/settings',
       response: { matterbridgeInformation: { restartRequired: true, fixedRestartRequired: false, bridgeMode: 'bridge', bridgeStatus: 'started' } },
     });
-    expect(screen.getByTestId('footer-right')).toHaveTextContent('Restart required');
+    expect(screen.getByTestId('footer-right')).toHaveTextContent('Restart Required');
   });
 
   it('replaces previously received selectDevices for the same plugin without leaving stale rows', () => {

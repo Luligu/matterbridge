@@ -3,8 +3,7 @@ export type DebouncedRunner = ((fn: () => void) => void) & { cancel: () => void 
 export function createDebouncer(delay = 1000): DebouncedRunner {
   let handle: number | null = null;
 
-  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-  const run = ((fn: () => void) => {
+  const run = (fn: () => void) => {
     if (handle !== null) {
       window.clearTimeout(handle);
     }
@@ -12,14 +11,14 @@ export function createDebouncer(delay = 1000): DebouncedRunner {
       fn();
       handle = null;
     }, delay);
-  }) as DebouncedRunner;
+  };
 
-  run.cancel = () => {
+  const cancel = () => {
     if (handle !== null) {
       window.clearTimeout(handle);
       handle = null;
     }
   };
 
-  return run;
+  return Object.assign(run, { cancel });
 }

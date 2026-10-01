@@ -39,6 +39,7 @@ export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' |
 export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
 
 /** Normalized message request structure */
+// oxlint-disable-next-line typescript/no-generated-empty-object-type
 type NormalizeRequest<T> = T extends { params: infer P } ? ([P] extends [undefined] ? { params?: undefined } : { params: P }) : Record<never, never>;
 
 /** Message request structure with id, timestamp, src and dst */

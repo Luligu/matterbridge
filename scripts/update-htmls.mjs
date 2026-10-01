@@ -1,14 +1,12 @@
 /**
  * update-htmls.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Converts Markdown files to HTML using the marked library.
  *
  * Usage:
  *   node scripts/update-htmls.mjs
  */
-
-/* eslint-disable no-console */
 
 import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -80,6 +78,8 @@ const FILES_TO_RENDER = [
   { source: 'README-SERVICE.md', target: 'README-SERVICE.html' },
   { source: 'README-WINDOWS.md', target: 'README-WINDOWS.html' },
   { source: 'README-BUN.md', target: 'README-BUN.html' },
+  { source: 'Raspi-zero-2w-matterbridge.md', target: 'Raspi-zero-2w-matterbridge.html' },
+  { source: 'Raspi-4b-matterbridge.md', target: 'Raspi-4b-matterbridge.html' },
   { source: 'README.md', target: 'README.html' },
   { source: 'CHANGELOG.md', target: 'CHANGELOG.html' },
   { source: 'CONTRIBUTING.md', target: 'CONTRIBUTING.html' },

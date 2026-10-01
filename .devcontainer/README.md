@@ -19,16 +19,19 @@ Open with **Dev Containers: Reopen in Container** and pick the variant.
 .devcontainer/
 ├── README.md              ← this file
 ├── node/
-│   ├── devcontainer.json  Node variant definition
-│   ├── post-create.sh     Directory + ownership setup (runs once per container)
-│   └── post-start.sh      install → build → link → frontend install → frontend build
+│   └── devcontainer.json  Node variant definition
 └── bun/
-    └── (same three files, bun equivalents)
+    └── devcontainer.json  Bun variant definition
 ```
 
-There is deliberately no host-side script. `initializeCommand` is defined inline in `devcontainer.json` and
-calls only `docker`, so the host needs no interpreter — see requirement 4. The two lifecycle scripts run
-**inside** the container, where bash is guaranteed.
+There are no scripts in the repository. `initializeCommand` is defined inline in `devcontainer.json` and
+calls only `docker`, so the host needs no interpreter — see requirement 4. The two lifecycle scripts ship
+**inside** the images, on `PATH`, where bash is guaranteed, and are selected by flags:
+
+| Script           | Invoked as                                    | Runs                                                         |
+| ---------------- | --------------------------------------------- | ------------------------------------------------------------ |
+| `post-create.sh` | `post-create.sh --node\|--bun --matterbridge` | once per container: directory + ownership setup              |
+| `post-start.sh`  | `post-start.sh --node\|--bun --matterbridge`  | every start: install → build → link → frontend install/build |
 
 ---
 

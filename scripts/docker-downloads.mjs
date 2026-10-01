@@ -1,6 +1,6 @@
 /**
  * docker-downloads.mjs
- * Version: 1.0.2
+ * Version: 1.0.3
  *
  * Tracks Docker Hub pulls per day by sampling the repository "pull_count" daily.
  * Docker Hub provides total pulls for a repo; daily pulls are computed from deltas
@@ -15,8 +15,6 @@
  * Env:
  *   DOCKER_REPO="namespace/repo" (optional, default "luligu/matterbridge")
  */
-
-/* eslint-disable no-console */
 
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
@@ -51,7 +49,6 @@ Defaults:
   --days    14
   --history ./docker-downloads-history.json
 `);
-      // eslint-disable-next-line n/no-process-exit
       process.exit(0);
     }
   }

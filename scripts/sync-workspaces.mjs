@@ -1,15 +1,12 @@
 /**
  * sync-workspaces.mjs
- * Version: 1.0.2
+ * Version: 1.0.3
  *
  * Syncs version and common fields across all workspace package.json files.
  *
  * Usage:
  *   node scripts/sync-workspaces.mjs [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -54,7 +51,6 @@ function getWorkspacePatterns(rootPkg) {
 }
 
 function hasGlobChars(pattern) {
-  // eslint-disable-next-line no-useless-escape
   return /[\*\?\[\]]/.test(String(pattern ?? ''));
 }
 
@@ -75,7 +71,6 @@ async function findWorkspacePackageJsonPaths(repoRoot, workspacePatterns) {
 
   const globMatches = [];
   if (globPatterns.length > 0) {
-    // eslint-disable-next-line n/no-unsupported-features/node-builtins -- this script always runs on current LTS
     for await (const match of fs.glob(globPatterns, {
       cwd: repoRoot,
       exclude: (entry) => entry.split(/[\\/]/).includes('node_modules'),

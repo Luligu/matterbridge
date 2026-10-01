@@ -3,11 +3,26 @@
 # docker/devcontainer/post-start.sh v.2.2.0
 
 # This script runs after the Dev Container is started to set up the dev container environment.
+#
+# Usage:
+#   post-start.sh <--bun|--node> [--plugin|--matterbridge]
+#
+#   --bun | --node   runtime of the image; required.
+#   --plugin         plugin repository: also links Matterbridge and builds the plugin frontend
+#                    when present.
+#   --matterbridge   Matterbridge repository: also builds the frontend when present.
+#
+# The dev container images copy this script to /usr/local/bin, so devcontainer.json can call it
+# from there:
+#   "postStartCommand": "bash /usr/local/bin/post-start.sh --node"
+#   "postStartCommand": "bash /usr/local/bin/post-start.sh --bun --plugin"
+#   "postStartCommand": "bash /usr/local/bin/post-start.sh --node --matterbridge"
 
 set -euo pipefail
 
 MODE=""
 PLUGIN=false
+MATTERBRIDGE=false
 
 for arg in "$@"; do
   case "$arg" in
@@ -20,16 +35,19 @@ for arg in "$@"; do
     --plugin)
       PLUGIN=true
       ;;
+    --matterbridge)
+      MATTERBRIDGE=true
+      ;;
     *)
       echo "Unknown argument: $arg" >&2
-      echo "Usage: post-start.sh <--bun|--node> [--plugin]" >&2
+      echo "Usage: post-start.sh <--bun|--node> [--plugin|--matterbridge]" >&2
       exit 1
       ;;
   esac
 done
 
 if [ -z "$MODE" ]; then
-  echo "Usage: post-start.sh <--bun|--node> [--plugin]" >&2
+  echo "Usage: post-start.sh <--bun|--node> [--plugin|--matterbridge]" >&2
   exit 1
 fi
 
@@ -38,6 +56,9 @@ if [ "$PLUGIN" = true ]; then
   TARGET="plugin"
   echo "Welcome to Matterbridge Plugin Dev Container (post-start.sh)"
 else
+  if [ "$MATTERBRIDGE" = true ]; then
+    TARGET="Matterbridge"
+  fi
   echo "Welcome to Matterbridge Dev Container (post-start.sh)"
 fi
 
@@ -52,11 +73,15 @@ echo "Uptime: $(uptime -p || echo 'unavailable')"
 echo "Date: $(date)"
 if [ "$MODE" = "bun" ]; then
   echo "Bun version: $(bun -v)"
-  echo "Bun global cache: ${HOME}/.bun/install/cache"
+  echo "Bun location: $(command -v bun)"
+  echo "Bun cache: ${HOME}/.bun/install/cache"
+  echo "Bun global prefix: ${BUN_INSTALL:-$HOME/.bun}/install/global/node_modules"
 else
   echo "Node.js version: $(node -v)"
+  echo "Node.js location: $(command -v node)"
   echo "Npm version: $(npm -v)"
   echo "Npm cache: $(npm config get cache)"
+  echo "Npm global prefix: $(npm root -g)"
 fi
 echo ""
 
@@ -79,13 +104,13 @@ if [ "$PLUGIN" = true ]; then
   step "Linking Matterbridge..."
   if [ "$MODE" = "bun" ]; then
     if ! bun link matterbridge; then
-      echo "Retrying link with elevated permissions..."
+      step "Retrying link with elevated permissions..."
       sudo bun link matterbridge
       sudo chown -R bun:bun ./node_modules
     fi
   else
     if ! npm link matterbridge --no-fund --no-audit; then
-      echo "Retrying link with elevated permissions..."
+      step "Retrying link with elevated permissions..."
       sudo npm link matterbridge --no-fund --no-audit
       sudo chown -R node:node ./node_modules
     fi
@@ -99,10 +124,10 @@ else
   npm run build
 fi
 
-if [ "$PLUGIN" = true ]; then
-  echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "${STEP}.post-start - Checking for the plugin frontend..."
+if [ "$PLUGIN" = true ] || [ "$MATTERBRIDGE" = true ]; then
+  step "Checking for the ${TARGET} frontend..."
   if [ -f apps/frontend/package.json ]; then
-    echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "${STEP}.post-start - Building the plugin frontend..."
+    step "Building the ${TARGET} frontend..."
     cd apps/frontend
     if [ "$MODE" = "bun" ]; then
       [ -f package-lock.json ] && mv package-lock.json package-lock.json.bak || true
@@ -113,7 +138,16 @@ if [ "$PLUGIN" = true ]; then
     fi
     cd ../..
   fi
-  STEP=$((STEP + 1))
+fi
+
+if [ "$MATTERBRIDGE" = true ]; then
+  step "Linking Matterbridge globally..."
+  if [ "$MODE" = "bun" ]; then
+    sudo -E bun link
+    sudo chown -R bun:bun /home/bun/.bun
+  else
+    sudo npm link --no-fund --no-audit
+  fi
 fi
 
 step "Post start setup completed!"
