@@ -215,6 +215,9 @@
 <li>[frontend]: Fix React Compiler <code>react/set-state-in-effect</code> rule flags.</li>
 <li>[frontend]: Fix React Compiler <code>react/hooks</code> rule flags.</li>
 <li>[frontend]: Fix React Compiler <code>react/refs</code> rule flags.</li>
+<li>[microwaveOven]: <code>AddMoreTime</code> now rejects an invalid TimeToAdd with CONSTRAINT_ERROR and adds TimeToAdd to the Operational State <code>CountdownTime</code> (Matter 1.6.0 § 8.13.6.3.2).</li>
+<li>[microwaveOven]: <code>SetCookingParameters</code> now rejects a CookMode not in SupportedModes with CONSTRAINT_ERROR and validates after forwarding to the plugin.</li>
+<li>[microwaveOven]: Add the endpoint context to all <code>MatterbridgeMicrowaveOvenControlServer</code> logs and errors, narrow <code>endpoint</code> and emit the command observable.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31011-2026-09-25">[3.10.11] - 2026-09-25</h2>
