@@ -156,6 +156,7 @@
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h3 id="added">Added</h3>
 <ul>
+<li>[refrigerator]: Add the <code>RefrigeratorAndTemperatureControlledCabinetMode.changeToMode</code> command handler, so plugins now receive the Refrigerator mode changes.</li>
 <li>[oven]: Add the <code>OvenMode.changeToMode</code>, <code>OvenCavityOperationalState.start</code> and <code>OvenCavityOperationalState.stop</code> command handlers, so plugins now receive the Oven commands.</li>
 <li>[bun]: Bun support is now available for production use, either as a <a href="README-BUN.html#run-matterbridge-with-bun">standalone installation</a> on a host with only Bun installed or through the <a href="./README-BUN.html#run-matterbridge-with-the-bun-docker-hub-image"><code>bun</code></a> and <code>bundev</code> Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.</li>
 <li>[dgram]: Add <code>isFirstOnPort()</code> to <code>mdns.ts</code> (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its <code>mdns.port.test.ts</code> test.</li>
@@ -211,6 +212,9 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[refrigerator]: <code>ChangeToMode</code> with an unknown mode now responds <code>UnsupportedMode</code> instead of <code>InvalidInMode</code> (Matter 1.6.0 § 1.10.7.1.1).</li>
+<li>[refrigerator]: <code>MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer</code> now runs the base initialization, which requires an Auto mode in SupportedModes (Matter 1.6.0 § 8.7.6.1).</li>
+<li>[refrigerator]: Add the endpoint context to the Refrigerator mode server messages, narrow <code>endpoint</code>, emit the command observable and add Matter 1.6.0 spec comments.</li>
 <li>[dishwasher]: <code>MatterbridgeDishwasherModeServer</code> keeps the configured CurrentMode at startup instead of forcing mode 2, and runs the DishwasherModeServer initialization, which requires a Normal mode (Matter 1.6.0 § 8.3.6.1).</li>
 <li>[dishwasher]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.</li>
 <li>[dishwasher]: Add the endpoint context to the Dishwasher Mode server messages, forward ChangeToMode with the action context, narrow <code>endpoint</code>, emit the command observables and add Matter 1.6.0 spec comments.</li>

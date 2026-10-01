@@ -35,6 +35,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [refrigerator]: Add the `RefrigeratorAndTemperatureControlledCabinetMode.changeToMode` command handler, so plugins now receive the Refrigerator mode changes.
 - [oven]: Add the `OvenMode.changeToMode`, `OvenCavityOperationalState.start` and `OvenCavityOperationalState.stop` command handlers, so plugins now receive the Oven commands.
 - [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
 - [dgram]: Add `isFirstOnPort()` to `mdns.ts` (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its `mdns.port.test.ts` test.
@@ -90,6 +91,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [refrigerator]: `ChangeToMode` with an unknown mode now responds `UnsupportedMode` instead of `InvalidInMode` (Matter 1.6.0 § 1.10.7.1.1).
+- [refrigerator]: `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer` now runs the base initialization, which requires an Auto mode in SupportedModes (Matter 1.6.0 § 8.7.6.1).
+- [refrigerator]: Add the endpoint context to the Refrigerator mode server messages, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
 - [dishwasher]: `MatterbridgeDishwasherModeServer` keeps the configured CurrentMode at startup instead of forcing mode 2, and runs the DishwasherModeServer initialization, which requires a Normal mode (Matter 1.6.0 § 8.3.6.1).
 - [dishwasher]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.
 - [dishwasher]: Add the endpoint context to the Dishwasher Mode server messages, forward ChangeToMode with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.

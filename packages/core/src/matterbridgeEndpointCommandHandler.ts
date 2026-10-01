@@ -56,6 +56,7 @@ import type { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
 import type { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
 import type { OvenMode } from '@matter/types/clusters/oven-mode';
+import type { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import type { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import type { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import type { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
@@ -696,6 +697,15 @@ export type CommandHandlerDataMap = {
     request: ModeBase.ChangeToModeRequest;
     cluster: 'laundryWasherMode';
     attributes: ClusterAttributeValues<(typeof LaundryWasherMode)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Refrigerator And Temperature Controlled Cabinet Mode
+  'RefrigeratorAndTemperatureControlledCabinetMode.changeToMode': {
+    command: 'changeToMode';
+    request: ModeBase.ChangeToModeRequest;
+    cluster: 'refrigeratorAndTemperatureControlledCabinetMode';
+    attributes: ClusterAttributeValues<(typeof RefrigeratorAndTemperatureControlledCabinetMode)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

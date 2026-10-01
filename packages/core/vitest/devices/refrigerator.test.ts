@@ -13,6 +13,7 @@ import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/n
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { TlvOfModel } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
+import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
@@ -35,6 +36,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 import { MatterbridgeRefrigeratorAlarmServer, MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';
 import { refrigerator } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { CommandHandlerData } from '../../src/matterbridgeEndpointCommandHandler.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -145,7 +147,10 @@ describe('Matterbridge ' + NAME, () => {
   test('add a refrigerator device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: initialized (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('the RefrigeratorAlarm cluster exposes no commands', () => {
@@ -510,24 +515,60 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['refrigeratorAndTemperatureControlledCabinetMode'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['refrigeratorAndTemperatureControlledCabinetMode'].generatedCommandList).toEqual([1]);
 
-    // Change to mode 2
+    const order: string[] = [];
+    const pluginHandler = vi.fn(async (data: CommandHandlerData<'RefrigeratorAndTemperatureControlledCabinetMode.changeToMode'>) => {
+      expect(data.endpoint).toBe(device);
+      expect(data).toHaveProperty('context');
+      await Promise.resolve();
+      order.push('forwarded');
+    });
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: unknown[] = [];
+    device.addCommandHandler('RefrigeratorAndTemperatureControlledCabinetMode.changeToMode', pluginHandler);
+    device.subscribeCommand(RefrigeratorAndTemperatureControlledCabinetMode, 'changeToMode', (data) => {
+      order.push('emitted');
+      emitted.push(data.request);
+    });
+
+    // Change to mode 2: forwarded to the plugin, then CurrentMode updated and the command emitted
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 2 });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with mode 2 = RapidCool`,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changing mode to 2 (endpoint ${device.id}.${device.number})`,
     );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with mode 2 = RapidCool (endpoint ${device.id}.${device.number})`,
+    );
+    expect(order).toEqual(['forwarded', 'emitted']);
+    expect(device.getAttribute(RefrigeratorAndTemperatureControlledCabinetMode.id, 'currentMode')).toBe(2);
 
-    // Change to mode 15
+    // Change to mode 15: forwarded to the plugin but rejected with UnsupportedMode and not emitted
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('refrigeratorAndTemperatureControlledCabinetMode', 'changeToMode', { newMode: 15 });
+    const unsupportedResponse = await device.act(async (agent) => await agent.get(MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer).changeToMode({ newMode: 15 }));
+    expect(unsupportedResponse).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
+    expect(pluginHandler).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.ERROR,
-      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with invalid mode 15`,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with unsupported mode 15 (endpoint ${device.id}.${device.number})`,
     );
     expect(loggerErrorSpy).toHaveBeenCalledWith(
-      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint RefrigeratorTestDevice-RF123456.2) called with invalid mode 15`,
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with unsupported mode 15 (endpoint ${device.id}.${device.number})`,
     );
+    loggerErrorSpy.mockClear();
+    expect(device.getAttribute(RefrigeratorAndTemperatureControlledCabinetMode.id, 'currentMode')).toBe(2);
+    expect(emitted).toEqual([{ newMode: 2 }]);
+    device.commandHandler.removeHandler('RefrigeratorAndTemperatureControlledCabinetMode.changeToMode', pluginHandler);
+  });
+
+  test('reject SupportedModes without an Auto mode at initialization', async () => {
+    const invalid = new Refrigerator('Refrigerator No Auto', 'RF000000', {
+      currentMode: 1,
+      supportedModes: [{ label: 'RapidCool', mode: 1, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidCool }] }],
+    });
+    expect(await addDevice(server, invalid)).toBeFalsy();
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device RefrigeratorNoAuto-RF000000'));
     loggerErrorSpy.mockClear();
   });
 
