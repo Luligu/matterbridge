@@ -1,5 +1,5 @@
 /**
- * @file packages/jest-utils/src/matterRequest.ts
+ * @file packages/test-utils/src/matter/matterRequest.ts
  * @description This file contains the Matter Request utilities.
  * @author Luca Liguori
  * @created 2026-04-19

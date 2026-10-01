@@ -133,6 +133,10 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Open/Close are ignored with FailureDueToFault when a fault is registered', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: string[] = [];
+    valve.subscribeCommand(ValveConfigurationAndControl, 'open', () => emitted.push('open'));
+    valve.subscribeCommand(ValveConfigurationAndControl, 'close', () => emitted.push('close'));
     await valve.setAttribute(ValveConfigurationAndControl.id, 'valveFault', { ...noFault, generalFault: true });
     await expect(valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'open', {})).rejects.toMatchObject({ code: Status.Failure, clusterCode: 2 });
     await expect(valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'close')).rejects.toMatchObject({ code: Status.Failure, clusterCode: 2 });
@@ -140,6 +144,11 @@ describe('Server clusters and behaviors', () => {
     expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Transitioning);
     expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
     await valve.setAttribute(ValveConfigurationAndControl.id, 'valveFault', noFault);
+    // Commands rejected with FailureDueToFault are not announced, accepted ones are
+    expect(emitted).toEqual([]);
+    await valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'open', {});
+    await valve.invokeBehaviorCommand(ValveConfigurationAndControl, 'close');
+    expect(emitted).toEqual(['open', 'close']);
   });
 
   test('Open rejects a TargetLevel not aligned to LevelStep, but always accepts 100', async () => {

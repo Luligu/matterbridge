@@ -1,5 +1,5 @@
 /**
- * @file buntest/bunMatterTest.test.ts
+ * @file buntest/matterTest.test.ts
  * @description This file contains the tests for the bunMatterTest helpers.
  * @author Luca Liguori
  */

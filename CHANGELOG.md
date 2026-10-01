@@ -31,10 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.12] - Dev branch
 
-<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
-
 ### Added
 
+- [refrigerator]: Add the `RefrigeratorAndTemperatureControlledCabinetMode.changeToMode` command handler, so plugins now receive the Refrigerator mode changes.
+- [oven]: Add the `OvenMode.changeToMode`, `OvenCavityOperationalState.start` and `OvenCavityOperationalState.stop` command handlers, so plugins now receive the Oven commands.
 - [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
 - [dgram]: Add `isFirstOnPort()` to `mdns.ts` (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its `mdns.port.test.ts` test.
 - [frontend]: Add and expand unit tests for `QRDiv` node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.
@@ -89,11 +89,52 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [waterHeater]: Narrow server endpoints and forward command context and completed command observables.
+- [mediaHelpers]: Correct server log context and forward command context and completed command observables.
+
+- [electricalUtilityMeter]: Narrow commodity server endpoints and forward command context and completed command observables.
+
+- [closure]: Correct ClosureControl and ClosureDimension server endpoint context, command emissions and specification comments.
+
+- [evse]: Emit completed EVSE commands to subscribers and return empty status text for unsupported modes.
+
+- [matterbridge]: Raise the server node close timeout from 10 to 30 seconds, so a restart no longer starts the new server node while the old one still holds port 5540 (fixes `TC_AVSUM_2_9`).
+- [behaviors]: Align the Camera AV Stream Management, Camera AV Settings User Level Management and WebRTC Transport Provider server messages and Matter 1.6.0 spec comments with the server endpoint context rules.
+- [behaviors]: The Boolean State Configuration, Smoke CO Alarm, Mode Select, Device Energy Management, Device Energy Management Mode and Temperature Alarm servers narrow `endpoint` and emit the command observable for every completed command, and the Binding, Occupancy Sensing, Pump Configuration and Control and Switch servers narrow `endpoint`.
+- [behaviors]: The Window Covering, Operational State and Valve Configuration and Control servers narrow `endpoint` and emit the command observable for every completed command.
+- [doorLock]: `MatterbridgeDoorLockServer` narrows `endpoint` and emits the command observable for every completed command, including getter responses supplied by the plugin.
+- [roboticVacuumCleaner]: Add the endpoint context to the RVC Run Mode, Clean Mode and Operational State server messages, forward their commands with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [serviceArea]: `MatterbridgeServiceAreaServer` narrows `endpoint` and emits the command observable for an accepted SelectAreas.
+- [waterTankLevelMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the server narrows `endpoint` and emits the command observable.
+- [fanControl]: `createBaseFanControlClusterServer()` and `createOnOffFanControlClusterServer()` now use a featureless `MatterbridgeFanControlServer` instead of the plain matter.js server, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply to the Extractor Hood and to base and On/Off fans.
+- [filterMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the HEPA and Activated Carbon filter monitoring servers narrow `endpoint` and emit the command observable.
+- [behaviors]: The Thermostat, Fan Control and Identify servers now emit their command observables to `subscribeCommand()` listeners, and the Thermostat, Fan Control, Identify and Power Source servers narrow `endpoint` instead of casting it.
+- [temperatureControl]: `SetTemperature` now rejects an out-of-range TargetTemperatureLevel or TargetTemperature, and a TargetTemperature not aligned to Step, with CONSTRAINT_ERROR instead of accepting it, and a missing field with INVALID_COMMAND (Matter 1.6.0 § 8.2.6.1).
+- [temperatureControl]: Add the endpoint context to the temperature control server messages, forward SetTemperature with the action context, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
+- [refrigerator]: `ChangeToMode` with an unknown mode now responds `UnsupportedMode` instead of `InvalidInMode` (Matter 1.6.0 § 1.10.7.1.1).
+- [refrigerator]: `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer` now runs the base initialization, which requires an Auto mode in SupportedModes (Matter 1.6.0 § 8.7.6.1).
+- [refrigerator]: Add the endpoint context to the Refrigerator mode server messages, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
+- [dishwasher]: `MatterbridgeDishwasherModeServer` keeps the configured CurrentMode at startup instead of forcing mode 2, and runs the DishwasherModeServer initialization, which requires a Normal mode (Matter 1.6.0 § 8.3.6.1).
+- [dishwasher]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.
+- [dishwasher]: Add the endpoint context to the Dishwasher Mode server messages, forward ChangeToMode with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [oven]: `Stop` while Stopped and `Start` while Running now respond NoError and take no further action (Matter 1.6.0 § 1.14.6.2 and § 1.14.6.3).
+- [oven]: `MatterbridgeOvenModeServer` now runs the OvenModeServer initialization, which requires a Bake mode in SupportedModes (Matter 1.6.0 § 8.11.6.1).
+- [oven]: Add the endpoint context to all Oven server logs, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [laundry-washer]: Normalize server endpoint messages and emit successful mode changes after plugin forwarding and state updates.
+- [laundry-washer]: `MatterbridgeLaundryWasherModeServer` now runs the LaundryWasherModeServer initialization, which requires a Normal mode in SupportedModes (Matter 1.6.0 § 8.5.6.1).
+- [laundry-washer]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.
+- [laundry-dryer]: Add `MatterbridgeLaundryDryerControlsServer`, which rejects a SelectedDrynessLevel not in SupportedDrynessLevels with CONSTRAINT_ERROR (Matter 1.6.0 § 8.9.5.2).
 - [dgram]: Fix `encodeDnsName` in `mdns.ts` writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.
 - [frontend]: Fix React Compiler `react/immutability` rule flags.
 - [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
 - [frontend]: Fix React Compiler `react/hooks` rule flags.
 - [frontend]: Fix React Compiler `react/refs` rule flags.
+- [microwaveOven]: `AddMoreTime` now rejects an invalid TimeToAdd with CONSTRAINT_ERROR and adds TimeToAdd to the Operational State `CountdownTime` (Matter 1.6.0 § 8.13.6.3.2).
+- [microwaveOven]: `SetCookingParameters` now rejects a CookMode not in SupportedModes with CONSTRAINT_ERROR and validates after forwarding to the plugin.
+- [microwaveOven]: Add the endpoint context to all `MatterbridgeMicrowaveOvenControlServer` logs and errors, narrow `endpoint` and emit the command observable.
+- [microwaveOven]: `AddMoreTime` now rejects the command with INVALID_IN_STATE while the Operational State is Error (Matter 1.6.0 § 8.13.6.3.2).
+- [microwaveOven]: `SetCookingParameters` now rejects the command with INVALID_IN_STATE unless the Operational State is Stopped (Matter 1.6.0 § 8.13.6.2.6).
+- [closure]: `MoveTo` completion now reports `SecureState` true only when the closure is both FullyClosed (Positioning) and latched (MotionLatching) (Matter 1.6.0 § 5.4.6.5.4).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

@@ -23,12 +23,16 @@
 
 import { SwitchServer } from '@matter/node/behaviors/switch';
 
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * Switch server placeholder; the device implementation drives switch logic.
  */
 export class MatterbridgeSwitchServer extends SwitchServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Intentionally no-op: switch logic is handled by the device implementation.
    */

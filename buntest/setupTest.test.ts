@@ -1,5 +1,5 @@
 /**
- * @file buntest/bunSetupTest.test.ts
+ * @file buntest/setupTest.test.ts
  * @description This file contains the tests for the bunSetupTest helpers.
  * @author Luca Liguori
  */

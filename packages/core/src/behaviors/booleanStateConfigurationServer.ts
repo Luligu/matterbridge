@@ -48,6 +48,9 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
   BooleanStateConfiguration.Feature.SensitivityLevel,
   BooleanStateConfiguration.Feature.FaultEvents,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Registers reactions that emit alarm-state and sensor-fault events when their source attributes change.
    *
@@ -180,7 +183,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       request,
       cluster: BooleanStateConfigurationServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
@@ -190,6 +193,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
     // Matter 1.6.0 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
     this.state.alarmsSuppressed = this.#mergeAlarmsSuppressed(request.alarmsToSuppress);
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: suppressAlarm called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.endpoint.emitCommand(BooleanStateConfiguration, 'suppressAlarm', request, this.context);
   }
 
   /**
@@ -208,7 +212,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       request,
       cluster: BooleanStateConfigurationServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof BooleanStateConfiguration)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
@@ -216,5 +220,6 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
     // Matter 1.6.0 § 1.8.7.2.2: Apply the requested enabled modes and clear active or suppressed modes that become disabled.
     this.#applyAlarmsEnabled(request.alarmsToEnableDisable);
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.endpoint.emitCommand(BooleanStateConfiguration, 'enableDisableAlarm', request, this.context);
   }
 }

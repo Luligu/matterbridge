@@ -1,5 +1,5 @@
 /**
- * @file packages/jest-utils/src/jestMatterTest.ts
+ * @file packages/test-utils/src/jest/matterTest.ts
  * @description This file contains the Jest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19

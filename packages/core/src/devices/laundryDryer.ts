@@ -23,7 +23,7 @@
 
 // @matter
 import { LaundryDryerControlsServer } from '@matter/node/behaviors/laundry-dryer-controls';
-import type { EndpointNumber } from '@matter/types';
+import { Status, StatusResponseError, type EndpointNumber } from '@matter/types';
 import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
@@ -169,7 +169,7 @@ export class LaundryDryer extends MatterbridgeEndpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultLaundryDryerControlsClusterServer(selectedDrynessLevel?: LaundryDryerControls.DrynessLevel, supportedDrynessLevels?: LaundryDryerControls.DrynessLevel[]): this {
-    this.behaviors.require(LaundryDryerControlsServer, {
+    this.behaviors.require(MatterbridgeLaundryDryerControlsServer, {
       supportedDrynessLevels: supportedDrynessLevels ?? [
         LaundryDryerControls.DrynessLevel.Low,
         LaundryDryerControls.DrynessLevel.Normal,
@@ -179,5 +179,36 @@ export class LaundryDryer extends MatterbridgeEndpoint {
       selectedDrynessLevel, // Writable
     });
     return this;
+  }
+}
+
+/**
+ * Laundry Dryer Controls server enforcing the SelectedDrynessLevel constraint.
+ */
+export class MatterbridgeLaundryDryerControlsServer extends LaundryDryerControlsServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
+  /**
+   * Registers validation for SelectedDrynessLevel writes.
+   */
+  override initialize(): void {
+    // oxlint-disable-next-line typescript/unbound-method
+    this.reactTo(this.events.selectedDrynessLevel$Changing, this.#validateSelectedDrynessLevel);
+  }
+
+  /**
+   * Validates a requested dryness level.
+   *
+   * @param {LaundryDryerControls.DrynessLevel | null} selectedDrynessLevel - Requested SelectedDrynessLevel value.
+   */
+  #validateSelectedDrynessLevel(selectedDrynessLevel: LaundryDryerControls.DrynessLevel | null): void {
+    // Matter 1.6.0 § 8.9.5.2: Reject a SelectedDrynessLevel that is neither null nor contained in SupportedDrynessLevels with CONSTRAINT_ERROR.
+    if (selectedDrynessLevel !== null && !this.state.supportedDrynessLevels.includes(selectedDrynessLevel)) {
+      throw new StatusResponseError(
+        `MatterbridgeLaundryDryerControlsServer: selectedDrynessLevel ${selectedDrynessLevel} is not in SupportedDrynessLevels (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.ConstraintError,
+      );
+    }
   }
 }

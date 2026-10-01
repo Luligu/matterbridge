@@ -440,6 +440,9 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
     });
 
     test('FanControl server', async () => {
+      // Collect the requests announced to subscribeCommand() listeners
+      const emitted: unknown[] = [];
+      vent.subscribeCommand(FanControl, 'step', (data) => emitted.push(data.request));
       // vent uses createDefaultFanControlClusterServer() (Auto + Step, FanModeSequence OffLowMedHighAuto), whose
       // 1-100 PercentSetting domain splits into Low 1-33 / Medium 34-66 / High 67-100 (see fanControlServer.ts's
       // computePercentRanges()). Step (Matter 1.6 Application Cluster Spec § 4.4.7.1.5) moves FanMode across that
@@ -506,6 +509,8 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       expect(stepCalls[7]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: 99, wrap: false, lowestOff: false } });
       expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Medium);
       expect(vent.getAttribute(FanControl.id, 'percentCurrent')).toBe(30);
+      expect(emitted).toContainEqual({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: false });
+      expect(emitted.length).toBeGreaterThanOrEqual(3);
     });
   });
 });

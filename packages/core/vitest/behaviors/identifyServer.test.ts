@@ -73,6 +73,10 @@ describe('MatterbridgeIdentifyServer', () => {
   });
 
   test('Identify server', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: string[] = [];
+    light.subscribeCommand(Identify, 'identify', () => emitted.push('identify'));
+    light.subscribeCommand(Identify, 'triggerEffect', () => emitted.push('triggerEffect'));
     // A single recording handler is registered for the two identify invocations below, because only the first
     // handler registered for a command name is ever executed: a second registration would silently never run.
     const identifyCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
@@ -110,5 +114,6 @@ describe('MatterbridgeIdentifyServer', () => {
       expect(data.attributes.identifyType).toBe(Identify.IdentifyType.None);
     });
     expect(effectTriggeredEvents).toEqual([triggerEffectRequest]);
+    expect(emitted).toEqual(['identify', 'identify', 'triggerEffect']);
   });
 });

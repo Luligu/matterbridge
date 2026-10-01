@@ -1,5 +1,5 @@
 /**
- * @file vitest/behaviors/snapshot.test.ts
+ * @file packages/core/vitest/behaviors/snapshot.test.ts
  * @description This file contains tests for the ffmpeg-based snapshot capture pipeline.
  * @author Luca Liguori
  */

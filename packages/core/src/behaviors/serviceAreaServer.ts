@@ -33,7 +33,11 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 /**
  * ServiceArea server that validates and applies selected areas.
  */
+
 export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(ServiceArea.Feature.ProgressReporting) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Validates area IDs, updates selectedAreas, and forwards the request.
    *
@@ -48,12 +52,15 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(Servic
       request,
       cluster: ServiceAreaServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeServiceAreaServer: selectAreas called with [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.17.7.1.2: Reject the request with UnsupportedArea, InvalidSet or InvalidInMode as applicable, otherwise respond Success and set SelectedAreas to the NewAreas value.
-    return await super.selectAreas(request);
+    const response = await super.selectAreas(request);
+    // matter.js reports a rejected SelectAreas through the response status, so only a successful one is emitted.
+    if (response.status === ServiceArea.SelectAreasStatus.Success) this.endpoint.emitCommand(ServiceArea, 'selectAreas', request, this.context);
+    return response;
   }
 
   /**
@@ -73,7 +80,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(Servic
       request,
       cluster: ServiceAreaServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeServiceAreaServer: skipArea called with ${request.skippedArea} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);

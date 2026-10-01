@@ -1,5 +1,5 @@
 /**
- * @file packages/vitest-utils/src/vitestMatterTest.ts
+ * @file packages/test-utils/src/vitest/matterTest.ts
  * @description This file contains the Vitest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19

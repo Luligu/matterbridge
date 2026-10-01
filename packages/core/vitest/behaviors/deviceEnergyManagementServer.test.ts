@@ -99,6 +99,9 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('PowerAdjustRequest activates the session and emits PowerAdjustStart once', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    esa.subscribeCommand(DeviceEnergyManagement, 'powerAdjustRequest', (data) => emitted.push({ command: data.command, request: data.request }));
     const powerAdjustStart = vi.fn();
     const powerAdjustEnd = vi.fn();
     (esa.events as any).deviceEnergyManagement.powerAdjustStart.on(powerAdjustStart);
@@ -123,9 +126,13 @@ describe('Client clusters and behaviors', () => {
     expect(esa.getAttribute(DeviceEnergyManagement, 'powerAdjustmentCapability')).toMatchObject({ cause: DeviceEnergyManagement.PowerAdjustReason.GridOptimizationAdjustment });
     expect(powerAdjustStart).toHaveBeenCalledTimes(1);
     expect(powerAdjustEnd).not.toHaveBeenCalled();
+    expect(emitted).toHaveLength(2);
   });
 
   test('CancelPowerAdjustRequest ends the active session', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    esa.subscribeCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest', (data) => emitted.push({ command: data.command, request: data.request }));
     const powerAdjustEnd = vi.fn();
     (esa.events as any).deviceEnergyManagement.powerAdjustEnd.on(powerAdjustEnd);
 
@@ -134,12 +141,17 @@ describe('Client clusters and behaviors', () => {
     expect(esa.getAttribute(DeviceEnergyManagement, 'powerAdjustmentCapability')).toMatchObject({ cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment });
     expect(powerAdjustEnd).toHaveBeenCalledTimes(1);
     expect(powerAdjustEnd.mock.calls[0]?.[0]).toMatchObject({ cause: DeviceEnergyManagement.Cause.Cancelled });
+    expect(emitted).toEqual([{ command: 'cancelPowerAdjustRequest', request: {} }]);
   });
 
   test('CancelPowerAdjustRequest is rejected when nothing is active', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    esa.subscribeCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest', (data) => emitted.push({ command: data.command, request: data.request }));
     await expect(esa.invokeBehaviorCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest')).rejects.toThrow(
       'MatterbridgeDeviceEnergyManagementServer: no power adjustment is currently active',
     );
+    expect(emitted).toEqual([]);
   });
 
   test('PowerAdjustRequest is rejected for an opted-out cause', async () => {

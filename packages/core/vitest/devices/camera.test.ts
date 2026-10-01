@@ -1,8 +1,7 @@
 /**
- * @file vitest/devices/camera.test.ts
+ * @file packages/core/vitest/devices/camera.test.ts
  * @description This file contains the tests for the Camera device.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'CameraDevice';

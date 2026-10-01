@@ -1,6 +1,6 @@
 /**
+ * @file packages/test-utils/src/buntest/matterTest.ts
  * @description This file contains the Bun Matter Test Environment.
- * @file buntest/bunMatterTest.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.0

@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-/* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 /* oxlint-disable max-lines-per-function */
 /* oxlint-disable typescript/no-non-null-assertion */
+
+/* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';

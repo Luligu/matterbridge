@@ -1,5 +1,5 @@
 /**
- * @file src/devices/camera.ts
+ * @file packages/core/src/devices/camera.ts
  * @description This file contains the Camera class.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

@@ -196,7 +196,7 @@ export class Refrigerator extends MatterbridgeEndpoint {
    * Creates a default RefrigeratorAndTemperatureControlledCabinetMode Cluster Server.
    *
    * @param {MatterbridgeEndpoint} endpoint - The Matterbridge endpoint instance.
-   * @param {number} currentMode - The current mode of the oven.
+   * @param {number} currentMode - The current mode of the refrigerator or cabinet.
    * @param {RefrigeratorAndTemperatureControlledCabinetMode.ModeOption[]} supportedModes - The supported modes for the refrigerator and temperature controlled cabinet.
    *
    * @returns {MatterbridgeEndpoint} The current MatterbridgeEndpoint instance for chaining.
@@ -289,34 +289,58 @@ export class Refrigerator extends MatterbridgeEndpoint {
  * Refrigerator/cabinet mode server that forwards mode changes to the device implementation.
  */
 export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer extends RefrigeratorAndTemperatureControlledCabinetModeServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server.
    */
   override initialize(): void {
+    // Validates SupportedModes (Matter 1.6.0 § 8.7.6.1 requires an Auto mode) and CurrentMode.
+    super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info('MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer initialized');
+    device.log.info(`MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
+
   /**
    * Handles the RefrigeratorAndTemperatureControlledCabinetMode `ChangeToMode` command.
    *
+   * @remarks
+   * Matter 1.6 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
+   * any `SupportedModes` entry, `ChangeToModeResponse.Status` SHALL indicate `UnsupportedMode` and the
+   * `StatusText` field SHALL be included, either with a human readable string or an empty string.
+   *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
-   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   * @returns {Promise<ModeBase.ChangeToModeResponse>} Command response with change status.
    */
-  override changeToMode(request: ModeBase.ChangeToModeRequest): MaybePromise<ModeBase.ChangeToModeResponse> {
+  override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    await device.commandHandler.executeHandler('RefrigeratorAndTemperatureControlledCabinetMode.changeToMode', {
+      command: 'changeToMode',
+      request,
+      cluster: RefrigeratorAndTemperatureControlledCabinetModeServer.id,
+      attributes: this.state,
+      endpoint: this.endpoint,
+      context: this.context,
+    });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    if (supportedMode) {
-      device.log.info(
-        `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with mode ${supportedMode.mode} = ${supportedMode.label}`,
-      );
-      this.state.currentMode = request.newMode;
-      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
-    } else {
+    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
+    if (!supportedMode) {
       device.log.error(
-        `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber}) called with invalid mode ${request.newMode}`,
+        `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with unsupported mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Invalid mode' };
+      return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
+    device.log.debug(
+      `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with mode ${supportedMode.mode} = ${supportedMode.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
+    this.state.currentMode = request.newMode;
+    this.endpoint.emitCommand(RefrigeratorAndTemperatureControlledCabinetMode, 'changeToMode', request, this.context);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
 
@@ -361,6 +385,9 @@ type RefrigeratorAlarmBitmap = Required<RefrigeratorAlarm.Alarm>;
  * action), which is why no command is offered to clear it remotely.
  */
 export class MatterbridgeRefrigeratorAlarmServer extends RefrigeratorAlarmServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   static override readonly schema = MatterbridgeRefrigeratorAlarmSchema;
 
   /**

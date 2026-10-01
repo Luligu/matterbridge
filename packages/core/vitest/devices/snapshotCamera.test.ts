@@ -1,8 +1,7 @@
 /**
- * @file vitest/devices/snapshotCamera.test.ts
+ * @file packages/core/vitest/devices/snapshotCamera.test.ts
  * @description This file contains the tests for the SnapshotCamera device.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'SnapshotCameraDevice';

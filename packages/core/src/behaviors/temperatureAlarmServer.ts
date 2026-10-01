@@ -115,6 +115,9 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
   TemperatureAlarm.Feature.OverTemperature,
   TemperatureAlarm.Feature.UnderTemperature,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Registers the reaction that emits the Notify event when the State attribute changes.
    *
@@ -230,13 +233,14 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       request,
       cluster: MatterbridgeTemperatureAlarmServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 1.15.7.1.1: Respond with FAILURE when a requested alarm cannot be reset because it is not supported.
     this.#assertAlarmsSupported(request.alarms, Status.Failure);
     // Matter 1.6.0 § 1.15.7.1.1: Reset every requested alarm to inactive in the State attribute.
     this.state.state = this.#clearAlarms(request.alarms);
+    this.endpoint.emitCommand(TemperatureAlarm, 'reset', request, this.context);
   }
 
   /**
@@ -255,7 +259,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       request,
       cluster: MatterbridgeTemperatureAlarmServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureAlarm)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 1.15.7.2.1: Reject the command with INVALID_COMMAND when the Mask sets a bit of an alarm that is not supported.
@@ -264,5 +268,6 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
     this.state.mask = request.mask;
     // Matter 1.6.0 § 1.15.7.2.1: Then update the State attribute to reflect the alarm set enabled by the new Mask value.
     this.state.state = this.#applyMaskToState(request.mask);
+    this.endpoint.emitCommand(TemperatureAlarm, 'modifyEnabledAlarms', request, this.context);
   }
 }

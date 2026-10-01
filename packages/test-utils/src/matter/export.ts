@@ -1,5 +1,5 @@
 /**
- * @file packages/test-utils/src/matter.ts
+ * @file packages/test-utils/src/matter/export.ts
  * @description Shared Matter test utility exports for the unified test-utils package.
  * @author Luca Liguori
  * @created 2026-08-23

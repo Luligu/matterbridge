@@ -1,5 +1,5 @@
 /**
- * @file packages/jest-utils/src/export.ts
+ * @file packages/test-utils/src/jest/export.ts
  * @description Jest utilities package entrypoint exports.
  * @author Luca Liguori
  * @created 2026-03-04

@@ -33,6 +33,7 @@ import {
   TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
 } from '@matter/node/behaviors';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { Status } from '@matter/types';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -1979,6 +1980,11 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).step).toBe(false);
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
     expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    // The featureless MatterbridgeFanControlServer applies the Fan Control attribute rules (Matter 1.6.0 § 4.4.6).
+    await device.setAttribute(FanControl.id, 'percentSetting', 50);
+    expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Medium);
+    await device.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Off);
+    expect(device.getAttribute(FanControl.id, 'percentSetting')).toBe(0);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
@@ -2060,6 +2066,11 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).wind).toBe(false);
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(false);
     expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
+    // The featureless MatterbridgeFanControlServer rejects a FanMode outside the OffHigh FanModeSequence (Matter 1.6.0 § 4.4.6.1).
+    await expect(device.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Low)).rejects.toMatchObject({ code: Status.ConstraintError });
+    await device.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.High);
+    // Matter 1.6.0 § 4.4.6.3.1: FanMode High moves PercentSetting into the High range, which spans 1-100 for the OffHigh sequence.
+    expect(device.getAttribute(FanControl.id, 'percentSetting')).toBeGreaterThan(0);
     // (matterbridge as any).frontend.getClusterTextFromDevice(device);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });

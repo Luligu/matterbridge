@@ -30,6 +30,7 @@ import type { ClusterId } from '@matter/types';
 import type { Binding } from '@matter/types/clusters/binding';
 import { debugStringify, nt } from 'node-ansi-logger';
 
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -37,6 +38,8 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * endpoint.type.clientClusters so that matter.js BindingManager can validate and resolve bindings.
  */
 export class MatterbridgeBindingServer extends BindingServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
   declare protected internal: MatterbridgeBindingServer.Internal;
   declare state: MatterbridgeBindingServer.State;
 

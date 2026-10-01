@@ -1,5 +1,5 @@
 /**
- * @file src/devices/floodlightCamera.ts
+ * @file packages/core/src/devices/floodlightCamera.ts
  * @description This file contains the FloodlightCamera class.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

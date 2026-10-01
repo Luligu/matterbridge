@@ -21,8 +21,6 @@
  * limitations under the License.
  */
 
-/* oxlint-disable typescript/no-unsafe-type-assertion */
-
 // @matter
 import type { MaybePromise } from '@matter/general';
 import { AttributeElement, CommandElement, EventElement, FieldElement } from '@matter/model';
@@ -188,24 +186,39 @@ export class Dishwasher extends MatterbridgeEndpoint {
  * DishwasherMode server that forwards mode changes and reacts to on/off state.
  */
 export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
-   * Initializes mode defaults and hooks on/off changes.
+   * Initializes the server and hooks on/off changes.
    */
   override initialize(): void {
+    // Validates SupportedModes (Matter 1.6.0 § 8.3.6.1 requires a Normal mode) and CurrentMode.
+    super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeDishwasherModeServer initialized: currentMode is ${this.state.currentMode}`);
-    this.state.currentMode = 2;
+    device.log.info(`MatterbridgeDishwasherModeServer: initialized: currentMode is ${this.state.currentMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.agent.get(MatterbridgeOnOffServer.with(OnOff.Feature.DeadFrontBehavior)).events.onOff$Changed, this.handleOnOffChange);
   }
 
-  // Dead Front OnOff Cluster
+  /**
+   * Sets CurrentMode to the Normal mode while the dishwasher is off (dead front).
+   *
+   * @param {boolean} onOff - Whether the dishwasher is on.
+   */
   protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(`MatterbridgeDishwasherModeServer: handling on/off change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.5.4.2: Begin dead front behavior when OnOff becomes FALSE.
     /* v8 ignore next */
     if (!onOff) {
-      device.log.info('OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific');
-      this.state.currentMode = 2;
+      device.log.notice(
+        `MatterbridgeDishwasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
+      // SupportedModes includes a Normal mode at startup (Matter 1.6.0 § 8.3.6.1), but a plugin can still replace the list at runtime.
+      const normalMode = this.state.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === DishwasherMode.ModeTag.Normal));
+      // Matter 1.6.0 § 1.5.4.2: Other clusters MAY use best-effort attribute values in dead front, so set CurrentMode to the Normal mode when there is one.
+      if (normalMode) this.state.currentMode = normalMode.mode;
     }
   }
 
@@ -213,31 +226,39 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
    * Handles the DishwasherMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster Specification §1.10.7.1.1 requires `UnsupportedMode` when `NewMode` does not
-   * match any `SupportedModes` entry. Section 1.10.7.2 requires an empty `StatusText` for `UnsupportedMode`.
+   * Matter 1.6 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
+   * any `SupportedModes` entry, `ChangeToModeResponse.Status` SHALL indicate `UnsupportedMode` and the
+   * `StatusText` field SHALL be included, either with a human readable string or an empty string.
    *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
    */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`ChangeToMode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeDishwasherModeServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('DishwasherMode.changeToMode', {
       command: 'changeToMode',
       request,
       cluster: DishwasherModeServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    if (supportedMode) {
-      device.log.info(`DishwasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label}`);
-      this.state.currentMode = request.newMode;
-      return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
-    } else {
-      device.log.error(`DishwasherModeServer: changeToMode called with unsupported mode ${request.newMode}`);
+    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
+    if (!supportedMode) {
+      device.log.error(
+        `MatterbridgeDishwasherModeServer: changeToMode called with unsupported mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
+    device.log.debug(
+      `MatterbridgeDishwasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
+    this.state.currentMode = request.newMode;
+    this.endpoint.emitCommand(DishwasherMode, 'changeToMode', request, this.context);
+    return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
 
@@ -281,6 +302,9 @@ type DishwasherAlarmBitmap = Required<DishwasherAlarm.Alarm>;
  * schema of the class it is called on.
  */
 class DishwasherAlarmBaseServer extends DishwasherAlarmServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   static override readonly schema = MatterbridgeDishwasherAlarmSchema;
 }
 
@@ -305,6 +329,9 @@ class DishwasherAlarmBaseServer extends DishwasherAlarmServer {
  * alarm only has to update `State`.
  */
 export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer.with(DishwasherAlarm.Feature.Reset) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Registers the reaction that emits the Notify event when the State attribute changes.
    *
@@ -418,13 +445,14 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       request,
       cluster: MatterbridgeDishwasherAlarmServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 1.15.7.1.1: Respond with FAILURE when a requested alarm cannot be reset because it is not supported.
     this.#assertAlarmsSupported(request.alarms, Status.Failure);
     // Matter 1.6.0 § 1.15.7.1.1: Reset every requested alarm to inactive in the State attribute.
     this.state.state = this.#clearAlarms(request.alarms);
+    this.endpoint.emitCommand(DishwasherAlarm, 'reset', request, this.context);
   }
 
   /**
@@ -443,7 +471,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       request,
       cluster: MatterbridgeDishwasherAlarmServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 1.15.7.2.1: Reject the command with INVALID_COMMAND when the Mask sets a bit of an alarm that is not supported.
@@ -452,5 +480,6 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
     this.state.mask = request.mask;
     // Matter 1.6.0 § 1.15.7.2.1: Then update the State attribute to reflect the alarm set enabled by the new Mask value.
     this.state.state = this.#applyMaskToState(request.mask);
+    this.endpoint.emitCommand(DishwasherAlarm, 'modifyEnabledAlarms', request, this.context);
   }
 }

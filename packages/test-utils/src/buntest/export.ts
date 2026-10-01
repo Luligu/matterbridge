@@ -1,5 +1,5 @@
 /**
- * @file packages/test-utils/src/buntest.ts
+ * @file packages/test-utils/src/buntest/export.ts
  * @description Re-export the Bun test utility API used in the repo's buntest directory.
  * @author Luca Liguori
  * @created 2026-08-23

@@ -1,8 +1,7 @@
 /**
- * @file vitest/devices/chime.test.ts
+ * @file packages/core/vitest/devices/chime.test.ts
  * @description This file contains the tests for the Chime device.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'ChimeDevice';

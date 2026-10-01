@@ -430,6 +430,40 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
+  test('should emit completed ClosureDimension commands after awaited plugin forwarding', async () => {
+    const observed = createClosurePanelTestEndpoint('Panel Observable', 'CP-OBS', 'lift');
+    await addDevice(server, observed);
+    const order: string[] = [];
+    const requests: unknown[] = [];
+    for (const command of ['setTarget', 'step'] as const) {
+      observed.addCommandHandler(`ClosureDimension.${command}`, async (data) => {
+        expect(data.endpoint).toBe(observed);
+        expect(data.context).toBeDefined();
+        await Promise.resolve();
+        order.push(`forwarded:${command}`);
+      });
+      observed.subscribeCommand(ClosureDimension, command, (data) => {
+        expect(data.context).toBeDefined();
+        requests.push(data.request);
+        order.push(`emitted:${command}`);
+      });
+    }
+    const request = { position: 3000 };
+    const step = { direction: ClosureDimension.StepDirection.Increase, numberOfSteps: 2 };
+    await observed.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', request);
+    expect(observed.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 3000 });
+    await observed.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', step);
+    expect(observed.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 200 });
+    expect(requests).toEqual([request, step]);
+    expect(order).toEqual(['forwarded:setTarget', 'emitted:setTarget', 'forwarded:step', 'emitted:step']);
+    order.length = 0;
+    await expect(observed.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', {})).rejects.toMatchObject({
+      code: Status.InvalidCommand,
+      message: `MatterbridgeClosureDimensionServer.setTarget: requires at least one of position, latch, or speed to be present (endpoint ${observed.maybeId}.${observed.maybeNumber}) (code ${Status.InvalidCommand})`,
+    });
+    expect(order).toEqual(['forwarded:setTarget']);
+  });
+
   test('start the server node', async () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();

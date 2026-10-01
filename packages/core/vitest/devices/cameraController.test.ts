@@ -1,5 +1,5 @@
 /**
- * @file vitest/devices/cameraController.test.ts
+ * @file packages/core/vitest/devices/cameraController.test.ts
  * @description This file contains the tests for the CameraController device.
  * @author Luca Liguori
  */

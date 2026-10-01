@@ -1,6 +1,6 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.0
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.4
 ---
 
 # Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
@@ -38,6 +38,7 @@ Checks:
 - Follow local variables and simple helper methods when needed so multiline calls, template literals, and indirectly constructed error messages are not missed.
 - Do not accept a missing or abbreviated server name, text before the server name, a prefix that does not match the enclosing server class name exactly, a method segment that does not match the enclosing method name exactly, a method segment not separated from the server name by a single dot, a prefix whose colon and space separator is missing so the prefix runs into the message text, or an uppercase first letter immediately after the prefix's colon and space (for example `MatterbridgeEnergyEvseServer: Disable charging` is a violation; `MatterbridgeEnergyEvseServer: disable charging` is compliant, and `MatterbridgeWebRtcTransportProviderServer.solicitOffer requires at least one stream` is a violation because it has no colon and space separator; `MatterbridgeWebRtcTransportProviderServer.solicitOffer: requires at least one stream` is compliant).
 - Do not accept alternate endpoint formats, missing parentheses, a colon separator, `endpoint.id`, `endpoint.number`, messages containing only one endpoint component, or any text after the endpoint fragment's closing parenthesis.
+- Accept `(endpoint ${endpointLabel})` only in a log written from a deferred callback (a timer, an un-awaited promise or similar) that can run after the command's behavior context has exited, where `endpointLabel` is a local `const endpointLabel = \`${this.endpoint.maybeId}.${this.endpoint.maybeNumber}\`` captured synchronously before the deferral, with a comment explaining why. Report a label used in a synchronous log, a label built any other way, or a captured label without that comment as a violation.
 - Do not require the fragment in a log or thrown value that has no textual message, but report that case separately for manual review.
 - Ignore comments, JSDoc examples, tests, generated output, and imported server implementations.
 
@@ -66,6 +67,7 @@ Plugin forwarding contract:
 - Do not allow request validation, assertions, conditionals, early returns, thrown errors, state reads used for decisions, state changes, event emission, additional logging, or other side effects between the command-entry log and completion of the awaited forwarding call.
 - Verify all validation and state mutation occur only after the awaited forwarding call.
 - Report a missing command-entry log, command-entry log at a level other than `info`, missing forwarding call, non-awaited forwarding call, or any disallowed operation before forwarding completes as a plugin forwarding contract violation.
+- Exempt from this contract the servers whose cluster has no entry in the `CommandHandlers` type of [matterbridgeEndpointCommandHandler.ts](../../../packages/core/src/matterbridgeEndpointCommandHandler.ts), currently Chime, Camera AV Stream Management, Camera AV Settings User Level Management, WebRTC Transport Provider and WebRTC Transport Requestor. They reach the plugin only through the command observable, after validation, so they have no `executeHandler(...)` call; they must still log, validate and emit the command observable as required by the other sections. Do not report the missing forwarding call for these servers, and recheck the `CommandHandlers` type before applying the exemption to any other server.
 
 Command observable emission:
 
@@ -78,9 +80,17 @@ Command observable emission:
 - Pass the cluster as the `ClusterType` exported by `@matter/types/clusters/<cluster>`, for example `OnOff` or `BooleanStateConfiguration`. Do not accept `<Cluster>.Cluster`, a behavior type, a behavior id such as `OnOffServer.id`, or a cluster name string: the `ClusterType` form keeps the command name and the request payload checked against the cluster definition.
 - Pass the exact command name of the enclosing handler, the request payload, and `this.context`. Use `{}` as the payload for commands that take no request.
 - Verify the call goes through the narrowed `this.endpoint`. Do not accept the `emitCommand` helper imported from [matterbridgeEndpointHelpers.ts](../../../packages/core/src/matterbridgeEndpointHelpers.ts) in a behavior that module imports, because the value import closes an import cycle.
-- Verify the emission comes after the awaited plugin forwarding, after every validation, and after every state update, including after the `await super.<command>()` call when the handler delegates to the base implementation. No statement may follow it.
+- Verify the emission comes after the awaited plugin forwarding, after every validation, and after every state update, including after the `await super.<command>()` call when the handler delegates to the base implementation. No statement may follow it, except a final `return` of the command response in handlers that return one.
+- That `return` may only hand back the response: an object literal, or a value already computed before the emission, such as `const response = await super.<command>(request);` returned after emitting. It must not call methods, read or change state, log, or have any other side effect. Do not accept a `try`/`finally` block used only to defer the emission past the `return`; emit first, then return.
+
+  ```typescript
+  this.state.currentMode = request.newMode;
+  this.endpoint.emitCommand(OvenMode, 'changeToMode', request, this.context);
+  return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  ```
+
 - Do not require an emission on a path that rejects the command with a Matter status error, discards it by cluster conformance, or returns early, for example the `MATTERBRIDGE_CHIP_TEST` branch that gates the plugin forwarder off. The observable reports commands that completed.
-- Report a missing emission, an emission that is not the last call, an emission placed before validation or state updates, a cluster passed in any form other than the `ClusterType`, a command name that does not match the enclosing handler, a missing `this.context`, or a direct helper import as a command observable emission violation.
+- Report a missing emission, an emission that is not the last call (a final side-effect-free `return` of the command response is allowed), an emission placed before validation or state updates, a cluster passed in any form other than the `ClusterType`, a command name that does not match the enclosing handler, a missing `this.context`, or a direct helper import as a command observable emission violation.
 
 Matter specification comments:
 
@@ -91,6 +101,7 @@ Matter specification comments:
   ```
 
 - Use the applicable paragraph from the authoritative Matter 1.6.0 specifications under [chip/1.6.0/specs](../../../chip/1.6.0/specs). Do not guess a paragraph number or copy a reference from unrelated code.
+- Read only the Markdown specifications (`Matter-1.6-*-Specification.md`, mainly `Matter-1.6-Application-Cluster-Specification.md`). Never open the `.html`, `.pdf` or `_files` copies. Locate a section with `grep -n` on its heading, for example `grep -n '^#\+ 1\.5\.7\.4\.3\. ' chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.md` or `grep -n '^#\+ .*Effect on Receipt' ...`, then read only the lines of that section instead of the whole file.
 - Keep each comment concise and specific to the validation or state update immediately below it. State the observable requirement, including the required status code for validation failures when the specification defines one.
 - Add separate comments when adjacent state assignments enforce different normative requirements. Do not use one generic comment to cover multiple assignments with distinct effects.
 - Place validation and state-update comments both where the rule is implemented and immediately before each call to a helper that performs the validation or state update. At each call site, use the paragraph for that specific command rather than a combined reference covering other callers.

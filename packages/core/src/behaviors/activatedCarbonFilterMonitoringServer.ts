@@ -24,7 +24,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ActivatedCarbonFilterMonitoringServer } from '@matter/node/behaviors/activated-carbon-filter-monitoring';
-import type { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
+import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
@@ -39,6 +39,9 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
   ResourceMonitoring.Feature.Warning,
   ResourceMonitoring.Feature.ReplacementProductList,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Resets filter condition to 100%.
    */
@@ -50,14 +53,16 @@ export class MatterbridgeActivatedCarbonFilterMonitoringServer extends Activated
       request: {},
       cluster: MatterbridgeActivatedCarbonFilterMonitoringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ActivatedCarbonFilterMonitoring)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 2.8.7.1: Reset Condition and ChangeIndicator to indicate full resource availability, as initially configured.
-    this.state.condition = 100;
+    // Matter 1.6.0 § 2.8.7.1 and § 2.8.6.2: Reset Condition to full resource availability, which is 100 when DegradationDirection is Down and 0 when it is Up.
+    this.state.condition = this.state.degradationDirection === ResourceMonitoring.DegradationDirection.Up ? 0 : 100;
+    // Matter 1.6.0 § 2.8.7.1: Reset ChangeIndication to OK, indicating readiness for use.
     this.state.changeIndication = ResourceMonitoring.ChangeIndication.Ok;
     // Matter 1.6.0 § 2.8.7.1: Invocation of this command may update LastChangedTime based on the server's clock.
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000);
     device.log.debug(`MatterbridgeActivatedCarbonFilterMonitoringServer: resetCondition called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.endpoint.emitCommand(ActivatedCarbonFilterMonitoring, 'resetCondition', {}, this.context);
   }
 }

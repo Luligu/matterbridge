@@ -1,8 +1,7 @@
 /**
- * @file vitest/devices/videoDoorbell.test.ts
+ * @file packages/core/vitest/devices/videoDoorbell.test.ts
  * @description This file contains the tests for the VideoDoorbell device.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'VideoDoorbellDevice';
