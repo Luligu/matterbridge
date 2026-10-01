@@ -89,6 +89,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [electricalUtilityMeter]: Narrow commodity server endpoints and forward command context and completed command observables.
+
 - [closure]: Correct ClosureControl and ClosureDimension server endpoint context, command emissions and specification comments.
 
 - [evse]: Emit completed EVSE commands to subscribers and return empty status text for unsupported modes.

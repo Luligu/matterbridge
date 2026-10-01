@@ -3,7 +3,7 @@
  * @description This file contains the ElectricalUtilityMeter class.
  * @author Luca Liguori
  * @created 2026-08-15
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -33,7 +33,7 @@ import { MeterIdentificationServer } from '@matter/node/behaviors/meter-identifi
 import { StatusResponse } from '@matter/types';
 import type { EndpointNumber } from '@matter/types';
 import type { CommodityMetering } from '@matter/types/clusters/commodity-metering';
-import type { CommodityPrice } from '@matter/types/clusters/commodity-price';
+import { CommodityPrice } from '@matter/types/clusters/commodity-price';
 import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import type { ElectricalGridConditions } from '@matter/types/clusters/electrical-grid-conditions';
 import type { MeterIdentification } from '@matter/types/clusters/meter-identification';
@@ -59,6 +59,9 @@ import { getSemtag } from '../matterbridgeEndpointHelpers.js';
  * event is otherwise spec-conformant to emit.
  */
 export class MatterbridgeCommodityPriceServer extends CommodityPriceServer.enable({ events: { priceChange: true } }) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Returns the endpoint's own already-published `currentPrice` attribute as the detailed price.
    *
@@ -75,9 +78,13 @@ export class MatterbridgeCommodityPriceServer extends CommodityPriceServer.enabl
       request,
       cluster: CommodityPriceServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof CommodityPrice)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
-    return { currentPrice: this.state.currentPrice };
+    // Matter 1.6.0 § 9.9.7.2.1: Return the current price, or null when it is unknown.
+    const response = { currentPrice: this.state.currentPrice };
+    this.endpoint.emitCommand(CommodityPrice, 'getDetailedPriceRequest', request, this.context);
+    return response;
   }
 }
 
@@ -90,6 +97,9 @@ export class MatterbridgeCommodityPriceServer extends CommodityPriceServer.enabl
  * matter.js does not yet provide a default implementation of these commands (they throw "unimplemented" by default).
  */
 export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.with(CommodityTariff.Feature.Pricing) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Looks up the requested tariff component (and the label/day entries of the tariff period that references it)
    * among the values already published on `tariffComponents`/`tariffPeriods`.
@@ -107,7 +117,8 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
       request,
       cluster: CommodityTariffServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof CommodityTariff)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     const tariffComponent = (this.state.tariffComponents ?? []).find((component) => component.tariffComponentId === request.tariffComponentId);
     // Matter 1.6.0 § 9.12.7.1.2: Reject GetTariffComponent with NOT_FOUND if the requested TariffComponentID is unavailable.
@@ -117,7 +128,10 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
       );
     }
     const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIDs.includes(request.tariffComponentId));
-    return { label: period?.label ?? null, dayEntryIDs: period?.dayEntryIDs ?? [], tariffComponent };
+    // Matter 1.6.0 § 9.12.7.1.2: Return information about the available requested tariff component.
+    const response = { label: period?.label ?? null, dayEntryIDs: period?.dayEntryIDs ?? [], tariffComponent };
+    this.endpoint.emitCommand(CommodityTariff, 'getTariffComponent', request, this.context);
+    return response;
   }
 
   /**
@@ -136,7 +150,8 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
       request,
       cluster: CommodityTariffServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof CommodityTariff)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     const dayEntry = (this.state.dayEntries ?? []).find((entry) => entry.dayEntryId === request.dayEntryId);
     // Matter 1.6.0 § 9.12.7.3.2: Reject GetDayEntry with NOT_FOUND if the requested DayEntryID is unavailable.
@@ -145,7 +160,10 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
         `MatterbridgeCommodityTariffServer: no DayEntry with id ${request.dayEntryId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    return { dayEntry };
+    // Matter 1.6.0 § 9.12.7.3.2: Return the available requested day entry.
+    const response = { dayEntry };
+    this.endpoint.emitCommand(CommodityTariff, 'getDayEntry', request, this.context);
+    return response;
   }
 }
 
@@ -154,7 +172,10 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
  * events, so there is no default behavior to override — this class exists to keep every cluster on this endpoint
  * behind its own Matterbridge-prefixed server, matching the other Commodity* servers above.
  */
-export class MatterbridgeCommodityMeteringServer extends CommodityMeteringServer {}
+export class MatterbridgeCommodityMeteringServer extends CommodityMeteringServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+}
 
 /**
  * Options for {@link ElectricalUtilityMeter}. See Application Cluster Specification § 9.10 (Meter Identification).

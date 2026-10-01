@@ -390,6 +390,62 @@ describe('Matterbridge ' + NAME, () => {
     await expect(tariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 }))).rejects.toThrow(/no DayEntry with id 1/);
   });
 
+  test('should emit completed commodity commands after awaited plugin forwarding', async () => {
+    const observedMeter = new ElectricalUtilityMeter('Utility Observable', 'EUM-OBS');
+    const observed = observedMeter.addElectricalEnergyTariff('ObservedTariff', {
+      tariffLabel: 'Standard',
+      currentPrice: explicitCurrentPrice,
+      tariffComponents,
+      tariffPeriods,
+      dayEntries,
+    });
+    await addDevice(server, observedMeter);
+    const order: string[] = [];
+    const requests: unknown[] = [];
+    observed.addCommandHandler('CommodityPrice.getDetailedPriceRequest', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:price');
+    });
+    observed.subscribeCommand(CommodityPrice, 'getDetailedPriceRequest', (data) => {
+      expect(data.context).toBeDefined();
+      requests.push(data.request);
+      order.push('emitted:price');
+    });
+    for (const command of ['getTariffComponent', 'getDayEntry'] as const) {
+      observed.addCommandHandler(`CommodityTariff.${command}`, async (data) => {
+        expect(data.endpoint).toBe(observed);
+        expect(data.context).toBeDefined();
+        await Promise.resolve();
+        order.push(`forwarded:${command}`);
+      });
+      observed.subscribeCommand(CommodityTariff, command, (data) => {
+        expect(data.context).toBeDefined();
+        requests.push(data.request);
+        order.push(`emitted:${command}`);
+      });
+    }
+    const priceRequest = { details: {} };
+    expect(await observed.act(async (agent) => agent.get(MatterbridgeCommodityPriceServer).getDetailedPriceRequest(priceRequest))).toMatchObject({
+      currentPrice: explicitCurrentPrice,
+    });
+    expect(await observed.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }))).toEqual({
+      label: 'Standard',
+      dayEntryIDs: [1],
+      tariffComponent: tariffComponents[0],
+    });
+    expect(await observed.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 }))).toEqual({ dayEntry: dayEntries[0] });
+    expect(requests).toEqual([priceRequest, { tariffComponentId: 1 }, { dayEntryId: 1 }]);
+    expect(order).toEqual(['forwarded:price', 'emitted:price', 'forwarded:getTariffComponent', 'emitted:getTariffComponent', 'forwarded:getDayEntry', 'emitted:getDayEntry']);
+    order.length = 0;
+    await expect(observed.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 99 }))).rejects.toThrow(
+      /no TariffComponent with id 99/,
+    );
+    await expect(observed.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 99 }))).rejects.toThrow(/no DayEntry with id 99/);
+    expect(order).toEqual(['forwarded:getTariffComponent', 'forwarded:getDayEntry']);
+  });
+
   test('start the server node', async () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();
