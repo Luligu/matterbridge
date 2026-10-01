@@ -226,56 +226,40 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
     supportedMaps?: ServiceArea.Map[],
     progress?: ServiceArea.Progress[],
   ): this {
-    const defaultSupportedAreas: ServiceArea.Area[] = supportedAreas ?? [
-      {
-        areaId: 1,
-        mapId: null,
-        areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: CommonAreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
-      },
-      {
-        areaId: 2,
-        mapId: null,
-        areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: CommonAreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
-      },
-      {
-        areaId: 3,
-        mapId: null,
-        areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: CommonAreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
-      },
-      {
-        areaId: 4,
-        mapId: null,
-        areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: CommonAreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
-      },
-    ];
-    const defaultSelectedAreas = selectedAreas ?? []; // Indicates the set of areas where the device SHOULD attempt to operate. If this attribute is empty, the device is not constrained to operate in any specific areas.
-    const defaultCurrentArea = currentArea !== undefined ? currentArea : 1; // If not null, the value of this attribute shall match the AreaID field of an entry on the SupportedAreas attribute’s list. A null value indicates that the device is currently unable to provide this information.
-    const defaultSupportedMaps = supportedMaps ?? []; // If empty, that indicates that the device is currently unable to provide this information
-    /**
-     * Indicates the estimated Epoch time for completing operating at the area indicated by the CurrentArea attribute, in seconds. A value of 0 means that the operation has completed.
-     * When this attribute is null, that represents that there is no time currently defined until operation completion.
-     * This attribute SHALL be null if the CurrentArea attribute is null.
-     */
-    const defaultEstimatedEndTime = null;
-    // The ProgressReporting (PROG) feature, and thus the progress attribute, is only enabled when the progress option is explicitly provided (even as an empty list).
-    if (progress !== undefined) {
-      this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps, ServiceArea.Feature.ProgressReporting), {
-        supportedAreas: defaultSupportedAreas,
-        selectedAreas: defaultSelectedAreas,
-        currentArea: defaultCurrentArea,
-        supportedMaps: defaultSupportedMaps,
-        estimatedEndTime: defaultEstimatedEndTime,
-        progress,
-      });
-    } else {
-      this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps), {
-        supportedAreas: defaultSupportedAreas,
-        selectedAreas: defaultSelectedAreas,
-        currentArea: defaultCurrentArea,
-        supportedMaps: defaultSupportedMaps,
-        estimatedEndTime: defaultEstimatedEndTime,
-      });
-    }
+    this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps, ...(progress !== undefined ? [ServiceArea.Feature.ProgressReporting] : [])), {
+      supportedAreas: supportedAreas ?? [
+        {
+          areaId: 1,
+          mapId: null,
+          areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: CommonAreaNamespaceTag.LivingRoom.tag }, landmarkInfo: null },
+        },
+        {
+          areaId: 2,
+          mapId: null,
+          areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: CommonAreaNamespaceTag.Kitchen.tag }, landmarkInfo: null },
+        },
+        {
+          areaId: 3,
+          mapId: null,
+          areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: CommonAreaNamespaceTag.Bedroom.tag }, landmarkInfo: null },
+        },
+        {
+          areaId: 4,
+          mapId: null,
+          areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: CommonAreaNamespaceTag.Bathroom.tag }, landmarkInfo: null },
+        },
+      ],
+      selectedAreas: selectedAreas ?? [], // Indicates the set of areas where the device SHOULD attempt to operate. If this attribute is empty, the device is not constrained to operate in any specific areas.
+      currentArea: currentArea !== undefined ? currentArea : 1, // If not null, the value of this attribute shall match the AreaID field of an entry on the SupportedAreas attribute’s list. A null value indicates that the device is currently unable to provide this information.
+      supportedMaps: supportedMaps ?? [], // If empty, that indicates that the device is currently unable to provide this information
+      /**
+       * Indicates the estimated Epoch time for completing operating at the area indicated by the CurrentArea attribute, in seconds. A value of 0 means that the operation has completed.
+       * When this attribute is null, that represents that there is no time currently defined until operation completion.
+       * This attribute SHALL be null if the CurrentArea attribute is null.
+       */
+      estimatedEndTime: null,
+      progress, // The progress of the device in each area, if ProgressReporting is enabled.
+    });
     return this;
   }
 
