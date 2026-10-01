@@ -93,6 +93,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [oven]: `Stop` while Stopped and `Start` while Running now respond NoError and take no further action (Matter 1.6.0 § 1.14.6.2 and § 1.14.6.3).
 - [oven]: `MatterbridgeOvenModeServer` now runs the OvenModeServer initialization, which requires a Bake mode in SupportedModes (Matter 1.6.0 § 8.11.6.1).
 - [oven]: Add the endpoint context to all Oven server logs, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [laundry-washer]: Normalize server endpoint messages and emit successful mode changes after plugin forwarding and state updates.
+- [laundry-washer]: `MatterbridgeLaundryWasherModeServer` now runs the LaundryWasherModeServer initialization, which requires a Normal mode in SupportedModes (Matter 1.6.0 § 8.5.6.1).
+- [laundry-washer]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.
+- [laundry-dryer]: Add `MatterbridgeLaundryDryerControlsServer`, which rejects a SelectedDrynessLevel not in SupportedDrynessLevels with CONSTRAINT_ERROR (Matter 1.6.0 § 8.9.5.2).
 - [dgram]: Fix `encodeDnsName` in `mdns.ts` writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.
 - [frontend]: Fix React Compiler `react/immutability` rule flags.
 - [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.

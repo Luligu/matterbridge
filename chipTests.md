@@ -403,9 +403,13 @@ Dishwasher clusters:
 
 ## Endpoint 1306
 
-Laundry Dryer cluster:
+Laundry Dryer clusters:
 
-- Laundry Dryer Controls
+- OnOff (DeadFrontBehavior)
+- LaundryWasherMode
+- LaundryDryerControls
+- TemperatureControl (TemperatureLevel)
+- OperationalState
 
 The local `Test_TC_DRYERCTRL_2_1.yaml` patch omits the upstream write of undefined `DrynessLevelEnum` value `4`,
 the same class of issue as the WASHERCTRL patch above: chip-tool rejects that value during local command encoding

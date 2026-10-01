@@ -1,14 +1,26 @@
-Chip tests run started at 2026-10-01T11:22:30.495Z
+Chip tests run started at 2026-10-01T11:42:59.029Z
 
-✅ OvenMode attributes on Oven (TC_OTCCM_1_2.py)
-✅ OvenMode ChangeToMode on Oven (Test_TC_OTCCM_2_1)
-✅ OvenCavityOperationalState attributes on Oven (TC_OVENOPSTATE_2_1.py)
-✅ OvenCavityOperationalState Start and Stop commands on Oven (TC_OVENOPSTATE_2_2.py)
-⏭️ OvenCavityOperationalState OperationalError event on Oven (TC_OVENOPSTATE_2_4.py)
-   ↳ Not currently automatable: the demo endpoint has no vendor action for injecting an Oven Cavity fault, so the test harness cannot trigger and observe the OperationalError event scenario.
-✅ OvenCavityOperationalState OperationCompletion event on Oven (TC_OVENOPSTATE_2_5.py)
-⏭️ OvenCavityOperationalState CountdownTime reporting on Oven (TC_OVENOPSTATE_2_6.py)
-   ↳ Not applicable: endpoint 13091 does not implement the optional CountdownTime attribute required by this test. The upstream Matter 1.6 test also ignores its configured endpoint and hardcodes endpoint 1.
+✅ DeadFrontOnOff attributes on LaundryWasher (Test_TC_OO_2_1)
+✅ DeadFrontOnOff primary functionality on LaundryWasher (Test_TC_OO_2_2)
+✅ LaundryWasherMode attributes on LaundryWasher (TC_LWM_1_2.py)
+✅ LaundryWasherMode ChangeToMode on LaundryWasher (Test_TC_LWM_2_1)
+✅ LaundryWasherControls Spin attributes on LaundryWasher (TC_WASHERCTRL_2_1.py)
+✅ LaundryWasherControls Rinse attributes on LaundryWasher (Test_TC_WASHERCTRL_2_2)
+✅ NumberTemperatureControl attributes on LaundryWasherNumberTemperature (Test_TC_TCTL_2_1)
+✅ NumberTemperatureControl optional attributes on LaundryWasherNumberTemperature (Test_TC_TCTL_2_2)
+✅ LevelTemperatureControl attributes on LaundryWasher (TC_TCTL_2_3.py)
+✅ LaundryDryerControls optional dryness attributes on LaundryDryer (Test_TC_DRYERCTRL_2_1)
+✅ DeadFrontOnOff attributes on LaundryDryer (Test_TC_OO_2_1)
+✅ DeadFrontOnOff primary functionality on LaundryDryer (Test_TC_OO_2_2)
+✅ LaundryWasherMode attributes on LaundryDryer (TC_LWM_1_2.py)
+✅ LaundryWasherMode ChangeToMode on LaundryDryer (Test_TC_LWM_2_1)
+✅ LevelTemperatureControl attributes on LaundryDryer (TC_TCTL_2_3.py)
+✅ OperationalState attributes on LaundryDryer (TC_OPSTATE_2_1.py)
+✅ OperationalState Start/Stop on LaundryDryer (TC_OPSTATE_2_2.py)
+✅ OperationalState Pause/Resume on LaundryDryer (TC_OPSTATE_2_3.py)
+✅ OperationalState OperationalError event on LaundryDryer (TC_OPSTATE_2_4.py)
+✅ OperationalState OperationCompletion event on LaundryDryer (TC_OPSTATE_2_5.py)
+✅ OperationalState CountdownTime reporting on LaundryDryer (TC_OPSTATE_2_6.py)
 
-Summary: 5/5 tests passed (2 skipped).
-Chip tests run ended at 2026-10-01T11:22:37.454Z (total duration 7s)
+Summary: 21/21 tests passed.
+Chip tests run ended at 2026-10-01T11:43:56.661Z (total duration 58s)

@@ -37,6 +37,7 @@ import { LaundryWasher, MatterbridgeLaundryWasherControlsServer, MatterbridgeLau
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { laundryWasher } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { CommandHandlerData } from '../../src/matterbridgeEndpointCommandHandler.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -89,7 +90,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add a laundry washer device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer initialized: currentMode is 2`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`,
@@ -222,15 +223,50 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['laundryWasherMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('onOff', 'off', {}); // Dead Front state
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.NOTICE,
+      `MatterbridgeLaundryWasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${device.id}.${device.number})`,
+    );
+    const order: string[] = [];
+    let modeServer: MatterbridgeLaundryWasherModeServer | undefined;
+    const commandListener = vi.fn(() => {
+      expect(modeServer?.state.currentMode).toBe(1);
+      order.push('emitted');
+    });
+    const pluginHandler = vi.fn(async (data: CommandHandlerData<'LaundryWasherMode.changeToMode'>) => {
+      const { attributes, endpoint } = data;
+      expect(attributes.currentMode).toBe(2);
+      expect(endpoint).toBe(device);
+      expect(data).toHaveProperty('context');
+      expect(commandListener).not.toHaveBeenCalled();
+      await Promise.resolve();
+      order.push('forwarded');
+    });
+    device.addCommandHandler('LaundryWasherMode.changeToMode', pluginHandler);
+    device.subscribeCommand(LaundryWasherMode, 'changeToMode', commandListener);
     vi.clearAllMocks();
     const unsupportedResponse = await device.act(async (agent) => await agent.get(MatterbridgeLaundryWasherModeServer).changeToMode({ newMode: 0 }));
     expect(unsupportedResponse).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode 0`);
+    expect(commandListener).not.toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode 0 (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLaundryWasherModeServer: changeToMode called with mode 1 => Delicate`);
+    order.length = 0;
+    await device.act(async (agent) => {
+      modeServer = agent.get(MatterbridgeLaundryWasherModeServer);
+      expect(await modeServer.changeToMode({ newMode: 1 })).toEqual({ status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' });
+    });
+    expect(commandListener).toHaveBeenCalledTimes(1);
+    expect(order).toEqual(['forwarded', 'emitted']);
+    expect(device.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(1);
+    device.commandHandler.removeHandler('LaundryWasherMode.changeToMode', pluginHandler);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeLaundryWasherModeServer: changeToMode called with mode 1 => Delicate (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('validate SpinSpeedCurrent writes', async () => {
@@ -291,7 +327,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add a laundry washer device with number temperature control', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer initialized: currentMode is 2`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
@@ -315,6 +351,38 @@ describe('Matterbridge ' + NAME, () => {
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 5000 });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
+  });
+
+  test('dead front sets CurrentMode to the Normal mode of custom SupportedModes', async () => {
+    const custom = new LaundryWasher('Laundry Washer Custom Modes', 'LW654321', {
+      currentMode: 1,
+      supportedModes: [
+        { label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] },
+        { label: 'Normal', mode: 5, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
+      ],
+    });
+    expect(await addDevice(server, custom)).toBeTruthy();
+    expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(1);
+    await custom.invokeBehaviorCommand('onOff', 'off', {});
+    expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(5);
+
+    // A plugin replaces SupportedModes at runtime without a Normal mode: dead front keeps CurrentMode unchanged
+    await custom.invokeBehaviorCommand('onOff', 'on', {});
+    await custom.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 1 });
+    await custom.setAttribute(LaundryWasherMode.id, 'supportedModes', [{ label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] }]);
+    await custom.invokeBehaviorCommand('onOff', 'off', {});
+    expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(1);
+    expect(await deleteDevice(server, custom)).toBeTruthy();
+  });
+
+  test('reject SupportedModes without a Normal mode at initialization', async () => {
+    const invalid = new LaundryWasher('Laundry Washer No Normal', 'LW000000', {
+      currentMode: 1,
+      supportedModes: [{ label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] }],
+    });
+    expect(await addDevice(server, invalid)).toBeFalsy();
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device LaundryWasherNoNormal-LW000000'));
+    loggerErrorSpy.mockClear();
   });
 
   test('start the server node', async () => {

@@ -2685,6 +2685,48 @@
       "comment": "Patched locally to omit the undefined DrynessLevelEnum value 4 write, which CHIP rejects during local command encoding before it reaches the DUT; all attribute, supported-list, valid-write, readback, and applicable state coverage remains.",
       "args": ["--PICS /root/laundry-dryer-controls.pics"]
     },
+    { "name": "DeadFrontOnOff attributes on LaundryDryer", "test": "Test_TC_OO_2_1", "endpoint": 1306, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "DeadFrontOnOff primary functionality on LaundryDryer", "test": "Test_TC_OO_2_2", "endpoint": 1306, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "LaundryWasherMode attributes on LaundryDryer", "test": "TC_LWM_1_2.py", "endpoint": 1306, "args": ["--PICS /root/laundry-washer.pics"] },
+    { "name": "LaundryWasherMode ChangeToMode on LaundryDryer", "test": "Test_TC_LWM_2_1", "endpoint": 1306, "args": ["--PICS /root/laundry-washer.pics"] },
+    { "name": "LevelTemperatureControl attributes on LaundryDryer", "test": "TC_TCTL_2_3.py", "endpoint": 1306, "args": ["--PICS /root/temperature-control-level.pics"] },
+    {
+      "name": "OperationalState attributes on LaundryDryer",
+      "test": "TC_OPSTATE_2_1.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "OperationalState Start/Stop on LaundryDryer",
+      "test": "TC_OPSTATE_2_2.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState Pause/Resume on LaundryDryer",
+      "test": "TC_OPSTATE_2_3.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState OperationalError event on LaundryDryer",
+      "test": "TC_OPSTATE_2_4.py",
+      "endpoint": 1306,
+      "resetBefore": true,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.OPSTATE.ErrorEventGen:1"]
+    },
+    {
+      "name": "OperationalState OperationCompletion event on LaundryDryer",
+      "test": "TC_OPSTATE_2_5.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
+    },
+    {
+      "name": "OperationalState CountdownTime reporting on LaundryDryer",
+      "test": "TC_OPSTATE_2_6.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
     {
       "name": "OffOnlyOnOff attributes on Cooktop",
       "test": "Test_TC_OO_2_1",
