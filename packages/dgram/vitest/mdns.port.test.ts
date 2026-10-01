@@ -8,9 +8,8 @@ import dgram, { type SocketType } from 'node:dgram';
 
 import { isFirstOnPort } from '../src/mdns.js';
 
-// No module is mocked: the tests bind real sockets on random high ports, so the mDNS port of the host is never touched.
-
-let nextPort = 40000 + Math.floor(Math.random() * 20000);
+// No module is mocked: the tests bind real sockets on ports assigned by the OS, so the mDNS port of the host is never touched.
+// A random port is not used: Windows reserves whole port ranges (Hyper-V, WinNAT) where any bind fails.
 
 /**
  * Binds a socket with address reuse on a port, as an mDNS responder (mDNSResponder, avahi) does on 5353.
@@ -21,7 +20,10 @@ let nextPort = 40000 + Math.floor(Math.random() * 20000);
  */
 async function bindResponder(socketType: SocketType, port: number): Promise<dgram.Socket> {
   const socket = dgram.createSocket({ type: socketType, reuseAddr: true });
-  await new Promise<void>((resolve) => socket.bind(port, socketType === 'udp4' ? '0.0.0.0' : '::', resolve));
+  await new Promise<void>((resolve, reject) => {
+    socket.once('error', reject); // Fail fast with the bind error instead of hanging until the test timeout
+    socket.bind(port, socketType === 'udp4' ? '0.0.0.0' : '::', resolve);
+  });
   return socket;
 }
 
@@ -35,21 +37,34 @@ async function close(socket: dgram.Socket): Promise<void> {
   await new Promise<void>((resolve) => socket.close(() => resolve()));
 }
 
+/**
+ * Gets a free port from the OS, by binding a socket on port 0 and closing it.
+ *
+ * @param {SocketType} socketType - The socket type.
+ * @returns {Promise<number>} The free port.
+ */
+async function freePort(socketType: SocketType): Promise<number> {
+  const socket = await bindResponder(socketType, 0);
+  const { port } = socket.address();
+  await close(socket);
+  return port;
+}
+
 describe('isFirstOnPort', () => {
   for (const socketType of ['udp4', 'udp6'] as const) {
     it(`should return true when no socket is bound to the port (${socketType})`, async () => {
-      expect(await isFirstOnPort(socketType, nextPort++)).toBe(true);
+      expect(await isFirstOnPort(socketType, await freePort(socketType))).toBe(true);
     });
 
     it(`should return false when another socket is bound to the port, even with address reuse (${socketType})`, async () => {
-      const port = nextPort++;
+      const port = await freePort(socketType);
       const responder = await bindResponder(socketType, port);
       expect(await isFirstOnPort(socketType, port)).toBe(false);
       await close(responder);
     });
 
     it(`should leave the port free for the caller after the check (${socketType})`, async () => {
-      const port = nextPort++;
+      const port = await freePort(socketType);
       expect(await isFirstOnPort(socketType, port)).toBe(true);
       const own = await bindResponder(socketType, port); // Fails with EADDRINUSE if the probe socket were still bound
       await close(own);
