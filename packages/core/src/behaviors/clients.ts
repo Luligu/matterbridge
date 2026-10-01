@@ -1,5 +1,5 @@
 /**
- * @file src/behaviors/clients.ts
+ * @file packages/core/src/behaviors/clients.ts
  * @description This file contains helpers that wire required cluster client behaviors (Chime, WebRtcTransportRequestor, WebRtcTransportProvider) onto a MatterbridgeEndpoint.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

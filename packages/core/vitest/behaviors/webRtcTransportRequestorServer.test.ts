@@ -1,8 +1,7 @@
 /**
- * @file vitest/behaviors/webRtcTransportRequestorServer.test.ts
+ * @file packages/core/vitest/behaviors/webRtcTransportRequestorServer.test.ts
  * @description This file contains the tests for the MatterbridgeWebRtcTransportRequestorServer behavior.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'WebRtcTransportRequestorServerBehavior';

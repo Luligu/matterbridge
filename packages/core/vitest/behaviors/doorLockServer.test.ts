@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-// oxlint-disable vitest/no-commented-out-tests
+/* oxlint-disable vitest/no-commented-out-tests */
 
 const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;

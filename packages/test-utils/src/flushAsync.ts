@@ -1,5 +1,5 @@
 /**
- * @file packages/jest-utils/src/flushAsync.ts
+ * @file packages/test-utils/src/flushAsync.ts
  * @description This file contains the flushAsync helper.
  * @author Luca Liguori
  * @created 2026-04-19

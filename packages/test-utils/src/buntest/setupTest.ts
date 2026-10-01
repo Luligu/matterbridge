@@ -1,6 +1,6 @@
 /**
+ * @file packages/test-utils/src/buntest/setupTest.ts
  * @description This file contains the Bun Setup helpers.
- * @file buntest/bunSetupTest.ts
  * @author Luca Liguori
  * @created 2026-06-26
  * @version 1.0.0

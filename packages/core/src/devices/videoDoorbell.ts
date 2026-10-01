@@ -1,5 +1,5 @@
 /**
- * @file src/devices/videoDoorbell.ts
+ * @file packages/core/src/devices/videoDoorbell.ts
  * @description This file contains the VideoDoorbell class.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

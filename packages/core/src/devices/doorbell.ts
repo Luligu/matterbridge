@@ -1,5 +1,5 @@
 /**
- * @file src/devices/doorbell.ts
+ * @file packages/core/src/devices/doorbell.ts
  * @description This file contains the Doorbell class.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

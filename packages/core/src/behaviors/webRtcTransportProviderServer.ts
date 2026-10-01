@@ -1,5 +1,5 @@
 /**
- * @file src/behaviors/webRtcTransportProviderServer.ts
+ * @file packages/core/src/behaviors/webRtcTransportProviderServer.ts
  * @description This file contains the MatterbridgeWebRtcTransportProviderServer class of Matterbridge.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
