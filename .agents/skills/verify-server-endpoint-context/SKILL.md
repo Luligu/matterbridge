@@ -1,6 +1,6 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.0
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.1
 ---
 
 # Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
@@ -91,6 +91,7 @@ Matter specification comments:
   ```
 
 - Use the applicable paragraph from the authoritative Matter 1.6.0 specifications under [chip/1.6.0/specs](../../../chip/1.6.0/specs). Do not guess a paragraph number or copy a reference from unrelated code.
+- Read only the Markdown specifications (`Matter-1.6-*-Specification.md`, mainly `Matter-1.6-Application-Cluster-Specification.md`). Never open the `.html`, `.pdf` or `_files` copies. Locate a section with `grep -n` on its heading, for example `grep -n '^#\+ 1\.5\.7\.4\.3\. ' chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.md` or `grep -n '^#\+ .*Effect on Receipt' ...`, then read only the lines of that section instead of the whole file.
 - Keep each comment concise and specific to the validation or state update immediately below it. State the observable requirement, including the required status code for validation failures when the specification defines one.
 - Add separate comments when adjacent state assignments enforce different normative requirements. Do not use one generic comment to cover multiple assignments with distinct effects.
 - Place validation and state-update comments both where the rule is implemented and immediately before each call to a helper that performs the validation or state update. At each call site, use the paragraph for that specific command rather than a combined reference covering other callers.
