@@ -988,6 +988,40 @@ describe('Matterbridge ' + NAME, () => {
     );
   });
 
+  test('should emit completed ClosureControl commands after awaited plugin forwarding', async () => {
+    const observed = new Closure('Closure Observable', 'CL-OBS', { calibration: true });
+    await addDevice(server, observed);
+    const order: string[] = [];
+    const requests: unknown[] = [];
+    for (const command of ['moveTo', 'stop', 'calibrate'] as const) {
+      observed.addCommandHandler(`ClosureControl.${command}`, async (data) => {
+        expect(data.endpoint).toBe(observed);
+        expect(data.context).toBeDefined();
+        await Promise.resolve();
+        order.push(`forwarded:${command}`);
+      });
+      observed.subscribeCommand(ClosureControl, command, (data) => {
+        expect(data.context).toBeDefined();
+        requests.push(data.request);
+        order.push(`emitted:${command}`);
+      });
+    }
+    const request = { position: ClosureControl.TargetPosition.MoveToFullyOpen };
+    await observed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', request);
+    expect(observed.getAttribute(ClosureControl.id, 'mainState')).toBe(ClosureControl.MainState.Moving);
+    await observed.invokeBehaviorCommand('closureControl', 'ClosureControl.stop', {});
+    await observed.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+    expect(observed.getAttribute(ClosureControl.id, 'mainState')).toBe(ClosureControl.MainState.Calibrating);
+    expect(requests).toEqual([request, {}, {}]);
+    expect(order).toEqual(['forwarded:moveTo', 'emitted:moveTo', 'forwarded:stop', 'emitted:stop', 'forwarded:calibrate', 'emitted:calibrate']);
+    order.length = 0;
+    await expect(observed.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {})).rejects.toMatchObject({
+      code: Status.InvalidCommand,
+      message: `MatterbridgeClosureControlServer.moveTo: requires at least one of position, latch, or speed to be present (endpoint ${observed.maybeId}.${observed.maybeNumber}) (code ${Status.InvalidCommand})`,
+    });
+    expect(order).toEqual(['forwarded:moveTo']);
+  });
+
   test('start the server node', async () => {
     if (!MATTER_CREATE_ONLY) await startServerNode();
     expect(server).toBeDefined();

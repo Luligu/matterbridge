@@ -64,7 +64,7 @@ process.argv = [
   '--homedir',
   HOMEDIR,
   '--profile',
-  'JestChildbridge',
+  'Childbridge',
   '--port',
   MATTER_PORT.toString(),
   '--passcode',
@@ -92,8 +92,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
+    // Subscribe before any further await: with no plugins the start matter interval emits childbridge_started ~20 ms after initialize()
+    const childbridgeStarted = new Promise<void>((resolve) => matterbridge.once('childbridge_started', () => resolve()));
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.profile).toBe('JestChildbridge');
+    expect(matterbridge.profile).toBe('Childbridge');
     expect(matterbridge.bridgeMode).toBe('childbridge');
     expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
 
@@ -144,11 +146,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).passcode).toBe(PASSCODE);
     expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR);
 
-    await new Promise<void>((resolve) => {
-      matterbridge.once('childbridge_started', () => {
-        resolve();
-      });
-    });
+    await childbridgeStarted;
 
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,

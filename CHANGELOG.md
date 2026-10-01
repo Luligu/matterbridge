@@ -89,6 +89,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [closure]: Correct ClosureControl and ClosureDimension server endpoint context, command emissions and specification comments.
+
 - [evse]: Emit completed EVSE commands to subscribers and return empty status text for unsupported modes.
 
 - [matterbridge]: Raise the server node close timeout from 10 to 30 seconds, so a restart no longer starts the new server node while the old one still holds port 5540 (fixes `TC_AVSUM_2_9`).
