@@ -394,6 +394,13 @@ Refrigerator clusters:
 - `Test_TC_TCCM_2_1` contains only disabled manual verification steps and executes no conformance checks.
 - `Test_TC_REFALM_2_3` requires local alarm suppression, which endpoint 1302 does not implement, and every suppression step is gated on `PICS_USER_PROMPT` (0 here), so it would run no conformance check even if enabled.
 
+## Endpoints 13021 and 13022
+
+Refrigerator cabinets (`RefrigeratorCabinetTop` and `FreezerCabinetBottom`) clusters:
+
+- TemperatureControl (TemperatureNumber and TemperatureStep)
+- TemperatureMeasurement
+
 ## Endpoint 1305
 
 Dishwasher clusters:

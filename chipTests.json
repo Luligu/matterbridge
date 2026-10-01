@@ -2613,6 +2613,44 @@
       "args": ["--PICS /root/refrigerator.pics"]
     },
     {
+      "name": "NumberTemperatureControl attributes on RefrigeratorCabinetTop",
+      "test": "Test_TC_TCTL_2_1",
+      "endpoint": 13021,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl optional attributes on RefrigeratorCabinetTop",
+      "test": "Test_TC_TCTL_2_2",
+      "endpoint": 13021,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    { "name": "TemperatureMeasurement attributes on RefrigeratorCabinetTop", "test": "TC_TMP_2_1.py", "endpoint": 13021, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on RefrigeratorCabinetTop",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13021,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl attributes on FreezerCabinetBottom",
+      "test": "Test_TC_TCTL_2_1",
+      "endpoint": 13022,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl optional attributes on FreezerCabinetBottom",
+      "test": "Test_TC_TCTL_2_2",
+      "endpoint": 13022,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    { "name": "TemperatureMeasurement attributes on FreezerCabinetBottom", "test": "TC_TMP_2_1.py", "endpoint": 13022, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on FreezerCabinetBottom",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13022,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
+    {
       "name": "DishwasherMode attributes on Dishwasher",
       "test": "TC_DISHM_1_2.py",
       "endpoint": 1305,
