@@ -89,6 +89,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [behaviors]: The Window Covering, Operational State and Valve Configuration and Control servers narrow `endpoint` and emit the command observable for every completed command.
 - [doorLock]: `MatterbridgeDoorLockServer` narrows `endpoint` and emits the command observable for every completed command, including getter responses supplied by the plugin.
 - [roboticVacuumCleaner]: Add the endpoint context to the RVC Run Mode, Clean Mode and Operational State server messages, forward their commands with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
 - [serviceArea]: `MatterbridgeServiceAreaServer` narrows `endpoint` and emits the command observable for an accepted SelectAreas.

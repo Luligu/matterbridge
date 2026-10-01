@@ -1,38 +1,15 @@
-Chip tests run started at 2026-10-01T13:45:48.044Z
+Chip tests run started at 2026-10-01T13:59:41.510Z
 
-✅ DoorLock attributes on DoorLock (Test_TC_DRLK_2_1)
-✅ DoorLock LockDoor command on DoorLock (TC_DRLK_2_2.py)
-✅ DoorLock UnlockDoor command on DoorLock (TC_DRLK_2_3.py)
-✅ DoorLock UnlockWithTimeout command on DoorLock (Test_TC_DRLK_2_4)
-✅ DoorLock week day schedule commands on DoorLock (TC_DRLK_2_5.py)
-✅ DoorLock holiday schedule commands on DoorLock (Test_TC_DRLK_2_6)
-✅ DoorLock year day schedule commands on DoorLock (Test_TC_DRLK_2_7)
-✅ DoorLock user commands on DoorLock (Test_TC_DRLK_2_8)
-✅ DoorLock credential commands on DoorLock (TC_DRLK_2_9.py)
-✅ DoorLock events on DoorLock (Test_TC_DRLK_2_10)
-✅ DoorLock multiple credential types on DoorLock (Test_TC_DRLK_2_11)
-⏭️ DoorLock UnboltDoor command on DoorLock (TC_DRLK_2_12.py)
-   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 801 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
-⏭️ DoorLock Aliro functionality on DoorLock (TC_DRLK_2_13.py)
-   ↳ Requires the Aliro Provisioning feature; endpoint 801 does not implement it. The Python test still sends an unconditional ClearUser command when DRLK.S.F0d=0 and fails with UNSUPPORTED_COMMAND.
-✅ DoorLock client commands on DoorLock (Test_TC_DRLK_3_2)
-✅ DoorLock User, PIN, and schedule attributes on DoorLockUserPINSchedules (Test_TC_DRLK_2_1)
-✅ DoorLock LockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_2.py)
-✅ DoorLock UnlockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_3.py)
-✅ DoorLock UnlockWithTimeout with PIN on DoorLockUserPINSchedules (Test_TC_DRLK_2_4)
-✅ DoorLock week day schedule commands on DoorLockUserPINSchedules (TC_DRLK_2_5.py)
-✅ DoorLock holiday schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_6)
-✅ DoorLock year day schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_7)
-✅ DoorLock user commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_8)
-✅ DoorLock PIN credential commands on DoorLockUserPINSchedules (TC_DRLK_2_9.py)
-✅ DoorLock events on DoorLockUserPINSchedules (Test_TC_DRLK_2_10)
-✅ DoorLock PIN credential type on DoorLockUserPINSchedules (Test_TC_DRLK_2_11)
-⏭️ DoorLock UnboltDoor command on DoorLockUserPINSchedules (TC_DRLK_2_12.py)
-   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 8012 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
-⏭️ DoorLock Aliro functionality on DoorLockUserPINSchedules (TC_DRLK_2_13.py)
-   ↳ Requires the Aliro Provisioning feature; endpoint 8012 does not implement it. The Python test unconditionally sends ClearAliroReaderConfig when ClearCredential is supported, even when DRLK.S.F0d=0.
-✅ DoorLock client commands on DoorLockUserPINSchedules (Test_TC_DRLK_3_2)
-✅ DoorLock User, PIN, and expiring user timeout attributes on DoorLockUserPINExpiring (Test_TC_DRLK_2_1)
+✅ ValveConfigurationAndControl attributes on WaterValve (TC_VALCC_2_1.py)
+✅ ValveConfigurationAndControl Open/Close primary functionality on WaterValve (TC_VALCC_3_1.py)
+✅ ValveConfigurationAndControl Open/Close with TargetLevel on WaterValve (TC_VALCC_3_2.py)
+✅ ValveConfigurationAndControl DefaultOpenLevel functionality on WaterValve (TC_VALCC_3_3.py)
+✅ ValveConfigurationAndControl LevelStep functionality on WaterValve (TC_VALCC_3_4.py)
+✅ ValveConfigurationAndControl OpenDuration and RemainingDuration functionality on WaterValve (TC_VALCC_4_1.py)
+✅ ValveConfigurationAndControl DefaultOpenDuration functionality on WaterValve (TC_VALCC_4_2.py)
+✅ ValveConfigurationAndControl AutoCloseTime functionality on WaterValve (TC_VALCC_4_3.py)
+✅ ValveConfigurationAndControl AutoCloseTime with UTCTime set on WaterValve (TC_VALCC_4_4.py)
+✅ ValveConfigurationAndControl auto-close after OpenDuration elapses on WaterValve (TC_VALCC_4_5.py)
 
-Summary: 25/25 tests passed (4 skipped).
-Chip tests run ended at 2026-10-01T13:47:00.252Z (total duration 1m 12s)
+Summary: 10/10 tests passed.
+Chip tests run ended at 2026-10-01T14:00:27.824Z (total duration 46s)

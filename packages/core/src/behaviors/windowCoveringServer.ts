@@ -54,6 +54,8 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
   WindowCovering.Feature.Tilt,
   WindowCovering.Feature.PositionAwareTilt,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
   declare readonly state: MatterbridgeWindowCoveringServer.State;
   declare protected internal: MatterbridgeWindowCoveringServer.Internal;
   lookupMovementStatus = ['Stopped', 'Opening', 'Closing', 'Unknown'];
@@ -237,7 +239,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: upOrOpen called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -250,6 +252,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: upOrOpen result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(WindowCovering, 'upOrOpen', {}, this.context);
   }
 
   /**
@@ -264,7 +267,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: downOrClose called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -277,6 +280,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: downOrClose result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(WindowCovering, 'downOrClose', {}, this.context);
   }
 
   /**
@@ -291,7 +295,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       request: {},
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeWindowCoveringServer: stopMotion called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -320,6 +324,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: stopMotion result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(WindowCovering, 'stopMotion', {}, this.context);
   }
 
   /**
@@ -338,7 +343,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       request,
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(
@@ -351,6 +356,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: goToLiftPercentage result target ${this.state.targetPositionLiftPercent100ths} current ${this.state.currentPositionLiftPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(WindowCovering, 'goToLiftPercentage', request, this.context);
   }
 
   /**
@@ -369,7 +375,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
       request,
       cluster: WindowCoveringServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WindowCovering)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(
@@ -382,6 +388,7 @@ export class MatterbridgeWindowCoveringServer extends WindowCoveringServer.with(
     device.log.debug(
       `MatterbridgeWindowCoveringServer: goToTiltPercentage result target ${this.state.targetPositionTiltPercent100ths} current ${this.state.currentPositionTiltPercent100ths} status global ${this.getMovementStatusLabel(this.state.operationalStatus.global)} lift ${this.getMovementStatusLabel(this.state.operationalStatus.lift)} tilt ${this.getMovementStatusLabel(this.state.operationalStatus.tilt)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(WindowCovering, 'goToTiltPercentage', request, this.context);
   }
 
   /**
