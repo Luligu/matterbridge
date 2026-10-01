@@ -54,6 +54,8 @@ import type { ModeBase } from '@matter/types/clusters/mode-base';
 import type { ModeSelect } from '@matter/types/clusters/mode-select';
 import type { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
+import type { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
+import type { OvenMode } from '@matter/types/clusters/oven-mode';
 import type { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import type { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import type { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
@@ -697,6 +699,15 @@ export type CommandHandlerDataMap = {
     endpoint: MatterbridgeEndpoint;
   };
 
+  // Oven Mode
+  'OvenMode.changeToMode': {
+    command: 'changeToMode';
+    request: ModeBase.ChangeToModeRequest;
+    cluster: 'ovenMode';
+    attributes: ClusterAttributeValues<(typeof OvenMode)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
   // Energy EVSE Mode
   'EnergyEvseMode.changeToMode': {
     command: 'changeToMode';
@@ -921,6 +932,22 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'operationalState';
     attributes: ClusterAttributeValues<(typeof OperationalState)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+
+  // Oven Cavity Operational State
+  'OvenCavityOperationalState.stop': {
+    command: 'stop';
+    request: {}; // TlvNoArguments
+    cluster: 'ovenCavityOperationalState';
+    attributes: ClusterAttributeValues<(typeof OvenCavityOperationalState)['attributes']>;
+    endpoint: MatterbridgeEndpoint;
+  };
+  'OvenCavityOperationalState.start': {
+    command: 'start';
+    request: {}; // TlvNoArguments
+    cluster: 'ovenCavityOperationalState';
+    attributes: ClusterAttributeValues<(typeof OvenCavityOperationalState)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

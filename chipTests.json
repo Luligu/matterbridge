@@ -2780,7 +2780,6 @@
       "name": "OvenCavityOperationalState OperationCompletion event on Oven",
       "test": "TC_OVENOPSTATE_2_5.py",
       "endpoint": 13091,
-      "comment": "Fails Step 6: subscribing to the OperationCompletion event returns INVALID_ACTION, although the Temperature Controlled Cabinet device type mandates this event for an Oven Cavity Operational State server.",
       "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
     },
     {

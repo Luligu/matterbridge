@@ -35,6 +35,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [oven]: Add the `OvenMode.changeToMode`, `OvenCavityOperationalState.start` and `OvenCavityOperationalState.stop` command handlers, so plugins now receive the Oven commands.
 - [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
 - [dgram]: Add `isFirstOnPort()` to `mdns.ts` (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its `mdns.port.test.ts` test.
 - [frontend]: Add and expand unit tests for `QRDiv` node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.
@@ -89,6 +90,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [oven]: `Stop` while Stopped and `Start` while Running now respond NoError and take no further action (Matter 1.6.0 § 1.14.6.2 and § 1.14.6.3).
+- [oven]: `MatterbridgeOvenModeServer` now runs the OvenModeServer initialization, which requires a Bake mode in SupportedModes (Matter 1.6.0 § 8.11.6.1).
+- [oven]: Add the endpoint context to all Oven server logs, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
 - [dgram]: Fix `encodeDnsName` in `mdns.ts` writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.
 - [frontend]: Fix React Compiler `react/immutability` rule flags.
 - [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.

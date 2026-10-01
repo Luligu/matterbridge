@@ -36,6 +36,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from '../../src/devices/oven.js';
 import { oven } from '../../src/matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { CommandHandlerData } from '../../src/matterbridgeEndpointCommandHandler.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -99,7 +100,7 @@ describe('Matterbridge ' + NAME, () => {
       [{ mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label }],
       3,
       [
-        { label: 'Convection', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Convection }] },
+        { label: 'Bake', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Bake }] },
         { label: 'Clean', mode: 2, modeTags: [{ value: OvenMode.ModeTag.Clean }] },
         { label: 'Steam', mode: 3, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
       ],
@@ -149,10 +150,10 @@ describe('Matterbridge ' + NAME, () => {
   test('add a oven device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer initialized`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: initialized (endpoint ${cabinet1.id}.${cabinet1.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeOvenCavityOperationalStateServer initialized: setting operational state to Stopped and operational error to No error`,
+      `MatterbridgeOvenCavityOperationalStateServer: initialized: setting operational state to Stopped and operational error to No error (endpoint ${cabinet1.id}.${cabinet1.number})`,
     );
   });
 
@@ -396,7 +397,7 @@ describe('Matterbridge ' + NAME, () => {
         'ovenMode(0x49).currentMode(0x1)=3',
         'ovenMode(0x49).featureMap(0xfffc)={ onOff: false }',
         'ovenMode(0x49).generatedCommandList(0xfff8)=[ 1 ]',
-        "ovenMode(0x49).supportedModes(0x0)=[ { label: 'Convection', mode: 1, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Clean', mode: 2, modeTags: [ { mfgCode: undefined, value: 16388 } ] }, { label: 'Steam', mode: 3, modeTags: [ { mfgCode: undefined, value: 16393 } ] } ]",
+        "ovenMode(0x49).supportedModes(0x0)=[ { label: 'Bake', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Clean', mode: 2, modeTags: [ { mfgCode: undefined, value: 16388 } ] }, { label: 'Steam', mode: 3, modeTags: [ { mfgCode: undefined, value: 16393 } ] } ]",
         'temperatureControl(0x56).acceptedCommandList(0xfff9)=[ 0 ]',
         'temperatureControl(0x56).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'temperatureControl(0x56).clusterRevision(0xfffd)=1',
@@ -462,17 +463,41 @@ describe('Matterbridge ' + NAME, () => {
     expect((cabinet1 as any).state['ovenMode'].acceptedCommandList).toEqual([0]);
     expect((cabinet1 as any).state['ovenMode'].generatedCommandList).toEqual([1]);
 
-    // Change to mode 2
+    const EP = `(endpoint ${cabinet1.id}.${cabinet1.number})`;
+    const order: string[] = [];
+    const pluginHandler = vi.fn(async (data: CommandHandlerData<'OvenMode.changeToMode'>) => {
+      expect(data.endpoint).toBe(cabinet1);
+      expect(data).toHaveProperty('context');
+      await Promise.resolve();
+      order.push('forwarded');
+    });
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: unknown[] = [];
+    cabinet1.addCommandHandler('OvenMode.changeToMode', pluginHandler);
+    cabinet1.subscribeCommand(OvenMode, 'changeToMode', (data) => {
+      order.push('emitted');
+      emitted.push(data.request);
+    });
+
+    // Change to mode 2: forwarded to the plugin, then CurrentMode updated and the command emitted
     vi.clearAllMocks();
     await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with mode 2 = Convection`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: changing mode to 2 ${EP}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOvenModeServer: changeToMode called with mode 2 = Convection ${EP}`);
+    expect(pluginHandler).toHaveBeenCalledTimes(1);
+    expect(order).toEqual(['forwarded', 'emitted']);
+    expect((cabinet1 as any).state['ovenMode'].currentMode).toBe(2);
 
-    // Change to mode 15
+    // Change to mode 15: forwarded to the plugin but rejected with UnsupportedMode and not emitted
     vi.clearAllMocks();
     const unsupportedResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenModeServer).changeToMode({ newMode: 15 }));
     expect(unsupportedResponse).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with unsupported mode 15`);
-    expect(loggerErrorSpy).toHaveBeenCalledWith(`MatterbridgeOvenModeServer: changeToMode (endpoint OvenTestCabinetTop.3) called with unsupported mode 15`);
+    expect(pluginHandler).toHaveBeenCalledTimes(1);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode called with unsupported mode 15 ${EP}`);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`MatterbridgeOvenModeServer: changeToMode called with unsupported mode 15 ${EP}`);
+    expect((cabinet1 as any).state['ovenMode'].currentMode).toBe(2);
+    expect(emitted).toEqual([{ newMode: 2 }]);
+    cabinet1.commandHandler.removeHandler('OvenMode.changeToMode', pluginHandler);
     loggerErrorSpy.mockClear();
   });
 
@@ -487,34 +512,85 @@ describe('Matterbridge ' + NAME, () => {
     expect((cabinet1 as any).state['ovenCavityOperationalState'].acceptedCommandList).toEqual([1, 2]);
     expect((cabinet1 as any).state['ovenCavityOperationalState'].generatedCommandList).toEqual([4]);
 
+    const EP = `(endpoint ${cabinet1.id}.${cabinet1.number})`;
     const operationCompletion = vi.fn();
     cabinet1.eventsOf(MatterbridgeOvenCavityOperationalStateServer).operationCompletion.on(operationCompletion);
+    const startHandler = vi.fn();
+    const stopHandler = vi.fn();
+    cabinet1.addCommandHandler('OvenCavityOperationalState.start', startHandler);
+    cabinet1.addCommandHandler('OvenCavityOperationalState.stop', stopHandler);
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: string[] = [];
+    cabinet1.subscribeCommand(OvenCavityOperationalState, 'start', () => emitted.push('start'));
+    cabinet1.subscribeCommand(OvenCavityOperationalState, 'stop', () => emitted.push('stop'));
     vi.useFakeTimers();
 
     try {
+      // Stop while already Stopped: forwarded, NoError response, no further action and no emission
       vi.clearAllMocks();
-      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', { newMode: 2 });
+      const stoppedResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenCavityOperationalStateServer).stop());
+      expect(stoppedResponse).toEqual({ commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already stopped' } });
+      expect(stopHandler).toHaveBeenCalledTimes(1);
       expect(loggerLogSpy).toHaveBeenCalledWith(
-        LogLevel.INFO,
-        `MatterbridgeOvenCavityOperationalStateServer: start (endpoint OvenTestCabinetTop.3) called setting operational state to Running and operational error to No error`,
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: stop received while already Stopped, taking no further action ${EP}`,
       );
 
-      await vi.advanceTimersByTimeAsync(2000);
       vi.clearAllMocks();
-      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', {});
+      expect(startHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: start ${EP}`);
       expect(loggerLogSpy).toHaveBeenCalledWith(
-        LogLevel.INFO,
-        `MatterbridgeOvenCavityOperationalStateServer: stop (endpoint OvenTestCabinetTop.3) called setting operational state to Stopped and operational error to No error`,
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: start called setting operational state to Running and operational error to No error ${EP}`,
       );
+      expect((cabinet1 as any).state['ovenCavityOperationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Running);
+
+      // Start while already Running: forwarded, NoError response, no further action and no emission
+      await vi.advanceTimersByTimeAsync(1000);
+      vi.clearAllMocks();
+      const runningResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenCavityOperationalStateServer).start());
+      expect(runningResponse).toEqual({ commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already running' } });
+      expect(startHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: start received while already Running, taking no further action ${EP}`,
+      );
+
+      await vi.advanceTimersByTimeAsync(1000);
+      vi.clearAllMocks();
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', {});
+      expect(stopHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: stop ${EP}`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: stop called setting operational state to Stopped and operational error to No error ${EP}`,
+      );
+      expect((cabinet1 as any).state['ovenCavityOperationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
 
       // A repeated Stop does not complete the same operation again.
-      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', { newMode: 15 });
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', {});
     } finally {
       vi.useRealTimers();
+      cabinet1.commandHandler.removeHandler('OvenCavityOperationalState.start', startHandler);
+      cabinet1.commandHandler.removeHandler('OvenCavityOperationalState.stop', stopHandler);
     }
 
+    // The repeated Start keeps the original start time, so TotalOperationalTime covers both seconds
     expect(operationCompletion).toHaveBeenCalledTimes(1);
     expect(operationCompletion.mock.calls[0][0]).toEqual({ completionErrorCode: OperationalState.ErrorState.NoError, totalOperationalTime: 2, pausedTime: 0 });
+    expect(emitted).toEqual(['start', 'stop']);
+  });
+
+  test('stop an operation that was not started with the Start command', async () => {
+    const operationCompletion = vi.fn();
+    cabinet2.eventsOf(MatterbridgeOvenCavityOperationalStateServer).operationCompletion.on(operationCompletion);
+    // Running set out of band, e.g. by the plugin after a manual start on the appliance
+    await cabinet2.setAttribute('ovenCavityOperationalState', 'operationalState', OperationalState.OperationalStateEnum.Running);
+    await cabinet2.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', {});
+    expect((cabinet2 as any).state['ovenCavityOperationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
+    // No start time was recorded, so there is no TotalOperationalTime to report
+    expect(operationCompletion).not.toHaveBeenCalled();
   });
 
   test('start the server node', async () => {
