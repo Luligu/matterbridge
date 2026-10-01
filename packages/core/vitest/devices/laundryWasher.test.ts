@@ -93,7 +93,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`,
+      `MatterbridgeLevelTemperatureControlServer: initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80° (endpoint ${device.id}.${device.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -283,12 +283,38 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.behaviors.elementsOf(MatterbridgeLevelTemperatureControlServer).commands.has('setTemperature')).toBeTruthy();
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
+    const order: string[] = [];
+    const pluginHandler = vi.fn(async (data: CommandHandlerData<'TemperatureControl.setTemperature'>) => {
+      expect(data.endpoint).toBe(device);
+      expect(data).toHaveProperty('context');
+      await Promise.resolve();
+      order.push('forwarded');
+    });
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: unknown[] = [];
+    device.addCommandHandler('TemperatureControl.setTemperature', pluginHandler);
+    device.subscribeCommand(TemperatureControl, 'setTemperature', (data) => {
+      order.push('emitted');
+      emitted.push(data.request);
+    });
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 100 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel 100`);
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 100 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getAttribute(TemperatureControl.id, 'selectedTemperatureLevel')).toBe(1);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to 2: Hot`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLevelTemperatureControlServer: setting temperature level to 2 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to 2: Hot (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.getAttribute(TemperatureControl.id, 'selectedTemperatureLevel')).toBe(2);
+    // Rejected commands are forwarded to the plugin but not emitted
+    expect(order).toEqual(['forwarded', 'forwarded', 'forwarded', 'emitted']);
+    expect(emitted).toEqual([{ targetTemperatureLevel: 2 }]);
+    device.commandHandler.removeHandler('TemperatureControl.setTemperature', pluginHandler);
   });
 
   test('remove the laundry washer device', async () => {
@@ -330,7 +356,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
+      `MatterbridgeNumberTemperatureControlServer: initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000 (endpoint ${device.id}.${device.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -346,11 +372,23 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    // 6500 is in range but not aligned to Step 1000 from MinTemperature 3000
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 6500 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getAttribute(TemperatureControl.id, 'temperatureSetpoint')).toBe(5500);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeNumberTemperatureControlServer: setting temperature to 5000 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.getAttribute(TemperatureControl.id, 'temperatureSetpoint')).toBe(5000);
   });
 
   test('dead front sets CurrentMode to the Normal mode of custom SupportedModes', async () => {

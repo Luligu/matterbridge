@@ -212,6 +212,8 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[temperatureControl]: <code>SetTemperature</code> now rejects an out-of-range TargetTemperatureLevel or TargetTemperature, and a TargetTemperature not aligned to Step, with CONSTRAINT_ERROR instead of accepting it, and a missing field with INVALID_COMMAND (Matter 1.6.0 § 8.2.6.1).</li>
+<li>[temperatureControl]: Add the endpoint context to the temperature control server messages, forward SetTemperature with the action context, narrow <code>endpoint</code>, emit the command observable and add Matter 1.6.0 spec comments.</li>
 <li>[refrigerator]: <code>ChangeToMode</code> with an unknown mode now responds <code>UnsupportedMode</code> instead of <code>InvalidInMode</code> (Matter 1.6.0 § 1.10.7.1.1).</li>
 <li>[refrigerator]: <code>MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer</code> now runs the base initialization, which requires an Auto mode in SupportedModes (Matter 1.6.0 § 8.7.6.1).</li>
 <li>[refrigerator]: Add the endpoint context to the Refrigerator mode server messages, narrow <code>endpoint</code>, emit the command observable and add Matter 1.6.0 spec comments.</li>

@@ -91,6 +91,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [temperatureControl]: `SetTemperature` now rejects an out-of-range TargetTemperatureLevel or TargetTemperature, and a TargetTemperature not aligned to Step, with CONSTRAINT_ERROR instead of accepting it, and a missing field with INVALID_COMMAND (Matter 1.6.0 § 8.2.6.1).
+- [temperatureControl]: Add the endpoint context to the temperature control server messages, forward SetTemperature with the action context, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
 - [refrigerator]: `ChangeToMode` with an unknown mode now responds `UnsupportedMode` instead of `InvalidInMode` (Matter 1.6.0 § 1.10.7.1.1).
 - [refrigerator]: `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer` now runs the base initialization, which requires an Auto mode in SupportedModes (Matter 1.6.0 § 8.7.6.1).
 - [refrigerator]: Add the endpoint context to the Refrigerator mode server messages, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.

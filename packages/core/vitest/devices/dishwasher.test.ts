@@ -425,7 +425,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
+      `MatterbridgeNumberTemperatureControlServer: initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000 (endpoint ${device.id}.${device.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -441,11 +441,23 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    // 6500 is in range but not aligned to Step 1000 from MinTemperature 3000
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 6500 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getAttribute(TemperatureControl.id, 'temperatureSetpoint')).toBe(5500);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeNumberTemperatureControlServer: setting temperature to 5000 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.getAttribute(TemperatureControl.id, 'temperatureSetpoint')).toBe(5000);
   });
 
   test('start the server node', async () => {
