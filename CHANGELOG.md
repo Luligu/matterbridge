@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.12] - Dev branch
 
+### Breaking changes
+
+- [rvc]: The ServiceArea cluster of every RoboticVacuumCleaner now always advertises the `SkipArea` command (and its `SkipAreaResponse`), even when the ProgressReporting feature is not enabled. Its conformance is `[CurrentArea | Progress]` (Matter 1.6.1 § 1.17.7) and the RVC always has `CurrentArea`. Plugins should register a `skipArea` command handler and stop operating in the skipped area: without it, the command only gets validated and answers Success while the device keeps operating there.
+
 ### Added
 
 - [refrigerator]: Add the `RefrigeratorAndTemperatureControlledCabinetMode.changeToMode` command handler, so plugins now receive the Refrigerator mode changes.
