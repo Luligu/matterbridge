@@ -91,6 +91,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [fanControl]: `createBaseFanControlClusterServer()` and `createOnOffFanControlClusterServer()` now use a featureless `MatterbridgeFanControlServer` instead of the plain matter.js server, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply to the Extractor Hood and to base and On/Off fans.
+- [filterMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the HEPA and Activated Carbon filter monitoring servers narrow `endpoint` and emit the command observable.
 - [behaviors]: The Thermostat, Fan Control and Identify servers now emit their command observables to `subscribeCommand()` listeners, and the Thermostat, Fan Control, Identify and Power Source servers narrow `endpoint` instead of casting it.
 - [temperatureControl]: `SetTemperature` now rejects an out-of-range TargetTemperatureLevel or TargetTemperature, and a TargetTemperature not aligned to Step, with CONSTRAINT_ERROR instead of accepting it, and a missing field with INVALID_COMMAND (Matter 1.6.0 § 8.2.6.1).
 - [temperatureControl]: Add the endpoint context to the temperature control server messages, forward SetTemperature with the action context, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.

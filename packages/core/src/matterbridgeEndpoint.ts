@@ -40,7 +40,6 @@ import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behav
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
 import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
-import { FanControlServer } from '@matter/node/behaviors/fan-control';
 import { FlowMeasurementServer } from '@matter/node/behaviors/flow-measurement';
 import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
 import { GroupsServer } from '@matter/node/behaviors/groups';
@@ -4087,7 +4086,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * percentSetting is writable.
    */
   createOnOffFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off): this {
-    this.behaviors.require(FanControlServer, {
+    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply here.
+    this.behaviors.require(MatterbridgeFanControlServer.with(), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence: FanControl.FanModeSequence.OffHigh, // Fixed attribute
@@ -4117,7 +4117,8 @@ export class MatterbridgeEndpoint extends Endpoint {
     percentSetting: number = 0,
     percentCurrent: number = 0,
   ): this {
-    this.behaviors.require(FanControlServer, {
+    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply here.
+    this.behaviors.require(MatterbridgeFanControlServer.with(), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
       fanModeSequence, // Fixed attribute
