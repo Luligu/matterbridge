@@ -503,8 +503,8 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
         Status.AlreadyExists,
       );
     }
-    // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with DYNAMIC_CONSTRAINT_ERROR if a requested stream id is not found in the allocated-streams attribute.
     for (const id of ids) {
+      // Matter 1.6.0 § 11.5.6.1.10 and § 11.5.6.3.12: Fail with DYNAMIC_CONSTRAINT_ERROR if a requested stream id is not found in the allocated-streams attribute.
       if (!allocatedIds.includes(id)) {
         throw new StatusResponseError(
           `MatterbridgeWebRtcTransportProviderServer: ${kind} stream ${id} is not present in ${attributeName} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -701,6 +701,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
         ({ videoStreams, audioStreams } = await this.#autoAssignStreams(request.streamUsage));
       }
     }
+    // Matter 1.6.0 § 11.5.6.1: VideoStreams and AudioStreams have choice conformance (.b+), so reject with CONSTRAINT_ERROR when neither resolves to a stream.
     if (!videoStreams?.length && !audioStreams?.length) {
       throw new StatusResponseError(
         `MatterbridgeWebRtcTransportProviderServer.solicitOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -817,6 +818,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
           ({ videoStreams, audioStreams } = await this.#autoAssignStreams(request.streamUsage ?? StreamUsage.LiveView));
         }
       }
+      // Matter 1.6.0 § 11.5.6.3: VideoStreams and AudioStreams have choice conformance (.b+), so reject with CONSTRAINT_ERROR when neither resolves to a stream.
       if (!videoStreams?.length && !audioStreams?.length) {
         throw new StatusResponseError(
           `MatterbridgeWebRtcTransportProviderServer.provideOffer: requires at least one of videoStreams or audioStreams; the camera has no video or audio stream to assign automatically (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -975,7 +977,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     // instance is ephemeral (see this class's doc comment) and may no longer be valid by the time that code runs.
     const endpointLabel = `${this.endpoint.maybeId}.${this.endpoint.maybeNumber}`;
     device.log.info(
-      `MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: received ${request.iceCandidates.length} ICE candidate(s) for session ${request.webRtcSessionId} (endpoint ${endpointLabel})`,
+      `MatterbridgeWebRtcTransportProviderServer.provideIceCandidates: received ${request.iceCandidates.length} ICE candidate(s) for session ${request.webRtcSessionId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
 
     const webRtcPeer = this.internal.sessions.get(request.webRtcSessionId);
@@ -1052,8 +1054,8 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    */
   override async endSession(request: WebRtcTransportProvider.EndSessionRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.5.6.7.3: Fail EndSession with NOT_FOUND if WebRTCSessionID does not match a value in CurrentSessions.
     const session = this.state.currentSessions.find((session) => session.id === request.webRtcSessionId);
+    // Matter 1.6.0 § 11.5.6.7.3: Fail EndSession with NOT_FOUND if WebRTCSessionID does not match a value in CurrentSessions.
     if (!session) {
       throw new StatusResponseError(
         `MatterbridgeWebRtcTransportProviderServer.endSession: webRTC session ${request.webRtcSessionId} is not present in currentSessions (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
