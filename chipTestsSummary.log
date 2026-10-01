@@ -1,9 +1,17 @@
-Chip tests run started at 2026-10-01T12:04:37.133Z
+Chip tests run started at 2026-10-01T12:11:12.449Z
 
-✅ NumberTemperatureControl attributes on FreezerCabinetBottom (Test_TC_TCTL_2_1)
-✅ NumberTemperatureControl optional attributes on FreezerCabinetBottom (Test_TC_TCTL_2_2)
-✅ TemperatureMeasurement attributes on FreezerCabinetBottom (TC_TMP_2_1.py)
-✅ TemperatureMeasurement primary functionality on FreezerCabinetBottom (Test_TC_TMP_2_2)
+✅ OffOnlyOnOff attributes on CookSurfaceTopLeft (Test_TC_OO_2_1)
+✅ OffOnlyOnOff primary functionality on CookSurfaceTopLeft (Test_TC_OO_2_2)
+✅ OffOnlyOnOff feature behavior on CookSurfaceTopLeft (Test_TC_OO_2_6)
+✅ LevelTemperatureControl attributes on CookSurfaceTopLeft (TC_TCTL_2_3.py)
+✅ TemperatureMeasurement attributes on CookSurfaceTopLeft (TC_TMP_2_1.py)
+✅ TemperatureMeasurement primary functionality on CookSurfaceTopLeft (Test_TC_TMP_2_2)
+✅ OffOnlyOnOff attributes on CookSurfaceTopRight (Test_TC_OO_2_1)
+✅ OffOnlyOnOff primary functionality on CookSurfaceTopRight (Test_TC_OO_2_2)
+✅ OffOnlyOnOff feature behavior on CookSurfaceTopRight (Test_TC_OO_2_6)
+✅ LevelTemperatureControl attributes on CookSurfaceTopRight (TC_TCTL_2_3.py)
+✅ TemperatureMeasurement attributes on CookSurfaceTopRight (TC_TMP_2_1.py)
+✅ TemperatureMeasurement primary functionality on CookSurfaceTopRight (Test_TC_TMP_2_2)
 
-Summary: 4/4 tests passed.
-Chip tests run ended at 2026-10-01T12:04:39.483Z (total duration 2s)
+Summary: 12/12 tests passed.
+Chip tests run ended at 2026-10-01T12:11:35.917Z (total duration 23s)

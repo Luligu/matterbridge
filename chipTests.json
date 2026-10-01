@@ -2863,6 +2863,28 @@
       "endpoint": 1308,
       "args": ["--PICS /root/cooktop.pics"]
     },
+    { "name": "OffOnlyOnOff attributes on CookSurfaceTopLeft", "test": "Test_TC_OO_2_1", "endpoint": 13081, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff primary functionality on CookSurfaceTopLeft", "test": "Test_TC_OO_2_2", "endpoint": 13081, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff feature behavior on CookSurfaceTopLeft", "test": "Test_TC_OO_2_6", "endpoint": 13081, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "LevelTemperatureControl attributes on CookSurfaceTopLeft", "test": "TC_TCTL_2_3.py", "endpoint": 13081, "args": ["--PICS /root/temperature-control-level.pics"] },
+    { "name": "TemperatureMeasurement attributes on CookSurfaceTopLeft", "test": "TC_TMP_2_1.py", "endpoint": 13081, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on CookSurfaceTopLeft",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13081,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
+    { "name": "OffOnlyOnOff attributes on CookSurfaceTopRight", "test": "Test_TC_OO_2_1", "endpoint": 13082, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff primary functionality on CookSurfaceTopRight", "test": "Test_TC_OO_2_2", "endpoint": 13082, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff feature behavior on CookSurfaceTopRight", "test": "Test_TC_OO_2_6", "endpoint": 13082, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "LevelTemperatureControl attributes on CookSurfaceTopRight", "test": "TC_TCTL_2_3.py", "endpoint": 13082, "args": ["--PICS /root/temperature-control-level.pics"] },
+    { "name": "TemperatureMeasurement attributes on CookSurfaceTopRight", "test": "TC_TMP_2_1.py", "endpoint": 13082, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on CookSurfaceTopRight",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13082,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
     {
       "name": "OvenMode attributes on Oven",
       "test": "TC_OTCCM_1_2.py",

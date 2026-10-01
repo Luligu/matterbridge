@@ -440,6 +440,14 @@ state change that command would have caused. The local `Test_TC_OO_2_6.yaml` pat
 commands' contradictory PICS guards from the negative checks, allowing the test to verify the Matter 1.6-required
 `UNSUPPORTED_COMMAND` responses.
 
+## Endpoints 13081 and 13082
+
+Cook surfaces (`CookSurfaceTopLeft` and `CookSurfaceTopRight`) clusters:
+
+- OnOff (OffOnly), using the same patched `Test_TC_OO_2_2.yaml` and `Test_TC_OO_2_6.yaml` as endpoint 1308
+- TemperatureControl (TemperatureLevel)
+- TemperatureMeasurement
+
 ## Endpoint 13091
 
 Top Oven Cabinet clusters:
