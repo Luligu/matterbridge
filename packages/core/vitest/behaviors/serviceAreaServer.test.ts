@@ -66,6 +66,9 @@ describe('MatterbridgeServiceAreaServer', () => {
   });
 
   test('ServiceArea server', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    rvc.subscribeCommand(ServiceArea, 'selectAreas', (data) => emitted.push(data.request));
     const serviceAreaServer = MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps);
     expect(rvc.behaviors.has(serviceAreaServer)).toBeTruthy();
     expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([]);
@@ -94,5 +97,7 @@ describe('MatterbridgeServiceAreaServer', () => {
     expect(selectAreasCalls).toHaveLength(2);
     expect(selectAreasCalls[1]).toEqual({ cluster: 'serviceArea', endpoint: rvc, request: { newAreas: [0, 5] } });
     expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([1, 2]);
+    // Only the accepted SelectAreas is announced
+    expect(emitted).toEqual([{ newAreas: [1, 2] }]);
   });
 });

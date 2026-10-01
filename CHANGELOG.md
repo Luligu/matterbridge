@@ -89,6 +89,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [roboticVacuumCleaner]: Add the endpoint context to the RVC Run Mode, Clean Mode and Operational State server messages, forward their commands with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [serviceArea]: `MatterbridgeServiceAreaServer` narrows `endpoint` and emits the command observable for an accepted SelectAreas.
 - [waterTankLevelMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the server narrows `endpoint` and emits the command observable.
 - [fanControl]: `createBaseFanControlClusterServer()` and `createOnOffFanControlClusterServer()` now use a featureless `MatterbridgeFanControlServer` instead of the plain matter.js server, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply to the Extractor Hood and to base and On/Off fans.
 - [filterMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the HEPA and Activated Carbon filter monitoring servers narrow `endpoint` and emit the command observable.

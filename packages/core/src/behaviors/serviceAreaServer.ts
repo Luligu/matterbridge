@@ -24,7 +24,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
-import type { ServiceArea } from '@matter/types/clusters/service-area';
+import { ServiceArea } from '@matter/types/clusters/service-area';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
@@ -34,6 +34,9 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * ServiceArea server that validates and applies selected areas.
  */
 export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Validates area IDs, updates selectedAreas, and forwards the request.
    *
@@ -48,11 +51,14 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer {
       request,
       cluster: ServiceAreaServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ServiceArea)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeServiceAreaServer: selectAreas called with [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.17.7.1.2: Reject the request with UnsupportedArea, InvalidSet or InvalidInMode as applicable, otherwise respond Success and set SelectedAreas to the NewAreas value.
-    return await super.selectAreas(request);
+    const response = await super.selectAreas(request);
+    // matter.js reports a rejected SelectAreas through the response status, so only a successful one is emitted.
+    if (response.status === ServiceArea.SelectAreasStatus.Success) this.endpoint.emitCommand(ServiceArea, 'selectAreas', request, this.context);
+    return response;
   }
 }

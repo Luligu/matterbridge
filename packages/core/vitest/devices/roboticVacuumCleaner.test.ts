@@ -381,6 +381,9 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
   });
 
   test('invoke MatterbridgeRvcRunModeServer commands', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    device.subscribeCommand(RvcRunMode, 'changeToMode', (data) => emitted.push(data.request));
     expect(device.behaviors.has(RvcRunModeServer)).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeRvcRunModeServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(RvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
@@ -397,21 +400,33 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeRvcRunModeServer: changeToMode called with unsupported newMode 0 (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeRvcRunModeServer: changeToMode called with unsupported newMode 0 (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(1);
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 2 (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer: changing mode to 2 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcRunModeServer: changeToMode called with newMode Cleaning => Running (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Running);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode rejected direct non-Idle mode change from 2 to 3`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcRunModeServer: changeToMode rejected direct non-Idle mode change from 2 to 3 (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 });
     expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.SeekingCharger);
@@ -419,11 +434,22 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(3);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcRunModeServer changeToMode rejected direct non-Idle mode change from 3 to 4`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcRunModeServer: changeToMode rejected direct non-Idle mode change from 3 to 4 (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(3);
+    // Successful mode changes are announced, rejected ones are not
+    expect(emitted).toContainEqual({ newMode: 2 });
+    expect(emitted).toContainEqual({ newMode: 3 });
+    expect(emitted).not.toContainEqual({ newMode: 0 });
+    expect(emitted).not.toContainEqual({ newMode: 4 });
   });
 
   test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    device.subscribeCommand(RvcCleanMode, 'changeToMode', (data) => emitted.push(data.request));
     expect(device.behaviors.has(RvcCleanModeServer)).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeRvcCleanModeServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(RvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
@@ -432,19 +458,29 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     expect((device as any).state['rvcCleanMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeRvcCleanModeServer: changeToMode called with unsupported newMode 0 (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcCleanModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
     expect(device.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(1);
     await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 2 });
     expect(device.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(1);
     await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 });
     await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 2 });
     expect(device.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(2);
+    expect(emitted).toContainEqual({ newMode: 2 });
+    expect(emitted).not.toContainEqual({ newMode: 0 });
   });
 
   test('invoke MatterbridgeRvcOperationalStateServer commands', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: string[] = [];
+    device.subscribeCommand(RvcOperationalState, 'pause', () => emitted.push('pause'));
+    device.subscribeCommand(RvcOperationalState, 'resume', () => emitted.push('resume'));
+    device.subscribeCommand(RvcOperationalState, 'goHome', () => emitted.push('goHome'));
     expect(device.behaviors.has(RvcOperationalStateServer)).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
     expect(device.behaviors.elementsOf(RvcOperationalStateServer).commands.has('pause')).toBeTruthy();
@@ -456,25 +492,35 @@ describe('Matterbridge Robotic Vacuum Cleaner', () => {
     await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Running });
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcOperationalState', 'pause');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: pause (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Paused);
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcOperationalState', 'resume');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Resume (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: resume called restoring operational state to 1`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: resume (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: resume called restoring operational state to 1 (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Running);
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('rvcOperationalState', 'goHome');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `GoHome (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: goHome (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger (endpoint ${device.id}.${device.number})`,
+    );
     expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.SeekingCharger);
     expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
     await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Docked });
     await device.invokeBehaviorCommand('rvcOperationalState', 'goHome');
     expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Docked);
+    expect(emitted).toEqual(expect.arrayContaining(['pause', 'resume', 'goHome']));
   });
 
   test('handle all RVC operational-state compatibility branches', async () => {
