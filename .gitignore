@@ -4,12 +4,15 @@
 
 # Specific directories that should be ignored
 .cache/
+artifacts/
 build/
+chip/
 coverage/
 dist/
 node_modules/
 out/
 temp/
+tmp/
 
 # Specific files that should be ignored
 .DS_Store
