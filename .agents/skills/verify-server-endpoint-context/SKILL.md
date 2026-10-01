@@ -1,6 +1,6 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.1
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.2
 ---
 
 # Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
@@ -78,9 +78,17 @@ Command observable emission:
 - Pass the cluster as the `ClusterType` exported by `@matter/types/clusters/<cluster>`, for example `OnOff` or `BooleanStateConfiguration`. Do not accept `<Cluster>.Cluster`, a behavior type, a behavior id such as `OnOffServer.id`, or a cluster name string: the `ClusterType` form keeps the command name and the request payload checked against the cluster definition.
 - Pass the exact command name of the enclosing handler, the request payload, and `this.context`. Use `{}` as the payload for commands that take no request.
 - Verify the call goes through the narrowed `this.endpoint`. Do not accept the `emitCommand` helper imported from [matterbridgeEndpointHelpers.ts](../../../packages/core/src/matterbridgeEndpointHelpers.ts) in a behavior that module imports, because the value import closes an import cycle.
-- Verify the emission comes after the awaited plugin forwarding, after every validation, and after every state update, including after the `await super.<command>()` call when the handler delegates to the base implementation. No statement may follow it.
+- Verify the emission comes after the awaited plugin forwarding, after every validation, and after every state update, including after the `await super.<command>()` call when the handler delegates to the base implementation. No statement may follow it, except a final `return` of the command response in handlers that return one.
+- That `return` may only hand back the response: an object literal, or a value already computed before the emission, such as `const response = await super.<command>(request);` returned after emitting. It must not call methods, read or change state, log, or have any other side effect. Do not accept a `try`/`finally` block used only to defer the emission past the `return`; emit first, then return.
+
+  ```typescript
+  this.state.currentMode = request.newMode;
+  this.endpoint.emitCommand(OvenMode, 'changeToMode', request, this.context);
+  return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
+  ```
+
 - Do not require an emission on a path that rejects the command with a Matter status error, discards it by cluster conformance, or returns early, for example the `MATTERBRIDGE_CHIP_TEST` branch that gates the plugin forwarder off. The observable reports commands that completed.
-- Report a missing emission, an emission that is not the last call, an emission placed before validation or state updates, a cluster passed in any form other than the `ClusterType`, a command name that does not match the enclosing handler, a missing `this.context`, or a direct helper import as a command observable emission violation.
+- Report a missing emission, an emission that is not the last call (a final side-effect-free `return` of the command response is allowed), an emission placed before validation or state updates, a cluster passed in any form other than the `ClusterType`, a command name that does not match the enclosing handler, a missing `this.context`, or a direct helper import as a command observable emission violation.
 
 Matter specification comments:
 

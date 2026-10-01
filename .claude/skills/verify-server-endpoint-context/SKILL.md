@@ -1,6 +1,6 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.1
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.2
 argument-hint: '[optional scope, notes, or request to fix violations]'
 ---
 
