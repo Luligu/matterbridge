@@ -4,14 +4,14 @@
  * @author Luca Liguori
  */
 
+/* oxlint-disable no-console */
+/* oxlint-disable vitest/no-conditional-expect */
+
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-/* oxlint-disable no-console */
-/* oxlint-disable vitest/no-conditional-expect */
 
 const MATTER_PORT = 6400;
 const FRONTEND_PORT = 8802;
