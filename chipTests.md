@@ -586,7 +586,8 @@ WebRTC session or stream-allocation behavior.
 ## Mid-test DUT reboots (restart-flag monitor)
 
 Several Python tests reboot the DUT mid-run to assert that state survives a restart:
-`TC_ACL_2_10`, `TC_AVSM_2_18` through `TC_AVSM_2_21`, `TC_BINFO_2_2` and `TC_CC_6_5`.
+`TC_ACL_2_10`, `TC_AVSM_2_18` through `TC_AVSM_2_21`, `TC_AVSUM_2_9`, `TC_BINFO_2_2` and
+`TC_CC_6_5`.
 They all go through the one shared `MatterBaseTest.request_device_reboot()` in
 `matter/testing/matter_testing.py`, which has two branches.
 
@@ -622,7 +623,14 @@ than being told a reset it asked for had completed.
 To add a reboot-backed test, pass `--restart-flag-file /tmp/matterbridge-chip-test-restart-flag`
 in that entry's `args`. A completed reboot logs `CHIP test restart requested via ...`,
 `Cleanup completed. Restarting...` and `CHIP test restart completed, cleared restart flag ...`,
-and takes roughly 4-5 s against the 30 s budget. To confirm a run really rebooted rather
+and takes roughly 4-5 s against the 30 s budget. It takes about 16 s when the test still
+holds a subscription at the reboot, as `TC_AVSUM_2_9` does (its MovementState subscription
+from step 3): the test expires its CASE session without closing it, so the DUT keeps
+retransmitting on that session, and the server node close waits about 12.5 s for the session
+to end. `stopServerNode()` in `matterbridge.ts` therefore allows the close 30 s. With the
+previous 10 s it gave up, the reload started a new server node while the old one still held
+UDP 5540 (`Cannot bind {::}:5540 because port is already in use`), the root node never came
+back online, and the test failed with `App restart did not complete within timeout`. To confirm a run really rebooted rather
 than falling into the EOF branch, check that `chipTests.log` contains no `EOF on STDIN`
 and one `App reboot completed successfully` per reboot. Note the container's `local` log
 driver rotates at 100 MB x 3, so `docker logs` may only show the most recent cycles —

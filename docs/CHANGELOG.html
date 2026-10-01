@@ -211,6 +211,7 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[matterbridge]: Raise the server node close timeout from 10 to 30 seconds, so a restart no longer starts the new server node while the old one still holds port 5540 (fixes <code>TC_AVSUM_2_9</code>).</li>
 <li>[behaviors]: Align the Camera AV Stream Management, Camera AV Settings User Level Management and WebRTC Transport Provider server messages and Matter 1.6.0 spec comments with the server endpoint context rules.</li>
 <li>[behaviors]: The Boolean State Configuration, Smoke CO Alarm, Mode Select, Device Energy Management, Device Energy Management Mode and Temperature Alarm servers narrow <code>endpoint</code> and emit the command observable for every completed command, and the Binding, Occupancy Sensing, Pump Configuration and Control and Switch servers narrow <code>endpoint</code>.</li>
 <li>[behaviors]: The Window Covering, Operational State and Valve Configuration and Control servers narrow <code>endpoint</code> and emit the command observable for every completed command.</li>
