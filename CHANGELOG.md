@@ -56,30 +56,35 @@ If you like this project and find it useful, please consider giving it a star on
 - [data-model]: Emit `oxlint-disable typescript/no-empty-object-type` instead of the obsolete `eslint-disable` in the generated `matterClusterTypes.ts`.
 - [styleguide]: Update [`STYLEGUIDE.md`](STYLEGUIDE.md) to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.12.
-- [matterbridge]: Bump `@types/node` to v.26.6.2.
-- [matterbridge]: Bump `vitest` to v.5.0.2.
-- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.2.
+- [matterbridge]: Bump `@types/node` to v.26.6.3.
+- [matterbridge]: Bump `vitest` to v.5.0.3.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.3.
 - [matterbridge]: Bump `marked` to v.18.0.14.
-- [matterbridge]: Bump `oxfmt` to v.0.70.0.
-- [matterbridge]: Bump `oxlint` to v.1.85.0.
+- [matterbridge]: Bump `oxfmt` to v.0.71.0.
+- [matterbridge]: Bump `oxlint` to v.1.86.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
+- [core]: Bump `ws` to v.8.22.0.
+- [core]: Bump `@types/ws` to v.8.18.2.
+- [core]: Bump `@types/multer` to v.2.3.0.
+- [types]: Suppress the new oxlint `no-generated-empty-object-type` rule in `broadcastServerTypes.ts`.
 - [dgram]: Update `mdns.ts` to v.1.1.0: `sendQuery` and `sendResponse` accept optional answers (known answers in queries), authorities and additionals, records accept an optional `flush` flag, and add the `DnsHeaderFlag` enum and the `MDNS_MAX_MESSAGE_LENGTH` and `MDNS_MAX_RESOURCE_RECORD_LENGTH` constants.
 - [dgram]: `sendQuery` and `sendResponse` in `mdns.ts` compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.
 - [dgram]: Update `dgram.ts` to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.
 - [dgram]: Use the Node.js `SocketType` type in `dgram.ts`, `coap.ts`, `mdns.ts`, `multicast.ts` and `unicast.ts`.
 - [scripts]: Update `clean.mjs` and `deep-clean.mjs` to v.1.2.0: log every removed path under its directory with a red dash (the emptied `.cache` and `node_modules` contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor `NO_COLOR` and redirected output.
-- [thread]: Bump `@zip.js/zip.js` to v.2.18.2.
+- [thread]: Bump `@zip.js/zip.js` to v.2.22.0.
 - [utils]: Update `runtimeBun.ts` to v.1.0.1: `sleep()` on Node now uses `setTimeout` from `node:timers/promises`.
 - [frontend]: Bump `frontend` version to v.3.6.3.
 - [frontend]: Require 100% line and function coverage in `test:coverage`.
 - [devcontainer]: Update `post-create.sh` to v.2.3.0: add the workspace to the git `safe.directory` list to avoid the "detected dubious ownership" error on macOS bind mounts.
-- [frontend]: Bump `@types/node` to v.26.6.2.
+- [frontend]: Bump `@types/node` to v.26.6.3.
 - [frontend]: Bump `jsdom` to v.30.1.1.
 - [frontend]: Update the `MbfWindow` test expectations for jsdom's numeric computed `font-weight` values.
 - [frontend]: Bump `vite` to v.8.3.1.
-- [frontend]: Bump `vitest` to v.5.0.2.
-- [frontend]: Bump `oxfmt` to v.0.70.0.
-- [frontend]: Bump `oxlint` to v.1.85.0.
+- [frontend]: Bump `vitest` to v.5.0.3.
+- [frontend]: Add `@vitest/coverage-v8` v.5.0.3 to the devDependencies instead of resolving it from the root workspace.
+- [frontend]: Bump `oxfmt` to v.0.71.0.
+- [frontend]: Bump `oxlint` to v.1.86.0.
 - [frontend]: Bump `oxlint-tsgolint` to v.7.0.2003.
 
 ### Fixed

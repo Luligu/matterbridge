@@ -147,16 +147,16 @@
     "node-ansi-logger": "3.3.1",
     "node-persist-manager": "2.1.1",
     "werift": "0.24.4",
-    "ws": "8.21.3"
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@matterbridge/vitest-utils": "3.10.12",
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
     "@types/jest": "30.0.0",
-    "@types/multer": "2.2.0",
-    "@types/node": "26.6.2",
-    "@types/ws": "8.18.1",
-    "vitest": "5.0.2"
+    "@types/multer": "2.3.0",
+    "@types/node": "26.6.3",
+    "@types/ws": "8.18.2",
+    "vitest": "5.0.3"
   }
 }
