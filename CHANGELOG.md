@@ -91,6 +91,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [behaviors]: The Thermostat, Fan Control and Identify servers now emit their command observables to `subscribeCommand()` listeners, and the Thermostat, Fan Control, Identify and Power Source servers narrow `endpoint` instead of casting it.
 - [temperatureControl]: `SetTemperature` now rejects an out-of-range TargetTemperatureLevel or TargetTemperature, and a TargetTemperature not aligned to Step, with CONSTRAINT_ERROR instead of accepting it, and a missing field with INVALID_COMMAND (Matter 1.6.0 § 8.2.6.1).
 - [temperatureControl]: Add the endpoint context to the temperature control server messages, forward SetTemperature with the action context, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
 - [refrigerator]: `ChangeToMode` with an unknown mode now responds `UnsupportedMode` instead of `InvalidInMode` (Matter 1.6.0 § 1.10.7.1.1).

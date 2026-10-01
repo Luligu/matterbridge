@@ -24,12 +24,16 @@
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import type { EndpointNumber } from '@matter/types/datatype';
 
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * PowerSource server that keeps the Matterbridge endpoint list in sync.
  */
 export class MatterbridgePowerSourceServer extends PowerSourceServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes state and updates endpointList when construction completes.
    */

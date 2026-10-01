@@ -212,6 +212,9 @@ function speedSettingForPercent(speedMax: number, percent: number): number {
  * it depends on knowledge this generic server does not have.
  */
 export class MatterbridgeFanControlServer extends FanControlServer.with(FanControl.Feature.Auto, FanControl.Feature.Step) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Registers the FanMode, PercentSetting, and (when the MultiSpeed feature is present) SpeedSetting pre-commit
    * handlers that enforce the attribute rules.
@@ -489,7 +492,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       request,
       cluster: FanControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof FanControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
 
@@ -553,5 +556,6 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 
     // step is not implemented in matter.js
     // await super.step(request);
+    this.endpoint.emitCommand(FanControl, 'step', request, this.context);
   }
 }
