@@ -37,6 +37,7 @@ import { Dishwasher, MatterbridgeDishwasherAlarmServer, MatterbridgeDishwasherMo
 import { MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { dishwasher } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { CommandHandlerData } from '../../src/matterbridgeEndpointCommandHandler.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -212,14 +213,80 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['dishwasherMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('onOff', 'off', {}); // Dead Front state
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.NOTICE,
+      `MatterbridgeDishwasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.getAttribute(DishwasherMode.id, 'currentMode')).toBe(2);
+
+    const order: string[] = [];
+    const pluginHandler = vi.fn(async (data: CommandHandlerData<'DishwasherMode.changeToMode'>) => {
+      expect(data.endpoint).toBe(device);
+      expect(data).toHaveProperty('context');
+      await Promise.resolve();
+      order.push('forwarded');
+    });
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: unknown[] = [];
+    device.addCommandHandler('DishwasherMode.changeToMode', pluginHandler);
+    device.subscribeCommand(DishwasherMode, 'changeToMode', (data) => {
+      order.push('emitted');
+      emitted.push(data.request);
+    });
+
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `DishwasherModeServer: changeToMode called with unsupported mode 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeDishwasherModeServer: changeToMode called with unsupported mode 0 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(pluginHandler).toHaveBeenCalledTimes(1);
+    expect(emitted).toEqual([]);
+
     vi.clearAllMocks();
+    order.length = 0;
     await device.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `DishwasherModeServer: changeToMode called with mode 1 => Light`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDishwasherModeServer: changeToMode called with mode 1 => Light (endpoint ${device.id}.${device.number})`,
+    );
+    expect(order).toEqual(['forwarded', 'emitted']);
+    expect(emitted).toEqual([{ newMode: 1 }]);
+    expect(device.getAttribute(DishwasherMode.id, 'currentMode')).toBe(1);
+    device.commandHandler.removeHandler('DishwasherMode.changeToMode', pluginHandler);
+  });
+
+  test('keep the configured CurrentMode and use the Normal mode of custom SupportedModes in dead front', async () => {
+    const custom = new Dishwasher('Dishwasher Custom Modes', 'DW654321', {
+      currentMode: 1,
+      supportedModes: [
+        { label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] },
+        { label: 'Normal', mode: 5, modeTags: [{ value: DishwasherMode.ModeTag.Normal }] },
+      ],
+    });
+    expect(await addDevice(server, custom)).toBeTruthy();
+    expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(1);
+    await custom.invokeBehaviorCommand('onOff', 'off', {});
+    expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(5);
+
+    // A plugin replaces SupportedModes at runtime without a Normal mode: dead front keeps CurrentMode unchanged
+    await custom.invokeBehaviorCommand('onOff', 'on', {});
+    await custom.invokeBehaviorCommand('dishwasherMode', 'changeToMode', { newMode: 1 });
+    await custom.setAttribute(DishwasherMode.id, 'supportedModes', [{ label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] }]);
+    await custom.invokeBehaviorCommand('onOff', 'off', {});
+    expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(1);
+    expect(await deleteDevice(server, custom)).toBeTruthy();
+  });
+
+  test('reject SupportedModes without a Normal mode at initialization', async () => {
+    const invalid = new Dishwasher('Dishwasher No Normal', 'DW000000', {
+      currentMode: 1,
+      supportedModes: [{ label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] }],
+    });
+    expect(await addDevice(server, invalid)).toBeFalsy();
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device DishwasherNoNormal-DW000000'));
+    loggerErrorSpy.mockClear();
   });
 
   test('encode DishwasherAlarm attributes with the cluster-specific bitmap', () => {
@@ -283,6 +350,9 @@ describe('Matterbridge ' + NAME, () => {
     alarmDevice.eventsOf(MatterbridgeDishwasherAlarmServer).notify.on((event) => {
       notifyEvents.push(event);
     });
+    const emitted: string[] = [];
+    alarmDevice.subscribeCommand(DishwasherAlarm, 'reset', () => emitted.push('reset'));
+    alarmDevice.subscribeCommand(DishwasherAlarm, 'modifyEnabledAlarms', () => emitted.push('modifyEnabledAlarms'));
 
     // Every alarm becomes active at once.
     await alarmDevice.setAttribute(DishwasherAlarm.id, 'state', allAlarms);
@@ -310,6 +380,7 @@ describe('Matterbridge ' + NAME, () => {
     // Resetting alarms that are already inactive is a no-op.
     await alarmDevice.invokeBehaviorCommand(DishwasherAlarm, 'reset', { alarms: allAlarms });
     expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'state')).toEqual(noAlarm);
+    expect(emitted).toEqual(['reset', 'modifyEnabledAlarms', 'reset', 'modifyEnabledAlarms', 'reset']);
   });
 
   test('MatterbridgeDishwasherAlarmServer rejects unsupported alarms', async () => {
@@ -351,7 +422,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(server.parts.has(device)).toBeTruthy();
     expect(device.lifecycle.isReady).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer initialized: currentMode is 2`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDishwasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
       `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,

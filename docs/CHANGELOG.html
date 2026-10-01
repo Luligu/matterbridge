@@ -211,6 +211,9 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[dishwasher]: <code>MatterbridgeDishwasherModeServer</code> keeps the configured CurrentMode at startup instead of forcing mode 2, and runs the DishwasherModeServer initialization, which requires a Normal mode (Matter 1.6.0 § 8.3.6.1).</li>
+<li>[dishwasher]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.</li>
+<li>[dishwasher]: Add the endpoint context to the Dishwasher Mode server messages, forward ChangeToMode with the action context, narrow <code>endpoint</code>, emit the command observables and add Matter 1.6.0 spec comments.</li>
 <li>[oven]: <code>Stop</code> while Stopped and <code>Start</code> while Running now respond NoError and take no further action (Matter 1.6.0 § 1.14.6.2 and § 1.14.6.3).</li>
 <li>[oven]: <code>MatterbridgeOvenModeServer</code> now runs the OvenModeServer initialization, which requires a Bake mode in SupportedModes (Matter 1.6.0 § 8.11.6.1).</li>
 <li>[oven]: Add the endpoint context to all Oven server logs, narrow <code>endpoint</code>, emit the command observables and add Matter 1.6.0 spec comments.</li>
