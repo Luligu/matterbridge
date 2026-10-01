@@ -201,19 +201,22 @@ describe('Matterbridge ' + NAME, () => {
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Play (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMediaPlaybackServer: play (endpoint ${device.id}.${device.number})`);
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.pause', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Pause (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMediaPlaybackServer: pause (endpoint ${device.id}.${device.number})`);
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.stop', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Stop (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMediaPlaybackServer: stop (endpoint ${device.id}.${device.number})`);
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('keypadInput', 'KeypadInput.sendKey', { keyCode: KeypadInput.CecKeyCode.Down });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `SendKey keyCode ${KeypadInput.CecKeyCode.Down} (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeKeypadInputServer: sendKey keyCode ${KeypadInput.CecKeyCode.Down} (endpoint ${device.id}.${device.number})`,
+    );
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('onOff', 'OnOff.off', {});
@@ -221,7 +224,7 @@ describe('Matterbridge ' + NAME, () => {
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Play (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMediaPlaybackServer: play (endpoint ${device.id}.${device.number})`);
 
     await device.invokeBehaviorCommand('mediaPlayback', 'MediaPlayback.play', {});
     expect(device.getAttribute('mediaPlayback', 'currentState')).toBe(MediaPlayback.PlaybackState.NotPlaying);

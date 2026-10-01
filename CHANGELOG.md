@@ -89,6 +89,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [waterHeater]: Narrow server endpoints and forward command context and completed command observables.
+- [mediaHelpers]: Correct server log context and forward command context and completed command observables.
+
 - [electricalUtilityMeter]: Narrow commodity server endpoints and forward command context and completed command observables.
 
 - [closure]: Correct ClosureControl and ClosureDimension server endpoint context, command emissions and specification comments.

@@ -3,7 +3,7 @@
  * @description This file contains the Matterbridge server behaviors shared by Chapter 10 Media Device Types.
  * @author Luca Liguori
  * @created 2026-08-20
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -76,17 +76,21 @@ import { lowercaseFirstLetter } from '../matterbridgeEndpointHelpers.js';
  * @remarks Used by BasicVideoPlayer and CastingVideoPlayer.
  */
 export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server and hooks on/off changes.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeMediaPlaybackServer initialized: currentState is ${this.state.currentState}`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: initialized: currentState is ${this.state.currentState} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.agent.get(MatterbridgeOnOffServer.with()).events.onOff$Changed, this.handleOnOffChange);
   }
 
   protected handleOnOffChange(_onOff: boolean): void {
+    // Matter 1.6.0 § 6.10.6.1: CurrentState indicates the current playback state of the media.
     this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
   }
 
@@ -97,15 +101,18 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async play(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Play (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: play (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.play', {
       command: 'play',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    // Matter 1.6.0 § 6.10.7.1: Reflect successful play in CurrentState when media is powered on.
     if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Playing;
+    this.endpoint.emitCommand(MediaPlayback, 'play', {}, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -116,15 +123,18 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async pause(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.pause', {
       command: 'pause',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    // Matter 1.6.0 § 6.10.7.2: Reflect successful pause in CurrentState when media is powered on.
     if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Paused;
+    this.endpoint.emitCommand(MediaPlayback, 'pause', {}, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -135,15 +145,18 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async stop(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: stop (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.stop', {
       command: 'stop',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    // Matter 1.6.0 § 6.10.7.3: Reflect successful stop in CurrentState when media is powered on.
     if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
+    this.endpoint.emitCommand(MediaPlayback, 'stop', {}, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -154,14 +167,16 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async previous(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Previous (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: previous (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.previous', {
       command: 'previous',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(MediaPlayback, 'previous', {}, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -172,14 +187,16 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async next(): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Next (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: next (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.next', {
       command: 'next',
       request: {},
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(MediaPlayback, 'next', {}, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -191,14 +208,16 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async skipForward(request: MediaPlayback.SkipForwardRequest): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SkipForward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: skipForward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.skipForward', {
       command: 'skipForward',
       request,
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(MediaPlayback, 'skipForward', request, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 
@@ -210,14 +229,16 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
    */
   override async skipBackward(request: MediaPlayback.SkipBackwardRequest): Promise<MediaPlayback.PlaybackResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SkipBackward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeMediaPlaybackServer: skipBackward (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('MediaPlayback.skipBackward', {
       command: 'skipBackward',
       request,
       cluster: MediaPlaybackServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof MediaPlayback)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(MediaPlayback, 'skipBackward', request, this.context);
     return { status: MediaPlayback.Status.Success };
   }
 }
@@ -228,12 +249,15 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
  * @remarks Used by BasicVideoPlayer, CastingVideoPlayer and ContentApp.
  */
 export class MatterbridgeKeypadInputServer extends KeypadInputServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeKeypadInputServer initialized`);
+    device.log.info(`MatterbridgeKeypadInputServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
 
   /**
@@ -244,14 +268,16 @@ export class MatterbridgeKeypadInputServer extends KeypadInputServer {
    */
   override async sendKey(request: KeypadInput.SendKeyRequest): Promise<KeypadInput.SendKeyResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SendKey keyCode ${request.keyCode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeKeypadInputServer: sendKey keyCode ${request.keyCode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('KeypadInput.sendKey', {
       command: 'sendKey',
       request,
       cluster: KeypadInputServer.id,
       attributes: {},
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(KeypadInput, 'sendKey', request, this.context);
     return { status: KeypadInput.Status.Success };
   }
 }
@@ -263,12 +289,15 @@ export class MatterbridgeKeypadInputServer extends KeypadInputServer {
  * this server only logs on initialization. Used by CastingVideoPlayer.
  */
 export class MatterbridgeContentLauncherServer extends ContentLauncherServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeContentLauncherServer initialized`);
+    device.log.info(`MatterbridgeContentLauncherServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
 }
 
@@ -279,12 +308,15 @@ export class MatterbridgeContentLauncherServer extends ContentLauncherServer {
  * ContentApp.
  */
 export class MatterbridgeApplicationBasicServer extends ApplicationBasicServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeApplicationBasicServer initialized`);
+    device.log.info(`MatterbridgeApplicationBasicServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
 }
 
@@ -293,12 +325,15 @@ export class MatterbridgeApplicationBasicServer extends ApplicationBasicServer {
  * ContentApp.
  */
 export class MatterbridgeApplicationLauncherServer extends ApplicationLauncherServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`MatterbridgeApplicationLauncherServer initialized`);
+    device.log.info(`MatterbridgeApplicationLauncherServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
   }
 
   /**
@@ -309,14 +344,16 @@ export class MatterbridgeApplicationLauncherServer extends ApplicationLauncherSe
    */
   override async launchApp(request: ApplicationLauncher.LaunchAppRequest): Promise<ApplicationLauncher.LauncherResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`LaunchApp (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeApplicationLauncherServer: launchApp (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ApplicationLauncher.launchApp', {
       command: 'launchApp',
       request,
       cluster: ApplicationLauncherServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ApplicationLauncher)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(ApplicationLauncher, 'launchApp', request, this.context);
     return { status: ApplicationLauncher.Status.Success };
   }
 
@@ -328,14 +365,16 @@ export class MatterbridgeApplicationLauncherServer extends ApplicationLauncherSe
    */
   override async stopApp(request: ApplicationLauncher.StopAppRequest): Promise<ApplicationLauncher.LauncherResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`StopApp (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeApplicationLauncherServer: stopApp (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ApplicationLauncher.stopApp', {
       command: 'stopApp',
       request,
       cluster: ApplicationLauncherServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ApplicationLauncher)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(ApplicationLauncher, 'stopApp', request, this.context);
     return { status: ApplicationLauncher.Status.Success };
   }
 
@@ -347,14 +386,16 @@ export class MatterbridgeApplicationLauncherServer extends ApplicationLauncherSe
    */
   override async hideApp(request: ApplicationLauncher.HideAppRequest): Promise<ApplicationLauncher.LauncherResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`HideApp (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeApplicationLauncherServer: hideApp (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('ApplicationLauncher.hideApp', {
       command: 'hideApp',
       request,
       cluster: ApplicationLauncherServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ApplicationLauncher)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    this.endpoint.emitCommand(ApplicationLauncher, 'hideApp', request, this.context);
     return { status: ApplicationLauncher.Status.Success };
   }
 }

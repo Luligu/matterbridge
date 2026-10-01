@@ -130,21 +130,24 @@ describe('Matterbridge ' + NAME, () => {
 
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('keypadInput', 'KeypadInput.sendKey', { keyCode: KeypadInput.CecKeyCode.Down });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `SendKey keyCode ${KeypadInput.CecKeyCode.Down} (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeKeypadInputServer: sendKey keyCode ${KeypadInput.CecKeyCode.Down} (endpoint ${device.id}.${device.number})`,
+    );
 
     vi.clearAllMocks();
     const launchAppResponse = await device.act(async (agent) => agent.get(ApplicationLauncherServer).launchApp({}));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `LaunchApp (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeApplicationLauncherServer: launchApp (endpoint ${device.id}.${device.number})`);
     expect(launchAppResponse).toEqual({ status: ApplicationLauncher.Status.Success });
 
     vi.clearAllMocks();
     const stopAppResponse = await device.act(async (agent) => agent.get(ApplicationLauncherServer).stopApp({}));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `StopApp (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeApplicationLauncherServer: stopApp (endpoint ${device.id}.${device.number})`);
     expect(stopAppResponse).toEqual({ status: ApplicationLauncher.Status.Success });
 
     vi.clearAllMocks();
     const hideAppResponse = await device.act(async (agent) => agent.get(ApplicationLauncherServer).hideApp({}));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `HideApp (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeApplicationLauncherServer: hideApp (endpoint ${device.id}.${device.number})`);
     expect(hideAppResponse).toEqual({ status: ApplicationLauncher.Status.Success });
   });
 

@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-18
- * @version 1.2.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -254,6 +254,9 @@ export class WaterHeater extends MatterbridgeEndpoint {
  * WaterHeaterManagement server that forwards boost commands and updates boost state.
  */
 export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManagementServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Handles the WaterHeaterManagement `Boost` command.
    *
@@ -267,11 +270,13 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       request,
       cluster: WaterHeaterManagementServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer: boost called with: ${JSON.stringify(request)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Active when the Boost command succeeds.
     this.state.boostState = WaterHeaterManagement.BoostState.Active;
+    this.endpoint.emitCommand(WaterHeaterManagement, 'boost', request, this.context);
   }
 
   /**
@@ -285,11 +290,13 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       request: {},
       cluster: WaterHeaterManagementServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof WaterHeaterManagement)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer: cancelBoost called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 9.5.8.2.1: Transition BoostState to Inactive when CancelBoost is received.
     this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
+    this.endpoint.emitCommand(WaterHeaterManagement, 'cancelBoost', {}, this.context);
   }
 }
 
@@ -297,6 +304,9 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
  * WaterHeaterMode server that validates and applies mode changes.
  */
 export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Handles the WaterHeaterMode `ChangeToMode` command.
    *
@@ -311,7 +321,8 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
       request,
       cluster: WaterHeaterModeServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
     // Matter 1.6.0 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
@@ -326,6 +337,7 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
     device.log.debug(
       `MatterbridgeWaterHeaterModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(WaterHeaterMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
