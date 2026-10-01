@@ -94,6 +94,9 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
 - [frontend]: Fix React Compiler `react/hooks` rule flags.
 - [frontend]: Fix React Compiler `react/refs` rule flags.
+- [microwaveOven]: `AddMoreTime` now rejects an invalid TimeToAdd with CONSTRAINT_ERROR and adds TimeToAdd to the Operational State `CountdownTime` (Matter 1.6.0 § 8.13.6.3.2).
+- [microwaveOven]: `SetCookingParameters` now rejects a CookMode not in SupportedModes with CONSTRAINT_ERROR and validates after forwarding to the plugin.
+- [microwaveOven]: Add the endpoint context to all `MatterbridgeMicrowaveOvenControlServer` logs and errors, narrow `endpoint` and emit the command observable.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

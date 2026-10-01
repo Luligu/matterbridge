@@ -32,7 +32,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from '../../src/devices/microwaveOven.js';
 import { microwaveOven } from '../../src/matterbridgeDeviceTypes.js';
-import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -85,7 +85,7 @@ describe('Matterbridge ' + NAME, () => {
   test('add a microwave oven device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
     await device.construction.ready;
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer initialized`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: initialized (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
       `MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${device.id}.${device.number})`,
@@ -201,36 +201,90 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['microwaveOvenControl'].acceptedCommandList).toEqual([0, 1]);
     expect((device as any).state['microwaveOvenControl'].generatedCommandList).toEqual([]); // No response
 
+    // Collect the emitted commands in arrays: vi.clearAllMocks() below would reset vi.fn() listeners
+    const setCookingParametersEmitted: unknown[] = [];
+    const addMoreTimeEmitted: unknown[] = [];
+    device.subscribeCommand(MicrowaveOvenControl, 'setCookingParameters', (data) => setCookingParametersEmitted.push(data.request));
+    device.subscribeCommand(MicrowaveOvenControl, 'addMoreTime', (data) => addMoreTimeEmitted.push(data.request));
+
     // Default cookTime from constructor is 60; adding 1 should log setting cookTime to 61
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: addMoreTime called setting cookTime to 61`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: addMoreTime called setting cookTime to 61 (endpoint ${device.id}.${device.number})`,
+    );
 
-    // Adding -1 should log invalid cookTime
+    // Adding -1 violates the TimeToAdd constraint -> ConstraintError and cookTime unchanged
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: -1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeMicrowaveOvenControlServer: addMoreTime called with invalid cookTime -1`);
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: -1 })).rejects.toMatchObject({ code: Status.ConstraintError });
+    expect((device as any).state['microwaveOvenControl'].cookTime).toBe(61);
+
+    // CookTime + TimeToAdd above MaxCookTime -> ConstraintError and cookTime unchanged
+    vi.clearAllMocks();
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: 3600 })).rejects.toMatchObject({ code: Status.ConstraintError });
+    expect((device as any).state['microwaveOvenControl'].cookTime).toBe(61);
+
+    // AddMoreTime also adds TimeToAdd to the Operational State CountdownTime when it is known
+    await device.setAttribute('operationalState', 'countdownTime', 100);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: 10 });
+    expect((device as any).state['microwaveOvenControl'].cookTime).toBe(71);
+    expect((device as any).state['operationalState'].countdownTime).toBe(110);
+    await device.setAttribute('operationalState', 'countdownTime', null);
 
     // Test setCookingParameters command - all unspecified -> defaults
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', {});
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec. (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower (endpoint ${device.id}.${device.number})`,
+    );
 
     // Test setCookingParameters - valid cookMode only
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 2`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec.`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 2 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec. (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower (endpoint ${device.id}.${device.number})`,
+    );
 
     // Test setCookingParameters - no cookMode provided but valid cookTime and powerSetting
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 120, powerSetting: 30 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 120`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 30`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 120 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 30 (endpoint ${device.id}.${device.number})`,
+    );
+
+    // Test setCookingParameters - cookMode not in SupportedModes -> ConstraintError
+    vi.clearAllMocks();
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 99 })).rejects.toMatchObject({ code: Status.ConstraintError });
+    expect((device as any).state['microwaveOvenMode'].currentMode).toBe(6);
 
     // Test setCookingParameters - invalid cookTime (<1) -> ConstraintError
     vi.clearAllMocks();
@@ -257,21 +311,61 @@ describe('Matterbridge ' + NAME, () => {
     // Test setCookingParameters - all valid values
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookMode: 4, cookTime: 90, powerSetting: 50 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 4`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 90`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 50`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to 4 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to 90 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to 50 (endpoint ${device.id}.${device.number})`,
+    );
 
     // Test setCookingParameters - startAfterSetting false (no change expected)
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { startAfterSetting: false });
-    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true (endpoint ${device.id}.${device.number})`,
+    );
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
 
     // Test setCookingParameters - startAfterSetting true (transition to Running)
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { startAfterSetting: true });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true (endpoint ${device.id}.${device.number})`,
+    );
     expect((device as any).state['operationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Running);
+
+    // Only completed commands are emitted to the command observable
+    expect(addMoreTimeEmitted).toEqual([{ timeToAdd: 1 }, { timeToAdd: 10 }]);
+    expect(setCookingParametersEmitted).toHaveLength(6);
+    expect(setCookingParametersEmitted).toContainEqual({ cookMode: 4, cookTime: 90, powerSetting: 50 });
+  });
+
+  test('addMoreTime without an Operational State cluster on the endpoint', async () => {
+    const endpoint = new MatterbridgeEndpoint(microwaveOven, { id: 'MicrowaveOvenNoOperationalState' });
+    endpoint.behaviors.require(MatterbridgeMicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerAsNumber, MicrowaveOvenControl.Feature.PowerNumberLimits), {
+      powerSetting: 100,
+      minPower: 10,
+      maxPower: 100,
+      powerStep: 10,
+      cookTime: 60,
+      maxCookTime: 3600,
+    });
+    expect(endpoint.hasClusterServer(OperationalState.id)).toBeFalsy();
+    expect(await addDevice(server, endpoint)).toBeTruthy();
+
+    const addMoreTimeEmitted: unknown[] = [];
+    endpoint.subscribeCommand(MicrowaveOvenControl, 'addMoreTime', (data) => addMoreTimeEmitted.push(data.request));
+    await endpoint.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: 30 });
+    expect((endpoint as any).state['microwaveOvenControl'].cookTime).toBe(90);
+    expect(addMoreTimeEmitted).toEqual([{ timeToAdd: 30 }]);
   });
 
   test('start the server node', async () => {
