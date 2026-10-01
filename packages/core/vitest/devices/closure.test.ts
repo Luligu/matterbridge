@@ -710,11 +710,12 @@ describe('Matterbridge ' + NAME, () => {
       expect(timedDevice.getMainState()).toBe(ClosureControl.MainState.Moving);
 
       await vi.advanceTimersByTimeAsync(1000);
+      // Latched but FullyOpened is not secure: with Positioning, SecureState also requires Position FullyClosed
       expect(timedDevice.getAttribute(ClosureControl.id, 'overallCurrentState')).toEqual({
         position: ClosureControl.CurrentPosition.FullyOpened,
         latch: true,
         speed: ThreeLevelAuto.Auto,
-        secureState: true,
+        secureState: false,
       });
       expect(movementCompleted).toHaveBeenCalledTimes(1);
 

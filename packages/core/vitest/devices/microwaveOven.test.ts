@@ -233,6 +233,23 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['operationalState'].countdownTime).toBe(110);
     await device.setAttribute('operationalState', 'countdownTime', null);
 
+    // AddMoreTime while the Operational State is Error -> InvalidInState and cookTime unchanged
+    const operationalState = (device as any).state['operationalState'].operationalState;
+    await device.setAttribute('operationalState', 'operationalState', OperationalState.OperationalStateEnum.Error);
+    vi.clearAllMocks();
+    await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'addMoreTime', { timeToAdd: 10 })).rejects.toMatchObject({ code: Status.InvalidInState });
+    expect((device as any).state['microwaveOvenControl'].cookTime).toBe(71);
+
+    // SetCookingParameters while the Operational State is not Stopped -> InvalidInState and cookTime unchanged
+    for (const state of [OperationalState.OperationalStateEnum.Error, OperationalState.OperationalStateEnum.Running, OperationalState.OperationalStateEnum.Paused]) {
+      await device.setAttribute('operationalState', 'operationalState', state);
+      vi.clearAllMocks();
+      await expect(device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', { cookTime: 30 })).rejects.toMatchObject({ code: Status.InvalidInState });
+      expect((device as any).state['microwaveOvenControl'].cookTime).toBe(71);
+    }
+    await device.setAttribute('operationalState', 'operationalState', operationalState);
+    expect(operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
+
     // Test setCookingParameters command - all unspecified -> defaults
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('microwaveOvenControl', 'setCookingParameters', {});

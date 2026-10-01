@@ -233,7 +233,8 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       if (mappedPosition !== undefined) position = mappedPosition;
     }
     const latch = targetState.latch ?? previousState.latch;
-    const secureState = this.features.motionLatching ? latch === true : position === ClosureControl.CurrentPosition.FullyClosed;
+    // Matter 1.6.0 § 5.4.6.5.4: The closure is secure only when Position is FullyClosed (if Positioning is supported) and Latch is TRUE (if MotionLatching is supported).
+    const secureState = (!this.features.positioning || position === ClosureControl.CurrentPosition.FullyClosed) && (!this.features.motionLatching || latch === true);
 
     // Unlike Closure.setState() (which can also be called directly, e.g. by setOpenedForVentilation()/
     // setOpenedForPedestrian(), on a closure that doesn't support that feature), `targetState.position` here was

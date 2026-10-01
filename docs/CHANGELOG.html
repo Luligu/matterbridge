@@ -289,6 +289,12 @@
 </li>
 <li><p>[microwaveOven]: Add the endpoint context to all <code>MatterbridgeMicrowaveOvenControlServer</code> logs and errors, narrow <code>endpoint</code> and emit the command observable.</p>
 </li>
+<li><p>[microwaveOven]: <code>AddMoreTime</code> now rejects the command with INVALID_IN_STATE while the Operational State is Error (Matter 1.6.0 § 8.13.6.3.2).</p>
+</li>
+<li><p>[microwaveOven]: <code>SetCookingParameters</code> now rejects the command with INVALID_IN_STATE unless the Operational State is Stopped (Matter 1.6.0 § 8.13.6.2.6).</p>
+</li>
+<li><p>[closure]: <code>MoveTo</code> completion now reports <code>SecureState</code> true only when the closure is both FullyClosed (Positioning) and latched (MotionLatching) (Matter 1.6.0 § 5.4.6.5.4).</p>
+</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31011-2026-09-25">[3.10.11] - 2026-09-25</h2>

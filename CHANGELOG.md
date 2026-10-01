@@ -132,6 +132,9 @@ If you like this project and find it useful, please consider giving it a star on
 - [microwaveOven]: `AddMoreTime` now rejects an invalid TimeToAdd with CONSTRAINT_ERROR and adds TimeToAdd to the Operational State `CountdownTime` (Matter 1.6.0 § 8.13.6.3.2).
 - [microwaveOven]: `SetCookingParameters` now rejects a CookMode not in SupportedModes with CONSTRAINT_ERROR and validates after forwarding to the plugin.
 - [microwaveOven]: Add the endpoint context to all `MatterbridgeMicrowaveOvenControlServer` logs and errors, narrow `endpoint` and emit the command observable.
+- [microwaveOven]: `AddMoreTime` now rejects the command with INVALID_IN_STATE while the Operational State is Error (Matter 1.6.0 § 8.13.6.3.2).
+- [microwaveOven]: `SetCookingParameters` now rejects the command with INVALID_IN_STATE unless the Operational State is Stopped (Matter 1.6.0 § 8.13.6.2.6).
+- [closure]: `MoveTo` completion now reports `SecureState` true only when the closure is both FullyClosed (Positioning) and latched (MotionLatching) (Matter 1.6.0 § 5.4.6.5.4).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

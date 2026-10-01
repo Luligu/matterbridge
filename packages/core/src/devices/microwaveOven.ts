@@ -234,6 +234,17 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       context: this.context,
     });
 
+    // Matter 1.6.0 § 8.13.6.2.6: Respond with INVALID_IN_STATE, leaving state unchanged, if the Operational State cluster on the same endpoint is not Stopped, since cooking parameters cannot change while the oven is running, paused or in error.
+    if (
+      this.endpoint.behaviors.has(MatterbridgeOperationalStateServer) &&
+      this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState !== OperationalState.OperationalStateEnum.Stopped
+    ) {
+      throw new StatusResponseError(
+        `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called while the operational state is not Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidInState,
+      );
+    }
+
     const supportedModes = this.endpoint.stateOf(MicrowaveOvenModeServer).supportedModes;
 
     // Matter 1.6.0 § 8.13.6.2.1 and § 8.13.6.2.6: Reject the command with CONSTRAINT_ERROR, leaving state unchanged, if CookMode is not one of the SupportedModes of the Microwave Oven Mode cluster.
@@ -342,16 +353,27 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       );
     }
 
+    // Matter 1.6.0 § 8.13.6.3.2: Respond with INVALID_IN_STATE if the Operational State cluster on the same endpoint is in an operational state, such as Error, that cannot support the command.
+    if (
+      this.endpoint.behaviors.has(MatterbridgeOperationalStateServer) &&
+      this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState === OperationalState.OperationalStateEnum.Error
+    ) {
+      throw new StatusResponseError(
+        `MatterbridgeMicrowaveOvenControlServer: addMoreTime called while the operational state is Error (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidInState,
+      );
+    }
+
     device.log.info(
       `MatterbridgeMicrowaveOvenControlServer: addMoreTime called setting cookTime to ${this.state.cookTime + request.timeToAdd} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     // Matter 1.6.0 § 8.13.6.3.2: Add TimeToAdd to the CookTime attribute.
     this.state.cookTime += request.timeToAdd;
 
-    // Matter 1.6.0 § 8.13.6.3.2: Add TimeToAdd to the CountdownTime attribute of the Operational State cluster on the same endpoint.
     if (this.endpoint.behaviors.has(MatterbridgeOperationalStateServer)) {
       const countdownTime = this.endpoint.stateOf(MatterbridgeOperationalStateServer).countdownTime;
       if (countdownTime !== null && countdownTime !== undefined) {
+        // Matter 1.6.0 § 8.13.6.3.2: Add TimeToAdd to the CountdownTime attribute of the Operational State cluster on the same endpoint.
         await this.endpoint.setStateOf(MatterbridgeOperationalStateServer, { countdownTime: countdownTime + request.timeToAdd });
       }
     }

@@ -302,6 +302,9 @@ type DishwasherAlarmBitmap = Required<DishwasherAlarm.Alarm>;
  * schema of the class it is called on.
  */
 class DishwasherAlarmBaseServer extends DishwasherAlarmServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   static override readonly schema = MatterbridgeDishwasherAlarmSchema;
 }
 
