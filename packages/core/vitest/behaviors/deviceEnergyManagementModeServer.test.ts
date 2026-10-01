@@ -71,6 +71,9 @@ describe('MatterbridgeDeviceEnergyManagementModeServer', () => {
   });
 
   test('DeviceEnergyManagementMode server', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    energyManagement.subscribeCommand(DeviceEnergyManagementMode, 'changeToMode', (data) => emitted.push({ command: data.command, request: data.request }));
     const modeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     energyManagement.addCommandHandler('changeToMode', (data) => {
       modeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
@@ -120,5 +123,8 @@ describe('MatterbridgeDeviceEnergyManagementModeServer', () => {
     expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
     hasSpy.mockRestore();
+    // The unsupported mode 0 is not announced, the accepted changes are
+    expect(emitted).not.toContainEqual({ command: 'changeToMode', request: { newMode: 0 } });
+    expect(emitted).toContainEqual({ command: 'changeToMode', request: { newMode: 5 } });
   });
 });

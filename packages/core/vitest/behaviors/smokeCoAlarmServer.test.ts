@@ -69,6 +69,9 @@ describe('MatterbridgeSmokeCoAlarmServer', () => {
   });
 
   test('SmokeCoAlarm server', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    smoke.subscribeCommand(SmokeCoAlarm, 'selfTestRequest', (data) => emitted.push({ command: data.command, request: data.request }));
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
 
@@ -111,5 +114,7 @@ describe('MatterbridgeSmokeCoAlarmServer', () => {
 
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'smokeState')).toBe(SmokeCoAlarm.AlarmState.Normal);
     expect(smoke.getAttribute(SmokeCoAlarm.id, 'coState')).toBe(SmokeCoAlarm.AlarmState.Normal);
+    // The self-test rejected with BUSY is not announced, the accepted ones are
+    expect(emitted.length).toBeGreaterThan(0);
   });
 });

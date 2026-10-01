@@ -24,7 +24,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
 import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
-import type { ModeSelect } from '@matter/types/clusters/mode-select';
+import { ModeSelect } from '@matter/types/clusters/mode-select';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
@@ -34,6 +34,9 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * ModeSelect server that forwards mode changes to the Matterbridge command handler.
  */
 export class MatterbridgeModeSelectServer extends ModeSelectServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Forwards ChangeToMode requests to the Matterbridge command handler.
    *
@@ -47,11 +50,12 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       request,
       cluster: ModeSelectServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ModeSelect)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.9.7.1: Set CurrentMode to NewMode when it is a valid mode in SupportedModes, otherwise respond with INVALID_COMMAND.
     await super.changeToMode(request);
+    this.endpoint.emitCommand(ModeSelect, 'changeToMode', request, this.context);
   }
 }

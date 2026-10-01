@@ -30,12 +30,15 @@ import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-c
 import { Status, StatusResponseError } from '@matter/types';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
 
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
  * PumpConfigurationAndControl server that synchronizes pump state from OnOff and LevelControl clusters.
  */
 export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigurationAndControlServer.with(PumpConfigurationAndControl.Feature.ConstantSpeed) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
   declare protected internal: MatterbridgePumpConfigurationAndControlServer.Internal;
 
   /**

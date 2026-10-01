@@ -69,6 +69,10 @@ describe('MatterbridgeBooleanStateConfigurationServer', () => {
   });
 
   test('BooleanStateConfiguration server', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    contact.subscribeCommand(BooleanStateConfiguration, 'suppressAlarm', (data) => emitted.push({ command: data.command, request: data.request }));
+    contact.subscribeCommand(BooleanStateConfiguration, 'enableDisableAlarm', (data) => emitted.push({ command: data.command, request: data.request }));
     const suppressAlarmRequest = { alarmsToSuppress: { audible: true, visual: true } };
     const enableDisableAlarmRequest = { alarmsToEnableDisable: { audible: true, visual: true } };
 
@@ -128,5 +132,7 @@ describe('MatterbridgeBooleanStateConfigurationServer', () => {
     await contact.setAttribute('booleanStateConfiguration', 'sensorFault', { generalFault: true });
     expect(sensorFaultEvents).toHaveLength(1);
     expect(sensorFaultEvents[0]).toEqual({ sensorFault: { generalFault: true } });
+    // Rejected commands are not announced, accepted ones are
+    expect(emitted.map((entry) => (entry as { command: string }).command)).toEqual(['suppressAlarm', 'enableDisableAlarm']);
   });
 });
