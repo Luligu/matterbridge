@@ -1,17 +1,17 @@
-Chip tests run started at 2026-10-01T12:11:12.449Z
+Chip tests run started at 2026-10-01T12:34:06.632Z
 
-✅ OffOnlyOnOff attributes on CookSurfaceTopLeft (Test_TC_OO_2_1)
-✅ OffOnlyOnOff primary functionality on CookSurfaceTopLeft (Test_TC_OO_2_2)
-✅ OffOnlyOnOff feature behavior on CookSurfaceTopLeft (Test_TC_OO_2_6)
-✅ LevelTemperatureControl attributes on CookSurfaceTopLeft (TC_TCTL_2_3.py)
-✅ TemperatureMeasurement attributes on CookSurfaceTopLeft (TC_TMP_2_1.py)
-✅ TemperatureMeasurement primary functionality on CookSurfaceTopLeft (Test_TC_TMP_2_2)
-✅ OffOnlyOnOff attributes on CookSurfaceTopRight (Test_TC_OO_2_1)
-✅ OffOnlyOnOff primary functionality on CookSurfaceTopRight (Test_TC_OO_2_2)
-✅ OffOnlyOnOff feature behavior on CookSurfaceTopRight (Test_TC_OO_2_6)
-✅ LevelTemperatureControl attributes on CookSurfaceTopRight (TC_TCTL_2_3.py)
-✅ TemperatureMeasurement attributes on CookSurfaceTopRight (TC_TMP_2_1.py)
-✅ TemperatureMeasurement primary functionality on CookSurfaceTopRight (Test_TC_TMP_2_2)
+✅ FanControl mandatory functionality on FanBase (TC_FAN_2_1.py)
+✅ FanControl optional speed attributes on FanBase (Test_TC_FAN_2_2)
+✅ FanControl optional rock attributes on FanBase (TC_FAN_2_3.py)
+✅ FanControl optional wind attributes on FanBase (TC_FAN_2_4.py)
+✅ FanControl optional direction attributes on FanBase (Test_TC_FAN_2_5)
+✅ FanControl mandatory functionality with PercentSetting/FanMode ordering on FanBase (TC_FAN_3_1.py)
+✅ FanControl optional speed functionality on FanBase (TC_FAN_3_2.py)
+✅ FanControl optional rock functionality on FanBase (TC_FAN_3_3.py)
+✅ FanControl optional wind functionality on FanBase (TC_FAN_3_4.py)
+✅ FanControl Step command functionality on FanBase (TC_FAN_3_5.py)
+✅ FanControl optional direction functionality on FanBase (Test_TC_FAN_3_6)
+✅ FanControl interaction with On/Off cluster on FanBase (TC_FAN_4_1.py)
 
 Summary: 12/12 tests passed.
-Chip tests run ended at 2026-10-01T12:11:35.917Z (total duration 23s)
+Chip tests run ended at 2026-10-01T12:34:40.164Z (total duration 34s)

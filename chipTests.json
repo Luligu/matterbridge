@@ -1857,6 +1857,54 @@
       "args": ["--PICS /root/fan-control-complete.pics"],
       "comment": "Self-skips: gated by @run_if_endpoint_matches(has_cluster(FanControl) and has_cluster(OnOff)); the Fan device type's On/Off cluster is optionalConform and endpoint 9024 does not add it (createCompleteFanControlClusterServer() only creates the FanControl cluster server)."
     },
+    { "name": "FanControl mandatory functionality on FanOnOff", "test": "TC_FAN_2_1.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional speed attributes on FanOnOff", "test": "Test_TC_FAN_2_2", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock attributes on FanOnOff", "test": "TC_FAN_2_3.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind attributes on FanOnOff", "test": "TC_FAN_2_4.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction attributes on FanOnOff", "test": "Test_TC_FAN_2_5", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on FanOnOff",
+      "test": "TC_FAN_3_1.py",
+      "endpoint": 9021,
+      "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    { "name": "FanControl optional speed functionality on FanOnOff", "test": "TC_FAN_3_2.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock functionality on FanOnOff", "test": "TC_FAN_3_3.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind functionality on FanOnOff", "test": "TC_FAN_3_4.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl Step command functionality on FanOnOff", "test": "TC_FAN_3_5.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction functionality on FanOnOff", "test": "Test_TC_FAN_3_6", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl interaction with On/Off cluster on FanOnOff",
+      "test": "TC_FAN_4_1.py",
+      "endpoint": 9021,
+      "comment": "Self-skips: the FanOnOff endpoint does not add the optional On/Off cluster.",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    { "name": "FanControl mandatory functionality on FanBase", "test": "TC_FAN_2_1.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional speed attributes on FanBase", "test": "Test_TC_FAN_2_2", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock attributes on FanBase", "test": "TC_FAN_2_3.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind attributes on FanBase", "test": "TC_FAN_2_4.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction attributes on FanBase", "test": "Test_TC_FAN_2_5", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on FanBase",
+      "test": "TC_FAN_3_1.py",
+      "endpoint": 9022,
+      "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    { "name": "FanControl optional speed functionality on FanBase", "test": "TC_FAN_3_2.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock functionality on FanBase", "test": "TC_FAN_3_3.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind functionality on FanBase", "test": "TC_FAN_3_4.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl Step command functionality on FanBase", "test": "TC_FAN_3_5.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction functionality on FanBase", "test": "Test_TC_FAN_3_6", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl interaction with On/Off cluster on FanBase",
+      "test": "TC_FAN_4_1.py",
+      "endpoint": 9022,
+      "comment": "Self-skips: the FanBase endpoint does not add the optional On/Off cluster.",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
     {
       "name": "HepaFilterMonitoring attributes on AirPurifier",
       "test": "Test_TC_HEPAFREMON_2_1",
