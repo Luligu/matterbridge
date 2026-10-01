@@ -91,13 +91,23 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Lock and unlock', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    lock.subscribeCommand(DoorLock, 'lockDoor', () => emitted.push('lockDoor'));
+    lock.subscribeCommand(DoorLock, 'unlockDoor', () => emitted.push('unlockDoor'));
     await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
     await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    expect(emitted).toEqual(['unlockDoor', 'lockDoor']);
   });
 
   test('Lock, unlock and lockWithTimeout with actuator disabled', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    lock.subscribeCommand(DoorLock, 'lockDoor', () => emitted.push('lockDoor'));
+    lock.subscribeCommand(DoorLock, 'unlockDoor', () => emitted.push('unlockDoor'));
+    lock.subscribeCommand(DoorLock, 'unlockWithTimeout', () => emitted.push('unlockWithTimeout'));
     await lock.setAttribute(DoorLock, 'actuatorEnabled', false);
     await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
@@ -106,6 +116,8 @@ describe('Client clusters and behaviors', () => {
     await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
     await lock.setAttribute(DoorLock, 'actuatorEnabled', true);
+    // Commands discarded while the actuator is disabled are not announced
+    expect(emitted).toEqual([]);
   });
 
   test('Auto relock', async () => {
@@ -157,6 +169,10 @@ describe('Client clusters and behaviors', () => {
     scheduleDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 2, 2);
     scheduleDoorLock.addRequiredClusterServers();
     expect(await addDevice(aggregator, scheduleDoorLock)).toBeDefined();
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    scheduleDoorLock.subscribeCommand(DoorLock, 'setWeekDaySchedule', () => emitted.push('setWeekDaySchedule'));
+    scheduleDoorLock.subscribeCommand(DoorLock, 'clearWeekDaySchedule', () => emitted.push('clearWeekDaySchedule'));
 
     await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'setUser', {
       operationType: DoorLock.DataOperationType.Add,
@@ -248,6 +264,8 @@ describe('Client clusters and behaviors', () => {
     await scheduleDoorLock.invokeBehaviorCommand(DoorLock, 'clearHolidaySchedule', { holidayIndex: 1 });
 
     for (const handler of Object.values(handlers)) expect(handler).toHaveBeenCalledTimes(1);
+    expect(emitted).toContain('setWeekDaySchedule');
+    expect(emitted).toContain('clearWeekDaySchedule');
   });
 
   test('should validate, store, replace and clear WeekDay schedules when the feature is enabled', async () => {
@@ -785,6 +803,11 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('DoorLock getter delegation and validation', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    userPinDoorLock.subscribeCommand(DoorLock, 'getUser', (data) => emitted.push(data.request));
+    userPinDoorLock.subscribeCommand(DoorLock, 'clearUser', (data) => emitted.push(data.request));
+    userPinDoorLock.subscribeCommand(DoorLock, 'getCredentialStatus', (data) => emitted.push(data.request));
     await expect(userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 0 }))).rejects.toThrow('Invalid user index');
 
     const handlerResponse: DoorLock.GetUserResponse = {
@@ -810,6 +833,8 @@ describe('Client clusters and behaviors', () => {
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
     expect(credentialStatus).toMatchObject({ credentialExists: false, userIndex: null });
+    // The plugin-supplied getUser response and the default getCredentialStatus are announced, rejected commands are not
+    expect(emitted).toEqual([{ userIndex: 7 }, { credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }]);
   });
 
   test('DoorLock covers null/default user fields and clear all users', async () => {

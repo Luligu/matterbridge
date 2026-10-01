@@ -1,21 +1,38 @@
-Chip tests run started at 2026-10-01T12:50:01.597Z
+Chip tests run started at 2026-10-01T13:45:48.044Z
 
-✅ RvcRunMode attributes on RoboticVacuumCleaner (TC_RVCRUNM_1_2.py)
-✅ RvcRunMode ChangeToMode on RoboticVacuumCleaner (TC_RVCRUNM_2_1.py)
-✅ RvcRunMode mode transitions on RoboticVacuumCleaner (TC_RVCRUNM_2_2.py)
-✅ RvcCleanMode attributes on RoboticVacuumCleaner (TC_RVCCLEANM_1_2.py)
-✅ RvcCleanMode ChangeToMode on RoboticVacuumCleaner (TC_RVCCLEANM_2_1.py)
-✅ RvcCleanMode changes while running on RoboticVacuumCleaner (TC_RVCCLEANM_2_2.py)
-✅ RvcOperationalState attributes on RoboticVacuumCleaner (TC_RVCOPSTATE_2_1.py)
-✅ RvcOperationalState Pause/Resume on RoboticVacuumCleaner (TC_RVCOPSTATE_2_3.py)
-✅ RvcOperationalState GoHome on RoboticVacuumCleaner (TC_RVCOPSTATE_2_4.py)
-✅ RvcOperationalState GoHome run-mode interaction on RoboticVacuumCleaner (TC_RVCOPSTATE_2_5.py)
-✅ ServiceArea attributes on RoboticVacuumCleaner (TC_SEAR_1_2.py)
-✅ ServiceArea SelectAreas on RoboticVacuumCleaner (TC_SEAR_1_3.py)
-✅ ServiceArea SkipArea conformance on RoboticVacuumCleaner (TC_SEAR_1_4.py)
-✅ ServiceArea SkipArea command on RoboticVacuumCleaner (TC_SEAR_1_5.py)
-⏭️ ServiceArea Progress reporting on RoboticVacuumCleaner (TC_SEAR_1_6.py)
-   ↳ Not applicable: endpoint 1201 does not implement the ServiceArea ProgressReporting feature or Progress attribute. The directly launched upstream test does not enforce its own declared PICS prerequisites and otherwise assumes the reference app's hardcoded area IDs 7 and 1234567.
+✅ DoorLock attributes on DoorLock (Test_TC_DRLK_2_1)
+✅ DoorLock LockDoor command on DoorLock (TC_DRLK_2_2.py)
+✅ DoorLock UnlockDoor command on DoorLock (TC_DRLK_2_3.py)
+✅ DoorLock UnlockWithTimeout command on DoorLock (Test_TC_DRLK_2_4)
+✅ DoorLock week day schedule commands on DoorLock (TC_DRLK_2_5.py)
+✅ DoorLock holiday schedule commands on DoorLock (Test_TC_DRLK_2_6)
+✅ DoorLock year day schedule commands on DoorLock (Test_TC_DRLK_2_7)
+✅ DoorLock user commands on DoorLock (Test_TC_DRLK_2_8)
+✅ DoorLock credential commands on DoorLock (TC_DRLK_2_9.py)
+✅ DoorLock events on DoorLock (Test_TC_DRLK_2_10)
+✅ DoorLock multiple credential types on DoorLock (Test_TC_DRLK_2_11)
+⏭️ DoorLock UnboltDoor command on DoorLock (TC_DRLK_2_12.py)
+   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 801 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
+⏭️ DoorLock Aliro functionality on DoorLock (TC_DRLK_2_13.py)
+   ↳ Requires the Aliro Provisioning feature; endpoint 801 does not implement it. The Python test still sends an unconditional ClearUser command when DRLK.S.F0d=0 and fails with UNSUPPORTED_COMMAND.
+✅ DoorLock client commands on DoorLock (Test_TC_DRLK_3_2)
+✅ DoorLock User, PIN, and schedule attributes on DoorLockUserPINSchedules (Test_TC_DRLK_2_1)
+✅ DoorLock LockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_2.py)
+✅ DoorLock UnlockDoor with PIN on DoorLockUserPINSchedules (TC_DRLK_2_3.py)
+✅ DoorLock UnlockWithTimeout with PIN on DoorLockUserPINSchedules (Test_TC_DRLK_2_4)
+✅ DoorLock week day schedule commands on DoorLockUserPINSchedules (TC_DRLK_2_5.py)
+✅ DoorLock holiday schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_6)
+✅ DoorLock year day schedule commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_7)
+✅ DoorLock user commands on DoorLockUserPINSchedules (Test_TC_DRLK_2_8)
+✅ DoorLock PIN credential commands on DoorLockUserPINSchedules (TC_DRLK_2_9.py)
+✅ DoorLock events on DoorLockUserPINSchedules (Test_TC_DRLK_2_10)
+✅ DoorLock PIN credential type on DoorLockUserPINSchedules (Test_TC_DRLK_2_11)
+⏭️ DoorLock UnboltDoor command on DoorLockUserPINSchedules (TC_DRLK_2_12.py)
+   ↳ Requires the Unbolting feature and UnboltDoor command; endpoint 8012 has neither. The Python test asserts the command PICS instead of skipping when DRLK.S.F0c=0.
+⏭️ DoorLock Aliro functionality on DoorLockUserPINSchedules (TC_DRLK_2_13.py)
+   ↳ Requires the Aliro Provisioning feature; endpoint 8012 does not implement it. The Python test unconditionally sends ClearAliroReaderConfig when ClearCredential is supported, even when DRLK.S.F0d=0.
+✅ DoorLock client commands on DoorLockUserPINSchedules (Test_TC_DRLK_3_2)
+✅ DoorLock User, PIN, and expiring user timeout attributes on DoorLockUserPINExpiring (Test_TC_DRLK_2_1)
 
-Summary: 14/14 tests passed (1 skipped).
-Chip tests run ended at 2026-10-01T12:50:28.905Z (total duration 27s)
+Summary: 25/25 tests passed (4 skipped).
+Chip tests run ended at 2026-10-01T13:47:00.252Z (total duration 1m 12s)
