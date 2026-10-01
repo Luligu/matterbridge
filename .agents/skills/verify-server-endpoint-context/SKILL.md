@@ -1,6 +1,6 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.2
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.3
 ---
 
 # Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
@@ -66,6 +66,7 @@ Plugin forwarding contract:
 - Do not allow request validation, assertions, conditionals, early returns, thrown errors, state reads used for decisions, state changes, event emission, additional logging, or other side effects between the command-entry log and completion of the awaited forwarding call.
 - Verify all validation and state mutation occur only after the awaited forwarding call.
 - Report a missing command-entry log, command-entry log at a level other than `info`, missing forwarding call, non-awaited forwarding call, or any disallowed operation before forwarding completes as a plugin forwarding contract violation.
+- Exempt from this contract the servers whose cluster has no entry in the `CommandHandlers` type of [matterbridgeEndpointCommandHandler.ts](../../../packages/core/src/matterbridgeEndpointCommandHandler.ts), currently Chime, Camera AV Stream Management, Camera AV Settings User Level Management, WebRTC Transport Provider and WebRTC Transport Requestor. They reach the plugin only through the command observable, after validation, so they have no `executeHandler(...)` call; they must still log, validate and emit the command observable as required by the other sections. Do not report the missing forwarding call for these servers, and recheck the `CommandHandlers` type before applying the exemption to any other server.
 
 Command observable emission:
 
