@@ -398,8 +398,11 @@ Refrigerator clusters:
 
 Dishwasher clusters:
 
+- OnOff (DeadFrontBehavior)
 - Dishwasher Mode
 - Dishwasher Alarm
+- TemperatureControl (TemperatureLevel)
+- OperationalState
 
 ## Endpoint 1306
 

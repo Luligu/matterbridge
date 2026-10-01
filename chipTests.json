@@ -2678,6 +2678,46 @@
       "comment": "Not applicable to endpoint 1305: WaterLevelError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
       "args": ["--PICS /root/dishwasher.pics"]
     },
+    { "name": "DeadFrontOnOff attributes on Dishwasher", "test": "Test_TC_OO_2_1", "endpoint": 1305, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "DeadFrontOnOff primary functionality on Dishwasher", "test": "Test_TC_OO_2_2", "endpoint": 1305, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "LevelTemperatureControl attributes on Dishwasher", "test": "TC_TCTL_2_3.py", "endpoint": 1305, "args": ["--PICS /root/temperature-control-level.pics"] },
+    {
+      "name": "OperationalState attributes on Dishwasher",
+      "test": "TC_OPSTATE_2_1.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "OperationalState Start/Stop on Dishwasher",
+      "test": "TC_OPSTATE_2_2.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState Pause/Resume on Dishwasher",
+      "test": "TC_OPSTATE_2_3.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState OperationalError event on Dishwasher",
+      "test": "TC_OPSTATE_2_4.py",
+      "endpoint": 1305,
+      "resetBefore": true,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.OPSTATE.ErrorEventGen:1"]
+    },
+    {
+      "name": "OperationalState OperationCompletion event on Dishwasher",
+      "test": "TC_OPSTATE_2_5.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
+    },
+    {
+      "name": "OperationalState CountdownTime reporting on Dishwasher",
+      "test": "TC_OPSTATE_2_6.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
     {
       "name": "LaundryDryerControls optional dryness attributes on LaundryDryer",
       "test": "Test_TC_DRYERCTRL_2_1",

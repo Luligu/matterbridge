@@ -1,4 +1,4 @@
-Chip tests run started at 2026-10-01T11:55:11.213Z
+Chip tests run started at 2026-10-01T11:56:57.185Z
 
 ✅ DishwasherMode attributes on Dishwasher (TC_DISHM_1_2.py)
 ✅ DishwasherMode ChangeToMode on Dishwasher (TC_DISHM_2_1.py)
@@ -15,6 +15,15 @@ Chip tests run started at 2026-10-01T11:55:11.213Z
    ↳ Not applicable to endpoint 1305: TempTooHigh is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.
 ⏭️ DishwasherAlarm water-level alarm functionality on Dishwasher (Test_TC_DISHALM_3_6)
    ↳ Not applicable to endpoint 1305: WaterLevelError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.
+✅ DeadFrontOnOff attributes on Dishwasher (Test_TC_OO_2_1)
+✅ DeadFrontOnOff primary functionality on Dishwasher (Test_TC_OO_2_2)
+✅ LevelTemperatureControl attributes on Dishwasher (TC_TCTL_2_3.py)
+✅ OperationalState attributes on Dishwasher (TC_OPSTATE_2_1.py)
+✅ OperationalState Start/Stop on Dishwasher (TC_OPSTATE_2_2.py)
+✅ OperationalState Pause/Resume on Dishwasher (TC_OPSTATE_2_3.py)
+✅ OperationalState OperationalError event on Dishwasher (TC_OPSTATE_2_4.py)
+✅ OperationalState OperationCompletion event on Dishwasher (TC_OPSTATE_2_5.py)
+✅ OperationalState CountdownTime reporting on Dishwasher (TC_OPSTATE_2_6.py)
 
-Summary: 3/3 tests passed (6 skipped).
-Chip tests run ended at 2026-10-01T11:55:18.338Z (total duration 7s)
+Summary: 12/12 tests passed (6 skipped).
+Chip tests run ended at 2026-10-01T11:57:41.834Z (total duration 45s)
