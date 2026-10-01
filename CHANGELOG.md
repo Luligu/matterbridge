@@ -89,6 +89,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [evse]: Emit completed EVSE commands to subscribers and return empty status text for unsupported modes.
+
 - [matterbridge]: Raise the server node close timeout from 10 to 30 seconds, so a restart no longer starts the new server node while the old one still holds port 5540 (fixes `TC_AVSUM_2_9`).
 - [behaviors]: Align the Camera AV Stream Management, Camera AV Settings User Level Management and WebRTC Transport Provider server messages and Matter 1.6.0 spec comments with the server endpoint context rules.
 - [behaviors]: The Boolean State Configuration, Smoke CO Alarm, Mode Select, Device Energy Management, Device Energy Management Mode and Temperature Alarm servers narrow `endpoint` and emit the command observable for every completed command, and the Binding, Occupancy Sensing, Pump Configuration and Control and Switch servers narrow `endpoint`.
