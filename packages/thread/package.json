@@ -82,7 +82,7 @@
   },
   "devDependencies": {
     "@matterbridge/vitest-utils": "3.10.13",
-    "@types/node": "26.6.3",
+    "@types/node": "26.6.4",
     "vitest": "5.0.3"
   }
 }

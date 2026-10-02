@@ -29,6 +29,28 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.13] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.13.
+- [matterbridge]: Bump `@types/node` to v.26.6.4.
+- [core]: Bump `@types/node` to v.26.6.4.
+- [dgram]: Bump `@types/node` to v.26.6.4.
+- [jest-utils]: Bump `@types/node` to v.26.6.4.
+- [test-utils]: Bump `@types/node` to v.26.6.4.
+- [thread]: Bump `@types/node` to v.26.6.4.
+- [types]: Bump `@types/node` to v.26.6.4.
+- [utils]: Bump `@types/node` to v.26.6.4.
+- [vitest-utils]: Bump `@types/node` to v.26.6.4.
+- [frontend]: Bump `frontend` version to v.3.6.4.
+- [frontend]: Bump `@rjsf` to v.6.11.0.
+- [frontend]: Bump `@types/node` to v.26.6.4.
+- [frontend]: Bump `globals` to v.17.13.0.
+- [frontend]: Bump `vite` to v.8.3.2.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.12] - 2026-10-02
 
 ### Breaking changes
