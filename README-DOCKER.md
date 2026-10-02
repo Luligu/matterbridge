@@ -132,7 +132,7 @@ sudo docker run --name matterbridge \
 
 If you override the command, always start it with `matterbridge --docker`.
 
-**If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param**.
+**If you change the frontend port (or enable https) via `--frontend` and `--ssl`/`--mtls`, `mb_health` reads the stored configuration and probes the matching endpoint automatically, so the container stays healthy without needing `--no-healthcheck`.**
 
 ### How to run a double instance of matterbridge
 
