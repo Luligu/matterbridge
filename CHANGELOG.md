@@ -34,6 +34,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.13.
+- [scripts]: Sync the generic scripts (`clean`, `deep-clean`, `prepublish-clean`, `create-release`, `downloads`, `git-status`, `git-sync-dev`, `prune-releases`, `prune-tags`, `remove-workflows`, `version`) to v.2.0.0 and add `bun-bundle` from matterbridge-native.
 - [matterbridge]: Bump `@types/node` to v.26.6.4.
 - [core]: Bump `@types/node` to v.26.6.4.
 - [dgram]: Bump `@types/node` to v.26.6.4.

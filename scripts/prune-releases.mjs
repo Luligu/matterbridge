@@ -1,20 +1,37 @@
 /**
  * prune-releases.mjs
- * Version: 1.0.2
+ * Version: 2.0.0
  *
  * Prunes old releases for a given tag prefix.
  *
  * Usage:
+ *   node scripts/prune-releases.mjs --version, -v  Show the script version
  *   node scripts/prune-releases.mjs [--help|-h] [--dry-run|-n] <tag-prefix-to-keep>
+ *
+ * The script runs only when executed directly. Importing it exposes `main` without side effects.
  */
+
+/* oxlint-disable no-console */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { createInterface } from 'node:readline';
+
+const scriptVersion = '2.0.0';
+
+/** @typedef {Parameters<typeof formatRelease>[0] & {id?: number}} Release */
 
 const PAGE_SIZE = 100;
 
 class ExitError extends Error {
+  /**
+   * Create a CLI exit error.
+   *
+   * @param {string} message Error message.
+   * @param {number} [code] Exit status.
+   */
   constructor(message, code = 1) {
     super(message);
     this.code = code;
@@ -28,29 +45,29 @@ function usage() {
     'Examples:',
     '  node scripts/prune-releases.mjs 2.',
     '  node scripts/prune-releases.mjs --dry-run 2.',
+    '',
+    '  --version, -v  Show the script version',
   ].join('\n');
 }
 
 function createColors() {
   const enabled = process.stdout.isTTY && !process.env.NO_COLOR;
-  if (!enabled) {
-    return {
-      bold: (value) => value,
-      cyan: (value) => value,
-      dim: (value) => value,
-      green: (value) => value,
-      red: (value) => value,
-      yellow: (value) => value,
-    };
-  }
+  /**
+   * Create a colorizer for an ANSI SGR open/close pair.
+   *
+   * @param {number} open Opening SGR code.
+   * @param {number} close Closing SGR code.
+   * @returns {(value: string) => string} The colorizer, returning the plain value when colors are disabled.
+   */
+  const color = (open, close) => (value) => (enabled ? `\u001B[${open}m${value}\u001B[${close}m` : value);
 
   return {
-    bold: (value) => `\u001B[1m${value}\u001B[22m`,
-    cyan: (value) => `\u001B[36m${value}\u001B[39m`,
-    dim: (value) => `\u001B[2m${value}\u001B[22m`,
-    green: (value) => `\u001B[32m${value}\u001B[39m`,
-    red: (value) => `\u001B[31m${value}\u001B[39m`,
-    yellow: (value) => `\u001B[33m${value}\u001B[39m`,
+    bold: color(1, 22),
+    cyan: color(36, 39),
+    dim: color(2, 22),
+    green: color(32, 39),
+    red: color(31, 39),
+    yellow: color(33, 39),
   };
 }
 
@@ -64,32 +81,51 @@ function hr() {
   console.log(colors.dim('-'.repeat(lineWidth())));
 }
 
+/**
+ * Section.
+ *
+ * @param {string} title title value.
+ * @returns {void} No return value.
+ */
 function section(title) {
   hr();
   console.log(colors.bold(colors.cyan(title)));
   hr();
 }
 
+/**
+ * Throw an ExitError.
+ *
+ * @param {string} message - Error message.
+ * @param {number} [code] - Exit code.
+ * @returns {never} Never returns.
+ */
 function fail(message, code = 1) {
   throw new ExitError(message, code);
 }
 
+/**
+ * Parse args.
+ *
+ * @param {string[]} argv argv value.
+ * @returns {{dryRun: boolean, keepPrefix: string} | undefined} The result.
+ */
 function parseArgs(argv) {
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(usage());
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     return undefined;
   }
 
   const knownFlags = new Set(['--dry-run', '-n']);
-  const flags = argv.filter((value) => value.startsWith('-'));
-  const unknownFlags = flags.filter((value) => !knownFlags.has(value));
-  const dryRun = flags.some((value) => knownFlags.has(value));
+  const flags = argv.filter((/** @type {string} */ value) => value.startsWith('-'));
+  const unknownFlags = flags.filter((/** @type {string} */ value) => !knownFlags.has(value));
+  const dryRun = flags.some((/** @type {string} */ value) => knownFlags.has(value));
   if (unknownFlags.length > 0) {
     fail(`Unknown option(s): ${unknownFlags.join(', ')}\n\n${usage()}`);
   }
 
-  const positional = argv.filter((value) => !value.startsWith('-'));
-  const [keepPrefix] = positional;
+  const keepPrefix = argv.find((/** @type {string} */ value) => !value.startsWith('-'));
   if (!keepPrefix) {
     fail(usage());
   }
@@ -97,6 +133,15 @@ function parseArgs(argv) {
   return { dryRun, keepPrefix };
 }
 
+/**
+ * Run capture.
+ *
+ * @param {string} command command value.
+ * @param {string[]} args args value.
+ * @param {{allowFailure?: boolean, input?: string, inherit?: boolean}} [options] options value.
+ * @returns {{status: number, stdout: string, stderr: string}} The result.
+ */
+// oxlint-disable-next-line typescript/consistent-return -- ends with fail(), which always throws
 function runCapture(command, args, options = {}) {
   const { allowFailure = false } = options;
   const result = spawnSync(command, args, {
@@ -121,6 +166,14 @@ function runCapture(command, args, options = {}) {
   fail(details ? `${command} ${args.join(' ')} failed:\n${details}` : `${command} ${args.join(' ')} failed.`);
 }
 
+/**
+ * Print key value.
+ *
+ * @param {string} key key value.
+ * @param {unknown} value value value.
+ * @param {(value: string) => string} [colorizer] colorizer value.
+ * @returns {void} No return value.
+ */
 function printKeyValue(key, value, colorizer) {
   const renderedValue = colorizer ? colorizer(String(value)) : String(value);
   console.log(`${key.padEnd(14)} ${renderedValue}`);
@@ -129,9 +182,11 @@ function printKeyValue(key, value, colorizer) {
 async function confirmPrompt() {
   const reader = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    const answer = await new Promise((resolve) => {
-      reader.question(colors.bold(colors.yellow('Proceed? [y/N] ')), resolve);
-    });
+    const answer = await new Promise(
+      /** @param {(answer: string) => void} resolve Resolve with the answer. */ (resolve) => {
+        reader.question(colors.bold(colors.yellow('Proceed? [y/N] ')), resolve);
+      },
+    );
     return answer.trim().toLowerCase() === 'y';
   } finally {
     reader.close();
@@ -178,7 +233,7 @@ function normalizeRepositoryUrl(remoteUrl) {
 /**
  * Read the repository from git remote.origin.url.
  *
- * @returns {Promise<string | null>} Repository in owner/repo form, or null.
+ * @returns {string | null} Repository in owner/repo form, or null.
  */
 function getRepositoryFromGit() {
   const result = runCapture('git', ['remote', 'get-url', 'origin'], { allowFailure: true });
@@ -191,7 +246,7 @@ function getRepositoryFromGit() {
 /**
  * Read the repository from package.json.
  *
- * @returns {Promise<string | null>} Repository in owner/repo form, or null.
+ * @returns {string | null} Repository in owner/repo form, or null.
  */
 function getRepositoryFromPackageJson() {
   try {
@@ -208,7 +263,7 @@ function getRepositoryFromPackageJson() {
 /**
  * Determine the current GitHub repository.
  *
- * @returns {Promise<string>} Repository in owner/repo form.
+ * @returns {string} Repository in owner/repo form.
  */
 function getRepositoryNameWithOwner() {
   const fromGit = getRepositoryFromGit();
@@ -228,7 +283,7 @@ function getRepositoryNameWithOwner() {
  * Call the GitHub API and parse a JSON response.
  *
  * @param {string} pathname - GitHub API path.
- * @returns {Promise<unknown>} Parsed JSON payload.
+ * @returns {unknown} Parsed JSON payload.
  */
 function ghApiJson(pathname) {
   const { stdout } = runCapture('gh', ['api', '--method', 'GET', pathname]);
@@ -278,7 +333,14 @@ function deleteRelease(repository, tagName) {
   runCapture('gh', ['release', 'delete', tagName, '--repo', repository, '--yes']);
 }
 
-function printReleaseTable(releases, colorizer = (value) => value) {
+/**
+ * Print release table.
+ *
+ * @param {Release[]} releases releases value.
+ * @param {(value: string) => string} colorizer colorizer value.
+ * @returns {void} No return value.
+ */
+function printReleaseTable(releases, colorizer) {
   if (releases.length === 0) {
     console.log(colors.dim('(none)'));
     return;
@@ -296,6 +358,13 @@ function printReleaseTable(releases, colorizer = (value) => value) {
   });
 }
 
+/**
+ * Print planned commands.
+ *
+ * @param {string} repository repository value.
+ * @param {Release[]} releases releases value.
+ * @returns {void} No return value.
+ */
 function printPlannedCommands(repository, releases) {
   section('Dry Run');
   console.log(colors.green('No changes will be made.'));
@@ -307,22 +376,21 @@ function printPlannedCommands(repository, releases) {
 }
 
 /**
- * Entrypoint.
+ * Prune the releases.
  *
- * @returns {Promise<void>}
+ * @param {string[]} args Command line arguments.
+ * @returns {Promise<number>} The exit code.
  */
-async function main() {
-  const parsedArgs = parseArgs(process.argv.slice(2));
+async function run(args) {
+  const parsedArgs = parseArgs(args);
   if (!parsedArgs) {
-    return;
+    return 0;
   }
 
   const { dryRun, keepPrefix } = parsedArgs;
   const repository = getRepositoryNameWithOwner();
+  // normalizeRepositoryUrl() only returns a non-empty owner/repo pair.
   const [owner, repo] = repository.split('/');
-  if (!owner || !repo) {
-    throw new Error(`Invalid repository identifier: ${repository}`);
-  }
 
   section('Remove GitHub Releases');
   printKeyValue('Keep prefix:', keepPrefix, colors.green);
@@ -349,7 +417,7 @@ async function main() {
 
   if (allReleases.length === 0) {
     console.log(colors.yellow('No releases found.'));
-    return;
+    return 0;
   }
 
   const releasesWithTags = allReleases.filter((release) => typeof release?.tag_name === 'string' && release.tag_name.trim() !== '');
@@ -367,7 +435,7 @@ async function main() {
     console.log();
     section('Releases');
     printReleaseTable(releasesWithTags, colors.green);
-    return;
+    return 0;
   }
 
   section('Releases To Delete');
@@ -376,14 +444,13 @@ async function main() {
 
   if (dryRun) {
     printPlannedCommands(repository, releasesToDelete);
-    return;
+    return 0;
   }
 
   const confirmed = await confirmPrompt();
   if (!confirmed) {
     console.log(colors.red('Aborted.'));
-    process.exitCode = 1;
-    return;
+    return 1;
   }
 
   console.log();
@@ -406,22 +473,35 @@ async function main() {
   printKeyValue('Deleted:', deleted, deleted > 0 ? colors.green : colors.bold);
   printKeyValue('Failed:', failed, failed > 0 ? colors.red : colors.green);
 
-  if (failed > 0) {
-    process.exitCode = 1;
+  return failed > 0 ? 1 : 0;
+}
+
+/**
+ * Prune the releases and report the failures.
+ *
+ * @param {string[]} [args] Command line arguments, without the runtime and script paths.
+ * @returns {Promise<number>} The exit code.
+ */
+export async function main(args = process.argv.slice(2)) {
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(scriptVersion);
+    return 0;
+  }
+
+  try {
+    return await run(args);
+  } catch (error) {
+    if (error instanceof ExitError) {
+      if (error.message) {
+        console.error(colors.red(error.message));
+      }
+      return error.code;
+    }
+    console.error(colors.red(error instanceof Error ? error.message : String(error)));
+    console.error(colors.red('Make sure GitHub CLI is installed and authenticated: gh auth status'));
+    return 1;
   }
 }
 
-try {
-  await main();
-} catch (error) {
-  if (error instanceof ExitError) {
-    if (error.message) {
-      console.error(colors.red(error.message));
-    }
-    process.exitCode = error.code;
-  } else {
-    console.error(colors.red(error instanceof Error ? error.message : String(error)));
-    console.error(colors.red('Make sure GitHub CLI is installed and authenticated: gh auth status'));
-    process.exitCode = 1;
-  }
-}
+// `import.meta.main` needs Node.js 22.18 or 24.2; older runtimes fall back to comparing the executed script path.
+if (import.meta.main ?? path.resolve(process.argv[1] ?? '') === import.meta.filename) process.exitCode = await main();
