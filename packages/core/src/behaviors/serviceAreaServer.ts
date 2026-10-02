@@ -33,7 +33,6 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 /**
  * ServiceArea server that validates and applies selected areas.
  */
-
 export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(ServiceArea.Feature.ProgressReporting) {
   /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
   declare readonly endpoint: MatterbridgeEndpoint;
