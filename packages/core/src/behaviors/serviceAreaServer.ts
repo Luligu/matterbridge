@@ -84,15 +84,15 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(Servic
     });
     device.log.debug(`MatterbridgeServiceAreaServer: skipArea called with ${request.skippedArea} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Matter 1.6.0 § 1.17.7.3: Reject the request with InvalidAreaList or InvalidSkippedArea as applicable, otherwise respond Success.
-    const result = this.assertSkipServiceArea(request);
+    const response = this.assertSkipServiceArea(request);
     // ProgressReporting may not be enabled on this instance, so progress can be undefined.
-    if (result.status === ServiceArea.SkipAreaStatus.Success && this.state.progress !== undefined) {
+    if (response.status === ServiceArea.SkipAreaStatus.Success && this.state.progress !== undefined) {
       this.state.progress = this.state.progress.map((area) =>
         area.areaId === request.skippedArea
           ? { areaId: area.areaId, status: ServiceArea.OperationalStatus.Skipped, totalOperationalTime: area.totalOperationalTime, estimatedTime: area.estimatedTime }
           : area,
       );
     }
-    return result;
+    return response;
   }
 }
