@@ -1,23 +1,30 @@
-// .oxfmtrc.json v.1.0.6
+// .oxfmtrc.json v.1.0.7
 
 // This Oxfmt configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules.
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "ignorePatterns": [
     "**/.cache/**",
+    "**/.cottontail-tmp/**",
     "**/.git/**",
+    "**/.hutch/**",
     "apps/**",
+    "**/artifacts/**",
     "**/build/**",
     "chip/**",
     "**/coverage/**",
-    "docs",
+    "docs/**",
     "**/dist/**",
     "**/temp/**",
+    "**/tmp/**",
     "**/node_modules/**",
     "**/out/**",
     "**/screenshots/**",
+    "**/scripts/**",
+    "**/xmls/**",
     "vendor/**",
     "**/package-lock.json",
+    "**/bun.lock",
     "scripts/*.html",
     "docker/chip-test/**",
     "eslint.config.js"

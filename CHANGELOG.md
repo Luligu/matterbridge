@@ -48,6 +48,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `@types/node` to v.26.6.4.
 - [frontend]: Bump `globals` to v.17.13.0.
 - [frontend]: Bump `vite` to v.8.3.2.
+- [oxc]: Align the `.gitignore` (1.0.4), `.oxfmtrc.json` (v.1.0.7) and `.oxlintrc.json` (v.1.0.19) exclusions with the mb-run templates: add `.cottontail-tmp`, `.hutch`, `artifacts`, `tmp`, `xmls`, `bun.lock` and `scripts` (oxfmt), and exclude `chip` at any depth.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
