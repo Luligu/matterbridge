@@ -39,6 +39,18 @@ vi.doMock('node:https', async () => {
   };
 });
 
+let nodeContextGetImpl: Mock<(...args: any[]) => any>;
+
+vi.doMock('node-persist-manager', () => ({
+  NodeStorageManager: class {
+    async createStorage(_name: string) {
+      return {
+        get: (...args: any[]) => nodeContextGetImpl(...args),
+      };
+    }
+  },
+}));
+
 const { checkHealth, mbHealthCli, mbHealthExitCode, mbHealthMain } = await import('../src/mb_health.js');
 
 function createStreamingResponse(statusCode: number | undefined, body: string, emitAsString = false) {
@@ -68,6 +80,7 @@ describe('mb_health', () => {
   beforeEach(() => {
     httpRequestImpl = vi.fn();
     httpsRequestImpl = vi.fn();
+    nodeContextGetImpl = vi.fn((_key: string, defaultValue: any) => defaultValue);
   });
 
   test('returns 0 on 2xx (http)', async () => {
@@ -467,5 +480,89 @@ describe('mb_health', () => {
       (process as any).exit = originalExit;
       consoleLogSpy.mockRestore();
     }
+  });
+
+  test('main resolves the frontend port and https protocol from the stored configuration', async () => {
+    nodeContextGetImpl.mockImplementation((key: string, defaultValue: any) => {
+      if (key === 'frontendport') return 8443;
+      if (key === 'frontendssl') return true;
+      if (key === 'frontendmtls') return false;
+      return defaultValue;
+    });
+
+    let capturedOptions: any;
+    httpsRequestImpl.mockImplementation((options: any, callback: (res: any) => void) => {
+      capturedOptions = options;
+      const request = {
+        on: vi.fn().mockReturnThis(),
+        setTimeout: vi.fn().mockReturnThis(),
+        destroy: vi.fn().mockReturnThis(),
+        end: vi.fn().mockReturnThis(),
+      };
+      const response = createStreamingResponse(200, JSON.stringify({ ok: true }));
+      queueMicrotask(() => {
+        callback(response);
+        response.start();
+      });
+      return request;
+    });
+
+    const exitFn = vi.fn();
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await mbHealthMain(exitFn as any);
+
+    expect(capturedOptions).toEqual(
+      expect.objectContaining({
+        protocol: 'https:',
+        hostname: 'localhost',
+        port: '8443',
+        path: '/health',
+      }),
+    );
+    expect(exitFn).toHaveBeenCalledWith(0);
+    consoleLogSpy.mockRestore();
+  });
+
+  test('main resolves the frontend port and http protocol from the stored configuration', async () => {
+    nodeContextGetImpl.mockImplementation((key: string, defaultValue: any) => {
+      if (key === 'frontendport') return 9000;
+      if (key === 'frontendssl') return false;
+      if (key === 'frontendmtls') return false;
+      return defaultValue;
+    });
+
+    let capturedOptions: any;
+    httpRequestImpl.mockImplementation((options: any, callback: (res: any) => void) => {
+      capturedOptions = options;
+      const request = {
+        on: vi.fn().mockReturnThis(),
+        setTimeout: vi.fn().mockReturnThis(),
+        destroy: vi.fn().mockReturnThis(),
+        end: vi.fn().mockReturnThis(),
+      };
+      const response = createStreamingResponse(200, JSON.stringify({ ok: true }));
+      queueMicrotask(() => {
+        callback(response);
+        response.start();
+      });
+      return request;
+    });
+
+    const exitFn = vi.fn();
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await mbHealthMain(exitFn as any);
+
+    expect(capturedOptions).toEqual(
+      expect.objectContaining({
+        protocol: 'http:',
+        hostname: 'localhost',
+        port: '9000',
+        path: '/health',
+      }),
+    );
+    expect(exitFn).toHaveBeenCalledWith(0);
+    consoleLogSpy.mockRestore();
   });
 });
