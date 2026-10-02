@@ -86,6 +86,8 @@ export interface RoboticVacuumCleanerOptions {
   currentArea?: number | null;
   /** Supported service-area maps. Defaults to an empty array. */
   supportedMaps?: ServiceArea.Map[];
+  /** Initial per-area progress. When defined (even as an empty list), the ProgressReporting (PROG) feature is enabled. Defaults to undefined (PROG disabled). */
+  progress?: ServiceArea.Progress[];
 }
 
 /**
@@ -156,7 +158,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       .createDefaultRvcRunModeClusterServer(options.currentRunMode, options.supportedRunModes)
       .createDefaultRvcCleanModeClusterServer(options.currentCleanMode, options.supportedCleanModes)
       .createDefaultRvcOperationalStateClusterServer(options.phaseList, options.currentPhase, options.operationalStateList, options.operationalState)
-      .createDefaultServiceAreaClusterServer(options.supportedAreas, options.selectedAreas, options.currentArea, options.supportedMaps);
+      .createDefaultServiceAreaClusterServer(options.supportedAreas, options.selectedAreas, options.currentArea, options.supportedMaps, options.progress);
   }
 
   /**
@@ -213,10 +215,17 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
    * @param {number | null} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
    * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults empty list.
+   * @param {ServiceArea.Progress[]} [progress] - The initial per-area progress for the robotic vacuum cleaner. When defined (even as an empty list), the ProgressReporting (PROG) feature is enabled. Defaults to undefined (PROG disabled).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number | null, supportedMaps?: ServiceArea.Map[]): this {
-    this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps), {
+  createDefaultServiceAreaClusterServer(
+    supportedAreas?: ServiceArea.Area[],
+    selectedAreas?: number[],
+    currentArea?: number | null,
+    supportedMaps?: ServiceArea.Map[],
+    progress?: ServiceArea.Progress[],
+  ): this {
+    this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps, ...(progress !== undefined ? [ServiceArea.Feature.ProgressReporting] : [])), {
       supportedAreas: supportedAreas ?? [
         {
           areaId: 1,
@@ -248,6 +257,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
        * This attribute SHALL be null if the CurrentArea attribute is null.
        */
       estimatedEndTime: null,
+      progress, // The progress of the device in each area, if ProgressReporting is enabled.
     });
     return this;
   }
