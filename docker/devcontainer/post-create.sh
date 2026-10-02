@@ -117,7 +117,10 @@ step "Setting permissions..."
 # still need it on first create, but they are empty then, so the recursion is instant.
 for path in . "${workspace_paths[@]}" "${home_paths[@]}"; do
   if [ "$(stat -c %u "$path")" != "$(id -u)" ]; then
-    sudo chown -R "$(id -u):$(id -g)" "$path" # Transfer ownership to the current user
+    # Skip sockets (e.g. .git/fsmonitor--daemon.ipc) and only touch what is actually wrong;
+    # a failure on the bind-mounted workspace must not abort the setup.
+    sudo find "$path" -xdev ! -type s ! -user "$(id -u)" -exec chown -h "$(id -u):$(id -g)" {} + \
+      || echo "Warning: could not change ownership of some files in $path" # Transfer ownership to the current user
   fi
 done
 
