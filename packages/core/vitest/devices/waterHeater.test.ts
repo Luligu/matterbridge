@@ -17,6 +17,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
@@ -339,6 +340,59 @@ describe('Matterbridge Water Heater', () => {
       LogLevel.DEBUG,
       `MatterbridgeWaterHeaterModeServer: changeToMode called with newMode 1 => Auto (endpoint ${device.id}.${device.number})`,
     );
+  });
+
+  test('should emit completed water heater commands after awaited plugin forwarding', async () => {
+    const observed = new WaterHeater('Observed Heater', 'WH-OBS');
+    await addDevice(server, observed);
+    const order: string[] = [];
+    const request0 = { boostInfo: { duration: 60 } };
+    observed.addCommandHandler('WaterHeaterManagement.boost', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:boost');
+    });
+    observed.subscribeCommand(WaterHeaterManagement, 'boost', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request0);
+      order.push('emitted:boost');
+    });
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterManagementServer).boost(request0));
+    expect(observed.stateOf(MatterbridgeWaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
+    const request1 = {};
+    observed.addCommandHandler('WaterHeaterManagement.cancelBoost', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:cancelBoost');
+    });
+    observed.subscribeCommand(WaterHeaterManagement, 'cancelBoost', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request1);
+      order.push('emitted:cancelBoost');
+    });
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterManagementServer).cancelBoost());
+    expect(observed.stateOf(MatterbridgeWaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
+    const request2 = { newMode: 2 };
+    observed.addCommandHandler('WaterHeaterMode.changeToMode', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:changeToMode');
+    });
+    observed.subscribeCommand(WaterHeaterMode, 'changeToMode', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request2);
+      order.push('emitted:changeToMode');
+    });
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterModeServer).changeToMode(request2));
+    expect(observed.stateOf(MatterbridgeWaterHeaterModeServer).currentMode).toBe(2);
+    expect(order).toEqual(['forwarded:boost', 'emitted:boost', 'forwarded:cancelBoost', 'emitted:cancelBoost', 'forwarded:changeToMode', 'emitted:changeToMode']);
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterModeServer).changeToMode({ newMode: 0 }));
+    expect(order.slice(6)).toEqual(['forwarded:changeToMode']);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    loggerErrorSpy.mockClear();
   });
 
   test('start the server node', async () => {

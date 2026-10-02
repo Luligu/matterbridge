@@ -187,6 +187,9 @@ describe('MatterbridgeThermostatServer', () => {
   });
 
   test('Thermostat server', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    thermo.subscribeCommand(Thermostat, 'setpointRaiseLower', (data) => emitted.push(data.request));
     const setBothRequest = { mode: Thermostat.SetpointRaiseLowerMode.Both, amount: 5 };
     const setHeatRequest = { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 };
     const setCoolRequest = { mode: Thermostat.SetpointRaiseLowerMode.Cool, amount: 5 };
@@ -215,6 +218,7 @@ describe('MatterbridgeThermostatServer', () => {
     updatedThermostatCluster = thermo.getCluster(MatterbridgeThermostatServer);
 
     expect(updatedThermostatCluster).toMatchObject({ occupiedHeatingSetpoint: 2200, occupiedCoolingSetpoint: 2600 });
+    expect(emitted).toContainEqual(setBothRequest);
   });
 
   /*
@@ -248,6 +252,9 @@ describe('MatterbridgeThermostatServer', () => {
   test('PresetThermostat server', async () => {
     thermostatPreset = createPresetThermostatEndpoint('thermostatPresetBehavior');
     expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    thermostatPreset.subscribeCommand(Thermostat, 'setActivePresetRequest', (data) => emitted.push(data.request));
 
     const formatPresetHandleForLog = (presetHandle: Uint8Array | null): string => (presetHandle ? `0x${Buffer.from(presetHandle).toString('hex')}` : 'null');
     const setHeatRequest = { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 };
@@ -352,11 +359,16 @@ describe('MatterbridgeThermostatServer', () => {
     expect(presetCalls[3]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: invalidPresetRequest });
     expect(presetCalls).toHaveLength(4);
     expectPresetThermostatAttributes(null, 1900, 2700);
+    expect(emitted).toContainEqual(firstPresetRequest);
+    expect(emitted).toContainEqual(clearPresetRequest);
   });
 
   test('ScheduleThermostat server', async () => {
     thermostatSchedule = createScheduleThermostatEndpoint('thermostatScheduleBehavior');
     expect(await addDevice(aggregator, thermostatSchedule)).toBeTruthy();
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    thermostatSchedule.subscribeCommand(Thermostat, 'setActiveScheduleRequest', (data) => emitted.push(data.request));
 
     const scheduleThermostatBehavior = MatterbridgeThermostatServer.with(
       Thermostat.Feature.Heating,
@@ -395,11 +407,18 @@ describe('MatterbridgeThermostatServer', () => {
     expect(scheduleCalls).toHaveLength(2);
     // The active schedule handle must not change when the requested schedule handle is invalid.
     expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
+    // Only the accepted schedule request is announced
+    expect(emitted).toEqual([secondScheduleRequest]);
   });
 
   test('ThermostatSuggestion server', async () => {
     thermostatSuggestion = createThermostatSuggestionEndpoint('thermostatSuggestionBehavior');
     expect(await addDevice(aggregator, thermostatSuggestion)).toBeTruthy();
+    // Collect the requests announced to subscribeCommand() listeners
+    const emittedAdd: unknown[] = [];
+    const emittedRemove: unknown[] = [];
+    thermostatSuggestion.subscribeCommand(Thermostat, 'addThermostatSuggestion', (data) => emittedAdd.push(data.request));
+    thermostatSuggestion.subscribeCommand(Thermostat, 'removeThermostatSuggestion', (data) => emittedRemove.push(data.request));
 
     const addCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     const removeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
@@ -607,6 +626,10 @@ describe('MatterbridgeThermostatServer', () => {
       expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
     });
     expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
+    // Accepted commands are announced, rejected ones are not
+    expect(emittedAdd).toContainEqual(expect.objectContaining({ presetHandle: Uint8Array.from([1]) }));
+    expect(emittedRemove).toContainEqual({ uniqueId: 4 });
+    expect(emittedRemove).not.toContainEqual({ uniqueId: 99 });
   });
 
   test('removeThermostatSuggestionsForRemovedPresets branch coverage', () => {

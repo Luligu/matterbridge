@@ -1,5 +1,5 @@
 /**
- * @file src/devices/intercom.ts
+ * @file packages/core/src/devices/intercom.ts
  * @description This file contains the Intercom class.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

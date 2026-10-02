@@ -48,37 +48,38 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
   if (debug) console.log('SystemInfoTable loading with systemInfo:', localSystemInfo, 'compact:', compact);
 
+  const displaySystemInfo = { ...localSystemInfo };
+
   // Compact some fields if compact is true
-  if (compact && localSystemInfo.totalMemory && localSystemInfo.freeMemory) {
-    const totalMemory = localSystemInfo.totalMemory;
-    const freeMemory = localSystemInfo.freeMemory;
-    localSystemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
-    localSystemInfo.totalMemory = '';
+  if (compact && displaySystemInfo.totalMemory && displaySystemInfo.freeMemory) {
+    const totalMemory = displaySystemInfo.totalMemory;
+    const freeMemory = displaySystemInfo.freeMemory;
+    displaySystemInfo.freeMemory = `${freeMemory} / ${totalMemory}`;
+    displaySystemInfo.totalMemory = '';
   }
-  if (compact && localSystemInfo.heapTotal && localSystemInfo.heapUsed) {
-    const heapTotal = localSystemInfo.heapTotal;
-    const heapUsed = localSystemInfo.heapUsed;
-    localSystemInfo.heapUsed = `${heapUsed} / ${heapTotal}`;
-    localSystemInfo.heapTotal = '';
+  if (compact && displaySystemInfo.heapTotal && displaySystemInfo.heapUsed) {
+    const heapTotal = displaySystemInfo.heapTotal;
+    const heapUsed = displaySystemInfo.heapUsed;
+    displaySystemInfo.heapUsed = `${heapUsed} / ${heapTotal}`;
+    displaySystemInfo.heapTotal = '';
   }
-  if (compact && localSystemInfo.osRelease && localSystemInfo.osType) {
-    const osType = localSystemInfo.osType;
-    const osRelease = localSystemInfo.osRelease;
-    localSystemInfo.osType = `${osType} (${osRelease})`;
-    localSystemInfo.osRelease = '';
+  if (compact && displaySystemInfo.osRelease && displaySystemInfo.osType) {
+    const osType = displaySystemInfo.osType;
+    const osRelease = displaySystemInfo.osRelease;
+    displaySystemInfo.osType = `${osType} (${osRelease})`;
+    displaySystemInfo.osRelease = '';
   }
-  if (compact && localSystemInfo.osArch && localSystemInfo.osPlatform) {
-    const osPlatform = localSystemInfo.osPlatform;
-    const osArch = localSystemInfo.osArch;
-    localSystemInfo.osPlatform = `${osPlatform} (${osArch})`;
-    localSystemInfo.osArch = '';
+  if (compact && displaySystemInfo.osArch && displaySystemInfo.osPlatform) {
+    const osPlatform = displaySystemInfo.osPlatform;
+    const osArch = displaySystemInfo.osArch;
+    displaySystemInfo.osPlatform = `${osPlatform} (${osArch})`;
+    displaySystemInfo.osArch = '';
   }
 
   // If bunVersion is present, use it as nodeVersion and remove bunVersion from the display
-  if (localSystemInfo.bunVersion) {
-    localSystemInfo.nodeVersion = localSystemInfo.bunVersion;
-    localSystemInfo.bunVersion = undefined;
-    keyNameMap.set('nodeVersion', 'Bun version');
+  if (displaySystemInfo.bunVersion) {
+    displaySystemInfo.nodeVersion = displaySystemInfo.bunVersion;
+    displaySystemInfo.bunVersion = undefined;
   }
 
   const handleViewHistory = () => {
@@ -184,21 +185,15 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
             <col style={{ width: '60%' }} />
           </colgroup>
           <tbody style={{ border: 'none', borderCollapse: 'collapse' }}>
-            {Object.entries(localSystemInfo)
+            {Object.entries(displaySystemInfo)
               .filter(([key, value]) => key !== 'bunVersion' && value !== undefined && value !== '')
               .map(([key, value], index) => (
                 <tr key={key} className={index % 2 === 0 ? 'table-content-even' : 'table-content-odd'} style={{ border: 'none', borderCollapse: 'collapse' }}>
-                  <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>{keyNameMap.get(key) ?? key}</td>
+                  <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap' }}>
+                    {key === 'nodeVersion' && localSystemInfo.bunVersion ? 'Bun version' : (keyNameMap.get(key) ?? key)}
+                  </td>
                   <td style={{ border: 'none', borderCollapse: 'collapse', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {enableMobile && mobile ? (
-                      typeof value !== 'string' ? (
-                        value.toString()
-                      ) : (
-                        value
-                      )
-                    ) : (
-                      <TruncatedText value={typeof value !== 'string' ? value.toString() : value} maxChars={22} />
-                    )}
+                    {enableMobile && mobile ? value : <TruncatedText value={value} maxChars={22} />}
                   </td>
                 </tr>
               ))}

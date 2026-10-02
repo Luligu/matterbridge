@@ -57,6 +57,8 @@ const MatterbridgeValveConfigurationAndControlServerBase = ValveConfigurationAnd
  * device implementation may also opt into either simulation directly by setting the same `state` values.
  */
 export class MatterbridgeValveConfigurationAndControlServer extends MatterbridgeValveConfigurationAndControlServerBase {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
   declare readonly state: MatterbridgeValveConfigurationAndControlServer.State;
   declare protected internal: MatterbridgeValveConfigurationAndControlServer.Internal;
 
@@ -91,7 +93,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
       request,
       cluster: ValveConfigurationAndControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(
@@ -138,6 +140,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     if (this.state.movementDuration > 0) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Open, this.state.targetLevel ?? 100);
     // Matter 1.6.0 § 4.6.8.1.3: Once the target and duration attributes are set, start the countdown of the RemainingDuration attribute.
     if (this.state.autoClose && this.state.remainingDuration !== null) this.#scheduleAutoClose();
+    this.endpoint.emitCommand(ValveConfigurationAndControl, 'open', request, this.context);
   }
 
   /**
@@ -151,7 +154,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
       request: {},
       cluster: ValveConfigurationAndControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof ValveConfigurationAndControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -180,6 +183,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     // device implementation.
     // Matter 1.6.0 § 4.6.8.2.1: Once the target attributes are set, start the movement towards the target value, setting CurrentState to Closed when the movement completes.
     if (this.state.movementDuration > 0) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Closed, 0);
+    this.endpoint.emitCommand(ValveConfigurationAndControl, 'close', {}, this.context);
   }
 
   /**

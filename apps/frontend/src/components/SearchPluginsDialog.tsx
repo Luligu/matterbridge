@@ -437,6 +437,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       selectedPluginNameRef.current = '';
       controllerRef.current?.abort();
       controllerRef.current = null;
+      // oxlint-disable-next-line react/set-state-in-effect -- Reset the mounted dialog on every close path so reopening starts without stale results, selection, or progress.
       setRows([]);
       setLoading(false);
       setSelecting(false);
@@ -784,6 +785,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             index += 1;
 
             const packageName = packagesNeedingFetchList[rowIndex];
+            /* v8 ignore next 3 -- defensive check */
             if (!packageName) {
               continue;
             }
@@ -932,7 +934,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <Tooltip title="Select the plugin and close the dialog. Double-click a row to select and close the dialog.">
-          <Button variant="contained" onClick={handleSelect} disabled={!(selectedPluginNameRef.current || pluginName) || selecting}>
+          <Button variant="contained" onClick={handleSelect} disabled={!pluginName || selecting}>
             Select
           </Button>
         </Tooltip>

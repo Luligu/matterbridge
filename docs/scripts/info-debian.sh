@@ -22,10 +22,24 @@ echo "🧩 Kernel Version: $(uname -r)"
 echo "👤 User: $(whoami)"
 echo "🏷️ Hostname: $(hostname)"
 echo "📅 Date: $(date)"
-echo "⏳ Uptime: $(uptime -p || echo 'unavailable')"
-echo "🧠 Memory: $(free -h | awk '/^Mem:/{print $3 " / " $2}')"
+echo "⏳ Uptime: $(uptime -p 2>/dev/null || echo 'unavailable')"
+if command -v free >/dev/null 2>&1; then
+  echo "🧠 Memory: $(free -h | awk '/^Mem:/{print $3 " / " $2}')"
+else
+  echo "🧠 Memory: unavailable"
+fi
 echo "🌐 IPv4: $(ip -4 route get 1 2>/dev/null | awk '{print $7; exit}' || echo 'unavailable')"
 echo "🌐 IPv6: $(ip -6 addr show dev eth0 2>/dev/null | awk '/inet6/{gsub(/\/.*$/,"",$2); print $2}' | tr '\n' ' ' || echo 'none')"
+
+# host.docker.internal and gateway.docker.internal are provided by Docker Desktop (or --add-host),
+# so each line is printed only when the name resolves. IPv4 is listed first on glibc and musl alike.
+docker_name_ips() {
+  getent ahosts "$1" 2>/dev/null | awk '!seen[$1]++ { if (index($1, ":")) v6 = v6 $1 " "; else v4 = v4 $1 " " } END { printf "%s%s", v4, v6 }' || true
+}
+DOCKER_HOST_IPS=$(docker_name_ips host.docker.internal)
+[ -z "$DOCKER_HOST_IPS" ] || echo "🏠 Docker host: $DOCKER_HOST_IPS"
+DOCKER_GATEWAY_IPS=$(docker_name_ips gateway.docker.internal)
+[ -z "$DOCKER_GATEWAY_IPS" ] || echo "🚪 Docker gateway: $DOCKER_GATEWAY_IPS"
 
 # CPU temperature (if available)
 for zone in /sys/class/thermal/thermal_zone*; do

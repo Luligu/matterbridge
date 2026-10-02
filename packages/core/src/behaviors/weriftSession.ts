@@ -1,5 +1,5 @@
 /**
- * @file src/behaviors/weriftSession.ts
+ * @file packages/core/src/behaviors/weriftSession.ts
  * @description This file contains the WeriftWebRtcSession class, wrapping a werift RTCPeerConnection.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

@@ -226,8 +226,8 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    */
   override setStreamPriorities(request: CameraAvStreamManagement.SetStreamPrioritiesRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
+    // Matter 1.6.0 § 11.2.8.12.2: Fail SetStreamPriorities with INVALID_IN_STATE if any entry exists in AllocatedSnapshotStreams, AllocatedVideoStreams or AllocatedAudioStreams.
     if (
-      // Matter 1.6.0 § 11.2.8.12.2: Fail SetStreamPriorities with INVALID_IN_STATE if any entry exists in AllocatedSnapshotStreams, AllocatedVideoStreams or AllocatedAudioStreams.
       (this.features.snapshot && this.state.allocatedSnapshotStreams.length > 0) ||
       (this.features.video && this.state.allocatedVideoStreams.length > 0) ||
       (this.features.audio && this.state.allocatedAudioStreams.length > 0)
@@ -461,6 +461,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       );
     }
     const { microphoneCapabilities } = this.state;
+    // Matter 1.6.0 § 11.2.8.1.7: Fail AudioStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported AudioCodec, ChannelCount, SampleRate or BitDepth is requested.
     if (
       !microphoneCapabilities.supportedCodecs.includes(request.audioCodec) ||
       request.channelCount < 1 ||
@@ -678,10 +679,14 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    * @throws {StatusResponseError} Failure if no `snapshotSource` is set and the endpoint has no WebRtcTransportProvider cluster (or its `videoSource` is `none`), or a `webcam`/`rtsp` source has no device configured.
    */
   #resolveSnapshotSource(): string {
-    const endpoint = `(endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`;
     const fail = (reason: string): StatusResponseError => {
-      this.endpoint.stateOf(MatterbridgeServer).log.error(`MatterbridgeCameraAvStreamManagementServer: cannot capture snapshot: ${reason} ${endpoint}`);
-      return new StatusResponseError(`MatterbridgeCameraAvStreamManagementServer: cannot capture snapshot: ${reason} ${endpoint}`, Status.Failure);
+      this.endpoint
+        .stateOf(MatterbridgeServer)
+        .log.error(`MatterbridgeCameraAvStreamManagementServer: cannot capture snapshot: ${reason} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      return new StatusResponseError(
+        `MatterbridgeCameraAvStreamManagementServer: cannot capture snapshot: ${reason} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.Failure,
+      );
     };
     const sourceFor = (source: SnapshotSource, device: string | undefined, sourceOption: string, deviceOption: string): string => {
       if (source === 'test') return TEST_SNAPSHOT_SOURCE;

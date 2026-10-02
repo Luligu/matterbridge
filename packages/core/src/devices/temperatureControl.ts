@@ -25,6 +25,7 @@
 
 // @matter
 import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
+import { Status, StatusResponseError } from '@matter/types';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 
 // Matterbridge
@@ -84,13 +85,16 @@ export function createNumberTemperatureControlClusterServer(
  * Temperature control server that exposes discrete temperature levels.
  */
 export class MatterbridgeLevelTemperatureControlServer extends TemperatureControlServer.with(TemperatureControl.Feature.TemperatureLevel) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server and logs the configured temperature levels.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
-      `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')}`,
+      `MatterbridgeLevelTemperatureControlServer: initialized with selectedTemperatureLevel ${this.state.selectedTemperatureLevel} and supportedTemperatureLevels: ${this.state.supportedTemperatureLevels.join(', ')} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -101,22 +105,37 @@ export class MatterbridgeLevelTemperatureControlServer extends TemperatureContro
    */
   override async setTemperature(request: TemperatureControl.SetTemperatureRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeLevelTemperatureControlServer: setting temperature level to ${request.targetTemperatureLevel} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('TemperatureControl.setTemperature', {
       command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
-    if (request.targetTemperatureLevel !== undefined && request.targetTemperatureLevel >= 0 && request.targetTemperatureLevel < this.state.supportedTemperatureLevels.length) {
-      device.log.debug(
-        `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]}`,
+    // Matter 1.6.0 § 8.2.6.1: TargetTemperatureLevel is mandatory when the TemperatureLevel feature is supported, so reject a command without it with INVALID_COMMAND.
+    if (request.targetTemperatureLevel === undefined) {
+      throw new StatusResponseError(
+        `MatterbridgeLevelTemperatureControlServer: setTemperature requires targetTemperatureLevel (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidCommand,
       );
-      this.state.selectedTemperatureLevel = request.targetTemperatureLevel;
-    } else {
-      device.log.error(`MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel ${request.targetTemperatureLevel}`);
     }
+    // Matter 1.6.0 § 8.2.6.1.2 and § 8.2.6.1.3: Reject a TargetTemperatureLevel outside the SupportedTemperatureLevels list with CONSTRAINT_ERROR, leaving SelectedTemperatureLevel unchanged.
+    if (request.targetTemperatureLevel < 0 || request.targetTemperatureLevel >= this.state.supportedTemperatureLevels.length) {
+      throw new StatusResponseError(
+        `MatterbridgeLevelTemperatureControlServer: targetTemperatureLevel ${request.targetTemperatureLevel} is outside the supportedTemperatureLevels list (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.ConstraintError,
+      );
+    }
+    device.log.debug(
+      `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to ${request.targetTemperatureLevel}: ${this.state.supportedTemperatureLevels[request.targetTemperatureLevel]} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 8.2.6.1.3: Set SelectedTemperatureLevel to TargetTemperatureLevel and respond with SUCCESS.
+    this.state.selectedTemperatureLevel = request.targetTemperatureLevel;
+    this.endpoint.emitCommand(TemperatureControl, 'setTemperature', request, this.context);
   }
 }
 
@@ -127,13 +146,16 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
   TemperatureControl.Feature.TemperatureNumber,
   TemperatureControl.Feature.TemperatureStep,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the server and logs the configured setpoint constraints.
    */
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(
-      `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step}`,
+      `MatterbridgeNumberTemperatureControlServer: initialized with temperatureSetpoint ${this.state.temperatureSetpoint} minTemperature ${this.state.minTemperature} maxTemperature ${this.state.maxTemperature} step ${this.state.step} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
   }
 
@@ -144,19 +166,43 @@ export class MatterbridgeNumberTemperatureControlServer extends TemperatureContr
    */
   override async setTemperature(request: TemperatureControl.SetTemperatureRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`SetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(
+      `MatterbridgeNumberTemperatureControlServer: setting temperature to ${request.targetTemperature} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await device.commandHandler.executeHandler('TemperatureControl.setTemperature', {
       command: 'setTemperature',
       request,
       cluster: TemperatureControlServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof TemperatureControl)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
-    if (request.targetTemperature !== undefined && request.targetTemperature >= this.state.minTemperature && request.targetTemperature <= this.state.maxTemperature) {
-      device.log.debug(`MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature}`);
-      this.state.temperatureSetpoint = request.targetTemperature;
-    } else {
-      device.log.error(`MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature ${request.targetTemperature}`);
+    // Matter 1.6.0 § 8.2.6.1: TargetTemperature is mandatory when the TemperatureNumber feature is supported, so reject a command without it with INVALID_COMMAND.
+    if (request.targetTemperature === undefined) {
+      throw new StatusResponseError(
+        `MatterbridgeNumberTemperatureControlServer: setTemperature requires targetTemperature (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.InvalidCommand,
+      );
     }
+    // Matter 1.6.0 § 8.2.6.1.1: Reject a TargetTemperature outside MinTemperature to MaxTemperature inclusive with CONSTRAINT_ERROR, leaving TemperatureSetpoint unchanged.
+    if (request.targetTemperature < this.state.minTemperature || request.targetTemperature > this.state.maxTemperature) {
+      throw new StatusResponseError(
+        `MatterbridgeNumberTemperatureControlServer: targetTemperature ${request.targetTemperature} must be between minTemperature ${this.state.minTemperature} and maxTemperature ${this.state.maxTemperature} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.ConstraintError,
+      );
+    }
+    // Matter 1.6.0 § 8.2.6.1.3: With the Step feature, reject a TargetTemperature where (TargetTemperature - MinTemperature) % Step != 0 with CONSTRAINT_ERROR, leaving TemperatureSetpoint unchanged.
+    if ((request.targetTemperature - this.state.minTemperature) % this.state.step !== 0) {
+      throw new StatusResponseError(
+        `MatterbridgeNumberTemperatureControlServer: targetTemperature ${request.targetTemperature} is not aligned to step ${this.state.step} from minTemperature ${this.state.minTemperature} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.ConstraintError,
+      );
+    }
+    device.log.debug(
+      `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to ${request.targetTemperature} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 8.2.6.1.3: Set TemperatureSetpoint to TargetTemperature and respond with SUCCESS.
+    this.state.temperatureSetpoint = request.targetTemperature;
+    this.endpoint.emitCommand(TemperatureControl, 'setTemperature', request, this.context);
   }
 }

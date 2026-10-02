@@ -119,7 +119,7 @@ describe('ConfigPluginDialog debug paths', () => {
           } as any
         }
       >
-        <ConfigPluginDialog open={true} onClose={onClose} plugin={plugin} />
+        <ConfigPluginDialog open={true} onClose={onClose} onSave={vi.fn()} plugin={plugin} />
       </WebSocketContext.Provider>,
     );
 

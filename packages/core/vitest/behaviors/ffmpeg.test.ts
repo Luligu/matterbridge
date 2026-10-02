@@ -1,5 +1,5 @@
 /**
- * @file vitest/behaviors/ffmpeg.test.ts
+ * @file packages/core/vitest/behaviors/ffmpeg.test.ts
  * @description This file contains the tests for the ffmpeg binary resolution helpers.
  * @author Luca Liguori
  */

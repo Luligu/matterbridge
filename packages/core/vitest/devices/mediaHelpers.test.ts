@@ -61,7 +61,16 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
-import { createDefaultMediaBindingClusterServer, createDefaultMediaPowerSourceClusterServer, type MediaPowerSourceType } from '../../src/devices/mediaHelpers.js';
+import { BasicVideoPlayer } from '../../src/devices/basicVideoPlayer.js';
+import { ContentApp } from '../../src/devices/contentApp.js';
+import {
+  createDefaultMediaBindingClusterServer,
+  createDefaultMediaPowerSourceClusterServer,
+  type MediaPowerSourceType,
+  MatterbridgeMediaPlaybackServer,
+  MatterbridgeKeypadInputServer,
+  MatterbridgeApplicationLauncherServer,
+} from '../../src/devices/mediaHelpers.js';
 import { castingVideoClient, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
@@ -174,6 +183,195 @@ describe('Matterbridge ' + NAME, () => {
 
   test('remove the media helpers test device', async () => {
     expect(await deleteDevice(server, device)).toBeTruthy();
+  });
+
+  test('should emit completed media commands after awaited plugin forwarding', async () => {
+    const player = new BasicVideoPlayer('Observed Player', 'MEDIA-OBS', { onOff: true });
+    const app = new ContentApp('Observed App', 'APP-OBS');
+    await addDevice(server, player);
+    await addDevice(server, app);
+    const order: string[] = [];
+    const request0 = {};
+    player.addCommandHandler('MediaPlayback.play', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request0);
+      await Promise.resolve();
+      order.push('forwarded:play');
+    });
+    player.subscribeCommand(MediaPlayback, 'play', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request0);
+      order.push('emitted:play');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).play())).toMatchObject({ status: MediaPlayback.Status.Success });
+    expect(player.stateOf(MatterbridgeMediaPlaybackServer).currentState).toBe(MediaPlayback.PlaybackState.Playing);
+    const request1 = {};
+    player.addCommandHandler('MediaPlayback.pause', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request1);
+      await Promise.resolve();
+      order.push('forwarded:pause');
+    });
+    player.subscribeCommand(MediaPlayback, 'pause', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request1);
+      order.push('emitted:pause');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).pause())).toMatchObject({ status: MediaPlayback.Status.Success });
+    expect(player.stateOf(MatterbridgeMediaPlaybackServer).currentState).toBe(MediaPlayback.PlaybackState.Paused);
+    const request2 = {};
+    player.addCommandHandler('MediaPlayback.stop', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request2);
+      await Promise.resolve();
+      order.push('forwarded:stop');
+    });
+    player.subscribeCommand(MediaPlayback, 'stop', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request2);
+      order.push('emitted:stop');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).stop())).toMatchObject({ status: MediaPlayback.Status.Success });
+    expect(player.stateOf(MatterbridgeMediaPlaybackServer).currentState).toBe(MediaPlayback.PlaybackState.NotPlaying);
+    const request3 = {};
+    player.addCommandHandler('MediaPlayback.previous', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request3);
+      await Promise.resolve();
+      order.push('forwarded:previous');
+    });
+    player.subscribeCommand(MediaPlayback, 'previous', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request3);
+      order.push('emitted:previous');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).previous())).toMatchObject({ status: MediaPlayback.Status.Success });
+    const request4 = {};
+    player.addCommandHandler('MediaPlayback.next', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request4);
+      await Promise.resolve();
+      order.push('forwarded:next');
+    });
+    player.subscribeCommand(MediaPlayback, 'next', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request4);
+      order.push('emitted:next');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).next())).toMatchObject({ status: MediaPlayback.Status.Success });
+    const request5 = { deltaPositionMilliseconds: 1000 };
+    player.addCommandHandler('MediaPlayback.skipForward', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request5);
+      await Promise.resolve();
+      order.push('forwarded:skipForward');
+    });
+    player.subscribeCommand(MediaPlayback, 'skipForward', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request5);
+      order.push('emitted:skipForward');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).skipForward(request5))).toMatchObject({ status: MediaPlayback.Status.Success });
+    const request6 = { deltaPositionMilliseconds: 1000 };
+    player.addCommandHandler('MediaPlayback.skipBackward', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request6);
+      await Promise.resolve();
+      order.push('forwarded:skipBackward');
+    });
+    player.subscribeCommand(MediaPlayback, 'skipBackward', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request6);
+      order.push('emitted:skipBackward');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeMediaPlaybackServer).skipBackward(request6))).toMatchObject({ status: MediaPlayback.Status.Success });
+    const request7 = { keyCode: KeypadInput.CecKeyCode.Down };
+    player.addCommandHandler('KeypadInput.sendKey', async (data) => {
+      expect(data.endpoint).toBe(player);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request7);
+      await Promise.resolve();
+      order.push('forwarded:sendKey');
+    });
+    player.subscribeCommand(KeypadInput, 'sendKey', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request7);
+      order.push('emitted:sendKey');
+    });
+    expect(await player.act(async (agent) => agent.get(MatterbridgeKeypadInputServer).sendKey(request7))).toMatchObject({ status: KeypadInput.Status.Success });
+    const request8 = {};
+    app.addCommandHandler('ApplicationLauncher.launchApp', async (data) => {
+      expect(data.endpoint).toBe(app);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request8);
+      await Promise.resolve();
+      order.push('forwarded:launchApp');
+    });
+    app.subscribeCommand(ApplicationLauncher, 'launchApp', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request8);
+      order.push('emitted:launchApp');
+    });
+    expect(await app.act(async (agent) => agent.get(MatterbridgeApplicationLauncherServer).launchApp(request8))).toMatchObject({ status: ApplicationLauncher.Status.Success });
+    const request9 = {};
+    app.addCommandHandler('ApplicationLauncher.stopApp', async (data) => {
+      expect(data.endpoint).toBe(app);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request9);
+      await Promise.resolve();
+      order.push('forwarded:stopApp');
+    });
+    app.subscribeCommand(ApplicationLauncher, 'stopApp', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request9);
+      order.push('emitted:stopApp');
+    });
+    expect(await app.act(async (agent) => agent.get(MatterbridgeApplicationLauncherServer).stopApp(request9))).toMatchObject({ status: ApplicationLauncher.Status.Success });
+    const request10 = {};
+    app.addCommandHandler('ApplicationLauncher.hideApp', async (data) => {
+      expect(data.endpoint).toBe(app);
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request10);
+      await Promise.resolve();
+      order.push('forwarded:hideApp');
+    });
+    app.subscribeCommand(ApplicationLauncher, 'hideApp', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request10);
+      order.push('emitted:hideApp');
+    });
+    expect(await app.act(async (agent) => agent.get(MatterbridgeApplicationLauncherServer).hideApp(request10))).toMatchObject({ status: ApplicationLauncher.Status.Success });
+    expect(order).toEqual([
+      'forwarded:play',
+      'emitted:play',
+      'forwarded:pause',
+      'emitted:pause',
+      'forwarded:stop',
+      'emitted:stop',
+      'forwarded:previous',
+      'emitted:previous',
+      'forwarded:next',
+      'emitted:next',
+      'forwarded:skipForward',
+      'emitted:skipForward',
+      'forwarded:skipBackward',
+      'emitted:skipBackward',
+      'forwarded:sendKey',
+      'emitted:sendKey',
+      'forwarded:launchApp',
+      'emitted:launchApp',
+      'forwarded:stopApp',
+      'emitted:stopApp',
+      'forwarded:hideApp',
+      'emitted:hideApp',
+    ]);
   });
 
   test('start the server node', async () => {

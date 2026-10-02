@@ -1,8 +1,7 @@
 /**
- * @file vitest/devices/floodlightCamera.test.ts
+ * @file packages/core/vitest/devices/floodlightCamera.test.ts
  * @description This file contains the tests for the FloodlightCamera device.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'FloodlightCameraDevice';

@@ -1,5 +1,5 @@
 /**
- * @file packages/vitest-utils/src/export.ts
+ * @file packages/test-utils/src/vitest/export.ts
  * @description Vitest utilities package entrypoint exports.
  * @author Luca Liguori
  * @created 2026-03-04

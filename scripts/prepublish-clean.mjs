@@ -1,6 +1,6 @@
 /**
  * prepublish-clean.mjs
- * Version: 1.1.0
+ * Version: 1.1.1
  *
  * Dependency-free replacement for:
  *   npx shx rm -rf node_modules/* node_modules/.[!.]* node_modules/..?* package-lock.json npm-shrinkwrap.json
@@ -32,7 +32,6 @@ const rm = (dir, target) => {
     rmSync(resolve(dir, target), { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   } catch (error) {
     if (error.code === 'EPERM' || error.code === 'EBUSY' || error.code === 'ENOTEMPTY') {
-      // eslint-disable-next-line no-console
       console.warn(`Skipped locked path (${error.code}): ${error.path ?? target} — likely held by a running process.`);
       return;
     }

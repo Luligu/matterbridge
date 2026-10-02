@@ -179,6 +179,9 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('Reset forwards to the command handler and resets the requested alarms', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    sensor.subscribeCommand(TemperatureAlarm, 'reset', (data) => emitted.push({ command: data.command, request: data.request }));
     await sensor.setAttribute(TemperatureAlarm.id, 'state', criticalAlarms);
     vi.clearAllMocks();
     notifyEvents.length = 0;
@@ -209,17 +212,25 @@ describe('Server clusters and behaviors', () => {
       mask: criticalAlarms,
     });
     sensor.removeCommandHandler('TemperatureAlarm.reset', resetHandler);
+    expect(emitted).toHaveLength(1);
   });
 
   test('Reset rejects an unsupported alarm with FAILURE', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    sensor.subscribeCommand(TemperatureAlarm, 'reset', (data) => emitted.push({ command: data.command, request: data.request }));
     await expect(sensor.invokeBehaviorCommand(TemperatureAlarm, 'reset', { alarms: alarms('minorOverTemperatureAlarm') })).rejects.toMatchObject({
       code: Status.Failure,
     });
     // The state is left untouched.
     expect(sensor.getAttribute(TemperatureAlarm.id, 'state')).toEqual(alarms('criticalUnderTemperatureAlarm'));
+    expect(emitted).toEqual([]);
   });
 
   test('ModifyEnabledAlarms forwards to the command handler, updates the Mask and clears the disabled alarms', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    sensor.subscribeCommand(TemperatureAlarm, 'modifyEnabledAlarms', (data) => emitted.push({ command: data.command, request: data.request }));
     let handled = false;
     const modifyHandler = (data: CommandHandlerPayload<'TemperatureAlarm.modifyEnabledAlarms'>): void => {
       handled = true;
@@ -246,6 +257,7 @@ describe('Server clusters and behaviors', () => {
       mask: alarms('criticalOverTemperatureAlarm'),
     });
     sensor.removeCommandHandler('TemperatureAlarm.modifyEnabledAlarms', modifyHandler);
+    expect(emitted).toHaveLength(1);
   });
 
   test('Create a second TemperatureSensor device supporting every alarm', async () => {

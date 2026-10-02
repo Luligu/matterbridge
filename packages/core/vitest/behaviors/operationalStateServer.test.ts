@@ -314,4 +314,21 @@ describe('Server clusters and behaviors', () => {
     expect(response).toEqual({ commandResponseState: fullyOperational });
     expect(externallyPausedWasher.getAttribute(OperationalState.id, 'operationalState')).toBe(OperationalState.OperationalStateEnum.Running);
   });
+
+  test('Completed commands are announced to subscribeCommand() listeners, rejected and no-op ones are not', async () => {
+    const emitted: string[] = [];
+    for (const command of ['pause', 'stop', 'start', 'resume'] as const) washer.subscribeCommand(OperationalState, command, () => emitted.push(command));
+    await washer.setAttribute(OperationalState.id, 'operationalState', OperationalState.OperationalStateEnum.Stopped);
+    await washer.setAttribute(OperationalState.id, 'operationalError', fullyOperational);
+
+    await invoke('resume'); // Not Resume-compatible from Stopped
+    await invoke('stop'); // Already Stopped
+    await invoke('start');
+    await invoke('start'); // Already Running
+    await invoke('pause');
+    await invoke('resume');
+    await invoke('stop');
+
+    expect(emitted).toEqual(['start', 'pause', 'resume', 'stop']);
+  });
 });

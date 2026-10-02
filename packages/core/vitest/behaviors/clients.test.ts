@@ -1,8 +1,7 @@
 /**
- * @file vitest/behaviors/clients.test.ts
+ * @file packages/core/vitest/behaviors/clients.test.ts
  * @description This file contains the tests for the addChimeClient/addWebRtcTransportRequestorClient/addWebRtcTransportProviderClient helpers.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'ClientsBehavior';

@@ -81,12 +81,11 @@
     "react/no-array-index-key": "off", // the message feed has no stable id; index key is acceptable here
     "react/forbid-component-props": "off", // MUI components often require passing through arbitrary props (e.g. `sx`), so we allow all component props
     "react/jsx-no-literals": "off", // we allow string literals in JSX
-    // TODO: Re-enable React Compiler diagnostics incrementally after the existing frontend violations have been addressed.
     "react/exhaustive-effect-dependencies": "error",
-    "react/immutability": "off",
-    "react/hooks": "off",
-    "react/refs": "off",
-    "react/set-state-in-effect": "off",
+    "react/immutability": "error",
+    "react/hooks": "error",
+    "react/refs": "error",
+    "react/set-state-in-effect": "error",
     "react/rule-suppression": "off", // sometimes necessary to suppress specific React Compiler rules
     "react/todo": "off", // internal React Compiler limitations are not actionable application diagnostics
     "react/button-has-type": "warn" // native <button> defaults to type="submit" and can silently submit parent forms

@@ -28,6 +28,7 @@ Checks:
 - Verify [docs/main_update.json](../../../docs/main_update.json) and [docs/dev_update.json](../../../docs/dev_update.json) have a `dev` value whose version prefix matches the root package version, preserving the existing `-dev-...` suffix format.
 - Verify the `engines.node` field in every real workspace package under [packages](../../../packages) is identical to the `engines.node` field in the root [package.json](../../../package.json).
 - Verify the Docker workflow release tags in [docker-buildx-s6-rc.yml](../../../.github/workflows/docker-buildx-s6-rc.yml) and [docker-buildx-s6-rc-legacy.yml](../../../.github/workflows/docker-buildx-s6-rc-legacy.yml) are coherent.
+- Verify the `docker:run:hub:s6-rc:tag` and `docker:run:hub:s6-rc-legacy:tag` scripts in [package.json](../../../package.json) use the expected release tag and its `-legacy` suffix.
 - Treat the tag format as `year.month.number`, not a calendar day, for example `2026.4.3` and `2026.4.3-legacy`.
 - Treat the tags as coherent only when the legacy tag is exactly the non-legacy tag plus the `-legacy` suffix.
 - If the arguments include a user-provided expected release tag, verify the non-legacy workflow tag matches that `year.month.number` value and verify the legacy workflow tag matches that same value plus the `-legacy` suffix.
@@ -38,6 +39,8 @@ If explicitly asked to fix the alignment:
 - Set each file's `latest` field to the root package version.
 - Update each file's `dev` field so its version prefix matches the root package version while preserving the existing `-dev-...` suffix.
 - Advance `latestDate` and `devDate` by 1 week from their current values, preserving the `YYYY-MM-DD` format.
+- Update `docker:run:hub:s6-rc:tag` in [package.json](../../../package.json) to use the expected release tag.
+- Update `docker:run:hub:s6-rc-legacy:tag` in [package.json](../../../package.json) to use the expected release tag with the `-legacy` suffix.
 
 Output requirements:
 

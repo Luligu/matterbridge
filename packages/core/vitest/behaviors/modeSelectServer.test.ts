@@ -71,6 +71,9 @@ describe('MatterbridgeModeSelectServer', () => {
   });
 
   test('ModeSelect server', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    mode.subscribeCommand(ModeSelect, 'changeToMode', (data) => emitted.push({ command: data.command, request: data.request }));
     expect(mode.getAttribute(ModeSelect.id, 'currentMode')).toBe(0);
 
     await expectCommand(mode, ModeSelect, 'changeToMode', { newMode: 1 }, (data) => {
@@ -78,5 +81,6 @@ describe('MatterbridgeModeSelectServer', () => {
     });
 
     expect(mode.getAttribute(ModeSelect.id, 'currentMode')).toBe(1);
+    expect(emitted).toEqual([{ command: 'changeToMode', request: { newMode: 1 } }]);
   });
 });

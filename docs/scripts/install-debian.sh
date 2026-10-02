@@ -64,7 +64,7 @@ if [ -e "$INSTALL_STAMP" ]; then
 else
   echo "==> Installing prerequisites"
   $SUDO apt-get update
-  $SUDO apt-get install -y --no-install-recommends tzdata curl ca-certificates xz-utils libatomic1 unzip iproute2 locales
+  $SUDO apt-get install -y --no-install-recommends tzdata curl ca-certificates xz-utils libatomic1 unzip iproute2 locales procps less nano
 
   echo "==> Setting timezone to $TZ"
   [ -f "/usr/share/zoneinfo/$TZ" ] || { echo "Unknown timezone: $TZ" >&2; exit 1; }

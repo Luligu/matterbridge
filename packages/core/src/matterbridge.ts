@@ -3237,10 +3237,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * Stops the specified server node.
    *
    * @param {ServerNode} matterServerNode - The server node to stop.
-   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 10 seconds.
+   * @param {number} [timeout] - The timeout in milliseconds for stopping the server node. Defaults to 30 seconds, since a graceful close waits for its open sessions to end, which takes about 13 seconds when a peer has silently dropped a session.
    * @returns {Promise<void>} A promise that resolves when the server node has stopped.
    */
-  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 10000): Promise<void> {
+  private async stopServerNode(matterServerNode: ServerNode, timeout: number = 30000): Promise<void> {
     const { withTimeout } = await import('@matterbridge/utils/wait');
     if (!matterServerNode) return;
     this.log.notice(`Closing ${matterServerNode.id} server node`);

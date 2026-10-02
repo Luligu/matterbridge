@@ -1,8 +1,7 @@
 /**
- * @file vitest/behaviors/weriftSession.test.ts
+ * @file packages/core/vitest/behaviors/weriftSession.test.ts
  * @description This file contains the tests for the WeriftWebRtcSession class.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 // These tests raise the suite timeout because werift always gathers ICE against stun.l.google.com, even when

@@ -30,8 +30,9 @@ echo "👤 User: $(whoami)"
 echo "🏷️ Hostname: $(hostname)"
 echo "📅 Date: $(date)"
 
-# Busybox has no "uptime -p", no "free -h" and no "ip route get", so the Alpine banner reads
-# /proc directly and picks the first global address from "ip addr", with hostname -i as fallback.
+# Busybox has no "uptime -p" and no "free -h", so the Alpine banner reads /proc directly. The
+# addresses match the Debian banner (default route source, eth0 IPv6); without a usable
+# "ip route get" the IPv4 falls back to the first global address, then to hostname -i.
 UPTIME=$(awk '{ t = int($1); d = int(t / 86400); h = int((t % 86400) / 3600); m = int((t % 3600) / 60);
   s = "up";
   if (d > 0) s = s sprintf(" %d day%s,", d, (d == 1 ? "" : "s"));
@@ -44,12 +45,23 @@ MEMORY=$(awk '/^MemTotal:/ { total = $2 } /^MemAvailable:/ { available = $2 }
   END { if (total > 0) print sprintf("%.1fGi / %.1fGi", (total - available) / 1048576, total / 1048576) }' /proc/meminfo 2>/dev/null || true)
 echo "🧠 Memory: ${MEMORY:-unavailable}"
 
-IPV4=$(ip -4 addr show 2>/dev/null | awk '$1 == "inet" && substr($2, 1, 4) != "127." { split($2, a, "/"); print a[1]; exit }' || true)
+IPV4=$(ip -4 route get 1 2>/dev/null | awk '{ print $7; exit }' || true)
+[ -n "$IPV4" ] || IPV4=$(ip -4 addr show 2>/dev/null | awk '$1 == "inet" && substr($2, 1, 4) != "127." { split($2, a, "/"); print a[1]; exit }' || true)
 [ -n "$IPV4" ] || IPV4=$(hostname -i 2>/dev/null | awk '{ print $1 }' || true)
 echo "🌐 IPv4: ${IPV4:-unavailable}"
 
-IPV6=$(ip -6 addr show 2>/dev/null | awk '$1 == "inet6" && substr($2, 1, 4) != "::1/" { split($2, a, "/"); printf "%s ", a[1] }' || true)
+IPV6=$(ip -6 addr show dev eth0 2>/dev/null | awk '$1 == "inet6" { split($2, a, "/"); printf "%s ", a[1] }' || true)
 echo "🌐 IPv6: ${IPV6:-none}"
+
+# host.docker.internal and gateway.docker.internal are provided by Docker Desktop (or --add-host),
+# so each line is printed only when the name resolves. IPv4 is listed first on glibc and musl alike.
+docker_name_ips() {
+  getent ahosts "$1" 2>/dev/null | awk '!seen[$1]++ { if (index($1, ":")) v6 = v6 $1 " "; else v4 = v4 $1 " " } END { printf "%s%s", v4, v6 }' || true
+}
+DOCKER_HOST_IPS=$(docker_name_ips host.docker.internal)
+[ -z "$DOCKER_HOST_IPS" ] || echo "🏠 Docker host: $DOCKER_HOST_IPS"
+DOCKER_GATEWAY_IPS=$(docker_name_ips gateway.docker.internal)
+[ -z "$DOCKER_GATEWAY_IPS" ] || echo "🚪 Docker gateway: $DOCKER_GATEWAY_IPS"
 
 # Bun based images ship a "node" (and sometimes "npm") shim that forwards to bun, so the presence
 # of the command is not enough: accept it only when it answers with a real version string.

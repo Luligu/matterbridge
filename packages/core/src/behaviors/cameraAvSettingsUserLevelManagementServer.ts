@@ -1,5 +1,5 @@
 /**
- * @file src/behaviors/cameraAvSettingsUserLevelManagementServer.ts
+ * @file packages/core/src/behaviors/cameraAvSettingsUserLevelManagementServer.ts
  * @description This file contains the MatterbridgeCameraAvSettingsUserLevelManagementServer class of Matterbridge.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
@@ -157,8 +157,8 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     const allocatedIds = allocatedVideoStreams.map((stream) => stream.videoStreamId);
     const currentIds = this.state.dptzStreams.map((entry) => entry.videoStreamId);
     if (allocatedIds.length === currentIds.length && allocatedIds.every((id, index) => id === currentIds[index])) return;
-    // Matter 1.6.0 § 11.3.6.4: The initial values for each Viewport entry SHALL be the values found in the global Viewport.
     const viewport = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state.viewport;
+    // Matter 1.6.0 § 11.3.6.4: The initial values for each Viewport entry SHALL be the values found in the global Viewport.
     this.state.dptzStreams = allocatedIds.map((videoStreamId) => this.state.dptzStreams.find((entry) => entry.videoStreamId === videoStreamId) ?? { videoStreamId, viewport });
   }
 
@@ -171,6 +171,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    */
   protected syncDptzViewport(viewport: Viewport): void {
     if (this.state.dptzStreams.length === 0) return;
+    // Matter 1.6.0 § 11.2.7.25: When the Viewport attribute is changed, all Viewport values found in DPTZStreams SHALL be updated to the new values.
     this.state.dptzStreams = this.state.dptzStreams.map((entry) => ({ videoStreamId: entry.videoStreamId, viewport }));
   }
 
@@ -282,8 +283,8 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.3.2: Reject with NOT_FOUND; the provided PresetID SHALL match an entry in MPTZPresets.
     const preset = this.state.mptzPresets.find((entry) => entry.presetId === presetId);
+    // Matter 1.6.0 § 11.3.7.3.2: Reject with NOT_FOUND; the provided PresetID SHALL match an entry in MPTZPresets.
     if (preset === undefined) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: presetId ${presetId} is not present in mptzPresets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -409,6 +410,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    */
   private dptzStreamEntry(videoStreamId: number): CameraAvSettingsUserLevelManagement.Dptz {
     const entry = this.state.dptzStreams.find((stream) => stream.videoStreamId === videoStreamId);
+    // Matter 1.6.0 § 11.3.7.6.3 and § 11.3.7.7.5: Fail DPTZSetViewport and DPTZRelativeMove with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
     if (entry === undefined) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: video stream ${videoStreamId} is not present in dptzStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -425,6 +427,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    * @param {Viewport} viewport - The viewport to apply to that stream.
    */
   private applyDptzViewport(videoStreamId: number, viewport: Viewport): void {
+    // Matter 1.6.0 § 11.3.7.6.3 and § 11.3.7.7.5: Update the entry in DPTZStreams with the new viewport values.
     this.state.dptzStreams = this.state.dptzStreams.map((entry) => (entry.videoStreamId === videoStreamId ? { videoStreamId, viewport } : entry));
   }
 
@@ -439,6 +442,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override dptzSetViewport(request: CameraAvSettingsUserLevelManagement.DptzSetViewportRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { videoStreamId, viewport } = request;
+    // Matter 1.6.0 § 11.3.7.6.3: Fail DPTZSetViewport with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
     const entry = this.dptzStreamEntry(videoStreamId);
     const { videoSensorParams, minViewportResolution } = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state;
     const width = viewportWidth(viewport);
@@ -489,6 +493,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override dptzRelativeMove(request: CameraAvSettingsUserLevelManagement.DptzRelativeMoveRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { videoStreamId, deltaX, deltaY, zoomDelta } = request;
+    // Matter 1.6.0 § 11.3.7.7.5: Fail DPTZRelativeMove with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
     const entry = this.dptzStreamEntry(videoStreamId);
     const { videoSensorParams, minViewportResolution } = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state;
     const { sensorWidth, sensorHeight } = videoSensorParams;

@@ -1,6 +1,6 @@
 /**
+ * @file packages/test-utils/src/buntest/matterTest.ts
  * @description This file contains the Bun Matter Test Environment.
- * @file buntest/bunMatterTest.ts
  * @author Luca Liguori
  * @created 2026-04-19
  * @version 1.0.0
@@ -170,10 +170,10 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.10.11',
-    matterbridgeLatestVersion: '3.10.11',
-    matterbridgeDevVersion: '3.10.11',
-    frontendVersion: '3.6.2',
+    matterbridgeVersion: '3.10.12',
+    matterbridgeLatestVersion: '3.10.12',
+    matterbridgeDevVersion: '3.10.12',
+    frontendVersion: '3.6.3',
     bridgeMode: 'none',
     restartMode: 'none',
     virtualMode: 'mounted_switch',
@@ -268,8 +268,8 @@ export const addVirtualEndpoint = async (
     device.events.onOff.onOff$Changed.on((value) => {
       // If the `onOff` state becomes true, turn off the virtual device and execute the callback.
       if (value) {
-        void callback().catch(/* istanbul ignore next */ noop);
-        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* istanbul ignore next */ noop);
+        void callback().catch(/* v8 ignore next */ noop);
+        void device.setStateOf(OnOffServer, { onOff: false }).catch(/* v8 ignore next */ noop);
       }
     });
 
@@ -557,7 +557,7 @@ export async function createServerNode(
 export async function startServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   // Create the server node
   if (!server || !aggregator) {
-    // istanbul ignore next
+    /* v8 ignore next */
     throw new Error('Server node and aggregator must be created before starting the server. Call createServerNode() first.');
   }
 
@@ -721,7 +721,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   const rootServerNode = getRootServerNode(owner);
   await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
 
-  // istanbul ignore next
+  /* v8 ignore next */
   try {
     await owner.add(device);
   } catch (error) {
@@ -763,7 +763,7 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   const rootServerNode = getRootServerNode(owner);
   await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
 
-  // istanbul ignore next
+  /* v8 ignore next */
   try {
     await device.delete();
   } catch (error) {

@@ -3,7 +3,7 @@
  * @description This file contains the class Dgram.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.4
+ * @version 1.0.7
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -24,7 +24,7 @@
 /* oxlint-disable no-param-reassign */
 
 // Node.js imports
-import dgram from 'node:dgram';
+import dgram, { type SocketType } from 'node:dgram';
 import EventEmitter from 'node:events';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
@@ -51,6 +51,7 @@ export interface DgramEvents {
 
 /**
  * This class implements a dgram socket.
+ * Socket lifecycle and traffic messages are logged at debug level.
  */
 export class Dgram extends EventEmitter<DgramEvents> {
   verbose = hasParameter('v') || hasParameter('verbose');
@@ -59,7 +60,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
   log: AnsiLogger;
   socket: dgram.Socket;
   bound = false;
-  socketType: 'udp4' | 'udp6';
+  socketType: SocketType;
   interfaceName?: string;
   interfaceAddress?: string;
   interfaceNetmask?: string;
@@ -70,12 +71,12 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * Creates an instance of Dgram.
    *
    * @param {string} name - The name of the socket.
-   * @param {'udp4' | 'udp6'} socketType - The type of the socket (IPv4 or IPv6).
+   * @param {SocketType} socketType - The type of the socket (IPv4 or IPv6).
    * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
    * @param {string} [interfaceName] - The name of the network interface to bind to.
    * @param {string} [interfaceAddress] - The address of the network interface to bind to.
    */
-  constructor(name: string, socketType: 'udp4' | 'udp6', reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string) {
+  constructor(name: string, socketType: SocketType, reuseAddr: boolean | undefined = true, interfaceName?: string, interfaceAddress?: string) {
     super();
     this.log = new AnsiLogger({
       logName: name,
@@ -104,7 +105,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     });
 
     this.socket.on('connect', () => {
-      this.log.info('Socket connected');
+      this.log.debug('Socket connected');
       this.emit('connect');
       this.onConnect();
     });
@@ -156,12 +157,12 @@ export class Dgram extends EventEmitter<DgramEvents> {
 
   /** Handles socket close. */
   onClose(): void {
-    this.log.info(`Socket closed`);
+    this.log.debug(`Socket closed`);
   }
 
   /** Handles socket connect. */
   onConnect(): void {
-    this.log.info(`Socket connected`);
+    this.log.debug(`Socket connected`);
   }
 
   /**
@@ -172,7 +173,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {number} serverPort - Destination port.
    */
   onSent(msg: Buffer, serverAddress: string, serverPort: number): void {
-    this.log.info(`Socket sent a message to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
+    this.log.debug(`Socket sent a message to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
   }
 
   /**
@@ -182,7 +183,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {dgram.RemoteInfo} rinfo - Sender address information.
    */
   onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
-    this.log.info(`Socket received a message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
+    this.log.debug(`Socket received a message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
   }
 
   /**
@@ -191,7 +192,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {AddressInfo} address - Bound address information.
    */
   onListening(address: AddressInfo): void {
-    this.log.info(`Socket listening on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
+    this.log.debug(`Socket listening on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
     this.onReady(address);
   }
 
@@ -201,7 +202,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {AddressInfo} address - Bound address information.
    */
   onReady(address: AddressInfo): void {
-    this.log.info(`Socket ready on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
+    this.log.debug(`Socket ready on ${BLUE}${address.family}${nf} ${BLUE}${address.address}${nf}:${BLUE}${address.port}${nf}`);
     this.emit('ready', address);
   }
 

@@ -43,6 +43,9 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   Thermostat.Feature.MatterScheduleConfiguration,
   Thermostat.Feature.ThermostatSuggestions,
 ) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Initializes the behavior and reacts to Presets attribute changes to keep ThermostatSuggestions consistent.
    */
@@ -128,7 +131,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     const lookupSetpointAdjustMode = ['Heat', 'Cool', 'Both'];
@@ -137,6 +140,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     );
     // Matter 1.6.0 § 4.3.12.1.3: Add Amount to the setpoints indicated by Mode, clamping the result to the MinCoolSetpointLimit, MaxCoolSetpointLimit, MinHeatSetpointLimit and MaxHeatSetpointLimit limits.
     await super.setpointRaiseLower(request);
+    this.endpoint.emitCommand(Thermostat, 'setpointRaiseLower', request, this.context);
   }
 
   /**
@@ -153,7 +157,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(
@@ -165,6 +169,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     device.log.debug(
       `MatterbridgeThermostatServer: setActivePresetRequest completed with activePresetHandle: ${activePresetHandle} occupiedHeatingSetpoint: ${this.state.occupiedHeatingSetpoint} occupiedCoolingSetpoint: ${this.state.occupiedCoolingSetpoint} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(Thermostat, 'setActivePresetRequest', request, this.context);
   }
 
   /**
@@ -185,7 +190,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     const schedule = this.state.schedules.find((s) => s.scheduleHandle !== null && Bytes.areEqual(s.scheduleHandle, request.scheduleHandle));
@@ -201,6 +206,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     device.log.debug(
       `MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(Thermostat, 'setActiveScheduleRequest', request, this.context);
   }
 
   /**
@@ -258,7 +264,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 4.3.12.4.4: reject with NOT_FOUND if the PresetHandle does not match an entry in Presets.
@@ -308,6 +314,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     // Matter 1.6.0 § 4.3.7: Re-evaluate CurrentThermostatSuggestion, since the value of the ThermostatSuggestions attribute was updated.
     this.reEvaluateCurrentThermostatSuggestion();
     device.log.debug(`MatterbridgeThermostatServer: addThermostatSuggestion completed with uniqueId: ${uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.endpoint.emitCommand(Thermostat, 'addThermostatSuggestion', request, this.context);
     return { uniqueId };
   }
 
@@ -329,7 +336,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       request,
       cluster: ThermostatServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof Thermostat)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     const suggestion = this.state.thermostatSuggestions.find((s) => s.uniqueId === request.uniqueId);
@@ -346,5 +353,6 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
     device.log.debug(
       `MatterbridgeThermostatServer: removeThermostatSuggestion completed for uniqueId: ${request.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.endpoint.emitCommand(Thermostat, 'removeThermostatSuggestion', request, this.context);
   }
 }

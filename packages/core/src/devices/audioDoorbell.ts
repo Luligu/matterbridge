@@ -1,5 +1,5 @@
 /**
- * @file src/devices/audioDoorbell.ts
+ * @file packages/core/src/devices/audioDoorbell.ts
  * @description This file contains the AudioDoorbell class.
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ

@@ -103,7 +103,7 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
       system" case that effects exist for. The controller below aborts that probe if the form
       unmounts before it settles, so the state is never set after unmount.
     */
-    /// oxlint-disable-next-line react/set-state-in-effect -- async auto login probe; see the comment above
+    // oxlint-disable-next-line react/set-state-in-effect -- async auto login probe; see the comment above
     void logIn('', controller.signal); // Auto login if no password is required
     return () => {
       controller.abort();

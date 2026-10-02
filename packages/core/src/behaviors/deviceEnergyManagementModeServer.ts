@@ -21,8 +21,6 @@
  * limitations under the License.
  */
 
-/* oxlint-disable typescript/no-unsafe-type-assertion */
-
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
@@ -36,6 +34,9 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * DeviceEnergyManagementMode server that validates and applies energy optimization modes.
  */
 export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyManagementModeServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Validates the requested mode, updates opt-out state, and forwards the request.
    *
@@ -50,7 +51,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       request,
       cluster: DeviceEnergyManagementModeServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
@@ -82,6 +83,9 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
     // Matter 1.6.0 § 1.10.7.1.1: Transition into the mode associated with NewMode and respond with Success, or with a product-specific status and StatusText when the device is unable to transition.
-    return await super.changeToMode(request);
+    const response = await super.changeToMode(request);
+    // The base implementation only rejects an unsupported NewMode, which was already answered above, so the change succeeded.
+    this.endpoint.emitCommand(DeviceEnergyManagementMode, 'changeToMode', request, this.context);
+    return response;
   }
 }

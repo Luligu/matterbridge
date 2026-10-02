@@ -38,6 +38,8 @@ const MatterbridgeOperationalStateServerBase = OperationalStateServer.enable({ e
  * OperationalState server that maps operational commands to Matterbridge command handler calls.
  */
 export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalStateServerBase {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
   declare protected internal: MatterbridgeOperationalStateServer.Internal;
 
   /**
@@ -82,7 +84,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
 
@@ -114,6 +116,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
     // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(OperationalState, 'pause', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
@@ -153,7 +156,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
 
@@ -184,6 +187,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
     // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(OperationalState, 'stop', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
@@ -217,7 +221,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
 
@@ -254,6 +258,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
     // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(OperationalState, 'start', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
@@ -288,7 +293,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       request: {},
       cluster: OperationalStateServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof OperationalState)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
 
@@ -323,6 +328,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     this.state.operationalState = this.internal.operationalStateBeforePause;
     // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(OperationalState, 'resume', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };

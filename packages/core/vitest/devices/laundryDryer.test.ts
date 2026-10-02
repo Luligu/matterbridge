@@ -9,6 +9,7 @@ const MATTER_PORT = 8008;
 const MATTER_CREATE_ONLY = true;
 
 import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
+import { Status } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { LaundryDryerControls } from '@matter/types/clusters/laundry-dryer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
@@ -31,11 +32,11 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
-import { LaundryDryer } from '../../src/devices/laundryDryer.js';
+import { LaundryDryer, MatterbridgeLaundryDryerControlsServer } from '../../src/devices/laundryDryer.js';
 import { MatterbridgeLaundryWasherModeServer } from '../../src/devices/laundryWasher.js';
 import { MatterbridgeLevelTemperatureControlServer, MatterbridgeNumberTemperatureControlServer } from '../../src/devices/temperatureControl.js';
 import { laundryDryer } from '../../src/matterbridgeDeviceTypes.js';
-import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -88,10 +89,10 @@ describe('Matterbridge ' + NAME, () => {
   test('add a laundry dryer device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer initialized: currentMode is 2`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeLevelTemperatureControlServer initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80°`,
+      `MatterbridgeLevelTemperatureControlServer: initialized with selectedTemperatureLevel 1 and supportedTemperatureLevels: Cold, Warm, Hot, 30°, 40°, 60°, 80° (endpoint ${device.id}.${device.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -219,14 +220,23 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['laundryWasherMode'].generatedCommandList).toEqual([1]);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('onOff', 'off', {}); // Dead Front state
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `OnOffServer changed to OFF: setting Dead Front state to Manufacturer Specific`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.NOTICE,
+      `MatterbridgeLaundryWasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode 0`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode 0 (endpoint ${device.id}.${device.number})`,
+    );
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('laundryWasherMode', 'changeToMode', { newMode: 1 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `ChangeToMode (endpoint ${device.id}.${device.number})`);
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLaundryWasherModeServer: changeToMode called with mode 1 => Delicate`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeLaundryWasherModeServer: changeToMode called with mode 1 => Delicate (endpoint ${device.id}.${device.number})`,
+    );
   });
 
   test('invoke MatterbridgeLevelTemperatureControlServer commands', async () => {
@@ -237,11 +247,19 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 100 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeLevelTemperatureControlServer: setTemperature called with invalid targetTemperatureLevel 100`);
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 100 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getAttribute(TemperatureControl.id, 'selectedTemperatureLevel')).toBe(1);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperatureLevel: 2 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to 2: Hot`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLevelTemperatureControlServer: setting temperature level to 2 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeLevelTemperatureControlServer: setTemperature called setting selectedTemperatureLevel to 2: Hot (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.getAttribute(TemperatureControl.id, 'selectedTemperatureLevel')).toBe(2);
   });
 
   test('remove the laundry washer device', async () => {
@@ -265,10 +283,10 @@ describe('Matterbridge ' + NAME, () => {
   test('add a laundry dryer device with number temperature control', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer initialized: currentMode is 2`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeLaundryWasherModeServer: initialized: currentMode is 2 (endpoint ${device.id}.${device.number})`);
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
-      `MatterbridgeNumberTemperatureControlServer initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000`,
+      `MatterbridgeNumberTemperatureControlServer: initialized with temperatureSetpoint 5500 minTemperature 3000 maxTemperature 9000 step 1000 (endpoint ${device.id}.${device.number})`,
     );
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.DEBUG,
@@ -284,11 +302,39 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['temperatureControl'].acceptedCommandList).toEqual([0]);
     expect((device as any).state['temperatureControl'].generatedCommandList).toEqual([]);
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeNumberTemperatureControlServer: setTemperature called with invalid targetTemperature 3`);
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 3 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    // 6500 is in range but not aligned to Step 1000 from MinTemperature 3000
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 6500 })).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    await expect(device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', {})).rejects.toMatchObject({ code: Status.InvalidCommand });
+    expect(device.getAttribute(TemperatureControl.id, 'temperatureSetpoint')).toBe(5500);
     vi.clearAllMocks();
     await device.invokeBehaviorCommand('temperatureControl', 'TemperatureControl.setTemperature', { targetTemperature: 5000 });
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeNumberTemperatureControlServer: setting temperature to 5000 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeNumberTemperatureControlServer: setTemperature called setting temperatureSetpoint to 5000 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.getAttribute(TemperatureControl.id, 'temperatureSetpoint')).toBe(5000);
+  });
+
+  test('validate SelectedDrynessLevel writes against SupportedDrynessLevels', async () => {
+    const endpoint = new MatterbridgeEndpoint(laundryDryer, { id: 'LaundryDryerControlsSubset' });
+    endpoint.behaviors.require(MatterbridgeLaundryDryerControlsServer, {
+      supportedDrynessLevels: [LaundryDryerControls.DrynessLevel.Normal, LaundryDryerControls.DrynessLevel.Max],
+      selectedDrynessLevel: LaundryDryerControls.DrynessLevel.Normal,
+    });
+    expect(await addDevice(server, endpoint)).toBeTruthy();
+    await endpoint.setAttribute(LaundryDryerControls.id, 'selectedDrynessLevel', LaundryDryerControls.DrynessLevel.Max);
+    await expect(endpoint.setAttribute(LaundryDryerControls.id, 'selectedDrynessLevel', LaundryDryerControls.DrynessLevel.Low)).rejects.toMatchObject({
+      code: Status.ConstraintError,
+    });
+    expect(endpoint.getAttribute(LaundryDryerControls.id, 'selectedDrynessLevel')).toBe(LaundryDryerControls.DrynessLevel.Max);
+    await endpoint.setAttribute(LaundryDryerControls.id, 'selectedDrynessLevel', null);
+    expect(endpoint.getAttribute(LaundryDryerControls.id, 'selectedDrynessLevel')).toBeNull();
   });
 
   test('start the server node', async () => {

@@ -37,6 +37,9 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * Smoke/CO Alarm server that forwards self-test commands to the Matterbridge command handler.
  */
 export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(SmokeCoAlarm.Feature.SmokeAlarm, SmokeCoAlarm.Feature.CoAlarm) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   declare protected internal: MatterbridgeSmokeCoAlarmServer.Internal;
 
   /**
@@ -55,12 +58,12 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       request: {},
       cluster: SmokeCoAlarmServer.id,
       attributes: this.state as unknown as ClusterAttributeValues<(typeof SmokeCoAlarm)['attributes']>,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     // Matter 1.6.0 § 2.11.7.1: Only one SelfTestRequest may be processed at a time, and the device SHALL NOT execute the self-test and SHALL return BUSY when ExpressedState is SmokeAlarm, COAlarm, Testing, InterconnectSmoke or InterconnectCO.
     if (this.state.expressedState !== SmokeCoAlarm.ExpressedState.Normal || this.state.testInProgress) {
-      throw new StatusResponseError(`MatterbridgeSmokeCoAlarmServer: SmokeCOAlarm self-test is busy (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.Busy);
+      throw new StatusResponseError(`MatterbridgeSmokeCoAlarmServer: self-test is busy (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.Busy);
     }
     // Matter 1.6.0 § 2.11.7.1: Set TestInProgress to true and ExpressedState to Testing on successful acceptance.
     this.state.testInProgress = true;
@@ -68,6 +71,7 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
     // Matter 1.6.0 § 2.11.7.1: Upon completion of the self-test procedure the server updates TestInProgress and ExpressedState and generates SelfTestComplete.
     this.#scheduleSelfTestComplete();
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.endpoint.emitCommand(SmokeCoAlarm, 'selfTestRequest', {}, this.context);
   }
 
   /**

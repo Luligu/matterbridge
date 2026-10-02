@@ -1,15 +1,12 @@
 /**
  * bundle-workspaces.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Updates package.json bundledDependencies with all \@matterbridge/* dependencies.
  *
  * Usage:
  *   node scripts/bundle-workspaces.mjs [--scope <prefix>] [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';

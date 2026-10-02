@@ -4,14 +4,14 @@
  * @author Luca Liguori
  */
 
+/* oxlint-disable no-console */
+/* oxlint-disable vitest/no-conditional-expect */
+
 /**
  * WARNING!!!
  * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
  * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
  */
-
-/* oxlint-disable no-console */
-/* oxlint-disable vitest/no-conditional-expect */
 
 const MATTER_PORT = 6400;
 const FRONTEND_PORT = 8802;
@@ -64,7 +64,7 @@ process.argv = [
   '--homedir',
   HOMEDIR,
   '--profile',
-  'JestChildbridge',
+  'Childbridge',
   '--port',
   MATTER_PORT.toString(),
   '--passcode',
@@ -92,8 +92,10 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   test('Matterbridge.loadInstance(true) -childbridge mode', async () => {
     // Load Matterbridge instance and initialize it
     matterbridge = await Matterbridge.loadInstance(true);
+    // Subscribe before any further await: with no plugins the start matter interval emits childbridge_started ~20 ms after initialize()
+    const childbridgeStarted = new Promise<void>((resolve) => matterbridge.once('childbridge_started', () => resolve()));
     expect(matterbridge).toBeDefined();
-    expect(matterbridge.profile).toBe('JestChildbridge');
+    expect(matterbridge.profile).toBe('Childbridge');
     expect(matterbridge.bridgeMode).toBe('childbridge');
     expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
 
@@ -144,11 +146,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).passcode).toBe(PASSCODE);
     expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR);
 
-    await new Promise<void>((resolve) => {
-      matterbridge.once('childbridge_started', () => {
-        resolve();
-      });
-    });
+    await childbridgeStarted;
 
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,

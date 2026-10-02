@@ -1,8 +1,7 @@
 /**
- * @file vitest/devices/intercom.test.ts
+ * @file packages/core/vitest/devices/intercom.test.ts
  * @description This file contains the tests for the Intercom device.
  * @author Luca Liguori
- * @contributor Ludovic BOUÉ
  */
 
 const NAME = 'IntercomDevice';

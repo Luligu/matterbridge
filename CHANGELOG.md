@@ -29,6 +29,115 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.12] - 2026-10-02
+
+### Breaking changes
+
+- [rvc]: The ServiceArea cluster of every RoboticVacuumCleaner now always advertises the `SkipArea` command (and its `SkipAreaResponse`), even when the ProgressReporting feature is not enabled. Its conformance is `[CurrentArea | Progress]` (Matter 1.6.1 § 1.17.7) and the RVC always has `CurrentArea`. Plugins should register a `skipArea` command handler and stop operating in the skipped area: without it, the command only gets validated and answers Success while the device keeps operating there.
+
+### Added
+
+- [refrigerator]: Add the `RefrigeratorAndTemperatureControlledCabinetMode.changeToMode` command handler, so plugins now receive the Refrigerator mode changes.
+- [oven]: Add the `OvenMode.changeToMode`, `OvenCavityOperationalState.start` and `OvenCavityOperationalState.stop` command handlers, so plugins now receive the Oven commands.
+- [bun]: Bun support is now available for production use, either as a [standalone installation](README-BUN.md#run-matterbridge-with-bun) on a host with only Bun installed or through the [`bun`](./README-BUN.md#run-matterbridge-with-the-bun-docker-hub-image) and `bundev` Docker images. Three months of testing found no issues and showed substantial improvements in speed and efficiency. Next releases will switch the repository to use bun as package manager and to bundle, pack and publish.
+- [dgram]: Add `isFirstOnPort()` to `mdns.ts` (v.1.1.1) to check that no other socket is bound to the mDNS port (RFC 6762 §15.1), with its `mdns.port.test.ts` test.
+- [frontend]: Add and expand unit tests for `QRDiv` node switching, stale message handling, pairing commands, fabric removal, session counts, and clipboard fallbacks.
+- [frontend]: Expand `SearchPluginsDialog` tests for selection and reset on reopen, npm cache validation, metadata and version loading, download retries, request cancellation, link validation, and mobile layout.
+- [frontend]: Expand `ConfigPluginDialog` tests for form submission and cancellation, missing configuration, schema UI properties, custom RJSF templates and widgets, and WebSocket response filtering.
+- [frontend]: Add and expand `Header`, `HomePlugins`, and `HomeLogs` tests for connection state, WebSocket listener lifecycle, controls and links, plugin metadata and frontends, and log preferences.
+- [frontend]: Add `InstallProgressDialog` and `NetworkConfigDialog` tests for rendering, actions, close behavior, saved preferences, scrolling, and network configuration state.
+- [frontend]: Add `MatterbridgeInfoTable` and `SystemInfoTable` tests for field formatting and filtering, compact layout, runtime information, updates, and close behavior.
+- [frontend]: Add `WebSocketLogs` tests for badge colors and metadata, message updates, auto-scroll throttling, hover and touch behavior, and pending scrolls after unmount.
+- [frontend]: Add `WebSocketProvider` tests for connection state, authentication, message validation and routing, listener lifecycle, log filtering and buffer limits, UI notifications, heartbeat timeouts, and reconnection retries.
+- [agents]: Add [`commit message instructions`](.github/commit-message-instructions.md) v.1.0.0 for the VS Code Copilot "Generate Commit Message" button (Conventional Commits).
+
+### Changed
+
+- [vscode]: Update `.vscode/settings.json` to v.1.0.14: point the Copilot "Generate Commit Message" button to `.github/commit-message-instructions.md`, ask before running `mb-run` and before dependency installs and removals, and approve `find`, `bun test`, `npm run test:watch` and `npm run test:verbose`.
+- [antigravity]: Update `.antigravity/settings.json` to v.1.0.5: ask before running `mb-run`, allow `find` and the read-only git commands, and remove the obsolete sandboxing comments.
+- [scripts]: Update `scripts/clean.mjs` and `scripts/deep-clean.mjs` to v.1.3.0: add `--help` and `--version` and reject unknown arguments.
+- [scripts]: Remove the obsolete `eslint-disable` comments from the vendored scripts, the workspace `downloads.mjs` scripts and the repository scripts.
+- [data-model]: Emit `oxlint-disable typescript/no-empty-object-type` instead of the obsolete `eslint-disable` in the generated `matterClusterTypes.ts`.
+- [styleguide]: Update [`STYLEGUIDE.md`](STYLEGUIDE.md) to v.1.1.0: align it with the lint and format config and add the Commit Messages and Changelog sections.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.12.
+- [matterbridge]: Bump `@types/node` to v.26.6.3.
+- [matterbridge]: Bump `vitest` to v.5.0.3.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.3.
+- [matterbridge]: Bump `marked` to v.18.0.14.
+- [matterbridge]: Bump `oxfmt` to v.0.71.0.
+- [matterbridge]: Bump `oxlint` to v.1.86.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2003.
+- [core]: Bump `ws` to v.8.22.0.
+- [core]: Bump `@types/ws` to v.8.18.2.
+- [core]: Bump `@types/multer` to v.2.3.0.
+- [types]: Suppress the new oxlint `no-generated-empty-object-type` rule in `broadcastServerTypes.ts`.
+- [dgram]: Update `mdns.ts` to v.1.1.0: `sendQuery` and `sendResponse` accept optional answers (known answers in queries), authorities and additionals, records accept an optional `flush` flag, and add the `DnsHeaderFlag` enum and the `MDNS_MAX_MESSAGE_LENGTH` and `MDNS_MAX_RESOURCE_RECORD_LENGTH` constants.
+- [dgram]: `sendQuery` and `sendResponse` in `mdns.ts` compress DNS names (RFC 6762 §18.14), including the names in PTR and SRV rdata.
+- [dgram]: Update `dgram.ts` to v.1.0.7: log socket lifecycle and traffic messages at debug level instead of info.
+- [dgram]: Use the Node.js `SocketType` type in `dgram.ts`, `coap.ts`, `mdns.ts`, `multicast.ts` and `unicast.ts`.
+- [scripts]: Update `clean.mjs` and `deep-clean.mjs` to v.1.2.0: log every removed path under its directory with a red dash (the emptied `.cache` and `node_modules` contents as a single entry with their count), print the script version and a final summary with the elapsed time, and honor `NO_COLOR` and redirected output.
+- [thread]: Bump `@zip.js/zip.js` to v.2.22.0.
+- [utils]: Update `runtimeBun.ts` to v.1.0.1: `sleep()` on Node now uses `setTimeout` from `node:timers/promises`.
+- [frontend]: Bump `frontend` version to v.3.6.3.
+- [frontend]: Require 100% line and function coverage in `test:coverage`.
+- [devcontainer]: Update `post-create.sh` to v.2.3.0: add the workspace to the git `safe.directory` list to avoid the "detected dubious ownership" error on macOS bind mounts.
+- [frontend]: Bump `@types/node` to v.26.6.3.
+- [frontend]: Bump `jsdom` to v.30.1.1.
+- [frontend]: Update the `MbfWindow` test expectations for jsdom's numeric computed `font-weight` values.
+- [frontend]: Bump `vite` to v.8.3.1.
+- [frontend]: Bump `vitest` to v.5.0.3.
+- [frontend]: Add `@vitest/coverage-v8` v.5.0.3 to the devDependencies instead of resolving it from the root workspace.
+- [frontend]: Bump `oxfmt` to v.0.71.0.
+- [frontend]: Bump `oxlint` to v.1.86.0.
+- [frontend]: Bump `oxlint-tsgolint` to v.7.0.2003.
+
+### Fixed
+
+- [waterHeater]: Narrow server endpoints and forward command context and completed command observables.
+- [mediaHelpers]: Correct server log context and forward command context and completed command observables.
+- [electricalUtilityMeter]: Narrow commodity server endpoints and forward command context and completed command observables.
+- [closure]: Correct ClosureControl and ClosureDimension server endpoint context, command emissions and specification comments.
+- [evse]: Emit completed EVSE commands to subscribers and return empty status text for unsupported modes.
+- [matterbridge]: Raise the server node close timeout from 10 to 30 seconds, so a restart no longer starts the new server node while the old one still holds port 5540 (fixes `TC_AVSUM_2_9`).
+- [behaviors]: Align the Camera AV Stream Management, Camera AV Settings User Level Management and WebRTC Transport Provider server messages and Matter 1.6.0 spec comments with the server endpoint context rules.
+- [behaviors]: The Boolean State Configuration, Smoke CO Alarm, Mode Select, Device Energy Management, Device Energy Management Mode and Temperature Alarm servers narrow `endpoint` and emit the command observable for every completed command, and the Binding, Occupancy Sensing, Pump Configuration and Control and Switch servers narrow `endpoint`.
+- [behaviors]: The Window Covering, Operational State and Valve Configuration and Control servers narrow `endpoint` and emit the command observable for every completed command.
+- [doorLock]: `MatterbridgeDoorLockServer` narrows `endpoint` and emits the command observable for every completed command, including getter responses supplied by the plugin.
+- [roboticVacuumCleaner]: Add the endpoint context to the RVC Run Mode, Clean Mode and Operational State server messages, forward their commands with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [serviceArea]: `MatterbridgeServiceAreaServer` narrows `endpoint` and emits the command observable for an accepted SelectAreas.
+- [waterTankLevelMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the server narrows `endpoint` and emits the command observable.
+- [fanControl]: `createBaseFanControlClusterServer()` and `createOnOffFanControlClusterServer()` now use a featureless `MatterbridgeFanControlServer` instead of the plain matter.js server, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply to the Extractor Hood and to base and On/Off fans.
+- [filterMonitoring]: `ResetCondition` now resets Condition to 0 instead of 100 when DegradationDirection is Up (Matter 1.6.0 § 2.8.6.2), and the HEPA and Activated Carbon filter monitoring servers narrow `endpoint` and emit the command observable.
+- [behaviors]: The Thermostat, Fan Control and Identify servers now emit their command observables to `subscribeCommand()` listeners, and the Thermostat, Fan Control, Identify and Power Source servers narrow `endpoint` instead of casting it.
+- [temperatureControl]: `SetTemperature` now rejects an out-of-range TargetTemperatureLevel or TargetTemperature, and a TargetTemperature not aligned to Step, with CONSTRAINT_ERROR instead of accepting it, and a missing field with INVALID_COMMAND (Matter 1.6.0 § 8.2.6.1).
+- [temperatureControl]: Add the endpoint context to the temperature control server messages, forward SetTemperature with the action context, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
+- [refrigerator]: `ChangeToMode` with an unknown mode now responds `UnsupportedMode` instead of `InvalidInMode` (Matter 1.6.0 § 1.10.7.1.1).
+- [refrigerator]: `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer` now runs the base initialization, which requires an Auto mode in SupportedModes (Matter 1.6.0 § 8.7.6.1).
+- [refrigerator]: Add the endpoint context to the Refrigerator mode server messages, narrow `endpoint`, emit the command observable and add Matter 1.6.0 spec comments.
+- [dishwasher]: `MatterbridgeDishwasherModeServer` keeps the configured CurrentMode at startup instead of forcing mode 2, and runs the DishwasherModeServer initialization, which requires a Normal mode (Matter 1.6.0 § 8.3.6.1).
+- [dishwasher]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.
+- [dishwasher]: Add the endpoint context to the Dishwasher Mode server messages, forward ChangeToMode with the action context, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [oven]: `Stop` while Stopped and `Start` while Running now respond NoError and take no further action (Matter 1.6.0 § 1.14.6.2 and § 1.14.6.3).
+- [oven]: `MatterbridgeOvenModeServer` now runs the OvenModeServer initialization, which requires a Bake mode in SupportedModes (Matter 1.6.0 § 8.11.6.1).
+- [oven]: Add the endpoint context to all Oven server logs, narrow `endpoint`, emit the command observables and add Matter 1.6.0 spec comments.
+- [laundry-washer]: Normalize server endpoint messages and emit successful mode changes after plugin forwarding and state updates.
+- [laundry-washer]: `MatterbridgeLaundryWasherModeServer` now runs the LaundryWasherModeServer initialization, which requires a Normal mode in SupportedModes (Matter 1.6.0 § 8.5.6.1).
+- [laundry-washer]: Dead front now sets CurrentMode to the Normal-tagged mode instead of the hard-coded mode 2.
+- [laundry-dryer]: Add `MatterbridgeLaundryDryerControlsServer`, which rejects a SelectedDrynessLevel not in SupportedDrynessLevels with CONSTRAINT_ERROR (Matter 1.6.0 § 8.9.5.2).
+- [dgram]: Fix `encodeDnsName` in `mdns.ts` writing the character count instead of the UTF-8 byte length of each label, which corrupted packets with non-ASCII names.
+- [frontend]: Fix React Compiler `react/immutability` rule flags.
+- [frontend]: Fix React Compiler `react/set-state-in-effect` rule flags.
+- [frontend]: Fix React Compiler `react/hooks` rule flags.
+- [frontend]: Fix React Compiler `react/refs` rule flags.
+- [microwaveOven]: `AddMoreTime` now rejects an invalid TimeToAdd with CONSTRAINT_ERROR and adds TimeToAdd to the Operational State `CountdownTime` (Matter 1.6.0 § 8.13.6.3.2).
+- [microwaveOven]: `SetCookingParameters` now rejects a CookMode not in SupportedModes with CONSTRAINT_ERROR and validates after forwarding to the plugin.
+- [microwaveOven]: Add the endpoint context to all `MatterbridgeMicrowaveOvenControlServer` logs and errors, narrow `endpoint` and emit the command observable.
+- [microwaveOven]: `AddMoreTime` now rejects the command with INVALID_IN_STATE while the Operational State is Error (Matter 1.6.0 § 8.13.6.3.2).
+- [microwaveOven]: `SetCookingParameters` now rejects the command with INVALID_IN_STATE unless the Operational State is Stopped (Matter 1.6.0 § 8.13.6.2.6).
+- [closure]: `MoveTo` completion now reports `SecureState` true only when the closure is both FullyClosed (Positioning) and latched (MotionLatching) (Matter 1.6.0 § 5.4.6.5.4).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.11] - 2026-09-25
 
 ### Development Breaking Changes

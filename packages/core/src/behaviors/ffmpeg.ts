@@ -1,5 +1,5 @@
 /**
- * @file src/behaviors/ffmpeg.ts
+ * @file packages/core/src/behaviors/ffmpeg.ts
  * @description This file contains the shared ffmpeg binary resolution helpers.
  * @author Luca Liguori
  * @contributor Claude Fable 5

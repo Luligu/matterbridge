@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# docker/devcontainer/post-create.sh v.2.2.0
+# docker/devcontainer/post-create.sh v.2.3.0
 
 # This script runs after the Dev Container is created to set up the dev container environment.
 #
@@ -120,6 +120,15 @@ for path in . "${workspace_paths[@]}" "${home_paths[@]}"; do
     sudo chown -R "$(id -u):$(id -g)" "$path" # Transfer ownership to the current user
   fi
 done
+
+step "Marking the workspace as a git safe directory..."
+# On macOS and Windows the bind-mounted workspace can report a different owner than the container
+# user, so git refuses to work in it ("detected dubious ownership"). Add it once to avoid duplicates.
+if command -v git >/dev/null 2>&1; then
+  if ! git config --global --get-all safe.directory 2>/dev/null | grep -Fxq "$PWD"; then
+    git config --global --add safe.directory "$PWD"
+  fi
+fi
 
 if [ "$PLUGIN" = true ]; then
   step "Building Matterbridge from the ${BRANCH} branch..."

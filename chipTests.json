@@ -1857,6 +1857,54 @@
       "args": ["--PICS /root/fan-control-complete.pics"],
       "comment": "Self-skips: gated by @run_if_endpoint_matches(has_cluster(FanControl) and has_cluster(OnOff)); the Fan device type's On/Off cluster is optionalConform and endpoint 9024 does not add it (createCompleteFanControlClusterServer() only creates the FanControl cluster server)."
     },
+    { "name": "FanControl mandatory functionality on FanOnOff", "test": "TC_FAN_2_1.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional speed attributes on FanOnOff", "test": "Test_TC_FAN_2_2", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock attributes on FanOnOff", "test": "TC_FAN_2_3.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind attributes on FanOnOff", "test": "TC_FAN_2_4.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction attributes on FanOnOff", "test": "Test_TC_FAN_2_5", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on FanOnOff",
+      "test": "TC_FAN_3_1.py",
+      "endpoint": 9021,
+      "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    { "name": "FanControl optional speed functionality on FanOnOff", "test": "TC_FAN_3_2.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock functionality on FanOnOff", "test": "TC_FAN_3_3.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind functionality on FanOnOff", "test": "TC_FAN_3_4.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl Step command functionality on FanOnOff", "test": "TC_FAN_3_5.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction functionality on FanOnOff", "test": "Test_TC_FAN_3_6", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl interaction with On/Off cluster on FanOnOff",
+      "test": "TC_FAN_4_1.py",
+      "endpoint": 9021,
+      "comment": "Self-skips: the FanOnOff endpoint does not add the optional On/Off cluster.",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    { "name": "FanControl mandatory functionality on FanBase", "test": "TC_FAN_2_1.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional speed attributes on FanBase", "test": "Test_TC_FAN_2_2", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock attributes on FanBase", "test": "TC_FAN_2_3.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind attributes on FanBase", "test": "TC_FAN_2_4.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction attributes on FanBase", "test": "Test_TC_FAN_2_5", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on FanBase",
+      "test": "TC_FAN_3_1.py",
+      "endpoint": 9022,
+      "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
+    { "name": "FanControl optional speed functionality on FanBase", "test": "TC_FAN_3_2.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional rock functionality on FanBase", "test": "TC_FAN_3_3.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional wind functionality on FanBase", "test": "TC_FAN_3_4.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl Step command functionality on FanBase", "test": "TC_FAN_3_5.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    { "name": "FanControl optional direction functionality on FanBase", "test": "Test_TC_FAN_3_6", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
+    {
+      "name": "FanControl interaction with On/Off cluster on FanBase",
+      "test": "TC_FAN_4_1.py",
+      "endpoint": 9022,
+      "comment": "Self-skips: the FanBase endpoint does not add the optional On/Off cluster.",
+      "args": ["--PICS /root/fan-control-base.pics"]
+    },
     {
       "name": "HepaFilterMonitoring attributes on AirPurifier",
       "test": "Test_TC_HEPAFREMON_2_1",
@@ -2613,6 +2661,44 @@
       "args": ["--PICS /root/refrigerator.pics"]
     },
     {
+      "name": "NumberTemperatureControl attributes on RefrigeratorCabinetTop",
+      "test": "Test_TC_TCTL_2_1",
+      "endpoint": 13021,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl optional attributes on RefrigeratorCabinetTop",
+      "test": "Test_TC_TCTL_2_2",
+      "endpoint": 13021,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    { "name": "TemperatureMeasurement attributes on RefrigeratorCabinetTop", "test": "TC_TMP_2_1.py", "endpoint": 13021, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on RefrigeratorCabinetTop",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13021,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl attributes on FreezerCabinetBottom",
+      "test": "Test_TC_TCTL_2_1",
+      "endpoint": 13022,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    {
+      "name": "NumberTemperatureControl optional attributes on FreezerCabinetBottom",
+      "test": "Test_TC_TCTL_2_2",
+      "endpoint": 13022,
+      "args": ["--PICS /root/temperature-control-number.pics"]
+    },
+    { "name": "TemperatureMeasurement attributes on FreezerCabinetBottom", "test": "TC_TMP_2_1.py", "endpoint": 13022, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on FreezerCabinetBottom",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13022,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
+    {
       "name": "DishwasherMode attributes on Dishwasher",
       "test": "TC_DISHM_1_2.py",
       "endpoint": 1305,
@@ -2678,12 +2764,94 @@
       "comment": "Not applicable to endpoint 1305: WaterLevelError is provisional in Matter 1.6 and is not advertised in Supported. The upstream YAML also contains only disabled manual steps.",
       "args": ["--PICS /root/dishwasher.pics"]
     },
+    { "name": "DeadFrontOnOff attributes on Dishwasher", "test": "Test_TC_OO_2_1", "endpoint": 1305, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "DeadFrontOnOff primary functionality on Dishwasher", "test": "Test_TC_OO_2_2", "endpoint": 1305, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "LevelTemperatureControl attributes on Dishwasher", "test": "TC_TCTL_2_3.py", "endpoint": 1305, "args": ["--PICS /root/temperature-control-level.pics"] },
+    {
+      "name": "OperationalState attributes on Dishwasher",
+      "test": "TC_OPSTATE_2_1.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "OperationalState Start/Stop on Dishwasher",
+      "test": "TC_OPSTATE_2_2.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState Pause/Resume on Dishwasher",
+      "test": "TC_OPSTATE_2_3.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState OperationalError event on Dishwasher",
+      "test": "TC_OPSTATE_2_4.py",
+      "endpoint": 1305,
+      "resetBefore": true,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.OPSTATE.ErrorEventGen:1"]
+    },
+    {
+      "name": "OperationalState OperationCompletion event on Dishwasher",
+      "test": "TC_OPSTATE_2_5.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
+    },
+    {
+      "name": "OperationalState CountdownTime reporting on Dishwasher",
+      "test": "TC_OPSTATE_2_6.py",
+      "endpoint": 1305,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
     {
       "name": "LaundryDryerControls optional dryness attributes on LaundryDryer",
       "test": "Test_TC_DRYERCTRL_2_1",
       "endpoint": 1306,
       "comment": "Patched locally to omit the undefined DrynessLevelEnum value 4 write, which CHIP rejects during local command encoding before it reaches the DUT; all attribute, supported-list, valid-write, readback, and applicable state coverage remains.",
       "args": ["--PICS /root/laundry-dryer-controls.pics"]
+    },
+    { "name": "DeadFrontOnOff attributes on LaundryDryer", "test": "Test_TC_OO_2_1", "endpoint": 1306, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "DeadFrontOnOff primary functionality on LaundryDryer", "test": "Test_TC_OO_2_2", "endpoint": 1306, "args": ["--PICS /root/on-off-dead-front.pics"] },
+    { "name": "LaundryWasherMode attributes on LaundryDryer", "test": "TC_LWM_1_2.py", "endpoint": 1306, "args": ["--PICS /root/laundry-washer.pics"] },
+    { "name": "LaundryWasherMode ChangeToMode on LaundryDryer", "test": "Test_TC_LWM_2_1", "endpoint": 1306, "args": ["--PICS /root/laundry-washer.pics"] },
+    { "name": "LevelTemperatureControl attributes on LaundryDryer", "test": "TC_TCTL_2_3.py", "endpoint": 1306, "args": ["--PICS /root/temperature-control-level.pics"] },
+    {
+      "name": "OperationalState attributes on LaundryDryer",
+      "test": "TC_OPSTATE_2_1.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "OperationalState Start/Stop on LaundryDryer",
+      "test": "TC_OPSTATE_2_2.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState Pause/Resume on LaundryDryer",
+      "test": "TC_OPSTATE_2_3.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.COUNTDOWN:5"]
+    },
+    {
+      "name": "OperationalState OperationalError event on LaundryDryer",
+      "test": "TC_OPSTATE_2_4.py",
+      "endpoint": 1306,
+      "resetBefore": true,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.OPSTATE.ErrorEventGen:1"]
+    },
+    {
+      "name": "OperationalState OperationCompletion event on LaundryDryer",
+      "test": "TC_OPSTATE_2_5.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
+    },
+    {
+      "name": "OperationalState CountdownTime reporting on LaundryDryer",
+      "test": "TC_OPSTATE_2_6.py",
+      "endpoint": 1306,
+      "args": ["--PICS /root/operational-state.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "OffOnlyOnOff attributes on Cooktop",
@@ -2743,6 +2911,28 @@
       "endpoint": 1308,
       "args": ["--PICS /root/cooktop.pics"]
     },
+    { "name": "OffOnlyOnOff attributes on CookSurfaceTopLeft", "test": "Test_TC_OO_2_1", "endpoint": 13081, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff primary functionality on CookSurfaceTopLeft", "test": "Test_TC_OO_2_2", "endpoint": 13081, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff feature behavior on CookSurfaceTopLeft", "test": "Test_TC_OO_2_6", "endpoint": 13081, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "LevelTemperatureControl attributes on CookSurfaceTopLeft", "test": "TC_TCTL_2_3.py", "endpoint": 13081, "args": ["--PICS /root/temperature-control-level.pics"] },
+    { "name": "TemperatureMeasurement attributes on CookSurfaceTopLeft", "test": "TC_TMP_2_1.py", "endpoint": 13081, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on CookSurfaceTopLeft",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13081,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
+    { "name": "OffOnlyOnOff attributes on CookSurfaceTopRight", "test": "Test_TC_OO_2_1", "endpoint": 13082, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff primary functionality on CookSurfaceTopRight", "test": "Test_TC_OO_2_2", "endpoint": 13082, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "OffOnlyOnOff feature behavior on CookSurfaceTopRight", "test": "Test_TC_OO_2_6", "endpoint": 13082, "args": ["--PICS /root/on-off-off-only.pics"] },
+    { "name": "LevelTemperatureControl attributes on CookSurfaceTopRight", "test": "TC_TCTL_2_3.py", "endpoint": 13082, "args": ["--PICS /root/temperature-control-level.pics"] },
+    { "name": "TemperatureMeasurement attributes on CookSurfaceTopRight", "test": "TC_TMP_2_1.py", "endpoint": 13082, "args": ["--PICS /root/temperature-measurement.pics"] },
+    {
+      "name": "TemperatureMeasurement primary functionality on CookSurfaceTopRight",
+      "test": "Test_TC_TMP_2_2",
+      "endpoint": 13082,
+      "args": ["--PICS /root/temperature-measurement.pics"]
+    },
     {
       "name": "OvenMode attributes on Oven",
       "test": "TC_OTCCM_1_2.py",
@@ -2780,7 +2970,6 @@
       "name": "OvenCavityOperationalState OperationCompletion event on Oven",
       "test": "TC_OVENOPSTATE_2_5.py",
       "endpoint": 13091,
-      "comment": "Fails Step 6: subscribing to the OperationCompletion event returns INVALID_ACTION, although the Temperature Controlled Cabinet device type mandates this event for an Oven Cavity Operational State server.",
       "args": ["--PICS /root/oven.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--int-arg PIXIT.WAITTIME.REBOOT:5"]
     },
     {

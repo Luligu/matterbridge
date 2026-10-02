@@ -1,15 +1,12 @@
 /**
  * pack-monorepo.mjs
- * Version: 1.0.0
+ * Version: 1.0.1
  *
  * Packs Matterbridge with its workspace distribution files and without npm bundled dependencies.
  *
  * Usage:
  *   node scripts/pack-monorepo.mjs --tag <dev|edge|git|local|latest> [--scope <prefix>] [--dry-run]
  */
-
-/* eslint-disable no-console */
-/* eslint-disable jsdoc/require-jsdoc */
 
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';

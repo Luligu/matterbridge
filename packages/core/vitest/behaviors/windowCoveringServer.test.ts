@@ -276,6 +276,10 @@ describe('MatterbridgeWindowCoveringServer', () => {
   });
 
   test('invoke MatterbridgeWindowCoveringServer commands', async () => {
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: string[] = [];
+    for (const command of ['upOrOpen', 'downOrClose', 'stopMotion', 'goToLiftPercentage'] as const)
+      coverLift.subscribeCommand(WindowCovering, command, () => emitted.push(command));
     const coverLiftServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift);
     // expect(coverLift.behaviors.has(WindowCoveringServer)).toBeTruthy();
     expect(coverLift.behaviors.has(coverLiftServer)).toBeTruthy();
@@ -297,6 +301,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
       LogLevel.INFO,
       `MatterbridgeWindowCoveringServer: setting cover lift percentage to 5000 (endpoint ${coverLift.id}.${coverLift.number})`,
     );
+    expect(emitted).toEqual(['upOrOpen', 'downOrClose', 'stopMotion', 'goToLiftPercentage']);
   });
 
   test('invoke MatterbridgeWindowCoveringServer with tilt commands', async () => {

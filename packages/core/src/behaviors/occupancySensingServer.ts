@@ -26,6 +26,7 @@ import type { ActionContext } from '@matter/node';
 import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 
+import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
@@ -36,6 +37,9 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
  * the same hold duration.
  */
 export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.with(OccupancySensing.Feature.PassiveInfrared) {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   #syncingHoldTime = false;
 
   override initialize(): MaybePromise {

@@ -3,7 +3,7 @@
 FLAG_FILE="/matterbridge/.initialized"
 
 echo "Welcome to the Matterbridge bun docker image."
-echo "This image is built from the local source files and runs on Bun."
+echo "This image installs Matterbridge from npm and runs on Bun."
 
 if [ ! -f "$FLAG_FILE" ]; then
 

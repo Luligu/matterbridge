@@ -54,6 +54,9 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
   // fields — matter.js's Reactors system rebinds `this` to a fresh behavior instance for each reaction (see
   // thermostatServer.ts's own note on this), so a private field set during a command call would read back as
   // undefined from #handleOptOutStateChanged/#completePowerAdjustmentOnTimeout, which run as separate reactions.
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   declare protected internal: MatterbridgeDeviceEnergyManagementServer.Internal;
 
   override async initialize(): Promise<void> {
@@ -81,7 +84,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       request,
       cluster: DeviceEnergyManagementServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(
@@ -107,9 +110,9 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if OptOutState does not permit the requested AdjustmentCauseEnum.
     const optOutBit =
       cause === DeviceEnergyManagement.AdjustmentCause.LocalOptimization ? DeviceEnergyManagement.OptOutState.LocalOptOut : DeviceEnergyManagement.OptOutState.GridOptOut;
+    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if OptOutState does not permit the requested AdjustmentCauseEnum.
     if ((this.state.optOutState & optOutBit) !== 0) {
       throw new StatusResponseError(
         `MatterbridgeDeviceEnergyManagementServer: user has opted out of this adjustment cause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -143,6 +146,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       // oxlint-disable-next-line typescript/unbound-method
       this.callback(this.#completePowerAdjustmentOnTimeout, { lock: true }),
     ).start();
+    this.endpoint.emitCommand(DeviceEnergyManagement, 'powerAdjustRequest', request, this.context);
   }
 
   /**
@@ -158,7 +162,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
       request: {},
       cluster: DeviceEnergyManagementServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
       context: this.context,
     });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer: cancelPowerAdjustRequest called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -172,6 +176,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     }
     // Matter 1.6.0 § 9.2.9.2.1: End the active session, generating PowerAdjustEnd, restoring ESAState to Online and setting the PowerAdjustmentCapability Cause to NoAdjustment.
     this.#endPowerAdjustment(DeviceEnergyManagement.Cause.Cancelled);
+    this.endpoint.emitCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest', {}, this.context);
   }
 
   #handleOptOutStateChanged(optOutState: DeviceEnergyManagement.OptOutState): void {

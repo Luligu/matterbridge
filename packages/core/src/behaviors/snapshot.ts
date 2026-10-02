@@ -1,5 +1,5 @@
 /**
- * @file src/behaviors/snapshot.ts
+ * @file packages/core/src/behaviors/snapshot.ts
  * @description This file contains the ffmpeg-based CaptureSnapshot capture pipeline.
  * @author Luca Liguori
  * @contributor Claude Fable 5

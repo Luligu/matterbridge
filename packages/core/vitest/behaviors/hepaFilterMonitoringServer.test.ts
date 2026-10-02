@@ -9,6 +9,7 @@ const MATTER_PORT = 13800;
 const MATTER_CREATE_ONLY = true;
 
 import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
@@ -22,6 +23,7 @@ import {
 } from '@matterbridge/vitest-utils/matter';
 import { LogLevel } from 'node-ansi-logger';
 
+import { MatterbridgeHepaFilterMonitoringServer } from '../../src/behaviors/hepaFilterMonitoringServer.js';
 import { airPurifier } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
@@ -72,10 +74,39 @@ describe('MatterbridgeHepaFilterMonitoringServer', () => {
     expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(40);
     expect(purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBeNull();
 
+    // Collect the commands announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    purifier.subscribeCommand(HepaFilterMonitoring, 'resetCondition', (data) => emitted.push(data.request));
+
     await purifier.invokeBehaviorCommand(HepaFilterMonitoring, 'resetCondition');
 
     expect(purifier.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(100);
+    expect(purifier.getAttribute(HepaFilterMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
+    expect(emitted).toEqual([{}]);
     expect(typeof purifier.getAttribute(HepaFilterMonitoring.id, 'lastChangedTime')).toBe('number');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${purifier.id}.${purifier.number})`);
+  });
+
+  test('HepaFilterMonitoring resetCondition resets an Up DegradationDirection to 0', async () => {
+    const endpoint = new MatterbridgeEndpoint(airPurifier, { id: 'HepaDegradationUp' });
+    endpoint.behaviors.require(
+      MatterbridgeHepaFilterMonitoringServer.with(ResourceMonitoring.Feature.Condition, ResourceMonitoring.Feature.Warning, ResourceMonitoring.Feature.ReplacementProductList),
+      {
+        condition: 80,
+        degradationDirection: ResourceMonitoring.DegradationDirection.Up,
+        changeIndication: ResourceMonitoring.ChangeIndication.Warning,
+        inPlaceIndicator: true,
+        lastChangedTime: null,
+        replacementProductList: [],
+      },
+    );
+    endpoint.addRequiredClusterServers();
+    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+
+    await endpoint.invokeBehaviorCommand(HepaFilterMonitoring, 'resetCondition');
+
+    // Matter 1.6.0 § 2.8.6.2: with DegradationDirection Up, full resource availability is the lowest Condition value.
+    expect(endpoint.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(0);
+    expect(endpoint.getAttribute(HepaFilterMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
   });
 });

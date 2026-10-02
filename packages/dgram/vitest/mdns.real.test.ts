@@ -121,7 +121,6 @@ describe('Mdns Real Interaction Tests', () => {
         reject(new Error('mDNS server error'));
       });
       mdnsServer.onQuery = (rinfo: RemoteInfo, query: MdnsMessage): void => {
-        // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
         if (query.questions?.find((q) => q.name === serviceName && q.type === DnsRecordType.PTR)) {
           const ptrRdata = mdnsServer.encodeDnsName(instanceName);
           mdnsServer.sendResponse([{ name: serviceName, rtype: DnsRecordType.PTR, rclass: DnsClass.IN, ttl: 120, rdata: ptrRdata }]);

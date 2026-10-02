@@ -22,7 +22,6 @@
  */
 
 /* oxlint-disable unicorn/no-negated-condition */
-/* oxlint-disable typescript/no-unsafe-type-assertion */
 /* oxlint-disable typescript/no-namespace */
 
 // @matter
@@ -87,6 +86,8 @@ export interface RoboticVacuumCleanerOptions {
   currentArea?: number | null;
   /** Supported service-area maps. Defaults to an empty array. */
   supportedMaps?: ServiceArea.Map[];
+  /** Initial per-area progress. When defined (even as an empty list), the ProgressReporting (PROG) feature is enabled. Defaults to undefined (PROG disabled). */
+  progress?: ServiceArea.Progress[];
 }
 
 /**
@@ -157,7 +158,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
       .createDefaultRvcRunModeClusterServer(options.currentRunMode, options.supportedRunModes)
       .createDefaultRvcCleanModeClusterServer(options.currentCleanMode, options.supportedCleanModes)
       .createDefaultRvcOperationalStateClusterServer(options.phaseList, options.currentPhase, options.operationalStateList, options.operationalState)
-      .createDefaultServiceAreaClusterServer(options.supportedAreas, options.selectedAreas, options.currentArea, options.supportedMaps);
+      .createDefaultServiceAreaClusterServer(options.supportedAreas, options.selectedAreas, options.currentArea, options.supportedMaps, options.progress);
   }
 
   /**
@@ -214,10 +215,17 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
    * @param {number[]} [selectedAreas] - The selected areas for the ServiceArea cluster. Defaults to an empty array (all areas allowed).
    * @param {number | null} [currentArea] - The current areaId (not the index in the array!) of the ServiceArea cluster. Defaults to 1 (Living).
    * @param {ServiceArea.Map[]} [supportedMaps] - The supported maps for the robotic vacuum cleaner. Defaults empty list.
+   * @param {ServiceArea.Progress[]} [progress] - The initial per-area progress for the robotic vacuum cleaner. When defined (even as an empty list), the ProgressReporting (PROG) feature is enabled. Defaults to undefined (PROG disabled).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
-  createDefaultServiceAreaClusterServer(supportedAreas?: ServiceArea.Area[], selectedAreas?: number[], currentArea?: number | null, supportedMaps?: ServiceArea.Map[]): this {
-    this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps), {
+  createDefaultServiceAreaClusterServer(
+    supportedAreas?: ServiceArea.Area[],
+    selectedAreas?: number[],
+    currentArea?: number | null,
+    supportedMaps?: ServiceArea.Map[],
+    progress?: ServiceArea.Progress[],
+  ): this {
+    this.behaviors.require(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps, ...(progress !== undefined ? [ServiceArea.Feature.ProgressReporting] : [])), {
       supportedAreas: supportedAreas ?? [
         {
           areaId: 1,
@@ -249,6 +257,7 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
        * This attribute SHALL be null if the CurrentArea attribute is null.
        */
       estimatedEndTime: null,
+      progress, // The progress of the device in each area, if ProgressReporting is enabled.
     });
     return this;
   }
@@ -289,6 +298,9 @@ export class RoboticVacuumCleaner extends MatterbridgeEndpoint {
  * RVC run mode server that validates and applies run mode changes.
  */
 export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Handles the RvcRunMode `ChangeToMode` command.
    *
@@ -303,46 +315,64 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
    */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeRvcRunModeServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcRunMode.changeToMode', {
       command: 'changeToMode',
       request,
       cluster: RvcRunModeServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
+    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode when NewMode matches no SupportedModes entry.
     if (!supported) {
-      device.log.error(`MatterbridgeRvcRunModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
+      device.log.error(
+        `MatterbridgeRvcRunModeServer: changeToMode called with unsupported newMode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
     const currentIsIdle = this.state.supportedModes.some((mode) => mode.mode === this.state.currentMode && mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
     const requestedIsIdle = supported.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle);
+    // Matter 1.6.0 § 7.2.4.1: Without DirectModeChange, respond with InvalidInMode to a change from a non-Idle mode to another non-Idle mode.
     if (request.newMode !== this.state.currentMode && !this.features.directModeChange && !currentIsIdle && !requestedIsIdle) {
-      device.log.debug(`MatterbridgeRvcRunModeServer changeToMode rejected direct non-Idle mode change from ${this.state.currentMode} to ${request.newMode}`);
+      device.log.debug(
+        `MatterbridgeRvcRunModeServer: changeToMode rejected direct non-Idle mode change from ${this.state.currentMode} to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Direct mode change is not supported while operating' };
     }
+    // Matter 1.6.0 § 1.10.7.1.1: Respond with Success when NewMode is already the CurrentMode.
     if (request.newMode === this.state.currentMode) {
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Already in requested mode' };
     }
+    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
     this.state.currentMode = request.newMode;
+    const operationalState = this.agent.get(MatterbridgeRvcOperationalStateServer);
     if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Cleaning)) {
-      device.log.debug('MatterbridgeRvcRunModeServer changeToMode called with newMode Cleaning => Running');
-      const operationalState = this.agent.get(MatterbridgeRvcOperationalStateServer);
+      device.log.debug(`MatterbridgeRvcRunModeServer: changeToMode called with newMode Cleaning => Running (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      // Matter 1.6.0 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
       operationalState.beginOperation();
+      // Matter 1.6.0 § 7.2.7.2.2: A Cleaning mode means the device was asked to clean, so it is actively Running.
       operationalState.state.operationalState = RvcOperationalState.OperationalState.Running;
+      this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Running' };
     } else if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Idle)) {
-      device.log.debug('MatterbridgeRvcRunModeServer changeToMode called with newMode Idle => SeekingCharger');
-      const operationalState = this.agent.get(MatterbridgeRvcOperationalStateServer);
+      device.log.debug(`MatterbridgeRvcRunModeServer: changeToMode called with newMode Idle => SeekingCharger (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+      // Matter 1.6.0 § 1.14.7.2: The overall operation ends, so generate the OperationCompletion event.
       operationalState.completeOperation();
+      // Matter 1.6.0 § 7.2.7.2.1: In an Idle mode the device performs auxiliary actions such as seeking the charger.
       operationalState.state.operationalState = RvcOperationalState.OperationalState.SeekingCharger;
+      this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Seeking charger' };
     }
-    device.log.debug(`MatterbridgeRvcRunModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
-    const operationalState = this.agent.get(MatterbridgeRvcOperationalStateServer);
+    device.log.debug(
+      `MatterbridgeRvcRunModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
     operationalState.beginOperation();
+    // Matter 1.6.0 § 7.2.7.2: A non-Idle mode is a main operation of the device, so it is Running.
     operationalState.state.operationalState = RvcOperationalState.OperationalState.Running;
+    this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
@@ -351,6 +381,9 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
  * RVC clean mode server that validates and applies clean mode changes.
  */
 export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   /**
    * Handles the RvcCleanMode `ChangeToMode` command.
    *
@@ -363,30 +396,42 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
    */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeRvcCleanModeServer: changing mode to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcCleanMode.changeToMode', {
       command: 'changeToMode',
       request,
       cluster: RvcCleanModeServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
+    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode when NewMode matches no SupportedModes entry.
     if (!supported) {
-      device.log.error(`MatterbridgeRvcCleanModeServer changeToMode called with unsupported newMode: ${request.newMode}`);
+      device.log.error(
+        `MatterbridgeRvcCleanModeServer: changeToMode called with unsupported newMode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
+    // Matter 1.6.0 § 1.10.7.1.1: Respond with Success when NewMode is already the CurrentMode.
     if (request.newMode === this.state.currentMode) {
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Already in requested mode' };
     }
     const runModeState = this.agent.get(MatterbridgeRvcRunModeServer).state;
     const runModeIsIdle = runModeState.supportedModes.some((mode) => mode.mode === runModeState.currentMode && mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+    // Matter 1.6.0 § 7.3.4.1: Without DirectModeChange, respond with InvalidInMode to a clean mode change while the RVC Run Mode CurrentMode is not Idle.
     if (!this.features.directModeChange && !runModeIsIdle) {
-      device.log.debug(`MatterbridgeRvcCleanModeServer changeToMode rejected while RVC Run Mode ${runModeState.currentMode} is non-Idle`);
+      device.log.debug(
+        `MatterbridgeRvcCleanModeServer: changeToMode rejected while RVC Run Mode ${runModeState.currentMode} is non-Idle (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      );
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Clean mode cannot change while operating' };
     }
+    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
     this.state.currentMode = request.newMode;
-    device.log.debug(`MatterbridgeRvcCleanModeServer changeToMode called with newMode ${request.newMode} => ${supported.label}`);
+    device.log.debug(
+      `MatterbridgeRvcCleanModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    this.endpoint.emitCommand(RvcCleanMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }
@@ -395,6 +440,9 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
  * RVC operational state server that forwards operational commands and updates state.
  */
 export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperationalStateServerBase {
+  /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
+  declare readonly endpoint: MatterbridgeEndpoint;
+
   declare protected internal: MatterbridgeRvcOperationalStateServer.Internal;
 
   /** Records the beginning of an RVC operation for the mandatory OperationCompletion event. */
@@ -437,27 +485,35 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    */
   override async pause(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeRvcOperationalStateServer: pause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcOperationalState.pause', {
       command: 'pause',
       request: {},
       cluster: RvcOperationalStateServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    // Matter 1.6.0 § 1.14.6.1: Respond with ErrorStateID NoError and take no further action if Pause is received while already Paused.
     if (this.state.operationalState === RvcOperationalState.OperationalState.Paused) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already paused' } };
     }
+    // Matter 1.6.0 § 1.14.6.1 and § 7.4.4.1: Respond with CommandInvalidInState when the current state is not Pause-compatible (only Running and SeekingCharger are).
     if (this.state.operationalState !== RvcOperationalState.OperationalState.Running && this.state.operationalState !== RvcOperationalState.OperationalState.SeekingCharger) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Pause-compatible in the current operational state' },
       };
     }
-    device.log.debug('MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused');
+    device.log.debug(`MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.0 § 1.14.6.4: Remember the state before Paused, so Resume can restore it.
     this.internal.operationalStateBeforePause = this.state.operationalState;
+    // Matter 1.6.0 § 1.14.7.2.3: Start timing the paused interval reported as PausedTime in OperationCompletion.
     this.internal.pausedSinceMs = Date.now();
+    // Matter 1.6.0 § 1.14.6.1: On success, set OperationalState to Paused.
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
+    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(RvcOperationalState, 'pause', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
@@ -475,29 +531,38 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    */
   override async resume(): Promise<OperationalState.OperationalCommandResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`Resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeRvcOperationalStateServer: resume (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcOperationalState.resume', {
       command: 'resume',
       request: {},
       cluster: RvcOperationalStateServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    // Matter 1.6.0 § 1.14.6.4: Respond with ErrorStateID NoError and take no further action if Resume is received while already Running.
     if (this.state.operationalState === RvcOperationalState.OperationalState.Running) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already running' } };
     }
+    // Matter 1.6.0 § 1.14.6.4: Respond with CommandInvalidInState when the current state is not Resume-compatible (only Paused is).
     if (this.state.operationalState !== RvcOperationalState.OperationalState.Paused) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Resume-compatible in the current operational state' },
       };
     }
-    device.log.debug(`MatterbridgeRvcOperationalStateServer: resume called restoring operational state to ${this.internal.operationalStateBeforePause}`);
+    device.log.debug(
+      `MatterbridgeRvcOperationalStateServer: resume called restoring operational state to ${this.internal.operationalStateBeforePause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 1.14.7.2.3: Close the paused interval, so it counts toward PausedTime in OperationCompletion.
     if (this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;
     }
+    // Matter 1.6.0 § 1.14.6.4: On success, restore the most recent non-Error OperationalState that preceded Paused.
     this.state.operationalState = this.internal.operationalStateBeforePause;
+    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(RvcOperationalState, 'resume', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };
@@ -515,19 +580,21 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * @returns {OperationalState.OperationalCommandResponse} Command response with state and error details.
    */
   override async goHome(): Promise<OperationalState.OperationalCommandResponse> {
-    // const device = this.agent.get(MatterbridgeServer).state.deviceCommand;
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    device.log.info(`GoHome (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    device.log.info(`MatterbridgeRvcOperationalStateServer: goHome (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     await device.commandHandler.executeHandler('RvcOperationalState.goHome', {
       command: 'goHome',
       request: {},
       cluster: RvcOperationalStateServer.id,
       attributes: this.state,
-      endpoint: this.endpoint as MatterbridgeEndpoint,
+      endpoint: this.endpoint,
+      context: this.context,
     });
+    // Matter 1.6.0 § 7.4.5.1: Respond with ErrorStateID NoError and take no further action if GoHome is received while already SeekingCharger.
     if (this.state.operationalState === RvcOperationalState.OperationalState.SeekingCharger) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already seeking charger' } };
     }
+    // Matter 1.6.0 § 7.4.5.1: Respond with CommandInvalidInState when the device cannot seek the charger in the current state.
     if (
       this.state.operationalState === RvcOperationalState.OperationalState.Error ||
       this.state.operationalState === RvcOperationalState.OperationalState.Charging ||
@@ -541,9 +608,14 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Cannot seek the charger in the current operational state' },
       };
     }
-    device.log.debug('MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger');
+    device.log.debug(
+      `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+    // Matter 1.6.0 § 7.4.5.1: On success, set OperationalState to SeekingCharger.
     this.state.operationalState = RvcOperationalState.OperationalState.SeekingCharger;
+    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
+    this.endpoint.emitCommand(RvcOperationalState, 'goHome', {}, this.context);
     return {
       commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
     };

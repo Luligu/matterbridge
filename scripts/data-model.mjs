@@ -1,6 +1,6 @@
 /**
  * Data model script.
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * This script will fetch from the connectedhomeip GitHub repository the data model files and convert them to JSON.
  *
@@ -14,8 +14,6 @@
  * https://github.com/project-chip/connectedhomeip/tree/master/data_model/<version>/namespaces
  * (for x.y.0 releases the remote folder is x.y, e.g. data_model/1.6/namespaces).
  */
-
-/* eslint-disable no-console */
 
 const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.6.1';
 const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
@@ -1089,7 +1087,7 @@ const generateClusterTypesTs = (clustersByKey, versionLabel, unknownTypeUsages, 
   lines.push(` * @remarks Matter data model version: ${versionLabel}`);
   lines.push(' */');
   lines.push('');
-  lines.push('/* eslint-disable @typescript-eslint/no-empty-object-type */');
+  lines.push('/* oxlint-disable typescript/no-empty-object-type */');
 
   // Keep import order compatible with simple-import-sort.
   if (usesMatterBytes) {

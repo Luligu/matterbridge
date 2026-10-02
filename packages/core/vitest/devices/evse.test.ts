@@ -26,6 +26,7 @@ import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-po
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { Identify } from '@matter/types/clusters/identify';
+import { ModeBase } from '@matter/types/clusters/mode-base';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
@@ -567,7 +568,8 @@ describe('Matterbridge ' + NAME, () => {
     expect((device as any).state['energyEvseMode'].generatedCommandList).toEqual([1]);
 
     vi.clearAllMocks();
-    await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    const response = await device.act(async (agent) => agent.get(MatterbridgeEnergyEvseModeServer).changeToMode({ newMode: 0 }));
+    expect(response).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.ERROR,
       `MatterbridgeEnergyEvseModeServer: changeToMode called with unsupported newMode: 0 (endpoint ${device.id}.${device.number})`,
@@ -708,7 +710,7 @@ describe('Matterbridge ' + NAME, () => {
             },
           ],
         }),
-      ).rejects.toThrow('TargetSoC is required when SoC reporting is available');
+      ).rejects.toThrow('targetSoC is required when SoC reporting is available');
 
       await featureDevice.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 2 });
       await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
@@ -875,6 +877,57 @@ describe('Matterbridge ' + NAME, () => {
       vi.useRealTimers();
       await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
     }
+  });
+
+  test('should emit completed EVSE commands after forwarding and state updates', async () => {
+    const observed = new Evse('EVSE Observable', 'EVSE-OBSERVABLE', { v2x: true });
+    await addDevice(server, observed);
+    const order: string[] = [];
+    const commands = ['disable', 'enableCharging', 'enableDischarging', 'startDiagnostics', 'setTargets', 'getTargets', 'clearTargets'] as const;
+    for (const command of commands) {
+      observed.addCommandHandler(`EnergyEvse.${command}`, async () => {
+        await Promise.resolve();
+        order.push(`forwarded:${command}`);
+      });
+      observed.subscribeCommand(EnergyEvse, command, (data) => {
+        expect(data.context).toBeDefined();
+        order.push(`emitted:${command}`);
+      });
+    }
+    observed.addCommandHandler('EnergyEvseMode.changeToMode', async () => {
+      await Promise.resolve();
+      order.push('forwarded:changeToMode');
+    });
+    observed.subscribeCommand(EnergyEvseMode, 'changeToMode', (data) => {
+      expect(data.request).toEqual({ newMode: 2 });
+      order.push('emitted:changeToMode');
+    });
+    observed.subscribeCommand(EnergyEvse, 'enableCharging', (data) => {
+      expect(data.request.maximumChargeCurrent).toBe(16_000);
+    });
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 16_000 });
+    expect(observed.getAttribute(EnergyEvse.id, 'maximumChargeCurrent')).toBe(16_000);
+    await observed.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', { dischargingEnabledUntil: null, maximumDischargeCurrent: 16_000 });
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'setTargets', { chargingTargetSchedules: [] });
+    const response = await observed.act(async (agent) => agent.get(MatterbridgeEnergyEvseServer).getTargets());
+    expect(response).toEqual({ chargingTargetSchedules: [] });
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'clearTargets');
+    await observed.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 2 });
+    expect(observed.getAttribute(EnergyEvseMode.id, 'currentMode')).toBe(2);
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics');
+    expect(order).toEqual(
+      ['disable', 'enableCharging', 'enableDischarging', 'setTargets', 'getTargets', 'clearTargets', 'changeToMode', 'disable', 'startDiagnostics'].flatMap((command) => [
+        `forwarded:${command}`,
+        `emitted:${command}`,
+      ]),
+    );
+    order.length = 0;
+    await expect(
+      observed.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 16_000 }),
+    ).rejects.toThrow();
+    expect(order).toEqual(['forwarded:enableCharging']);
   });
 
   test('start the server node', async () => {
