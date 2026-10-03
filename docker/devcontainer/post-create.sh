@@ -104,18 +104,23 @@ workspace_paths=("$PWD/node_modules" "$PWD/.cache")
 home_paths=("$HOME/.claude" "$HOME/.codex" "$HOME/.gemini" "$HOME/.agents" "$HOME/.bash-cache" "$HOME/.npm" "$HOME/.bun" "$HOME/.bun/install/cache" "$HOME/.vscode-server/extensions")
 
 if [ "$PLUGIN" = true ] || [ "$MATTERBRIDGE" = true ]; then
-  workspace_paths+=("$PWD/apps/frontend/node_modules")
   home_paths+=("$HOME/Matterbridge" "$HOME/.matterbridge" "$HOME/.mattercert")
 fi
 
 step "Creating directories..."
 sudo mkdir -p "${workspace_paths[@]}" "${home_paths[@]}" # Create directories if they don't exist
 
+# Only chown apps/frontend/node_modules if it exists (e.g. mounted as a volume); do not create it
+if [ -d "$PWD/apps/frontend/node_modules" ]; then
+  workspace_paths+=("$PWD/apps/frontend/node_modules")
+fi
+
 step "Setting permissions..."
 # Only chown paths that are not already owned by the current user. The image pre-creates the
 # home paths, so fresh volumes are seeded correctly and this is a no-op; the workspace volumes
 # still need it on first create, but they are empty then, so the recursion is instant.
 for path in . "${workspace_paths[@]}" "${home_paths[@]}"; do
+  [ -e "$path" ] || continue
   if [ "$(stat -c %u "$path")" != "$(id -u)" ]; then
     # Skip sockets (e.g. .git/fsmonitor--daemon.ipc) and only touch what is actually wrong;
     # a failure on the bind-mounted workspace must not abort the setup.
