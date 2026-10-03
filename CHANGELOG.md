@@ -31,6 +31,13 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.13] - Dev branch
 
+### Added
+
+- [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
+- [core]: Add `listWebcams()` to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).
+- [core]: Add `playWebcam()` and `getPlayWebcamArgs()` to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.
+- [core]: Add `installFfmpeg()` to the ffmpeg helpers: on Linux with root privileges it installs the full ffmpeg package with `apk` or `apt-get` and resolves it again.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.13.
