@@ -93,6 +93,7 @@ import {
 } from '@matterbridge/types';
 import { isBun } from '@matterbridge/utils/bun';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
@@ -146,6 +147,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private serverFetchTimeout = 2000;
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
+  private readonly diagnostic = hasParameter('diagnostic');
 
   // Frontend settings
   public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
@@ -2201,11 +2203,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
       } else if (data.method === '/api/settings') {
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: this.getApiSettings() });
+        const start = performance.now();
+        const settings = this.getApiSettings();
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
       } else if (data.method === '/api/plugins') {
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: this.getApiPlugins() });
+        const start = performance.now();
+        const plugins = this.getApiPlugins();
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
+        const start = performance.now();
         const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
@@ -2216,15 +2229,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
           return;
         }
-        const response = this.getClusters(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
-        if (response) {
+        const start = performance.now();
+        const clusters = this.getClusters(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getClusters() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (clusters) {
           sendResponse({
             id: data.id,
             method: data.method,
             src: 'Matterbridge',
             dst: data.src,
             success: true,
-            response,
+            response: clusters,
           });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
@@ -2239,9 +2255,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/devices' });
           return;
         }
+        const start = performance.now();
         /* v8 ignore next */
-        const selectDeviceValues = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDeviceValues });
+        const selectDevices = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDevices });
       } else if (data.method === '/api/select/entities') {
         if (!isValidString(data.params.plugin, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' });
@@ -2252,9 +2271,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' });
           return;
         }
+        const start = performance.now();
         /* v8 ignore next */
-        const selectEntityValues = !plugin.platform ? [] : plugin.platform.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntityValues });
+        const selectEntities = !plugin.platform ? [] : plugin.platform.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectEntities() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntities });
       } else if (data.method === '/api/action') {
         const localData = data;
         if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {
