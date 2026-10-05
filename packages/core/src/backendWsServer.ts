@@ -316,6 +316,18 @@ export class BackendWsServer {
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
         }
+      } else if (data.method === '/api/matter') {
+        if (!isValidString(data.params.id)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter id in /api/matter' });
+          return;
+        }
+        const matter = await this.backend.getApiMatter(data.params.id);
+        if (!matter) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${data.params.id} in /api/matter` });
+          return;
+        }
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
+        this.wssSendRefreshRequired('matter', { matter });
       }
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);
@@ -327,12 +339,12 @@ export class BackendWsServer {
    * Helper function to send a broadcast message to all connected clients.
    *
    * @param {WsMessageBroadcast} msg - The message to send.
+   * @remarks Do not call the logger here: the global log callback broadcasts through this function and would recurse.
    */
   wssBroadcastMessage(msg: WsMessageBroadcast): void {
     if (!this.hasActiveClients()) return;
     try {
       const stringifiedMsg = JSON.stringify(msg);
-      if (this.verbose) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
       this.webSocketServer?.clients.forEach((client) => {
         if (client.readyState === client.OPEN) {
           client.send(stringifiedMsg);

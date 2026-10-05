@@ -33,7 +33,16 @@ import path from 'node:path';
 
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
-import { type ApiClusters, type ApiDevice, type ApiPlugin, type ApiSettings, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
+import {
+  type ApiClusters,
+  type ApiDevice,
+  type ApiPlugin,
+  type ApiSettings,
+  NODE_STORAGE_DIR,
+  type SharedMatterbridge,
+  type WorkerMessage,
+  type ApiMatter,
+} from '@matterbridge/types';
 import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
@@ -519,5 +528,18 @@ export class Backend extends EventEmitter<BackendEvents> {
     const start = performance.now();
     // TODO: Implement the generation of the diagnostic file with the server nodes information.
     if (this.diagnostic) writeDiagnostic('Backend', `generateDiagnostic() took ${(performance.now() - start).toFixed(2)} ms`);
+  }
+
+  /**
+   * Retrieve Matter node data by ID.
+   *
+   * @param {string} id - The server node ID.
+   * @returns {Promise<ApiMatter | undefined>} The node data, or undefined when the node is not found.
+   */
+  async getApiMatter(id: string): Promise<ApiMatter | undefined> {
+    const start = performance.now();
+    const response = await this.server.fetch({ type: 'matterbridge_apimatter', src: 'frontend', dst: 'matterbridge', params: { id } });
+    if (this.diagnostic) writeDiagnostic('Backend', `getApiMatter() took ${(performance.now() - start).toFixed(2)} ms`);
+    return response.result.matter;
   }
 }

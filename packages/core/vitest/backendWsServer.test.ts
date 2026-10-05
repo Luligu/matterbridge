@@ -10,7 +10,7 @@ import { EventEmitter } from 'node:events';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { SharedMatterbridge } from '@matterbridge/types';
+import type { ApiMatter, SharedMatterbridge } from '@matterbridge/types';
 import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
@@ -31,6 +31,7 @@ const mockedBackend = {
   fixedRestartRequired: false,
   updateRequired: false,
   secure: false,
+  getApiMatter: vi.fn<Backend['getApiMatter']>(),
   getApiSettings: vi.fn(async () => ({ matterbridgeInformation: {} })),
   getApiPlugins: vi.fn(async () => [{ name: 'matterbridge-test' }]),
   getApiDevices: vi.fn(async () => [{ name: 'Device' }]),
@@ -240,6 +241,14 @@ describe('BackendWsServer', () => {
       return JSON.parse(client.send.mock.calls[0][0]);
     };
 
+    expect(await request('/api/matter', { id: 1 })).toMatchObject({ error: 'Wrong parameter id in /api/matter' });
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- Explicitly mock a missing server node.
+    vi.mocked(mockedBackend.getApiMatter).mockResolvedValueOnce(undefined);
+    expect(await request('/api/matter', { id: 'missing' })).toMatchObject({ error: 'Unknown server node id missing in /api/matter' });
+    const matter = { id: 'Matterbridge' } as ApiMatter;
+    vi.mocked(mockedBackend.getApiMatter).mockResolvedValueOnce(matter);
+    expect(await request('/api/matter', { id: 'Matterbridge', server: true })).toMatchObject({ success: true, response: matter });
+    expect(mockedBackend.getApiMatter).toHaveBeenLastCalledWith('Matterbridge');
     expect(await request('/api/settings')).toEqual({
       id: 10,
       method: '/api/settings',

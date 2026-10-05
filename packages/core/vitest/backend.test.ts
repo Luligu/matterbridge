@@ -268,6 +268,9 @@ describe('Backend', () => {
 
     const matterbridgeServer = new BroadcastServer('matterbridge', log);
     matterbridgeServer.on('broadcast_message', (msg: WorkerMessage) => {
+      if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_apimatter')) {
+        matterbridgeServer.respond({ ...msg, result: { matter: undefined } });
+      }
       if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_apisettings')) {
         matterbridgeServer.respond({ ...msg, result: { data: { test: 'settings' } as any, success: true } });
       }
@@ -285,6 +288,7 @@ describe('Backend', () => {
       }
     });
 
+    expect(await backend.getApiMatter('missing')).toBeUndefined();
     expect(await backend.getApiSettings()).toEqual({ test: 'settings' });
     expect(await backend.getApiPlugins()).toEqual([{ name: 'plugin1' }]);
     expect(await backend.getApiDevices('plugin1')).toEqual([{ pluginName: 'plugin1' }]);
@@ -293,7 +297,7 @@ describe('Backend', () => {
     await expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).resolves.toBeUndefined();
     await expect(backend.generateDiagnostic()).resolves.toBeUndefined();
 
-    for (const method of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
+    for (const method of ['getApiMatter', 'getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
       const timing = new RegExp(`Backend: ${method}\\(\\) took \\d+\\.\\d{2} ms`);
       expect(stderrSpy.mock.calls.some(([message]) => timing.test(String(message)))).toBe(Boolean(flag));
     }
