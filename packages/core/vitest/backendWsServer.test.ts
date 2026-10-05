@@ -11,7 +11,7 @@ import { EventEmitter } from 'node:events';
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { SharedMatterbridge } from '@matterbridge/types';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
+import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
@@ -36,6 +36,14 @@ const mockedBackend = {
 await setupTest(NAME, false);
 
 process.argv = ['node', 'backendWsServer.test.js', '--debug-frontend', '--verbose-frontend'];
+
+class FakeClient extends EventEmitter {
+  OPEN = 1;
+  readyState = 1;
+  send = vi.fn();
+  pong = vi.fn();
+  close = vi.fn();
+}
 
 // No isolation needed or allowed since we're testing a single module and want to preserve module state across tests
 
@@ -62,6 +70,17 @@ describe('BackendWsServer', () => {
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend' });
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } });
     expect((wsServer as any).log.logLevel).toBe(LogLevel.DEBUG);
+  });
+
+  test('should answer broadcast requests from another thread and ignore other messages', async () => {
+    isWorkerRequestBroadcastServerSpy.mockRestore();
+    const manager = new BroadcastServer('manager', log);
+    const response = await manager.fetch({ type: 'get_log_level', src: 'manager', dst: 'frontend', params: undefined });
+    expect(response.result.logLevel).toBe((wsServer as any).log.logLevel);
+
+    // A response message is not a request and is ignored
+    await (wsServer as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'get_log_level', src: 'manager', dst: 'frontend', result: { logLevel: LogLevel.INFO } });
+    manager.close();
   });
 
   test('Start', async () => {
@@ -173,6 +192,40 @@ describe('BackendWsServer', () => {
     }
   });
 
+  test('should keep the auth clients when a client reconnects before the cleanup timer fires', async () => {
+    const wss: any = (wsServer as any).webSocketServer;
+    const client: any = new FakeClient();
+    mockedBackend.authClients.add('127.0.0.1');
+
+    vi.useFakeTimers();
+    try {
+      wss.emit('connection', client, { socket: { remoteAddress: '127.0.0.1' } });
+      client.emit('close', 1000, Buffer.from('done'));
+      // A client connects again before the timer fires
+      wss.clients.add(client);
+      vi.advanceTimersByTime(1100);
+      await Promise.resolve();
+      expect(loggerDebugSpy).not.toHaveBeenCalledWith(expect.stringContaining('Auth clients list cleared'));
+      expect(mockedBackend.authClients.has('127.0.0.1')).toBe(true);
+    } finally {
+      wss.clients.delete(client);
+      vi.useRealTimers();
+    }
+  });
+
+  test('should parse fragmented and ArrayBuffer messages', async () => {
+    const client: any = new FakeClient();
+    const message = JSON.stringify({ id: 4, src: 'Frontend', dst: 'Matterbridge', method: 'noop' });
+
+    await (wsServer as any).wsMessageHandler(client, [Buffer.from(message.slice(0, 10)), Buffer.from(message.slice(10))]);
+    const arrayBuffer = new ArrayBuffer(message.length);
+    new Uint8Array(arrayBuffer).set(Buffer.from(message));
+    await (wsServer as any).wsMessageHandler(client, arrayBuffer);
+
+    expect(loggerDebugSpy.mock.calls.filter((args) => args[0].includes('Received message from websocket client'))).toHaveLength(2);
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+  });
+
   test('Send helpers (active + inactive clients)', () => {
     // No clients => early returns
     expect(wsServer.hasActiveClients()).toBe(false);
@@ -242,6 +295,35 @@ describe('BackendWsServer', () => {
     expect(client.send).toHaveBeenCalled();
   });
 
+  test('should not broadcast to clients that are not open', () => {
+    const open: any = { OPEN: 1, readyState: 1, send: vi.fn() };
+    const closing: any = { OPEN: 1, readyState: 2, send: vi.fn() };
+    (wsServer as any).webSocketServer = { clients: new Set([open, closing]) };
+
+    wsServer.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log', success: true } as any);
+
+    expect(open.send).toHaveBeenCalledTimes(1);
+    expect(closing.send).not.toHaveBeenCalled();
+  });
+
+  test('should send the status updates and skip the snackbar when not requested', () => {
+    // No clients => early returns
+    (wsServer as any).webSocketServer = undefined;
+    wsServer.wssSendPluginStatusUpdate('plugin', {});
+    wsServer.wssSendMatterbridgeStatusUpdate({} as any);
+
+    const client: any = new FakeClient();
+    (wsServer as any).webSocketServer = { clients: new Set([client]) };
+    wsServer.wssSendPluginStatusUpdate('plugin', { loaded: true });
+    wsServer.wssSendMatterbridgeStatusUpdate({ online: true } as any);
+    wsServer.wssSendRestartRequired(false);
+    wsServer.wssSendRestartNotRequired(false);
+    wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0');
+
+    const methods = client.send.mock.calls.map((args: string[]) => JSON.parse(args[0]).method);
+    expect(methods).toEqual(['plugin_status_update', 'matterbridge_status_update', 'restart_required', 'restart_not_required', 'plugin_update_required']);
+  });
+
   test('Stop', async () => {
     // Cover stop() error branch (no recreate): close callback with error
     class FakeClientForStop extends EventEmitter {
@@ -273,6 +355,19 @@ describe('BackendWsServer', () => {
     await wsServer.stop();
   });
 
+  test('should not close the clients that are not open on stop', async () => {
+    const closedClient: any = new FakeClient();
+    closedClient.readyState = 3;
+    (wsServer as any).webSocketServer = {
+      clients: new Set([closedClient]),
+      // oxlint-disable-next-line typescript/explicit-function-return-type
+      close: (cb: (error?: Error) => void) => cb(),
+      removeAllListeners: vi.fn(),
+    };
+    await wsServer.stop();
+    expect(closedClient.close).not.toHaveBeenCalled();
+  });
+
   test('Destroy', () => {
     wsServer.destroy();
 
@@ -281,5 +376,41 @@ describe('BackendWsServer', () => {
     expect(server.closed).toBe(true);
     expect(server.broadcastChannel?.onmessage).toBe(null);
     expect(server.broadcastChannel?.onmessageerror).toBe(null);
+  });
+
+  test('should use wss, the info log level and no verbose logs without debug flags and with ssl', async () => {
+    const savedArgv = process.argv;
+    process.argv = ['node', 'backendWsServer.test.js', '--ssl'];
+    try {
+      const quietServer = new BackendWsServer(mockedSharedMatterbridge, mockedBackend);
+      expect((quietServer as any).log.logLevel).toBe(LogLevel.INFO);
+      await quietServer.start();
+      expect(mockedBackend.emit).toHaveBeenCalledWith('websocket_server_listening', 'wss');
+
+      const realServer = (quietServer as any).webSocketServer;
+      const client: any = new FakeClient();
+      (quietServer as any).webSocketServer = { clients: new Set([client]) };
+      quietServer.wssSendRefreshRequired('settings');
+      quietServer.wssSendRestartRequired();
+      quietServer.wssSendRestartNotRequired();
+      quietServer.wssSendUpdateRequired('3.0.0');
+      quietServer.wssSendPluginUpdateRequired('plugin', '3.0.0');
+      quietServer.wssSendPluginStatusUpdate('plugin', {});
+      quietServer.wssSendMatterbridgeStatusUpdate({} as any);
+      quietServer.wssSendCpuUpdate(1, 2);
+      quietServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
+      quietServer.wssSendUptimeUpdate('sys', 'proc');
+      quietServer.wssSendSnackbarMessage('hello');
+      quietServer.wssSendCloseSnackbarMessage('hello');
+      quietServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+      expect(client.send).toHaveBeenCalled();
+      expect(loggerDebugSpy).not.toHaveBeenCalledWith(expect.stringContaining('to all connected clients'));
+
+      (quietServer as any).webSocketServer = realServer;
+      await quietServer.stop();
+      quietServer.destroy();
+    } finally {
+      process.argv = savedArgv;
+    }
   });
 });

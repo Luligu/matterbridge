@@ -14,7 +14,9 @@ import fs from 'node:fs/promises';
 import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
+import v8 from 'node:v8';
 
+import { BroadcastServer } from '@matterbridge/thread/server';
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_DIR,
@@ -24,13 +26,17 @@ import {
   NODE_STORAGE_DIR,
   type SharedMatterbridge,
 } from '@matterbridge/types';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { log, setupTest } from '@matterbridge/vitest-utils';
 import type express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
 import { BackendExpress } from '../src/backendExpress.js';
+
+// Mock isBun to cover the bun install command of /api/uploadpackage
+const isBunMock = vi.hoisted(() => vi.fn(() => false));
+vi.mock('@matterbridge/utils/bun', async (importOriginal) => ({ ...(await importOriginal<typeof import('@matterbridge/utils/bun')>()), isBun: isBunMock }));
 
 const TEST_ZIP_FIXTURE = new URL('../src/mock/test.zip', import.meta.url);
 
@@ -323,6 +329,23 @@ describe('BackendExpress', () => {
     isWorkerRequestSpy.mockRestore();
   });
 
+  test('should answer broadcast requests from another thread and ignore other messages', async () => {
+    const manager = new BroadcastServer('manager', log);
+    const response = await manager.fetch({ type: 'get_log_level', src: 'manager', dst: 'frontend', params: undefined });
+    expect(response.result.logLevel).toBe((backendExpress as any).log.logLevel);
+
+    // A response message is not a request and is ignored
+    await (backendExpress as any).broadcastMsgHandler({
+      id: 123456,
+      timestamp: Date.now(),
+      type: 'get_log_level',
+      src: 'manager',
+      dst: 'frontend',
+      result: { logLevel: LogLevel.INFO },
+    });
+    manager.close();
+  });
+
   test('Start', async () => {
     await fs.mkdir(path.join(HOMEDIR, 'uploads'), { recursive: true });
     await fs.mkdir(path.join(HOMEDIR, 'apps', 'frontend', 'build'), { recursive: true });
@@ -404,6 +427,14 @@ describe('BackendExpress', () => {
     expect(Array.isArray(response.body.cjsModules)).toBe(true);
   });
 
+  test('GET /memory keeps the heap statistics that are not numbers', async () => {
+    const getHeapStatisticsSpy = vi.spyOn(v8, 'getHeapStatistics').mockReturnValueOnce({ ...v8.getHeapStatistics(), test_value: 'not a number' } as any);
+    const response = await makeRequest('/memory', 'GET');
+    expect(response.status).toBe(200);
+    expect(response.body.heapStats.test_value).toBe('not a number');
+    getHeapStatisticsSpy.mockRestore();
+  });
+
   test('GET /api/settings unauthorized', async () => {
     (mockedBackend as any).authClients.clear();
 
@@ -468,6 +499,19 @@ describe('BackendExpress', () => {
     expect(response.status).toBe(200);
     expect(response.body).toEqual({ valid: true });
     expect((mockedBackend as any).authClients.size).toBe(1);
+  });
+
+  test('POST /api/login valid password without req.ip does not authorize the client', () => {
+    (mockedBackend as any).authClients.clear();
+    const layer = (expressApp as any).router.stack.find((l: any) => l.route?.path === '/api/login');
+    const handler = layer.route.stack.at(-1).handle;
+    const res = { json: vi.fn() };
+    handler({ body: { password: 'secret' }, ip: undefined }, res);
+    expect(res.json).toHaveBeenCalledWith({ valid: true });
+    expect((mockedBackend as any).authClients.size).toBe(0);
+
+    // Restore the authorized client for the next tests
+    (mockedBackend as any).authClients.add('127.0.0.1');
   });
 
   test('GET /api/settings authorized', async () => {
@@ -603,6 +647,17 @@ describe('BackendExpress', () => {
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('Error reading diagnostic log file');
+  });
+
+  test('GET /api/download-diagnostic logs the error when the diagnostic file is missing', async () => {
+    const diagnosticPath = path.join(HOMEDIR, MATTERBRIDGE_DIAGNOSTIC_FILE);
+    (mockedBackend as any).generateDiagnostic.mockImplementationOnce(async () => {
+      await fs.rm(diagnosticPath, { force: true });
+    });
+    const debugSpy = vi.spyOn((backendExpress as any).log, 'debug');
+
+    await makeRequest('/api/download-diagnostic', 'GET');
+    expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Error in /api/download-diagnostic'));
   });
 
   test('GET /api/download-diagnostic aborted download triggers error callback branch', async () => {
@@ -760,6 +815,21 @@ describe('BackendExpress', () => {
     });
   }, 30000);
 
+  test('POST /api/uploadpackage .tgz uses bun to install when running on Bun', async () => {
+    const requestSpy = vi.spyOn((backendExpress as any).server, 'request');
+    isBunMock.mockReturnValue(true);
+    try {
+      const response = await makeMultipartRequest('/api/uploadpackage', 'test.tgz', Buffer.from('TGZ', 'utf8'));
+      expect(response.status).toBe(200);
+    } finally {
+      isBunMock.mockReturnValue(false);
+    }
+    expect(requestSpy.mock.calls[0]?.[0]).toMatchObject({
+      type: 'manager_run',
+      params: { workerData: { command: 'bun', args: ['install', '-g', expect.stringContaining('test.tgz'), '--omit=dev'] } },
+    });
+  }, 30000);
+
   test('POST /api/uploadpackage error path (rename fails)', async () => {
     const uploadPath = path.join(HOMEDIR, 'uploads', 'dir-as-file.zip');
     await fs.rm(uploadPath, { recursive: true, force: true });
@@ -804,5 +874,16 @@ describe('BackendExpress', () => {
     expect(server.closed).toBe(true);
     expect(server.broadcastChannel?.onmessage).toBe(null);
     expect(server.broadcastChannel?.onmessageerror).toBe(null);
+  });
+
+  test('should use the info log level and skip the request logger without debug and verbose', async () => {
+    const savedArgv = process.argv;
+    process.argv = ['node', 'backendExpress.test.js'];
+    const quietExpress = new BackendExpress(mockedSharedMatterbridge, mockedBackend);
+    process.argv = savedArgv;
+    expect((quietExpress as any).log.logLevel).toBe(LogLevel.INFO);
+    expect(await quietExpress.start()).toBeDefined();
+    expect(await quietExpress.stop()).toBeUndefined();
+    quietExpress.destroy();
   });
 });

@@ -331,7 +331,8 @@
         "packages/core/vitest/frontend.express.test.ts",
         "packages/core/vitest/frontend.websocket.test.ts",
         "packages/core/vitest/backendWsServer.test.ts",
-        "packages/core/vitest/backendExpress.test.ts"
+        "packages/core/vitest/backendExpress.test.ts",
+        "packages/core/vitest/backendHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -595,10 +596,14 @@
         "verbose",
         "--coverage",
         "--maxWorkers=100%",
+        "--coverage.include=packages/core/src/backend.ts",
         "--coverage.include=packages/core/src/backendWsServer.ts",
         "--coverage.include=packages/core/src/backendExpress.ts",
+        "--coverage.include=packages/core/src/backendHelpers.ts",
+        "packages/core/vitest/backend.test.ts",
         "packages/core/vitest/backendWsServer.test.ts",
-        "packages/core/vitest/backendExpress.test.ts"
+        "packages/core/vitest/backendExpress.test.ts",
+        "packages/core/vitest/backendHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

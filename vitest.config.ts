@@ -25,7 +25,7 @@ export default defineConfig({
       '**/jest-utils/', // Plugins test package for Jest
       '**/vitest-utils/', // Plugins test package for Vitest
       '**/matterNode*.test.ts', // Not released yet, so ignore for now
-      '**/backend*.test.ts', // Not released yet, so ignore for now
+      // '**/backend*.test.ts', // Not released yet, so ignore for now
     ],
     globals: true,
     clearMocks: false,
@@ -90,9 +90,9 @@ export default defineConfig({
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
 
-        'packages/core/src/backend.ts', // Not released yet, so ignore for now
-        'packages/core/src/backendExpress.ts', // Not released yet, so ignore for now
-        'packages/core/src/backendWsServer.ts', // Not released yet, so ignore for now
+        // 'packages/core/src/backend.ts', // Not released yet, so ignore for now
+        // 'packages/core/src/backendExpress.ts', // Not released yet, so ignore for now
+        // 'packages/core/src/backendWsServer.ts', // Not released yet, so ignore for now
         'packages/core/src/matterNode.ts', // Not released yet, so ignore for now
       ],
       thresholds: {

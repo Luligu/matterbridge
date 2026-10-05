@@ -48,6 +48,7 @@ import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { formatBytes } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
+import { fireAndForget } from '@matterbridge/utils/wait';
 // Express
 import escapeHtml from 'escape-html';
 import express from 'express';
@@ -70,6 +71,7 @@ logModuleLoaded('BackendExpress');
 export class BackendExpress {
   private debug: boolean;
   private verbose: boolean;
+  private diagnostic: boolean;
   private log: AnsiLogger;
   private backend: Backend;
   private matterbridge: SharedMatterbridge;
@@ -89,12 +91,11 @@ export class BackendExpress {
    * @param {Backend} backend - The backend instance to which this Express server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
+    this.diagnostic = hasParameter('diagnostic') || hasParameter('diagnostic-frontend');
     this.backend = backend;
     this.matterbridge = matterbridge;
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'BackendExpress',
       logNameColor: '\x1b[38;5;97m',
@@ -102,8 +103,7 @@ export class BackendExpress {
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
-    // oxlint-disable-next-line typescript/no-misused-promises
-    this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
+    this.server.on('broadcast_message', (msg) => fireAndForget(this.broadcastMsgHandler(msg), this.log, 'Broadcast message handler'));
   }
 
   /**
@@ -120,7 +120,6 @@ export class BackendExpress {
    */
   // oxlint-disable-next-line typescript/require-await
   private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
-    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
         case 'get_log_level':
@@ -130,8 +129,7 @@ export class BackendExpress {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
-        default:
-        //
+        // no default
       }
     }
   }
@@ -170,7 +168,6 @@ export class BackendExpress {
     this.expressApp = express();
 
     // Log all requests to the server for debugging
-    /* v8 ignore next */
     if (this.verbose) {
       this.expressApp.use((req, res, next) => {
         this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
@@ -189,7 +186,6 @@ export class BackendExpress {
       if (this.backend.storedPassword === '' || password === this.backend.storedPassword) {
         this.log.debug('/api/login password valid');
         res.json({ valid: true });
-        /* v8 ignore next */
         if (req.ip) this.backend.authClients.add(req.ip);
       } else {
         this.log.warn('/api/login error wrong password');
@@ -385,7 +381,6 @@ export class BackendExpress {
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
       } catch (error) {
-        /* v8 ignore next */
         this.log.debug(`Error in /api/download-diagnostic: ${getErrorMessage(error)}`);
       }
       res.type('text/plain; charset=utf-8');

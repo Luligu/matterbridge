@@ -37,6 +37,7 @@ import type { ApiDevice, ApiPlugin, ApiSettings, SharedMatterbridge, WorkerMessa
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
+import { fireAndForget } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
@@ -65,6 +66,9 @@ interface BackendEvents {
 export class Backend extends EventEmitter<BackendEvents> {
   private debug: boolean;
   private verbose: boolean;
+  private diagnostic: boolean;
+  private secure: boolean;
+  private requestCert: boolean;
   private log: AnsiLogger;
   private matterbridge: SharedMatterbridge;
   private readonly server: BroadcastServer;
@@ -87,11 +91,12 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   constructor(matterbridge: SharedMatterbridge) {
     super();
-    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
     this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
     this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
+    this.diagnostic = hasParameter('diagnostic') || hasParameter('diagnostic-frontend');
+    this.secure = hasParameter('ssl');
+    this.requestCert = hasParameter('mtls');
     this.matterbridge = matterbridge;
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'Backend',
       logNameColor: '\x1b[38;5;97m',
@@ -99,8 +104,7 @@ export class Backend extends EventEmitter<BackendEvents> {
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
-    // oxlint-disable-next-line typescript/no-misused-promises
-    this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
+    this.server.on('broadcast_message', (msg) => fireAndForget(this.broadcastMsgHandler(msg), this.log, 'Broadcast message handler'));
   }
 
   /**
@@ -117,9 +121,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   // oxlint-disable-next-line typescript/require-await
   private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
-    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
-      // oxlint-disable-next-line default-case
       switch (msg.type) {
         case 'get_log_level':
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
@@ -128,6 +130,7 @@ export class Backend extends EventEmitter<BackendEvents> {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
+        // no default
       }
     }
   }
@@ -146,95 +149,7 @@ export class Backend extends EventEmitter<BackendEvents> {
     this.backendExpress = new BackendExpress(this.matterbridge, this);
     this.backendWsServer = new BackendWsServer(this.matterbridge, this);
 
-    // oxlint-disable-next-line unicorn/no-negated-condition
-    if (!hasParameter('ssl')) {
-      // Create an HTTP server and attach the express app
-      const http = await import('node:http');
-      await this.backendExpress.start();
-      try {
-        this.log.debug(`Creating HTTP server...`);
-        this.httpServer = http.createServer(this.backendExpress.expressApp);
-      } catch (error) {
-        logError(this.log, `Failed to create HTTP server`, error);
-        this.emit('server_error', error);
-        await this.backendExpress.stop();
-        return;
-      }
-      await this.backendWsServer.start();
-
-      // Listen on the specified port
-      this.httpServer.listen(this.port, getParameter('bind'), () => {
-        const addr = this.httpServer?.address();
-        /* v8 ignore next */
-        if (addr && typeof addr !== 'string') {
-          this.log.info(`The frontend http server is bound to ${addr.family} ${addr.address}:${addr.port}`);
-        }
-        /* v8 ignore next */
-        if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
-          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
-        /* v8 ignore next */
-        if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
-          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
-        this.listening = true;
-        this.emit('server_listening', 'http', this.port);
-      });
-
-      this.httpServer.on('upgrade', (req, socket, head) => {
-        try {
-          // Only proceed for real WebSocket upgrades
-          /* v8 ignore next cause is only a safety check */
-          if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
-            this.log.error(`WebSocket upgrade error: Invalid upgrade header ${req.headers.upgrade}`);
-            socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
-            return socket.destroy();
-          }
-
-          // Build a URL so we can read ?password=...
-          const url = new URL(req.url ?? '/', `http://${req.headers.host || 'localhost'}`);
-
-          // Validate WebSocket password
-          const password = url.searchParams.get('password') ?? '';
-          if (password !== this.storedPassword) {
-            this.log.error(`WebSocket upgrade error: Invalid password ${password ? '[redacted]' : '(empty)'}`);
-            socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
-            return socket.destroy();
-          }
-
-          // Complete the WebSocket handshake
-          this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
-          /* v8 ignore next */
-          if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
-          this.backendWsServer?.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
-            this.backendWsServer?.webSocketServer?.emit('connection', ws, req);
-          });
-        } catch (err) {
-          /* v8 ignore next : only triggered on unexpected internal error */
-          {
-            inspectError(this.log, 'WebSocket upgrade error:', err);
-            socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');
-            socket.destroy();
-          }
-        }
-        // oxlint-disable-next-line unicorn/no-useless-undefined
-        return undefined;
-      });
-
-      this.httpServer.on('error', (error: Error) => {
-        this.log.error(`Frontend http server error listening on ${this.port}`);
-        // oxlint-disable-next-line default-case
-        switch ((error as NodeJS.ErrnoException).code) {
-          case 'EACCES':
-            this.log.error(`Port ${this.port} requires elevated privileges`);
-            break;
-          case 'EADDRINUSE':
-            this.log.error(`Port ${this.port} is already in use`);
-            break;
-        }
-        this.emit('server_error', error);
-        // oxlint-disable-next-line unicorn/no-useless-undefined
-        return undefined;
-      });
-    } else {
+    if (this.secure) {
       // SSL is enabled, load the certificate and the private key
       let cert: string | undefined;
       let key: string | undefined;
@@ -294,7 +209,7 @@ export class Backend extends EventEmitter<BackendEvents> {
         }
         httpsServerOptions = { cert: fullChain ?? cert, key, ca };
       }
-      if (hasParameter('mtls')) {
+      if (this.requestCert) {
         httpsServerOptions.requestCert = true; // Request client certificate
         httpsServerOptions.rejectUnauthorized = true; // Require client certificate validation
       }
@@ -316,30 +231,31 @@ export class Backend extends EventEmitter<BackendEvents> {
       // Listen on the specified port
       this.httpsServer.listen(this.port, getParameter('bind'), () => {
         const addr = this.httpsServer?.address();
-        /* v8 ignore next */
+        // v8 ignore else
         if (addr && typeof addr !== 'string') {
           this.log.info(`The frontend https server is bound to ${addr.family} ${addr.address}:${addr.port}`);
         }
-        /* v8 ignore next */
         if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
-        /* v8 ignore next */
         if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
           this.log.info(`The frontend https server is listening on ${UNDERLINE}https://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
         this.listening = true;
         this.emit('server_listening', 'https', this.port);
       });
 
-      this.httpsServer.on('upgrade', (req, socket, head) => {
+      this.httpsServer.on('upgrade', (req, socket, head): void => {
         try {
           // Only proceed for real WebSocket upgrades
-          /* v8 ignore next cause is only a safety check */
-          if ((req.headers.upgrade || '').toLowerCase() !== 'websocket') {
+          /* v8 ignore next - Node.js emits the upgrade event only when the Upgrade header is present, so the '' fallback is only a safety check */
+          const upgrade = (req.headers.upgrade || '').toLowerCase();
+          if (upgrade !== 'websocket') {
             socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
-            return socket.destroy();
+            socket.destroy();
+            return;
           }
 
           // Build a URL so we can read ?password=...
+          /* v8 ignore next - req.url is always set by Node.js on server requests, and the Host header is required by HTTP/1.1 (only an HTTP/1.0 request can omit it), so both fallbacks are only safety checks */
           const url = new URL(req.url ?? '/', `https://${req.headers.host || 'localhost'}`);
 
           // Validate WebSocket password
@@ -347,31 +263,27 @@ export class Backend extends EventEmitter<BackendEvents> {
           if (password !== this.storedPassword) {
             this.log.error(`WebSocket upgrade error: Invalid password ${password ? '[redacted]' : '(empty)'}`);
             socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
-            return socket.destroy();
+            socket.destroy();
+            return;
           }
 
           // Complete the WebSocket handshake
           this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
-          /* v8 ignore next */
           if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
           this.backendWsServer?.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
             this.backendWsServer?.webSocketServer?.emit('connection', ws, req);
           });
         } catch (err) {
-          /* v8 ignore next : only triggered on unexpected internal error */
           {
             inspectError(this.log, 'WebSocket upgrade error:', err);
             socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');
             socket.destroy();
           }
         }
-        // oxlint-disable-next-line unicorn/no-useless-undefined
-        return undefined;
       });
 
       this.httpsServer.on('error', (error: Error) => {
         this.log.error(`Frontend https server error listening on ${this.port}`);
-        // oxlint-disable-next-line default-case
         switch ((error as NodeJS.ErrnoException).code) {
           case 'EACCES':
             this.log.error(`Port ${this.port} requires elevated privileges`);
@@ -379,9 +291,93 @@ export class Backend extends EventEmitter<BackendEvents> {
           case 'EADDRINUSE':
             this.log.error(`Port ${this.port} is already in use`);
             break;
+          // no default
         }
         this.emit('server_error', error);
+      });
+    } else {
+      // Create an HTTP server and attach the express app
+      const http = await import('node:http');
+      await this.backendExpress.start();
+      try {
+        this.log.debug(`Creating HTTP server...`);
+        this.httpServer = http.createServer(this.backendExpress.expressApp);
+      } catch (error) {
+        logError(this.log, `Failed to create HTTP server`, error);
+        this.emit('server_error', error);
+        await this.backendExpress.stop();
         return;
+      }
+      await this.backendWsServer.start();
+
+      // Listen on the specified port
+      this.httpServer.listen(this.port, getParameter('bind'), () => {
+        const addr = this.httpServer?.address();
+        // v8 ignore else
+        if (addr && typeof addr !== 'string') {
+          this.log.info(`The frontend http server is bound to ${addr.family} ${addr.address}:${addr.port}`);
+        }
+        if (this.matterbridge.systemInformation.ipv4Address !== '' && !getParameter('bind'))
+          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://${this.matterbridge.systemInformation.ipv4Address}:${this.port}${UNDERLINEOFF}${rs}`);
+        if (this.matterbridge.systemInformation.ipv6Address !== '' && !getParameter('bind'))
+          this.log.info(`The frontend http server is listening on ${UNDERLINE}http://[${this.matterbridge.systemInformation.ipv6Address}]:${this.port}${UNDERLINEOFF}${rs}`);
+        this.listening = true;
+        this.emit('server_listening', 'http', this.port);
+      });
+
+      this.httpServer.on('upgrade', (req, socket, head): void => {
+        try {
+          // Only proceed for real WebSocket upgrades
+          /* v8 ignore next - Node.js emits the upgrade event only when the Upgrade header is present, so the '' fallback is only a safety check */
+          const upgrade = (req.headers.upgrade || '').toLowerCase();
+          if (upgrade !== 'websocket') {
+            this.log.error(`WebSocket upgrade error: Invalid upgrade header ${req.headers.upgrade}`);
+            socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
+            socket.destroy();
+            return;
+          }
+
+          // Build a URL so we can read ?password=...
+          /* v8 ignore next - req.url is always set by Node.js on server requests, and the Host header is required by HTTP/1.1 (only an HTTP/1.0 request can omit it), so both fallbacks are only safety checks */
+          const url = new URL(req.url ?? '/', `http://${req.headers.host || 'localhost'}`);
+
+          // Validate WebSocket password
+          const password = url.searchParams.get('password') ?? '';
+          if (password !== this.storedPassword) {
+            this.log.error(`WebSocket upgrade error: Invalid password ${password ? '[redacted]' : '(empty)'}`);
+            socket.write('HTTP/1.1 401 Unauthorized\r\nConnection: close\r\n\r\n');
+            socket.destroy();
+            return;
+          }
+
+          // Complete the WebSocket handshake
+          this.log.debug(`WebSocket upgrade success host ${url.host} password ${password ? '[redacted]' : '(empty)'}`);
+          if (req.socket.remoteAddress) this.authClients.add(req.socket.remoteAddress);
+          this.backendWsServer?.webSocketServer?.handleUpgrade(req, socket, head, (ws) => {
+            this.backendWsServer?.webSocketServer?.emit('connection', ws, req);
+          });
+        } catch (err) {
+          {
+            inspectError(this.log, 'WebSocket upgrade error:', err);
+            socket.write('HTTP/1.1 500 Internal Server Error\r\nConnection: close\r\n\r\n');
+            socket.destroy();
+          }
+        }
+        return;
+      });
+
+      this.httpServer.on('error', (error: Error) => {
+        this.log.error(`Frontend http server error listening on ${this.port}`);
+        switch ((error as NodeJS.ErrnoException).code) {
+          case 'EACCES':
+            this.log.error(`Port ${this.port} requires elevated privileges`);
+            break;
+          case 'EADDRINUSE':
+            this.log.error(`Port ${this.port} is already in use`);
+            break;
+          // no default
+        }
+        this.emit('server_error', error);
       });
     }
 
@@ -464,14 +460,14 @@ export class Backend extends EventEmitter<BackendEvents> {
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
   async getApiDevices(pluginName?: string): Promise<ApiDevice[]> {
-    const _response = await this.server.fetch({ type: 'devices_basearray', src: 'frontend', dst: 'devices', params: { pluginName } });
-    return [];
-    // return response.result.devices;
+    const response = await this.server.fetch({ type: 'devices_apidevicearray', src: 'frontend', dst: 'devices', params: { pluginName } });
+    return response.result.devices;
   }
 
   /**
    * Generates a diagnostic file with the server nodes information.
    */
-  // oxlint-disable-next-line no-empty-function
-  async generateDiagnostic(): Promise<void> {}
+  async generateDiagnostic(): Promise<void> {
+    // TODO: Implement the generation of the diagnostic file with the server nodes information.
+  }
 }
