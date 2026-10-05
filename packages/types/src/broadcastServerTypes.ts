@@ -29,7 +29,7 @@ import type { LogLevel } from 'node-ansi-logger';
 // matterbridge
 import type { ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type { ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
@@ -465,5 +465,9 @@ export type WorkerMessageTypes = {
   devices_basearray: {
     request: { params: { pluginName?: string } };
     response: { result: { devices: BaseDevice[] } };
+  };
+  devices_apidevicearray: {
+    request: { params: { pluginName?: string } };
+    response: { result: { devices: ApiDevice[] } };
   };
 };

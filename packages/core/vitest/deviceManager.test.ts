@@ -316,6 +316,79 @@ describe('DeviceManager', () => {
     expect(count).toBe(0);
   });
 
+  test('apiDeviceArray and devices_apidevicearray', async () => {
+    devices.clear();
+    const fake = (props: Record<string, unknown>): MatterbridgeEndpoint =>
+      ({
+        plugin: 'plugin1',
+        deviceType: 0x0100,
+        name: 'OnOffLight',
+        deviceName: 'Light',
+        serialNumber: 'SN',
+        uniqueId: 'unique',
+        id: 'light',
+        number: 5,
+        productUrl: 'https://product',
+        configUrl: 'https://config',
+        lifecycle: { isReady: true },
+        construction: { status: 'active' },
+        hasClusterServer: () => false,
+        getChildEndpoints: () => [],
+        forEachAttribute: () => {},
+        ownerOfType: () => null,
+        ...props,
+      }) as unknown as MatterbridgeEndpoint;
+
+    devices.set(fake({}));
+    devices.set(fake({ uniqueId: 'other', plugin: 'plugin2', deviceName: 'Other' }));
+    devices.set(fake({ uniqueId: 'notReady', lifecycle: { isReady: false } }));
+    devices.set(fake({ uniqueId: 'noPlugin', plugin: '' }));
+    devices.set(
+      fake({
+        uniqueId: 'server',
+        deviceName: 'Server',
+        mode: 'server',
+        serverNode: {
+          id: 'server-store',
+          lifecycle: { isOnline: true },
+          state: {
+            commissioning: { commissioned: false, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: 'MAN' }, fabrics: {} },
+            administratorCommissioning: { windowStatus: 0 },
+            sessions: { sessions: {} },
+            basicInformation: { serialNumber: 'SN', reachable: true },
+          },
+        },
+      }),
+    );
+
+    const all = devices.apiDeviceArray();
+    expect(all.map((d) => d.uniqueId)).toEqual(['unique', 'other', 'server']);
+    expect(all[0]).toEqual({
+      pluginName: 'plugin1',
+      type: 'OnOffLight (0x0100)',
+      endpoint: 5,
+      name: 'Light',
+      serial: 'SN',
+      productUrl: 'https://product',
+      configUrl: 'https://config',
+      uniqueId: 'unique',
+      reachable: false,
+      powerSource: undefined,
+      batteryLevel: undefined,
+      matter: undefined,
+      cluster: '',
+    });
+    expect(all[2].reachable).toBe(true);
+    expect(all[2].matter).toMatchObject({ id: 'server-store', online: true, commissioned: false, qrPairingCode: 'QR', manualPairingCode: 'MAN', serialNumber: 'SN' });
+
+    expect(devices.apiDeviceArray('plugin2').map((d) => d.uniqueId)).toEqual(['other']);
+    expect(devices.apiDeviceArray('missing')).toEqual([]);
+
+    expect((await testServer.fetch({ type: 'devices_apidevicearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toHaveLength(3);
+    expect((await testServer.fetch({ type: 'devices_apidevicearray', src: testServer.name, dst: 'devices', params: { pluginName: 'plugin1' } })).result.devices).toHaveLength(2);
+    devices.clear();
+  });
+
   test('destroy', () => {
     devices.destroy();
     expect(devices).toBeInstanceOf(DeviceManager);

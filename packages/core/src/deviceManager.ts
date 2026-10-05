@@ -23,7 +23,7 @@
 
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
+import type { ApiDevice, BaseDevice, WorkerMessage } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -31,6 +31,7 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 // matterbridge
+import { getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData } from './backendHelpers.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 
 logModuleLoaded('Device Manager');
@@ -142,6 +143,9 @@ export class DeviceManager {
           break;
         case 'devices_basearray':
           this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
+          break;
+        case 'devices_apidevicearray':
+          this.server.respond({ ...msg, result: { devices: this.apiDeviceArray(msg.params.pluginName) } });
           break;
         default:
           /* v8 ignore next cause debug logs are not relevant for coverage */
@@ -259,6 +263,39 @@ export class DeviceManager {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
       devices.push(this.toBaseDevice(device));
+    }
+    return devices;
+  }
+
+  /**
+   * Gets an array of all devices in the ApiDevice format used by the frontend.
+   * Devices that are not ready or miss the required properties are skipped.
+   *
+   * @param {string} [pluginName] - Optional plugin name to filter devices.
+   * @returns {ApiDevice[]} An array of ApiDevice.
+   */
+  apiDeviceArray(pluginName?: string): ApiDevice[] {
+    const devices: ApiDevice[] = [];
+    for (const device of this._devices.values()) {
+      // Filter by pluginName if provided
+      if (pluginName && pluginName !== device.plugin) continue;
+      // Check if the device has the required properties
+      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
+      devices.push({
+        pluginName: device.plugin,
+        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
+        endpoint: device.number,
+        name: device.deviceName,
+        serial: device.serialNumber,
+        productUrl: device.productUrl,
+        configUrl: device.configUrl,
+        uniqueId: device.uniqueId,
+        reachable: getReachability(device),
+        powerSource: getPowerSource(device),
+        batteryLevel: getBatteryLevel(device),
+        matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
+        cluster: getClusterTextFromDevice(device),
+      });
     }
     return devices;
   }
