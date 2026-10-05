@@ -41,6 +41,35 @@ describe('ThreadsManager', () => {
     vi.restoreAllMocks();
   });
 
+  describe('command line flags', () => {
+    test.each([
+      { flag: undefined, debug: false, verbose: false, tracker: false },
+      { flag: 'debug', debug: true, verbose: false, tracker: false },
+      { flag: 'verbose', debug: true, verbose: true, tracker: false },
+      { flag: 'debug-threads', debug: true, verbose: false, tracker: false },
+      { flag: 'verbose-threads', debug: true, verbose: true, tracker: false },
+      { flag: 'tracker', debug: false, verbose: false, tracker: true },
+      { flag: 'tracker-threads', debug: false, verbose: false, tracker: true },
+    ])('should configure flags for $flag', ({ flag, debug, verbose, tracker }) => {
+      const originalArgv = process.argv;
+      const originalLogLevel = ThreadsManager.logLevel;
+      process.argv = originalArgv.slice(0, 2);
+      if (flag) process.argv.push(`--${flag}`);
+      let manager: ThreadsManager | undefined;
+      try {
+        manager = new ThreadsManager();
+        expect(manager['debug']).toBe(debug);
+        expect(manager['verbose']).toBe(verbose);
+        expect(manager['tracker']).toBe(tracker);
+        expect(ThreadsManager.logLevel).toBe(debug ? LogLevel.DEBUG : LogLevel.INFO);
+      } finally {
+        manager?.destroy();
+        process.argv = originalArgv;
+        ThreadsManager.logLevel = originalLogLevel;
+      }
+    });
+  });
+
   describe('resolvePath', () => {
     const manager = new ThreadsManager();
 

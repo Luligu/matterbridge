@@ -29,7 +29,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker, type WorkerOptions } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '@matterbridge/types';
-import { hasParameter } from '@matterbridge/utils/cli';
+import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { fireAndForget } from '@matterbridge/utils/wait';
@@ -86,6 +86,7 @@ export class ThreadsManager {
     { name: 'SpawnCommand', path: 'workerSpawnCommand.js', type: 'worker' },
     { name: 'ArchiveCommand', path: 'workerArchiveCommand.js', type: 'worker' },
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
+    { name: 'Backend', path: 'threadBackend.js', type: 'thread' },
   ];
 
   private terminateWorkers = new Set<Worker>();
@@ -96,16 +97,14 @@ export class ThreadsManager {
    * @param {number} [intervalMs=60_000] - The delay in milliseconds for the interval handler. Defaults to 60 seconds (60000 ms).
    */
   constructor(intervalMs: number = 60_000) {
-    /* v8 ignore next 3 lines - debug/verbose/tracker flags are only used for development and testing, not in production */
-    this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
-    this.verbose = hasParameter('verbose') || hasParameter('verbose-threads');
-    this.tracker = hasParameter('tracker') || hasParameter('tracker-threads');
+    this.debug = hasAnyParameter('debug', 'verbose', 'debug-threads', 'verbose-threads');
+    this.verbose = hasAnyParameter('verbose', 'verbose-threads');
+    this.tracker = hasAnyParameter('tracker', 'tracker-threads');
     // Create a logger instance for the ThreadsManager
     this.log = new AnsiLogger({
       logName: 'ThreadsManager',
       logNameColor: MAGENTA,
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
-      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
       logWithColors: !hasParameter('no-ansi') && process.env.NO_COLOR !== '1',
     });
@@ -120,7 +119,6 @@ export class ThreadsManager {
     this.intervalMs = intervalMs;
     this.interval = setInterval(this.intervalHandler.bind(this), this.intervalMs);
 
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.verbose) this.log.notice(`ThreadsManager initialized. Listening for broadcast messages...`);
   }
 
@@ -134,7 +132,6 @@ export class ThreadsManager {
     // Close broadcast servers and remove listeners
     this.server.off('broadcast_message', this.boundMsgHandler);
     this.server.close();
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.verbose) this.log.notice(`ThreadsManager destroyed. Broadcast server closed.`);
   }
 
