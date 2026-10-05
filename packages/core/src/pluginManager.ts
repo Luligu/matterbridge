@@ -46,12 +46,13 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, nt, rs, T
 // NodeStorage
 import type { NodeStorage } from 'node-persist-manager';
 
-// matterbridge
 import type { Matterbridge } from './matterbridge.js';
 import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform.js';
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
+// matterbridge
+import { getServerNodeData } from './matterNodeHelpers.js';
 
 logModuleLoaded('Plugin Manager');
 
@@ -543,7 +544,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       schemaJson: plugin.schemaJson,
       hasWhiteList: plugin.hasWhiteList,
       hasBlackList: plugin.hasBlackList,
-      matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
+      matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
     };
   }
 
