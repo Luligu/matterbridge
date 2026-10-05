@@ -580,9 +580,11 @@ describe('ThreadsManager', () => {
 
       expect(debugSpy).toHaveBeenCalled();
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Thread CheckUpdates running: yes'));
+      expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Thread CheckUpdates running: yes, threadId: 1'));
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('lastSeen: 1970-01-01T00:00:00.001Z'));
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('runs: 2, errors: 3'));
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Thread SystemCheck running: no'));
+      expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Thread SystemCheck running: no, threadId: none'));
       manager.destroy();
     });
 

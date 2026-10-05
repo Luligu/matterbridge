@@ -189,7 +189,7 @@ export class ThreadsManager {
   private intervalHandler(): void {
     for (const thread of this.threads) {
       this.log.debug(
-        `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
+        `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, threadId: ${thread.worker?.threadId ?? 'none'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
       );
     }
     this.terminateExitedWorkers();
