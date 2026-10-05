@@ -33,8 +33,8 @@ import path from 'node:path';
 
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
-import type { ApiDevice, ApiPlugin, ApiSettings, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
-import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import type { ApiClusters, ApiDevice, ApiPlugin, ApiSettings, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { fireAndForget } from '@matterbridge/utils/wait';
@@ -67,8 +67,6 @@ export class Backend extends EventEmitter<BackendEvents> {
   private debug: boolean;
   private verbose: boolean;
   private diagnostic: boolean;
-  private secure: boolean;
-  private requestCert: boolean;
   private log: AnsiLogger;
   private matterbridge: SharedMatterbridge;
   private readonly server: BroadcastServer;
@@ -76,6 +74,11 @@ export class Backend extends EventEmitter<BackendEvents> {
   private listening = false;
   private httpServer: HttpServer | undefined;
   private httpsServer: HttpsServer | undefined;
+
+  /** True when the backend serves https and wss (--ssl, --tls or --mtls). */
+  readonly secure: boolean;
+  /** True when the backend requires a client certificate (--mtls). */
+  readonly requestCert: boolean;
 
   backendExpress: BackendExpress | undefined;
   backendWsServer: BackendWsServer | undefined;
@@ -91,10 +94,10 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   constructor(matterbridge: SharedMatterbridge) {
     super();
-    this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
-    this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
-    this.diagnostic = hasParameter('diagnostic') || hasParameter('diagnostic-frontend');
-    this.secure = hasParameter('ssl');
+    this.debug = hasAnyParameter('debug', 'verbose', 'debug-backend', 'verbose-backend');
+    this.verbose = hasAnyParameter('verbose', 'verbose-backend');
+    this.diagnostic = hasAnyParameter('diagnostic', 'diagnostic-backend');
+    this.secure = hasAnyParameter('ssl', 'tls', 'mtls');
     this.requestCert = hasParameter('mtls');
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({
@@ -462,6 +465,22 @@ export class Backend extends EventEmitter<BackendEvents> {
   async getApiDevices(pluginName?: string): Promise<ApiDevice[]> {
     const response = await this.server.fetch({ type: 'devices_apidevicearray', src: 'frontend', dst: 'devices', params: { pluginName } });
     return response.result.devices;
+  }
+
+  /**
+   * Retrieves the clusters from a given plugin and endpoint number.
+   *
+   * Response for /api/clusters
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {number} endpointNumber - The endpoint number.
+   * @param {string} [serialNumber] - The device serial number to filter by (optional).
+   * @param {string} [uniqueId] - The device unique ID to filter by (optional).
+   * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
+   */
+  getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
+    this.log.debug(`Retrieving API cluster for plugin: ${pluginName}, endpoint: ${endpointNumber}, serial: ${serialNumber}, uniqueId: ${uniqueId}`);
+    return undefined;
   }
 
   /**

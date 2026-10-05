@@ -165,7 +165,7 @@ describe('Backend', () => {
    * @returns {Promise<Backend>} The listening Backend.
    */
   async function startBackend(args: string[], matterbridge: SharedMatterbridge = createSharedMatterbridge()): Promise<Backend> {
-    process.argv = ['node', 'backend.test.js', ...args, '--debug-frontend', '--verbose-frontend'];
+    process.argv = ['node', 'backend.test.js', ...args, '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(matterbridge);
     backend.storedPassword = 'testpassword';
@@ -182,7 +182,7 @@ describe('Backend', () => {
    * @returns {Promise<unknown>} The error emitted with server_error.
    */
   async function startBackendWithError(args: string[]): Promise<unknown> {
-    process.argv = ['node', 'backend.test.js', ...args, '--debug-frontend', '--verbose-frontend'];
+    process.argv = ['node', 'backend.test.js', ...args, '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
     const serverError = once(backend, 'server_error');
@@ -255,6 +255,8 @@ describe('Backend', () => {
     expect(await backend.getApiPlugins()).toEqual([{ name: 'plugin1' }]);
     expect(await backend.getApiDevices('plugin1')).toEqual([{ pluginName: 'plugin1' }]);
     expect(await backend.getApiDevices()).toEqual([]);
+    expect(backend.getApiCluster('plugin1', 1)).toBeUndefined();
+    expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).toBeUndefined();
     await expect(backend.generateDiagnostic()).resolves.toBeUndefined();
 
     matterbridgeServer.close();
@@ -263,7 +265,7 @@ describe('Backend', () => {
   });
 
   test('should serve http and ws when started without ssl', async () => {
-    process.argv = ['node', 'backend.test.js', '--debug-frontend', '--verbose-frontend'];
+    process.argv = ['node', 'backend.test.js', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
     backend.storedPassword = 'testpassword';
@@ -288,7 +290,7 @@ describe('Backend', () => {
 
   test('should serve https and wss when started with ssl', async () => {
     setCerts(PEM_CERTS);
-    process.argv = ['node', 'backend.test.js', '--ssl', '--debug-frontend', '--verbose-frontend'];
+    process.argv = ['node', 'backend.test.js', '--ssl', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
     backend.storedPassword = 'testpassword';
@@ -312,6 +314,28 @@ describe('Backend', () => {
     await closeWebSocket(client);
   });
 
+  test('should be secure without client certificate when started with tls', async () => {
+    setCerts(PEM_CERTS);
+    await startBackend(['--tls']);
+    expect(backend?.secure).toBe(true);
+    expect(backend?.requestCert).toBe(false);
+    expect((backend as any).httpsServer).toBeDefined();
+
+    const response = await get(`https://localhost:${port}/health`, { ca: caCert, rejectUnauthorized: true });
+    expect(response.statusCode).toBe(200);
+  });
+
+  test('should be secure and require a client certificate when started with mtls only', async () => {
+    setCerts(PEM_CERTS);
+    await startBackend(['--mtls']);
+    expect(backend?.secure).toBe(true);
+    expect(backend?.requestCert).toBe(true);
+
+    await expect(get(`https://localhost:${port}/health`, { ca: caCert, rejectUnauthorized: true })).rejects.toThrow();
+    const response = await get(`https://localhost:${port}/health`, { ca: caCert, cert: clientCert, key: clientKey, rejectUnauthorized: true });
+    expect(response.statusCode).toBe(200);
+  });
+
   test('should serve https without the ca certificate when ca.pem is missing', async () => {
     setCerts({ 'cert.pem': 'server.crt', 'key.pem': 'server.key' });
     await startBackend(['--ssl']);
@@ -323,7 +347,7 @@ describe('Backend', () => {
 
   test('should require a client certificate when started with ssl and mtls', async () => {
     setCerts(PEM_CERTS);
-    process.argv = ['node', 'backend.test.js', '--ssl', '--mtls', '--debug-frontend', '--verbose-frontend'];
+    process.argv = ['node', 'backend.test.js', '--ssl', '--mtls', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
     backend.storedPassword = 'testpassword';
@@ -351,7 +375,7 @@ describe('Backend', () => {
 
   test('should serve https and wss when started with ssl and a p12 certificate with passphrase', async () => {
     setCerts({ 'cert.p12': 'server.p12', 'cert.pass': 'server.pass' });
-    process.argv = ['node', 'backend.test.js', '--ssl', '--debug-frontend', '--verbose-frontend'];
+    process.argv = ['node', 'backend.test.js', '--ssl', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
     backend.storedPassword = 'testpassword';

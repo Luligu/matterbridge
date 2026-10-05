@@ -44,7 +44,8 @@ import type {
   WsMessageBroadcast,
   WsMessageErrorApiResponse,
 } from '@matterbridge/types';
-import { hasParameter } from '@matterbridge/utils/cli';
+import { hasAnyParameter } from '@matterbridge/utils/cli';
+import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidNumber, isValidString } from '@matterbridge/utils/validate';
@@ -83,9 +84,9 @@ export class BackendWsServer {
    * @param {Backend} backend - The backend instance to which this WebSocket server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
-    this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
-    this.diagnostic = hasParameter('diagnostic') || hasParameter('diagnostic-frontend');
+    this.debug = hasAnyParameter('debug', 'verbose', 'debug-backend', 'verbose-backend');
+    this.verbose = hasAnyParameter('verbose', 'verbose-backend');
+    this.diagnostic = hasAnyParameter('diagnostic', 'diagnostic-backend');
     this.backend = backend;
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({
@@ -136,7 +137,7 @@ export class BackendWsServer {
     // Create a WebSocket server to be wired to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer({ noServer: true });
-    this.backend.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
+    this.backend.emit('websocket_server_listening', this.backend.secure ? 'wss' : 'ws');
 
     this.webSocketServer.on('connection', (websocket, request) => {
       const clientIp = request.socket.remoteAddress;
@@ -250,7 +251,6 @@ export class BackendWsServer {
    * @param {WebSocket.RawData} rawData - The raw data of the message received from the client.
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
-  // oxlint-disable-next-line typescript/require-await
   private async wsMessageHandler(client: WebSocket, rawData: WebSocket.RawData): Promise<void> {
     let data: WsMessageApiRequest;
 
@@ -284,6 +284,39 @@ export class BackendWsServer {
 
       // Handle the message based on the method
       // TODO add methods
+      if (data.method === '/api/settings') {
+        const start = performance.now();
+        const settings = await this.backend.getApiSettings();
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
+      } else if (data.method === '/api/plugins') {
+        const start = performance.now();
+        const plugins = await this.backend.getApiPlugins();
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
+      } else if (data.method === '/api/devices') {
+        const start = performance.now();
+        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
+      } else if (data.method === '/api/clusters') {
+        if (!isValidString(data.params.plugin, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' });
+          return;
+        }
+        if (!isValidNumber(data.params.endpoint, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
+          return;
+        }
+        const start = performance.now();
+        const clusters = this.backend.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (clusters) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: clusters });
+        } else {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
+        }
+      }
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);
       return;

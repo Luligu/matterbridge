@@ -30,12 +30,17 @@ const mockedBackend = {
   restartRequired: false,
   fixedRestartRequired: false,
   updateRequired: false,
+  secure: false,
+  getApiSettings: vi.fn(async () => ({ matterbridgeInformation: {} })),
+  getApiPlugins: vi.fn(async () => [{ name: 'matterbridge-test' }]),
+  getApiDevices: vi.fn(async () => [{ name: 'Device' }]),
+  getApiCluster: vi.fn<Backend['getApiCluster']>(),
 } as unknown as Backend;
 
 // Setup the test environment
 await setupTest(NAME, false);
 
-process.argv = ['node', 'backendWsServer.test.js', '--debug-frontend', '--verbose-frontend'];
+process.argv = ['node', 'backendWsServer.test.js', '--debug-backend', '--verbose-backend'];
 
 class FakeClient extends EventEmitter {
   OPEN = 1;
@@ -226,6 +231,70 @@ describe('BackendWsServer', () => {
     expect(loggerErrorSpy).not.toHaveBeenCalled();
   });
 
+  test('should answer the settings, plugins, devices and clusters api requests', async () => {
+    const client: any = new FakeClient();
+    const request = async (method: string, params: Record<string, unknown> = {}): Promise<any> => {
+      client.send.mockClear();
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 10, src: 'Frontend', dst: 'Matterbridge', method, params })));
+      expect(client.send).toHaveBeenCalledTimes(1);
+      return JSON.parse(client.send.mock.calls[0][0]);
+    };
+
+    expect(await request('/api/settings')).toEqual({
+      id: 10,
+      method: '/api/settings',
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      success: true,
+      response: { matterbridgeInformation: {} },
+    });
+    expect(mockedBackend.getApiSettings).toHaveBeenCalled();
+
+    expect(await request('/api/plugins')).toMatchObject({ success: true, response: [{ name: 'matterbridge-test' }] });
+    expect(mockedBackend.getApiPlugins).toHaveBeenCalled();
+
+    expect(await request('/api/devices')).toMatchObject({ success: true, response: [{ name: 'Device' }] });
+    expect(vi.mocked(mockedBackend.getApiDevices).mock.lastCall).toEqual([undefined]);
+    expect(await request('/api/devices', { pluginName: 'matterbridge-test' })).toMatchObject({ success: true });
+    expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test');
+
+    expect(await request('/api/clusters', { plugin: 'short', endpoint: 1 })).toMatchObject({ error: 'Wrong parameter plugin in /api/clusters' });
+    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 0 })).toMatchObject({ error: 'Wrong parameter endpoint in /api/clusters' });
+    expect(mockedBackend.getApiCluster).not.toHaveBeenCalled();
+
+    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1 })).toMatchObject({ error: 'Endpoint not found in /api/clusters' });
+    expect(vi.mocked(mockedBackend.getApiCluster).mock.lastCall).toEqual(['matterbridge-test', 1, undefined, undefined]);
+
+    vi.mocked(mockedBackend.getApiCluster).mockReturnValueOnce({ plugin: 'matterbridge-test', endpoint: 1 } as any);
+    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
+      success: true,
+      response: { plugin: 'matterbridge-test', endpoint: 1 },
+    });
+    expect(mockedBackend.getApiCluster).toHaveBeenLastCalledWith('matterbridge-test', 1, 'SN1', 'UID1');
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+  });
+
+  test('should write the diagnostic timings when diagnostic is enabled', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const client: any = new FakeClient();
+    (wsServer as any).diagnostic = true;
+    try {
+      for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/clusters']) {
+        await (wsServer as any).wsMessageHandler(
+          client,
+          Buffer.from(JSON.stringify({ id: 11, src: 'Frontend', dst: 'Matterbridge', sender: 'Test', method, params: { plugin: 'matterbridge-test', endpoint: 1 } })),
+        );
+      }
+      for (const name of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster']) {
+        expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Frontend:Test: ${name}() took`));
+      }
+      expect(client.send).toHaveBeenCalledTimes(4);
+    } finally {
+      (wsServer as any).diagnostic = false;
+      stderrSpy.mockRestore();
+    }
+  });
+
   test('Send helpers (active + inactive clients)', () => {
     // No clients => early returns
     expect(wsServer.hasActiveClients()).toBe(false);
@@ -378,9 +447,10 @@ describe('BackendWsServer', () => {
     expect(server.broadcastChannel?.onmessageerror).toBe(null);
   });
 
-  test('should use wss, the info log level and no verbose logs without debug flags and with ssl', async () => {
+  test('should use wss, the info log level and no verbose logs without debug flags and with a secure backend', async () => {
     const savedArgv = process.argv;
-    process.argv = ['node', 'backendWsServer.test.js', '--ssl'];
+    process.argv = ['node', 'backendWsServer.test.js'];
+    (mockedBackend as any).secure = true;
     try {
       const quietServer = new BackendWsServer(mockedSharedMatterbridge, mockedBackend);
       expect((quietServer as any).log.logLevel).toBe(LogLevel.INFO);
@@ -410,6 +480,7 @@ describe('BackendWsServer', () => {
       await quietServer.stop();
       quietServer.destroy();
     } finally {
+      (mockedBackend as any).secure = false;
       process.argv = savedArgv;
     }
   });

@@ -68,7 +68,7 @@ const mockedBackend = {
 // Setup the test environment
 await setupTest(NAME, false);
 
-process.argv = ['node', 'backendExpress.test.js', '--debug-frontend', '--verbose-frontend'];
+process.argv = ['node', 'backendExpress.test.js', '--debug-backend', '--verbose-backend'];
 
 describe('BackendExpress', () => {
   let backendExpress: BackendExpress;

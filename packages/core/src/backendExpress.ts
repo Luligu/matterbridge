@@ -44,7 +44,7 @@ import {
   type WorkerMessage,
 } from '@matterbridge/types';
 import { isBun } from '@matterbridge/utils/bun';
-import { hasParameter } from '@matterbridge/utils/cli';
+import { hasAnyParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { formatBytes } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -91,9 +91,9 @@ export class BackendExpress {
    * @param {Backend} backend - The backend instance to which this Express server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
-    this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
-    this.diagnostic = hasParameter('diagnostic') || hasParameter('diagnostic-frontend');
+    this.debug = hasAnyParameter('debug', 'verbose', 'debug-backend', 'verbose-backend');
+    this.verbose = hasAnyParameter('verbose', 'verbose-backend');
+    this.diagnostic = hasAnyParameter('diagnostic', 'diagnostic-backend');
     this.backend = backend;
     this.matterbridge = matterbridge;
     this.log = new AnsiLogger({
