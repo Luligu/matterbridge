@@ -422,11 +422,11 @@ describe('Matterbridge frontend', () => {
     expect(frontend.getApiDevices()).toEqual([]);
   });
 
-  test('Frontend getClusters', async () => {
+  test('Frontend getApiCluster', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(frontend.getClusters('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1)).toBeUndefined();
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(frontend.getClusters('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1)).toBeUndefined();
   });
 
   test('Frontend getClusterTextFromDevice', () => {

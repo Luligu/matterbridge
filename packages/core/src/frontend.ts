@@ -1700,14 +1700,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} [uniqueId] - The device unique ID to filter by (optional).
    * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
    */
-  getClusters(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
+  getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
     if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices
       .array()
       .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber) && (!uniqueId || d.uniqueId === uniqueId));
     if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(
-        `getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
+        `getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
       );
       return;
     }
@@ -1743,7 +1743,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     childEndpoints.forEach((childEndpoint) => {
       /* v8 ignore next cause is not reachable: should never happen but ... */
       if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
-        this.log.error(`getClusters: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
+        this.log.error(`getApiCluster: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
         return;
       }
 
@@ -2230,9 +2230,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         const start = performance.now();
-        const clusters = this.getClusters(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        const clusters = this.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getClusters() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
         if (clusters) {
           sendResponse({
             id: data.id,
