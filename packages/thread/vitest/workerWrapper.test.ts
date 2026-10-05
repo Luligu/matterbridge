@@ -22,6 +22,7 @@ type SetupOptions = Readonly<{
   debugParam?: boolean;
   verboseParam?: boolean;
   workerDataPresent?: boolean;
+  type?: 'worker' | 'thread';
 }>;
 
 type SetupResult = Readonly<{
@@ -88,7 +89,7 @@ describe('WorkerWrapper', () => {
         ...actual,
         isMainThread: options.isMainThread,
         threadId: options.threadId,
-        workerData: options.workerDataPresent === false ? undefined : { threadName: options.threadName },
+        workerData: options.workerDataPresent === false ? undefined : { threadName: options.threadName, type: options.type },
         parentPort,
       };
     });
@@ -122,6 +123,51 @@ describe('WorkerWrapper', () => {
       waitImmediate,
     };
   }
+
+  test('should keep a successful continuous thread alive and responsive until explicitly destroyed', async () => {
+    const { WorkerWrapper, parentPort, getOnMessageHandler, serverClose, waitImmediate } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 7,
+      threadName: 'Backend',
+      type: 'thread',
+    });
+    const worker = new WorkerWrapper('Backend', asyncTrue);
+    try {
+      await waitImmediate();
+      expect(serverClose).not.toHaveBeenCalled();
+      expect(parentPort?.close).not.toHaveBeenCalled();
+      expect(parentPort?.postMessage).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'exit' }));
+      getOnMessageHandler()?.({ type: 'ping' });
+      expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'pong' }));
+    } finally {
+      worker.destroy(true);
+    }
+    expect(serverClose).toHaveBeenCalledOnce();
+    expect(parentPort?.close).toHaveBeenCalledOnce();
+  });
+
+  test.each(['false', 'throw'] as const)('should destroy a continuous thread when startup fails (%s)', async (failure) => {
+    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 7,
+      threadName: 'Backend',
+      type: 'thread',
+    });
+    const worker = new WorkerWrapper('Backend', async () => {
+      await Promise.resolve();
+      if (failure === 'throw') throw new Error('Startup failed');
+      return false;
+    });
+    try {
+      await waitImmediate();
+      expect(serverClose).toHaveBeenCalledOnce();
+      expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'exit', success: false }));
+    } finally {
+      worker.destroy(false);
+    }
+  });
 
   test('should enable debug and verbose logging in the main thread', async () => {
     const { WorkerWrapper, serverClose } = await setup({

@@ -205,6 +205,7 @@ describe('ThreadsManager', () => {
         expect(message).toBeDefined();
         expect(message.workerData).toBeDefined();
         expect(message.workerData.foo).toBe('bar');
+        expect(message.workerData.type).toBe('worker');
         // ThreadsManager adds threadName into workerData
         expect(message.workerData.threadName).toBe('TestWorker');
         expect(Array.isArray(message.argv)).toBe(true);
@@ -389,10 +390,14 @@ describe('ThreadsManager', () => {
       manager.destroy();
     });
 
-    test('runs the exported worker wrapper in the main thread and returns the callback result', async () => {
+    test.each([
+      { type: 'worker' as const, ok: true },
+      { type: 'thread' as const, ok: true },
+      { type: 'thread' as const, ok: false },
+    ])('runs a $type wrapper in the main thread with success $ok', async ({ type, ok }) => {
       const manager = new ThreadsManager();
 
-      const tempWorkerFileName = `runInMainThread.test.worker.${Date.now()}.js`;
+      const tempWorkerFileName = `runInMainThread.test.${type}.${ok}.${Date.now()}.js`;
       const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
       writeFileSync(
         tempWorkerPath,
@@ -415,17 +420,17 @@ describe('ThreadsManager', () => {
         vi.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
 
         const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
-        threads.push({ name: 'RunInMainThreadWorker', path: tempWorkerFileName, type: 'worker' });
+        threads.push({ name: 'RunInMainThreadWorker', path: tempWorkerFileName, type });
 
         // @ts-expect-error test-only workerData shape
-        const result = await manager.runInMainThread('RunInMainThreadWorker', { ok: true, payload: 'value' });
+        const result = await manager.runInMainThread('RunInMainThreadWorker', { ok, payload: 'value' });
 
-        expect(result).toBe(true);
+        expect(result).toBe(ok);
 
         const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
-        expect(imported.workerData).toEqual({ ok: true, payload: 'value' });
+        expect(imported.workerData).toEqual({ ok, payload: 'value' });
         expect(imported.callbackCalledWith).toBe(imported);
-        expect(imported.destroyCalledWith).toBe(true);
+        expect(imported.destroyCalledWith).toBe(type === 'thread' && ok ? undefined : ok);
       } finally {
         if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
         manager.destroy();

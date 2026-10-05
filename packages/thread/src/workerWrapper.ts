@@ -82,7 +82,6 @@ export class WorkerWrapper {
           this.tracker.start();
           return;
         })
-        /* v8 ignore next - debug/verbose/tracker flags are only used for development and testing, not in production */
         .catch((err: unknown) => {
           // oxlint-disable-next-line no-console
           if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker ${getErrorMessage(err)}`);
@@ -136,7 +135,7 @@ export class WorkerWrapper {
     // Log worker info
     if (this.verbose) this.logWorkerInfo(this.log, false);
 
-    // Execute the callback function and destroy the worker with the success status returned by the callback
+    // Execute startup and keep successful continuous threads alive.
     if (!isMainThread) {
       setImmediate(() => {
         void (async (): Promise<void> => {
@@ -146,7 +145,7 @@ export class WorkerWrapper {
           } catch (err) {
             inspectError(this.log, `Worker ${this.name} callback failed`, err);
           } finally {
-            this.destroy(success);
+            if (!success || this.workerData?.type !== 'thread') this.destroy(success);
           }
         })();
       });

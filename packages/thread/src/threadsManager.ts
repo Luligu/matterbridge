@@ -241,7 +241,7 @@ export class ThreadsManager {
     threadInfo.worker = this.createESMWorker(
       threadInfo.name,
       path,
-      { ...workerData, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel/tracker in workerData for workers to adjust their logging behavior
+      { ...workerData, type: threadInfo.type, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel/tracker in workerData for workers to adjust their logging behavior
       argv,
       env,
       execArgv,
@@ -338,8 +338,11 @@ export class ThreadsManager {
     const workerWrapper: WorkerWrapper = (await import(this.resolvePath(threadInfo.path))).default;
     if (workerWrapper && typeof workerWrapper === 'object' && workerWrapper.name === name && workerWrapper.callback && typeof workerWrapper.callback === 'function') {
       workerWrapper.workerData = workerData;
-      success = await workerWrapper.callback(workerWrapper);
-      workerWrapper.destroy(success);
+      try {
+        success = await workerWrapper.callback(workerWrapper);
+      } finally {
+        if (!success || threadInfo.type !== 'thread') workerWrapper.destroy(success);
+      }
     }
 
     this.log.debug(`Finished running thread ${threadInfo.name} in the main thread.`);

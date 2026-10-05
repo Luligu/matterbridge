@@ -27,10 +27,11 @@ import type { LogLevel } from 'node-ansi-logger';
 export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend';
 
 /** Base worker data for all workers */
-export type BaseWorkerData = { threadName: ThreadNames; logLevel: LogLevel; debug: boolean; verbose: boolean; tracker: boolean };
+export type BaseWorkerData = { type?: 'worker' | 'thread'; threadName: ThreadNames; logLevel: LogLevel; debug: boolean; verbose: boolean; tracker: boolean };
 
 /** Worker data for spawn command worker */
 export type SpawnWorkerData = {
+  type?: 'worker' | 'thread';
   threadName: ThreadNames;
   logLevel?: LogLevel;
   debug?: boolean;
@@ -44,6 +45,7 @@ export type SpawnWorkerData = {
 
 /** Worker data for archive command worker */
 export type ArchiveWorkerData = {
+  type?: 'worker' | 'thread';
   threadName: ThreadNames;
   logLevel?: LogLevel;
   debug?: boolean;
