@@ -74,20 +74,7 @@ export class WorkerWrapper {
       this.verbose = this.workerData.verbose ?? this.verbose;
       this.useTracker = this.workerData.tracker ?? this.useTracker;
     }
-    /* v8 ignore next - debug/verbose/tracker flags are only used for development and testing, not in production */
-    if (this.useTracker) {
-      void import('@matterbridge/utils/tracker')
-        .then(({ Tracker }) => {
-          this.tracker = new Tracker(`Thread${this.name}`, this.debug, this.verbose);
-          this.tracker.start();
-          return;
-        })
-        .catch((err: unknown) => {
-          // oxlint-disable-next-line no-console
-          if (this.debug) console.error(`WorkerWrapper ${this.name}: failed to load Tracker ${getErrorMessage(err)}`);
-          return;
-        });
-    }
+
     // Initialize logger
     this.log = new AnsiLogger({
       logName: this.name,
@@ -95,6 +82,20 @@ export class WorkerWrapper {
       logTimestampFormat: TimestampFormat.TIME_MILLIS,
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
+
+    // Initialize the tracker if the useTracker flag is set.
+    if (this.useTracker) {
+      void import('@matterbridge/utils/tracker')
+        .then(({ Tracker }) => {
+          this.tracker = new Tracker(`Thread${this.name}`, this.debug || this.useTracker, this.verbose, this.useTracker);
+          this.tracker.start();
+          return;
+        })
+        .catch((err: unknown) => {
+          this.safeParentLog(LogLevel.ERROR, `WorkerWrapper ${this.name}: failed to load Tracker ${getErrorMessage(err)}`);
+          return;
+        });
+    }
 
     // Initialize broadcast server
     this.server = new BroadcastServer('matterbridge', this.log);
@@ -167,7 +168,6 @@ export class WorkerWrapper {
     }
 
     // Close the tracker if it exists
-    /* v8 ignore next - debug/verbose/tracker flags are only used for development and testing, not in production */
     if (this.tracker) this.tracker.stop();
 
     // Close the broadcast server

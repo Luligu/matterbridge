@@ -415,7 +415,7 @@ export class ThreadsManager {
   ): Worker {
     const fileURL = pathToFileURL(path.resolve(relativePath));
     const options: WorkerOptions = {
-      workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel, tracker: this.tracker }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
+      workerData: { ...workerData, threadName: name, debug: this.debug, verbose: this.verbose, tracker: this.tracker, logLevel: this.log.logLevel }, // Pass threadName in workerData cause worker_threads don't have it natively in node 20
       name,
       argv: argv ?? process.argv.slice(2), // Pass command line arguments to worker
       env: env ?? process.env, // Inherit environment variables

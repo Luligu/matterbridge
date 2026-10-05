@@ -32,11 +32,16 @@ logModuleLoaded('Backend', '\u001B[35m');
 export default new WorkerWrapper('Backend', async (worker) => {
   worker.logger(LogLevel.INFO, 'Creating backend...');
   try {
+    worker.logger(LogLevel.DEBUG, 'Fetching shared Matterbridge state...');
     const shared = (await worker.server.fetch({ type: 'matterbridge_shared', src: 'matterbridge', dst: 'matterbridge' }, 1000)).result.data;
+    worker.logger(LogLevel.DEBUG, 'Shared Matterbridge state fetched; importing Backend...');
     const { Backend } = await import('@matterbridge/core/backend');
+    worker.logger(LogLevel.DEBUG, 'Backend imported; creating instance...');
     const backend = new Backend(shared);
+    worker.logger(LogLevel.DEBUG, 'Starting Backend...');
     // Start the backend server. It will keep running until explicitly stopped.
     await backend.start();
+    worker.logger(LogLevel.DEBUG, 'Backend started');
     return true;
   } catch (error) {
     const errorMessage = inspectError(worker.log, 'Failed to create backend', error);

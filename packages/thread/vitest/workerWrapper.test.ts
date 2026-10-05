@@ -21,6 +21,7 @@ type SetupOptions = Readonly<{
   parentPortPresent: boolean;
   debugParam?: boolean;
   verboseParam?: boolean;
+  trackerParam?: boolean;
   workerDataPresent?: boolean;
   type?: 'worker' | 'thread';
 }>;
@@ -50,6 +51,7 @@ describe('WorkerWrapper', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.doUnmock('@matterbridge/utils/tracker');
   });
 
   async function setup(options: SetupOptions): Promise<SetupResult> {
@@ -73,6 +75,7 @@ describe('WorkerWrapper', () => {
     const hasParameterMock = vi.fn<(...args: any[]) => any>((parameter: string) => {
       if (parameter === 'debug') return options.debugParam ?? false;
       if (parameter === 'verbose') return options.verboseParam ?? false;
+      if (parameter === 'tracker') return options.trackerParam ?? false;
       if (parameter === 'debug-threads') return false;
       if (parameter === 'verbose-threads') return false;
       return false;
@@ -184,6 +187,78 @@ describe('WorkerWrapper', () => {
       expect(worker.verbose).toBe(true);
       expect(worker.useTracker).toBe(false);
       expect(worker.log.logLevel).toBe(LogLevel.DEBUG);
+    } finally {
+      worker.destroy(true);
+    }
+    expect(serverClose).toHaveBeenCalledOnce();
+  });
+
+  test.each([
+    { debugParam: false, useTracker: true },
+    { debugParam: true, useTracker: true },
+    { debugParam: false, useTracker: false },
+  ])('should initialize the Tracker with the current flags ($debugParam, $useTracker)', async ({ debugParam, useTracker }) => {
+    const { WorkerWrapper } = await setup({
+      isMainThread: true,
+      parentPortPresent: false,
+      threadId: 0,
+      threadName: 'Backend',
+      trackerParam: true,
+      debugParam,
+    });
+    const start = vi.fn<() => void>();
+    const stop = vi.fn<() => void>();
+    const tracker = { start, stop };
+    const Tracker = vi.fn(function () {
+      return tracker;
+    });
+    vi.doMock('@matterbridge/utils/tracker', () => ({ Tracker }));
+
+    const worker = new WorkerWrapper('Backend', asyncTrue);
+    // Flags can change while the asynchronous module import is pending.
+    worker.useTracker = useTracker;
+    try {
+      await vi.dynamicImportSettled();
+      expect(worker.useTracker).toBe(useTracker);
+      expect(Tracker).toHaveBeenCalledExactlyOnceWith('ThreadBackend', debugParam || useTracker, false, useTracker);
+      expect(worker.tracker).toBe(tracker);
+      expect(start).toHaveBeenCalledOnce();
+      expect(stop).not.toHaveBeenCalled();
+    } finally {
+      worker.destroy(true);
+    }
+    expect(stop).toHaveBeenCalledOnce();
+  });
+
+  test('should log an error and keep the worker responsive when the Tracker import fails', async () => {
+    const { WorkerWrapper, parentPort, getOnMessageHandler, serverClose } = await setup({
+      isMainThread: false,
+      parentPortPresent: true,
+      threadId: 7,
+      threadName: 'Backend',
+      type: 'thread',
+      trackerParam: true,
+    });
+    const rejectTrackerImport = vi.fn(() => {
+      throw new Error('Tracker module unavailable');
+    });
+    vi.doMock('@matterbridge/utils/tracker', rejectTrackerImport);
+
+    const worker = new WorkerWrapper('Backend', asyncTrue);
+    try {
+      await vi.dynamicImportSettled();
+      expect(rejectTrackerImport).toHaveBeenCalledOnce();
+      expect(worker.tracker).toBeUndefined();
+      expect(parentPort?.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'log',
+          logLevel: LogLevel.ERROR,
+          message: expect.stringMatching(/^WorkerWrapper Backend: failed to load Tracker .+/),
+        }),
+      );
+      expect(serverClose).not.toHaveBeenCalled();
+      getOnMessageHandler()?.({ type: 'ping' });
+      expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'pong' }));
     } finally {
       worker.destroy(true);
     }
