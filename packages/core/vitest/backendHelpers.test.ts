@@ -64,6 +64,7 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { setupTest } from '@matterbridge/vitest-utils';
 
 import {
+  clearAdvertisingNodes,
   deleteAdvertisingNode,
   getBatteryLevel,
   getClusterTextFromDevice,
@@ -81,9 +82,12 @@ const colorAttributes: Record<string, unknown> = { colorMode: 0 };
 
 const labels: Record<string, unknown> = {};
 
+const supportedModes = new Map<string, unknown>();
+
 vi.mock('../src/matterbridgeEndpointHelpers.js', () => ({
   getAttribute: vi.fn((_device: unknown, cluster: string | { id: number }, attribute: string) => {
     if (cluster === 'colorControl') return colorAttributes[attribute];
+    if (typeof cluster === 'string' && attribute === 'supportedModes') return supportedModes.get(cluster);
     if (typeof cluster === 'object' && attribute === 'labelList') return labels[cluster.id];
     return null;
   }),
@@ -321,9 +325,26 @@ describe('backendHelpers', () => {
     });
 
     test.each([ModeSelect, RvcRunMode, RvcCleanMode, LaundryWasherMode, OvenMode, MicrowaveOvenMode, DeviceEnergyManagementMode])('mode cluster %#', (cluster) => {
+      const clusterName = at(cluster, 'currentMode', 1)[0];
+      supportedModes.set(clusterName, [{ label: 'Eco', mode: 1 }]);
       expect(text(at(cluster, 'supportedModes', [{ label: 'Eco', mode: 1 }]), at(cluster, 'currentMode', 1))).toBe('Mode: Eco');
       expect(text(at(cluster, 'supportedModes', [{ label: 'Eco', mode: 1 }]), at(cluster, 'currentMode', 2))).toBe('');
+      supportedModes.delete(clusterName);
       expect(text(at(cluster, 'currentMode', 1))).toBe('');
+    });
+
+    test('mode clusters use their own supportedModes regardless of the attribute order', () => {
+      supportedModes.set('rvcRunMode', [{ label: 'Idle', mode: 1 }]);
+      supportedModes.set('rvcCleanMode', [{ label: 'Vacuum', mode: 1 }]);
+      expect(
+        text(
+          at(RvcRunMode, 'supportedModes', [{ label: 'Idle', mode: 1 }]),
+          at(RvcRunMode, 'currentMode', 1),
+          at(RvcCleanMode, 'currentMode', 1),
+          at(RvcCleanMode, 'supportedModes', [{ label: 'Vacuum', mode: 1 }]),
+        ),
+      ).toBe('Mode: Idle Mode: Vacuum');
+      supportedModes.clear();
     });
 
     test('robot vacuum and appliances operational states', () => {
@@ -391,6 +412,7 @@ describe('backendHelpers', () => {
       expect(text(at(IlluminanceMeasurement, 'measuredValue', null))).toBe('Illuminance: unknown');
       expect(text(at(IlluminanceMeasurement, 'measuredValue', 'x'))).toBe('');
       expect(text(at(IlluminanceMeasurement, 'measuredValue', 40000))).toBe('Illuminance: 10000 lx');
+      expect(text(at(IlluminanceMeasurement, 'measuredValue', 40000), at(TemperatureMeasurement, 'measuredValue', 2150))).toBe('Illuminance: 10000 lx Temperature: 21.5 °C');
       expect(text(at(SoilMeasurement, 'soilMoistureMeasuredValue', 30))).toBe('Soil moisture: 30%');
       expect(text(at(TemperatureMeasurement, 'measuredValue', null), at(PressureMeasurement, 'measuredValue', 'x'))).toBe('Temperature: unknown');
       expect(text(at(PressureMeasurement, 'measuredValue', 10n))).toBe('Pressure: 10 hPa');
@@ -536,7 +558,7 @@ describe('backendHelpers', () => {
     } as unknown as ServerNode;
 
     afterEach(() => {
-      deleteAdvertisingNode('node-store');
+      clearAdvertisingNodes();
     });
 
     test('returns the sanitized server node data when not advertising', () => {
@@ -583,6 +605,19 @@ describe('backendHelpers', () => {
       deleteAdvertisingNode('node-store');
       expect(getServerNodeData(serverNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
       deleteAdvertisingNode('node-store'); // no-op when missing
+      expect(getServerNodeData(serverNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
+    });
+
+    test('clearAdvertisingNodes', () => {
+      const otherServerNode = Object.create(serverNode, { id: { value: 'other-store' } }) as ServerNode;
+      setAdvertisingNode('node-store', 1234);
+      setAdvertisingNode('other-store', 5678);
+      expect(getServerNodeData(serverNode)).toMatchObject({ advertising: true, advertiseTime: 1234 });
+      expect(getServerNodeData(otherServerNode)).toMatchObject({ advertising: true, advertiseTime: 5678 });
+      clearAdvertisingNodes();
+      expect(getServerNodeData(serverNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
+      expect(getServerNodeData(otherServerNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
+      clearAdvertisingNodes(); // no-op when empty
       expect(getServerNodeData(serverNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
     });
   });

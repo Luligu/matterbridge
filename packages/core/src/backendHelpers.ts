@@ -150,7 +150,6 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
   if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
 
   let attributes = '';
-  let supportedModes: { label: string; mode: number }[] = [];
 
   const getUserLabel = (device: MatterbridgeEndpoint): string => {
     const labelList = getAttribute(device, UserLabel, 'labelList') as { label: string; value: string }[];
@@ -228,12 +227,10 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
 
     const modeClusters = new Set(['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode', 'deviceEnergyManagementMode']);
-    if (modeClusters.has(clusterName) && attributeName === 'supportedModes') {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      supportedModes = attributeValue as { label: string; mode: number }[];
-    }
     if (modeClusters.has(clusterName) && attributeName === 'currentMode') {
-      const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
+      // Read the supportedModes of the same cluster: the attribute iteration order is not guaranteed
+      const supportedModes = getAttribute(device, clusterName, 'supportedModes') as { label: string; mode: number }[] | undefined;
+      const supportedMode = supportedModes?.find((mode) => mode.mode === attributeValue);
       if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
     }
     if (clusterName === 'operationalState' && attributeName === 'operationalState')
@@ -290,7 +287,7 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
       attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
     if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') {
       if (attributeValue === null) attributes += `Illuminance: unknown `;
-      else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} lx`;
+      else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} lx `;
     }
     if (clusterName === 'airQuality' && attributeName === 'airQuality')
       attributes += `Air quality: ${getEnumDescription(AirQuality.AirQualityEnum, attributeValue as AirQuality.AirQualityEnum)} `;
@@ -338,6 +335,13 @@ export function setAdvertisingNode(storeId: string, advertiseTime: number): void
  */
 export function deleteAdvertisingNode(storeId: string): void {
   advertisingNodes.delete(storeId);
+}
+
+/**
+ * Clears all the advertising nodes.
+ */
+export function clearAdvertisingNodes(): void {
+  advertisingNodes.clear();
 }
 
 /**
