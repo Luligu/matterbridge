@@ -18,13 +18,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import type { SessionsBehavior } from '@matter/node';
+import type { ServerNode } from '@matter/node';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import type { ExposedFabricInformation } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import { plg } from '@matterbridge/types';
+import { type ApiMatter, plg, type WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { flushAsync, HOMEDIR, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel, nf } from 'node-ansi-logger';
@@ -210,6 +208,57 @@ describe('Matterbridge', () => {
     // oxfmt-ignore
     await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', error: 'Error message' } as any);
     cleanupSpy.mockRestore();
+  });
+
+  test.each(['root', 'missing-root', 'plugin', 'device', 'unknown', 'duplicate'] as const)('should respond to matterbridge_apimatter for the %s node lookup', async (scenario) => {
+    const originalServerNode = matterbridge.serverNode;
+    const rootNode = { id: 'Matterbridge' } as ServerNode;
+    const pluginNode = { id: 'plugin-node' } as ServerNode;
+    const deviceNode = { id: scenario === 'duplicate' ? 'plugin-node' : 'device-node' } as ServerNode;
+    const pluginsSpy = vi
+      .spyOn(matterbridge.plugins, 'array')
+      .mockReturnValue([{}, { serverNode: { id: 'other-plugin' } }, { serverNode: pluginNode }] as unknown as ReturnType<typeof matterbridge.plugins.array>);
+    const devicesSpy = vi
+      .spyOn(matterbridge.devices, 'array')
+      .mockReturnValue([{}, { serverNode: { id: 'other-device' } }, { serverNode: deviceNode }] as unknown as ReturnType<typeof matterbridge.devices.array>);
+    const expectedNode = scenario === 'root' ? rootNode : scenario === 'plugin' || scenario === 'duplicate' ? pluginNode : scenario === 'device' ? deviceNode : undefined;
+    const matter: ApiMatter = {
+      id: expectedNode?.id ?? '',
+      online: true,
+      commissioned: false,
+      advertising: false,
+      advertiseTime: 0,
+      windowStatus: 0,
+      qrPairingCode: 'MT:TEST',
+      manualPairingCode: '12345678901',
+      fabricInformations: [],
+      sessionInformations: [],
+      serialNumber: 'TEST',
+    };
+    const matterNodeHelpers = await import('../src/matterNodeHelpers.js');
+    const getServerNodeDataSpy = vi.spyOn(matterNodeHelpers, 'getServerNodeData').mockReturnValue(matter);
+    const request = {
+      id: 123456,
+      type: 'matterbridge_apimatter',
+      src: 'frontend',
+      dst: 'matterbridge',
+      params: { id: scenario === 'root' || scenario === 'missing-root' ? 'Matterbridge' : scenario === 'unknown' ? 'missing-node' : (expectedNode?.id ?? '') },
+    } as const;
+    matterbridge.serverNode = scenario === 'missing-root' ? undefined : rootNode;
+    try {
+      const handler = matterbridge as unknown as { msgHandler(message: WorkerMessage): Promise<void> };
+      await handler.msgHandler(request);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(1);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledWith({ ...request, result: { matter: expectedNode ? matter : undefined } });
+      expect(getServerNodeDataSpy.mock.calls).toEqual(expectedNode ? [[expectedNode]] : []);
+      expect(pluginsSpy).toHaveBeenCalledTimes(scenario === 'root' || scenario === 'missing-root' ? 0 : 1);
+      expect(devicesSpy).toHaveBeenCalledTimes(scenario === 'device' || scenario === 'unknown' ? 1 : 0);
+    } finally {
+      matterbridge.serverNode = originalServerNode;
+      pluginsSpy.mockRestore();
+      devicesSpy.mockRestore();
+      getServerNodeDataSpy.mockRestore();
+    }
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
@@ -444,141 +493,6 @@ describe('Matterbridge', () => {
 
   test('hasParameter("frontend") should return true', () => {
     expect(hasParameter('frontend')).toBeTruthy();
-  });
-
-  test('Sanitize fabrics', () => {
-    const fabricInfos: ExposedFabricInformation[] = [
-      {
-        fabricIndex: FabricIndex(1),
-        fabricId: FabricId(45653242346465555556n),
-        nodeId: NodeId(556546442432656555556n),
-        rootNodeId: NodeId(5565442324264656555556n),
-        rootVendorId: VendorId(4996),
-        label: 'Fabric 1 label',
-      },
-      {
-        fabricIndex: FabricIndex(2),
-        fabricId: FabricId(45654621214656555556n),
-        nodeId: NodeId(556546462112156555556n),
-        rootNodeId: NodeId(556546412212656555556n),
-        rootVendorId: VendorId(4937),
-        label: 'Fabric 2 label',
-      },
-    ];
-    expect((matterbridge as any).sanitizeFabricInformations(fabricInfos).length).toBe(2);
-    expect(() => {
-      JSON.stringify(fabricInfos);
-    }).toThrow();
-    expect(JSON.stringify((matterbridge as any).sanitizeFabricInformations(fabricInfos)).length).toBe(402);
-  });
-
-  test('Sanitize sessions', () => {
-    let sessionInfos: SessionsBehavior.Session[] = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: true,
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect(() => {
-      JSON.stringify(sessionInfos);
-    }).toThrow();
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos)).toEqual([
-      {
-        fabric: {
-          fabricId: '456546212146567986',
-          fabricIndex: 2,
-          label: 'SmartThings Hub 0503',
-          nodeId: '1678420619586823323397986',
-          rootNodeId: '18446744060824623349729',
-          rootVendorId: 4362,
-          rootVendorName: '(SmartThings)',
-        },
-        isPeerActive: true,
-        lastActiveTimestamp: '1720035761223121',
-        lastInteractionTimestamp: '1720035723121269',
-        name: 'secure/64351',
-        nodeId: '16784206195868397986',
-        numberOfActiveSubscriptions: 0,
-        peerNodeId: '1604858123872676291',
-      },
-    ]);
-    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(450);
-    sessionInfos = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: false, // isPeerActive false should cause the session to be filtered out
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(0);
-    sessionInfos = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: undefined,
-        isPeerActive: true, // isPeerActive true should not cause the session to be filtered out
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos)).toEqual([
-      {
-        isPeerActive: true,
-        lastActiveTimestamp: '1720035761223121',
-        lastInteractionTimestamp: '1720035723121269',
-        name: 'secure/64351',
-        nodeId: '16784206195868397986',
-        numberOfActiveSubscriptions: 0,
-        peerNodeId: '1604858123872676291',
-      },
-    ]);
-  });
-
-  test('getVendorIdName', () => {
-    expect((matterbridge as any).getVendorIdName()).toBe('');
-    expect((matterbridge as any).getVendorIdName(4937)).toContain('AppleHome');
-    expect((matterbridge as any).getVendorIdName(4996)).toContain('AppleKeyChain');
-    expect((matterbridge as any).getVendorIdName(4362)).toContain('SmartThings');
-    expect((matterbridge as any).getVendorIdName(4939)).toContain('HomeAssistant');
-    expect((matterbridge as any).getVendorIdName(24582)).toContain('GoogleHome');
-    expect((matterbridge as any).getVendorIdName(4631)).toContain('Alexa');
-    expect((matterbridge as any).getVendorIdName(4701)).toContain('Tuya');
-    expect((matterbridge as any).getVendorIdName(4718)).toContain('Xiaomi');
-    expect((matterbridge as any).getVendorIdName(4742)).toContain('eWeLink');
-    expect((matterbridge as any).getVendorIdName(5264)).toContain('Shelly');
-    expect((matterbridge as any).getVendorIdName(0x1488)).toContain('ShortcutLabsFlic');
-    expect((matterbridge as any).getVendorIdName(65521)).toContain('MatterTest');
-    expect((matterbridge as any).getVendorIdName(matterbridge.aggregatorVendorId)).toContain('MatterTest');
-    expect((matterbridge as any).getVendorIdName(1)).toContain('Unknown vendorId');
   });
 
   test('matterbridge -add mockPlugin1', async () => {
