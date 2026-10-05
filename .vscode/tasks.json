@@ -1,4 +1,4 @@
-// VS Code tasks native v.1.0.0
+// VS Code tasks native v.1.0.1
 {
   "version": "2.0.0",
   "tasks": [
@@ -325,14 +325,9 @@
         "--coverage",
         "--maxWorkers=100%",
         "--coverage.include=packages/core/src/frontend.ts",
-        "--coverage.include=packages/core/src/backendWsServer.ts",
-        "--coverage.include=packages/core/src/backendExpress.ts",
         "packages/core/vitest/frontend.test.ts",
         "packages/core/vitest/frontend.express.test.ts",
-        "packages/core/vitest/frontend.websocket.test.ts",
-        "packages/core/vitest/backendWsServer.test.ts",
-        "packages/core/vitest/backendExpress.test.ts",
-        "packages/core/vitest/backendHelpers.test.ts"
+        "packages/core/vitest/frontend.websocket.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -599,11 +594,11 @@
         "--coverage.include=packages/core/src/backend.ts",
         "--coverage.include=packages/core/src/backendWsServer.ts",
         "--coverage.include=packages/core/src/backendExpress.ts",
-        "--coverage.include=packages/core/src/backendHelpers.ts",
+        "--coverage.include=packages/core/src/matterNodeHelpers.ts",
         "packages/core/vitest/backend.test.ts",
         "packages/core/vitest/backendWsServer.test.ts",
         "packages/core/vitest/backendExpress.test.ts",
-        "packages/core/vitest/backendHelpers.test.ts"
+        "packages/core/vitest/matterNodeHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -620,11 +615,13 @@
         "--coverage",
         "--maxWorkers=100%",
         "--coverage.include=packages/core/src/matterNode.ts",
+        "--coverage.include=packages/core/src/matterNodeHelpers.ts",
         "packages/core/vitest/matterNode.test.ts",
         "packages/core/vitest/matterNode.bridge.test.ts",
         "packages/core/vitest/matterNode.accessory.test.ts",
         "packages/core/vitest/matterNode.dynamic.test.ts",
-        "packages/core/vitest/matterNode.server.test.ts"
+        "packages/core/vitest/matterNode.server.test.ts",
+        "packages/core/vitest/matterNodeHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
