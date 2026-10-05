@@ -3,7 +3,7 @@
  * @description This file contains the class Backend.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -33,13 +33,15 @@ import path from 'node:path';
 
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread';
-import type { ApiClusters, ApiDevice, ApiPlugin, ApiSettings, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import { type ApiClusters, type ApiDevice, type ApiPlugin, type ApiSettings, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
+import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { fireAndForget } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, LogLevel, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
+import { NodeStorageManager } from 'node-persist-manager';
 
 // Local imports
 import type { BackendExpress } from './backendExpress.js';
@@ -147,6 +149,24 @@ export class Backend extends EventEmitter<BackendEvents> {
   async start(port: number = 8283): Promise<void> {
     this.log.debug('Starting backend...');
     this.port = port;
+    const start = performance.now();
+    const nodeStorage = new NodeStorageManager({
+      dir: path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR),
+      writeQueue: false,
+      expiredInterval: undefined,
+      logging: false,
+    });
+    try {
+      const nodeContext = await nodeStorage.createStorage('matterbridge');
+      try {
+        this.storedPassword = await nodeContext.get<string>('password', '');
+      } finally {
+        await nodeContext.close();
+      }
+    } finally {
+      await nodeStorage.close();
+      if (this.diagnostic) writeDiagnostic('Backend', `Loading storedPassword took ${(performance.now() - start).toFixed(2)} ms`);
+    }
     const { BackendExpress } = await import('./backendExpress.js');
     const { BackendWsServer } = await import('./backendWsServer.js');
     this.backendExpress = new BackendExpress(this.matterbridge, this);
@@ -434,15 +454,15 @@ export class Backend extends EventEmitter<BackendEvents> {
     this.log.debug('Backend stopped');
   }
 
-  // TODO check
-
   /**
    * Retrieves the api settings data.
    *
    * @returns {ApiSettings} The api settings object.
    */
   async getApiSettings(): Promise<ApiSettings> {
+    const start = performance.now();
     const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: undefined });
+    if (this.diagnostic) writeDiagnostic('Backend', `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.data;
   }
 
@@ -452,7 +472,9 @@ export class Backend extends EventEmitter<BackendEvents> {
    * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
    */
   async getApiPlugins(): Promise<ApiPlugin[]> {
+    const start = performance.now();
     const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: 'frontend', dst: 'plugins', params: undefined });
+    if (this.diagnostic) writeDiagnostic('Backend', `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.plugins;
   }
 
@@ -463,7 +485,9 @@ export class Backend extends EventEmitter<BackendEvents> {
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
   async getApiDevices(pluginName?: string): Promise<ApiDevice[]> {
+    const start = performance.now();
     const response = await this.server.fetch({ type: 'devices_apidevicearray', src: 'frontend', dst: 'devices', params: { pluginName } });
+    if (this.diagnostic) writeDiagnostic('Backend', `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.devices;
   }
 
@@ -476,17 +500,24 @@ export class Backend extends EventEmitter<BackendEvents> {
    * @param {number} endpointNumber - The endpoint number.
    * @param {string} [serialNumber] - The device serial number to filter by (optional).
    * @param {string} [uniqueId] - The device unique ID to filter by (optional).
-   * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
+   * @returns {Promise<ApiClusters | undefined>} A promise that resolves to the clusters or undefined if not found.
    */
-  getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
+  // oxlint-disable-next-line typescript/require-await -- Preserve the async API until cluster retrieval is implemented.
+  async getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): Promise<ApiClusters | undefined> {
+    const start = performance.now();
     this.log.debug(`Retrieving API cluster for plugin: ${pluginName}, endpoint: ${endpointNumber}, serial: ${serialNumber}, uniqueId: ${uniqueId}`);
+    // TODO: Implement the call to retrieve the API cluster.
+    if (this.diagnostic) writeDiagnostic('Backend', `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
     return undefined;
   }
 
   /**
    * Generates a diagnostic file with the server nodes information.
    */
+  // oxlint-disable-next-line typescript/require-await -- Preserve the async API until diagnostic generation is implemented.
   async generateDiagnostic(): Promise<void> {
+    const start = performance.now();
     // TODO: Implement the generation of the diagnostic file with the server nodes information.
+    if (this.diagnostic) writeDiagnostic('Backend', `generateDiagnostic() took ${(performance.now() - start).toFixed(2)} ms`);
   }
 }

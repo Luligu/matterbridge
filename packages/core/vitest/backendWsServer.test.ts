@@ -265,7 +265,7 @@ describe('BackendWsServer', () => {
     expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1 })).toMatchObject({ error: 'Endpoint not found in /api/clusters' });
     expect(vi.mocked(mockedBackend.getApiCluster).mock.lastCall).toEqual(['matterbridge-test', 1, undefined, undefined]);
 
-    vi.mocked(mockedBackend.getApiCluster).mockReturnValueOnce({ plugin: 'matterbridge-test', endpoint: 1 } as any);
+    vi.mocked(mockedBackend.getApiCluster).mockResolvedValueOnce({ plugin: 'matterbridge-test', endpoint: 1 } as any);
     expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
       success: true,
       response: { plugin: 'matterbridge-test', endpoint: 1 },

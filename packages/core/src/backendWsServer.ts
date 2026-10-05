@@ -309,7 +309,7 @@ export class BackendWsServer {
           return;
         }
         const start = performance.now();
-        const clusters = this.backend.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        const clusters = await this.backend.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
         if (clusters) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: clusters });

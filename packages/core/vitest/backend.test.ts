@@ -15,10 +15,11 @@ import path from 'node:path';
 import tls from 'node:tls';
 
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import { NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
+import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { WebSocket } from 'ws';
 
 import { Backend } from '../src/backend.js';
@@ -168,7 +169,6 @@ describe('Backend', () => {
     process.argv = ['node', 'backend.test.js', ...args, '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(matterbridge);
-    backend.storedPassword = 'testpassword';
     const listening = once(backend, 'server_listening');
     await backend.start(port);
     await listening;
@@ -191,9 +191,14 @@ describe('Backend', () => {
     return error;
   }
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Clear all mocks
     vi.clearAllMocks();
+    const storage = new NodeStorageManager({ dir: path.join(HOMEDIR, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    const context = await storage.createStorage('matterbridge');
+    await context.set('password', 'testpassword');
+    await context.close();
+    await storage.close();
   });
 
   afterEach(async () => {
@@ -205,6 +210,34 @@ describe('Backend', () => {
   afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
+  });
+
+  test('should load the stored password and close the archive when starting', async () => {
+    const contextClose = vi.spyOn(NodeStorage.prototype, 'close');
+    const storageClose = vi.spyOn(NodeStorageManager.prototype, 'close');
+    try {
+      const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+      const instance = await startBackend(['--diagnostic']);
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringMatching(/Backend: Loading storedPassword took \d+\.\d{2} ms/));
+      stderrSpy.mockRestore();
+      expect(instance.storedPassword).toBe('testpassword');
+      expect(contextClose).toHaveBeenCalledTimes(1);
+      expect(storageClose).toHaveBeenCalledTimes(1);
+    } finally {
+      contextClose.mockRestore();
+      storageClose.mockRestore();
+    }
+  });
+
+  test('should use an empty password when none is stored', async () => {
+    const storage = new NodeStorageManager({ dir: path.join(HOMEDIR, NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    const context = await storage.createStorage('matterbridge');
+    await context.remove('password');
+    await context.close();
+    await storage.close();
+
+    const instance = await startBackend([]);
+    expect(instance.storedPassword).toBe('');
   });
 
   test('should answer get_log_level and set_log_level broadcast requests', async () => {
@@ -228,8 +261,9 @@ describe('Backend', () => {
     manager.close();
   });
 
-  test('should fetch settings, plugins and devices from the other threads', async () => {
-    process.argv = ['node', 'backend.test.js'];
+  test.each(['', '--diagnostic', '--diagnostic-backend'])('should fetch API data with diagnostic flag %s', async (flag) => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    process.argv = ['node', 'backend.test.js', flag];
     backend = new Backend(createSharedMatterbridge());
 
     const matterbridgeServer = new BroadcastServer('matterbridge', log);
@@ -255,10 +289,15 @@ describe('Backend', () => {
     expect(await backend.getApiPlugins()).toEqual([{ name: 'plugin1' }]);
     expect(await backend.getApiDevices('plugin1')).toEqual([{ pluginName: 'plugin1' }]);
     expect(await backend.getApiDevices()).toEqual([]);
-    expect(backend.getApiCluster('plugin1', 1)).toBeUndefined();
-    expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).toBeUndefined();
+    await expect(backend.getApiCluster('plugin1', 1)).resolves.toBeUndefined();
+    await expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).resolves.toBeUndefined();
     await expect(backend.generateDiagnostic()).resolves.toBeUndefined();
 
+    for (const method of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
+      const timing = new RegExp(`Backend: ${method}\\(\\) took \\d+\\.\\d{2} ms`);
+      expect(stderrSpy.mock.calls.some(([message]) => timing.test(String(message)))).toBe(Boolean(flag));
+    }
+    stderrSpy.mockRestore();
     matterbridgeServer.close();
     pluginsServer.close();
     devicesServer.close();
@@ -268,7 +307,6 @@ describe('Backend', () => {
     process.argv = ['node', 'backend.test.js', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
-    backend.storedPassword = 'testpassword';
 
     const listening = once(backend, 'server_listening');
     const wsListening = once(backend, 'websocket_server_listening');
@@ -293,7 +331,6 @@ describe('Backend', () => {
     process.argv = ['node', 'backend.test.js', '--ssl', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
-    backend.storedPassword = 'testpassword';
 
     const listening = once(backend, 'server_listening');
     const wsListening = once(backend, 'websocket_server_listening');
@@ -350,7 +387,6 @@ describe('Backend', () => {
     process.argv = ['node', 'backend.test.js', '--ssl', '--mtls', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
-    backend.storedPassword = 'testpassword';
 
     const listening = once(backend, 'server_listening');
     const wsListening = once(backend, 'websocket_server_listening');
@@ -378,7 +414,6 @@ describe('Backend', () => {
     process.argv = ['node', 'backend.test.js', '--ssl', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
-    backend.storedPassword = 'testpassword';
 
     const listening = once(backend, 'server_listening');
     const wsListening = once(backend, 'websocket_server_listening');
