@@ -346,18 +346,28 @@ export interface WsMessageApiDownloadHistoryPageResponse extends WsMessageSucces
 }
 
 export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
+  /** WebSocket API route for Matter server node data and actions. */
   method: '/api/matter';
+  /** Identifies the server node and optionally requests an action. */
   params: {
+    /** Server node ID: 'Matterbridge' for the bridge, or a plugin or device server node ID. */
     id: string;
+    /** Broadcast the node data in a 'matter' refresh notification, used when QRDiv selects a node. */
     server?: boolean;
+    /** Open basic commissioning and broadcast a refresh with advertising enabled and its start time. */
     startCommission?: boolean;
+    /** End commissioning and broadcast a refresh with advertising disabled and its start time cleared. */
     stopCommission?: boolean;
+    /** Restart the node advertisement and broadcast a refresh with advertising enabled. */
     advertise?: boolean;
+    /** Fabric index to remove from the node, if present; broadcast a Matter refresh afterward. */
     removeFabric?: number;
   };
 }
 export interface WsMessageApiMatterResponse extends WsMessageSuccessApiResponse {
+  /** WebSocket API route matching the Matter request. */
   method: '/api/matter';
+  /** Sanitized server node data captured before any requested actions are performed. */
   response: ApiMatter;
 }
 

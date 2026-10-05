@@ -215,6 +215,10 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
   };
+  matterbridge_apimatter: {
+    request: { params: { id: string } };
+    response: { result: { matter: ApiMatter | undefined } };
+  };
   matterbridge_apisettings: {
     request: { params: undefined };
     response: { result: { data: ApiSettings; success: true } };
