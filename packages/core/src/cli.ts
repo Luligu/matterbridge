@@ -231,11 +231,16 @@ async function main(): Promise<void> {
   if (hasParameter('inspect')) await startInspector();
 
   log.debug(`***Matterbridge.loadInstance(true) called`);
-
   const { Matterbridge } = await import('./matterbridge.js');
   instance = await Matterbridge.loadInstance(true);
-
   log.debug(`***Matterbridge.loadInstance(true) exited`);
+
+  // v8 ignore next -- just experimental
+  if (hasParameter('experimental')) {
+    log.debug(`***Starting Backend thread...`);
+    manager.runThread('Backend');
+    log.debug(`***Started Backend thread`);
+  }
 
   // Check if the instance needs to shut down from parseCommandLine()
   if (!instance || instance.shutdown) {
