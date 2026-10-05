@@ -79,6 +79,7 @@ describe('WorkerWrapper', () => {
 
     vi.doMock('@matterbridge/utils/cli', () => ({
       hasParameter: hasParameterMock,
+      hasAnyParameter: (...parameters: string[]): boolean => parameters.some((parameter) => hasParameterMock(parameter)),
     }));
 
     vi.doMock('node:worker_threads', async () => {
@@ -121,6 +122,27 @@ describe('WorkerWrapper', () => {
       waitImmediate,
     };
   }
+
+  test('should enable debug and verbose logging in the main thread', async () => {
+    const { WorkerWrapper, serverClose } = await setup({
+      isMainThread: true,
+      parentPortPresent: false,
+      threadId: 0,
+      threadName: 'Backend',
+      debugParam: true,
+      verboseParam: true,
+    });
+    const worker = new WorkerWrapper('Backend', asyncTrue);
+    try {
+      expect(worker.debug).toBe(true);
+      expect(worker.verbose).toBe(true);
+      expect(worker.useTracker).toBe(false);
+      expect(worker.log.logLevel).toBe(LogLevel.DEBUG);
+    } finally {
+      worker.destroy(true);
+    }
+    expect(serverClose).toHaveBeenCalledOnce();
+  });
 
   test('worker thread: posts init, can log, closes server, posts exit', async () => {
     const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({

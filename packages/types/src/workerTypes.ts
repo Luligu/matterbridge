@@ -24,7 +24,7 @@
 import type { LogLevel } from 'node-ansi-logger';
 
 /** Thread names used in the thread system */
-export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion';
+export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend';
 
 /** Base worker data for all workers */
 export type BaseWorkerData = { threadName: ThreadNames; logLevel: LogLevel; debug: boolean; verbose: boolean; tracker: boolean };
