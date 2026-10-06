@@ -19,7 +19,7 @@ beforeEach(async () => {
   start.mockReset().mockImplementation(async () => await Promise.resolve());
   destroy.mockClear();
   createBackend.mockReset();
-  vi.doMock('@matterbridge/core/backend', () => ({
+  vi.doMock('../src/backend.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class -- Mock the Backend constructor without starting real servers.
     Backend: class {
       constructor(shared: unknown) {
@@ -42,7 +42,7 @@ afterEach(() => {
   responder.close();
   wrapper.destroy(true);
   vi.restoreAllMocks();
-  vi.doUnmock('@matterbridge/core/backend');
+  vi.doUnmock('../src/backend.js');
 });
 
 test('should fetch shared state and await Backend startup without destroying it', async () => {

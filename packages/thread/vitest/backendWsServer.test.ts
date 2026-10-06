@@ -1,5 +1,5 @@
 /**
- * @file packages/core/vitest/backendWsServer.test.ts
+ * @file packages/thread/vitest/backendWsServer.test.ts
  * @description This file contains the tests for backendWsServer.
  * @author Luca Liguori
  */
@@ -9,13 +9,13 @@ const NAME = 'BackendWsServer';
 import { EventEmitter } from 'node:events';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, SharedMatterbridge } from '@matterbridge/types';
 import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
 import { BackendWsServer } from '../src/backendWsServer.js';
+import { BroadcastServer } from '../src/broadcastServer.js';
 
 // Spy on BroadcastServer methods
 const isWorkerRequestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerRequest');

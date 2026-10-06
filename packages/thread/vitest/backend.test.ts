@@ -1,5 +1,5 @@
 /**
- * @file packages/core/vitest/backend.test.ts
+ * @file packages/thread/vitest/backend.test.ts
  * @description This file contains the tests for the Backend class.
  * @author Luca Liguori
  */
@@ -14,7 +14,6 @@ import net from 'node:net';
 import path from 'node:path';
 import tls from 'node:tls';
 
-import { BroadcastServer } from '@matterbridge/thread/server';
 import { NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
@@ -23,15 +22,16 @@ import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { WebSocket } from 'ws';
 
 import { Backend } from '../src/backend.js';
+import { BroadcastServer } from '../src/broadcastServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 const CERTS_DIR = path.join(HOMEDIR, 'certs');
 
-const caCert = readFileSync(new URL('../src/mock/certs/ca.crt', import.meta.url), 'utf8');
-const clientCert = readFileSync(new URL('../src/mock/certs/client.crt', import.meta.url), 'utf8');
-const clientKey = readFileSync(new URL('../src/mock/certs/client.key', import.meta.url), 'utf8');
+const caCert = readFileSync(new URL('./fixtures/certs/ca.crt', import.meta.url), 'utf8');
+const clientCert = readFileSync(new URL('./fixtures/certs/client.crt', import.meta.url), 'utf8');
+const clientKey = readFileSync(new URL('./fixtures/certs/client.key', import.meta.url), 'utf8');
 
 /**
  * Create the shared Matterbridge object used by the Backend.
@@ -51,13 +51,13 @@ function createSharedMatterbridge(ipv4Address: string = '', ipv6Address: string 
 /**
  * Empty the certs directory and copy the given mock certificates into it.
  *
- * @param {Record<string, string>} files - Map of destination file name in the certs directory to the source file name in src/mock/certs.
+ * @param {Record<string, string>} files - Map of destination file name in the certs directory to the source file name in fixtures/certs.
  */
 function setCerts(files: Record<string, string>): void {
   rmSync(CERTS_DIR, { recursive: true, force: true });
   mkdirSync(CERTS_DIR, { recursive: true });
   for (const [destination, source] of Object.entries(files)) {
-    copyFileSync(new URL(`../src/mock/certs/${source}`, import.meta.url), path.join(CERTS_DIR, destination));
+    copyFileSync(new URL(`./fixtures/certs/${source}`, import.meta.url), path.join(CERTS_DIR, destination));
   }
 }
 

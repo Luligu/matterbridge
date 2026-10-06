@@ -1,5 +1,5 @@
 /**
- * @file packages/core/vitest/backendExpress.test.ts
+ * @file packages/thread/vitest/backendExpress.test.ts
  * @description This file contains the tests for the BackendExpress class.
  * @author Luca Liguori
  */
@@ -16,7 +16,6 @@ import os from 'node:os';
 import path from 'node:path';
 import v8 from 'node:v8';
 
-import { BroadcastServer } from '@matterbridge/thread/server';
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_DIR,
@@ -33,12 +32,13 @@ import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
 import { BackendExpress } from '../src/backendExpress.js';
+import { BroadcastServer } from '../src/broadcastServer.js';
 
 // Mock isBun to cover the bun install command of /api/uploadpackage
 const isBunMock = vi.hoisted(() => vi.fn(() => false));
 vi.mock('@matterbridge/utils/bun', async (importOriginal) => ({ ...(await importOriginal<typeof import('@matterbridge/utils/bun')>()), isBun: isBunMock }));
 
-const TEST_ZIP_FIXTURE = new URL('../src/mock/test.zip', import.meta.url);
+const TEST_ZIP_FIXTURE = new URL('./fixtures/test.zip', import.meta.url);
 
 const mockedSharedMatterbridge = {
   matterbridgeDirectory: HOMEDIR,

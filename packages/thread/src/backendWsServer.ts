@@ -1,5 +1,5 @@
 /**
- * @file packages/core/src/backendWsServer.ts
+ * @file packages/thread/src/backendWsServer.ts
  * @description This file contains the class BackendWsServer.
  * @author Luca Liguori
  * @created 2026-03-30
@@ -30,8 +30,6 @@
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { EndpointNumber } from '@matter/types/datatype';
-// @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
 import type {
   ApiMatter,
   BridgeStatus,
@@ -57,6 +55,8 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import type { Backend } from './backend.js';
+// @matterbridge
+import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('BackendWsServer');
 
@@ -284,7 +284,9 @@ export class BackendWsServer {
 
       // Handle the message based on the method
       // TODO add methods
-      if (data.method === '/api/settings') {
+      if (data.method === 'ping') {
+        sendResponse({ id: data.id, method: 'pong', src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
+      } else if (data.method === '/api/settings') {
         const start = performance.now();
         const settings = await this.backend.getApiSettings();
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);

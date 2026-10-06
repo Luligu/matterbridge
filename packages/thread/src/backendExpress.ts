@@ -1,5 +1,5 @@
 /**
- * @file packages/core/src/backendExpress.ts
+ * @file packages/thread/src/backendExpress.ts
  * @description This file contains the class BackendExpress.
  * @author Luca Liguori
  * @created 2026-03-30
@@ -27,8 +27,6 @@
 import os from 'node:os';
 import path from 'node:path';
 
-// @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_DIR,
@@ -60,6 +58,8 @@ import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger'
 
 // matterbridge
 import type { Backend } from './backend.js';
+// @matterbridge
+import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('BackendExpress');
 
