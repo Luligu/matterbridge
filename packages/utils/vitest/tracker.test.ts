@@ -6,13 +6,12 @@
 
 import os, { type CpuInfo } from 'node:os';
 
-import { consoleLogSpy, setDebug, setupTest } from './vitestSetupTest.js';
+import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Tracker', false);
 
 describe('Tracker', () => {
-  const originalArgv = [...process.argv];
   const originalGc = global.gc;
 
   beforeEach(async () => {
@@ -26,7 +25,7 @@ describe('Tracker', () => {
   });
 
   afterEach(() => {
-    process.argv = [...originalArgv];
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     vi.useRealTimers();
     vi.unstubAllGlobals();
@@ -36,7 +35,7 @@ describe('Tracker', () => {
   });
 
   afterAll(() => {
-    process.argv = originalArgv;
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks

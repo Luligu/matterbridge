@@ -10,12 +10,12 @@ import { EventEmitter } from 'node:events';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { ApiMatter, SharedMatterbridge } from '@matterbridge/types';
-import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
 import { BackendWsServer } from '../src/backendWsServer.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
+import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Spy on BroadcastServer methods
 const isWorkerRequestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
@@ -503,7 +503,7 @@ describe('BackendWsServer', () => {
 
   test('should use wss, the info log level and no verbose logs without debug flags and with a secure backend', async () => {
     const savedArgv = process.argv;
-    process.argv = ['node', 'backendWsServer.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
     (mockedBackend as any).secure = true;
     try {
       const quietServer = new BackendWsServer(mockedSharedMatterbridge, mockedBackend);

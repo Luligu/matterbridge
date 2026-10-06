@@ -5,6 +5,10 @@
  */
 
 import { luxToMatter, matterToLux } from '../src/measurementUtils.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('MeasurementUtils', false);
 
 describe('measurementUtils', () => {
   describe('luxToMatter', () => {

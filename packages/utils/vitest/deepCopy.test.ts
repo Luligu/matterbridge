@@ -5,6 +5,10 @@
  */
 
 import { deepCopy } from '../src/deepCopy.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('DeepCopy', false);
 
 describe('deepCopy', () => {
   // Primitives

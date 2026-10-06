@@ -7,6 +7,11 @@
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('WorkerArchiveCommand', false);
+
 type RunOptions = Readonly<{
   command?: 'zip' | 'verify' | 'unzip';
   createZipResult?: number;

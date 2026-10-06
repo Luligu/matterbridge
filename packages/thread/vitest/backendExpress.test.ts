@@ -25,7 +25,6 @@ import {
   NODE_STORAGE_DIR,
   type SharedMatterbridge,
 } from '@matterbridge/types';
-import { log, setupTest } from '@matterbridge/vitest-utils';
 import type express from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { LogLevel } from 'node-ansi-logger';
@@ -33,6 +32,7 @@ import { LogLevel } from 'node-ansi-logger';
 import type { Backend } from '../src/backend.js';
 import { BackendExpress } from '../src/backendExpress.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
+import { log, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Mock isBun to cover the bun install command of /api/uploadpackage
 const isBunMock = vi.hoisted(() => vi.fn(() => false));
@@ -66,9 +66,7 @@ const mockedBackend = {
 // No isolation needed or allowed since we're testing a single module and want to preserve module state across tests
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-process.argv = ['node', 'backendExpress.test.js', '--debug-backend', '--verbose-backend'];
+await setupTest(NAME, false, ['--debug-backend', '--verbose-backend']);
 
 describe('BackendExpress', () => {
   let backendExpress: BackendExpress;
@@ -878,7 +876,7 @@ describe('BackendExpress', () => {
 
   test('should use the info log level and skip the request logger without debug and verbose', async () => {
     const savedArgv = process.argv;
-    process.argv = ['node', 'backendExpress.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
     const quietExpress = new BackendExpress(mockedSharedMatterbridge, mockedBackend);
     process.argv = savedArgv;
     expect((quietExpress as any).log.logLevel).toBe(LogLevel.INFO);

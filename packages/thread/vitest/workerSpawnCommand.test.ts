@@ -7,6 +7,11 @@
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('WorkerSpawnCommand', false);
+
 type RunOptions = Readonly<{
   spawnSuccess: boolean;
   workerData?: Record<string, unknown>;

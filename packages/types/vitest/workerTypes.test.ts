@@ -5,6 +5,10 @@
  */
 
 import { isArchiveWorkerData, isSpawnWorkerData, isWorkerData } from '../src/workerTypes.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('WorkerTypes', false);
 
 describe('Worker data type guards', () => {
   beforeEach(() => {

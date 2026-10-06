@@ -13,7 +13,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
 import { ThreadsManager } from '../src/threadsManager.js';
-import { setupTest } from './vitestSetupTest.js';
+import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -48,8 +48,6 @@ describe('ThreadsManagerMainThread', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(() => {
     // Close broadcast servers

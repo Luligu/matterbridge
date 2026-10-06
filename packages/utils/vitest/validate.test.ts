@@ -20,6 +20,10 @@ import {
   isValidUndefined,
   parseVersionString,
 } from '../src/validate.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('Validate', false);
 
 describe('Validation Functions', () => {
   describe('isValidIpv4Address', () => {

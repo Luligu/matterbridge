@@ -5,6 +5,10 @@
  */
 
 import { formatBytes, formatPercent, formatTimeStamp, formatUptime } from '../src/format.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('Format', false);
 
 describe('formatTimeStamp(), formatBytes() and formatUptime()', () => {
   test('Frontend formatTimeStamp', () => {

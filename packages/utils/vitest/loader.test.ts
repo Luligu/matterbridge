@@ -5,21 +5,19 @@
  */
 
 import { logModuleLoaded } from '../src/loader.js';
-import { consoleLogSpy, setupTest } from './vitestSetupTest.js';
+import { consoleLogSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Loader', false);
 
 describe('logModuleLoaded()', () => {
-  const ORIGINAL_ARGV = process.argv;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    process.argv = ['node', 'script.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
   });
 
   afterAll(() => {
-    process.argv = ORIGINAL_ARGV;
+    process.argv = [...originalProcessArgv];
     vi.restoreAllMocks();
   });
 

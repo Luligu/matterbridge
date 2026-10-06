@@ -6,7 +6,7 @@
 
 const NAME = 'CopyDirectory';
 
-import { setupTest } from './vitestSetupTest.js';
+import { setupTest } from './setupTest.js';
 
 // Prepare fake implementations
 const fakeMkdir = vi.fn<(path: string, options: { recursive: boolean }) => Promise<void>>();

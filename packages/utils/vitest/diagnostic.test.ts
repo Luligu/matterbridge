@@ -5,6 +5,10 @@
  */
 
 import { writeDiagnostic } from '../src/diagnostic.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('Diagnostic', false);
 
 describe('writeDiagnostic()', () => {
   afterEach(() => {

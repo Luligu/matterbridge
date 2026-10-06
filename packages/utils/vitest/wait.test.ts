@@ -8,7 +8,7 @@ import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import type { MockInstance } from 'vitest';
 
 import { fireAndForget, wait, waiter, withTimeout } from '../src/wait.js';
-import { loggerLogSpy, setupTest } from './vitestSetupTest.js';
+import { loggerLogSpy, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Wait', false);

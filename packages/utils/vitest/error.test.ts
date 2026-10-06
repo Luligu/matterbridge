@@ -5,7 +5,7 @@
  */
 
 import { getErrorMessage, inspectError, logError } from '../src/error.js';
-import { log, loggerErrorSpy, setupTest } from './vitestSetupTest.js';
+import { log, loggerErrorSpy, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Error', false);

@@ -11,19 +11,17 @@ import os from 'node:os';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
 import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, Multicast } from '../src/multicast.js';
-import { loggerLogSpy, setupTest } from './vitestSetupTest.js';
+import { loggerLogSpy, originalProcessArgv, originalProcessEnv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Multicast', false);
 
 describe('Multicast', () => {
   let mcast: Multicast;
-  const originalEnv = process.env;
-  const originalArgv = process.argv;
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    process.argv = ['jest', 'multicast.test.ts'];
+    process.env = { ...originalProcessEnv };
+    process.argv = originalProcessArgv.slice(0, 2);
   });
 
   afterEach(() => {
@@ -32,8 +30,8 @@ describe('Multicast', () => {
 
   afterAll(() => {
     vi.restoreAllMocks();
-    process.env = originalEnv;
-    process.argv = originalArgv;
+    process.env = { ...originalProcessEnv };
+    process.argv = [...originalProcessArgv];
   });
 
   test('Create the multicast with udp4 with no available interfaces', () => {

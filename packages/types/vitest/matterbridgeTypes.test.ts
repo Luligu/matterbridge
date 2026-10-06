@@ -18,6 +18,10 @@ import {
   plg,
   typ,
 } from '../src/matterbridgeTypes.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('MatterbridgeTypes', false);
 
 describe('matterbridgeTypes constants', () => {
   beforeEach(() => {

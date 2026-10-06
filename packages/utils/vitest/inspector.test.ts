@@ -6,13 +6,12 @@
 
 /* oxlint-disable typescript/explicit-function-return-type */
 
-import { consoleLogSpy, setDebug, setupTest } from './vitestSetupTest.js';
+import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Inspector', false);
 
 describe('Inspector', () => {
-  const originalArgv = [...process.argv];
   const originalGc = global.gc;
 
   beforeEach(async () => {
@@ -25,7 +24,7 @@ describe('Inspector', () => {
   });
 
   afterEach(() => {
-    process.argv = [...originalArgv];
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     vi.useRealTimers();
     // Restore all mocks
@@ -33,7 +32,7 @@ describe('Inspector', () => {
   });
 
   afterAll(() => {
-    process.argv = originalArgv;
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     // Restore all mocks
     vi.restoreAllMocks();

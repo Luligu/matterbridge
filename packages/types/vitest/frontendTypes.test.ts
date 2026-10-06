@@ -6,6 +6,10 @@
 
 import type { WsMessage } from '../src/frontendTypes.js';
 import { isApiRequest, isApiResponse, isBroadcast } from '../src/frontendTypes.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('FrontendTypes', false);
 
 describe('WsMessage type guards', () => {
   beforeEach(() => {

@@ -5,6 +5,10 @@
  */
 
 import { deepEqual } from '../src/deepEqual.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('DeepEqual', false);
 
 describe('deepEqual', () => {
   // Primitives and same references

@@ -14,7 +14,7 @@ import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
 import { flushAsync } from './flushAsync.js';
-import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from './vitestSetupTest.js';
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -23,14 +23,10 @@ describe('BroadcastServer', () => {
   const log = new AnsiLogger({ logName: 'BroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   let server: BroadcastServer;
 
-  beforeAll(async () => {});
-
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(() => {
     // Restore all mocks

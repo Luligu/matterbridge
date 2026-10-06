@@ -7,7 +7,7 @@
 import type dgram from 'node:dgram';
 
 import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from './vitestSetupTest.js';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Mock node:dgram so the Mdns constructor does not open a real socket. Unlike Jest's automock,
 // Vitest's bare automock returns undefined from createSocket, so provide a minimal fake socket
@@ -26,12 +26,11 @@ vi.mock('node:dgram', () => {
 const mockRinfo: dgram.RemoteInfo = { family: 'IPv4', address: '1.2.3.4', port: 5353, size: 32 };
 
 // Setup the test environment
-await setupTest('Mdns', false);
+await setupTest('Mdns', false, ['--verbose']);
 
 describe('Mdns', () => {
   let mdns: Mdns;
   let mockSocket: any;
-  process.argv.push('--verbose');
 
   beforeEach(() => {
     mockSocket = {
@@ -817,9 +816,9 @@ describe('Mdns', () => {
   });
 
   it('should skip verbose logging in sendQuery/sendResponse when no -v/--verbose flags are present', () => {
-    const savedArgv = [...process.argv];
+    const savedArgv = process.argv;
     try {
-      process.argv = ['node', 'jest'];
+      process.argv = originalProcessArgv.slice(0, 2);
 
       mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
       const rdata = mdns.encodeDnsName('foo.local');

@@ -41,11 +41,12 @@ vi.doMock('node:https', () => {
   return { get: mockedGet };
 });
 
-import { setupTest } from './vitestSetupTest.js';
+import { setupTest } from './setupTest.js';
 
 const { getNpmPackageVersion } = await import('../src/npmVersion.js');
 
-await setupTest('NpmVersion');
+// Setup the test environment
+await setupTest('NpmVersion', false);
 
 describe('getNpmPackageVersion', () => {
   const mockNpmResponse = {

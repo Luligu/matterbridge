@@ -17,7 +17,7 @@ import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
 import { ThreadsManager } from '../src/threadsManager.js';
-import { setupTest } from './vitestSetupTest.js';
+import { originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -35,8 +35,6 @@ describe('ThreadsManager', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {});
-
   afterAll(() => {
     // Restore all mocks
     vi.restoreAllMocks();
@@ -52,9 +50,9 @@ describe('ThreadsManager', () => {
       { flag: 'tracker', debug: false, verbose: false, tracker: true },
       { flag: 'tracker-threads', debug: false, verbose: false, tracker: true },
     ])('should configure flags for $flag', ({ flag, debug, verbose, tracker }) => {
-      const originalArgv = process.argv;
+      const savedArgv = process.argv;
       const originalLogLevel = ThreadsManager.logLevel;
-      process.argv = originalArgv.slice(0, 2);
+      process.argv = originalProcessArgv.slice(0, 2);
       if (flag) process.argv.push(`--${flag}`);
       let manager: ThreadsManager | undefined;
       try {
@@ -65,7 +63,7 @@ describe('ThreadsManager', () => {
         expect(ThreadsManager.logLevel).toBe(debug ? LogLevel.DEBUG : LogLevel.INFO);
       } finally {
         manager?.destroy();
-        process.argv = originalArgv;
+        process.argv = savedArgv;
         ThreadsManager.logLevel = originalLogLevel;
       }
     });
@@ -246,8 +244,8 @@ describe('ThreadsManager', () => {
 
   describe('msgHandler', () => {
     test('responds to get_log_level and set_log_level', async () => {
-      const originalArgv = process.argv;
-      process.argv = originalArgv.filter((arg) => arg !== '--verbose' && arg !== '-verbose');
+      const savedArgv = process.argv;
+      process.argv = savedArgv.filter((arg) => arg !== '--verbose' && arg !== '-verbose');
 
       try {
         const manager = new ThreadsManager();
@@ -279,13 +277,13 @@ describe('ThreadsManager', () => {
 
         manager.destroy();
       } finally {
-        process.argv = originalArgv;
+        process.argv = savedArgv;
       }
     });
 
     test('set_log_level does not change when debug=true', async () => {
-      const originalArgv = process.argv;
-      process.argv = [...originalArgv.slice(0, 2), '--debug'];
+      const savedArgv = process.argv;
+      process.argv = [...originalProcessArgv.slice(0, 2), '--debug'];
 
       try {
         const manager = new ThreadsManager();
@@ -309,7 +307,7 @@ describe('ThreadsManager', () => {
 
         manager.destroy();
       } finally {
-        process.argv = originalArgv;
+        process.argv = savedArgv;
       }
     });
 
@@ -353,8 +351,8 @@ describe('ThreadsManager', () => {
     });
 
     test('ignores non-requests / wrong dst and logs unknown types when verbose', async () => {
-      const originalArgv = process.argv;
-      process.argv = [...originalArgv.slice(0, 2), '--verbose'];
+      const savedArgv = process.argv;
+      process.argv = [...originalProcessArgv.slice(0, 2), '--verbose'];
 
       try {
         const manager = new ThreadsManager();
@@ -377,7 +375,7 @@ describe('ThreadsManager', () => {
 
         manager.destroy();
       } finally {
-        process.argv = originalArgv;
+        process.argv = savedArgv;
       }
     });
   });
@@ -438,6 +436,48 @@ describe('ThreadsManager', () => {
       }
     });
 
+    test('passes null workerData when none is given', async () => {
+      const manager = new ThreadsManager();
+
+      const tempWorkerFileName = `runInMainThread.nodata.${Date.now()}.js`;
+      const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
+      writeFileSync(
+        tempWorkerPath,
+        [
+          'const state = {',
+          "  name: 'NoDataMainThreadWorker',",
+          '  workerData: undefined,',
+          '  destroy: function(success) { this.destroyCalledWith = success; },',
+          '  callback: async function(worker) {',
+          '    this.callbackCalledWith = worker;',
+          '    return worker.workerData === null;',
+          '  },',
+          '};',
+          'export default state;',
+        ].join('\n'),
+        { encoding: 'utf8' },
+      );
+
+      try {
+        vi.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
+
+        const threads = (manager as any).threads as Array<{ name: string; path: string; type: ThreadType }>;
+        threads.push({ name: 'NoDataMainThreadWorker', path: tempWorkerFileName, type: 'worker' });
+
+        const result = await manager.runInMainThread('NoDataMainThreadWorker');
+
+        expect(result).toBe(true);
+
+        const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
+        expect(imported.workerData).toBeNull();
+        expect(imported.callbackCalledWith).toBe(imported);
+        expect(imported.destroyCalledWith).toBe(true);
+      } finally {
+        if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
+        manager.destroy();
+      }
+    });
+
     test('returns false when the imported default export is not a matching worker wrapper', async () => {
       const manager = new ThreadsManager();
 
@@ -466,11 +506,11 @@ describe('ThreadsManager', () => {
 
   describe('createESMWorker', () => {
     test('uses default argv/env and logs when verbose', async () => {
-      const originalArgv = process.argv;
+      const savedArgv = process.argv;
       const originalFoo = process.env.FOO;
 
       const defaultArgvMarker = `--default-argv-marker-${Date.now()}`;
-      process.argv = [...originalArgv.slice(0, 2), '--verbose', defaultArgvMarker];
+      process.argv = [...originalProcessArgv.slice(0, 2), '--verbose', defaultArgvMarker];
       delete process.env.FOO;
 
       const manager = new ThreadsManager();
@@ -511,7 +551,7 @@ describe('ThreadsManager', () => {
         await worker.terminate();
       } finally {
         if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
-        process.argv = originalArgv;
+        process.argv = savedArgv;
         if (originalFoo === undefined) delete process.env.FOO;
         else process.env.FOO = originalFoo;
         manager.destroy();
@@ -519,12 +559,12 @@ describe('ThreadsManager', () => {
     }, 10000);
 
     test('uses provided argv/env', async () => {
-      const originalArgv = process.argv;
+      const savedArgv = process.argv;
       const originalFoo = process.env.FOO;
       delete process.env.FOO;
 
       // Ensure ThreadsManager.verbose is false so we cover the non-logging branch.
-      process.argv = originalArgv.filter((arg) => arg !== '--verbose' && arg !== '-verbose' && arg !== '--verbose-worker' && arg !== '-verbose-worker');
+      process.argv = savedArgv.filter((arg) => arg !== '--verbose' && arg !== '-verbose' && arg !== '--verbose-worker' && arg !== '-verbose-worker');
 
       const manager = new ThreadsManager();
       const tempWorkerFileName = `createESMWorker.test.worker2.${Date.now()}.js`;
@@ -556,7 +596,7 @@ describe('ThreadsManager', () => {
         await worker.terminate();
       } finally {
         if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
-        process.argv = originalArgv;
+        process.argv = savedArgv;
         if (originalFoo === undefined) delete process.env.FOO;
         else process.env.FOO = originalFoo;
         manager.destroy();

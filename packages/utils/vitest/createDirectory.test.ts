@@ -12,7 +12,7 @@ import path from 'node:path';
 import { LogLevel } from 'node-ansi-logger';
 
 import { createDirectory } from '../src/createDirectory.js';
-import { HOMEDIR, log, loggerLogSpy, setupTest } from './vitestSetupTest.js';
+import { HOMEDIR, log, loggerLogSpy, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

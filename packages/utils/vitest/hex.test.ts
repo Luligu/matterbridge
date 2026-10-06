@@ -7,6 +7,10 @@
 /* oxlint-disable no-use-before-define */
 
 import { bufferToHex, extractPrivateKeyRaw, hexToBuffer, pemToBuffer } from '../src/hex.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('HexUtils', false);
 
 describe('bufferToHex()', () => {
   it('throws error for non-ArrayBufferLike input', () => {

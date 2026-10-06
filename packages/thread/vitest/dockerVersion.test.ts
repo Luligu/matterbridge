@@ -6,6 +6,11 @@
 
 import type { Mock } from 'vitest';
 
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('DockerVersion', false);
+
 let httpsGetImpl: Mock<(...args: any[]) => any>;
 
 vi.doMock('node:https', (): { get: (...args: any[]) => any } => {

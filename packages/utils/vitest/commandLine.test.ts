@@ -5,17 +5,19 @@
  */
 
 import { getIntArrayParameter, getIntParameter, getParameter, getStringArrayParameter, hasAnyParameter, hasParameter } from '../src/commandLine.js';
+import { originalProcessArgv, setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('CommandLine', false);
 
 describe('Parameter Functions', () => {
-  const ORIGINAL_ARGV = process.argv;
-
   beforeEach(() => {
     vi.resetModules();
-    process.argv = ['node', 'script.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
   });
 
   afterAll(() => {
-    process.argv = ORIGINAL_ARGV;
+    process.argv = [...originalProcessArgv];
   });
 
   describe('hasParameter', () => {

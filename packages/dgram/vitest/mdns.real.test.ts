@@ -10,12 +10,10 @@ import { getMacAddress } from '@matterbridge/utils';
 
 import { DnsClass, DnsRecordType, Mdns, type MdnsMessage } from '../src/mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from '../src/multicast.js';
-import { setupTest } from './vitestSetupTest.js';
-
-process.argv.push('--verbose');
+import { setupTest } from './setupTest.js';
 
 // Setup the test environment
-await setupTest('MdnsReal', false);
+await setupTest('MdnsReal', false, ['--verbose']);
 
 describe('Mdns Real Interaction Tests', () => {
   let mdnsServer: Mdns;

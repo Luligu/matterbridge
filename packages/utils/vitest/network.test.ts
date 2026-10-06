@@ -11,11 +11,12 @@ import { BLUE, LogLevel, nf } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
 import { getInterfaceDetails, getInterfaceName, getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname } from '../src/network.js';
-import { loggerLogSpy, setupTest } from './vitestSetupTest.js';
+import { loggerLogSpy, setupTest } from './setupTest.js';
 
 vi.useFakeTimers();
 
-await setupTest('Network');
+// Setup the test environment
+await setupTest('Network', false);
 
 describe('getInterfaceDetails() / getInterfaceName() / getIpv4InterfaceAddress / getIpv6InterfaceAddress / getMacAddress', () => {
   const fakeIfaces = {
@@ -140,8 +141,6 @@ describe('logInterfaces()', () => {
   beforeAll(() => {
     vi.spyOn(os, 'networkInterfaces').mockReturnValueOnce(fakeIfaces as any);
   });
-
-  afterAll(() => {});
 
   it('logs interface details when debug=true', () => {
     logInterfaces();

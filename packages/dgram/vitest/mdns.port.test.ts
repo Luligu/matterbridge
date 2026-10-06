@@ -7,6 +7,10 @@
 import dgram, { type SocketType } from 'node:dgram';
 
 import { isFirstOnPort } from '../src/mdns.js';
+import { setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('MdnsPort', false);
 
 // No module is mocked: the tests bind real sockets on ports assigned by the OS, so the mDNS port of the host is never touched.
 // A random port is not used: Windows reserves whole port ranges (Hyper-V, WinNAT) where any bind fails.

@@ -9,9 +9,10 @@ import path from 'node:path';
 
 import type { Mock } from 'vitest';
 
-import { setupTest } from './vitestSetupTest.js';
+import { originalProcessArgv, setupTest } from './setupTest.js';
 
-await setupTest('RuntimeBun');
+// Setup the test environment
+await setupTest('RuntimeBun', false);
 
 type RuntimeBunModule = typeof import('../src/runtimeBun.js');
 type ExistsSyncFn = (path: string) => boolean;
@@ -20,7 +21,6 @@ type ExecFileSyncFn = (file: string, args: string[], options: { stdio: 'ignore' 
 const originalBunDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'Bun');
 const originalBunInstall = process.env.BUN_INSTALL;
 const originalHome = process.env.HOME;
-const originalArgv = [...process.argv];
 const originalVersions = process.versions;
 
 let mockedExistsSync: Mock<ExistsSyncFn>;
@@ -50,7 +50,7 @@ afterEach(() => {
   vi.doUnmock('node:fs');
   restoreBunGlobal();
   setProcessVersions();
-  process.argv.splice(0, process.argv.length, ...originalArgv);
+  process.argv.splice(0, process.argv.length, ...originalProcessArgv);
   if (originalBunInstall === undefined) delete process.env.BUN_INSTALL;
   else process.env.BUN_INSTALL = originalBunInstall;
   if (originalHome === undefined) delete process.env.HOME;

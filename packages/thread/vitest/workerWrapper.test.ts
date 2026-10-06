@@ -8,6 +8,11 @@ import type { ThreadNames, ThreadType } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
+import { originalProcessArgv, setupTest } from './setupTest.js';
+
+// Setup the test environment
+await setupTest('WorkerWrapper', false);
+
 type MockedParentPort = {
   postMessage: Mock<(...args: any[]) => any>;
   on: Mock<(...args: any[]) => any>;
@@ -633,8 +638,8 @@ describe('WorkerWrapper', () => {
       threadName: 'Ignored',
     });
 
-    const originalArgv = process.argv;
-    process.argv = ['node', 'script'];
+    const savedArgv = process.argv;
+    process.argv = originalProcessArgv.slice(0, 2);
 
     try {
       const wrapper = new WorkerWrapper('Info' as unknown as ThreadNames, asyncTrue);
@@ -647,7 +652,7 @@ describe('WorkerWrapper', () => {
       expect(debug).toHaveBeenCalledWith('Argv: none');
       expect(debug).toHaveBeenCalledWith(expect.stringMatching(/^Env: /));
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
     }
   });
 
@@ -659,8 +664,8 @@ describe('WorkerWrapper', () => {
       threadName: 'Ignored',
     });
 
-    const originalArgv = process.argv;
-    process.argv = ['node', 'script', '--foo', 'bar'];
+    const savedArgv = process.argv;
+    process.argv = [...originalProcessArgv.slice(0, 2), '--foo', 'bar'];
 
     try {
       const wrapper = new WorkerWrapper('InfoArgs' as unknown as ThreadNames, asyncTrue);
@@ -669,7 +674,7 @@ describe('WorkerWrapper', () => {
 
       expect(debug).toHaveBeenCalledWith('Argv: --foo bar');
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
     }
   });
 

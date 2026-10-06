@@ -156,6 +156,7 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[thread]: Add the Backend thread entry point.</li>
+<li>[test-utils]: Add <code>resetTest()</code> (vitest, jest and bun): it restores the spies, <code>process.argv</code> and <code>process.env</code>, and lets <code>setupTest()</code> run again for the same name.</li>
 <li>[core]: Export the ffmpeg helpers (<code>hasFfmpeg</code>, <code>runFfmpeg</code>, <code>redactSource</code>) from <code>matterbridge/behaviors</code>.</li>
 <li>[core]: Add <code>listWebcams()</code> to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).</li>
 <li>[core]: Add <code>playWebcam()</code> and <code>getPlayWebcamArgs()</code> to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.</li>
@@ -165,6 +166,10 @@
 <ul>
 <li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, <code>_</code> and <code>-</code>.</li>
 <li>[test-utils]: <code>setupTest()</code> and <code>setDebug()</code> (vitest, jest and bun) share one spy installer that restores every spy first, so <code>setupTest(name, true)</code> after a mocked setup no longer keeps the output silenced.</li>
+<li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) ignores a second call with the same suite name, and <code>setDebug()</code> ignores calls made before <code>setupTest()</code>; both write a warning to stderr.</li>
+<li>[utils], [dgram], [thread]: Rename the local <code>vitest/vitestSetupTest.ts</code> to <code>vitest/setupTest.ts</code> and sync it with the <code>test-utils</code> vitest helper.</li>
+<li>[types]: Add the local <code>vitest/setupTest.ts</code>, a copy of the <code>test-utils</code> vitest helper.</li>
+<li>[thread]: Use the local <code>setupTest.ts</code> in all thread tests instead of <code>@matterbridge/vitest-utils</code>.</li>
 <li>[utils]: Bump Tracker to 1.1.0.</li>
 <li>[utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.</li>
 <li>[utils]: Always run a synchronous garbage collection in the tracker on Bun.</li>

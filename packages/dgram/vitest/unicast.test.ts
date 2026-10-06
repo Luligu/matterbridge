@@ -11,7 +11,7 @@ import { CYAN, LogLevel, nf } from 'node-ansi-logger';
 
 import { Dgram } from '../src/dgram.js';
 import { Unicast } from '../src/unicast.js';
-import { loggerLogSpy, setupTest } from './vitestSetupTest.js';
+import { loggerLogSpy, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Unicast', false);

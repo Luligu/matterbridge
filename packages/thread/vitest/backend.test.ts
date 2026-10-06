@@ -16,13 +16,13 @@ import tls from 'node:tls';
 
 import { NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
-import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { WebSocket } from 'ws';
 
 import { Backend } from '../src/backend.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
+import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -166,7 +166,7 @@ describe('Backend', () => {
    * @returns {Promise<Backend>} The listening Backend.
    */
   async function startBackend(args: string[], matterbridge: SharedMatterbridge = createSharedMatterbridge()): Promise<Backend> {
-    process.argv = ['node', 'backend.test.js', ...args, '--debug-backend', '--verbose-backend'];
+    process.argv = [...originalProcessArgv.slice(0, 2), ...args, '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(matterbridge);
     const listening = once(backend, 'server_listening');
@@ -182,7 +182,7 @@ describe('Backend', () => {
    * @returns {Promise<unknown>} The error emitted with server_error.
    */
   async function startBackendWithError(args: string[]): Promise<unknown> {
-    process.argv = ['node', 'backend.test.js', ...args, '--debug-backend', '--verbose-backend'];
+    process.argv = [...originalProcessArgv.slice(0, 2), ...args, '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
     const serverError = once(backend, 'server_error');
@@ -241,7 +241,7 @@ describe('Backend', () => {
   });
 
   test('should answer get_log_level and set_log_level broadcast requests', async () => {
-    process.argv = ['node', 'backend.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
     backend = new Backend(createSharedMatterbridge());
     const manager = new BroadcastServer('manager', log);
 
@@ -263,7 +263,7 @@ describe('Backend', () => {
 
   test.each(['', '--diagnostic', '--diagnostic-backend'])('should fetch API data with diagnostic flag %s', async (flag) => {
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    process.argv = ['node', 'backend.test.js', flag];
+    process.argv = [...originalProcessArgv.slice(0, 2), flag];
     backend = new Backend(createSharedMatterbridge());
 
     const matterbridgeServer = new BroadcastServer('matterbridge', log);
@@ -308,7 +308,7 @@ describe('Backend', () => {
   });
 
   test('should serve http and ws when started without ssl', async () => {
-    process.argv = ['node', 'backend.test.js', '--debug-backend', '--verbose-backend'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
 
@@ -332,7 +332,7 @@ describe('Backend', () => {
 
   test('should serve https and wss when started with ssl', async () => {
     setCerts(PEM_CERTS);
-    process.argv = ['node', 'backend.test.js', '--ssl', '--debug-backend', '--verbose-backend'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--ssl', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
 
@@ -388,7 +388,7 @@ describe('Backend', () => {
 
   test('should require a client certificate when started with ssl and mtls', async () => {
     setCerts(PEM_CERTS);
-    process.argv = ['node', 'backend.test.js', '--ssl', '--mtls', '--debug-backend', '--verbose-backend'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--ssl', '--mtls', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
 
@@ -415,7 +415,7 @@ describe('Backend', () => {
 
   test('should serve https and wss when started with ssl and a p12 certificate with passphrase', async () => {
     setCerts({ 'cert.p12': 'server.p12', 'cert.pass': 'server.pass' });
-    process.argv = ['node', 'backend.test.js', '--ssl', '--debug-backend', '--verbose-backend'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--ssl', '--debug-backend', '--verbose-backend'];
     port = await getFreePort();
     backend = new Backend(createSharedMatterbridge());
 
