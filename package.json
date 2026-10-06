@@ -205,6 +205,10 @@
     },
     "entryPoints": [
       {
+        "in": "packages/thread/src/threadBackend.ts",
+        "out": "workers/threadBackend"
+      },
+      {
         "in": "packages/thread/src/workerArchiveCommand.ts",
         "out": "workers/workerArchiveCommand"
       },

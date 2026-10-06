@@ -33,6 +33,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [thread]: Add the Backend thread entry point.
 - [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
 - [core]: Add `listWebcams()` to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).
 - [core]: Add `playWebcam()` and `getPlayWebcamArgs()` to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.
@@ -40,6 +41,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [utils]: Bump Tracker to 1.1.0.
+- [utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.
+- [utils]: Add `memoryFootprint()` to runtimeBun (Bun memory footprint, falling back to `process.memoryUsage().rss`).
+- [core]: Use `memoryFootprint()` for the system information RSS.
+- [core]: Refresh the variable system information (memory, uptime) in `Matterbridge.getApiSettings()`.
+- [thread]: Move Backend and its tests from core to thread.
+- [thread]: Include the worker thread ID in periodic status logs.
+- [thread]: Keep continuous threads alive after successful startup; retain cleanup for workers and failed startups.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.13.
 - [scripts]: Sync the generic scripts (`clean`, `deep-clean`, `prepublish-clean`, `create-release`, `downloads`, `git-status`, `git-sync-dev`, `prune-releases`, `prune-tags`, `remove-workflows`, `version`) to v.2.0.0 and add `bun-bundle` from matterbridge-native.
 - [matterbridge]: Bump `@types/node` to v.26.6.4.
@@ -56,10 +65,17 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `@types/node` to v.26.6.4.
 - [frontend]: Bump `globals` to v.17.13.0.
 - [frontend]: Bump `vite` to v.8.3.2.
+- [core]: Move `getServerNodeData()`, the fabric and session sanitizers, `getVendorIdName()` and the advertising nodes map from `Matterbridge` and `MatterNode` to `matterNodeHelpers`.
+- [core]: The frontend device list uses `getReachability()`, `getPowerSource()`, `getBatteryLevel()` and `getClusterTextFromDevice()` from `matterNodeHelpers`.
+- [core]: Reachability of devices without `BridgedDeviceBasicInformation` reads the owner server node `basicInformation.reachable` instead of returning true in childbridge mode.
+- [core]: The battery level is reported only when `batPercentRemaining` is between 0 and 200.
+- [core]: The session `lastInteractionTimestamp` and `lastActiveTimestamp` in the matter API data are now ISO 8601 strings (empty when not available).
 - [oxc]: Align the `.gitignore` (1.0.4), `.oxfmtrc.json` (v.1.0.7) and `.oxlintrc.json` (v.1.0.19) exclusions with the mb-run templates: add `.cottontail-tmp`, `.hutch`, `artifacts`, `tmp`, `xmls`, `bun.lock` and `scripts` (oxfmt), and exclude `chip` at any depth.
 
 ### Fixed
 
+- [core]: Fix the missing space after the illuminance value in the device cluster text.
+- [core]: Fix the mode label in the device cluster text: read the `supportedModes` of the same mode cluster instead of relying on the attribute order.
 - [devcontainer]: Fix `post-create.sh` creating `apps/frontend/node_modules` when it does not exist; only chown it if present.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>

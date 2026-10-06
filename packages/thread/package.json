@@ -75,14 +75,25 @@
     "skipTsconfig": true
   },
   "dependencies": {
+    "@matter/main": "0.17.9",
     "@matterbridge/types": "3.10.13",
     "@matterbridge/utils": "3.10.13",
     "@zip.js/zip.js": "2.22.0",
-    "node-ansi-logger": "3.3.1"
+    "escape-html": "1.0.3",
+    "express": "5.2.1",
+    "express-rate-limit": "8.7.0",
+    "multer": "2.4.0",
+    "node-ansi-logger": "3.3.1",
+    "node-persist-manager": "2.1.1",
+    "ws": "8.22.0"
   },
   "devDependencies": {
     "@matterbridge/vitest-utils": "3.10.13",
+    "@types/escape-html": "1.0.4",
+    "@types/express": "5.0.6",
+    "@types/multer": "2.3.0",
     "@types/node": "26.6.4",
+    "@types/ws": "8.18.2",
     "vitest": "5.0.3"
   }
 }
