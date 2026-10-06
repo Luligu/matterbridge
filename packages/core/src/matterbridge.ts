@@ -72,7 +72,7 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import { isBun, getGlobalBunModules } from '@matterbridge/utils/bun';
+import { isBun, getGlobalBunModules, memoryFootprint } from '@matterbridge/utils/bun';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
@@ -461,6 +461,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {ApiSettings} The API settings object.
    */
   getApiSettings(): ApiSettings {
+    // Update the variable system information properties
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.systemInformation.rss = formatBytes(memoryFootprint());
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
+
     return {
       systemInformation: { ...this.systemInformation },
       matterbridgeInformation: {
@@ -547,6 +556,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           break;
         case 'matterbridge_shared':
           this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
+          break;
+        case 'matterbridge_restart':
+          this.server.respond({ ...msg, result: { success: true } });
+          await this.restartProcess();
+          break;
+        case 'matterbridge_shutdown':
+          this.server.respond({ ...msg, result: { success: true } });
+          await this.shutdownProcess();
           break;
         case 'matterbridge_apimatter': {
           let serverNode: ServerNode | undefined;
@@ -1590,7 +1607,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.processUptime = formatUptime(process.uptime());
     this.systemInformation.cpuUsage = formatPercent(0);
     this.systemInformation.processCpuUsage = formatPercent(0);
-    this.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.systemInformation.rss = formatBytes(memoryFootprint());
     this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
     this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 

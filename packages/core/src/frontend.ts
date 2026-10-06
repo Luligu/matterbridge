@@ -77,7 +77,7 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import { isBun } from '@matterbridge/utils/bun';
+import { isBun, memoryFootprint } from '@matterbridge/utils/bun';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
@@ -1271,7 +1271,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
     this.matterbridge.systemInformation.cpuUsage = formatPercent(lastOsCpuUsage);
     this.matterbridge.systemInformation.processCpuUsage = formatPercent(lastProcessCpuUsage);
-    this.matterbridge.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.matterbridge.systemInformation.rss = formatBytes(memoryFootprint());
     this.matterbridge.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
     this.matterbridge.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 

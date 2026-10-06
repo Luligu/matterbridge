@@ -162,10 +162,10 @@ describe('Matterbridge frontend', () => {
 
     expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
 
-    await (frontend as any).broadcastMsgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    await (frontend as any).broadcastMsgHandler({ type: 'test', src: 'manager', dst: 'frontend' } as any); // no id
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'frontend' } as any); // valid
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all' } as any); // valid
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend', params: {} } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_start', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);

@@ -165,13 +165,13 @@ describe('Matterbridge', () => {
 
     expect((matterbridge as any).server).toBeInstanceOf(BroadcastServer);
 
-    await (matterbridge as any).msgHandler({ type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // no id
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // valid
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: false } } as any);
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: true } } as any);
+    await (matterbridge as any).msgHandler({ type: 'test', src: 'manager', dst: 'matterbridge' } as any); // no id
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'matterbridge' } as any); // valid
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all' } as any); // valid
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all', response: { success: false } } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all', response: { success: true } } as any);
 
     await (matterbridge as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'matterbridge' } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'matterbridge', params: { level: LogLevel.DEBUG } } as any);
@@ -193,7 +193,8 @@ describe('Matterbridge', () => {
       src: 'manager',
       dst: 'matterbridge',
       params: {},
-      result: { data: apiSettings, success: true },
+      // systemInformation is refreshed on every getApiSettings() call (memory, uptime)
+      result: { data: { ...apiSettings, systemInformation: expect.objectContaining({ hostname: apiSettings.systemInformation.hostname }) }, success: true },
     });
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
@@ -208,6 +209,17 @@ describe('Matterbridge', () => {
     // oxfmt-ignore
     await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_spawn_response', src: 'manager', dst: 'matterbridge', error: 'Error message' } as any);
     cleanupSpy.mockRestore();
+  });
+
+  test.each(['matterbridge_restart', 'matterbridge_shutdown'] as const)('should handle %s through the process lifecycle', async (type) => {
+    const lifecycleSpy = vi.spyOn(matterbridge, type === 'matterbridge_restart' ? 'restartProcess' : 'shutdownProcess').mockResolvedValueOnce();
+    try {
+      await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type, src: 'frontend', dst: 'matterbridge', params: undefined });
+      expect(respondBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type, result: { success: true } }));
+      expect(lifecycleSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      lifecycleSpy.mockRestore();
+    }
   });
 
   test.each(['root', 'missing-root', 'plugin', 'device', 'unknown', 'duplicate'] as const)('should respond to matterbridge_apimatter for the %s node lookup', async (scenario) => {
