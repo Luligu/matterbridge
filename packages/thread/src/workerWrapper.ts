@@ -3,7 +3,7 @@
  * @description This file contains the class WorkerWrapper.
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.1.1
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -162,6 +162,7 @@ export class WorkerWrapper {
     if (this.destroyed) return;
     this.destroyed = true;
 
+    // Remove process-level event listeners for unhandled rejections and uncaught exceptions in the worker.
     if (!isMainThread) {
       process.off('unhandledRejection', this.boundUnhandledRejectionHandler);
       process.off('uncaughtException', this.boundUncaughtExceptionHandler);

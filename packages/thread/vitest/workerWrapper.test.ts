@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-import type { ThreadNames } from '@matterbridge/types';
+import type { ThreadNames, ThreadType } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -23,7 +23,7 @@ type SetupOptions = Readonly<{
   verboseParam?: boolean;
   trackerParam?: boolean;
   workerDataPresent?: boolean;
-  type?: 'worker' | 'thread';
+  type?: ThreadType;
 }>;
 
 type SetupResult = Readonly<{
@@ -92,7 +92,7 @@ describe('WorkerWrapper', () => {
         ...actual,
         isMainThread: options.isMainThread,
         threadId: options.threadId,
-        workerData: options.workerDataPresent === false ? undefined : { threadName: options.threadName, type: options.type },
+        workerData: options.workerDataPresent === false ? undefined : { threadName: options.threadName, type: options.type ?? 'worker' },
         parentPort,
       };
     });
