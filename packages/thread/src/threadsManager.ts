@@ -334,7 +334,7 @@ export class ThreadsManager {
     let success = false;
     const workerWrapper: WorkerWrapper = (await import(this.resolvePath(threadInfo.path))).default;
     if (workerWrapper && typeof workerWrapper === 'object' && workerWrapper.name === name && workerWrapper.callback && typeof workerWrapper.callback === 'function') {
-      workerWrapper.workerData = workerData;
+      workerWrapper.workerData = workerData ? { ...workerData, type: threadInfo.type } : null;
       try {
         success = await workerWrapper.callback(workerWrapper);
       } finally {

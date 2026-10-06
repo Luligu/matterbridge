@@ -429,7 +429,7 @@ describe('ThreadsManager', () => {
         expect(result).toBe(ok);
 
         const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
-        expect(imported.workerData).toEqual({ ok, payload: 'value' });
+        expect(imported.workerData).toEqual({ ok, payload: 'value', type });
         expect(imported.callbackCalledWith).toBe(imported);
         expect(imported.destroyCalledWith).toBe(type === 'thread' && ok ? undefined : ok);
       } finally {

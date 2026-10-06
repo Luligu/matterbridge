@@ -30,8 +30,8 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 // AnsiLogger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 // matterbridge
+import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData } from './matterNodeHelpers.js';
 
 logModuleLoaded('Device Manager');

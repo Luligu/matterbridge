@@ -27,8 +27,8 @@
 
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-// @matterbridge
 import type { EndpointNumber } from '@matter/types/datatype';
+// @matterbridge
 import type {
   ApiMatter,
   BridgeStatus,

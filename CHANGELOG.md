@@ -43,6 +43,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [utils]: Bump Tracker to 1.1.0.
 - [utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.
+- [utils]: Always run a synchronous garbage collection in the tracker on Bun.
+- [thread]: Add the thread type to the worker data in `ThreadsManager.runInMainThread()`.
 - [utils]: Add `memoryFootprint()` to runtimeBun (Bun memory footprint, falling back to `process.memoryUsage().rss`).
 - [core]: Use `memoryFootprint()` for the system information RSS.
 - [core]: Refresh the variable system information (memory, uptime) in `Matterbridge.getApiSettings()`.

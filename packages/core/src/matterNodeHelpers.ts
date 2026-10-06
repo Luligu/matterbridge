@@ -27,8 +27,8 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 /* oxlint-disable typescript/non-nullable-type-assertion-style */
 
-import { Lifecycle } from '@matter/general';
 // @matter
+import { Lifecycle } from '@matter/general';
 import { ServerNode, type SessionsBehavior } from '@matter/node';
 import type { ExposedFabricInformation } from '@matter/protocol';
 import { getClusterNameById } from '@matter/types/cluster';
@@ -48,8 +48,8 @@ import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import type { ClusterId } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
-import type { ApiMatter, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
 // @matterbridge
+import type { ApiMatter, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 import { isValidArray, isValidNumber, isValidObject } from '@matterbridge/utils/validate';
 // Third-party modules

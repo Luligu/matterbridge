@@ -108,12 +108,12 @@ import {
 // NodeStorage module
 import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
+// matterbridge
 import { DeviceManager } from './deviceManager.js';
 import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './helpers.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-// matterbridge
 import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
