@@ -4,8 +4,9 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { hslColorToRgbColor, kelvinToMireds, kelvinToRGB, miredsToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from '../src/colorUtils.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('ColorUtils', false);

@@ -6,10 +6,10 @@
 
 import os from 'node:os';
 
+import { loggerDebugSpy, loggerLogSpy, originalProcessArgv, originalProcessEnv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
 import { Dgram } from '../src/dgram.js';
-import { loggerDebugSpy, loggerLogSpy, originalProcessArgv, originalProcessEnv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Dgram', false);

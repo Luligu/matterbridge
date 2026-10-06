@@ -6,11 +6,11 @@
 
 import type { RemoteInfo } from 'node:dgram';
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { getMacAddress } from '@matterbridge/utils';
 
 import { DnsClass, DnsRecordType, Mdns, type MdnsMessage } from '../src/mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from '../src/multicast.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('MdnsReal', false, ['--verbose']);

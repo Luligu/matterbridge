@@ -22,6 +22,7 @@ import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { VendorId } from '@matter/types';
+import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { plg } from '@matterbridge/types';
@@ -1604,7 +1605,7 @@ describe('Matterbridge mocked', () => {
     });
     vi.advanceTimersByTime(60000); // Simulate 1 minute for the interval
     vi.useRealTimers();
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the next tick
+    await flushAsync(3, 10, 0); // Let the configure callback settle
     expect(configurePluginSpy).toHaveBeenCalledTimes(2);
     expect((matterbridge as any).startMatterInterval).toBeUndefined(); // Reset the interval after testing
 
@@ -1780,7 +1781,7 @@ describe('Matterbridge mocked', () => {
     });
     vi.advanceTimersByTime(60000); // Simulate 1 minute for the interval
     vi.useRealTimers();
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the next tick
+    await flushAsync(3, 10, 0); // Let the configure callback settle
     expect(plugin5.error).toBe(true);
     expect(configurePluginSpy).toHaveBeenCalledTimes(5);
 

@@ -71,6 +71,7 @@
     "node-ansi-logger": "3.3.1"
   },
   "devDependencies": {
+    "@matterbridge/test-utils": "3.10.13",
     "@types/node": "26.6.4",
     "vitest": "5.0.3"
   }

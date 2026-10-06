@@ -41,7 +41,7 @@ vi.doMock('node:https', () => {
   return { get: mockedGet };
 });
 
-import { setupTest } from './setupTest.js';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const { getNpmPackageVersion } = await import('../src/npmVersion.js');
 

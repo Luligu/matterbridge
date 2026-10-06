@@ -88,6 +88,7 @@
     "ws": "8.22.0"
   },
   "devDependencies": {
+    "@matterbridge/test-utils": "3.10.13",
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
     "@types/multer": "2.3.0",

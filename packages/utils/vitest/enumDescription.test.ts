@@ -4,8 +4,9 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { getEnumDescription } from '../src/enumDescription.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('EnumDescription', false);

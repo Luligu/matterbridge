@@ -8,12 +8,12 @@
 
 const NAME = 'ThreadsManagerMainThread';
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
 import { ThreadsManager } from '../src/threadsManager.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

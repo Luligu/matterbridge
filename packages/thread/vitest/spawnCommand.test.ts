@@ -26,10 +26,10 @@ vi.mock('@matterbridge/utils/bun', () => ({
 
 import type { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { Mock } from 'vitest';
 
 import { spawnCommand } from '../src/spawnCommand.js';
-import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('SpawnCommand', false);

@@ -4,8 +4,9 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { deepEqual } from '../src/deepEqual.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('DeepEqual', false);

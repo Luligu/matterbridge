@@ -6,8 +6,9 @@
 
 /* oxlint-disable no-use-before-define */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { bufferToHex, extractPrivateKeyRaw, hexToBuffer, pemToBuffer } from '../src/hex.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('HexUtils', false);

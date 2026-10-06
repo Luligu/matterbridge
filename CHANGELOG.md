@@ -36,7 +36,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [thread]: Add the Backend thread entry point.
 - [test-utils]: Add `resetTest()` (vitest, jest and bun): it restores the spies, `process.argv` and `process.env`, and lets `setupTest()` run again for the same name.
 - [test-utils]: Add `getFreePort()`: it returns a free TCP, UDP4 or UDP6 port from the OS.
-- [dgram], [thread]: Add the local `vitest/freePort.ts`, a copy of the `test-utils` helper, and use it in the tests instead of their own free-port helpers.
 - [test-utils]: Add the `/vitest/setup`, `/vitest/matter`, `/jest/setup`, `/jest/matter`, `/buntest/setup` and `/buntest/matter` subpaths: `setup` loads only the setup helpers and spies, without matter.js. The `/vitest`, `/jest` and `/buntest` subpaths still export both.
 - [core]: Re-export the new `test-utils` subpaths as `matterbridge/test-utils/{vitest,jest,buntest}/{setup,matter}`.
 - [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
@@ -48,6 +47,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [test-utils]: Remove the `@matterbridge/utils` dependency: `inspectError()` is now a local helper.
 - [core]: Import the test helpers from the `test-utils` `/vitest/setup` and `/vitest/matter` subpaths instead of `/vitest`.
+- [dgram]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts` and `vitest/freePort.ts`, and add it to the devDependencies.
+- [utils]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts`, and add it to the devDependencies.
+- [thread]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts`, `vitest/freePort.ts` and `vitest/flushAsync.ts`, and add it to the devDependencies.
 - [test-utils]: `setupTest()` (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, `_` and `-`.
 - [test-utils]: `setupTest()` and `setDebug()` (vitest, jest and bun) share one spy installer that restores every spy first, so `setupTest(name, true)` after a mocked setup no longer keeps the output silenced.
 - [test-utils]: `setupTest()` (vitest, jest and bun) ignores a second call with the same suite name, and `setDebug()` ignores calls made before `setupTest()`; both write a warning to stderr.

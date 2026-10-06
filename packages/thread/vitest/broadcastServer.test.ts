@@ -9,12 +9,12 @@ const MATTER_PORT = 0;
 
 import { BroadcastChannel } from 'node:worker_threads';
 
+import { flushAsync } from '@matterbridge/test-utils';
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
-import { flushAsync } from './flushAsync.js';
-import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

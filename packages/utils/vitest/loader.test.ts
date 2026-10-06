@@ -4,8 +4,9 @@
  * @author Luca Liguori
  */
 
+import { consoleLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { logModuleLoaded } from '../src/loader.js';
-import { consoleLogSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Loader', false);

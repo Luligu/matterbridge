@@ -14,6 +14,8 @@ import net from 'node:net';
 import path from 'node:path';
 import tls from 'node:tls';
 
+import { getFreePort } from '@matterbridge/test-utils';
+import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
@@ -22,8 +24,6 @@ import { WebSocket } from 'ws';
 
 import { Backend } from '../src/backend.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
-import { getFreePort } from './freePort.js';
-import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

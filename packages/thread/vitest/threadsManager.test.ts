@@ -12,12 +12,12 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { ThreadType } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
 import { ThreadsManager } from '../src/threadsManager.js';
-import { originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

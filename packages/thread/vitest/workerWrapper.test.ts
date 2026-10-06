@@ -4,11 +4,10 @@
  * @author Luca Liguori
  */
 
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { ThreadNames, ThreadType } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
-
-import { originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('WorkerWrapper', false);

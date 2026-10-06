@@ -7,11 +7,11 @@
 import dns from 'node:dns';
 import os from 'node:os';
 
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, LogLevel, nf } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
 import { getInterfaceDetails, getInterfaceName, getIpv4InterfaceAddress, getIpv6InterfaceAddress, getMacAddress, logInterfaces, resolveHostname } from '../src/network.js';
-import { loggerLogSpy, setupTest } from './setupTest.js';
 
 vi.useFakeTimers();
 

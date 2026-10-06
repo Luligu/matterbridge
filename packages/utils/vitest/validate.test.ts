@@ -6,6 +6,8 @@
 
 /* oxlint-disable unicorn/no-useless-undefined */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import {
   isValidArray,
   isValidBoolean,
@@ -20,7 +22,6 @@ import {
   isValidUndefined,
   parseVersionString,
 } from '../src/validate.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Validate', false);

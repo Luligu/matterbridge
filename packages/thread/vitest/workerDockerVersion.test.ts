@@ -4,10 +4,9 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
-
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('WorkerDockerVersion', false);

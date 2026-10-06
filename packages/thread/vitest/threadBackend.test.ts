@@ -4,9 +4,10 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { BroadcastServer } from '../src/broadcastServer.js';
 import type { WorkerWrapper } from '../src/workerWrapper.js';
-import { setupTest } from './setupTest.js';
 import { matterbridge } from './sharedMatterbridge.js';
 
 // Setup the test environment

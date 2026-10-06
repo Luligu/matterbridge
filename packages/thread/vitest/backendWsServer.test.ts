@@ -9,13 +9,13 @@ const NAME = 'BackendWsServer';
 import { EventEmitter } from 'node:events';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
+import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { ApiMatter, SharedMatterbridge } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
 import { BackendWsServer } from '../src/backendWsServer.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
-import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Spy on BroadcastServer methods
 const isWorkerRequestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerRequest');

@@ -7,9 +7,8 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { Mock } from 'vitest';
-
-import { originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('RuntimeBun', false);

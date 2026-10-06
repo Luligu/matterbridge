@@ -4,8 +4,9 @@
  * @author Luca Liguori
  */
 
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { getIntArrayParameter, getIntParameter, getParameter, getStringArrayParameter, hasAnyParameter, hasParameter } from '../src/commandLine.js';
-import { originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('CommandLine', false);

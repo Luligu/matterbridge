@@ -8,10 +8,10 @@ import { Socket } from 'node:dgram';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
+import { loggerLogSpy, originalProcessArgv, originalProcessEnv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
 import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, Multicast } from '../src/multicast.js';
-import { loggerLogSpy, originalProcessArgv, originalProcessEnv, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Multicast', false);

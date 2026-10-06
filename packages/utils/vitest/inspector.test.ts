@@ -6,7 +6,7 @@
 
 /* oxlint-disable typescript/explicit-function-return-type */
 
-import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from './setupTest.js';
+import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // Setup the test environment
 await setupTest('Inspector', false);
@@ -637,7 +637,7 @@ describe('Inspector', () => {
     expect(inspector.session).toBeUndefined();
     await inspector.start();
     inspector.emit('start');
-    await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
+    // await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
     await inspector.stop();
   });
 
@@ -649,6 +649,6 @@ describe('Inspector', () => {
     await inspector.start();
     await inspector.stop();
     inspector.emit('stop');
-    await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
+    // await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
   });
 });

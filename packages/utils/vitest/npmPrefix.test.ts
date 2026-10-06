@@ -23,7 +23,7 @@ vi.doMock('node:child_process', () => {
   return { exec: mockedExec };
 });
 
-import { setupTest } from './setupTest.js';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const { getGlobalNodeModules } = await import('../src/npmPrefix.js');
 

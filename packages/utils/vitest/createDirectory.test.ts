@@ -9,10 +9,10 @@ const NAME = 'CreateDirectory';
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { HOMEDIR, log, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { createDirectory } from '../src/createDirectory.js';
-import { HOMEDIR, log, loggerLogSpy, setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);

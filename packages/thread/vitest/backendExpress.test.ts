@@ -16,6 +16,7 @@ import os from 'node:os';
 import path from 'node:path';
 import v8 from 'node:v8';
 
+import { log, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_DIR,
@@ -32,7 +33,6 @@ import { LogLevel } from 'node-ansi-logger';
 import type { Backend } from '../src/backend.js';
 import { BackendExpress } from '../src/backendExpress.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
-import { log, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Mock isBun to cover the bun install command of /api/uploadpackage
 const isBunMock = vi.hoisted(() => vi.fn(() => false));

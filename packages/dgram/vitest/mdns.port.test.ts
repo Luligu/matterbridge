@@ -6,9 +6,10 @@
 
 import dgram, { type SocketType } from 'node:dgram';
 
+import { getFreePort } from '@matterbridge/test-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { isFirstOnPort } from '../src/mdns.js';
-import { getFreePort } from './freePort.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('MdnsPort', false);

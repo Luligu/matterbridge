@@ -10,10 +10,10 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
+import { loggerInfoSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { ERR_UNSAFE_FILENAME, Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
 
 import { createZip, readZip, unZip } from '../src/zipjs.js';
-import { loggerInfoSpy, setupTest } from './setupTest.js';
 
 const execFileAsync = promisify(execFile);
 const tempDirectories: string[] = [];

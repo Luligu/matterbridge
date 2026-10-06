@@ -6,8 +6,9 @@
 
 import type dgram from 'node:dgram';
 
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Mock node:dgram so the Mdns constructor does not open a real socket. Unlike Jest's automock,
 // Vitest's bare automock returns undefined from createSocket, so provide a minimal fake socket

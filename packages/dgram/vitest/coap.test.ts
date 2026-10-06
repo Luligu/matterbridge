@@ -6,11 +6,11 @@
 
 import dgram from 'node:dgram';
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { Mocked } from 'vitest';
 
 import { Coap, COAP_OPTION_URI_PATH, type CoapMessage, COIOT_OPTION_DEVID, COIOT_OPTION_SERIAL, COIOT_OPTION_VALIDITY } from '../src/coap.js';
 import { COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT } from '../src/multicast.js';
-import { setupTest } from './setupTest.js';
 
 // Setup the test environment
 await setupTest('Coap', false);

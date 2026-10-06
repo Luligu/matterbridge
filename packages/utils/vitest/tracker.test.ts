@@ -6,7 +6,7 @@
 
 import os, { type CpuInfo } from 'node:os';
 
-import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from './setupTest.js';
+import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // Setup the test environment
 await setupTest('Tracker', false);
