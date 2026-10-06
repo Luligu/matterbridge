@@ -163,6 +163,8 @@
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, <code>_</code> and <code>-</code>.</li>
+<li>[test-utils]: <code>setupTest()</code> and <code>setDebug()</code> (vitest, jest and bun) share one spy installer that restores every spy first, so <code>setupTest(name, true)</code> after a mocked setup no longer keeps the output silenced.</li>
 <li>[utils]: Bump Tracker to 1.1.0.</li>
 <li>[utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.</li>
 <li>[utils]: Always run a synchronous garbage collection in the tracker on Bun.</li>

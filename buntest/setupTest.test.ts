@@ -8,10 +8,11 @@
 //   - they set NAME / HOMEDIR / process.argv and create the home directory,
 //   - they apply extra argv and environment variables,
 //   - they install working logger/console spies,
-//   - setDebug() restores and re-installs those spies.
+//   - setDebug() restores and re-installs those spies,
+//   - resetTest() undoes setupTest() and lets the same name be set up again.
 // Run from the repo root with:  bun test  (bunfig.toml scopes discovery to buntest/).
 
-import { afterEach, describe, expect, test } from 'bun:test';
+import { afterEach, describe, expect, spyOn, test } from 'bun:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
@@ -33,6 +34,7 @@ import {
   NAME,
   originalProcessArgv,
   originalProcessEnv,
+  resetTest,
   setDebug,
   setupTest,
 } from '@matterbridge/test-utils/buntest';
@@ -40,26 +42,8 @@ import { AnsiLogger } from 'node-ansi-logger';
 
 describe('bunSetupTest', () => {
   afterEach(() => {
-    // Restore every installed spy so suppressed console output returns for the reporter.
-    for (const spy of [
-      loggerLogSpy,
-      loggerDebugSpy,
-      loggerInfoSpy,
-      loggerNoticeSpy,
-      loggerWarnSpy,
-      loggerErrorSpy,
-      loggerFatalSpy,
-      consoleLogSpy,
-      consoleDebugSpy,
-      consoleInfoSpy,
-      consoleWarnSpy,
-      consoleErrorSpy,
-    ]) {
-      spy?.mockRestore();
-    }
-    // Reset the process state mutated by setupTest.
-    process.argv = [...originalProcessArgv];
-    delete process.env.MB_BUNTEST_ENV;
+    // Restore the spies, process.argv and process.env, and release the suite name for the next test.
+    resetTest();
   });
 
   test('freezes the original process snapshots', () => {
@@ -120,6 +104,20 @@ describe('bunSetupTest', () => {
     }
   });
 
+  test('setupTest in debug mode drops the noop installed by a previous setupTest', async () => {
+    // afterEach restores every spy, so these are the original implementations
+    const originalLoggerLog = AnsiLogger.prototype.log;
+    // oxlint-disable-next-line eslint/no-console
+    const originalConsoleLog = console.log;
+
+    await setupTest('SuiteMocked', false);
+    expect(consoleLogSpy.getMockImplementation()).not.toBe(originalConsoleLog);
+
+    await setupTest('SuitePassthrough', true);
+    expect(loggerLogSpy.getMockImplementation()).toBe(originalLoggerLog);
+    expect(consoleLogSpy.getMockImplementation()).toBe(originalConsoleLog);
+  });
+
   test('setDebug toggles the spies without throwing', async () => {
     await setupTest('SuiteFour', false);
 
@@ -133,11 +131,58 @@ describe('bunSetupTest', () => {
     expect(consoleLogSpy).toHaveBeenCalledWith('suppressed again');
   });
 
+  test('ignores a second setupTest with the same name', async () => {
+    const stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      await setupTest('SuiteTwice');
+      await setupTest('SuiteTwice', false, ['--ignored']);
+      expect(process.argv).toEqual(['bun', 'SuiteTwice']);
+      expect(stderrSpy).toHaveBeenCalledWith("setupTest: 'SuiteTwice' has already been set up. Call setupTest() once per test file.\n");
+    } finally {
+      stderrSpy.mockRestore();
+    }
+  });
+
+  test('setDebug before setupTest does nothing', async () => {
+    const stderrSpy = spyOn(process.stderr, 'write').mockImplementation(() => true);
+    try {
+      await setDebug(true);
+      expect(stderrSpy).toHaveBeenCalledWith('setDebug() called before setupTest(): no spies to switch, ignoring.\n');
+    } finally {
+      stderrSpy.mockRestore();
+    }
+  });
+
+  test('resetTest restores the process state and allows the same name again', async () => {
+    // oxlint-disable-next-line eslint/no-console
+    const originalConsoleLog = console.log;
+
+    await setupTest('SuiteReset', false, ['--verbose'], { MB_BUNTEST_ENV: 'enabled' });
+    resetTest();
+
+    expect(process.argv).toEqual([...originalProcessArgv]);
+    expect(process.env.MB_BUNTEST_ENV).toBeUndefined();
+    // oxlint-disable-next-line eslint/no-console
+    expect(console.log).toBe(originalConsoleLog);
+
+    await setupTest('SuiteReset', false, ['--again']);
+    expect(process.argv).toEqual(['bun', 'SuiteReset', '--again']);
+  });
+
   test('rejects a name shorter than four characters', async () => {
     let rejected = false;
     await setupTest('abc').catch(() => {
       rejected = true;
     });
     expect(rejected).toBe(true);
+  });
+
+  test('rejects a name that could escape the home directory', async () => {
+    // '../BunSetupEscape' resolves to .cache/BunSetupEscape, so even a stale build cannot touch real files
+    let message = '';
+    await setupTest('../BunSetupEscape').catch((error: unknown) => {
+      message = error instanceof Error ? error.message : String(error);
+    });
+    expect(message).toContain('Use letters, digits, underscores and dashes only.');
   });
 });

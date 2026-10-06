@@ -34,6 +34,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [thread]: Add the Backend thread entry point.
+- [test-utils]: Add `resetTest()` (vitest, jest and bun): it restores the spies, `process.argv` and `process.env`, and lets `setupTest()` run again for the same name.
 - [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
 - [core]: Add `listWebcams()` to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).
 - [core]: Add `playWebcam()` and `getPlayWebcamArgs()` to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.
@@ -41,6 +42,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [test-utils]: `setupTest()` (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, `_` and `-`.
+- [test-utils]: `setupTest()` and `setDebug()` (vitest, jest and bun) share one spy installer that restores every spy first, so `setupTest(name, true)` after a mocked setup no longer keeps the output silenced.
+- [test-utils]: `setupTest()` (vitest, jest and bun) ignores a second call with the same suite name, and `setDebug()` ignores calls made before `setupTest()`; both write a warning to stderr.
 - [utils]: Bump Tracker to 1.1.0.
 - [utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.
 - [utils]: Always run a synchronous garbage collection in the tracker on Bun.
