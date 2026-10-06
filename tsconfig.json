@@ -1,6 +1,7 @@
 {
   "files": [],
   "references": [
+    { "path": "./apps/frontend/tsconfig.json" },
     { "path": "./packages/types/tsconfig.json" },
     { "path": "./packages/jest-utils/tsconfig.json" },
     { "path": "./packages/vitest-utils/tsconfig.json" },
