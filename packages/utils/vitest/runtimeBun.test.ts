@@ -288,3 +288,43 @@ describe('Bun runtime helpers', () => {
     });
   });
 });
+
+describe('memoryFootprint()', () => {
+  it('should return RSS when the Bun global is unavailable', async () => {
+    restoreBunGlobal();
+    setProcessVersions();
+    vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 456, heapUsed: 1, heapTotal: 2, external: 3, arrayBuffers: 4 });
+
+    const { memoryFootprint } = await importRuntimeBun();
+
+    expect(memoryFootprint()).toBe(456);
+  });
+
+  it.each([
+    { name: 'valid footprint', bun: { unsafe: { memoryFootprint: (): number => 123 } }, expected: 123 },
+    { name: 'missing unsafe API', bun: {}, expected: 456 },
+    { name: 'missing footprint API', bun: { unsafe: {} }, expected: 456 },
+    { name: 'undefined footprint', bun: { unsafe: { memoryFootprint: (): undefined => {} } }, expected: 456 },
+    { name: 'zero footprint', bun: { unsafe: { memoryFootprint: (): number => 0 } }, expected: 456 },
+    { name: 'negative footprint', bun: { unsafe: { memoryFootprint: (): number => -1 } }, expected: 456 },
+    { name: 'non-finite footprint', bun: { unsafe: { memoryFootprint: (): number => Number.NaN } }, expected: 456 },
+    {
+      name: 'throwing footprint API',
+      bun: {
+        unsafe: {
+          memoryFootprint: (): never => {
+            throw new Error('Unavailable');
+          },
+        },
+      },
+      expected: 456,
+    },
+  ])('should handle the Bun global with $name', async ({ bun, expected }) => {
+    setBunGlobal(bun);
+    vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 456, heapUsed: 1, heapTotal: 2, external: 3, arrayBuffers: 4 });
+
+    const { memoryFootprint } = await importRuntimeBun();
+
+    expect(memoryFootprint()).toBe(expected);
+  });
+});

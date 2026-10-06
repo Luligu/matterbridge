@@ -29,6 +29,7 @@ describe('Tracker', () => {
     process.argv = [...originalArgv];
     global.gc = originalGc;
     vi.useRealTimers();
+    vi.unstubAllGlobals();
     vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks
     vi.restoreAllMocks();
@@ -40,6 +41,43 @@ describe('Tracker', () => {
     vi.doUnmock('../src/runtimeBun.js');
     // Restore all mocks
     vi.restoreAllMocks();
+  });
+
+  test.each([
+    { name: 'valid footprint', bun: { unsafe: { memoryFootprint: (): number => 123 } }, expected: 123 },
+    { name: 'missing footprint API', bun: {}, expected: 456 },
+  ])('should safely sample Bun memory with $name', async ({ bun, expected }) => {
+    vi.useFakeTimers();
+    vi.stubGlobal('Bun', bun);
+    vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 456, heapUsed: 1, heapTotal: 2, external: 3, arrayBuffers: 4 });
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('BunMemory');
+    const memorySpy = vi.fn();
+    const snapshotSpy = vi.fn();
+    tracker.on('memory', memorySpy);
+    tracker.on('snapshot', snapshotSpy);
+    tracker.start(20);
+    vi.advanceTimersByTime(20);
+    tracker.stop();
+    expect(memorySpy).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), expected, 1, 2, 3, 4);
+    expect(snapshotSpy).toHaveBeenCalledWith(expect.objectContaining({ rss: expected, peakRss: expected }));
+  });
+
+  test('should log increasing and unchanged memory and CPU peaks in debug mode', async () => {
+    vi.useFakeTimers();
+    const cpu = (user: number): CpuInfo => ({ model: 'test', speed: 1, times: { user, nice: 0, sys: 0, idle: 0, irq: 0 } });
+    vi.spyOn(os, 'cpus')
+      .mockReturnValueOnce([cpu(0)])
+      .mockReturnValueOnce([cpu(100)])
+      .mockReturnValue([cpu(200)]);
+    vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 1000, heapUsed: 1000, heapTotal: 1000, external: 1000, arrayBuffers: 1000 });
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('DebugPeaks', true);
+    const debugSpy = vi.spyOn(tracker['log'], 'debug');
+    tracker.start(20);
+    vi.advanceTimersByTime(40);
+    tracker.stop();
+    expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('rss:'));
   });
 
   test('does not print loader banner when loader flag missing', async () => {
@@ -141,9 +179,9 @@ describe('Tracker', () => {
     tracker.stop();
   });
 
-  test('gc event runs garbage collector and emits gc_done (major-sync)', async () => {
+  test.each([false, true])('gc event runs garbage collector and emits gc_done (major-sync) with debug=%s', async (debug) => {
     const { Tracker } = await import('../src/tracker.js');
-    const tracker = new Tracker('GCTester');
+    const tracker = new Tracker('GCTester', debug);
 
     const gcMock = vi.fn<(...args: any[]) => any>(() => {});
     global.gc = ((arg?: unknown) => {
@@ -159,9 +197,9 @@ describe('Tracker', () => {
     expect(results).toContainEqual(['major', 'async']);
   });
 
-  test('gc event falls back to minor-async when major call throws', async () => {
+  test.each([false, true])('gc event falls back to minor-async when major call throws with debug=%s', async (debug) => {
     const { Tracker } = await import('../src/tracker.js');
-    const tracker = new Tracker('GCTester2');
+    const tracker = new Tracker('GCTester2', debug);
 
     const gcMock = vi.fn<(...args: any[]) => any>((arg?: unknown) => {
       if (arg !== undefined) throw new Error('no args supported');
@@ -181,16 +219,16 @@ describe('Tracker', () => {
     expect(results).toContainEqual(['minor', 'async']);
   });
 
-  test('gc not exposed does not throw', async () => {
+  test.each([false, true])('gc not exposed does not throw with debug=%s', async (debug) => {
     const { Tracker } = await import('../src/tracker.js');
-    const tracker = new Tracker('GCTester3');
+    const tracker = new Tracker('GCTester3', debug);
 
     delete (global as any).gc;
 
     expect(() => tracker.runGarbageCollector()).not.toThrow();
   });
 
-  test('gc uses Bun garbage collector when running on Bun', async () => {
+  test.each([false, true])('gc uses Bun garbage collector when running on Bun with debug=%s', async (debug) => {
     const bunGcMock = vi.fn();
     const setGcLevelMock = vi.fn();
     vi.doMock('../src/runtimeBun.js', () => ({
@@ -200,7 +238,7 @@ describe('Tracker', () => {
     }));
 
     const { Tracker } = await import('../src/tracker.js');
-    const tracker = new Tracker('BunGCTester');
+    const tracker = new Tracker('BunGCTester', debug);
 
     const results: Array<[string, string]> = [];
     tracker.on('gc_done', (type, execution) => results.push([type, execution]));
@@ -213,7 +251,7 @@ describe('Tracker', () => {
     expect(results).toContainEqual(['minor', 'sync']);
   });
 
-  test('gc handles Bun garbage collector errors', async () => {
+  test.each([false, true])('gc handles Bun garbage collector errors with debug=%s', async (debug) => {
     const bunGcMock = vi.fn(() => {
       throw new Error('bun gc failed');
     });
@@ -224,7 +262,7 @@ describe('Tracker', () => {
     }));
 
     const { Tracker } = await import('../src/tracker.js');
-    const tracker = new Tracker('BunGCErrorTester');
+    const tracker = new Tracker('BunGCErrorTester', debug);
 
     let gcDoneCount = 0;
     tracker.on('gc_done', () => gcDoneCount++);

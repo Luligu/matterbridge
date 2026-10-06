@@ -232,6 +232,28 @@ export function setGcLevel(level?: 0 | 1 | 2): 0 | 1 | 2 | undefined {
   return HAS_BUN_GLOBAL ? Bun.unsafe.gcAggressionLevel(level) : undefined;
 }
 
+/**
+ * Process memory footprint in bytes.
+ *
+ * On Bun, returns `Bun.unsafe.memoryFootprint()`, since RSS can include reusable resident pages on macOS.
+ * Falls back to `process.memoryUsage().rss` when not on Bun or when the footprint is unavailable or invalid.
+ *
+ * @returns {number} The process memory footprint in bytes.
+ * @example
+ * const bytes = memoryFootprint();
+ */
+export function memoryFootprint(): number {
+  if (HAS_BUN_GLOBAL) {
+    try {
+      const footprint = Bun.unsafe?.memoryFootprint?.();
+      if (typeof footprint === 'number' && Number.isFinite(footprint) && footprint > 0) return footprint;
+    } catch {
+      // Fall back to RSS when an older Bun runtime cannot provide a footprint.
+    }
+  }
+  return process.memoryUsage().rss;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Aggregated runtime info                                                     */
 /* -------------------------------------------------------------------------- */
