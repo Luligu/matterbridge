@@ -5,20 +5,8 @@
  */
 
 import { isArchiveWorkerData, isSpawnWorkerData, isWorkerData } from '../src/workerTypes.js';
-import { setupTest } from './setupTest.js';
-
-// Setup the test environment
-await setupTest('WorkerTypes', false);
 
 describe('Worker data type guards', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
-
   const base = { type: 'worker', threadName: 'SystemCheck', logLevel: 'info', debug: false, verbose: false, tracker: false };
   const spawn = { ...base, command: 'npm', args: ['install'], packageCommand: 'install', packageName: 'some-pkg' };
   const archive = { ...base, command: 'zip', archivePath: '/tmp/out.zip', sourcePaths: ['/tmp/src'], destinationPath: '/tmp/dst' };

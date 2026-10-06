@@ -18,20 +18,8 @@ import {
   plg,
   typ,
 } from '../src/matterbridgeTypes.js';
-import { setupTest } from './setupTest.js';
-
-// Setup the test environment
-await setupTest('MatterbridgeTypes', false);
 
 describe('matterbridgeTypes constants', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
-
   describe('ANSI color constants', () => {
     test('plg should be the ANSI escape for color 33', () => {
       expect(plg).toBe('[38;5;33m');

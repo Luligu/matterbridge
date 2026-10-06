@@ -54,7 +54,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [test-utils]: `setupTest()` and `setDebug()` (vitest, jest and bun) share one spy installer that restores every spy first, so `setupTest(name, true)` after a mocked setup no longer keeps the output silenced.
 - [test-utils]: `setupTest()` (vitest, jest and bun) ignores a second call with the same suite name, and `setDebug()` ignores calls made before `setupTest()`; both write a warning to stderr.
 - [utils], [dgram], [thread]: Rename the local `vitest/vitestSetupTest.ts` to `vitest/setupTest.ts` and sync it with the `test-utils` vitest helper.
-- [types]: Add the local `vitest/setupTest.ts`, a copy of the `test-utils` vitest helper.
 - [thread]: Use the local `setupTest.ts` in all thread tests instead of `@matterbridge/vitest-utils`.
 - [thread]: Remove the unused `@matterbridge/vitest-utils` devDependency.
 - [core]: Use `@matterbridge/test-utils` in all core tests instead of `@matterbridge/vitest-utils`, and replace the devDependency.

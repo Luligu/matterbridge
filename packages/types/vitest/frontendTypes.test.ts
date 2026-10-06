@@ -6,20 +6,8 @@
 
 import type { WsMessage } from '../src/frontendTypes.js';
 import { isApiRequest, isApiResponse, isBroadcast } from '../src/frontendTypes.js';
-import { setupTest } from './setupTest.js';
-
-// Setup the test environment
-await setupTest('FrontendTypes', false);
 
 describe('WsMessage type guards', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
-
   const request: WsMessage = { id: 1, src: 'Frontend', dst: 'Matterbridge', method: 'ping' };
   const response: WsMessage = { id: 1, src: 'Matterbridge', dst: 'Frontend', method: 'pong' };
   const broadcast: WsMessage = { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'log' };
