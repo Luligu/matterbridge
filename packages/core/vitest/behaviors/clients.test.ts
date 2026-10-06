@@ -15,18 +15,8 @@ import { Chime } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
-import {
-  createServerNode,
-  createTestEnvironment,
-  destroyTestEnvironment,
-  flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
-  setupTest,
-  startServerNode,
-  stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, startServerNode, stopServerNode } from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { addChimeClient, addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../../src/behaviors/clients.js';

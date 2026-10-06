@@ -18,7 +18,7 @@ import os from 'node:os';
 import path from 'node:path';
 import url from 'node:url';
 
-import { HOMEDIR, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { NODE_STORAGE_DIR } from '@matterbridge/types';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';

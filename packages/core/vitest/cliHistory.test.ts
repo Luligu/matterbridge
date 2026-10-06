@@ -8,7 +8,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { Tracker, type TrackerSnapshot } from '@matterbridge/utils';
 
 import { generateHistoryPage } from '../src/cliHistory.js';

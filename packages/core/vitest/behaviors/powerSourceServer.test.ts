@@ -16,10 +16,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { bridge, extendedColorLight, lightSensor, occupancySensor, powerSource, temperatureSensor } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';

@@ -6,7 +6,7 @@
 
 const NAME = 'DeviceManager';
 
-import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { BaseDevice } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';

@@ -6,7 +6,7 @@
 
 import os from 'node:os';
 
-import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest';
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const mockMdnsInstances: MockMdns[] = [];
 const scheduledIntervals: Array<{ callback: () => void; delay: number | undefined; unref: ReturnType<typeof vi.fn> }> = [];

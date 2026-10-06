@@ -17,10 +17,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeValveConfigurationAndControlServer } from '../../src/behaviors/valveConfigurationAndControlServer.js';

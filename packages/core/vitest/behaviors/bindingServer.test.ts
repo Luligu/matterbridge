@@ -28,15 +28,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerInfoSpy,
-  loggerWarnSpy,
-  setDebug,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { debugStringify } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';

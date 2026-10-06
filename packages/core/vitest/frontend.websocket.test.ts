@@ -23,7 +23,7 @@ import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters/identify';
 import { EndpointNumber } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
-import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, BridgeStatus, plg } from '@matterbridge/types';

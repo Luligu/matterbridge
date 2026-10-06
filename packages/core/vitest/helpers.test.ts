@@ -21,18 +21,15 @@ import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import {
   aggregator,
-  consoleLogSpy,
   createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
   getMatterbridge,
-  log,
-  setDebug,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { consoleLogSpy, log, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from '../src/helpers.js';
 import type { Matterbridge } from '../src/matterbridge.js';

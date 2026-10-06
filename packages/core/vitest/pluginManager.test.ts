@@ -22,7 +22,7 @@ import { execSync } from 'node:child_process';
 import { promises as fs, unlinkSync } from 'node:fs';
 import path from 'node:path';
 
-import { HOMEDIR, loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { ApiPlugin, PlatformConfig } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';

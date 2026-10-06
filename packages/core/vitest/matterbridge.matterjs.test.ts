@@ -17,7 +17,7 @@ import path from 'node:path';
 
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types';
-import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { waiter } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 

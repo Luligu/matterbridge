@@ -10,7 +10,7 @@ const NAME = 'MatterbridgeDevicetypesXmlRevision';
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // oxfmt-ignore
 import {

@@ -123,13 +123,37 @@
       "import": "./dist/test-utils/jest/export.js",
       "types": "./dist/test-utils/jest/export.d.ts"
     },
+    "./test-utils/jest/setup": {
+      "import": "./dist/test-utils/jest/setup.js",
+      "types": "./dist/test-utils/jest/setup.d.ts"
+    },
+    "./test-utils/jest/matter": {
+      "import": "./dist/test-utils/jest/matter.js",
+      "types": "./dist/test-utils/jest/matter.d.ts"
+    },
     "./test-utils/vitest": {
       "import": "./dist/test-utils/vitest/export.js",
       "types": "./dist/test-utils/vitest/export.d.ts"
     },
+    "./test-utils/vitest/setup": {
+      "import": "./dist/test-utils/vitest/setup.js",
+      "types": "./dist/test-utils/vitest/setup.d.ts"
+    },
+    "./test-utils/vitest/matter": {
+      "import": "./dist/test-utils/vitest/matter.js",
+      "types": "./dist/test-utils/vitest/matter.d.ts"
+    },
     "./test-utils/buntest": {
       "import": "./dist/test-utils/buntest/export.js",
       "types": "./dist/test-utils/buntest/export.d.ts"
+    },
+    "./test-utils/buntest/setup": {
+      "import": "./dist/test-utils/buntest/setup.js",
+      "types": "./dist/test-utils/buntest/setup.d.ts"
+    },
+    "./test-utils/buntest/matter": {
+      "import": "./dist/test-utils/buntest/matter.js",
+      "types": "./dist/test-utils/buntest/matter.d.ts"
     },
     "./logger": {
       "import": "./dist/logger/export.js",

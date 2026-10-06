@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest';
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const mockCoapInstances: MockCoap[] = [];
 const scheduledIntervals: Array<{ callback: () => void; delay: number | undefined; unref: ReturnType<typeof vi.fn> }> = [];

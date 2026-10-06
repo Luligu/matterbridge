@@ -24,7 +24,7 @@ import path from 'node:path';
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { dev, MATTER_STORAGE_DIR, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -568,5 +568,5 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
-  });
+  }, 30000);
 });

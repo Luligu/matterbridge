@@ -29,14 +29,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { ElectricalUtilityMeter, MatterbridgeCommodityPriceServer, MatterbridgeCommodityTariffServer } from '../../src/devices/electricalUtilityMeter.js';
 import { electricalEnergyTariff, electricalMeter, electricalSensor, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';

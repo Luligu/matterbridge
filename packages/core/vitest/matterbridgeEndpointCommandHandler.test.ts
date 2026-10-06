@@ -5,7 +5,7 @@
  */
 
 import { NamedHandler } from '@matter/general';
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {

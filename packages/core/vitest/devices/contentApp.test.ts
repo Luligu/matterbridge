@@ -25,15 +25,11 @@ import {
   deleteDevice,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { ContentApp } from '../../src/devices/contentApp.js';

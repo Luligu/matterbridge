@@ -37,6 +37,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [test-utils]: Add `resetTest()` (vitest, jest and bun): it restores the spies, `process.argv` and `process.env`, and lets `setupTest()` run again for the same name.
 - [test-utils]: Add `getFreePort()`: it returns a free TCP, UDP4 or UDP6 port from the OS.
 - [dgram], [thread]: Add the local `vitest/freePort.ts`, a copy of the `test-utils` helper, and use it in the tests instead of their own free-port helpers.
+- [test-utils]: Add the `/vitest/setup`, `/vitest/matter`, `/jest/setup`, `/jest/matter`, `/buntest/setup` and `/buntest/matter` subpaths: `setup` loads only the setup helpers and spies, without matter.js. The `/vitest`, `/jest` and `/buntest` subpaths still export both.
+- [core]: Re-export the new `test-utils` subpaths as `matterbridge/test-utils/{vitest,jest,buntest}/{setup,matter}`.
 - [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
 - [core]: Add `listWebcams()` to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).
 - [core]: Add `playWebcam()` and `getPlayWebcamArgs()` to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.
@@ -44,6 +46,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [test-utils]: Remove the `@matterbridge/utils` dependency: `inspectError()` is now a local helper.
+- [core]: Import the test helpers from the `test-utils` `/vitest/setup` and `/vitest/matter` subpaths instead of `/vitest`.
 - [test-utils]: `setupTest()` (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, `_` and `-`.
 - [test-utils]: `setupTest()` and `setDebug()` (vitest, jest and bun) share one spy installer that restores every spy first, so `setupTest(name, true)` after a mocked setup no longer keeps the output silenced.
 - [test-utils]: `setupTest()` (vitest, jest and bun) ignores a second call with the same suite name, and `setDebug()` ignores calls made before `setupTest()`; both write a warning to stderr.

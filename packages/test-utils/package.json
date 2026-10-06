@@ -58,13 +58,37 @@
       "types": "./dist/jest/export.d.ts",
       "import": "./dist/jest/export.js"
     },
+    "./jest/setup": {
+      "types": "./dist/jest/setupTest.d.ts",
+      "import": "./dist/jest/setupTest.js"
+    },
+    "./jest/matter": {
+      "types": "./dist/jest/matterTest.d.ts",
+      "import": "./dist/jest/matterTest.js"
+    },
     "./vitest": {
       "types": "./dist/vitest/export.d.ts",
       "import": "./dist/vitest/export.js"
     },
+    "./vitest/setup": {
+      "types": "./dist/vitest/setupTest.d.ts",
+      "import": "./dist/vitest/setupTest.js"
+    },
+    "./vitest/matter": {
+      "types": "./dist/vitest/matterTest.d.ts",
+      "import": "./dist/vitest/matterTest.js"
+    },
     "./buntest": {
       "types": "./dist/buntest/export.d.ts",
       "import": "./dist/buntest/export.js"
+    },
+    "./buntest/setup": {
+      "types": "./dist/buntest/setupTest.d.ts",
+      "import": "./dist/buntest/setupTest.js"
+    },
+    "./buntest/matter": {
+      "types": "./dist/buntest/matterTest.d.ts",
+      "import": "./dist/buntest/matterTest.js"
     }
   },
   "engines": {
@@ -85,7 +109,6 @@
   "dependencies": {
     "@matter/main": "0.17.9",
     "@matterbridge/types": "3.10.13",
-    "@matterbridge/utils": "3.10.13",
     "node-ansi-logger": "3.3.1"
   },
   "devDependencies": {

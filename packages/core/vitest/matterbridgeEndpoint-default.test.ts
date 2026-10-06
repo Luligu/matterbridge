@@ -89,12 +89,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerLogSpy,
-  setDebug,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';

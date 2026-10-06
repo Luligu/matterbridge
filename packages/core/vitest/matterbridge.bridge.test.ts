@@ -23,7 +23,7 @@ import path from 'node:path';
 import { Environment } from '@matter/general';
 import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/node/behaviors';
 import { flushAsync } from '@matterbridge/test-utils';
-import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { MATTER_STORAGE_DIR, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
 import { db, LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';

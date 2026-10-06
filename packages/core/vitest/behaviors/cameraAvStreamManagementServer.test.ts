@@ -17,15 +17,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerDebugSpy,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerInfoSpy,
-  loggerWarnSpy,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import {
   createDefaultAudioCameraAvStreamManagementClusterServer,

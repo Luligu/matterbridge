@@ -12,7 +12,7 @@ import * as devices from '@matter/node/devices';
 // oxlint-disable-next-line import/no-namespace
 import * as endpoints from '@matter/node/endpoints';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // oxfmt-ignore
 import {

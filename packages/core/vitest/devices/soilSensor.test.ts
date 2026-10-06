@@ -19,14 +19,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { stringify } from 'node-ansi-logger';
 
 import { SoilSensor } from '../../src/devices/soilSensor.js';

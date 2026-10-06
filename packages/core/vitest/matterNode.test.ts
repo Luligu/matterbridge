@@ -21,7 +21,8 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricIndex } from '@matter/types/datatype';
-import { closeServerNodeStores, HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { closeServerNodeStores } from '@matterbridge/test-utils/vitest/matter';
+import { HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';

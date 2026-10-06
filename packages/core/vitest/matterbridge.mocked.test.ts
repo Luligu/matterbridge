@@ -22,7 +22,7 @@ import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { VendorId } from '@matter/types';
-import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { plg } from '@matterbridge/types';
 import { getParameter } from '@matterbridge/utils/cli';

@@ -22,18 +22,12 @@ import {
   destroyTestEnvironment,
   flushServerNode,
   getMatterbridge,
-  log,
-  loggerDebugSpy,
-  loggerInfoSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
   removeAllBridgedEndpoints,
   removeBridgedEndpoint,
-  setDebug,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { log, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { PlatformMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, plg } from '@matterbridge/types';

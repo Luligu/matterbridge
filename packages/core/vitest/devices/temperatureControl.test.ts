@@ -15,14 +15,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from '../../src/devices/temperatureControl.js';
 import { laundryDryer, laundryWasher } from '../../src/matterbridgeDeviceTypes.js';

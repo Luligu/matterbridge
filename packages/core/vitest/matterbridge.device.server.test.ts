@@ -16,7 +16,7 @@ const NAME = 'MatterbridgeDeviceServer';
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
-import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { dev, plg } from '@matterbridge/types';
 import { db, LogLevel } from 'node-ansi-logger';
 

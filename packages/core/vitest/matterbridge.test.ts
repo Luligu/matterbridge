@@ -23,7 +23,7 @@ import type { ServerNode } from '@matter/node';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { flushAsync } from '@matterbridge/test-utils';
-import { HOMEDIR, loggerLogSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerLogSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { type ApiMatter, plg, type WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';

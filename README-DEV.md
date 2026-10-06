@@ -247,13 +247,37 @@ Matterbridge exports from:
 
 - Jest-specific test utilities and Matter test helpers.
 
+**"matterbridge/test-utils/jest/setup"**
+
+- Jest setup helpers and spies only, without matter.js.
+
+**"matterbridge/test-utils/jest/matter"**
+
+- Jest Matter test environment helpers.
+
 **"matterbridge/test-utils/vitest"**
 
 - Vitest-specific test utilities and Matter test helpers.
 
+**"matterbridge/test-utils/vitest/setup"**
+
+- Vitest setup helpers and spies only, without matter.js.
+
+**"matterbridge/test-utils/vitest/matter"**
+
+- Vitest Matter test environment helpers.
+
 **"matterbridge/test-utils/buntest"**
 
 - Bun test-specific utilities and Matter test helpers.
+
+**"matterbridge/test-utils/buntest/setup"**
+
+- Bun test setup helpers and spies only, without matter.js.
+
+**"matterbridge/test-utils/buntest/matter"**
+
+- Bun test Matter test environment helpers.
 
 **"matterbridge/matter"**
 

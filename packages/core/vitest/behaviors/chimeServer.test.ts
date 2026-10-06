@@ -16,15 +16,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerDebugSpy,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerInfoSpy,
-  loggerWarnSpy,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { createDefaultChimeClusterServer, MatterbridgeChimeServer } from '../../src/behaviors/chimeServer.js';
 import { Chime } from '../../src/devices/chime.js';

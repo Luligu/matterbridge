@@ -25,16 +25,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
   server,
-  setDebug,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { er, hk, LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeServiceAreaServer } from '../../src/behaviors/serviceAreaServer.js';

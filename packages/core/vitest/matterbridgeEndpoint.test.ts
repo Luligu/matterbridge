@@ -99,12 +99,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerDebugSpy,
-  loggerLogSpy,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';

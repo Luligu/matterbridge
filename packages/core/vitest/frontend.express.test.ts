@@ -24,7 +24,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { flushAsync } from '@matterbridge/test-utils';
-import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils/wait';

@@ -17,10 +17,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
 import { smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';

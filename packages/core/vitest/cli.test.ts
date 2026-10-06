@@ -6,7 +6,7 @@
 
 const NAME = 'CliMain';
 
-import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { Inspector, Tracker } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 

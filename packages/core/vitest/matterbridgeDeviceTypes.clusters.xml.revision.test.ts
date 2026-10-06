@@ -115,7 +115,7 @@ import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transpor
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ZoneManagement } from '@matter/types/clusters/zone-management';
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // Setup the test environment
 await setupTest(NAME, false);

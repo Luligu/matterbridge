@@ -23,15 +23,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerLogSpy,
-  loggerWarnSpy,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from '../../src/devices/microwaveOven.js';

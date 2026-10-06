@@ -19,7 +19,7 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
-import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';

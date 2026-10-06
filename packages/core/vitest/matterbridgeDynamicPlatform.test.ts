@@ -14,12 +14,10 @@ import {
   destroyTestEnvironment,
   flushServerNode,
   getMatterbridge,
-  log,
-  setDebug,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { log, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { PlatformMatterbridge } from '@matterbridge/types';
 
 import type { Matterbridge } from '../src/matterbridge.js';

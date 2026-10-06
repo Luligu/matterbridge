@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage, setLastOsCpuUsage, setLastProcessCpuUsage } from '../src/cliEmitter.js';
 

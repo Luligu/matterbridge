@@ -5,7 +5,7 @@
  */
 
 import { EndpointNumber } from '@matter/types/datatype';
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { AirConditioner } from '../../src/devices/airConditioner.js';
 import { Cooktop } from '../../src/devices/cooktop.js';

@@ -6,7 +6,7 @@
 
 const NAME = 'CliError2';
 
-import { loggerLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest';
+import { loggerLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { Inspector, Tracker } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 

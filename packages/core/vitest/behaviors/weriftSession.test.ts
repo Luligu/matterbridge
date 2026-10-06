@@ -14,7 +14,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';

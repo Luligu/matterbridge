@@ -6,7 +6,7 @@
 
 const NAME = 'SoilMeasurementCluster';
 
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { SoilMeasurement } from '../../src/clusters/soil-measurement.js';
 

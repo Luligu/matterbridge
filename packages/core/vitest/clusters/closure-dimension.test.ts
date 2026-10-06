@@ -7,7 +7,7 @@
 const NAME = 'ClosureDimensionCluster';
 
 import { ThreeLevelAuto } from '@matter/types/globals';
-import { setupTest } from '@matterbridge/test-utils/vitest';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { ClosureDimension } from '../../src/clusters/closure-dimension.js';
 

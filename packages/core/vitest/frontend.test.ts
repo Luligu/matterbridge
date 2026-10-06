@@ -29,7 +29,7 @@ import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-stat
 import { EndpointNumber } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
-import { HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
+import { HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { BridgeStatus } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';

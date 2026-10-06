@@ -37,7 +37,7 @@ import {
   resetTest,
   setDebug,
   setupTest,
-} from '@matterbridge/test-utils/buntest';
+} from '@matterbridge/test-utils/buntest/setup';
 import { AnsiLogger } from 'node-ansi-logger';
 
 describe('bunSetupTest', () => {

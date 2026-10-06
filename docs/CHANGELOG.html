@@ -159,6 +159,8 @@
 <li>[test-utils]: Add <code>resetTest()</code> (vitest, jest and bun): it restores the spies, <code>process.argv</code> and <code>process.env</code>, and lets <code>setupTest()</code> run again for the same name.</li>
 <li>[test-utils]: Add <code>getFreePort()</code>: it returns a free TCP, UDP4 or UDP6 port from the OS.</li>
 <li>[dgram], [thread]: Add the local <code>vitest/freePort.ts</code>, a copy of the <code>test-utils</code> helper, and use it in the tests instead of their own free-port helpers.</li>
+<li>[test-utils]: Add the <code>/vitest/setup</code>, <code>/vitest/matter</code>, <code>/jest/setup</code>, <code>/jest/matter</code>, <code>/buntest/setup</code> and <code>/buntest/matter</code> subpaths: <code>setup</code> loads only the setup helpers and spies, without matter.js. The <code>/vitest</code>, <code>/jest</code> and <code>/buntest</code> subpaths still export both.</li>
+<li>[core]: Re-export the new <code>test-utils</code> subpaths as <code>matterbridge/test-utils/{vitest,jest,buntest}/{setup,matter}</code>.</li>
 <li>[core]: Export the ffmpeg helpers (<code>hasFfmpeg</code>, <code>runFfmpeg</code>, <code>redactSource</code>) from <code>matterbridge/behaviors</code>.</li>
 <li>[core]: Add <code>listWebcams()</code> to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).</li>
 <li>[core]: Add <code>playWebcam()</code> and <code>getPlayWebcamArgs()</code> to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.</li>
@@ -166,6 +168,8 @@
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[test-utils]: Remove the <code>@matterbridge/utils</code> dependency: <code>inspectError()</code> is now a local helper.</li>
+<li>[core]: Import the test helpers from the <code>test-utils</code> <code>/vitest/setup</code> and <code>/vitest/matter</code> subpaths instead of <code>/vitest</code>.</li>
 <li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, <code>_</code> and <code>-</code>.</li>
 <li>[test-utils]: <code>setupTest()</code> and <code>setDebug()</code> (vitest, jest and bun) share one spy installer that restores every spy first, so <code>setupTest(name, true)</code> after a mocked setup no longer keeps the output silenced.</li>
 <li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) ignores a second call with the same suite name, and <code>setDebug()</code> ignores calls made before <code>setupTest()</code>; both write a warning to stderr.</li>

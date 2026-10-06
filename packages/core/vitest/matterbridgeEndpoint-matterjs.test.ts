@@ -92,19 +92,8 @@ import {
   WindowCovering,
 } from '@matter/types/clusters';
 import { flushAsync } from '@matterbridge/test-utils';
-import {
-  createServerNode,
-  createTestEnvironment,
-  destroyTestEnvironment,
-  flushServerNode,
-  HOMEDIR,
-  loggerLogSpy,
-  server,
-  setDebug,
-  setupTest,
-  startServerNode,
-  stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/test-utils/vitest/matter';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { AnsiLogger, debugStringify, er, hk, LogLevel, nf } from 'node-ansi-logger';
 
 import { MatterbridgeBooleanStateConfigurationServer } from '../src/behaviors/booleanStateConfigurationServer.js';

@@ -17,11 +17,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  loggerLogSpy,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { debugStringify, LogLevel, nf } from 'node-ansi-logger';
 
 import { MatterbridgeTemperatureAlarmServer } from '../../src/behaviors/temperatureAlarmServer.js';

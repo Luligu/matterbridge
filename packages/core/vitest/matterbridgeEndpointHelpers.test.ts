@@ -31,12 +31,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  log,
-  loggerWarnSpy,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { log, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';

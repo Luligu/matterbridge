@@ -38,12 +38,12 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
-import { inspectError } from '@matterbridge/utils/error';
 // node-ansi-logger module
 import { er, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from '../flushAsync.js';
+import { inspectError } from '../inspectError.js';
 import { HOMEDIR, log, NAME } from './setupTest.js';
 
 export let environment: Environment;

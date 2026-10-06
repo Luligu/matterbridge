@@ -24,14 +24,11 @@ import {
   deleteDevice,
   destroyTestEnvironment,
   flushServerNode,
-  loggerErrorSpy,
-  loggerFatalSpy,
-  loggerWarnSpy,
   server,
-  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/test-utils/vitest';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { VideoRemoteControl } from '../../src/devices/videoRemoteControl.js';
