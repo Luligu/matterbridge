@@ -22,6 +22,7 @@ import { WebSocket } from 'ws';
 
 import { Backend } from '../src/backend.js';
 import { BroadcastServer } from '../src/broadcastServer.js';
+import { getFreePort } from './freePort.js';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from './setupTest.js';
 
 // Setup the test environment
@@ -62,20 +63,6 @@ function setCerts(files: Record<string, string>): void {
 }
 
 const PEM_CERTS = { 'cert.pem': 'server.crt', 'key.pem': 'server.key', 'ca.pem': 'ca.crt' };
-
-/**
- * Get a free TCP port from the OS.
- *
- * @returns {Promise<number>} A free port number.
- */
-async function getFreePort(): Promise<number> {
-  const server = net.createServer();
-  server.listen(0);
-  await once(server, 'listening');
-  const address = server.address() as net.AddressInfo;
-  await new Promise<void>((resolve) => server.close(() => resolve()));
-  return address.port;
-}
 
 /**
  * Send a real GET request to the backend and collect the response.

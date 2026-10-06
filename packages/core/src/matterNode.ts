@@ -1242,8 +1242,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     const plugin = this.pluginManager.get(pluginName);
     if (!plugin) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`);
 
-    if (device.serverNode) {
-      // TODO: Close and remove the MatterNode managing the device
+    if (device.mode === 'server') {
+      // Close and remove the MatterNode managing the device. The MdnsService is shared through Environment.default, so it stays open.
+      const matterNode = this.dependantMatterNodes.get(device.id);
+      if (matterNode) {
+        this.log.debug(`Closing MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})...`);
+        await matterNode.stop();
+        await matterNode.destroy(false);
+        this.dependantMatterNodes.delete(device.id);
+        this.log.debug(`Closed MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})`);
+      }
     } else if (this.matterbridge.bridgeMode === 'bridge') {
       if (!this.aggregatorNode)
         throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);

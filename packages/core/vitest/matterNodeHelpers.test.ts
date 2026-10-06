@@ -61,7 +61,7 @@ import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {

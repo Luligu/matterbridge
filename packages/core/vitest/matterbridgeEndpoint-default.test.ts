@@ -81,7 +81,7 @@ import {
   WindowCovering,
 } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
-import { flushAsync, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
+import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,
   aggregator,
@@ -89,9 +89,12 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerLogSpy,
+  setDebug,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
@@ -152,8 +155,6 @@ describe('Matterbridge ' + NAME, () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(async () => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

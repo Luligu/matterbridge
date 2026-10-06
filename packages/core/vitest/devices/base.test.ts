@@ -13,7 +13,6 @@ import { Groups } from '@matter/types/clusters/groups';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { ScenesManagement } from '@matter/types/clusters/scenes-management';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -21,10 +20,14 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { stringify } from 'node-ansi-logger';
 
 import { bridge, onOffLight } from '../../src/matterbridgeDeviceTypes.js';

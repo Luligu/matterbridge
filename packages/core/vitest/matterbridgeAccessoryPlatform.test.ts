@@ -8,17 +8,19 @@ const NAME = 'MatterbridgeAccessoryPlatform';
 const MATTER_PORT = 7200;
 const MATTER_CREATE_ONLY = true;
 
-import type { PlatformMatterbridge } from '@matterbridge/types';
-import { log, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   createServerNode,
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
   getMatterbridge,
+  log,
+  setDebug,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
+import type { PlatformMatterbridge } from '@matterbridge/types';
 
 import { isMatterbridgeAccessoryPlatform, MatterbridgeAccessoryPlatform } from '../src/matterbridgeAccessoryPlatform.js';
 

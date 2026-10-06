@@ -10,7 +10,7 @@ const NAME = 'MatterbridgeDevicetypesRequirements';
 import * as devices from '@matter/node/devices';
 // oxlint-disable-next-line import/no-namespace
 import * as endpoints from '@matter/node/endpoints';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 // oxfmt-ignore
 import {
   // Utility
@@ -116,6 +116,7 @@ import {
   doorbell,
 } from '../src/matterbridgeDeviceTypes.js';
 
+// Setup the test environment
 await setupTest(NAME, false);
 
 function extractClusterIds(behaviorRecord: Record<string, any>): number[] {

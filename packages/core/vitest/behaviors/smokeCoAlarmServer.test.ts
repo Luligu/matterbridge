@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { Status } from '@matter/types';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -18,9 +17,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
 import { smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';

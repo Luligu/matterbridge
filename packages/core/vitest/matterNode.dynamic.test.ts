@@ -4,13 +4,11 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable no-use-before-define */
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
 
-const MATTER_PORT = 10030;
+const MATTER_PORT = 10300;
 const NAME = 'MatterNodeDynamic';
-const HOMEDIR = path.join('.cache', 'vitest', NAME);
 const PASSCODE = 123459;
 const DISCRIMINATOR = 3863;
 const STRESS_TEST_ITERATIONS = 5;
@@ -21,10 +19,10 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
+import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/vitest';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
 import { er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -34,6 +32,9 @@ import { bridgedNode, occupancySensor, onOffPlugInUnit, powerSource, pressureSen
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { PluginManager } from '../src/pluginManager.js';
+
+// Setup the test environment
+await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
@@ -99,9 +100,6 @@ const matterbridge: SharedMatterbridge = {
 };
 // process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
-// Setup the test environment
-await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
-
 describe('MatterNode dynamic', () => {
   let matter: MatterNode;
 
@@ -139,8 +137,6 @@ describe('MatterNode dynamic', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(async () => {});
 
   afterAll(async () => {
     // Close broadcast server and mDNS instance

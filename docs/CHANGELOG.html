@@ -157,6 +157,8 @@
 <ul>
 <li>[thread]: Add the Backend thread entry point.</li>
 <li>[test-utils]: Add <code>resetTest()</code> (vitest, jest and bun): it restores the spies, <code>process.argv</code> and <code>process.env</code>, and lets <code>setupTest()</code> run again for the same name.</li>
+<li>[test-utils]: Add <code>getFreePort()</code>: it returns a free TCP, UDP4 or UDP6 port from the OS.</li>
+<li>[dgram], [thread]: Add the local <code>vitest/freePort.ts</code>, a copy of the <code>test-utils</code> helper, and use it in the tests instead of their own free-port helpers.</li>
 <li>[core]: Export the ffmpeg helpers (<code>hasFfmpeg</code>, <code>runFfmpeg</code>, <code>redactSource</code>) from <code>matterbridge/behaviors</code>.</li>
 <li>[core]: Add <code>listWebcams()</code> to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).</li>
 <li>[core]: Add <code>playWebcam()</code> and <code>getPlayWebcamArgs()</code> to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.</li>
@@ -170,6 +172,9 @@
 <li>[utils], [dgram], [thread]: Rename the local <code>vitest/vitestSetupTest.ts</code> to <code>vitest/setupTest.ts</code> and sync it with the <code>test-utils</code> vitest helper.</li>
 <li>[types]: Add the local <code>vitest/setupTest.ts</code>, a copy of the <code>test-utils</code> vitest helper.</li>
 <li>[thread]: Use the local <code>setupTest.ts</code> in all thread tests instead of <code>@matterbridge/vitest-utils</code>.</li>
+<li>[thread]: Remove the unused <code>@matterbridge/vitest-utils</code> devDependency.</li>
+<li>[core]: Use <code>@matterbridge/test-utils</code> in all core tests instead of <code>@matterbridge/vitest-utils</code>, and replace the devDependency.</li>
+<li>[core]: Call <code>setupTest()</code> in every core test, pass the file-wide argv and env through it, and build per-test argv from <code>originalProcessArgv</code>.</li>
 <li>[utils]: Bump Tracker to 1.1.0.</li>
 <li>[utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.</li>
 <li>[utils]: Always run a synchronous garbage collection in the tracker on Bun.</li>
@@ -208,6 +213,7 @@
 <li>[core]: Fix the missing space after the illuminance value in the device cluster text.</li>
 <li>[core]: Fix the mode label in the device cluster text: read the <code>supportedModes</code> of the same mode cluster instead of relying on the attribute order.</li>
 <li>[devcontainer]: Fix <code>post-create.sh</code> creating <code>apps/frontend/node_modules</code> when it does not exist; only chown it if present.</li>
+<li>[core]: Fix <code>MatterNode.removeBridgedEndpoint()</code> for server mode endpoints: stop, destroy and remove the dependant MatterNode instead of deleting the endpoint.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31012-2026-10-02">[3.10.12] - 2026-10-02</h2>

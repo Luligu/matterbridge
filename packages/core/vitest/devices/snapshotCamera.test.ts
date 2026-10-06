@@ -12,7 +12,6 @@ import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -20,14 +19,19 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeCameraAvStreamManagementServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
 import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 describe('SnapshotCamera', () => {
   beforeAll(async () => {

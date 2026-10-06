@@ -35,6 +35,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [thread]: Add the Backend thread entry point.
 - [test-utils]: Add `resetTest()` (vitest, jest and bun): it restores the spies, `process.argv` and `process.env`, and lets `setupTest()` run again for the same name.
+- [test-utils]: Add `getFreePort()`: it returns a free TCP, UDP4 or UDP6 port from the OS.
+- [dgram], [thread]: Add the local `vitest/freePort.ts`, a copy of the `test-utils` helper, and use it in the tests instead of their own free-port helpers.
 - [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
 - [core]: Add `listWebcams()` to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).
 - [core]: Add `playWebcam()` and `getPlayWebcamArgs()` to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.
@@ -48,6 +50,9 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils], [dgram], [thread]: Rename the local `vitest/vitestSetupTest.ts` to `vitest/setupTest.ts` and sync it with the `test-utils` vitest helper.
 - [types]: Add the local `vitest/setupTest.ts`, a copy of the `test-utils` vitest helper.
 - [thread]: Use the local `setupTest.ts` in all thread tests instead of `@matterbridge/vitest-utils`.
+- [thread]: Remove the unused `@matterbridge/vitest-utils` devDependency.
+- [core]: Use `@matterbridge/test-utils` in all core tests instead of `@matterbridge/vitest-utils`, and replace the devDependency.
+- [core]: Call `setupTest()` in every core test, pass the file-wide argv and env through it, and build per-test argv from `originalProcessArgv`.
 - [utils]: Bump Tracker to 1.1.0.
 - [utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.
 - [utils]: Always run a synchronous garbage collection in the tracker on Bun.
@@ -86,6 +91,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Fix the missing space after the illuminance value in the device cluster text.
 - [core]: Fix the mode label in the device cluster text: read the `supportedModes` of the same mode cluster instead of relying on the attribute order.
 - [devcontainer]: Fix `post-create.sh` creating `apps/frontend/node_modules` when it does not exist; only chown it if present.
+- [core]: Fix `MatterNode.removeBridgedEndpoint()` for server mode endpoints: stop, destroy and remove the dependant MatterNode instead of deleting the endpoint.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

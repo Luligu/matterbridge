@@ -9,7 +9,6 @@ const MATTER_PORT = 12300;
 const MATTER_CREATE_ONLY = true;
 
 import { OperationalState } from '@matter/types/clusters/operational-state';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -17,9 +16,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeOperationalStateServer } from '../../src/behaviors/operationalStateServer.js';

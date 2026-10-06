@@ -25,14 +25,14 @@ import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { type ClusterId, EndpointNumber } from '@matter/types';
 import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { setupTest } from '@matterbridge/vitest-utils';
-import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from '@matterbridge/vitest-utils/matter';
+import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode, setupTest } from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { genericSwitch, onOffPlugInUnit, rainSensor, thermostat } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { internalFor } from '../src/matterbridgeEndpointHelpers.js';
 
+// Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matterbridge Endpoint Typed Checks', () => {

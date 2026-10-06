@@ -22,11 +22,12 @@ import path from 'node:path';
 import { LogLevel as MatterLogLevel } from '@matter/general';
 import { Identify } from '@matter/types/clusters/identify';
 import { EndpointNumber } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, BridgeStatus, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
-import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 import { WebSocket } from 'ws';
 
@@ -54,12 +55,7 @@ const startServerNodeSpy = vi.spyOn(Matterbridge.prototype as any, 'startServerN
 const stopServerNodeSpy = vi.spyOn(Matterbridge.prototype as any, 'stopServerNode');
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the frontend/matter args afterwards
-process.argv = [
-  'node',
-  'frontend.websocket.test.js',
+await setupTest(NAME, false, [
   '--frontend',
   FRONTEND_PORT.toString(),
   '--logger',
@@ -68,8 +64,6 @@ process.argv = [
   'debug',
   '--debug',
   '--bridge',
-  '--homedir',
-  HOMEDIR,
   '--profile',
   'JestFrontendWebsocket',
   '--port',
@@ -78,7 +72,8 @@ process.argv = [
   '123456',
   '--discriminator',
   '3860',
-];
+]);
+process.argv.push('--homedir', HOMEDIR);
 
 let ws: WebSocket;
 let WS_ID = 10050;
@@ -858,7 +853,7 @@ describe('Matterbridge frontend', () => {
 
     await matterbridge.plugins.shutdown(plugin.name, 'Jest test');
     await matterbridge.plugins.remove(plugin.name);
-  });
+  }, 30000);
 
   test('Websocket API /api/savepluginconfig', async () => {
     const pluginName = 'matterbridge-mock4';

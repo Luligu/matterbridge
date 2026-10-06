@@ -4,12 +4,10 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable no-use-before-define */
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
-const HOMEDIR = path.join('.cache', 'vitest', NAME);
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 
@@ -23,12 +21,11 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricIndex } from '@matter/types/datatype';
+import { closeServerNodeStores, HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
-import { closeServerNodeStores } from '@matterbridge/vitest-utils/matter';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -38,6 +35,9 @@ import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, t
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
+
+// Setup the test environment
+await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
@@ -103,9 +103,6 @@ const matterbridge: SharedMatterbridge = {
 };
 // process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
-// Setup the test environment
-await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
-
 describe('MatterNode', () => {
   let matter: MatterNode;
 
@@ -132,8 +129,6 @@ describe('MatterNode', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Close broadcast server and mDNS instance
@@ -378,10 +373,10 @@ describe('MatterNode', () => {
   ])('should $description when the server node goes online', async ({ args, expectedVersion }) => {
     const serverNode = matter.serverNode;
     if (!serverNode) throw new Error('Server node is not initialized');
-    const originalArgv = process.argv;
+    const savedArgv = process.argv;
     const originalVersion = serverNode.state.basicInformation.configurationVersion;
     const setStateSpy = vi.spyOn(serverNode, 'setStateOf').mockImplementation(async () => await Promise.resolve());
-    process.argv = [...originalArgv, ...args];
+    process.argv = [...savedArgv, ...args];
     try {
       await serverNode.act(async (agent) => {
         await serverNode.lifecycle.online.emit(agent.context);
@@ -393,7 +388,7 @@ describe('MatterNode', () => {
         args.length > 0 ? [[`Configuration version for server node Matterbridge is now ${expectedVersion}`]] : [],
       );
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
       setStateSpy.mockRestore();
     }
   });

@@ -16,7 +16,6 @@ import { KeypadInput } from '@matter/types/clusters/keypad-input';
 import { MediaPlayback } from '@matter/types/clusters/media-playback';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -25,10 +24,14 @@ import {
   deleteDevice,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { VideoRemoteControl } from '../../src/devices/videoRemoteControl.js';

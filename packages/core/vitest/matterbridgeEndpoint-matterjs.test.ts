@@ -91,8 +91,20 @@ import {
   WaterHeaterMode,
   WindowCovering,
 } from '@matter/types/clusters';
-import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
-import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';
+import { flushAsync } from '@matterbridge/test-utils';
+import {
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  HOMEDIR,
+  loggerLogSpy,
+  server,
+  setDebug,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/vitest';
 import { AnsiLogger, debugStringify, er, hk, LogLevel, nf } from 'node-ansi-logger';
 
 import { MatterbridgeBooleanStateConfigurationServer } from '../src/behaviors/booleanStateConfigurationServer.js';
@@ -191,8 +203,6 @@ describe('Matterbridge ' + NAME, () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

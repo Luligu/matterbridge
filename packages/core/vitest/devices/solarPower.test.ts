@@ -15,7 +15,6 @@ import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-po
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -23,10 +22,14 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { stringify } from 'node-ansi-logger';
 
 import { SolarPower } from '../../src/devices/solarPower.js';

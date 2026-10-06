@@ -12,9 +12,10 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 vi.mock('node:child_process', async () => {
   const actual = await vi.importActual<typeof import('node:child_process')>('node:child_process');

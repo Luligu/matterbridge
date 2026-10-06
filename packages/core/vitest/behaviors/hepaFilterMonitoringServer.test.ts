@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -18,9 +17,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerLogSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeHepaFilterMonitoringServer } from '../../src/behaviors/hepaFilterMonitoringServer.js';

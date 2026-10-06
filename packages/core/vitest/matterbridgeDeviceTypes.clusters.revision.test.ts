@@ -118,11 +118,12 @@ import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transpor
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { ZoneManagement } from '@matter/types/clusters/zone-management';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 
 // Helper to read a cluster's revision across variations in @matter/types exports
 const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.revision ?? entry?.Base?.revision ?? entry?.Complete?.revision ?? entry?.CompleteInstance?.revision;
 
+// Setup the test environment
 await setupTest(NAME, false);
 
 describe('Matter clusters revision (guard against upstream changes)', () => {

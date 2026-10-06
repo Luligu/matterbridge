@@ -9,7 +9,6 @@ const MATTER_PORT = 14200;
 const MATTER_CREATE_ONLY = true;
 
 import { ServiceArea } from '@matter/types/clusters/service-area';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -17,9 +16,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeServiceAreaServer } from '../../src/behaviors/serviceAreaServer.js';
 import { RoboticVacuumCleaner } from '../../src/devices/roboticVacuumCleaner.js';

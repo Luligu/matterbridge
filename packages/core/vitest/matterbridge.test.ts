@@ -12,6 +12,7 @@
 
 const NAME = 'MatterbridgeGlobal';
 const MATTER_PORT = 6000;
+const FRONTEND_PORT = 8803;
 
 import { rmSync } from 'node:fs';
 import os from 'node:os';
@@ -21,10 +22,11 @@ import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { ServerNode } from '@matter/node';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerLogSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { type ApiMatter, plg, type WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
-import { flushAsync, HOMEDIR, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel, nf } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 
@@ -32,7 +34,7 @@ import { Matterbridge } from '../src/matterbridge.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
-// Spy on BroadcastServer methods (inlined: vitest-utils cannot depend on core)
+// Spy on BroadcastServer methods (inlined: test-utils cannot depend on core)
 const isWorkerRequestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
 const isWorkerResponseBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
 const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
@@ -41,27 +43,11 @@ const fetchBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'fetch');
 const broadcastMessageHandlerBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
 
 // Setup the test environment
-await setupTest(NAME, false, [], { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' });
-
-// setupTest resets process.argv; set the matter args afterwards
-process.argv = [
-  'node',
-  'matterbridge.test.js',
-  '--novirtual',
-  '--frontend',
-  '0',
-  '--port',
-  MATTER_PORT.toString(),
-  '--homedir',
-  HOMEDIR,
-  '--profile',
-  'Jest',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--debug',
-];
+await setupTest(NAME, false, ['--novirtual', '--frontend', '0', '--port', MATTER_PORT.toString(), '--profile', 'Jest', '--logger', 'debug', '--matterlogger', 'debug', '--debug'], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
+process.argv.push('--homedir', HOMEDIR);
 
 rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 
@@ -368,7 +354,18 @@ describe('Matterbridge', () => {
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
     await setDebug(false);
-    process.argv = ['node', 'matterbridge.test.js', '--novirtual', '--frontend', '8081', '--port', MATTER_PORT.toString(), '--homedir', HOMEDIR, '--profile', 'Jest'];
+    process.argv = [
+      ...originalProcessArgv.slice(0, 2),
+      '--novirtual',
+      '--frontend',
+      FRONTEND_PORT.toString(),
+      '--port',
+      MATTER_PORT.toString(),
+      '--homedir',
+      HOMEDIR,
+      '--profile',
+      'Jest',
+    ];
 
     expect((Matterbridge as any).instance).toBeUndefined();
     matterbridge = await Matterbridge.loadInstance(true);
@@ -421,8 +418,8 @@ describe('Matterbridge', () => {
       expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest')}`),
     );
 
-    // -frontend 8081
-    expect((matterbridge as any).frontend.port).toBe(8081);
+    // -frontend FRONTEND_PORT
+    expect((matterbridge as any).frontend.port).toBe(FRONTEND_PORT);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
     expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
@@ -437,8 +434,7 @@ describe('Matterbridge', () => {
 
   test('Matterbridge profile', async () => {
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--novirtual',
       '--frontend',
       '0',
@@ -515,8 +511,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-frontend',
       '0',
       '-port',
@@ -557,8 +552,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -599,8 +593,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -641,8 +634,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -674,8 +666,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -711,8 +702,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -748,8 +738,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -810,8 +799,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -865,8 +853,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -905,8 +892,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -944,8 +930,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -989,8 +974,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -1048,8 +1032,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-frontend',
       '0',
       '-port',
@@ -1083,8 +1066,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',

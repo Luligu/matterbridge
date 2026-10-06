@@ -28,10 +28,11 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { EndpointNumber } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { BridgeStatus } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
-import { flushAsync, HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { db, LogLevel, YELLOW } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 import { WebSocket } from 'ws';
@@ -73,25 +74,8 @@ const startSpy = vi.spyOn(Frontend.prototype, 'start');
 const stopSpy = vi.spyOn(Frontend.prototype, 'stop');
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the frontend/matter args afterwards
-process.argv = [
-  'node',
-  'frontend.test.js',
-  '--novirtual',
-  '--test',
-  '--homedir',
-  HOMEDIR,
-  '--frontend',
-  FRONTEND_PORT.toString(),
-  '--port',
-  MATTER_PORT.toString(),
-  '--logger',
-  'debug',
-  '--debug',
-  '--verbose',
-];
+await setupTest(NAME, false, ['--novirtual', '--test', '--frontend', FRONTEND_PORT.toString(), '--port', MATTER_PORT.toString(), '--logger', 'debug', '--debug', '--verbose']);
+process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge frontend', () => {
   let matterbridge: MatterbridgeType;
@@ -761,7 +745,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() with createServerMock', async () => {
-    process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     createServerMock.mockImplementationOnce(() => {
       throw new Error('Test error');
@@ -782,7 +766,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start()', async () => {
-    process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
       frontend.once('server_listening', () => resolve());
@@ -825,7 +809,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl without certs shall reject', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
@@ -841,7 +825,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl without key certs shall reject', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     copyFileSync(new URL('../src/mock/certs/server.crt', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'));
 
@@ -859,7 +843,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl without ca cert', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     copyFileSync(new URL('../src/mock/certs/server.key', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'));
 
@@ -900,8 +884,7 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend.start() -ssl with ca cert', async () => {
     process.argv = [
-      'node',
-      'frontend.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-ingress',
       '-ssl',
       '-novirtual',
@@ -1024,7 +1007,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl with p12 cert', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     copyFileSync(new URL('../src/mock/certs/server.p12', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
     copyFileSync(new URL('../src/mock/certs/server.pass', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
@@ -1119,8 +1102,7 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend.start() -ssl with p12 cert and mTLS', async () => {
     process.argv = [
-      'node',
-      'frontend.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-ssl',
       '-mtls',
       '-novirtual',

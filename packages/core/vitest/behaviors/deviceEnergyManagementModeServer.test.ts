@@ -11,7 +11,6 @@ const MATTER_CREATE_ONLY = true;
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -19,9 +18,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerLogSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel } from 'node-ansi-logger';
 
 import { deviceEnergyManagement } from '../../src/matterbridgeDeviceTypes.js';

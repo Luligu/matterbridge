@@ -9,7 +9,6 @@ const MATTER_PORT = 12800;
 const MATTER_CREATE_ONLY = true;
 
 import { Switch } from '@matter/types/clusters/switch';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -17,9 +16,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerLogSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeSwitchServer } from '../../src/behaviors/switchServer.js';

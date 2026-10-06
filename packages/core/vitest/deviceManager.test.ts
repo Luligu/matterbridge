@@ -6,10 +6,10 @@
 
 const NAME = 'DeviceManager';
 
+import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { BaseDevice } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
-import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { DeviceManager } from '../src/deviceManager.js';
@@ -23,8 +23,6 @@ describe('DeviceManager', () => {
 
   const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   const testServer = new BroadcastServer('manager', log);
-
-  beforeAll(() => {});
 
   beforeEach(() => {
     // Clear all mocks

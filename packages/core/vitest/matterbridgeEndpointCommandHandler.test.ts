@@ -5,6 +5,7 @@
  */
 
 import { NamedHandler } from '@matter/general';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
@@ -14,6 +15,9 @@ import {
   type CommandHandlerFunction,
   type CommandHandlers,
 } from '../src/matterbridgeEndpointCommandHandler.js';
+
+// Setup the test environment
+await setupTest('MatterbridgeEndpointCommandHandler', false);
 
 type LocalHandlers = {
   'OnOff.on': CommandHandlerFunction<'OnOff.on'>;

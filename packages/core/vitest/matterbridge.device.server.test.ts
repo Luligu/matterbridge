@@ -16,8 +16,8 @@ const NAME = 'MatterbridgeDeviceServer';
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest';
 import { dev, plg } from '@matterbridge/types';
-import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import { db, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
@@ -25,26 +25,11 @@ import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
 // Setup the test environment
-await setupTest(NAME, false, [], { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' });
-
-// setupTest resets process.argv; set the matter args afterwards
-process.argv = [
-  'node',
-  'matterbridge.server.test.js',
-  '--novirtual',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--debug',
-  '--bridge',
-  '--frontend',
-  '0',
-  '--homedir',
-  HOMEDIR,
-  '--port',
-  MATTER_PORT.toString(),
-];
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
+process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge Device serverMode=server', () => {
   let matterbridge: Matterbridge;

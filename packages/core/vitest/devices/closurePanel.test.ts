@@ -13,7 +13,6 @@ import { Status } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
 import { ThreeLevelAuto } from '@matter/types/globals';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -21,10 +20,14 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { stringify } from 'node-ansi-logger';
 
 import { Closure } from '../../src/devices/closure.js';

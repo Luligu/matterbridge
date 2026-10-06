@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest';
+
 import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage, setLastOsCpuUsage, setLastProcessCpuUsage } from '../src/cliEmitter.js';
+
+// Setup the test environment
+await setupTest('CliEmitter', false);
 
 describe('cliEmitter', () => {
   it('should be an instance of EventEmitter', () => {

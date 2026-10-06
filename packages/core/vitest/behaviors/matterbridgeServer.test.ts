@@ -9,7 +9,7 @@ const NAME = 'MatterbridgeServer';
 import type { Environment } from '@matter/general';
 import { GeneralDiagnosticsBehavior } from '@matter/node/behaviors/general-diagnostics';
 import { GeneralDiagnostics } from '@matter/types/clusters/general-diagnostics';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 import type { AnsiLogger } from 'node-ansi-logger';
 
 import { isSoftwareUpdateBoot, MatterbridgeServer } from '../../src/behaviors/matterbridgeServer.js';

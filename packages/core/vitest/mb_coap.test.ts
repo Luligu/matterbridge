@@ -4,7 +4,7 @@
  * @author Luca Liguori
  */
 
-import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest';
 
 const mockCoapInstances: MockCoap[] = [];
 const scheduledIntervals: Array<{ callback: () => void; delay: number | undefined; unref: ReturnType<typeof vi.fn> }> = [];
@@ -56,6 +56,7 @@ vi.doMock('@matterbridge/dgram', () => ({
 const { MB_COAP_DEFAULT_REQUEST_INTERVAL_MS, MB_COAP_DEFAULT_TIMEOUT_MS, getMbCoapHelpText, getMbCoapOptions, mbCoapMain, printMbCoapHelp, startMbCoap } =
   await import('../src/mb_coap.js');
 
+// Setup the test environment
 await setupTest('MbCoap', false);
 
 describe('mb_coap', () => {
@@ -85,8 +86,7 @@ describe('mb_coap', () => {
 
   test('parses CLI options', () => {
     process.argv = [
-      'node',
-      'mb_coap',
+      ...originalProcessArgv.slice(0, 2),
       '--request',
       '5000',
       '--interfaceName',
@@ -114,7 +114,7 @@ describe('mb_coap', () => {
   });
 
   test('prints help and exits', () => {
-    process.argv = ['node', 'mb_coap', '--help'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--help'];
     const exitFn = vi.fn();
     const logFn = vi.fn();
 
@@ -133,7 +133,7 @@ describe('mb_coap', () => {
   });
 
   test('mbCoapMain uses default exit and log handlers for help', () => {
-    process.argv = ['node', 'mb_coap', '--help'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--help'];
     const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
@@ -191,7 +191,7 @@ describe('mb_coap', () => {
   });
 
   test('mbCoapMain starts runtime when help is not requested', () => {
-    process.argv = ['node', 'mb_coap', '--no-timeout'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--no-timeout'];
     const exitFn = vi.fn();
 
     const runtime = mbCoapMain(exitFn as any, vi.fn());
@@ -233,7 +233,7 @@ describe('mb_coap', () => {
   });
 
   test('uses defaults when request has no explicit interval and applies timeout', () => {
-    process.argv = ['node', 'mb_coap', '--request', '--noIpv4'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--request', '--noIpv4'];
     const options = getMbCoapOptions();
     const exitFn = vi.fn();
     const runtime = startMbCoap(options, exitFn as any, false);
@@ -310,7 +310,7 @@ describe('mb_coap', () => {
   });
 
   test('lists network interfaces for verbose IPv4 and IPv6-only startup', () => {
-    process.argv = ['node', 'mb_coap', '--verbose'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--verbose'];
 
     startMbCoap(
       {
@@ -332,7 +332,7 @@ describe('mb_coap', () => {
     expect(mockCoapInstances[1].listNetworkInterfaces).not.toHaveBeenCalled();
 
     MockCoap.clear();
-    process.argv = ['node', 'mb_coap', '--verbose'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--verbose'];
 
     startMbCoap(
       {

@@ -23,10 +23,11 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils/wait';
-import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { response as expressResponse } from 'express';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
@@ -47,12 +48,7 @@ const broadcastServerFetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').moc
 });
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the frontend/matter args afterwards
-process.argv = [
-  'node',
-  'frontend.express.test.js',
+await setupTest(NAME, false, [
   '--logger',
   'debug',
   '--matterlogger',
@@ -60,15 +56,14 @@ process.argv = [
   '--bridge',
   '--frontend',
   FRONTEND_PORT.toString(),
-  '--homedir',
-  HOMEDIR,
   '--port',
   MATTER_PORT.toString(),
   '--passcode',
   '123456',
   '--discriminator',
   '3860',
-];
+]);
+process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge frontend express with http', () => {
   let matterbridge: Matterbridge;

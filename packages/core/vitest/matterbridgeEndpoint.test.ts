@@ -92,7 +92,6 @@ import {
   WaterTankLevelMonitoring,
   WindowCovering,
 } from '@matter/types/clusters';
-import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -100,9 +99,12 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerDebugSpy,
+  loggerLogSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
@@ -152,8 +154,6 @@ describe('Matterbridge ' + NAME, () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

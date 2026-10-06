@@ -19,7 +19,6 @@ import { Thermostat } from '@matter/types/clusters/thermostat';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -27,10 +26,15 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerLogSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';

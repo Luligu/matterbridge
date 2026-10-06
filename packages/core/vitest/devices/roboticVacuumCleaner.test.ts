@@ -18,7 +18,6 @@ import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/types/clusters/service-area';
-import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -26,10 +25,16 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerLogSpy,
+  loggerWarnSpy,
   server,
+  setDebug,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { er, hk, LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeServiceAreaServer } from '../../src/behaviors/serviceAreaServer.js';

@@ -6,8 +6,8 @@
 
 const NAME = 'CliMain';
 
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest';
 import { Inspector, Tracker } from '@matterbridge/utils';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import { cliEmitter } from '../src/cliEmitter.js';
@@ -50,12 +50,7 @@ const runGarbageCollectionSpy = vi.spyOn(Inspector.prototype, 'runGarbageCollect
 });
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the cli args afterwards (they are read when cli.js is imported)
-process.argv = [
-  'node',
-  './cli.js',
+await setupTest(NAME, false, [
   '--inspect',
   '--snapshotinterval',
   '60000',
@@ -70,7 +65,7 @@ process.argv = [
   'debug',
   '--matterlogger',
   'debug',
-];
+]);
 
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;

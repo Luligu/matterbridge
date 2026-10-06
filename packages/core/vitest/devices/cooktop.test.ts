@@ -16,7 +16,6 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -24,10 +23,14 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { stringify } from 'node-ansi-logger';
 
 import { Cooktop } from '../../src/devices/cooktop.js';

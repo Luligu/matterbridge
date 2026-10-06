@@ -22,11 +22,11 @@ import { execSync } from 'node:child_process';
 import { promises as fs, unlinkSync } from 'node:fs';
 import path from 'node:path';
 
+import { HOMEDIR, loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { ApiPlugin, PlatformConfig } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils';
-import { HOMEDIR, loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { AnsiLogger, db, er, LogLevel, nf, nt, TimestampFormat } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
@@ -35,29 +35,14 @@ import { type Plugin, PluginManager } from '../src/pluginManager.js';
 import { closeMdnsInstance, closeRuntimeInstance, destroyInstance } from './vitestUtils.js';
 
 // Setup the test environment
-await setupTest(NAME, false);
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--test', '--frontend', '0', '--port', MATTER_PORT.toString()], {
+  npm_config_prefix: NPM_CONFIG_PREFIX,
+  npm_config_cache: NPM_CONFIG_CACHE,
+  npm_config_audit: 'false',
+  npm_config_fund: 'false',
+});
+process.argv.push('--homedir', HOMEDIR);
 
-// setupTest resets process.argv, so configure the real Matterbridge instance args and npm env afterwards
-process.argv = [
-  'node',
-  'matterbridge.test.js',
-  '--novirtual',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--test',
-  '--frontend',
-  '0',
-  '--homedir',
-  HOMEDIR,
-  '--port',
-  MATTER_PORT.toString(),
-];
-process.env.npm_config_prefix = NPM_CONFIG_PREFIX;
-process.env.npm_config_cache = NPM_CONFIG_CACHE;
-process.env.npm_config_audit = 'false';
-process.env.npm_config_fund = 'false';
 await fs.rm(NPM_CONFIG_PREFIX, { recursive: true, force: true });
 await fs.mkdir(NPM_CONFIG_PREFIX, { recursive: true });
 await fs.mkdir(NPM_CONFIG_CACHE, { recursive: true });
@@ -77,14 +62,10 @@ describe('PluginManager', () => {
   const log = new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   const testServer = new BroadcastServer('manager', log);
 
-  beforeAll(() => {});
-
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(() => {
     // Close the test server

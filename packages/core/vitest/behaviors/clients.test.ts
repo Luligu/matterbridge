@@ -15,8 +15,18 @@ import { Chime } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
-import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';
+import {
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  setupTest,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { addChimeClient, addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../../src/behaviors/clients.js';
@@ -25,7 +35,8 @@ import { Intercom } from '../../src/devices/intercom.js';
 import { doorbell } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 describe('clients', () => {
   beforeAll(async () => {

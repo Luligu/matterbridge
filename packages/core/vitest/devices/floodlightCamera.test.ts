@@ -17,7 +17,6 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -25,16 +24,21 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
 import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { FloodlightCamera } from '../../src/devices/floodlightCamera.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 describe('FloodlightCamera', () => {
   beforeAll(async () => {

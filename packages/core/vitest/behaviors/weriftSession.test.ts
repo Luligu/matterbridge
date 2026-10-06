@@ -14,7 +14,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/vitest-utils';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
@@ -25,7 +25,8 @@ vi.mock('../../src/behaviors/ffmpeg.js', async (importOriginal) => {
   return { ...actual, hasFfmpeg: vi.fn(actual.hasFfmpeg), runFfmpeg: vi.fn(actual.runFfmpeg) };
 });
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 // The dev container exports MATTERBRIDGE_ICE_PORT_RANGE / MATTERBRIDGE_ICE_HOST_ADDRESSES for manual WebRTC testing. Unset
 // them here so every session in this file starts from werift's defaults (the ICE override tests stub them explicitly, and

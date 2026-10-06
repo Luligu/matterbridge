@@ -9,7 +9,6 @@ const MATTER_PORT = 13700;
 const MATTER_CREATE_ONLY = true;
 
 import { ModeSelect } from '@matter/types/clusters/mode-select';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -17,9 +16,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { modeSelect } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';

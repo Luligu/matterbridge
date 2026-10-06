@@ -17,7 +17,6 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
-import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -26,10 +25,15 @@ import {
   deleteDevice,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerLogSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { LaundryDryer, MatterbridgeLaundryDryerControlsServer } from '../../src/devices/laundryDryer.js';

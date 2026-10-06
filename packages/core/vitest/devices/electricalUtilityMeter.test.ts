@@ -22,7 +22,6 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { EndpointNumber } from '@matter/types/datatype';
 import { TariffPriceType, TariffUnit } from '@matter/types/globals';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -30,10 +29,14 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { ElectricalUtilityMeter, MatterbridgeCommodityPriceServer, MatterbridgeCommodityTariffServer } from '../../src/devices/electricalUtilityMeter.js';
 import { electricalEnergyTariff, electricalMeter, electricalSensor, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';

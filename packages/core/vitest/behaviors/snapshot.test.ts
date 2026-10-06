@@ -9,12 +9,13 @@ const NAME = 'Snapshot';
 import type { ChildProcess } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
 import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from '../../src/behaviors/snapshot.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 vi.mock('../../src/behaviors/ffmpeg.js', () => ({
   hasFfmpeg: vi.fn(() => true),

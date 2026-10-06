@@ -29,7 +29,6 @@ import { Identify } from '@matter/types/clusters/identify';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -37,10 +36,15 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerLogSpy,
+  loggerWarnSpy,
   server,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeDeviceEnergyManagementModeServer } from '../../src/behaviors/deviceEnergyManagementModeServer.js';

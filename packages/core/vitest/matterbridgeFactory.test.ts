@@ -12,7 +12,6 @@ import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { ClusterId } from '@matter/types/datatype';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -20,9 +19,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerLogSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel } from 'node-ansi-logger';
 
 import { contactSensor, onOffLight } from '../src/matterbridgeDeviceTypes.js';

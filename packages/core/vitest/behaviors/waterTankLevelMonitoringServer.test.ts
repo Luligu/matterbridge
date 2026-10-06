@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -18,9 +17,11 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerLogSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeWaterTankLevelMonitoringServer } from '../../src/behaviors/waterTankLevelMonitoringServer.js';

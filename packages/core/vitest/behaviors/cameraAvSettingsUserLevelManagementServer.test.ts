@@ -11,7 +11,6 @@ const MATTER_CREATE_ONLY = true;
 import { Status, StreamUsage } from '@matter/types';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
-import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -19,9 +18,14 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  loggerErrorSpy,
+  loggerFatalSpy,
+  loggerInfoSpy,
+  loggerWarnSpy,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import {
   createDefaultCameraAvSettingsUserLevelManagementClusterServer,
@@ -29,7 +33,8 @@ import {
 } from '../../src/behaviors/cameraAvSettingsUserLevelManagementServer.js';
 import { Camera } from '../../src/devices/camera.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   let device: Camera;

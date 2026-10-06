@@ -9,7 +9,6 @@ const MATTER_PORT = 12700;
 const MATTER_CREATE_ONLY = true;
 
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -17,9 +16,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
+  setupTest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest';
 
 import { bridge, extendedColorLight, lightSensor, occupancySensor, powerSource, temperatureSensor } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
