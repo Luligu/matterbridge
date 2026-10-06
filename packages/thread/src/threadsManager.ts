@@ -3,7 +3,7 @@
  * @description This file contains the ThreadsManager class.
  * @author Luca Liguori
  * @created 2026-03-07
- * @version 1.1.1
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -28,7 +28,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker, type WorkerOptions } from 'node:worker_threads';
 
-import type { ParentPortMessage, ThreadNames, WorkerData, WorkerMessage } from '@matterbridge/types';
+import type { ParentPortMessage, ThreadNames, ThreadType, WorkerData, WorkerMessage } from '@matterbridge/types';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -46,7 +46,7 @@ interface ThreadInfo {
   /** Worker script/build artifact file name (resolved via resolvePath) or relative path. */
   path: string;
   /** Execution type (worker runs and exits, thread runs continuously). */
-  type: 'worker' | 'thread';
+  type: ThreadType;
   /** Last created Worker instance for this thread (if started). */
   worker?: Worker;
   /** Number of times this thread has been started via runThread(). */
@@ -142,7 +142,6 @@ export class ThreadsManager {
    */
   private msgHandler(msg: WorkerMessage): void {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'manager')) {
-      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -165,7 +164,6 @@ export class ThreadsManager {
           }
           break;
         default:
-          /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
@@ -271,7 +269,6 @@ export class ThreadsManager {
     worker.on('message', (message: ParentPortMessage) => {
       const now = Date.now();
       threadInfo.lastSeen = now;
-      /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date(now).toISOString()}: ${debugStringify(message)}`);
       if (message.type === 'log') {
         AnsiLogger.create({ logName: threadInfo.name, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.log.logLevel }).log(
@@ -423,7 +420,6 @@ export class ThreadsManager {
       stdout: pipedOutput, // When true, worker.stdout becomes a Readable stream (otherwise null)
       stderr: pipedOutput, // When true, worker.stderr becomes a Readable stream (otherwise null)
     };
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     if (this.verbose) this.log.debug(`Creating ESM Worker ${name} with file URL ${fileURL.href} and options ${debugStringify(options)}`);
     return new Worker(fileURL, options);
   }

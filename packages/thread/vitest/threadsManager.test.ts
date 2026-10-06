@@ -12,6 +12,7 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
+import type { ThreadType } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -135,7 +136,7 @@ describe('ThreadsManager', () => {
     test('throws when the resolved worker file does not exist', () => {
       const manager = new ThreadsManager();
       const fileName = `runThread.does-not-exist.${Date.now()}.js`;
-      const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
+      const threads = (manager as any).threads as Array<{ name: string; path: string; type: ThreadType }>;
       threads.push({ name: 'MissingFileWorker', path: fileName, type: 'worker' });
       expect(() => manager.runThread('MissingFileWorker')).toThrow(/Thread MissingFileWorker file not found at path/);
       manager.destroy();
@@ -167,7 +168,7 @@ describe('ThreadsManager', () => {
         const threads = (manager as any).threads as Array<{
           name: string;
           path: string;
-          type: 'worker' | 'thread';
+          type: ThreadType;
           worker?: any;
           runCount?: number;
           lastStarted?: number;
@@ -273,7 +274,7 @@ describe('ThreadsManager', () => {
         expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'set_log_level', src: 'frontend', dst: 'manager', result: { logLevel: LogLevel.DEBUG } }));
 
         // Default branch with verbose=false should not log.
-        await (manager as any).msgHandler({ type: 'jest_simple', id: 3, timestamp: 3, src: 'frontend', dst: 'manager' });
+        await (manager as any).msgHandler({ type: 'test_simple', id: 3, timestamp: 3, src: 'frontend', dst: 'manager' });
         expect(debugSpy).not.toHaveBeenCalled();
 
         manager.destroy();
@@ -370,7 +371,7 @@ describe('ThreadsManager', () => {
         expect(respondSpy).not.toHaveBeenCalled();
 
         // Valid request with unknown type => hits default branch.
-        await (manager as any).msgHandler({ type: 'jest_simple', id: 3, timestamp: 3, src: 'frontend', dst: 'manager' });
+        await (manager as any).msgHandler({ type: 'test_simple', id: 3, timestamp: 3, src: 'frontend', dst: 'manager' });
         expect(respondSpy).not.toHaveBeenCalled();
         expect(debugSpy).toHaveBeenCalled();
 
@@ -419,7 +420,7 @@ describe('ThreadsManager', () => {
       try {
         vi.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
 
-        const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
+        const threads = (manager as any).threads as Array<{ name: string; path: string; type: ThreadType }>;
         threads.push({ name: 'RunInMainThreadWorker', path: tempWorkerFileName, type });
 
         // @ts-expect-error test-only workerData shape
@@ -447,7 +448,7 @@ describe('ThreadsManager', () => {
       try {
         vi.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
 
-        const threads = (manager as any).threads as Array<{ name: string; path: string; type: 'worker' | 'thread' }>;
+        const threads = (manager as any).threads as Array<{ name: string; path: string; type: ThreadType }>;
         threads.push({ name: 'InvalidMainThreadWorker', path: tempWorkerFileName, type: 'worker' });
 
         const result = await manager.runInMainThread('InvalidMainThreadWorker');
@@ -890,7 +891,7 @@ describe('ThreadsManager', () => {
       manager.destroy();
     });
 
-    test('logs worker log messages through AnsiLogger.create', async () => {
+    test.each([false, true])('logs worker log messages through AnsiLogger.create with verbose=%s', async (verbose) => {
       vi.resetModules();
 
       const { EventEmitter } = await import('node:events');
@@ -916,6 +917,8 @@ describe('ThreadsManager', () => {
       createSpy.mockReturnValue({ log: logSpy } as any);
 
       const manager = new ThreadsManagerMocked();
+      manager['verbose'] = verbose;
+      const debugSpy = vi.spyOn(manager['log'], 'debug');
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
       const threads = (manager as any).threads as Array<any>;
@@ -925,10 +928,13 @@ describe('ThreadsManager', () => {
       const threadInfo = threads.find((t) => t.name === 'TestWorker');
       expect(threadInfo.worker).toBeDefined();
 
+      debugSpy.mockClear();
       threadInfo.worker.emit('message', { type: 'log', logLevel: LogLevel.INFO, message: 'from worker' });
 
       expect(createSpy).toHaveBeenCalled();
       expect(logSpy).toHaveBeenCalledWith(LogLevel.INFO, 'from worker');
+      const expectedMessage = expect.stringContaining('Thread TestWorker sent a message at');
+      expect(debugSpy.mock.calls).toEqual(verbose ? [[expectedMessage]] : []);
 
       manager.destroy();
     });
