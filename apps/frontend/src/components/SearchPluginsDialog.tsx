@@ -251,7 +251,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
   };
 
   type NpmPackageResponse = {
-    versions?: Record<string, unknown>;
+    'versions'?: Record<string, unknown>;
     'dist-tags'?: Record<string, unknown>;
   };
 

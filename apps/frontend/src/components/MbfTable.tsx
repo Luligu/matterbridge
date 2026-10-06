@@ -369,7 +369,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                           checked={value}
                           disabled
                           size="small"
-                          sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }}
+                          sx={{ 'm': 0, 'p': 0, 'color': 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }}
                         />
                       ) : column.format && typeof value === 'number' ? (
                         column.format(value)

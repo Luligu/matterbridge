@@ -22,10 +22,10 @@ const localDebug = false; // Set to true to enable local debug logging
 
 // Reusable hover styling for all action icon buttons (mdi icons)
 const iconBtnSx = {
-  margin: '0px',
-  padding: '0px',
-  color: 'var(--div-text-color)',
-  transition: 'color 0.2s ease',
+  'margin': '0px',
+  'padding': '0px',
+  'color': 'var(--div-text-color)',
+  'transition': 'color 0.2s ease',
   '& svg': { display: 'block' },
   '& svg path': { fill: 'var(--div-text-color)', transition: 'fill 0.2s ease' },
   '&:hover': { color: 'var(--primary-color)' },

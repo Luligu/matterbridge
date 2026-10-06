@@ -55,7 +55,7 @@ function requestUrl(input: RequestInfo | URL): string {
 function mockRegistry({
   objects = packageNames.map((name) => ({ package: { name, version: '1.0.0' }, downloads: { monthly: 10 } })),
   latest = {},
-  versions = { versions: { '1.0.0': {}, '1.10.0': {}, '1.2.0': {} }, 'dist-tags': { dev: '2.0.0-dev' } },
+  versions = { 'versions': { '1.0.0': {}, '1.10.0': {}, '1.2.0': {} }, 'dist-tags': { dev: '2.0.0-dev' } },
   downloads = { downloads: [{ downloads: 3 }, {}, { downloads: 7 }] },
 }: { objects?: unknown[]; latest?: unknown; versions?: unknown; downloads?: unknown } = {}) {
   vi.mocked(fetch).mockImplementation(async (input) => {
@@ -366,7 +366,14 @@ describe('SearchPluginsDialog', () => {
     '{broken',
     'null',
     '42',
-    JSON.stringify({ '': {}, invalid: null, primitive: 4, badDate: { asOf: 4 }, badTotal: { total: '4', asOf: 'old' }, badVersions: { versions: 'latest', asOf: 'old' } }),
+    JSON.stringify({
+      '': {},
+      'invalid': null,
+      'primitive': 4,
+      'badDate': { asOf: 4 },
+      'badTotal': { total: '4', asOf: 'old' },
+      'badVersions': { versions: 'latest', asOf: 'old' },
+    }),
   ])('should recover from invalid cache data %s', async (raw) => {
     vi.useFakeTimers();
     for (const key of [MbfLsk.searchPluginsTotal, MbfLsk.searchPluginsMeta, MbfLsk.searchPluginsVersions]) window.localStorage.setItem(key, raw);
@@ -420,7 +427,7 @@ describe('SearchPluginsDialog', () => {
     expect(readCache(MbfLsk.searchPluginsMeta)[packageNames[0]]).toEqual(expect.objectContaining({ homepage: 'https://www.npmjs.com/package/matterbridge-test-alpha' }));
   });
 
-  test.each([{}, { versions: {}, 'dist-tags': { dev: '  ' } }, { versions: { '1.0.0': {} }, 'dist-tags': { dev: 42 } }])(
+  test.each([{}, { 'versions': {}, 'dist-tags': { dev: '  ' } }, { 'versions': { '1.0.0': {} }, 'dist-tags': { dev: 42 } }])(
     'should omit the dev tag and tolerate missing version data: %j',
     async (versions) => {
       vi.useFakeTimers();

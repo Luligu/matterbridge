@@ -5,11 +5,7 @@
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "ignorePatterns": [
     "**/.cache/**",
-    "**/.cottontail-tmp/**",
     "**/.git/**",
-    "**/.hutch/**",
-    "apps/**",
-    "**/artifacts/**",
     "**/build/**",
     "chip/**",
     "**/coverage/**",
@@ -22,12 +18,9 @@
     "**/screenshots/**",
     "**/scripts/**",
     "**/xmls/**",
-    "vendor/**",
     "**/package-lock.json",
     "**/bun.lock",
-    "scripts/*.html",
-    "docker/chip-test/**",
-    "eslint.config.js"
+    "docker/chip-test/**"
   ],
   "printWidth": 180,
   "tabWidth": 2,
