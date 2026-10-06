@@ -591,14 +591,12 @@
         "verbose",
         "--coverage",
         "--maxWorkers=100%",
-        "--coverage.include=packages/core/src/backend.ts",
-        "--coverage.include=packages/core/src/backendWsServer.ts",
-        "--coverage.include=packages/core/src/backendExpress.ts",
-        "--coverage.include=packages/core/src/matterNodeHelpers.ts",
-        "packages/core/vitest/backend.test.ts",
-        "packages/core/vitest/backendWsServer.test.ts",
-        "packages/core/vitest/backendExpress.test.ts",
-        "packages/core/vitest/matterNodeHelpers.test.ts"
+        "--coverage.include=packages/thread/src/backend.ts",
+        "--coverage.include=packages/thread/src/backendWsServer.ts",
+        "--coverage.include=packages/thread/src/backendExpress.ts",
+        "packages/thread/vitest/backend.test.ts",
+        "packages/thread/vitest/backendWsServer.test.ts",
+        "packages/thread/vitest/backendExpress.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
