@@ -33,6 +33,7 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
   const respondMock = vi.fn<(...args: any[]) => any>();
 
   const workerData = {
+    type: 'worker',
     threadName: 'ArchiveCommand',
     logLevel: LogLevel.INFO,
     debug: false,

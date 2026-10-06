@@ -39,9 +39,7 @@ const mockedBackend = {
 } as unknown as Backend;
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-process.argv = ['node', 'backendWsServer.test.js', '--debug-backend', '--verbose-backend'];
+await setupTest(NAME, false, ['--debug-backend', '--verbose-backend']);
 
 class FakeClient extends EventEmitter {
   OPEN = 1;
@@ -232,6 +230,33 @@ describe('BackendWsServer', () => {
     expect(loggerErrorSpy).not.toHaveBeenCalled();
   });
 
+  test('should respond with pong when an API ping request is received', async () => {
+    const client = new FakeClient();
+    await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 9, src: 'Frontend', dst: 'Matterbridge', method: 'ping', params: {} })));
+    expect(client.send).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ id: 9, method: 'pong', src: 'Matterbridge', dst: 'Frontend', success: true, response: 'pong' }));
+  });
+
+  test('should serialize bigint response values with an n suffix and preserve other values', async () => {
+    const client = new FakeClient();
+    const response = { id: 'Matterbridge', values: [9007199254740993n, -42n, 0n, 42, 'text', true, null], nested: { value: 12n } };
+    vi.mocked(mockedBackend.getApiMatter).mockResolvedValueOnce(response as unknown as ApiMatter);
+    await (wsServer as any).wsMessageHandler(
+      client,
+      Buffer.from(JSON.stringify({ id: 8, src: 'Frontend', dst: 'Matterbridge', method: '/api/matter', params: { id: 'Matterbridge' } })),
+    );
+    expect(client.send).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({
+        id: 8,
+        method: '/api/matter',
+        src: 'Matterbridge',
+        dst: 'Frontend',
+        success: true,
+        response: { id: 'Matterbridge', values: ['9007199254740993n', '-42n', '0n', 42, 'text', true, null], nested: { value: '12n' } },
+      }),
+    );
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+  });
+
   test('should answer the settings, plugins, devices and clusters api requests', async () => {
     const client: any = new FakeClient();
     const request = async (method: string, params: Record<string, unknown> = {}): Promise<any> => {
@@ -281,6 +306,26 @@ describe('BackendWsServer', () => {
     });
     expect(mockedBackend.getApiCluster).toHaveBeenLastCalledWith('matterbridge-test', 1, 'SN1', 'UID1');
     expect(loggerErrorSpy).not.toHaveBeenCalled();
+  });
+
+  test.each(['/api/restart', '/api/shutdown'] as const)('should forward %s to the main thread and acknowledge the request', async (method) => {
+    const client = new FakeClient();
+    const fetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockResolvedValueOnce({ result: { success: true } } as never);
+    const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
+    try {
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 12, src: 'Frontend', dst: 'Matterbridge', method, params: {} })));
+      expect(fetchSpy).toHaveBeenCalledWith({
+        type: method === '/api/restart' ? 'matterbridge_restart' : 'matterbridge_shutdown',
+        src: 'frontend',
+        dst: 'matterbridge',
+        params: undefined,
+      });
+      expect(snackbarSpy).toHaveBeenCalledWith(method === '/api/restart' ? 'Restarting matterbridge...' : 'Shutting down matterbridge...', 0);
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 12, method, src: 'Matterbridge', dst: 'Frontend', success: true });
+    } finally {
+      fetchSpy.mockRestore();
+      snackbarSpy.mockRestore();
+    }
   });
 
   test('should write the diagnostic timings when diagnostic is enabled', async () => {

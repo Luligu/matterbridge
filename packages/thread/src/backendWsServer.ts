@@ -25,10 +25,9 @@
 
 // WARNING: Not released yet and excluded from Vitest coverage
 
-// TODO: analyze each rule
-
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
+// @matterbridge
 import type { EndpointNumber } from '@matter/types/datatype';
 import type {
   ApiMatter,
@@ -55,7 +54,6 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import type { Backend } from './backend.js';
-// @matterbridge
 import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('BackendWsServer');
@@ -263,8 +261,6 @@ export class BackendWsServer {
           this.log.debug(`Sending api error message: ${debugStringify(data)}`);
         }
         // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
-        // TODO: remove ignore
-        /* v8 ignore next - no api method returns a bigint yet (the methods are still to be implemented), so the bigint branch cannot be reached */
         const bigintReplacer = (_: string, v: unknown): unknown => (typeof v === 'bigint' ? `${v}n` : v);
         client.send(JSON.stringify(data, bigintReplacer));
       } else {
@@ -286,6 +282,14 @@ export class BackendWsServer {
       // TODO add methods
       if (data.method === 'ping') {
         sendResponse({ id: data.id, method: 'pong', src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
+      } else if (data.method === '/api/restart') {
+        this.wssSendSnackbarMessage('Restarting matterbridge...', 0);
+        await this.server.fetch({ type: 'matterbridge_restart', src: 'frontend', dst: 'matterbridge', params: undefined });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/shutdown') {
+        this.wssSendSnackbarMessage('Shutting down matterbridge...', 0);
+        await this.server.fetch({ type: 'matterbridge_shutdown', src: 'frontend', dst: 'matterbridge', params: undefined });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/settings') {
         const start = performance.now();
         const settings = await this.backend.getApiSettings();

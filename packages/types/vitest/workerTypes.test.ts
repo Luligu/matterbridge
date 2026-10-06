@@ -15,11 +15,24 @@ describe('Worker data type guards', () => {
     vi.restoreAllMocks();
   });
 
-  const base = { threadName: 'SystemCheck', logLevel: 'info', debug: false, verbose: false, tracker: false };
+  const base = { type: 'worker', threadName: 'SystemCheck', logLevel: 'info', debug: false, verbose: false, tracker: false };
   const spawn = { ...base, command: 'npm', args: ['install'], packageCommand: 'install', packageName: 'some-pkg' };
   const archive = { ...base, command: 'zip', archivePath: '/tmp/out.zip', sourcePaths: ['/tmp/src'], destinationPath: '/tmp/dst' };
 
   describe('isWorkerData', () => {
+    test('should accept thread execution type', () => {
+      expect(isWorkerData({ ...base, type: 'thread' })).toBe(true);
+    });
+
+    test('should reject missing execution type', () => {
+      const { type: _, ...rest } = base;
+      expect(isWorkerData(rest)).toBe(false);
+    });
+
+    test.each([undefined, null, 'invalid', 1])('should reject invalid execution type %s', (type) => {
+      expect(isWorkerData({ ...base, type })).toBe(false);
+    });
+
     test('should return true for valid base worker data', () => {
       expect(isWorkerData(base)).toBe(true);
     });

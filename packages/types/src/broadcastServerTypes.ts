@@ -128,12 +128,12 @@ export type WorkerMessage<K extends keyof WorkerMessageTypes = keyof WorkerMessa
 
 /** Map of all worker message types with their request and response structures */
 export type WorkerMessageTypes = {
-  // Jest example message
-  jest: {
+  // Test example messages
+  test: {
     request: { params: { userId: number } };
     response: { result: { name: string; age: number } };
   };
-  jest_simple: {
+  test_simple: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
@@ -214,6 +214,14 @@ export type WorkerMessageTypes = {
   matterbridge_shared: {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
+  };
+  matterbridge_restart: {
+    request: { params: undefined };
+    response: { result: { success: true } };
+  };
+  matterbridge_shutdown: {
+    request: { params: undefined };
+    response: { result: { success: true } };
   };
   matterbridge_apimatter: {
     request: { params: { id: string } };

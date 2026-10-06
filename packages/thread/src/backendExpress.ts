@@ -27,6 +27,7 @@
 import os from 'node:os';
 import path from 'node:path';
 
+// @matterbridge
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_DIR,
@@ -58,7 +59,6 @@ import { AnsiLogger, er, LogLevel, nf, TimestampFormat } from 'node-ansi-logger'
 
 // matterbridge
 import type { Backend } from './backend.js';
-// @matterbridge
 import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('BackendExpress');

@@ -3,7 +3,7 @@
  * @description This file contains the worker types.
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.1.0
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,13 +26,23 @@ import type { LogLevel } from 'node-ansi-logger';
 /** Thread names used in the thread system */
 export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend';
 
-/** Base worker data for all workers */
-export type BaseWorkerData = { type?: 'worker' | 'thread'; threadName: ThreadNames; logLevel: LogLevel; debug: boolean; verbose: boolean; tracker: boolean };
+/** Thread type used in the thread system */
+export type ThreadType = 'worker' | 'thread';
+
+/** Base worker data for all workers, with a required execution type */
+export interface BaseWorkerData {
+  threadName: ThreadNames;
+  type: ThreadType;
+  logLevel: LogLevel;
+  debug: boolean;
+  verbose: boolean;
+  tracker: boolean;
+}
 
 /** Worker data for spawn command worker */
-export type SpawnWorkerData = {
-  type?: 'worker' | 'thread';
+export interface SpawnWorkerData {
   threadName: ThreadNames;
+  type?: ThreadType;
   logLevel?: LogLevel;
   debug?: boolean;
   verbose?: boolean;
@@ -41,12 +51,12 @@ export type SpawnWorkerData = {
   args: string[];
   packageCommand: 'install' | 'uninstall';
   packageName: string;
-};
+}
 
 /** Worker data for archive command worker */
-export type ArchiveWorkerData = {
-  type?: 'worker' | 'thread';
+export interface ArchiveWorkerData {
   threadName: ThreadNames;
+  type?: ThreadType;
   logLevel?: LogLevel;
   debug?: boolean;
   verbose?: boolean;
@@ -55,7 +65,7 @@ export type ArchiveWorkerData = {
   archivePath: string;
   sourcePaths: string[];
   destinationPath: string;
-};
+}
 
 /** Worker data for all workers */
 export type WorkerData = BaseWorkerData | SpawnWorkerData | ArchiveWorkerData;
@@ -70,6 +80,8 @@ export function isWorkerData(data: unknown): data is WorkerData {
   return (
     typeof data === 'object' &&
     data !== null &&
+    'type' in data &&
+    (data.type === 'worker' || data.type === 'thread') &&
     'threadName' in data &&
     typeof data.threadName === 'string' &&
     'logLevel' in data &&

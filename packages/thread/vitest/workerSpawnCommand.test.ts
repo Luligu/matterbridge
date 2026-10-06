@@ -32,6 +32,7 @@ async function runWorkerSpawnCommand(options: RunOptions): Promise<RunWorkerSpaw
     args: ['--foo', 'bar'],
     packageCommand: 'install',
     packageName: '@matterbridge/thread',
+    type: 'worker',
     threadName: 'SpawnCommand',
     logLevel: LogLevel.INFO,
     debug: false,
