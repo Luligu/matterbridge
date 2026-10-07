@@ -58,6 +58,10 @@ coveragePathIgnorePatterns = [
   '**/test/**',
   '**/buntest/**',
   '**/vitest/**',
+  '**/packages/core/**',
+  '**/packages/jest-utils/**',
+  '**/packages/test-utils/**',
+  '**/packages/vitest-utils/**',
   '**/src/**/*.d.ts',
   '**/src/**/*.{spec,test}.{ts,mts,cts}',
 ]
