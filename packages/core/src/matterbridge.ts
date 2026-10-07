@@ -388,6 +388,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {PlatformMatterbridge} The platform matterbridge object.
    */
   getPlatformMatterbridge(): PlatformMatterbridge {
+    // Update the variable system information properties
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.systemInformation.rss = formatBytes(memoryFootprint());
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
     return {
       systemInformation: { ...this.systemInformation },
       uuid: this.uuid,
@@ -417,6 +425,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {SharedMatterbridge} The shared matterbridge object.
    */
   getSharedMatterbridge(): SharedMatterbridge {
+    // Update the variable system information properties
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.systemInformation.rss = formatBytes(memoryFootprint());
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
     return {
       systemInformation: { ...this.systemInformation },
       uuid: this.uuid,
