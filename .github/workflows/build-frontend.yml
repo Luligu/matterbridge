@@ -66,8 +66,8 @@ jobs:
         run: |
           npm outdated || true
           npm audit || true
-          npm audit fix || true
-          npm update || true
+          npx npm-check-updates -u || true
+          npm install --no-fund --no-audit || true
           npm outdated || true
           npm audit || true
           npm run build || true
