@@ -1,11 +1,12 @@
 /**
- * @file packages/core/vitest/matterNode.bridge.test.ts
+ * @file packages/core/buntest/matterNode.bridge.test.ts
  * @description This file contains the tests for the MatterNode class in bridge mode.
  * @author Luca Liguori
  */
 
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
+/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const MATTER_PORT = 10100;
 const NAME = 'MatterNodeBridge';
@@ -13,13 +14,14 @@ const PASSCODE = 123457;
 const DISCRIMINATOR = 3861;
 const STRESS_TEST_ITERATIONS = 5;
 
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import url from 'node:url';
 
-import { closeServerNodeStores } from '@matterbridge/test-utils/vitest/matter';
-import { HOMEDIR, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { closeServerNodeStores } from '@matterbridge/test-utils/buntest/matter';
+import { HOMEDIR, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
@@ -220,7 +222,7 @@ describe('MatterNode bridge', () => {
     // Test no server node
     const savedServer = matter.serverNode;
     matter.serverNode = undefined;
-    await expect(async () => matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
+    await expect(matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
       `Server node not found for matter endpoint ${plg}matterdevicetest${er}:${dev}${tmpSensor.deviceName}${er} (${zb}${tmpSensor.name}${er})`,
     );
     matter.serverNode = savedServer;

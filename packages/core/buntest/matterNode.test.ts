@@ -1,16 +1,18 @@
 /**
- * @file packages/core/vitest/matterNode.test.ts
+ * @file packages/core/buntest/matterNode.test.ts
  * @description This file contains the tests for the MatterNode class.
  * @author Luca Liguori
  */
 
 /* oxlint-disable typescript/prefer-nullish-coalescing */
+/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 
+import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -21,8 +23,8 @@ import { BasicInformationServer } from '@matter/node/behaviors/basic-information
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricIndex } from '@matter/types/datatype';
-import { closeServerNodeStores } from '@matterbridge/test-utils/vitest/matter';
-import { HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { closeServerNodeStores } from '@matterbridge/test-utils/buntest/matter';
+import { HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
@@ -329,7 +331,7 @@ describe('MatterNode', () => {
     const powerSourceState = invalidServerNode.stateOf(PowerSourceServer.with(PowerSource.Feature.Wired));
     expect(powerSourceState.status).toBe(PowerSource.PowerSourceStatus.Active);
     expect(powerSourceState.order).toBe(0);
-    expect(powerSourceState.endpointList).toEqual([0]);
+    expect(powerSourceState.endpointList as unknown).toEqual([0]);
     expect(powerSourceState.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid passcode -1 for server node InvalidCommissioning. Passcode must be between 0 and 99999999. Generating a random passcode...',
@@ -383,7 +385,7 @@ describe('MatterNode', () => {
         await serverNode.lifecycle.online.emit(agent.context);
       });
       await Promise.all(setStateSpy.mock.results.map((result) => result.value));
-      expect(setStateSpy.mock.calls).toEqual(args.length > 0 ? [[BasicInformationServer, { configurationVersion: expectedVersion }]] : []);
+      expect(setStateSpy.mock.calls as unknown).toEqual(args.length > 0 ? [[BasicInformationServer, { configurationVersion: expectedVersion }]] : []);
       expect(serverNode.state.basicInformation.configurationVersion).toBe(originalVersion);
       expect(loggerNoticeSpy.mock.calls.filter(([message]) => message.startsWith('Configuration version for server node Matterbridge is now'))).toEqual(
         args.length > 0 ? [[`Configuration version for server node Matterbridge is now ${expectedVersion}`]] : [],
@@ -463,7 +465,7 @@ describe('MatterNode', () => {
     device.plugin = 'matterbridge-mock1';
 
     // Test adding to unknown plugin
-    await expect(async () => matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+    await expect(matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
       `Error adding bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
     );
     expect(deviceManager.length).toBe(0);
@@ -473,7 +475,7 @@ describe('MatterNode', () => {
     const saved = matter.aggregatorNode; // Save aggregator node
     matter.aggregatorNode = undefined;
     expect(await matter.pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
-    await expect(async () => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Aggregator node not found for endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
     matter.aggregatorNode = saved; // Restore aggregator node
@@ -484,7 +486,7 @@ describe('MatterNode', () => {
     const savedServer = matter.serverNode; // Save server node
     matter.serverNode = undefined;
     device.mode = 'matter';
-    await expect(async () => matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Server node not found for matter endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
     matter.serverNode = savedServer; // Restore server node
@@ -527,7 +529,7 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(1);
 
     // Test removing from unknown plugin
-    await expect(async () => matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+    await expect(matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
     );
     expect(deviceManager.length).toBe(1);
@@ -535,7 +537,7 @@ describe('MatterNode', () => {
     // Test removing when no aggregator node
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(async () => matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    await expect(matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
     );
     expect(deviceManager.length).toBe(1);
@@ -568,7 +570,7 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(2);
 
     // Test removing from unknown plugin
-    await expect(async () => matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
+    await expect(matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
       `Error removing all bridged endpoints for plugin ${plg}matterbridge-unknown${er}: plugin not found`,
     );
     expect(deviceManager.length).toBe(2);
