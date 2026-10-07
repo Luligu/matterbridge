@@ -47,6 +47,14 @@ jobs:
       - name: Build matterbridge
         run: bun run build
 
+      - name: Link matterbridge globally
+        run: bun link
+
+      - name: Test matterbridge cli
+        run: |
+          bunx --bun matterbridge --version
+          bunx --bun matterbridge --loginterfaces
+
       - name: Install frontend dependencies
         run: bun install
         working-directory: apps/frontend
