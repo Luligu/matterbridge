@@ -305,7 +305,7 @@ describe('ConfigPluginDialog', () => {
     unmount();
     const Title = templates.ArrayFieldTitleTemplate;
     const Description = templates.ArrayFieldDescriptionTemplate;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const props = { fieldPathId: { $id: 'array', path: [] }, title: 'Array title', description: 'Array description', schema: {}, registry: createRegistry() };
     const { container } = render(
       <>

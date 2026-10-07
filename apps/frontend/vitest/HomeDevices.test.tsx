@@ -93,7 +93,6 @@ const uiContext = { mobile: false } as UiContextType;
 
 function renderComponent(options: { online?: boolean; setStoreId?: (id: string | null) => void; storeId?: string | null } = {}) {
   let listener: ((message: unknown) => void) | undefined;
-  // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
   const addListener = vi.fn((callback: (message: unknown) => void) => {
     listener = callback;
   });

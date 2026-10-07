@@ -24,7 +24,7 @@ import { ConfigPluginDialog } from '../src/components/ConfigPluginDialog';
 describe('ConfigPluginDialog debug paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   const createPlugin = (): ApiPlugin => ({

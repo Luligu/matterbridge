@@ -193,7 +193,7 @@ describe('Header', () => {
     locationMock.href = 'http://localhost/';
     Object.defineProperty(window, 'location', { configurable: true, value: locationMock });
     vi.spyOn(window, 'open').mockReturnValue(null);
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     localStorage.clear();
   });
 
@@ -550,7 +550,6 @@ describe('Header', () => {
     const sendMessage = vi.fn();
     const removeListener = vi.fn();
     let listener: ((message: unknown) => void) | undefined;
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
     const addListener = vi.fn((callback: (message: unknown) => void) => {
       listener = callback;
     });

@@ -58,7 +58,7 @@ const uiContext = { mobile: false, showConfirmCancelDialog: vi.fn() } as unknown
 beforeEach(() => {
   settings.debug = true;
   settings.enableMobile = true;
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(window, 'open').mockReturnValue(null);
 });
 
@@ -417,7 +417,6 @@ describe('HomePlugins', () => {
 
   it('updates only the matching plugin version from a plugin update notification', () => {
     let listener: ((message: unknown) => void) | undefined;
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
     const addListener = vi.fn((callback: (message: unknown) => void) => {
       listener = callback;
     });

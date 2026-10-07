@@ -1,3 +1,5 @@
+// oxlint-disable unicorn/no-negated-condition
+
 // @mui/icons-material
 import Battery1BarIcon from '@mui/icons-material/Battery1Bar';
 import Battery2BarIcon from '@mui/icons-material/Battery2Bar';

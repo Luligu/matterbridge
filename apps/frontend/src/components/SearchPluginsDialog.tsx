@@ -2,11 +2,9 @@
 // oxlint-disable max-lines-per-function
 // oxlint-disable typescript/promise-function-async
 // oxlint-disable unicorn/no-array-sort
-// oxlint-disable no-await-in-loop
 // oxlint-disable typescript/no-unsafe-type-assertion
 // oxlint-disable typescript/no-unnecessary-type-conversion
 // oxlint-disable typescript/non-nullable-type-assertion-style
-// oxlint-disable oxc/no-map-spread
 // oxlint-disable typescript/consistent-return
 // oxlint-disable unicorn/no-array-reduce
 
@@ -268,7 +266,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       if (debug) console.log(`[SearchPluginsDialog] versions cache hit for ${packageName} (${cached.versions.length.toString()})`);
       return cached.versions;
     }
-    if (cached && cached.asOf === asOf && cached.versions.length > 0 && cached.versions[0] !== 'latest') {
+    if (cached?.asOf === asOf && cached.versions.length > 0 && cached.versions[0] !== 'latest') {
       if (debug) console.log(`[SearchPluginsDialog] versions cache ignored (old format) for ${packageName} (asOf=${asOf})`);
     }
 
@@ -658,7 +656,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
             const repositoryRaw = getRepositoryUrl(latestJson.repository);
             const repositoryNormalized = repositoryRaw ? normalizeRepositoryUrl(repositoryRaw) : null;
-            const repositoryUrl = repositoryNormalized && repositoryNormalized.includes('http') ? repositoryNormalized : null;
+            const repositoryUrl = repositoryNormalized?.includes('http') ? repositoryNormalized : null;
 
             // Mirror backend fallback logic (PluginManager): help/changelog -> repository blob/main -> homepage.
             const homepageResolved = homepageFromPackage || repositoryUrl || fallbackHomepage || null;
@@ -934,7 +932,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center', gap: 1.5, flexWrap: 'wrap' }}>
         <Tooltip title="Select the plugin and close the dialog. Double-click a row to select and close the dialog.">
-          <Button variant="contained" onClick={handleSelect} disabled={!pluginName || selecting}>
+          <Button variant="contained" onClick={() => void handleSelect()} disabled={!pluginName || selecting}>
             Select
           </Button>
         </Tooltip>

@@ -66,7 +66,7 @@ describe('Devices', () => {
 
   beforeAll(async () => {
     // Silence the Devices component debug logs (it has debug=true).
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     // JSDOM returns 0x0 rects by default; MUI Popper/Tooltip warns that the anchorEl
     // is not part of the document layout. Override for this test file.

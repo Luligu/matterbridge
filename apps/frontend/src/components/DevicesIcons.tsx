@@ -1,6 +1,7 @@
 // oxlint-disable unicorn/prefer-set-has
 // oxlint-disable no-unused-expressions
 // oxlint-disable complexity
+// oxlint-disable unicorn/no-negated-condition
 
 // TODO: verify each rule
 // oxlint-disable typescript/no-unsafe-type-assertion

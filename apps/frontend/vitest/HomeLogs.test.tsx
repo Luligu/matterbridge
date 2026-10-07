@@ -27,7 +27,7 @@ function renderLogs(online = true, autoScroll = true) {
 beforeEach(() => {
   settings.debug = false;
   localStorage.clear();
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(() => {

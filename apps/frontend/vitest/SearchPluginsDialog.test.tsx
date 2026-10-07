@@ -181,7 +181,7 @@ describe('SearchPluginsDialog', () => {
   ])('should tolerate HTTP failures in the $endpoint worker', async ({ key }) => {
     vi.useFakeTimers();
     appState.debug = true;
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     window.localStorage.removeItem(key);
     mockRegistry();
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
@@ -221,7 +221,7 @@ describe('SearchPluginsDialog', () => {
   test.each([false, true])('should handle selection-time version rejection with aborted=%s', async (aborted) => {
     const cached = readCache(MbfLsk.searchPluginsVersions)[packageNames[0]] as { asOf: string };
     window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, versions: ['1.0.0'] }]))));
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
     const error = aborted ? new DOMException('Aborted', 'AbortError') : new Error('Version lookup failed');
     vi.mocked(fetch).mockImplementation(async (input, init) => {
@@ -312,7 +312,7 @@ describe('SearchPluginsDialog', () => {
   test('should fetch and cache metadata, sorted versions, and download totals on a cold start', async () => {
     vi.useFakeTimers();
     appState.debug = true;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     window.localStorage.clear();
     mockRegistry({ latest: { homepage: 'git+https://example.com/plugin.git', help: 'https://example.com/help', changelog: 'https://example.com/changes' } });
     const { onSelect, onVersions } = renderDialog();
@@ -405,7 +405,7 @@ describe('SearchPluginsDialog', () => {
   test('should refresh stale totals and versions and incomplete metadata', async () => {
     vi.useFakeTimers();
     appState.debug = true;
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     const cachedMeta = readCache(MbfLsk.searchPluginsMeta)[packageNames[0]] as { asOf: string };
     window.localStorage.setItem(
       MbfLsk.searchPluginsMeta,
@@ -432,7 +432,7 @@ describe('SearchPluginsDialog', () => {
     async (versions) => {
       vi.useFakeTimers();
       appState.debug = true;
-      vi.spyOn(console, 'log').mockImplementation(() => undefined);
+      vi.spyOn(console, 'log').mockImplementation(() => {});
       window.localStorage.removeItem(MbfLsk.searchPluginsVersions);
       mockRegistry({ versions });
       const { onVersions } = renderDialog();
@@ -445,7 +445,7 @@ describe('SearchPluginsDialog', () => {
 
   test('should replace the old versions cache format and return at most twenty versions', async () => {
     appState.debug = true;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const cached = readCache(MbfLsk.searchPluginsVersions)[packageNames[0]] as { asOf: string };
     window.localStorage.setItem(
       MbfLsk.searchPluginsVersions,
@@ -557,7 +557,7 @@ describe('SearchPluginsDialog', () => {
   });
 
   test.each([new Error('Network unavailable'), 'Registry unavailable'])('should display a rejected registry request: %s', async (rejection) => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(fetch).mockRejectedValue(rejection);
     renderDialog();
     expect(await screen.findByText(rejection instanceof Error ? rejection.message : rejection)).toBeInTheDocument();
@@ -565,14 +565,14 @@ describe('SearchPluginsDialog', () => {
   });
 
   test('should display the status of an unsuccessful registry response', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 503, statusText: 'Unavailable' }));
     renderDialog();
     expect(await screen.findByText('npm registry request failed: 503 Unavailable')).toBeInTheDocument();
   });
 
   test('should ignore an aborted registry request', async () => {
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     vi.mocked(fetch).mockRejectedValue(new DOMException('Aborted', 'AbortError'));
     renderDialog();
     await waitFor(() => expect(screen.queryByText('Loading npm registry...')).not.toBeInTheDocument());
