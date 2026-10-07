@@ -58,9 +58,17 @@ jobs:
         run: npm run format:check
         working-directory: apps/frontend
 
-      - name: Test frontend
-        run: npm run test -- --testTimeout=30000
+      - name: Test frontend with coverage
+        run: npm run test:coverage -- --testTimeout=30000
         working-directory: apps/frontend
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./apps/frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: true
 
       - name: List, audit, fix outdated dependencies, update and build again
         timeout-minutes: 3

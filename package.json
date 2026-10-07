@@ -298,7 +298,7 @@
     "test": "vitest run",
     "test:watch": "vitest --reporter verbose",
     "test:verbose": "vitest run --reporter verbose",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --reporter verbose --coverage",
     "test:bun": "bun test --parallel",
     "test:bun:core": "bun test --parallel packages/core",
     "test:bun:dgram": "bun test --parallel packages/dgram",

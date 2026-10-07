@@ -1,0 +1,22 @@
+# Codecov configuration.
+# Uploads: 'vitest' (.github/workflows/codecov.yml) and 'bun' (.github/workflows/codecov-bun.yml) on every commit,
+# 'frontend' (.github/workflows/build-frontend.yml) only on commits that touch apps/frontend.
+# The project and patch statuses only measure 'vitest'. Bun's lcov counts extra lines that v8 treats as
+# non-executable and ignores /* v8 ignore */ hints, so it is reported under its own flag only.
+
+coverage:
+  status:
+    project:
+      default:
+        flags:
+          - vitest
+    patch:
+      default:
+        flags:
+          - vitest
+
+flag_management:
+  individual_flags:
+    # The frontend workflow only runs when apps/frontend changes: carry its last coverage forward to the other commits.
+    - name: frontend
+      carryforward: true
