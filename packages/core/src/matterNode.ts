@@ -174,6 +174,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.logNameColor = '\x1b[38;5;65m';
     if (this.debug) this.log.debug(`MatterNode ${this.pluginName ? 'for plugin ' + this.pluginName : 'bridge'} loading...`);
 
+    // Setup the storeId of the server node: Matterbridge in bridge mode, the plugin name in childbridge mode or the device name for a server mode device
+    this.storeId = this.device?.deviceName ? this.device.deviceName.replace(/[ .]/g, '') : (this.pluginName ?? 'Matterbridge');
+
     // Setup Matter parameters
     this.port = matterbridge.port;
     this.passcode = matterbridge.passcode;
@@ -184,9 +187,6 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     // oxlint-disable-next-line typescript/no-misused-promises
     this.server.on('broadcast_message', this.msgHandler.bind(this));
     if (this.verbose) this.log.debug(`BroadcastServer is ready`);
-
-    // Ensure the matterbridge directory exists
-    fs.mkdirSync(matterbridge.matterbridgeDirectory, { recursive: true });
 
     // Setup the plugin manager with thread server closed
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
@@ -232,7 +232,6 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    *
    * @param {WorkerMessage} msg - The incoming message.
    */
-  // oxlint-disable-next-line typescript/require-await
   async msgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matter')) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
@@ -243,6 +242,33 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
+          break;
+        case 'matter_start':
+          // Only the MatterNode with the requested storeId responds. Dependant MatterNodes are started by their parent MatterNode.
+          if (this.device || msg.params.storeId !== this.storeId) break;
+          try {
+            await this.create();
+            await this.start();
+            this.server.respond({ ...msg, result: { storeId: this.storeId, success: true } });
+          } catch (error) {
+            inspectError(this.log, `Error starting MatterNode ${this.storeId}`, error);
+          }
+          break;
+        case 'matter_stop':
+          // Only the MatterNode with the requested storeId responds. Dependant MatterNodes are stopped by their parent MatterNode.
+          if (this.device || msg.params.storeId !== this.storeId) break;
+          try {
+            await this.stop();
+            // Respond before destroy() closes the broadcast server. Only the bridge MatterNode closes the shared mDNS service.
+            this.server.respond({ ...msg, result: { storeId: this.storeId, success: true } });
+            await this.destroy(!this.pluginName);
+          } catch (error) {
+            inspectError(this.log, `Error stopping MatterNode ${this.storeId}`, error);
+          }
+          break;
+        case 'matter_apimatter':
+          // Every MatterNode (dependant ones included) receives the request: only the one owning the server node responds
+          if (this.serverNode?.id === msg.params.id) this.server.respond({ ...msg, result: { matter: getServerNodeData(this.serverNode) } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
@@ -1527,10 +1553,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * This does **not** guarantee that every promise in the process is settled,
    * but it gives all already-scheduled work a very good chance to run before continuing.
    *
-   * @param {number} [timeout] - Optional timeout in milliseconds to wait after yielding. Default is 100 ms (minimum 10 ms).
+   * @param {number} [timeout] - Optional timeout in milliseconds to wait after yielding. Default is 10 ms (minimum 10 ms).
    * @returns {Promise<void>}
    */
-  async yieldToNode(timeout: number = 100): Promise<void> {
+  async yieldToNode(timeout: number = 10): Promise<void> {
     // 1. Let all currently queued microtasks run
     await Promise.resolve();
 

@@ -257,6 +257,10 @@ export type WorkerMessageTypes = {
     request: { params: { storeId: string } };
     response: { result: { storeId: string; success: true } };
   };
+  matter_apimatter: {
+    request: { params: { id: string } };
+    response: { result: { matter: ApiMatter } };
+  };
 
   // Frontend methods
   frontend_start: {

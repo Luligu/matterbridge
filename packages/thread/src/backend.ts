@@ -539,7 +539,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiMatter(id: string): Promise<ApiMatter | undefined> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'matterbridge_apimatter', src: 'frontend', dst: 'matterbridge', params: { id } });
+    const response = await this.server.fetch({ type: 'matter_apimatter', src: 'frontend', dst: 'matter', params: { id } });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiMatter() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.matter;
   }
