@@ -36,23 +36,29 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
-      - name: Install dependencies
+      - name: Install matterbridge dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Build matterbridge
+        run: npm run build
+
+      - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Lint the project
-        run: npm run lint
-        working-directory: apps/frontend
-
-      - name: Check formatting of the project
-        run: npm run format:check
-        working-directory: apps/frontend
-
-      - name: Build the project
+      - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Test the project
+      - name: Lint frontend
+        run: npm run lint
+        working-directory: apps/frontend
+
+      - name: Check frontend formatting
+        run: npm run format:check
+        working-directory: apps/frontend
+
+      - name: Test frontend
         run: npm run test -- --testTimeout=30000
         working-directory: apps/frontend
 
@@ -64,7 +70,8 @@ jobs:
           npm update || true
           npm outdated || true
           npm audit || true
-          npm run lint || true
           npm run build || true
+          npm run lint || true
+          npm run typecheck || true
           npm run test -- --testTimeout=30000 || true
         working-directory: apps/frontend
