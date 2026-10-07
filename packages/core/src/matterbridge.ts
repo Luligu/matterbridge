@@ -1081,6 +1081,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.nodeContext.set<string>('globalModulesDirectory', this.globalModulesDirectory);
     } else {
       this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+      if (this.globalModulesDirectory.includes('.bun')) this.globalModulesDirectory = '';
     }
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
