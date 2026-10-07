@@ -45,7 +45,6 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
-- [test-utils]: Remove the `@matterbridge/utils` dependency: `inspectError()` is now a local helper.
 - [core]: Import the test helpers from the `test-utils` `/vitest/setup` and `/vitest/matter` subpaths instead of `/vitest`.
 - [dgram]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts` and `vitest/freePort.ts`, and add it to the devDependencies.
 - [utils]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts`, and add it to the devDependencies.
@@ -53,21 +52,12 @@ If you like this project and find it useful, please consider giving it a star on
 - [test-utils]: `setupTest()` (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, `_` and `-`.
 - [test-utils]: `setupTest()` and `setDebug()` (vitest, jest and bun) share one spy installer that restores every spy first, so `setupTest(name, true)` after a mocked setup no longer keeps the output silenced.
 - [test-utils]: `setupTest()` (vitest, jest and bun) ignores a second call with the same suite name, and `setDebug()` ignores calls made before `setupTest()`; both write a warning to stderr.
-- [utils], [dgram], [thread]: Rename the local `vitest/vitestSetupTest.ts` to `vitest/setupTest.ts` and sync it with the `test-utils` vitest helper.
-- [thread]: Use the local `setupTest.ts` in all thread tests instead of `@matterbridge/vitest-utils`.
-- [thread]: Remove the unused `@matterbridge/vitest-utils` devDependency.
-- [core]: Use `@matterbridge/test-utils` in all core tests instead of `@matterbridge/vitest-utils`, and replace the devDependency.
-- [core]: Call `setupTest()` in every core test, pass the file-wide argv and env through it, and build per-test argv from `originalProcessArgv`.
 - [utils]: Bump Tracker to 1.1.0.
 - [utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.
-- [utils]: Always run a synchronous garbage collection in the tracker on Bun.
-- [thread]: Add the thread type to the worker data in `ThreadsManager.runInMainThread()`.
 - [utils]: Add `memoryFootprint()` to runtimeBun (Bun memory footprint, falling back to `process.memoryUsage().rss`).
 - [core]: Use `memoryFootprint()` for the system information RSS.
 - [core]: Refresh the variable system information (memory, uptime) in `Matterbridge.getApiSettings()`.
-- [thread]: Move Backend and its tests from core to thread.
 - [thread]: Include the worker thread ID in periodic status logs.
-- [thread]: Keep continuous threads alive after successful startup; retain cleanup for workers and failed startups.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.13.
 - [scripts]: Sync the generic scripts (`clean`, `deep-clean`, `prepublish-clean`, `create-release`, `downloads`, `git-status`, `git-sync-dev`, `prune-releases`, `prune-tags`, `remove-workflows`, `version`) to v.2.0.0 and add `bun-bundle` from matterbridge-native.
 - [matterbridge]: Bump `@types/node` to v.26.6.4.
@@ -84,12 +74,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `@types/node` to v.26.6.4.
 - [frontend]: Bump `globals` to v.17.13.0.
 - [frontend]: Bump `vite` to v.8.3.2.
-- [core]: Move `getServerNodeData()`, the fabric and session sanitizers, `getVendorIdName()` and the advertising nodes map from `Matterbridge` and `MatterNode` to `matterNodeHelpers`.
-- [core]: The frontend device list uses `getReachability()`, `getPowerSource()`, `getBatteryLevel()` and `getClusterTextFromDevice()` from `matterNodeHelpers`.
 - [core]: Reachability of devices without `BridgedDeviceBasicInformation` reads the owner server node `basicInformation.reachable` instead of returning true in childbridge mode.
-- [core]: The battery level is reported only when `batPercentRemaining` is between 0 and 200.
 - [core]: The session `lastInteractionTimestamp` and `lastActiveTimestamp` in the matter API data are now ISO 8601 strings (empty when not available).
-- [oxc]: Align the `.gitignore` (1.0.4), `.oxfmtrc.json` (v.1.0.7) and `.oxlintrc.json` (v.1.0.19) exclusions with the mb-run templates: add `.cottontail-tmp`, `.hutch`, `artifacts`, `tmp`, `xmls`, `bun.lock` and `scripts` (oxfmt), and exclude `chip` at any depth.
 
 ### Fixed
 
@@ -97,6 +83,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Fix the mode label in the device cluster text: read the `supportedModes` of the same mode cluster instead of relying on the attribute order.
 - [devcontainer]: Fix `post-create.sh` creating `apps/frontend/node_modules` when it does not exist; only chown it if present.
 - [core]: Fix `MatterNode.removeBridgedEndpoint()` for server mode endpoints: stop, destroy and remove the dependant MatterNode instead of deleting the endpoint.
+- [core]: Fix the the global node_modules check when switching from bun to node.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

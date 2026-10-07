@@ -167,7 +167,6 @@
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
-<li>[test-utils]: Remove the <code>@matterbridge/utils</code> dependency: <code>inspectError()</code> is now a local helper.</li>
 <li>[core]: Import the test helpers from the <code>test-utils</code> <code>/vitest/setup</code> and <code>/vitest/matter</code> subpaths instead of <code>/vitest</code>.</li>
 <li>[dgram]: Use <code>@matterbridge/test-utils</code> in the tests instead of the local <code>vitest/setupTest.ts</code> and <code>vitest/freePort.ts</code>, and add it to the devDependencies.</li>
 <li>[utils]: Use <code>@matterbridge/test-utils</code> in the tests instead of the local <code>vitest/setupTest.ts</code>, and add it to the devDependencies.</li>
@@ -175,21 +174,12 @@
 <li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, <code>_</code> and <code>-</code>.</li>
 <li>[test-utils]: <code>setupTest()</code> and <code>setDebug()</code> (vitest, jest and bun) share one spy installer that restores every spy first, so <code>setupTest(name, true)</code> after a mocked setup no longer keeps the output silenced.</li>
 <li>[test-utils]: <code>setupTest()</code> (vitest, jest and bun) ignores a second call with the same suite name, and <code>setDebug()</code> ignores calls made before <code>setupTest()</code>; both write a warning to stderr.</li>
-<li>[utils], [dgram], [thread]: Rename the local <code>vitest/vitestSetupTest.ts</code> to <code>vitest/setupTest.ts</code> and sync it with the <code>test-utils</code> vitest helper.</li>
-<li>[thread]: Use the local <code>setupTest.ts</code> in all thread tests instead of <code>@matterbridge/vitest-utils</code>.</li>
-<li>[thread]: Remove the unused <code>@matterbridge/vitest-utils</code> devDependency.</li>
-<li>[core]: Use <code>@matterbridge/test-utils</code> in all core tests instead of <code>@matterbridge/vitest-utils</code>, and replace the devDependency.</li>
-<li>[core]: Call <code>setupTest()</code> in every core test, pass the file-wide argv and env through it, and build per-test argv from <code>originalProcessArgv</code>.</li>
 <li>[utils]: Bump Tracker to 1.1.0.</li>
 <li>[utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.</li>
-<li>[utils]: Always run a synchronous garbage collection in the tracker on Bun.</li>
-<li>[thread]: Add the thread type to the worker data in <code>ThreadsManager.runInMainThread()</code>.</li>
 <li>[utils]: Add <code>memoryFootprint()</code> to runtimeBun (Bun memory footprint, falling back to <code>process.memoryUsage().rss</code>).</li>
 <li>[core]: Use <code>memoryFootprint()</code> for the system information RSS.</li>
 <li>[core]: Refresh the variable system information (memory, uptime) in <code>Matterbridge.getApiSettings()</code>.</li>
-<li>[thread]: Move Backend and its tests from core to thread.</li>
 <li>[thread]: Include the worker thread ID in periodic status logs.</li>
-<li>[thread]: Keep continuous threads alive after successful startup; retain cleanup for workers and failed startups.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.13.</li>
 <li>[scripts]: Sync the generic scripts (<code>clean</code>, <code>deep-clean</code>, <code>prepublish-clean</code>, <code>create-release</code>, <code>downloads</code>, <code>git-status</code>, <code>git-sync-dev</code>, <code>prune-releases</code>, <code>prune-tags</code>, <code>remove-workflows</code>, <code>version</code>) to v.2.0.0 and add <code>bun-bundle</code> from matterbridge-native.</li>
 <li>[matterbridge]: Bump <code>@types/node</code> to v.26.6.4.</li>
@@ -206,12 +196,8 @@
 <li>[frontend]: Bump <code>@types/node</code> to v.26.6.4.</li>
 <li>[frontend]: Bump <code>globals</code> to v.17.13.0.</li>
 <li>[frontend]: Bump <code>vite</code> to v.8.3.2.</li>
-<li>[core]: Move <code>getServerNodeData()</code>, the fabric and session sanitizers, <code>getVendorIdName()</code> and the advertising nodes map from <code>Matterbridge</code> and <code>MatterNode</code> to <code>matterNodeHelpers</code>.</li>
-<li>[core]: The frontend device list uses <code>getReachability()</code>, <code>getPowerSource()</code>, <code>getBatteryLevel()</code> and <code>getClusterTextFromDevice()</code> from <code>matterNodeHelpers</code>.</li>
 <li>[core]: Reachability of devices without <code>BridgedDeviceBasicInformation</code> reads the owner server node <code>basicInformation.reachable</code> instead of returning true in childbridge mode.</li>
-<li>[core]: The battery level is reported only when <code>batPercentRemaining</code> is between 0 and 200.</li>
 <li>[core]: The session <code>lastInteractionTimestamp</code> and <code>lastActiveTimestamp</code> in the matter API data are now ISO 8601 strings (empty when not available).</li>
-<li>[oxc]: Align the <code>.gitignore</code> (1.0.4), <code>.oxfmtrc.json</code> (v.1.0.7) and <code>.oxlintrc.json</code> (v.1.0.19) exclusions with the mb-run templates: add <code>.cottontail-tmp</code>, <code>.hutch</code>, <code>artifacts</code>, <code>tmp</code>, <code>xmls</code>, <code>bun.lock</code> and <code>scripts</code> (oxfmt), and exclude <code>chip</code> at any depth.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
@@ -219,6 +205,7 @@
 <li>[core]: Fix the mode label in the device cluster text: read the <code>supportedModes</code> of the same mode cluster instead of relying on the attribute order.</li>
 <li>[devcontainer]: Fix <code>post-create.sh</code> creating <code>apps/frontend/node_modules</code> when it does not exist; only chown it if present.</li>
 <li>[core]: Fix <code>MatterNode.removeBridgedEndpoint()</code> for server mode endpoints: stop, destroy and remove the dependant MatterNode instead of deleting the endpoint.</li>
+<li>[core]: Fix the the global node_modules check when switching from bun to node.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31012-2026-10-02">[3.10.12] - 2026-10-02</h2>
