@@ -63,6 +63,8 @@ jobs:
         working-directory: apps/frontend
 
       - name: List, audit, fix outdated dependencies, update and build again
+        timeout-minutes: 3
+        continue-on-error: true
         run: |
           npm outdated || true
           npm audit || true
@@ -71,7 +73,8 @@ jobs:
           npm outdated || true
           npm audit || true
           npm run build || true
-          npm run lint || true
           npm run typecheck || true
+          npm run lint || true
+          npm run format:check || true
           npm run test -- --testTimeout=30000 || true
         working-directory: apps/frontend

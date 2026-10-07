@@ -74,3 +74,17 @@ jobs:
 
       - name: Test matterbridge
         run: bun run test:bun
+
+      - name: List, audit, fix outdated dependencies and build again
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          bun outdated --recursive || true
+          bun audit || true
+          bun update --latest --recursive || true
+          bun outdated --recursive || true
+          bun audit || true
+          bun run build || true
+          bun run typecheck || true
+          bun run lint || true
+          bun run format:check || true
