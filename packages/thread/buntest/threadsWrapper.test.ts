@@ -1,16 +1,30 @@
 /**
- * @file packages/thread/vitest/workerWrapper.test.ts
- * @description This file contains the tests for the WorkerWrapper class.
+ * @file packages/thread/buntest/threadsWrapper.test.ts
+ * @description This file contains the tests for the ThreadsWrapper class.
  * @author Luca Liguori
  */
 
-import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { afterAll, afterEach, beforeEach, describe, expect, type Mock, spyOn, test, vi } from 'bun:test';
+// oxlint-disable-next-line import/no-namespace
+import * as workerThreads from 'node:worker_threads';
+
+import { flushAsync } from '@matterbridge/test-utils';
+import { originalProcessArgv, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import type { ThreadNames, ThreadType } from '@matterbridge/types';
-import { LogLevel } from 'node-ansi-logger';
-import type { Mock } from 'vitest';
+// oxlint-disable-next-line import/no-namespace
+import * as cli from '@matterbridge/utils/cli';
+// oxlint-disable-next-line import/no-namespace
+import * as trackerModule from '@matterbridge/utils/tracker';
+import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+
+import { BroadcastServer } from '../src/broadcastServer.js';
+import { ThreadsWrapper } from '../src/threadsWrapper.js';
+
+// Copy of the real exports, used to put node:worker_threads back after each test replaces its thread bindings.
+const actualWorkerThreads = { ...workerThreads };
 
 // Setup the test environment
-await setupTest('WorkerWrapper', false);
+await setupTest('ThreadsWrapper', false);
 
 type MockedParentPort = {
   postMessage: Mock<(...args: any[]) => any>;
@@ -31,7 +45,6 @@ type SetupOptions = Readonly<{
 }>;
 
 type SetupResult = Readonly<{
-  WorkerWrapper: typeof import('../src/workerWrapper.js').WorkerWrapper;
   parentPort: MockedParentPort | null;
   getOnMessageHandler: () => ((message: any) => void) | undefined;
   hasParameterMock: Mock<(...args: any[]) => any>;
@@ -40,27 +53,39 @@ type SetupResult = Readonly<{
   waitImmediate: () => Promise<void>;
 }>;
 
-type WorkerWrapperInternals = {
+type ThreadsWrapperInternals = {
   handleUnhandledRejection(reason: unknown): void;
 };
 
 const asyncTrue = async (): Promise<boolean> => await Promise.resolve(true);
 
-describe('WorkerWrapper', () => {
+/**
+ * Lets the dynamic Tracker import started by the ThreadsWrapper constructor settle (bun has no vi.dynamicImportSettled).
+ *
+ * @returns {Promise<void>} Resolves after the pending immediates and microtasks have run.
+ */
+const settleImports = async (): Promise<void> => await flushAsync(3, 10, 0);
+
+describe('ThreadsWrapper', () => {
   beforeEach(() => {
     // node-ansi-logger ultimately writes to console.*; keep tests quiet.
     vi.spyOn(console, 'log').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Bun shares one module instance across tests, so let worker startups scheduled with setImmediate finish
+    // while this test's node:worker_threads bindings are still in place.
+    await new Promise<void>((resolve) => setImmediate(resolve));
     vi.restoreAllMocks();
-    vi.doUnmock('@matterbridge/utils/tracker');
+    void vi.mock('node:worker_threads', () => actualWorkerThreads);
   });
 
-  async function setup(options: SetupOptions): Promise<SetupResult> {
-    vi.resetModules();
+  afterAll(() => {
+    resetTest();
+  });
 
+  function setup(options: SetupOptions): SetupResult {
     let onMessageHandler: ((message: any) => void) | undefined;
 
     const parentPort: MockedParentPort | null = options.parentPortPresent
@@ -73,8 +98,9 @@ describe('WorkerWrapper', () => {
         }
       : null;
 
-    const serverClose = vi.fn<(...args: any[]) => any>();
-    const serverRequest = vi.fn<(...args: any[]) => any>();
+    // The real BroadcastServer is created, so close still releases its channel; request never reaches other threads.
+    const serverClose = spyOn(BroadcastServer.prototype, 'close') as Mock<(...args: any[]) => any>;
+    const serverRequest = spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {}) as Mock<(...args: any[]) => any>;
 
     const hasParameterMock = vi.fn<(...args: any[]) => any>((parameter: string) => {
       if (parameter === 'debug') return options.debugParam ?? false;
@@ -84,44 +110,20 @@ describe('WorkerWrapper', () => {
       if (parameter === 'verbose-threads') return false;
       return false;
     });
+    spyOn(cli, 'hasAnyParameter').mockImplementation((...parameters: string[]): boolean => parameters.some((parameter) => hasParameterMock(parameter)));
 
-    vi.doMock('@matterbridge/utils/cli', () => ({
-      hasParameter: hasParameterMock,
-      hasAnyParameter: (...parameters: string[]): boolean => parameters.some((parameter) => hasParameterMock(parameter)),
+    // Bun updates the live bindings already imported by threadsWrapper.ts, so no module reset is needed.
+    void vi.mock('node:worker_threads', () => ({
+      ...actualWorkerThreads,
+      isMainThread: options.isMainThread,
+      threadId: options.threadId,
+      workerData: options.workerDataPresent === false ? undefined : { threadName: options.threadName, type: options.type ?? 'worker' },
+      parentPort,
     }));
 
-    vi.doMock('node:worker_threads', async () => {
-      const actual = await vi.importActual<any>('node:worker_threads');
-      return {
-        ...actual,
-        isMainThread: options.isMainThread,
-        threadId: options.threadId,
-        workerData: options.workerDataPresent === false ? undefined : { threadName: options.threadName, type: options.type ?? 'worker' },
-        parentPort,
-      };
-    });
-
-    vi.doMock('../src/broadcastServer.js', () => ({
-      BroadcastServer: class {
-        request = serverRequest;
-        close = serverClose;
-        // oxlint-disable-next-line typescript/no-useless-constructor
-        constructor() {}
-      },
-    }));
-
-    vi.doMock('../src/threadsManager.js', () => ({
-      // oxlint-disable-next-line typescript/no-extraneous-class
-      ThreadsManager: class {
-        static logLevel = LogLevel.DEBUG;
-      },
-    }));
-
-    const { WorkerWrapper } = await import('../src/workerWrapper.js');
     const waitImmediate = async (): Promise<void> => await new Promise<void>((resolve) => setImmediate(resolve));
 
     return {
-      WorkerWrapper,
       parentPort,
       getOnMessageHandler: (): ((message: any) => void) | undefined => onMessageHandler,
       hasParameterMock,
@@ -132,14 +134,14 @@ describe('WorkerWrapper', () => {
   }
 
   test('should keep a successful continuous thread alive and responsive until explicitly destroyed', async () => {
-    const { WorkerWrapper, parentPort, getOnMessageHandler, serverClose, waitImmediate } = await setup({
+    const { parentPort, getOnMessageHandler, serverClose, waitImmediate } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 7,
       threadName: 'Backend',
       type: 'thread',
     });
-    const worker = new WorkerWrapper('Backend', asyncTrue);
+    const worker = new ThreadsWrapper('Backend', asyncTrue);
     try {
       await waitImmediate();
       expect(serverClose).not.toHaveBeenCalled();
@@ -150,26 +152,26 @@ describe('WorkerWrapper', () => {
     } finally {
       worker.destroy(true);
     }
-    expect(serverClose).toHaveBeenCalledOnce();
-    expect(parentPort?.close).toHaveBeenCalledOnce();
+    expect(serverClose).toHaveBeenCalledTimes(1);
+    expect(parentPort?.close).toHaveBeenCalledTimes(1);
   });
 
   test.each(['false', 'throw'] as const)('should destroy a continuous thread when startup fails (%s)', async (failure) => {
-    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+    const { parentPort, serverClose, waitImmediate } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 7,
       threadName: 'Backend',
       type: 'thread',
     });
-    const worker = new WorkerWrapper('Backend', async () => {
+    const worker = new ThreadsWrapper('Backend', async () => {
       await Promise.resolve();
       if (failure === 'throw') throw new Error('Startup failed');
       return false;
     });
     try {
       await waitImmediate();
-      expect(serverClose).toHaveBeenCalledOnce();
+      expect(serverClose).toHaveBeenCalledTimes(1);
       expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'exit', success: false }));
     } finally {
       worker.destroy(false);
@@ -177,7 +179,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('should enable debug and verbose logging in the main thread', async () => {
-    const { WorkerWrapper, serverClose } = await setup({
+    const { serverClose } = setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -185,7 +187,7 @@ describe('WorkerWrapper', () => {
       debugParam: true,
       verboseParam: true,
     });
-    const worker = new WorkerWrapper('Backend', asyncTrue);
+    const worker = new ThreadsWrapper('Backend', asyncTrue);
     try {
       expect(worker.debug).toBe(true);
       expect(worker.verbose).toBe(true);
@@ -194,7 +196,7 @@ describe('WorkerWrapper', () => {
     } finally {
       worker.destroy(true);
     }
-    expect(serverClose).toHaveBeenCalledOnce();
+    expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
   test.each([
@@ -202,7 +204,7 @@ describe('WorkerWrapper', () => {
     { debugParam: true, useTracker: true },
     { debugParam: false, useTracker: false },
   ])('should initialize the Tracker with the current flags ($debugParam, $useTracker)', async ({ debugParam, useTracker }) => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -213,29 +215,30 @@ describe('WorkerWrapper', () => {
     const start = vi.fn<() => void>();
     const stop = vi.fn<() => void>();
     const tracker = { start, stop };
-    const Tracker = vi.fn(function () {
+    // Typed as a plain function so the partial tracker can be returned from the mocked constructor.
+    const Tracker = (spyOn(trackerModule, 'Tracker') as unknown as Mock<(...args: unknown[]) => typeof tracker>).mockImplementation(function () {
       return tracker;
     });
-    vi.doMock('@matterbridge/utils/tracker', () => ({ Tracker }));
 
-    const worker = new WorkerWrapper('Backend', asyncTrue);
+    const worker = new ThreadsWrapper('Backend', asyncTrue);
     // Flags can change while the asynchronous module import is pending.
     worker.useTracker = useTracker;
     try {
-      await vi.dynamicImportSettled();
+      await settleImports();
       expect(worker.useTracker).toBe(useTracker);
-      expect(Tracker).toHaveBeenCalledExactlyOnceWith('ThreadBackend', debugParam || useTracker, false, useTracker);
-      expect(worker.tracker).toBe(tracker);
-      expect(start).toHaveBeenCalledOnce();
+      expect(Tracker).toHaveBeenCalledTimes(1);
+      expect(Tracker).toHaveBeenCalledWith('ThreadBackend', debugParam || useTracker, false, useTracker);
+      expect<object | undefined>(worker.tracker).toBe(tracker);
+      expect(start).toHaveBeenCalledTimes(1);
       expect(stop).not.toHaveBeenCalled();
     } finally {
       worker.destroy(true);
     }
-    expect(stop).toHaveBeenCalledOnce();
+    expect(stop).toHaveBeenCalledTimes(1);
   });
 
   test('should log an error and keep the worker responsive when the Tracker import fails', async () => {
-    const { WorkerWrapper, parentPort, getOnMessageHandler, serverClose } = await setup({
+    const { parentPort, getOnMessageHandler, serverClose } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 7,
@@ -243,21 +246,21 @@ describe('WorkerWrapper', () => {
       type: 'thread',
       trackerParam: true,
     });
-    const rejectTrackerImport = vi.fn(() => {
+    // Bun cannot mock a module whose import rejects, so the Tracker constructor throws instead: it fails inside the same .then and reaches the same .catch.
+    const rejectTrackerImport = (spyOn(trackerModule, 'Tracker') as unknown as Mock<() => never>).mockImplementation(() => {
       throw new Error('Tracker module unavailable');
     });
-    vi.doMock('@matterbridge/utils/tracker', rejectTrackerImport);
 
-    const worker = new WorkerWrapper('Backend', asyncTrue);
+    const worker = new ThreadsWrapper('Backend', asyncTrue);
     try {
-      await vi.dynamicImportSettled();
-      expect(rejectTrackerImport).toHaveBeenCalledOnce();
+      await settleImports();
+      expect(rejectTrackerImport).toHaveBeenCalledTimes(1);
       expect(worker.tracker).toBeUndefined();
       expect(parentPort?.postMessage).toHaveBeenCalledWith(
         expect.objectContaining({
           type: 'log',
           logLevel: LogLevel.ERROR,
-          message: expect.stringMatching(/^WorkerWrapper Backend: failed to load Tracker .+/),
+          message: expect.stringMatching(/^ThreadsWrapper Backend: failed to load Tracker .+/),
         }),
       );
       expect(serverClose).not.toHaveBeenCalled();
@@ -266,24 +269,24 @@ describe('WorkerWrapper', () => {
     } finally {
       worker.destroy(true);
     }
-    expect(serverClose).toHaveBeenCalledOnce();
+    expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
   test('worker thread: posts init, can log, closes server, posts exit', async () => {
-    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+    const { parentPort, serverClose, waitImmediate } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 7,
       threadName: 'ThreadA',
     });
 
-    const callback = vi.fn<(...args: any[]) => any>(async (worker: InstanceType<typeof WorkerWrapper>) => {
+    const callback = vi.fn<(...args: any[]) => any>(async (worker: ThreadsWrapper) => {
       await Promise.resolve();
       worker.logger(LogLevel.INFO, 'hello');
       return true;
     });
 
-    new WorkerWrapper('MyWorker' as unknown as ThreadNames, callback);
+    new ThreadsWrapper('MyWorker' as unknown as ThreadNames, callback);
 
     expect(parentPort?.postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'init', threadId: 7, threadName: 'MyWorker', success: true }));
 
@@ -313,7 +316,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('worker thread: logs callback failures and exits with success false', async () => {
-    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+    const { parentPort, serverClose, waitImmediate } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 8,
@@ -326,7 +329,7 @@ describe('WorkerWrapper', () => {
       throw callbackError;
     });
 
-    const worker = new WorkerWrapper('FailWorker' as unknown as ThreadNames, callback);
+    const worker = new ThreadsWrapper('FailWorker' as unknown as ThreadNames, callback);
     const errorSpy = vi.spyOn(worker.log, 'error');
 
     await waitImmediate();
@@ -349,7 +352,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('worker thread: handles unhandled rejections and exits with success false', async () => {
-    const { WorkerWrapper, parentPort, serverClose } = await setup({
+    const { parentPort, serverClose } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 13,
@@ -358,7 +361,7 @@ describe('WorkerWrapper', () => {
 
     const callback = vi.fn<(...args: any[]) => any>(async () => await new Promise<boolean>(() => {}));
 
-    new WorkerWrapper('UnhandledWorker' as unknown as ThreadNames, callback);
+    new ThreadsWrapper('UnhandledWorker' as unknown as ThreadNames, callback);
     process.emit('unhandledRejection', new Error('late rejection'), Promise.resolve());
 
     expect(serverClose).toHaveBeenCalledTimes(1);
@@ -383,7 +386,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('worker thread: handles uncaught exceptions and exits with success false', async () => {
-    const { WorkerWrapper, parentPort, serverClose } = await setup({
+    const { parentPort, serverClose } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 14,
@@ -392,7 +395,7 @@ describe('WorkerWrapper', () => {
 
     const callback = vi.fn<(...args: any[]) => any>(async () => await new Promise<boolean>(() => {}));
 
-    new WorkerWrapper('UncaughtWorker' as unknown as ThreadNames, callback);
+    new ThreadsWrapper('UncaughtWorker' as unknown as ThreadNames, callback);
     process.emit('uncaughtException', new Error('late exception'), 'uncaughtException');
 
     expect(serverClose).toHaveBeenCalledTimes(1);
@@ -417,7 +420,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('worker thread: handles failures while reporting unhandled rejections', async () => {
-    const { WorkerWrapper, parentPort, serverClose } = await setup({
+    const { parentPort, serverClose } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 15,
@@ -426,7 +429,7 @@ describe('WorkerWrapper', () => {
 
     const callback = vi.fn<(...args: any[]) => any>(async () => await new Promise<boolean>(() => {}));
 
-    const worker = new WorkerWrapper('ReportFailWorker' as unknown as ThreadNames, callback);
+    const worker = new ThreadsWrapper('ReportFailWorker' as unknown as ThreadNames, callback);
     const errorSpy = vi.spyOn(worker.log, 'error');
     parentPort?.postMessage.mockImplementation(() => {
       throw new Error('port closed');
@@ -441,32 +444,32 @@ describe('WorkerWrapper', () => {
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('failed to close parentPort'));
     expect(serverClose).toHaveBeenCalledTimes(1);
 
-    (worker as unknown as WorkerWrapperInternals).handleUnhandledRejection(new Error('already destroyed'));
+    (worker as unknown as ThreadsWrapperInternals).handleUnhandledRejection(new Error('already destroyed'));
 
     expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
   test('worker thread: responds to ping with pong', async () => {
-    const { WorkerWrapper, parentPort, getOnMessageHandler } = await setup({
+    const { parentPort, getOnMessageHandler } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 9,
       threadName: 'ThreadPing',
     });
 
-    new WorkerWrapper('Pinger' as unknown as ThreadNames, asyncTrue);
+    new ThreadsWrapper('Pinger' as unknown as ThreadNames, asyncTrue);
 
     const onMessageHandler = getOnMessageHandler();
     expect(onMessageHandler).toBeDefined();
     onMessageHandler?.({ type: 'ping' });
 
     // oxlint-disable-next-line typescript/no-non-null-assertion
-    const sent = (parentPort!.postMessage as Mock).mock.calls.map((c) => c[0]);
+    const sent = parentPort!.postMessage.mock.calls.map((c) => c[0]);
     expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'Pinger' });
   });
 
   test('worker thread (debug+verbose): handles pong and unknown message types', async () => {
-    const { WorkerWrapper, parentPort, getOnMessageHandler, waitImmediate } = await setup({
+    const { parentPort, getOnMessageHandler, waitImmediate } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 10,
@@ -475,7 +478,7 @@ describe('WorkerWrapper', () => {
       verboseParam: true,
     });
 
-    new WorkerWrapper('DbgWorker' as unknown as ThreadNames, asyncTrue);
+    new ThreadsWrapper('DbgWorker' as unknown as ThreadNames, asyncTrue);
 
     const onMessageHandler = getOnMessageHandler();
     expect(onMessageHandler).toBeDefined();
@@ -485,37 +488,37 @@ describe('WorkerWrapper', () => {
     await waitImmediate();
 
     // oxlint-disable-next-line typescript/no-non-null-assertion
-    const sent = (parentPort!.postMessage as Mock).mock.calls.map((c) => c[0]);
+    const sent = parentPort!.postMessage.mock.calls.map((c) => c[0]);
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.DEBUG }));
     expect(sent).toContainEqual(expect.objectContaining({ type: 'log', logLevel: LogLevel.WARN }));
   });
 
   test('parentPost throws when parentPort missing', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: false,
       parentPortPresent: false,
       threadId: 1,
       threadName: 'NoPort',
     });
 
-    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, asyncTrue);
+    const worker = new ThreadsWrapper('NoPortWorker' as unknown as ThreadNames, asyncTrue);
     expect(() => worker.parentPost({ type: 'ping', threadId: 1, threadName: 'NoPort' } as any)).toThrow(/parentPort is not available/);
   });
 
   test('parentLog throws when parentPort missing', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: false,
       parentPortPresent: false,
       threadId: 2,
       threadName: 'NoPort',
     });
 
-    const worker = new WorkerWrapper('NoPortWorker' as unknown as ThreadNames, asyncTrue);
+    const worker = new ThreadsWrapper('NoPortWorker' as unknown as ThreadNames, asyncTrue);
     expect(() => worker.parentLog('X', LogLevel.INFO, 'msg')).toThrow(/parentPort is not available/);
   });
 
   test('worker thread: missing workerData skips init/exit and still closes server', async () => {
-    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+    const { parentPort, serverClose, waitImmediate } = setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 11,
@@ -523,19 +526,19 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    new WorkerWrapper('NoWorkerData' as unknown as ThreadNames, asyncTrue);
+    new ThreadsWrapper('NoWorkerData' as unknown as ThreadNames, asyncTrue);
     await waitImmediate();
 
     // Without workerData, init/exit messages are not emitted.
     // oxlint-disable-next-line typescript/no-non-null-assertion
-    expect((parentPort!.postMessage as Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
+    expect(parentPort!.postMessage.mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'init' }));
     // oxlint-disable-next-line typescript/no-non-null-assertion
-    expect((parentPort!.postMessage as Mock).mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
+    expect(parentPort!.postMessage.mock.calls.map((c) => c[0])).not.toContainEqual(expect.objectContaining({ type: 'exit' }));
     expect(serverClose).toHaveBeenCalledTimes(1);
   });
 
   test('main thread: does not post init/exit but still runs callback and closes server', async () => {
-    const { WorkerWrapper, parentPort, serverClose, waitImmediate } = await setup({
+    const { parentPort, serverClose, waitImmediate } = setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -543,7 +546,7 @@ describe('WorkerWrapper', () => {
     });
 
     const callback = vi.fn<(...args: any[]) => any>(asyncTrue);
-    const worker = new WorkerWrapper('MainThreadWrapper' as unknown as ThreadNames, callback);
+    const worker = new ThreadsWrapper('MainThreadWrapper' as unknown as ThreadNames, callback);
     expect(parentPort).toBeNull();
 
     await waitImmediate();
@@ -559,25 +562,24 @@ describe('WorkerWrapper', () => {
   });
 
   test('main thread: logger uses AnsiLogger.create path', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
       threadName: 'Ignored',
     });
 
-    const ansi = await import('node-ansi-logger');
-    const createSpy = vi.spyOn(ansi.AnsiLogger, 'create');
+    const createSpy = vi.spyOn(AnsiLogger, 'create');
     const logSpy = vi.fn<(...args: any[]) => any>();
     createSpy.mockReturnValue({ log: logSpy } as any);
 
-    const callback = vi.fn<(...args: any[]) => any>(async (worker: InstanceType<typeof WorkerWrapper>) => {
+    const callback = vi.fn<(...args: any[]) => any>(async (worker: ThreadsWrapper) => {
       await Promise.resolve();
       worker.logger(LogLevel.INFO, 'hi');
       return true;
     });
 
-    const worker = new WorkerWrapper('MainThreadLogger' as unknown as ThreadNames, callback);
+    const worker = new ThreadsWrapper('MainThreadLogger' as unknown as ThreadNames, callback);
     await worker.callback(worker);
 
     expect(createSpy).toHaveBeenCalled();
@@ -585,14 +587,14 @@ describe('WorkerWrapper', () => {
   });
 
   test('snackBar sends frontend request through the broadcast server', async () => {
-    const { WorkerWrapper, serverRequest } = await setup({
+    const { serverRequest } = setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
       threadName: 'Ignored',
     });
 
-    const wrapper = new WorkerWrapper('SnackBarWrapper' as unknown as ThreadNames, asyncTrue);
+    const wrapper = new ThreadsWrapper('SnackBarWrapper' as unknown as ThreadNames, asyncTrue);
     wrapper.snackBar('system issue', 0, 'error');
 
     expect(serverRequest).toHaveBeenCalledWith({
@@ -613,7 +615,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('logWorkerInfo covers worker-thread and active parentPort branches', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: false,
       parentPortPresent: true,
       threadId: 12,
@@ -621,7 +623,7 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    const wrapper = new WorkerWrapper('WorkerInfoActive' as unknown as ThreadNames, asyncTrue);
+    const wrapper = new ThreadsWrapper('WorkerInfoActive' as unknown as ThreadNames, asyncTrue);
     const debug = vi.fn<(...args: any[]) => any>();
     wrapper.logWorkerInfo({ debug } as any, false);
 
@@ -630,7 +632,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('logWorkerInfo covers argv/env branches (logEnv=true)', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -641,7 +643,7 @@ describe('WorkerWrapper', () => {
     process.argv = originalProcessArgv.slice(0, 2);
 
     try {
-      const wrapper = new WorkerWrapper('Info' as unknown as ThreadNames, asyncTrue);
+      const wrapper = new ThreadsWrapper('Info' as unknown as ThreadNames, asyncTrue);
       const debug = vi.fn<(...args: any[]) => any>();
       wrapper.logWorkerInfo({ debug } as any, true);
 
@@ -656,7 +658,7 @@ describe('WorkerWrapper', () => {
   });
 
   test('logWorkerInfo prints argv when extra args are present', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -667,7 +669,7 @@ describe('WorkerWrapper', () => {
     process.argv = [...originalProcessArgv.slice(0, 2), '--foo', 'bar'];
 
     try {
-      const wrapper = new WorkerWrapper('InfoArgs' as unknown as ThreadNames, asyncTrue);
+      const wrapper = new ThreadsWrapper('InfoArgs' as unknown as ThreadNames, asyncTrue);
       const debug = vi.fn<(...args: any[]) => any>();
       wrapper.logWorkerInfo({ debug } as any, false);
 
@@ -678,7 +680,7 @@ describe('WorkerWrapper', () => {
   });
 
   test("logWorkerInfo prints 'WorkerData: none' when workerData is missing", async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
@@ -686,7 +688,7 @@ describe('WorkerWrapper', () => {
       workerDataPresent: false,
     });
 
-    const wrapper = new WorkerWrapper('InfoNoData' as unknown as ThreadNames, asyncTrue);
+    const wrapper = new ThreadsWrapper('InfoNoData' as unknown as ThreadNames, asyncTrue);
     const debug = vi.fn<(...args: any[]) => any>();
     wrapper.logWorkerInfo({ debug } as any, false);
 
@@ -694,14 +696,14 @@ describe('WorkerWrapper', () => {
   });
 
   test('logWorkerInfo uses default logEnv=false when omitted', async () => {
-    const { WorkerWrapper } = await setup({
+    setup({
       isMainThread: true,
       parentPortPresent: false,
       threadId: 0,
       threadName: 'Ignored',
     });
 
-    const wrapper = new WorkerWrapper('InfoDefaultArg' as unknown as ThreadNames, asyncTrue);
+    const wrapper = new ThreadsWrapper('InfoDefaultArg' as unknown as ThreadNames, asyncTrue);
     const debug = vi.fn<(...args: any[]) => any>();
     wrapper.logWorkerInfo({ debug } as any);
 

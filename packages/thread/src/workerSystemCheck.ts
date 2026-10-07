@@ -29,11 +29,11 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { excludedInterfaceNamePattern } from '@matterbridge/utils/network';
 import { LogLevel } from 'node-ansi-logger';
 
-import { WorkerWrapper } from './workerWrapper.js';
+import { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('SystemCheck', '\u001B[35m');
 
-export default new WorkerWrapper('SystemCheck', async (worker) => {
+export default new ThreadsWrapper('SystemCheck', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting system check...`);
   let success = false;
   try {

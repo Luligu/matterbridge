@@ -67,9 +67,9 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
 
   vi.doMock('../src/zipjs.js', () => ({ createZip, readZip, unZip }));
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
+    ThreadsWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;
         runPromise = callback(worker);

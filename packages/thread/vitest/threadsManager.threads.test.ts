@@ -13,6 +13,7 @@ import path from 'node:path';
 
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
+import { waiter } from '@matterbridge/utils/wait';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
@@ -52,7 +53,10 @@ describe('ThreadsManagerThreads', () => {
     vi.clearAllMocks();
   });
 
-  afterAll(() => {
+  afterAll(async () => {
+    // The tests resolve when manager_run answers, which is as soon as each worker starts. Wait until every worker has
+    // sent its exit message (worker cleared), so none is still logging to the console when the test file is torn down.
+    await waiter('All threads stopped', () => manager['threads'].every((thread) => thread.worker === undefined), false, 60_000, 100);
     // Close broadcast servers
     broadcastserverMatterbridge.close();
     broadcastserverPlugins.close();
@@ -60,7 +64,7 @@ describe('ThreadsManagerThreads', () => {
     manager.destroy();
     // Restore all mocks
     vi.restoreAllMocks();
-  });
+  }, 70_000);
 
   test('Run GlobalPrefix as a worker thread', async () => {
     await new Promise<void>((resolve) => {

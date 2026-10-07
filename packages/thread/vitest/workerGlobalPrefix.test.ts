@@ -49,9 +49,9 @@ async function runWorkerGlobalPrefix(options: RunOptions): Promise<RunWorkerGlob
 
   const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
+    ThreadsWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;
         runPromise = callback(worker);

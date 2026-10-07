@@ -45,6 +45,14 @@ interface BroadcastServerEvents {
 }
 
 /**
+ * The event received by the BroadcastChannel handlers, taken from the channel itself instead of the global MessageEvent.
+ * When a project loads both @types/node and bun-types (the buntest typecheck), the global MessageEvent resolves to the
+ * Node (undici) type while onmessage expects the Bun one, and their `source` properties are incompatible.
+ * Deriving the type from onmessage keeps the handlers assignable under either set of types. It is a type-only alias.
+ */
+type BroadcastChannelEvent = Parameters<NonNullable<BroadcastChannel['onmessage']>>[0];
+
+/**
  * BroadcastServer class to handle broadcast messages between workers with BroadcastChannel.
  */
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
@@ -88,10 +96,10 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   /**
    * Handles incoming broadcast messages.
    *
-   * @param {MessageEvent} event - The message event containing the broadcast message.
+   * @param {BroadcastChannelEvent} event - The message event containing the broadcast message.
    * @returns {void}
    */
-  private broadcastMessageHandler(event: MessageEvent): void {
+  private broadcastMessageHandler(event: BroadcastChannelEvent): void {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const msg = event.data as WorkerMessage;
     if (msg.dst === this.name || msg.dst === 'all') {
@@ -105,10 +113,10 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   /**
    * Handles incoming broadcast error messages.
    *
-   * @param {MessageEvent} event - The message event containing the broadcast message.
+   * @param {BroadcastChannelEvent} event - The message event containing the broadcast message.
    * @returns {void}
    */
-  private broadcastMessageErrorHandler(event: MessageEvent): void {
+  private broadcastMessageErrorHandler(event: BroadcastChannelEvent): void {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     const msg = event.data as WorkerMessage;
     this.log.error(`Server ${CYAN}${this.name}${db} received message error: ${debugStringify(msg)}`);

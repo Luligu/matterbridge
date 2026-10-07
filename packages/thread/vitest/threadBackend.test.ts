@@ -7,7 +7,7 @@
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
-import type { WorkerWrapper } from '../src/workerWrapper.js';
+import type { ThreadsWrapper } from '../src/threadsWrapper.js';
 import { matterbridge } from './sharedMatterbridge.js';
 
 // Setup the test environment
@@ -17,7 +17,7 @@ describe('ThreadBackend', () => {
   const start = vi.fn<() => Promise<void>>();
   const destroy = vi.fn();
   const createBackend = vi.fn();
-  let wrapper: WorkerWrapper;
+  let wrapper: ThreadsWrapper;
   let responder: BroadcastServer;
 
   beforeEach(async () => {

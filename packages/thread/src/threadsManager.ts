@@ -36,7 +36,7 @@ import { fireAndForget } from '@matterbridge/utils/wait';
 import { AnsiLogger, CYAN, db, debugStringify, ft, LogLevel, MAGENTA, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { BroadcastServer } from './broadcastServer.js';
-import type { WorkerWrapper } from './workerWrapper.js';
+import type { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('ThreadsManager');
 
@@ -332,13 +332,13 @@ export class ThreadsManager {
     this.log.debug(`Running thread ${threadInfo.name} in the main thread...`);
 
     let success = false;
-    const workerWrapper: WorkerWrapper = (await import(this.resolvePath(threadInfo.path))).default;
-    if (workerWrapper && typeof workerWrapper === 'object' && workerWrapper.name === name && workerWrapper.callback && typeof workerWrapper.callback === 'function') {
-      workerWrapper.workerData = workerData ? { ...workerData, type: threadInfo.type } : null;
+    const threadsWrapper: ThreadsWrapper = (await import(this.resolvePath(threadInfo.path))).default;
+    if (threadsWrapper && typeof threadsWrapper === 'object' && threadsWrapper.name === name && threadsWrapper.callback && typeof threadsWrapper.callback === 'function') {
+      threadsWrapper.workerData = workerData ? { ...workerData, type: threadInfo.type } : null;
       try {
-        success = await workerWrapper.callback(workerWrapper);
+        success = await threadsWrapper.callback(threadsWrapper);
       } finally {
-        if (!success || threadInfo.type !== 'thread') workerWrapper.destroy(success);
+        if (!success || threadInfo.type !== 'thread') threadsWrapper.destroy(success);
       }
     }
 

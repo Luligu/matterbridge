@@ -146,7 +146,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 500);
+            }, 0);
           }
         }),
 
@@ -187,7 +187,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 500);
+            }, 0);
           }
         }),
 
@@ -342,7 +342,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 100);
+            }, 0);
           }
         }),
       } as any;
@@ -379,7 +379,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 100);
+            }, 0);
           }
         }),
       } as any;
@@ -412,7 +412,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 100);
+            }, 0);
           }
         }),
       } as any;

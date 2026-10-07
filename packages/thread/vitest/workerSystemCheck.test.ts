@@ -86,9 +86,9 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
   let wrapperName: string | undefined;
   let runPromise: Promise<boolean> | undefined;
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
+    ThreadsWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;
         runPromise = callback(worker);

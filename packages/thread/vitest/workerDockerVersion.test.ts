@@ -69,9 +69,9 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
       })
     : vi.fn<(...args: any[]) => any>(() => options.dockerBuildConfigJson ?? '{"version":"3.5.4","dev":false}');
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
+    ThreadsWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;
         runPromise = callback(worker);

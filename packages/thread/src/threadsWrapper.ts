@@ -1,6 +1,6 @@
 /**
- * @file packages/thread/src/workerWrapper.ts
- * @description This file contains the class WorkerWrapper.
+ * @file packages/thread/src/threadsWrapper.ts
+ * @description This file contains the class ThreadsWrapper.
  * @author Luca Liguori
  * @created 2025-11-25
  * @version 1.2.0
@@ -34,15 +34,15 @@ import { AnsiLogger, debugStringify, LogLevel, MAGENTA, TimestampFormat } from '
 import { BroadcastServer } from './broadcastServer.js';
 import { ThreadsManager } from './threadsManager.js';
 
-logModuleLoaded('WorkerWrapper');
+logModuleLoaded('ThreadsWrapper');
 
 /**
  * Worker wrapper
  * This class serves as a wrapper for worker threads in the Matterbridge application, providing a structured way to initialize, manage, and communicate with worker threads.
  * It handles the setup of logging, message passing between the worker and the parent thread, and ensures proper cleanup when the worker is destroyed.
- * The WorkerWrapper class abstracts away the complexities of working with worker threads, allowing developers to focus on the specific tasks that each worker thread needs to perform.
+ * The ThreadsWrapper class abstracts away the complexities of working with worker threads, allowing developers to focus on the specific tasks that each worker thread needs to perform.
  */
-export class WorkerWrapper {
+export class ThreadsWrapper {
   debug = hasAnyParameter('debug', 'verbose', 'debug-threads', 'verbose-threads');
   verbose = hasAnyParameter('verbose', 'verbose-threads');
   useTracker = hasAnyParameter('tracker', 'tracker-threads');
@@ -62,11 +62,11 @@ export class WorkerWrapper {
    * Initializes the worker by sending an init message to the parent and logging the initialization if debug is enabled.
    *
    * @param {ThreadNames} name - The name of the worker thread, used for logging and identification purposes.
-   * @param { (worker: WorkerWrapper) => Promise<boolean> } callback - A callback function that is executed after the worker is initialized.
+   * @param { (worker: ThreadsWrapper) => Promise<boolean> } callback - A callback function that is executed after the worker is initialized.
    */
   constructor(
     public name: ThreadNames,
-    public callback: (worker: WorkerWrapper) => Promise<boolean>,
+    public callback: (worker: ThreadsWrapper) => Promise<boolean>,
   ) {
     // Update debug, verbose and tracker flags if workerData is available
     if (this.workerData) {
@@ -92,7 +92,7 @@ export class WorkerWrapper {
           return;
         })
         .catch((err: unknown) => {
-          this.safeParentLog(LogLevel.ERROR, `WorkerWrapper ${this.name}: failed to load Tracker ${getErrorMessage(err)}`);
+          this.safeParentLog(LogLevel.ERROR, `ThreadsWrapper ${this.name}: failed to load Tracker ${getErrorMessage(err)}`);
           return;
         });
     }

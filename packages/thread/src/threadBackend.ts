@@ -25,11 +25,11 @@ import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
-import { WorkerWrapper } from './workerWrapper.js';
+import { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('Backend', '\u001B[35m');
 
-export default new WorkerWrapper('Backend', async (worker) => {
+export default new ThreadsWrapper('Backend', async (worker) => {
   worker.logger(LogLevel.INFO, 'Creating backend...');
   try {
     worker.logger(LogLevel.DEBUG, 'Fetching shared Matterbridge state...');

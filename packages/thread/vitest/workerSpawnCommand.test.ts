@@ -64,9 +64,9 @@ async function runWorkerSpawnCommand(options: RunOptions): Promise<RunWorkerSpaw
 
   vi.doMock('../src/spawnCommand.js', () => ({ spawnCommand }));
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
+    ThreadsWrapper: class {
       constructor(name: string, callback: (w: any) => Promise<boolean>) {
         wrapperName = name;
         runPromise = callback(worker);

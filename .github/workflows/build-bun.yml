@@ -47,9 +47,6 @@ jobs:
       - name: Build matterbridge
         run: bun run build
 
-      - name: Typecheck matterbridge
-        run: bun run typecheck
-
       - name: Install frontend dependencies
         run: bun install
         working-directory: apps/frontend
@@ -58,9 +55,14 @@ jobs:
         run: bun run build
         working-directory: apps/frontend
 
-      - name: Typecheck frontend
+      - name: Typecheck matterbridge
         run: bun run typecheck
-        working-directory: apps/frontend
+
+      - name: Lint matterbridge
+        run: bun run lint
+
+      - name: Check matterbridge formatting
+        run: bun run format:check
 
       - name: Test matterbridge
-        run: bun test
+        run: bun run test:bun
