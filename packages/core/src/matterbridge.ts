@@ -1317,7 +1317,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Initialize frontend
-    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+    if ((getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) && !hasParameter('experimental')) await this.frontend.start(getIntParameter('frontend'));
 
     // Start the matter storage and create the matterbridge context
     try {
