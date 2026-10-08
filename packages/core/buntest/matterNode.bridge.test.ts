@@ -6,7 +6,6 @@
 
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const MATTER_PORT = 10100;
 const NAME = 'MatterNodeBridge';
@@ -175,8 +174,8 @@ describe('MatterNode bridge', () => {
   });
 
   test('Create MatterNode in bridge mode', async () => {
-    await expect(matter.start()).rejects.toThrow();
-    await expect(matter.stop()).rejects.toThrow();
+    expect(matter.start()).rejects.toThrow();
+    expect(matter.stop()).rejects.toThrow();
 
     await matter.create();
     expect(matter.matterStorageService).toBeDefined();
@@ -222,7 +221,7 @@ describe('MatterNode bridge', () => {
     // Test no server node
     const savedServer = matter.serverNode;
     matter.serverNode = undefined;
-    await expect(matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
+    expect(matter.addBridgedEndpoint('matterdevicetest', tmpSensor)).rejects.toThrow(
       `Server node not found for matter endpoint ${plg}matterdevicetest${er}:${dev}${tmpSensor.deviceName}${er} (${zb}${tmpSensor.name}${er})`,
     );
     matter.serverNode = savedServer;
@@ -264,7 +263,7 @@ describe('MatterNode bridge', () => {
     expect(sensor.owner).toBeDefined();
     expect(deviceManager.length).toBe(1);
     await matter.aggregatorNode?.parts.get('Flowsensor')?.delete();
-    await expect(matter.removeAllBridgedEndpoints('serverdevicetest')).rejects.toThrow(
+    expect(matter.removeAllBridgedEndpoints('serverdevicetest')).rejects.toThrow(
       `Endpoint ${plg}${sensor.plugin}${er}:${dev}${sensor.deviceName}${er} id ${sensor.id} not found removing all endpoints`,
     );
     deviceManager.clear();
@@ -344,8 +343,8 @@ describe('MatterNode bridge', () => {
       'frontend',
       new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     );
-    await expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 100)).rejects.toThrow();
-    await expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 100)).rejects.toThrow();
     testServer.close();
   });
 
@@ -355,7 +354,7 @@ describe('MatterNode bridge', () => {
       new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     );
     // stop() throws since the server node is not created: the error is logged and nobody responds
-    await expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 100)).rejects.toThrow();
     testServer.close();
   });
 
@@ -365,7 +364,7 @@ describe('MatterNode bridge', () => {
       new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     );
     const createSpy = vi.spyOn(matter, 'create').mockRejectedValueOnce(new Error('Test create error'));
-    await expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 100)).rejects.toThrow();
     expect(createSpy).toHaveBeenCalledTimes(1);
     createSpy.mockRestore();
     testServer.close();

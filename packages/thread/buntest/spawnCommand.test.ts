@@ -4,8 +4,6 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
-
 import { afterAll, beforeEach, describe, expect, it, spyOn, vi } from 'bun:test';
 // The namespace is what spyOn() needs to patch the spawn export that spawnCommand() imports dynamically.
 // oxlint-disable-next-line import/no-namespace
@@ -92,7 +90,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    // await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
+    // expect(spawnCommand(matterbridge, command, args)).rejects.toThrow('Spawn error');
     expect(await spawnCommand(command, args)).toBe(false);
 
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`Failed to start child process`));
@@ -133,7 +131,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    // await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    // expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
     expect(await spawnCommand(command, args)).toBe(false);
 
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`closed with code 1 and signal null`));
@@ -152,7 +150,7 @@ describe('Spawn', () => {
         }),
       } as any;
     });
-    // await expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
+    // expect(spawnCommand(matterbridge, command, args)).rejects.toThrow();
     expect(await spawnCommand(command, args)).toBe(false);
 
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`exited with code 1 and signal null`));
@@ -257,7 +255,7 @@ describe('Spawn', () => {
     });
 
     try {
-      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('cmd.exe', ['/c', 'bun install -g test-package'], expect.anything());
     } finally {
       process.argv = savedArgv;
@@ -283,7 +281,7 @@ describe('Spawn', () => {
     });
 
     try {
-      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('bun', ['install', '-g', 'test-package'], expect.anything());
     } finally {
       process.argv = savedArgv;
@@ -311,7 +309,7 @@ describe('Spawn', () => {
     });
 
     try {
-      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('bun', ['install', '-g', 'test-package'], expect.anything());
     } finally {
       process.argv = savedArgv;
@@ -339,7 +337,7 @@ describe('Spawn', () => {
     });
 
     try {
-      await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
+      expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('sudo', ['bun', 'install', '-g', 'test-package'], expect.anything());
     } finally {
       process.argv = savedArgv;

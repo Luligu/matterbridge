@@ -5,7 +5,6 @@
  */
 
 /* oxlint-disable typescript/prefer-nullish-coalescing */
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
@@ -207,16 +206,16 @@ describe('MatterNode', () => {
   });
 
   test('Should throw', async () => {
-    await expect(matter.start()).rejects.toThrow();
-    await expect(matter.stop()).rejects.toThrow();
-    await expect((matter as any).createServerNodeContext()).rejects.toThrow();
-    await expect((matter as any).createServerNode()).rejects.toThrow();
-    await expect((matter as any).startServerNode()).rejects.toThrow();
-    await expect((matter as any).stopServerNode()).rejects.toThrow();
-    await expect((matter as any).createAggregatorNode()).rejects.toThrow();
-    await expect((matter as any).createAccessoryPlugin('unknown')).rejects.toThrow();
-    await expect((matter as any).createDynamicPlugin('unknown')).rejects.toThrow();
-    await expect((matter as any).createDeviceServerNode('unknown')).rejects.toThrow();
+    expect(matter.start()).rejects.toThrow();
+    expect(matter.stop()).rejects.toThrow();
+    expect((matter as any).createServerNodeContext()).rejects.toThrow();
+    expect((matter as any).createServerNode()).rejects.toThrow();
+    expect((matter as any).startServerNode()).rejects.toThrow();
+    expect((matter as any).stopServerNode()).rejects.toThrow();
+    expect((matter as any).createAggregatorNode()).rejects.toThrow();
+    expect((matter as any).createAccessoryPlugin('unknown')).rejects.toThrow();
+    expect((matter as any).createDynamicPlugin('unknown')).rejects.toThrow();
+    expect((matter as any).createDeviceServerNode('unknown')).rejects.toThrow();
   });
 
   test('Should resolve plugin name', async () => {
@@ -235,9 +234,9 @@ describe('MatterNode', () => {
     const sensor = new MatterbridgeEndpoint([flowSensor], { id: 'Temperature sensor' }, true)
       .createDefaultBasicInformationClusterServer('Flow sensor', 'FLOW1234567890')
       .addRequiredClusterServers();
-    await expect((matter as any).createAccessoryPlugin('serverdevicetest')).rejects.toThrow();
-    await expect((matter as any).createDynamicPlugin('serverdevicetest')).rejects.toThrow();
-    await expect((matter as any).createDeviceServerNode('serverdevicetest')).rejects.toThrow();
+    expect((matter as any).createAccessoryPlugin('serverdevicetest')).rejects.toThrow();
+    expect((matter as any).createDynamicPlugin('serverdevicetest')).rejects.toThrow();
+    expect((matter as any).createDeviceServerNode('serverdevicetest')).rejects.toThrow();
     matter.pluginManager.clear();
   });
 
@@ -278,7 +277,7 @@ describe('MatterNode', () => {
 
   test('Create server node context without matter storage service', async () => {
     // @ts-expect-error -- Testing without storage
-    await expect(matter.createServerNodeContext()).rejects.toThrow('No storage service initialized');
+    expect(matter.createServerNodeContext()).rejects.toThrow('No storage service initialized');
   });
 
   test('Copy fabrics for server node for Matterbridge', async () => {
@@ -440,7 +439,7 @@ describe('MatterNode', () => {
     expect(response.result.matter.id).toBe(matter.serverNode.id);
     expect(response.result.matter.qrPairingCode).toBe(matter.serverNode.state.commissioning.pairingCodes.qrPairingCode);
     // No MatterNode owns an unknown server node, so nobody responds and the fetch times out
-    await expect(apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: 'unknown' } }, 100)).rejects.toThrow();
+    expect(apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: 'unknown' } }, 100)).rejects.toThrow();
     apiServer.close();
   });
 
@@ -465,7 +464,7 @@ describe('MatterNode', () => {
     device.plugin = 'matterbridge-mock1';
 
     // Test adding to unknown plugin
-    await expect(matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+    expect(matter.addBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
       `Error adding bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
     );
     expect(deviceManager.length).toBe(0);
@@ -475,7 +474,7 @@ describe('MatterNode', () => {
     const saved = matter.aggregatorNode; // Save aggregator node
     matter.aggregatorNode = undefined;
     expect(await matter.pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
-    await expect(matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    expect(matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Aggregator node not found for endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
     matter.aggregatorNode = saved; // Restore aggregator node
@@ -486,7 +485,7 @@ describe('MatterNode', () => {
     const savedServer = matter.serverNode; // Save server node
     matter.serverNode = undefined;
     device.mode = 'matter';
-    await expect(matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    expect(matter.addBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Server node not found for matter endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er})`,
     );
     matter.serverNode = savedServer; // Restore server node
@@ -529,7 +528,7 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(1);
 
     // Test removing from unknown plugin
-    await expect(matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
+    expect(matter.removeBridgedEndpoint('matterbridge-unknown', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-unknown${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`,
     );
     expect(deviceManager.length).toBe(1);
@@ -537,7 +536,7 @@ describe('MatterNode', () => {
     // Test removing when no aggregator node
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    expect(matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
     );
     expect(deviceManager.length).toBe(1);
@@ -570,7 +569,7 @@ describe('MatterNode', () => {
     expect(deviceManager.length).toBe(2);
 
     // Test removing from unknown plugin
-    await expect(matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
+    expect(matter.removeAllBridgedEndpoints('matterbridge-unknown')).rejects.toThrow(
       `Error removing all bridged endpoints for plugin ${plg}matterbridge-unknown${er}: plugin not found`,
     );
     expect(deviceManager.length).toBe(2);

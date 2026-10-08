@@ -4,8 +4,6 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
-
 const NAME = 'BroadcastServer';
 const MATTER_PORT = 0;
 
@@ -90,7 +88,7 @@ describe('BroadcastServer', () => {
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
     vi.clearAllMocks();
 
-    await expect(server.fetch({ type: 'test_simple', src: 'frontend', dst: 'manager' })).rejects.toThrow(/Broadcast channel is closed/);
+    expect(server.fetch({ type: 'test_simple', src: 'frontend', dst: 'manager' })).rejects.toThrow(/Broadcast channel is closed/);
     vi.clearAllMocks();
 
     // @ts-expect-error: access private method for test
@@ -439,7 +437,7 @@ describe('BroadcastServer', () => {
     setTimeout(() => {
       (server as any).broadcastChannel.onmessage({ data: { id: 666666, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', error: 'Nope' } });
     }, 10);
-    await expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch received error response Nope/);
+    expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch received error response Nope/);
   });
 
   test('fetch: should reject malformed response', async () => {
@@ -455,7 +453,7 @@ describe('BroadcastServer', () => {
       (server as any).broadcastChannel.onmessage({ data: { id: 777777, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager' } });
     }, 10);
     try {
-      await expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch received malformed response/);
+      expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch received malformed response/);
     } finally {
       guardSpy.mockRestore();
     }
@@ -463,14 +461,14 @@ describe('BroadcastServer', () => {
 
   test('fetch: should reject on timeout', async () => {
     const requestMsg = { id: 222222, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
-    await expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch timeout/);
+    expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch timeout/);
   });
 
   test('fetch: should reject on timeout from another thread', async () => {
     // Use a separate BroadcastServer instance to simulate another worker
     const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
-    await expect(testServer.fetch({ id: 123456, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 10)).rejects.toThrow(/Fetch timeout/);
+    expect(testServer.fetch({ id: 123456, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 10)).rejects.toThrow(/Fetch timeout/);
     testServer.close();
   });
 
@@ -480,7 +478,7 @@ describe('BroadcastServer', () => {
     setTimeout(() => {
       (server as any).broadcastChannel.onmessage({ data: wrongResponse });
     }, 10);
-    await expect(server.fetch(requestMsg, 20)).rejects.toThrow(/Fetch timeout/);
+    expect(server.fetch(requestMsg, 20)).rejects.toThrow(/Fetch timeout/);
   });
 
   test('fetch: should handle multiple fetches independently', async () => {

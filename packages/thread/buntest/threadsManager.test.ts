@@ -5,7 +5,6 @@
  */
 
 /* oxlint-disable typescript/no-non-null-assertion */
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const NAME = 'ThreadsManager';
 
@@ -425,7 +424,7 @@ describe('ThreadsManager', () => {
     test('throws when the thread is not found', async () => {
       const manager = new ThreadsManager(coreDirectory);
 
-      await expect(manager.runInMainThread('DoesNotExist')).rejects.toThrow('Thread DoesNotExist not found');
+      expect(manager.runInMainThread('DoesNotExist')).rejects.toThrow('Thread DoesNotExist not found');
 
       manager.destroy();
     });

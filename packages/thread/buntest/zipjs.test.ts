@@ -4,8 +4,6 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
-
 import { afterAll, beforeEach, describe, expect, spyOn, test, vi } from 'bun:test';
 import { execFile } from 'node:child_process';
 import type { Stats } from 'node:fs';
@@ -87,9 +85,9 @@ describe('zipjs', () => {
     const extractedDirectory = await unZip(zipPath);
 
     expect(extractedDirectory).toBe(path.join(tempDirectory, 'archive'));
-    await expect(readFile(path.join(extractedDirectory, 'source', 'root.txt'), 'utf-8')).resolves.toBe('root-content');
-    await expect(readFile(path.join(extractedDirectory, 'source', 'nested', 'child.txt'), 'utf-8')).resolves.toBe('child-content');
-    await expect(readFile(path.join(extractedDirectory, 'standalone.txt'), 'utf-8')).resolves.toBe('standalone-content');
+    expect(readFile(path.join(extractedDirectory, 'source', 'root.txt'), 'utf-8')).resolves.toBe('root-content');
+    expect(readFile(path.join(extractedDirectory, 'source', 'nested', 'child.txt'), 'utf-8')).resolves.toBe('child-content');
+    expect(readFile(path.join(extractedDirectory, 'standalone.txt'), 'utf-8')).resolves.toBe('standalone-content');
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Extracted 5 entries from ${zipPath} to ${extractedDirectory}.`));
   });
 
@@ -99,14 +97,14 @@ describe('zipjs', () => {
 
     await createArchive(zipPath, []);
 
-    await expect(readZip(zipPath)).resolves.toEqual([]);
+    expect(readZip(zipPath)).resolves.toEqual([]);
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Zip ${zipPath} is empty.`));
   });
 
   test('rejects createZip when no sources are provided', async () => {
     const tempDirectory = await createTempDirectory();
 
-    await expect(createZip(path.join(tempDirectory, 'empty.zip'), [])).rejects.toThrow('No files or directories provided to createZip.');
+    expect(createZip(path.join(tempDirectory, 'empty.zip'), [])).rejects.toThrow('No files or directories provided to createZip.');
   });
 
   test('rejects zip entries that escape the destination directory and normalizes backslashes', async () => {
@@ -118,15 +116,15 @@ describe('zipjs', () => {
     await createArchive(safeZipPath, [{ filename: 'folder\\child.txt', content: 'windows-content' }]);
     await createArchive(traversalZipPath, [{ filename: '..\\escape.txt', content: 'escape-content' }]);
 
-    await expect(unZip(safeZipPath, customDestination)).resolves.toBe(customDestination);
-    await expect(readFile(path.join(customDestination, 'folder', 'child.txt'), 'utf-8')).resolves.toBe('windows-content');
+    expect(unZip(safeZipPath, customDestination)).resolves.toBe(customDestination);
+    expect(readFile(path.join(customDestination, 'folder', 'child.txt'), 'utf-8')).resolves.toBe('windows-content');
 
     // zip.js 2.15.0 rejects backslash traversal during getEntries(), before our destination guard.
-    await expect(unZip(traversalZipPath, path.join(tempDirectory, 'traversal'))).rejects.toMatchObject({
+    expect(unZip(traversalZipPath, path.join(tempDirectory, 'traversal'))).rejects.toMatchObject({
       message: ERR_UNSAFE_FILENAME,
       filename: '..\\escape.txt',
     });
-    await expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
   test('should reject traversal when an unsafe filename reaches the destination guard', async () => {
@@ -140,8 +138,8 @@ describe('zipjs', () => {
       const entries = await reader.getEntries();
       const getEntriesSpy = vi.spyOn(ZipReader.prototype, 'getEntries').mockResolvedValueOnce(entries);
       try {
-        await expect(unZip(zipPath, path.join(tempDirectory, 'destination'))).rejects.toThrow('Refusing to extract zip entry outside destination: ..\\escape.txt');
-        await expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+        expect(unZip(zipPath, path.join(tempDirectory, 'destination'))).rejects.toThrow('Refusing to extract zip entry outside destination: ..\\escape.txt');
+        expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
       } finally {
         getEntriesSpy.mockRestore();
       }
@@ -162,7 +160,7 @@ describe('zipjs', () => {
     const statSpy = spyOn(fsPromises, 'stat').mockResolvedValue(unsupportedStats);
 
     try {
-      await expect(createZip(path.join(tempDirectory, 'unsupported.zip'), [sourcePath])).rejects.toThrow(`Unsupported source path type: ${sourcePath}`);
+      expect(createZip(path.join(tempDirectory, 'unsupported.zip'), [sourcePath])).rejects.toThrow(`Unsupported source path type: ${sourcePath}`);
     } finally {
       statSpy.mockRestore();
     }
@@ -176,6 +174,6 @@ describe('zipjs', () => {
 
     await execFileAsync('mkfifo', [fifoPath]);
 
-    await expect(createZip(path.join(tempDirectory, 'fifo.zip'), [fifoPath])).rejects.toThrow(`Unsupported source path type: ${fifoPath}`);
+    expect(createZip(path.join(tempDirectory, 'fifo.zip'), [fifoPath])).rejects.toThrow(`Unsupported source path type: ${fifoPath}`);
   });
 });

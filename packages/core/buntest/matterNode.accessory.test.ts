@@ -6,7 +6,6 @@
 
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const MATTER_PORT = 10400;
 const NAME = 'MatterNodeAccessory';
@@ -247,7 +246,7 @@ describe('MatterNode accessory', () => {
     // Remove with no server to test that code path
     const savedServer = matter.serverNode;
     matter.serverNode = undefined;
-    await expect(matter.removeBridgedEndpoint('matterbridge-mock4', device)).rejects.toThrow(
+    expect(matter.removeBridgedEndpoint('matterbridge-mock4', device)).rejects.toThrow(
       `Error removing endpoint ${plg}matterbridge-mock4${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): server node not found`,
     );
     matter.serverNode = savedServer; // Restore server node

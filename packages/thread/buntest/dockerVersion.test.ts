@@ -4,8 +4,6 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
-
 import { afterAll, beforeEach, describe, expect, type Mock, spyOn, test, vi } from 'bun:test';
 // oxlint-disable-next-line import/no-namespace
 import * as https from 'node:https';
@@ -73,7 +71,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
     expect(tokenRequestOptions).toEqual({ headers: undefined, signal: expect.any(AbortSignal) });
   });
 
@@ -111,7 +109,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('3.5.5');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('3.5.5');
   });
 
   test('follows 307 redirect for config blob and drops Authorization on cross-host redirect', async () => {
@@ -156,7 +154,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('8.8.8');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('8.8.8');
     expect(redirectedOptions?.headers?.Authorization).toBeUndefined();
   });
 
@@ -192,7 +190,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge')).resolves.toBe('3.5.5');
+    expect(getDockerVersion('luligu', 'matterbridge')).resolves.toBe('3.5.5');
   });
 
   test('returns undefined for 3xx response without Location header', async () => {
@@ -213,7 +211,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
     expect(resume).toHaveBeenCalled();
   });
 
@@ -258,7 +256,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('6.6.6');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('6.6.6');
     expect(typeof redirectedOptions?.headers?.Authorization).toBe('string');
   });
 
@@ -294,7 +292,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('9.9.9');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('9.9.9');
   });
 
   test('falls back to org.label-schema.version in config Labels', async () => {
@@ -329,7 +327,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('1.2.3');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('1.2.3');
   });
 
   test('falls back to org.label-schema.version in container_config Labels', async () => {
@@ -364,7 +362,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('7.7.7');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('7.7.7');
   });
 
   test('handles multi-arch manifest list (prefers linux/amd64)', async () => {
@@ -412,7 +410,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('4.4.4');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('4.4.4');
   });
 
   test('falls back to first manifest digest when linux/amd64 not present', async () => {
@@ -457,7 +455,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('5.5.5');
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBe('5.5.5');
   });
 
   test('returns undefined when manifest list has no manifests', async () => {
@@ -485,7 +483,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
   test('returns undefined when manifest list has no digests', async () => {
@@ -516,7 +514,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
   test('returns undefined when config digest is invalid', async () => {
@@ -544,7 +542,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
   test('returns undefined when token is missing/invalid', async () => {
@@ -565,7 +563,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
   test('returns undefined on non-2xx response (including missing statusCode)', async () => {
@@ -587,7 +585,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
     expect(resume).toHaveBeenCalled();
   });
 
@@ -617,7 +615,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
     expect(takeDockerVersionWarning()).toBe('Docker Hub rate limit reached while checking luligu/matterbridge:latest. Docker image version is unavailable.');
     expect(takeDockerVersionWarning()).toBeUndefined();
   });
@@ -638,7 +636,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
   test('returns undefined when JSON.parse throws an Error', async () => {
@@ -663,7 +661,7 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
 
     // restore
 
@@ -681,7 +679,7 @@ describe('getDockerVersion', () => {
     });
 
     const promise = getDockerVersion('luligu', 'matterbridge', 'latest', 10);
-    await expect(promise).resolves.toBeUndefined();
+    expect(promise).resolves.toBeUndefined();
     expect(requestOptions?.signal).toBeInstanceOf(AbortSignal);
     expect(requestOptions?.signal?.aborted).toBe(true);
   });
@@ -707,7 +705,7 @@ describe('getDockerVersion', () => {
     });
 
     const promise = getDockerVersion('luligu', 'matterbridge', 'latest', 10);
-    await expect(promise).resolves.toBeUndefined();
+    expect(promise).resolves.toBeUndefined();
 
     const lateResponse = createStreamingJsonResponse(200, { token: 'token-1234567890' });
     responseCallback?.(lateResponse);
@@ -725,10 +723,10 @@ describe('getDockerVersion', () => {
       return request as any;
     });
 
-    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 
   test('returns undefined on invalid args', async () => {
-    await expect(getDockerVersion('', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(getDockerVersion('', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
   });
 });

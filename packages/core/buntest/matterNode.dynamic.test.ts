@@ -6,7 +6,6 @@
 
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/await-thenable -- bun-types declares the resolves/rejects matchers as void, but they return a promise that must be awaited */
 
 const MATTER_PORT = 10300;
 const NAME = 'MatterNodeDynamic';
@@ -248,7 +247,7 @@ describe('MatterNode dynamic', () => {
     // Remove with no aggregator to test that code path
     const savedAggregator = matter.aggregatorNode;
     matter.aggregatorNode = undefined;
-    await expect(matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
+    expect(matter.removeBridgedEndpoint('matterbridge-mock1', device)).rejects.toThrow(
       `Error removing bridged endpoint ${plg}matterbridge-mock1${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`,
     );
     matter.aggregatorNode = savedAggregator; // Restore aggregator node
