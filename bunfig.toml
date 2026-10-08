@@ -32,7 +32,6 @@ pathIgnorePatterns = [
   '**/jest-utils/**',
   '**/vitest-utils/**',
   '**/test-utils/**',
-  '**/backend*.test.ts',
 ]
 
 # Source files kept out of the coverage report. pathIgnorePatterns above decides which files are
