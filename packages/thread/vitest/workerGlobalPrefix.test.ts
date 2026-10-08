@@ -69,10 +69,6 @@ async function runWorkerGlobalPrefix(options: RunOptions): Promise<RunWorkerGlob
 }
 
 describe('workerGlobalPrefix', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: requests global prefix and logs it', async () => {
     const { wrapperName, success, loggerMock, requestMock, getGlobalNodeModules } = await runWorkerGlobalPrefix({
       globalPrefix: '/custom/prefix',

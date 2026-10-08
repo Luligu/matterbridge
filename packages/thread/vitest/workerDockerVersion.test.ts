@@ -90,10 +90,6 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
 }
 
 describe('workerDockerVersion', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: gets latest + dev docker versions and logs success with current docker build version', async () => {
     const { wrapperName, success, loggerMock, snackBarMock, requestMock, getDockerVersion, readFileSync } = await runWorkerDockerVersion({
       dockerVersionLatest: '3.5.5',

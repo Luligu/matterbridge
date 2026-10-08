@@ -83,3 +83,9 @@ coverageIgnoreSourcemaps = false
 
 # Fail the run if coverage drops below 100%. Applies to the whole run, not per file.
 # coverageThreshold = { lines = 1.0, functions = 1.0 }
+
+# Every run also writes a JUnit XML report with the duration of each test (handy to find slow tests:
+# --parallel prints no per-test lines). It holds test results only, coverage stays in coverageDir.
+# Must stay the last table: any key below it would belong to [test.reporter], not [test].
+[test.reporter]
+junit = ".cache/bun/junit.xml"

@@ -68,10 +68,6 @@ async function runWorkerCheckUpdates(options: RunOptions): Promise<RunWorkerChec
 }
 
 describe('workerCheckUpdates', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: runs fetch + checkUpdates + logs success', async () => {
     const { wrapperName, success, loggerMock, fetchMock, checkUpdates } = await runWorkerCheckUpdates({});
 

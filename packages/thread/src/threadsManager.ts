@@ -3,7 +3,7 @@
  * @description This file contains the ThreadsManager class.
  * @author Luca Liguori
  * @created 2026-03-07
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -23,6 +23,22 @@
 
 /* oxlint-disable jsdoc/no-defaults */
 
+/*
+ * Worker lifecycle events, verified on Node.js v24.21.0 and Bun 1.4.2 (identical results).
+ * 'exit' always fires exactly once and is the last event; 'error' always precedes it on a failure.
+ * 'online' fires even when the worker module cannot be loaded.
+ * The only case without 'exit' is the main process exiting or crashing: workers are killed with it.
+ *
+ * | How the worker ends        | Events                          | Exit code |
+ * | -------------------------- | ------------------------------- | --------- |
+ * | Code finishes normally     | online, message, exit           | 0         |
+ * | process.exit(3)            | online, exit                    | 3         |
+ * | Uncaught throw             | online, error, exit             | 1         |
+ * | worker.terminate()         | online, message, exit           | 1         |
+ * | Unhandled promise reject   | online, message, error, exit    | 1         |
+ * | Worker file not found      | online, error, exit             | 1         |
+ */
+
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -40,6 +56,18 @@ import type { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('ThreadsManager');
 
+interface ThreadInstanceInfo {
+  /** Worker instance for this thread. */
+  worker?: Worker;
+  /** Timestamp in ms when the thread was last started (Date.now()). */
+  lastStarted?: number;
+  /** Timestamp in ms when the thread was last stopped (Date.now()). */
+  lastStopped?: number;
+  /** Duration in ms between last start and stop, if known. */
+  lastDuration?: number;
+  /** Timestamp in ms when the thread was last seen (Date.now()). */
+  lastSeen?: number;
+}
 interface ThreadInfo {
   /** Logical name used to identify the thread (also passed as workerData.threadName). */
   name: ThreadNames;
@@ -47,6 +75,8 @@ interface ThreadInfo {
   path: string;
   /** Execution type (worker runs and exits, thread runs continuously). */
   type: ThreadType;
+  /** Whether multiple instances of this thread are allowed. */
+  multiple?: boolean;
   /** Last created Worker instance for this thread (if started). */
   worker?: Worker;
   /** Number of times this thread has been started via runThread(). */
@@ -61,6 +91,8 @@ interface ThreadInfo {
   lastDuration?: number;
   /** Timestamp in ms when the thread was last seen (Date.now()). */
   lastSeen?: number;
+  /** Instances of this thread, if applicable. */
+  instances?: ThreadInstanceInfo[];
 }
 
 /**
@@ -88,7 +120,7 @@ export class ThreadsManager {
     { name: 'ArchiveCommand', path: 'workerArchiveCommand.js', type: 'worker' },
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
     { name: 'Backend', path: 'threadBackend.js', type: 'thread' },
-    { name: 'RootNode', path: 'threadRootNode.js', type: 'thread' },
+    { name: 'RootNode', path: 'threadRootNode.js', type: 'thread', multiple: true },
   ];
 
   private terminateWorkers = new Set<Worker>();
@@ -195,19 +227,37 @@ export class ThreadsManager {
    * Handle the interval for checking thread statuses and terminating exited workers.
    */
   private intervalHandler(): void {
+    // Log the status of each thread, including whether it is running, its thread ID, last seen time, run count, and error count.
     for (const thread of this.threads) {
-      this.log.debug(
-        `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, threadId: ${thread.worker?.threadId ?? 'none'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
-      );
-    }
-    this.terminateExitedWorkers();
-    for (const thread of this.threads) {
-      if (thread.worker && Date.now() - (thread.lastSeen ?? 0) > this.intervalMs) {
-        const msg: ParentPortMessage = { type: 'ping', threadId: thread.worker.threadId, threadName: thread.name };
-        thread.worker.postMessage(msg);
+      if (!thread.multiple) {
+        this.log.debug(
+          `Thread ${thread.name} running: ${thread.worker ? 'yes' : 'no'}, threadId: ${thread.worker?.threadId ?? 'none'}, lastSeen: ${thread.lastSeen ? new Date(thread.lastSeen).toISOString() : 'never'}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
+        );
+        continue;
       }
-      if (thread.worker && Date.now() - (thread.lastSeen ?? 0) > this.intervalMs * 2) {
-        this.log.warn(`Thread ${CYAN}${thread.name}${db} has not been seen for more than ${this.intervalMs * 2} ms. It may be unresponsive.`);
+      const instances = thread.instances ?? [];
+      this.log.debug(
+        `Thread ${thread.name} instances: ${instances.length}, running: ${instances.filter((instance) => instance.worker).length}, runs: ${thread.runCount ?? 0}, errors: ${thread.errorCount ?? 0}`,
+      );
+      instances.forEach((instance, index) => {
+        this.log.debug(
+          `- instance ${index} running: ${instance.worker ? 'yes' : 'no'}, threadId: ${instance.worker?.threadId ?? 'none'}, lastSeen: ${instance.lastSeen ? new Date(instance.lastSeen).toISOString() : 'never'}, lastStarted: ${instance.lastStarted ? new Date(instance.lastStarted).toISOString() : 'never'}, lastStopped: ${instance.lastStopped ? new Date(instance.lastStopped).toISOString() : 'never'}, lastDuration: ${instance.lastDuration ?? 'none'} ms`,
+        );
+      });
+    }
+    // Terminate any workers that have exited before checking for stale threads.
+    this.terminateExitedWorkers();
+    // Check each thread to see if it is stale and needs to be pinged or warned about.
+    for (const thread of this.threads) {
+      // A multiple thread keeps its workers in instances, the others in the thread info itself
+      for (const info of [thread, ...(thread.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]) {
+        if (info.worker && Date.now() - (info.lastSeen ?? 0) > this.intervalMs) {
+          const msg: ParentPortMessage = { type: 'ping', threadId: info.worker.threadId, threadName: thread.name };
+          info.worker.postMessage(msg);
+        }
+        if (info.worker && Date.now() - (info.lastSeen ?? 0) > this.intervalMs * 2) {
+          this.log.warn(`Thread ${CYAN}${thread.name}${db} has not been seen for more than ${this.intervalMs * 2} ms. It may be unresponsive.`);
+        }
       }
     }
   }
@@ -232,7 +282,7 @@ export class ThreadsManager {
     if (!threadInfo) {
       throw new Error(`Thread ${name} not found`);
     }
-    if (threadInfo.worker) {
+    if (threadInfo.worker && !threadInfo.multiple) {
       throw new Error(`Thread ${name} is already running with thread ID ${threadInfo.worker.threadId}`);
     }
 
@@ -240,13 +290,13 @@ export class ThreadsManager {
     if (!fs.existsSync(path)) {
       throw new Error(`Thread ${name} file not found at path ${path}`);
     }
-    this.log.debug(`Starting thread ${threadInfo.name} from path ${path} type ${threadInfo.type}...`);
+    this.log.debug(`Starting thread ${threadInfo.name} from path ${path} type ${threadInfo.type}${threadInfo.multiple ? ` instances: ${threadInfo.instances?.length}` : ''}...`);
 
     threadInfo.lastStarted = undefined;
     threadInfo.lastStopped = undefined;
     threadInfo.lastDuration = undefined;
 
-    threadInfo.worker = this.createESMWorker(
+    const worker = this.createESMWorker(
       threadInfo.name,
       path,
       { ...workerData, type: threadInfo.type, debug: this.debug, verbose: this.verbose, tracker: this.tracker, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel/tracker in workerData for workers to adjust their logging behavior
@@ -256,72 +306,87 @@ export class ThreadsManager {
       pipedOutput,
     );
 
-    const worker = threadInfo.worker;
+    if (threadInfo.multiple) {
+      threadInfo.instances ??= [];
+      threadInfo.instances.push({ worker });
+    } else threadInfo.worker = worker;
 
     worker.once('online', () => {
       const now = Date.now();
+      const info = ([threadInfo, ...(threadInfo.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]).find((info) => info.worker === worker);
+      if (info) {
+        info.lastSeen = now;
+        info.lastStarted = now;
+      }
       this.log.debug(`Thread ${threadInfo.name} is online at ${new Date(now).toISOString()}`);
     });
 
     worker.once('exit', () => {
       const now = Date.now();
-      // If for any reason the worker exited without sending an 'exit' message, we still want to update the threadInfo
-      if (threadInfo.worker === worker) {
-        threadInfo.lastSeen = now;
-        threadInfo.lastStopped = now;
-        threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
-        threadInfo.worker = undefined;
+      const info = ([threadInfo, ...(threadInfo.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]).find((info) => info.worker === worker);
+      if (info) {
+        info.lastSeen = now;
+        info.lastStopped = now;
+        info.lastDuration = Math.max(0, now - (info.lastStarted ?? now));
+        info.worker = undefined;
       }
-      this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()}`);
+      this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} after ${info?.lastDuration ?? 0} ms`);
       this.terminateWorkers.delete(worker);
     });
 
     worker.on('message', (message: ParentPortMessage) => {
       const now = Date.now();
-      threadInfo.lastSeen = now;
+      const info = ([threadInfo, ...(threadInfo.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]).find((info) => info.worker === worker);
+      if (info) {
+        info.lastSeen = now;
+      }
       if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date(now).toISOString()}: ${debugStringify(message)}`);
-      if (message.type === 'log') {
+      if (message.type === 'init') {
+        threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
+        this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
+      } else if (message.type === 'pong') {
+        this.log.debug(`Thread ${threadInfo.name} received a pong at ${new Date(now).toISOString()}`);
+      } else if (message.type === 'log') {
         AnsiLogger.create({ logName: threadInfo.name, logNameColor: MAGENTA, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.log.logLevel }).log(
           message.logLevel,
           message.message,
         );
-      } else if (message.type === 'init') {
-        threadInfo.lastStarted = now;
-        threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
-        this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
       } else if (message.type === 'exit') {
-        threadInfo.lastStopped = now;
-        threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
         if (!message.success) {
           threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
         }
         this.terminateWorkers.add(worker);
-        threadInfo.worker = undefined;
-        this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} with thread id ${worker.threadId} after running for ${threadInfo.lastDuration} ms`);
+        this.log.debug(`Thread ${threadInfo.name} has exited at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
       }
     });
 
     worker.on('messageerror', () => {
       const now = Date.now();
-      threadInfo.lastSeen = now;
-      threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+      const info = ([threadInfo, ...(threadInfo.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]).find((info) => info.worker === worker);
+      if (info) {
+        info.lastSeen = now;
+        threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+      }
       this.log.error(`Thread ${threadInfo.name} encountered a message error at ${new Date(now).toISOString()}`);
     });
 
     worker.once('error', (error) => {
       const now = Date.now();
-      threadInfo.lastSeen = now;
-      threadInfo.lastStopped = now;
-      threadInfo.lastDuration = Math.max(0, now - (threadInfo.lastStarted ?? now));
-      threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
-      threadInfo.worker = undefined;
+      const info = ([threadInfo, ...(threadInfo.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]).find((info) => info.worker === worker);
+      if (info) {
+        info.lastSeen = now;
+        info.lastStopped = now;
+        info.lastDuration = Math.max(0, now - (info.lastStarted ?? now));
+        threadInfo.errorCount = (threadInfo.errorCount ?? 0) + 1;
+        info.worker = undefined;
+      }
       this.terminateWorkers.add(worker);
-      this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(now).toISOString()} after running for ${threadInfo.lastDuration} ms: ${getErrorMessage(error)}`);
+      this.log.error(`Thread ${threadInfo.name} encountered an error at ${new Date(now).toISOString()} after running for ${info?.lastDuration} ms: ${getErrorMessage(error)}`);
     });
 
     this.log.debug(`Started thread ${threadInfo.name} from path ${path} type ${threadInfo.type} with thread id ${worker.threadId}`);
 
-    return threadInfo.worker;
+    return worker;
   }
 
   /**

@@ -81,10 +81,6 @@ async function runWorkerSpawnCommand(options: RunOptions): Promise<RunWorkerSpaw
 }
 
 describe('workerSpawnCommand', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: spawns command and logs success', async () => {
     const { wrapperName, success, loggerMock, respondMock, spawnCommand, workerData } = await runWorkerSpawnCommand({ spawnSuccess: true });
 

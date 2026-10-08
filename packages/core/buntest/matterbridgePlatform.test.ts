@@ -680,7 +680,7 @@ describe('Matterbridge platform', () => {
     expect(platform.saveConfig(platform.config)).toBeUndefined();
     platform.name = originalName;
     expect(platform.saveConfig(platform.config)).toBeUndefined();
-    await flushAsync();
+    await flushAsync(undefined, undefined, 10);
   });
 
   test('getSchema', async () => {
@@ -694,7 +694,7 @@ describe('Matterbridge platform', () => {
     expect(platform.setSchema({})).toBeUndefined();
     platform.name = originalName;
     expect(platform.setSchema({})).toBeUndefined();
-    await flushAsync();
+    await flushAsync(undefined, undefined, 10);
   });
 
   test('wssSendRestartRequired', () => {

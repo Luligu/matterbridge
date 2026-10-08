@@ -84,10 +84,6 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
 }
 
 describe('workerArchiveCommand', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: zip command creates archive and logs success', async () => {
     const { wrapperName, success, loggerMock, respondMock, createZip, readZip, unZip, workerData } = await runWorkerArchiveCommand({
       command: 'zip',

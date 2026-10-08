@@ -10,7 +10,6 @@ const MATTER_PORT = 0;
 import { afterAll, beforeEach, describe, expect, test, vi } from 'bun:test';
 import { BroadcastChannel } from 'node:worker_threads';
 
-import { flushAsync } from '@matterbridge/test-utils';
 import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
@@ -334,10 +333,11 @@ describe('BroadcastServer', () => {
     const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
     const testMessage = { id: 123456, type: 'test', src: 'frontend', dst: 'manager' } as const;
+    const received = new Promise<void>((resolve) => server.once('broadcast_message', () => resolve()));
     // @ts-expect-error: access private method for test
     testServer.broadcastChannel.postMessage(testMessage);
+    await received;
     testServer.close();
-    await flushAsync();
 
     expect(eventHandler).toHaveBeenCalledWith(testMessage);
     server.off('broadcast_message', eventHandler);
@@ -461,7 +461,7 @@ describe('BroadcastServer', () => {
 
   test('fetch: should reject on timeout', async () => {
     const requestMsg = { id: 222222, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
-    expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch timeout/);
+    expect(server.fetch(requestMsg, 10)).rejects.toThrow(/Fetch timeout/);
   });
 
   test('fetch: should reject on timeout from another thread', async () => {
@@ -502,33 +502,27 @@ describe('BroadcastServer', () => {
     server.closed = false;
   });
 
-  test('broadcast: should log error if the port is closed', async () => {
+  test('broadcast: should not throw when the channel is closed', async () => {
     const broadcastServerBroadcastSpy = vi.spyOn(BroadcastServer.prototype, 'broadcast');
     const requestMsg = { id: 654321, timestamp: Date.now(), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
     server.broadcast(requestMsg);
-    await flushAsync(undefined, undefined, 50);
     expect(broadcastServerBroadcastSpy).toHaveBeenCalledWith(requestMsg);
-    // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast message/));
     broadcastServerBroadcastSpy.mockRestore();
   });
 
-  test('request: should log error if the port is closed', async () => {
+  test('request: should not throw when the channel is closed', async () => {
     const broadcastServerRequestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
     const requestMsg = { id: 654321, timestamp: Date.now(), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
-    await flushAsync(undefined, undefined, 50);
     expect(broadcastServerRequestSpy).toHaveBeenCalledWith(requestMsg);
-    // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast request message/));
     broadcastServerRequestSpy.mockRestore();
   });
 
-  test('respond: should log error if the port is closed', async () => {
+  test('respond: should not throw when the channel is closed', async () => {
     const broadcastServerRespondSpy = vi.spyOn(BroadcastServer.prototype, 'respond');
     const responseMsg = { id: 654321, timestamp: Date.now(), type: 'test', src: 'manager', dst: 'manager', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
-    await flushAsync(undefined, undefined, 50);
     expect(broadcastServerRespondSpy).toHaveBeenCalledWith(responseMsg);
-    // expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Failed to broadcast response message/));
     broadcastServerRespondSpy.mockRestore();
   });
 

@@ -59,7 +59,7 @@ describe('ThreadsManagerThreads', () => {
 
   afterAll(async () => {
     // The tests resolve when manager_run answers, which is as soon as each worker starts. Wait until every worker has
-    // sent its exit message (worker cleared), so none is still logging to the console when the test file is torn down.
+    // exited (worker cleared on the native exit), so none is still logging to the console when the test file is torn down.
     await waiter('All threads stopped', () => manager['threads'].every((thread) => thread.worker === undefined), false, 60_000, 100);
     // Close broadcast servers
     broadcastserverMatterbridge.close();

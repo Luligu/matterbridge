@@ -153,6 +153,68 @@ describe('ThreadsManager', () => {
   });
 
   describe('runThread', () => {
+    test('should allow concurrent instances when the thread allows multiple', async () => {
+      const { EventEmitter } = await import('node:events');
+      const manager = new ThreadsManager(coreDirectory);
+      const threadInfo = manager['threads'].find((thread) => thread.name === 'RootNode');
+      expect(threadInfo?.multiple).toBe(true);
+      if (!threadInfo) throw new Error('RootNode thread not registered');
+      let nextThreadId = 1;
+      const createWorkerSpy = vi.spyOn(manager, 'createESMWorker').mockImplementation(() => {
+        return Object.assign(new EventEmitter(), { threadId: nextThreadId++, terminate: vi.fn(async () => 0) }) as unknown as ReturnType<typeof manager.createESMWorker>;
+      });
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
+      const nowSpy = vi.spyOn(Date, 'now').mockReturnValue(1000);
+      try {
+        // Multiple instances are tracked in instances, never in worker
+        const first = manager.runThread('RootNode');
+        expect(threadInfo.worker).toBeUndefined();
+        expect(threadInfo.instances).toEqual([{ worker: first }]);
+        const second = manager.runThread('RootNode');
+        expect(second).not.toBe(first);
+        expect(threadInfo.worker).toBeUndefined();
+        expect(threadInfo.instances).toEqual([{ worker: first }, { worker: second }]);
+
+        // Instance events update the instance, while errors are counted on the thread
+        second.emit('online');
+        expect(threadInfo.instances?.[1]).toEqual({ worker: second, lastSeen: 1000, lastStarted: 1000 });
+        nowSpy.mockReturnValue(1500);
+        second.emit('message', { type: 'pong', threadId: 2, threadName: 'RootNode' });
+        expect(threadInfo.instances?.[1].lastSeen).toBe(1500);
+        second.emit('messageerror', new Error('message error'));
+        expect(threadInfo.errorCount).toBe(1);
+        nowSpy.mockReturnValue(2000);
+        second.emit('exit', 0);
+        expect(threadInfo.instances?.[1]).toEqual({ worker: undefined, lastSeen: 2000, lastStarted: 1000, lastStopped: 2000, lastDuration: 1000 });
+        first.emit('error', new Error('boom'));
+        expect(threadInfo.instances?.[0]).toEqual({ worker: undefined, lastSeen: 2000, lastStopped: 2000, lastDuration: 0 });
+        expect(threadInfo.errorCount).toBe(2);
+
+        // Events of a worker no longer tracked are ignored
+        nowSpy.mockReturnValue(3000);
+        first.emit('online');
+        first.emit('message', { type: 'pong', threadId: 1, threadName: 'RootNode' });
+        first.emit('messageerror', new Error('message error'));
+        first.emit('exit', 1);
+        second.emit('error', new Error('late error'));
+        expect(threadInfo.instances?.[0]).toEqual({ worker: undefined, lastSeen: 2000, lastStopped: 2000, lastDuration: 0 });
+        expect(threadInfo.errorCount).toBe(2);
+        expect(threadInfo.lastSeen).toBeUndefined();
+        expect(threadInfo.worker).toBeUndefined();
+
+        // Exited instances are not removed yet
+        expect(threadInfo.instances).toHaveLength(2);
+        const third = manager.runThread('RootNode');
+        expect(threadInfo.instances).toHaveLength(3);
+        expect(threadInfo.instances?.[2]).toEqual({ worker: third });
+        third.emit('exit', 0);
+        expect(createWorkerSpy).toHaveBeenCalledTimes(3);
+      } finally {
+        manager.destroy();
+        nowSpy.mockRestore();
+      }
+    });
+
     test('throws when the thread is not found', () => {
       const manager = new ThreadsManager(coreDirectory);
       expect(() => manager.runThread('DoesNotExist')).toThrow('Thread DoesNotExist not found');
@@ -659,6 +721,27 @@ describe('ThreadsManager', () => {
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('runs: 2, errors: 3'));
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Thread SystemCheck running: no'));
       expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Thread SystemCheck running: no, threadId: none'));
+
+      // A multiple thread logs a summary line, then one line per instance.
+      expect(debugSpy).toHaveBeenCalledWith('Thread RootNode instances: 0, running: 0, runs: 0, errors: 0');
+      const rootNode = threads.find((thread) => thread.name === 'RootNode');
+      rootNode.runCount = 2;
+      rootNode.errorCount = 1;
+      rootNode.instances = [
+        { worker: { threadId: 7, postMessage: vi.fn<(...args: any[]) => any>() }, lastSeen: 1, lastStarted: 1 },
+        { lastSeen: 2, lastStarted: 1, lastStopped: 2, lastDuration: 1 },
+        {},
+      ];
+      debugSpy.mockClear();
+      (manager as any).intervalHandler();
+      expect(debugSpy).toHaveBeenCalledWith('Thread RootNode instances: 3, running: 1, runs: 2, errors: 1');
+      expect(debugSpy).toHaveBeenCalledWith(
+        '- instance 0 running: yes, threadId: 7, lastSeen: 1970-01-01T00:00:00.001Z, lastStarted: 1970-01-01T00:00:00.001Z, lastStopped: never, lastDuration: none ms',
+      );
+      expect(debugSpy).toHaveBeenCalledWith(
+        '- instance 1 running: no, threadId: none, lastSeen: 1970-01-01T00:00:00.002Z, lastStarted: 1970-01-01T00:00:00.001Z, lastStopped: 1970-01-01T00:00:00.002Z, lastDuration: 1 ms',
+      );
+      expect(debugSpy).toHaveBeenCalledWith('- instance 2 running: no, threadId: none, lastSeen: never, lastStarted: never, lastStopped: never, lastDuration: none ms');
       manager.destroy();
     });
 
@@ -731,6 +814,19 @@ describe('ThreadsManager', () => {
         (manager as any).intervalHandler();
         expect(thread.worker.postMessage).toHaveBeenCalledWith({ type: 'ping', threadId: 123, threadName: thread.name });
         expect(warnSpy).toHaveBeenCalled();
+
+        // A multiple thread pings and warns each running instance by its own lastSeen
+        delete thread.worker;
+        warnSpy.mockClear();
+        const rootNode = threads.find((t) => t.name === 'RootNode');
+        const staleWorker = { threadId: 7, postMessage: vi.fn<(...args: any[]) => any>() };
+        const freshWorker = { threadId: 8, postMessage: vi.fn<(...args: any[]) => any>() };
+        rootNode.instances = [{ worker: staleWorker, lastSeen: 7_999 }, { worker: freshWorker, lastSeen: 9_500 }, { lastSeen: 0 }];
+        (manager as any).intervalHandler();
+        expect(staleWorker.postMessage).toHaveBeenCalledWith({ type: 'ping', threadId: 7, threadName: 'RootNode' });
+        expect(freshWorker.postMessage).not.toHaveBeenCalled();
+        expect(warnSpy).toHaveBeenCalledTimes(1);
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('RootNode'));
       } finally {
         nowSpy.mockRestore();
         manager.destroy();
@@ -739,16 +835,14 @@ describe('ThreadsManager', () => {
   });
 
   describe('runThread (lifecycle branch coverage)', () => {
-    test('updates lifecycle state from init and exit worker messages', async () => {
+    test('should update lifecycle state when the worker goes online, sends messages and exits', async () => {
       vi.resetModules();
 
       const nowSpy = vi.spyOn(Date, 'now');
-      // ThreadsManager uses Date.now() multiple times across the lifecycle handlers:
-      // - native online: log timestamp only
-      // - init message: lastSeen + lastStarted
-      // - exit message: lastSeen + lastStopped
-      // - second init/failed exit messages after a restart
-      const times = [1000, 1001, 2000, 4000, 5000];
+      // Each handled event reads Date.now() once, in this order:
+      // - online, init message, exit message, native exit
+      // - after a restart: online, init message, failed exit message, error
+      const times = [1000, 1001, 2000, 3000, 4000, 4001, 5000, 6000];
       nowSpy.mockImplementation(() => times.shift() ?? 9999);
 
       const { EventEmitter } = await import('node:events');
@@ -778,49 +872,62 @@ describe('ThreadsManager', () => {
       manager.runThread('TestWorker');
       const threadInfo = threads.find((t) => t.name === 'TestWorker');
       const worker = threadInfo.worker;
-
-      // lastStarted/runCount are set only after the worker sends the init control message.
       expect(threadInfo.lastStarted).toBeUndefined();
       expect(threadInfo.runCount).toBeUndefined();
 
-      // Native worker online only logs after the refactor.
+      // lastStarted is set when the worker comes online.
       worker.emit('online');
-      expect(threadInfo.lastStarted).toBeUndefined();
+      expect(threadInfo.lastSeen).toBe(1000);
+      expect(threadInfo.lastStarted).toBe(1000);
       expect(threadInfo.runCount).toBeUndefined();
 
+      // runCount is incremented by the init control message.
       worker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
       expect(threadInfo.lastSeen).toBe(1001);
-      expect(threadInfo.lastStarted).toBe(1001);
+      expect(threadInfo.lastStarted).toBe(1000);
       expect(threadInfo.runCount).toBe(1);
 
+      // The exit control message only queues the worker for termination: the native exit clears it.
       worker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: true });
       expect(threadInfo.lastSeen).toBe(2000);
-      expect(threadInfo.lastStopped).toBe(2000);
-      expect(threadInfo.lastDuration).toBe(999);
-      expect(threadInfo.lastStopped).toBeGreaterThanOrEqual(threadInfo.lastStarted);
+      expect(threadInfo.lastStopped).toBeUndefined();
       expect(threadInfo.errorCount).toBeUndefined();
-
-      // Worker reference should be cleared on exit.
-      expect(threadInfo.worker).toBeUndefined();
-
-      manager.runThread('TestWorker');
-      const failedWorker = threadInfo.worker;
-      failedWorker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
-      failedWorker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: false });
-      expect(threadInfo.lastSeen).toBe(5000);
-      expect(threadInfo.lastStopped).toBe(5000);
-      expect(threadInfo.lastDuration).toBe(1000);
-      expect(threadInfo.errorCount).toBe(1);
-      expect(threadInfo.worker).toBeUndefined();
-
-      // Native worker exit is a no-op after the explicit exit message has already cleared this worker.
-      threadInfo.lastSeen = 3000;
-      threadInfo.lastStopped = 3000;
-      threadInfo.lastDuration = 1999;
+      expect(threadInfo.worker).toBe(worker);
+      expect((manager as any).terminateWorkers.has(worker)).toBe(true);
       worker.emit('exit', 0);
       expect(threadInfo.lastSeen).toBe(3000);
       expect(threadInfo.lastStopped).toBe(3000);
-      expect(threadInfo.lastDuration).toBe(1999);
+      expect(threadInfo.lastDuration).toBe(2000);
+      expect(threadInfo.worker).toBeUndefined();
+      expect((manager as any).terminateWorkers.has(worker)).toBe(false);
+
+      // After a restart, a failed exit message and an error both count as errors.
+      manager.runThread('TestWorker');
+      expect(threadInfo.lastStarted).toBeUndefined();
+      expect(threadInfo.lastStopped).toBeUndefined();
+      expect(threadInfo.lastDuration).toBeUndefined();
+      const failedWorker = threadInfo.worker;
+      failedWorker.emit('online');
+      failedWorker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
+      expect(threadInfo.runCount).toBe(2);
+      failedWorker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: false });
+      expect(threadInfo.lastSeen).toBe(5000);
+      expect(threadInfo.errorCount).toBe(1);
+      failedWorker.emit('error', new Error('boom'));
+      expect(threadInfo.lastSeen).toBe(6000);
+      expect(threadInfo.lastStopped).toBe(6000);
+      expect(threadInfo.lastDuration).toBe(2000);
+      expect(threadInfo.errorCount).toBe(2);
+      expect(threadInfo.worker).toBeUndefined();
+
+      // Events of a worker no longer tracked only log.
+      const debugSpy = vi.spyOn((manager as any).log, 'debug');
+      failedWorker.emit('message', { type: 'pong', threadId: 1, threadName: 'TestWorker' });
+      failedWorker.emit('exit', 1);
+      expect(threadInfo.lastSeen).toBe(6000);
+      expect(threadInfo.lastStopped).toBe(6000);
+      expect(threadInfo.lastDuration).toBe(2000);
+      expect(debugSpy).toHaveBeenCalledWith(expect.stringMatching(/Thread TestWorker received a pong at /));
 
       manager.destroy();
       nowSpy.mockRestore();
@@ -830,7 +937,7 @@ describe('ThreadsManager', () => {
       vi.resetModules();
 
       const nowSpy = vi.spyOn(Date, 'now');
-      const times = [1000, 2000];
+      const times = [1000, 1500, 2000];
       nowSpy.mockImplementation(() => times.shift() ?? 9999);
 
       const { EventEmitter } = await import('node:events');
@@ -861,8 +968,10 @@ describe('ThreadsManager', () => {
       const threadInfo = threads.find((t) => t.name === 'TestWorker');
       const worker = threadInfo.worker;
 
+      worker.emit('online');
       worker.emit('message', { type: 'init', threadId: 1, threadName: 'TestWorker', success: true });
       expect(threadInfo.lastStarted).toBe(1000);
+      expect(threadInfo.lastSeen).toBe(1500);
       expect(threadInfo.worker).toBe(worker);
 
       worker.emit('exit', 0);
@@ -876,7 +985,7 @@ describe('ThreadsManager', () => {
       nowSpy.mockRestore();
     });
 
-    test('computes zero duration when exit message arrives before init', async () => {
+    test('should compute zero duration when the worker exits before coming online', async () => {
       vi.resetModules();
 
       const nowSpy = vi.spyOn(Date, 'now');
@@ -912,7 +1021,10 @@ describe('ThreadsManager', () => {
 
       expect(threadInfo.lastStarted).toBeUndefined();
 
+      // The exit message does not clear the worker: the native exit does.
       worker.emit('message', { type: 'exit', threadId: 1, threadName: 'TestWorker', success: true });
+      expect(threadInfo.worker).toBe(worker);
+      worker.emit('exit', 0);
 
       expect(threadInfo.lastSeen).toBe(2000);
       expect(threadInfo.lastStopped).toBe(2000);

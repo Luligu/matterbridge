@@ -130,10 +130,6 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
 }
 
 describe('workerSystemCheck', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: covers node 20 branch, NVM warning, excluded interface warn, interface scan', async () => {
     const { wrapperName, success, loggerMock, snackBarMock, fetchMock } = await runWorkerSystemCheck({
       nvmBin: true,

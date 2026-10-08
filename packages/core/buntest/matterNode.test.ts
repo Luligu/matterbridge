@@ -439,7 +439,7 @@ describe('MatterNode', () => {
     expect(response.result.matter.id).toBe(matter.serverNode.id);
     expect(response.result.matter.qrPairingCode).toBe(matter.serverNode.state.commissioning.pairingCodes.qrPairingCode);
     // No MatterNode owns an unknown server node, so nobody responds and the fetch times out
-    expect(apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: 'unknown' } }, 100)).rejects.toThrow();
+    expect(apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: 'unknown' } }, 20)).rejects.toThrow();
     apiServer.close();
   });
 

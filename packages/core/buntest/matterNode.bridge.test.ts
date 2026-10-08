@@ -358,8 +358,8 @@ describe('MatterNode bridge', () => {
       'frontend',
       new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     );
-    expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 100)).rejects.toThrow();
-    expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 20)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'unknown' } }, 20)).rejects.toThrow();
     testServer.close();
   });
 
@@ -369,7 +369,7 @@ describe('MatterNode bridge', () => {
       new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     );
     // stop() throws since the server node is not created: the error is logged and nobody responds
-    expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_stop', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 20)).rejects.toThrow();
     testServer.close();
   });
 
@@ -379,7 +379,7 @@ describe('MatterNode bridge', () => {
       new AnsiLogger({ logName: 'TestBroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG }),
     );
     const createSpy = vi.spyOn(matter, 'create').mockRejectedValueOnce(new Error('Test create error'));
-    expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 100)).rejects.toThrow();
+    expect(testServer.fetch({ type: 'matter_start', src: testServer.name, dst: 'matter', params: { storeId: 'Matterbridge' } }, 20)).rejects.toThrow();
     expect(createSpy).toHaveBeenCalledTimes(1);
     createSpy.mockRestore();
     testServer.close();
