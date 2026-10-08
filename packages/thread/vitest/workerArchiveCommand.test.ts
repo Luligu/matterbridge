@@ -70,9 +70,9 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
   vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
     ThreadsWrapper: class {
-      constructor(name: string, callback: (w: any) => Promise<boolean>) {
+      constructor(name: string, entrypoint: (w: any) => Promise<boolean>) {
         wrapperName = name;
-        runPromise = callback(worker);
+        runPromise = entrypoint(worker);
       }
     },
   }));

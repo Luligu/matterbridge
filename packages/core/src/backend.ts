@@ -1,5 +1,5 @@
 /**
- * @file packages/thread/src/backend.ts
+ * @file packages/core/src/backend.ts
  * @description This file contains the class Backend.
  * @author Luca Liguori
  * @created 2026-03-30
@@ -32,6 +32,7 @@ import type { Server as HttpsServer, ServerOptions as HttpsServerOptions } from 
 import path from 'node:path';
 
 // @matterbridge
+import { BroadcastServer } from '@matterbridge/thread/server';
 import {
   type ApiClusters,
   type ApiDevice,
@@ -55,7 +56,6 @@ import { NodeStorageManager } from 'node-persist-manager';
 // Local imports
 import type { BackendExpress } from './backendExpress.js';
 import type { BackendWsServer } from './backendWsServer.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('Backend');
 

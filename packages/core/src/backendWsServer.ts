@@ -1,5 +1,5 @@
 /**
- * @file packages/thread/src/backendWsServer.ts
+ * @file packages/core/src/backendWsServer.ts
  * @description This file contains the class BackendWsServer.
  * @author Luca Liguori
  * @created 2026-03-30
@@ -29,6 +29,7 @@
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiMatter,
   BridgeStatus,
@@ -54,7 +55,6 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import type { Backend } from './backend.js';
-import { BroadcastServer } from './broadcastServer.js';
 
 logModuleLoaded('BackendWsServer');
 

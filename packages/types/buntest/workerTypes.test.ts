@@ -6,12 +6,13 @@
 
 import { describe, expect, test } from 'bun:test';
 
-import { isArchiveWorkerData, isSpawnWorkerData, isWorkerData } from '../src/workerTypes.js';
+import { isArchiveWorkerData, isRootNodeWorkerData, isSpawnWorkerData, isWorkerData } from '../src/workerTypes.js';
 
 describe('Worker data type guards', () => {
   const base = { type: 'worker', threadName: 'SystemCheck', logLevel: 'info', debug: false, verbose: false, tracker: false };
   const spawn = { ...base, command: 'npm', args: ['install'], packageCommand: 'install', packageName: 'some-pkg' };
   const archive = { ...base, command: 'zip', archivePath: '/tmp/out.zip', sourcePaths: ['/tmp/src'], destinationPath: '/tmp/dst' };
+  const rootNode = { ...base, threadName: 'RootNode', sharedMatterbridge: { matterbridgeVersion: '3.10.13' }, pluginName: 'matterbridge-test' };
 
   describe('isWorkerData', () => {
     test('should accept thread execution type', () => {
@@ -37,6 +38,10 @@ describe('Worker data type guards', () => {
 
     test('should return true for valid archive worker data', () => {
       expect(isWorkerData(archive)).toBe(true);
+    });
+
+    test('should return true for valid root node worker data', () => {
+      expect(isWorkerData(rootNode)).toBe(true);
     });
 
     test('should return false for null', () => {
@@ -144,6 +149,59 @@ describe('Worker data type guards', () => {
 
     test('should return false for null', () => {
       expect(isArchiveWorkerData(null)).toBe(false);
+    });
+  });
+
+  describe('isRootNodeWorkerData', () => {
+    test('should return true for valid root node worker data', () => {
+      expect(isRootNodeWorkerData(rootNode)).toBe(true);
+    });
+
+    test('should return true for valid root node worker data with thread execution type', () => {
+      expect(isRootNodeWorkerData({ ...rootNode, type: 'thread' })).toBe(true);
+    });
+
+    test('should return false for plain base worker data', () => {
+      expect(isRootNodeWorkerData(base)).toBe(false);
+    });
+
+    test('should return false for spawn worker data', () => {
+      expect(isRootNodeWorkerData(spawn)).toBe(false);
+    });
+
+    test('should return false for archive worker data', () => {
+      expect(isRootNodeWorkerData(archive)).toBe(false);
+    });
+
+    test('should return false when the base worker data is invalid', () => {
+      expect(isRootNodeWorkerData({ ...rootNode, debug: 'true' })).toBe(false);
+    });
+
+    test('should return false when sharedMatterbridge is missing', () => {
+      const { sharedMatterbridge: _, ...rest } = rootNode;
+      expect(isRootNodeWorkerData(rest)).toBe(false);
+    });
+
+    test.each([null, undefined, 'matterbridge', 1])('should return false when sharedMatterbridge is %s', (sharedMatterbridge) => {
+      expect(isRootNodeWorkerData({ ...rootNode, sharedMatterbridge })).toBe(false);
+    });
+
+    test('should return true when pluginName is missing (bridge mode)', () => {
+      const { pluginName: _, ...rest } = rootNode;
+      expect(isRootNodeWorkerData(rest)).toBe(true);
+    });
+
+    test('should return true when pluginName is undefined (bridge mode)', () => {
+      expect(isRootNodeWorkerData({ ...rootNode, pluginName: undefined })).toBe(true);
+    });
+
+    test('should return false when pluginName is not a string', () => {
+      expect(isRootNodeWorkerData({ ...rootNode, pluginName: 42 })).toBe(false);
+      expect(isRootNodeWorkerData({ ...rootNode, pluginName: null })).toBe(false);
+    });
+
+    test('should return false for null', () => {
+      expect(isRootNodeWorkerData(null)).toBe(false);
     });
   });
 });

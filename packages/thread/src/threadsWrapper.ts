@@ -62,11 +62,11 @@ export class ThreadsWrapper {
    * Initializes the worker by sending an init message to the parent and logging the initialization if debug is enabled.
    *
    * @param {ThreadNames} name - The name of the worker thread, used for logging and identification purposes.
-   * @param { (worker: ThreadsWrapper) => Promise<boolean> } callback - A callback function that is executed after the worker is initialized.
+   * @param { (worker: ThreadsWrapper) => Promise<boolean> } entrypoint - The entrypoint of the thread, executed after the worker is initialized.
    */
   constructor(
     public name: ThreadNames,
-    public callback: (worker: ThreadsWrapper) => Promise<boolean>,
+    public entrypoint: (worker: ThreadsWrapper) => Promise<boolean>,
   ) {
     // Update debug, verbose and tracker flags if workerData is available
     if (this.workerData) {
@@ -116,9 +116,6 @@ export class ThreadsWrapper {
             this.parentPost({ type: 'pong', threadId, threadName: this.name });
             this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} sent pong message type to parent: ${debugStringify(message)}`);
             break;
-          case 'pong':
-            this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} received pong message type from parent: ${debugStringify(message)}`);
-            break;
           default:
             this.parentLog(this.name, LogLevel.WARN, `Worker ${this.name}:${threadId} received unknown message type from parent: ${debugStringify(message)}`);
         }
@@ -142,9 +139,9 @@ export class ThreadsWrapper {
         void (async (): Promise<void> => {
           let success = false;
           try {
-            success = await callback(this);
+            success = await entrypoint(this);
           } catch (err) {
-            inspectError(this.log, `Worker ${this.name} callback failed`, err);
+            inspectError(this.log, `Worker ${this.name} entrypoint failed`, err);
           } finally {
             if (!success || this.workerData?.type !== 'thread') this.destroy(success);
           }

@@ -1,19 +1,19 @@
 /**
- * @file packages/thread/vitest/threadBackend.test.ts
+ * @file packages/core/vitest/threadBackend.test.ts
  * @description Tests Backend thread initialization and lifetime.
  * @author Luca Liguori
  */
 
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
-
-import { BroadcastServer } from '../src/broadcastServer.js';
-import type { ThreadsWrapper } from '../src/threadsWrapper.js';
-import { matterbridge } from './sharedMatterbridge.js';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import type { ThreadsWrapper } from '@matterbridge/thread/wrapper';
+import type { SharedMatterbridge } from '@matterbridge/types';
 
 // Setup the test environment
 await setupTest('ThreadBackend', false);
 
 describe('ThreadBackend', () => {
+  const matterbridge = { matterbridgeVersion: '3.10.13' } as unknown as SharedMatterbridge;
   const start = vi.fn<() => Promise<void>>();
   const destroy = vi.fn();
   const createBackend = vi.fn();
@@ -34,7 +34,7 @@ describe('ThreadBackend', () => {
         }
       },
     }));
-    wrapper = (await import('../src/threadBackend.js')).default;
+    wrapper = (await import('../src/runners/threadBackend.js')).default;
     vi.spyOn(wrapper, 'logger').mockImplementation(() => {});
     responder = new BroadcastServer('matterbridge', wrapper.log);
     responder.on('broadcast_message', (msg) => {
@@ -58,8 +58,8 @@ describe('ThreadBackend', () => {
         completeStartup = resolve;
       }),
     );
-    const result = wrapper.callback(wrapper);
-    await vi.waitFor(() => expect(start).toHaveBeenCalledOnce());
+    const result = wrapper.entrypoint(wrapper);
+    await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1));
     expect(createBackend).toHaveBeenCalledWith(matterbridge);
     expect(wrapper.name).toBe('Backend');
     expect(destroy).not.toHaveBeenCalled();
@@ -70,7 +70,7 @@ describe('ThreadBackend', () => {
 
   test('should report failure when fetching shared state fails', async () => {
     vi.spyOn(wrapper.server, 'fetch').mockRejectedValue(new Error('Shared state unavailable'));
-    await expect(wrapper.callback(wrapper)).resolves.toBe(false);
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(false);
     expect(createBackend).not.toHaveBeenCalled();
     expect(start).not.toHaveBeenCalled();
     expect(destroy).not.toHaveBeenCalled();
@@ -80,15 +80,15 @@ describe('ThreadBackend', () => {
     createBackend.mockImplementation(() => {
       throw new Error('Backend construction failed');
     });
-    await expect(wrapper.callback(wrapper)).resolves.toBe(false);
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(false);
     expect(start).not.toHaveBeenCalled();
     expect(destroy).not.toHaveBeenCalled();
   });
 
   test('should report failure when Backend startup rejects', async () => {
     start.mockRejectedValue(new Error('Backend startup failed'));
-    await expect(wrapper.callback(wrapper)).resolves.toBe(false);
-    expect(start).toHaveBeenCalledOnce();
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(false);
+    expect(start).toHaveBeenCalledTimes(1);
     expect(destroy).not.toHaveBeenCalled();
   });
 });

@@ -181,6 +181,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.port = matterbridge.port;
     this.passcode = matterbridge.passcode;
     this.discriminator = matterbridge.discriminator;
+    this.mdnsInterface = matterbridge.mdnsInterface;
 
     // Setup the broadcast server
     this.server = new BroadcastServer('matter', this.log);
@@ -202,6 +203,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
+    if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
 
     if (this.verbose) this.log.debug(`Matter Environment is ready`);
 

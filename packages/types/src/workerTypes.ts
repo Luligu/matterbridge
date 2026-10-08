@@ -23,8 +23,10 @@
 
 import type { LogLevel } from 'node-ansi-logger';
 
+import type { SharedMatterbridge } from './matterbridgeTypes.js';
+
 /** Thread names used in the thread system */
-export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend';
+export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend' | 'RootNode';
 
 /** Thread type used in the thread system */
 export type ThreadType = 'worker' | 'thread';
@@ -67,8 +69,20 @@ export interface ArchiveWorkerData {
   destinationPath: string;
 }
 
+/** Worker data for root node worker. Without pluginName the root node runs in bridge mode with all the plugins */
+export interface RootNodeWorkerData {
+  threadName: ThreadNames;
+  type?: ThreadType;
+  logLevel?: LogLevel;
+  debug?: boolean;
+  verbose?: boolean;
+  tracker?: boolean;
+  sharedMatterbridge: SharedMatterbridge;
+  pluginName?: string;
+}
+
 /** Worker data for all workers */
-export type WorkerData = BaseWorkerData | SpawnWorkerData | ArchiveWorkerData;
+export type WorkerData = BaseWorkerData | SpawnWorkerData | ArchiveWorkerData | RootNodeWorkerData;
 
 /**
  *  Type guard to check if the workerData is valid.
@@ -104,8 +118,6 @@ export function isWorkerData(data: unknown): data is WorkerData {
 export function isSpawnWorkerData(data: unknown): data is SpawnWorkerData {
   return (
     isWorkerData(data) &&
-    typeof data === 'object' &&
-    data !== null &&
     'command' in data &&
     typeof data.command === 'string' &&
     'args' in data &&
@@ -126,8 +138,6 @@ export function isSpawnWorkerData(data: unknown): data is SpawnWorkerData {
 export function isArchiveWorkerData(data: unknown): data is ArchiveWorkerData {
   return (
     isWorkerData(data) &&
-    typeof data === 'object' &&
-    data !== null &&
     'command' in data &&
     typeof data.command === 'string' &&
     'archivePath' in data &&
@@ -139,10 +149,35 @@ export function isArchiveWorkerData(data: unknown): data is ArchiveWorkerData {
   );
 }
 
+/**
+ * Type guard to check if the workerData is for the root node worker.
+ *
+ * @param {WorkerData} data - The worker data to check.
+ * @returns {data is RootNodeWorkerData} True if the data is for the root node worker, false otherwise.
+ */
+export function isRootNodeWorkerData(data: unknown): data is RootNodeWorkerData {
+  return (
+    isWorkerData(data) &&
+    'sharedMatterbridge' in data &&
+    typeof data.sharedMatterbridge === 'object' &&
+    data.sharedMatterbridge !== null &&
+    (!('pluginName' in data) || data.pluginName === undefined || typeof data.pluginName === 'string')
+  );
+}
+
 /** Control messages sent through parentPort manager <-> workers */
 export type ParentPortMessage =
+  // Worker -> manager: the worker started (sent by ThreadsWrapper when initialized)
   | { type: 'init'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean }
+  // Manager -> worker: liveness check (sent by ThreadsManager on its interval)
   | { type: 'ping'; threadName: ThreadNames; threadId: number }
+  // Worker -> manager: reply to a ping
   | { type: 'pong'; threadName: ThreadNames; threadId: number }
+  // Worker -> manager: log message to be logged by the manager in the main thread
   | { type: 'log'; threadName: ThreadNames; threadId: number; logName: string | undefined; logLevel: LogLevel; message: string }
-  | { type: 'exit'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean };
+  // Worker -> manager: the worker finished, with its success result
+  | { type: 'exit'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean }
+  // Manager -> worker: request the worker to start up
+  | { type: 'startup'; threadName: ThreadNames; threadId: number }
+  // Manager -> worker: request the worker to shut down
+  | { type: 'shutdown'; threadName: ThreadNames; threadId: number };

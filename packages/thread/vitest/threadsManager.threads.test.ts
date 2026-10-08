@@ -10,6 +10,7 @@ const NAME = 'ThreadsManagerThreads';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
+import url from 'node:url';
 
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
@@ -22,6 +23,9 @@ import { ThreadsManager } from '../src/threadsManager.js';
 // Setup the test environment
 await setupTest(NAME, false);
 
+// Directory of the @matterbridge/core cli module used to resolve the core runners
+const coreDirectory = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..', 'core', 'src');
+
 describe('ThreadsManagerThreads', () => {
   const log = new AnsiLogger({ logName: 'ThreadsManagerThreads', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
@@ -32,7 +36,7 @@ describe('ThreadsManagerThreads', () => {
   beforeAll(() => {
     // process.argv.push('--debug-worker');
     // Create ThreadsManager instance
-    manager = new ThreadsManager();
+    manager = new ThreadsManager(coreDirectory);
     // Create mocked broadcast servers
     broadcastserverMatterbridge = new BroadcastServer('matterbridge', log);
     broadcastserverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {

@@ -78,6 +78,7 @@ export class ThreadsManager {
 
   private interval: NodeJS.Timeout;
   private intervalMs: number;
+  private readonly coreDirectory: string;
 
   private threads: ThreadInfo[] = [
     { name: 'CheckUpdates', path: 'workerCheckUpdates.js', type: 'worker' },
@@ -87,6 +88,7 @@ export class ThreadsManager {
     { name: 'ArchiveCommand', path: 'workerArchiveCommand.js', type: 'worker' },
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
     { name: 'Backend', path: 'threadBackend.js', type: 'thread' },
+    { name: 'RootNode', path: 'threadRootNode.js', type: 'thread' },
   ];
 
   private terminateWorkers = new Set<Worker>();
@@ -94,9 +96,10 @@ export class ThreadsManager {
   /**
    * Initialize the ThreadsManager by setting up the check interval, broadcast server, and listeners.
    *
+   * @param {string} coreDirectory - The directory of the `@matterbridge/core` cli module (its `src` or `dist` directory), used to resolve the core runners.
    * @param {number} [intervalMs=60_000] - The delay in milliseconds for the interval handler. Defaults to 60 seconds (60000 ms).
    */
-  constructor(intervalMs: number = 60_000) {
+  constructor(coreDirectory: string, intervalMs: number = 60_000) {
     this.debug = hasAnyParameter('debug', 'verbose', 'debug-threads', 'verbose-threads');
     this.verbose = hasAnyParameter('verbose', 'verbose-threads');
     this.tracker = hasAnyParameter('tracker', 'tracker-threads');
@@ -117,6 +120,7 @@ export class ThreadsManager {
 
     // Set up an interval to log thread status every minute for debugging purposes
     this.intervalMs = intervalMs;
+    this.coreDirectory = coreDirectory;
     this.interval = setInterval(this.intervalHandler.bind(this), this.intervalMs);
 
     if (this.verbose) this.log.notice(`ThreadsManager initialized. Listening for broadcast messages...`);
@@ -169,6 +173,9 @@ export class ThreadsManager {
     }
   }
 
+  /**
+   * Terminate all workers that have exited.
+   */
   private terminateExitedWorkers(): void {
     if (this.terminateWorkers.size > 0) {
       this.log.debug(`Terminating ${this.terminateWorkers.size} workers that have exited...`);
@@ -184,6 +191,9 @@ export class ThreadsManager {
     }
   }
 
+  /**
+   * Handle the interval for checking thread statuses and terminating exited workers.
+   */
   private intervalHandler(): void {
     for (const thread of this.threads) {
       this.log.debug(
@@ -239,7 +249,7 @@ export class ThreadsManager {
     threadInfo.worker = this.createESMWorker(
       threadInfo.name,
       path,
-      { ...workerData, type: threadInfo.type, debug: this.debug, verbose: this.verbose, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel/tracker in workerData for workers to adjust their logging behavior
+      { ...workerData, type: threadInfo.type, debug: this.debug, verbose: this.verbose, tracker: this.tracker, logLevel: this.log.logLevel }, // Pass debug/verbose/logLevel/tracker in workerData for workers to adjust their logging behavior
       argv,
       env,
       execArgv,
@@ -333,10 +343,10 @@ export class ThreadsManager {
 
     let success = false;
     const threadsWrapper: ThreadsWrapper = (await import(this.resolvePath(threadInfo.path))).default;
-    if (threadsWrapper && typeof threadsWrapper === 'object' && threadsWrapper.name === name && threadsWrapper.callback && typeof threadsWrapper.callback === 'function') {
+    if (threadsWrapper && typeof threadsWrapper === 'object' && threadsWrapper.name === name && threadsWrapper.entrypoint && typeof threadsWrapper.entrypoint === 'function') {
       threadsWrapper.workerData = workerData ? { ...workerData, type: threadInfo.type } : null;
       try {
-        success = await threadsWrapper.callback(threadsWrapper);
+        success = await threadsWrapper.entrypoint(threadsWrapper);
       } finally {
         if (!success || threadInfo.type !== 'thread') threadsWrapper.destroy(success);
       }
@@ -347,7 +357,7 @@ export class ThreadsManager {
   }
 
   /**
-   * Resolve a file path located in the `@matterbridge/thread` distribution directory.
+   * Resolve a file path located in the `@matterbridge/thread` distribution directory or in the `@matterbridge/core` runners directory.
    *
    * @remarks
    * Matterbridge spawns ESM workers from built JavaScript files (e.g. `workerCheckUpdates.js`).
@@ -360,19 +370,26 @@ export class ThreadsManager {
    * - **Bundled**: when the package is bundled, the worker files live in a `workers/`
    *   subdirectory alongside the current module (`.../dist/workers/...`).
    *
-   * This helper tries all three locations and returns the first existing candidate.
+   * The same locations are then tried, from the core directory (the directory of the `@matterbridge/core` cli module), for the core runners: `<core>/runners`, `<core>/../dist/runners` and `<core>/../src/runners` (bun).
+   * The core directory comes from the cli `import.meta.url`, so it is correct for hoisted, nested, isolated and bundled layouts.
+   *
+   * This helper tries all the locations and returns the first existing candidate.
    *
    * @param {string} fileName - Worker/build artifact file name, e.g. `workerGlobalPrefix.js`.
    * @returns {string} Absolute path to the resolved file. If none exists, returns the first candidate (best effort).
    */
   resolvePath(fileName: string): string {
-    const currentModuleDirectory = path.dirname(fileURLToPath(import.meta.url));
-    // This core package's src or dist directory or the global installation dist directory for thread package
+    const threadDirectory = path.dirname(fileURLToPath(import.meta.url));
     const candidates = [
-      path.join(currentModuleDirectory, fileName), // Current dist directory for production
-      path.join(currentModuleDirectory, '..', 'dist', fileName), // Current src directory for tests
-      path.join(currentModuleDirectory, '..', 'src', fileName.replace(/\.js$/, '.ts')), // Current src directory for bun
-      path.join(currentModuleDirectory, 'workers', fileName), // Current dist workers directory for bundled workers
+      // This thread package's src or dist directory or the global installation dist directory for thread package
+      path.join(threadDirectory, fileName), // Current dist directory for production
+      path.join(threadDirectory, '..', 'dist', fileName), // Current src directory for tests
+      path.join(threadDirectory, '..', 'src', fileName.replace(/\.js$/, '.ts')), // Current src directory for bun
+      path.join(threadDirectory, 'workers', fileName), // Current dist workers directory for bundled workers
+      // The core package's src or dist runners directory
+      path.join(this.coreDirectory, 'runners', fileName), // Core dist runners directory for production and bundled
+      path.join(this.coreDirectory, '..', 'dist', 'runners', fileName), // Core src directory for tests
+      path.join(this.coreDirectory, '..', 'src', 'runners', fileName.replace(/\.js$/, '.ts')), // Core src runners directory for bun
     ];
     for (const candidate of candidates) {
       if (fs.existsSync(candidate)) return candidate;

@@ -22,6 +22,9 @@ import { ThreadsManager } from '../src/threadsManager.js';
 // Setup the test environment
 await setupTest(NAME, false);
 
+// Directory of the @matterbridge/core cli module used to resolve the core runners
+const coreDirectory = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..', 'core', 'src');
+
 describe('ThreadsManager', () => {
   const moduleDirectory = path.dirname(url.fileURLToPath(new URL('../src/threadsManager.js', import.meta.url)));
   const tempWorkerDirectory = path.resolve('.cache', 'vitest', NAME, 'temp-workers');
@@ -56,7 +59,7 @@ describe('ThreadsManager', () => {
       if (flag) process.argv.push(`--${flag}`);
       let manager: ThreadsManager | undefined;
       try {
-        manager = new ThreadsManager();
+        manager = new ThreadsManager(coreDirectory);
         expect(manager['debug']).toBe(debug);
         expect(manager['verbose']).toBe(verbose);
         expect(manager['tracker']).toBe(tracker);
@@ -70,7 +73,7 @@ describe('ThreadsManager', () => {
   });
 
   describe('resolvePath', () => {
-    const manager = new ThreadsManager();
+    const manager = new ThreadsManager(coreDirectory);
 
     const tempFileName = 'resolvePath.test.tmp.js';
     const tempSrcPath = path.join(moduleDirectory, tempFileName);
@@ -122,17 +125,42 @@ describe('ThreadsManager', () => {
 
       expect(resolved).toBe(expectedFirstCandidate);
     });
+
+    test('resolves the core runners candidates when the core directory is provided', () => {
+      const coreRoot = path.join(tempWorkerDirectory, 'core');
+      const coreSrc = path.join(coreRoot, 'src');
+      const coreDist = path.join(coreRoot, 'dist');
+      const fileName = 'resolvePath.core.test.tmp.js';
+      rmSync(coreRoot, { recursive: true, force: true });
+      mkdirSync(path.join(coreSrc, 'runners'), { recursive: true });
+      mkdirSync(path.join(coreDist, 'runners'), { recursive: true });
+      const coreManager = new ThreadsManager(coreSrc);
+      try {
+        // Bun: the core src runners directory with the .ts extension
+        writeFileSync(path.join(coreSrc, 'runners', 'resolvePath.core.test.tmp.ts'), '// temp test file', { encoding: 'utf8' });
+        expect(coreManager.resolvePath(fileName)).toBe(path.join(coreSrc, 'runners', 'resolvePath.core.test.tmp.ts'));
+        // Tests: the core dist runners directory from the core src directory
+        writeFileSync(path.join(coreDist, 'runners', fileName), '// temp test file', { encoding: 'utf8' });
+        expect(coreManager.resolvePath(fileName)).toBe(path.join(coreDist, 'runners', fileName));
+        // Production: the runners directory alongside the core module
+        writeFileSync(path.join(coreSrc, 'runners', fileName), '// temp test file', { encoding: 'utf8' });
+        expect(coreManager.resolvePath(fileName)).toBe(path.join(coreSrc, 'runners', fileName));
+      } finally {
+        coreManager.destroy();
+        rmSync(coreRoot, { recursive: true, force: true });
+      }
+    });
   });
 
   describe('runThread', () => {
     test('throws when the thread is not found', () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       expect(() => manager.runThread('DoesNotExist')).toThrow('Thread DoesNotExist not found');
       manager.destroy();
     });
 
     test('throws when the resolved worker file does not exist', () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const fileName = `runThread.does-not-exist.${Date.now()}.js`;
       const threads = (manager as any).threads as Array<{ name: string; path: string; type: ThreadType }>;
       threads.push({ name: 'MissingFileWorker', path: fileName, type: 'worker' });
@@ -141,7 +169,7 @@ describe('ThreadsManager', () => {
     });
 
     test('starts a thread and creates a worker with expected workerData and argv', async () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
 
       const tempWorkerFileName = `runThread.test.worker.${Date.now()}.js`;
       const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
@@ -205,6 +233,11 @@ describe('ThreadsManager', () => {
         expect(message.workerData).toBeDefined();
         expect(message.workerData.foo).toBe('bar');
         expect(message.workerData.type).toBe('worker');
+        // ThreadsManager adds the base worker data used by isWorkerData
+        expect(message.workerData.debug).toBe((manager as any).debug);
+        expect(message.workerData.verbose).toBe((manager as any).verbose);
+        expect(message.workerData.tracker).toBe((manager as any).tracker);
+        expect(message.workerData.logLevel).toBe((manager as any).log.logLevel);
         // ThreadsManager adds threadName into workerData
         expect(message.workerData.threadName).toBe('TestWorker');
         expect(Array.isArray(message.argv)).toBe(true);
@@ -235,7 +268,7 @@ describe('ThreadsManager', () => {
 
   describe('destroy', () => {
     test('closes the broadcast server', () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const closeSpy = vi.spyOn((manager as any).server, 'close');
       manager.destroy();
       expect(closeSpy).toHaveBeenCalledTimes(1);
@@ -248,7 +281,7 @@ describe('ThreadsManager', () => {
       process.argv = savedArgv.filter((arg) => arg !== '--verbose' && arg !== '-verbose');
 
       try {
-        const manager = new ThreadsManager();
+        const manager = new ThreadsManager(coreDirectory);
         const server = (manager as any).server;
         const respondSpy = vi.spyOn(server, 'respond').mockImplementation(() => {});
         const debugSpy = vi.spyOn((manager as any).log, 'debug');
@@ -286,7 +319,7 @@ describe('ThreadsManager', () => {
       process.argv = [...originalProcessArgv.slice(0, 2), '--debug'];
 
       try {
-        const manager = new ThreadsManager();
+        const manager = new ThreadsManager(coreDirectory);
         const server = (manager as any).server;
         const respondSpy = vi.spyOn(server, 'respond').mockImplementation(() => {});
 
@@ -312,7 +345,7 @@ describe('ThreadsManager', () => {
     });
 
     test('responds to manager_run (success + failure)', async () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const server = (manager as any).server;
       const respondSpy = vi.spyOn(server, 'respond').mockImplementation(() => {});
 
@@ -355,7 +388,7 @@ describe('ThreadsManager', () => {
       process.argv = [...originalProcessArgv.slice(0, 2), '--verbose'];
 
       try {
-        const manager = new ThreadsManager();
+        const manager = new ThreadsManager(coreDirectory);
         const server = (manager as any).server;
         const respondSpy = vi.spyOn(server, 'respond').mockImplementation(() => {});
         const debugSpy = vi.spyOn((manager as any).log, 'debug');
@@ -382,7 +415,7 @@ describe('ThreadsManager', () => {
 
   describe('runInMainThread', () => {
     test('throws when the thread is not found', async () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
 
       await expect(manager.runInMainThread('DoesNotExist')).rejects.toThrow('Thread DoesNotExist not found');
 
@@ -394,7 +427,7 @@ describe('ThreadsManager', () => {
       { type: 'thread' as const, ok: true },
       { type: 'thread' as const, ok: false },
     ])('runs a $type wrapper in the main thread with success $ok', async ({ type, ok }) => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
 
       const tempWorkerFileName = `runInMainThread.test.${type}.${ok}.${Date.now()}.js`;
       const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
@@ -405,8 +438,8 @@ describe('ThreadsManager', () => {
           "  name: 'RunInMainThreadWorker',",
           '  workerData: null,',
           '  destroy: function(success) { this.destroyCalledWith = success; },',
-          '  callback: async function(worker) {',
-          '    this.callbackCalledWith = worker;',
+          '  entrypoint: async function(worker) {',
+          '    this.entrypointCalledWith = worker;',
           '    return worker.workerData?.ok === true;',
           '  },',
           '};',
@@ -428,7 +461,7 @@ describe('ThreadsManager', () => {
 
         const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
         expect(imported.workerData).toEqual({ ok, payload: 'value', type });
-        expect(imported.callbackCalledWith).toBe(imported);
+        expect(imported.entrypointCalledWith).toBe(imported);
         expect(imported.destroyCalledWith).toBe(type === 'thread' && ok ? undefined : ok);
       } finally {
         if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
@@ -437,7 +470,7 @@ describe('ThreadsManager', () => {
     });
 
     test('passes null workerData when none is given', async () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
 
       const tempWorkerFileName = `runInMainThread.nodata.${Date.now()}.js`;
       const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
@@ -448,8 +481,8 @@ describe('ThreadsManager', () => {
           "  name: 'NoDataMainThreadWorker',",
           '  workerData: undefined,',
           '  destroy: function(success) { this.destroyCalledWith = success; },',
-          '  callback: async function(worker) {',
-          '    this.callbackCalledWith = worker;',
+          '  entrypoint: async function(worker) {',
+          '    this.entrypointCalledWith = worker;',
           '    return worker.workerData === null;',
           '  },',
           '};',
@@ -470,7 +503,7 @@ describe('ThreadsManager', () => {
 
         const imported = (await import(url.pathToFileURL(tempWorkerPath).href)).default;
         expect(imported.workerData).toBeNull();
-        expect(imported.callbackCalledWith).toBe(imported);
+        expect(imported.entrypointCalledWith).toBe(imported);
         expect(imported.destroyCalledWith).toBe(true);
       } finally {
         if (existsSync(tempWorkerPath)) rmSync(tempWorkerPath, { force: true });
@@ -479,11 +512,11 @@ describe('ThreadsManager', () => {
     });
 
     test('returns false when the imported default export is not a matching worker wrapper', async () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
 
       const tempWorkerFileName = `runInMainThread.invalid.${Date.now()}.js`;
       const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
-      writeFileSync(tempWorkerPath, "export default { name: 'DifferentName', callback: async () => true, destroy: () => undefined };", { encoding: 'utf8' });
+      writeFileSync(tempWorkerPath, "export default { name: 'DifferentName', entrypoint: async () => true, destroy: () => undefined };", { encoding: 'utf8' });
 
       try {
         vi.spyOn(manager, 'resolvePath').mockReturnValue(tempWorkerPath);
@@ -513,7 +546,7 @@ describe('ThreadsManager', () => {
       process.argv = [...originalProcessArgv.slice(0, 2), '--verbose', defaultArgvMarker];
       delete process.env.FOO;
 
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const debugSpy = vi.spyOn((manager as any).log, 'debug');
 
       const tempWorkerFileName = `createESMWorker.test.worker.${Date.now()}.js`;
@@ -566,7 +599,7 @@ describe('ThreadsManager', () => {
       // Ensure ThreadsManager.verbose is false so we cover the non-logging branch.
       process.argv = savedArgv.filter((arg) => arg !== '--verbose' && arg !== '-verbose' && arg !== '--verbose-worker' && arg !== '-verbose-worker');
 
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const tempWorkerFileName = `createESMWorker.test.worker2.${Date.now()}.js`;
       const tempWorkerPath = path.join(tempWorkerDirectory, tempWorkerFileName);
       writeFileSync(
@@ -606,7 +639,7 @@ describe('ThreadsManager', () => {
 
   describe('intervalHandler', () => {
     test('logs thread status', () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const debugSpy = vi.spyOn((manager as any).log, 'debug');
 
       (manager as any).intervalHandler();
@@ -630,7 +663,7 @@ describe('ThreadsManager', () => {
     });
 
     test('terminates workers queued for cleanup', () => {
-      const manager = new ThreadsManager();
+      const manager = new ThreadsManager(coreDirectory);
       const debugSpy = vi.spyOn((manager as any).log, 'debug');
       const errorSpy = vi.spyOn((manager as any).log, 'error');
       const terminateWorker = { threadId: 123, terminate: vi.fn(async () => 0) };
@@ -658,7 +691,7 @@ describe('ThreadsManager', () => {
     });
 
     test('pings after interval and warns after 2x interval', () => {
-      const manager = new ThreadsManager(1000);
+      const manager = new ThreadsManager(coreDirectory, 1000);
       const warnSpy = vi.spyOn((manager as any).log, 'warn');
 
       const threads = (manager as any).threads as Array<any>;
@@ -735,7 +768,7 @@ describe('ThreadsManager', () => {
       });
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
@@ -817,7 +850,7 @@ describe('ThreadsManager', () => {
       });
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
@@ -866,7 +899,7 @@ describe('ThreadsManager', () => {
       });
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
@@ -910,7 +943,7 @@ describe('ThreadsManager', () => {
       });
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       const errorSpy = vi.spyOn((manager as any).log, 'error');
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
@@ -956,7 +989,7 @@ describe('ThreadsManager', () => {
       const logSpy = vi.fn<(...args: any[]) => any>();
       createSpy.mockReturnValue({ log: logSpy } as any);
 
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       manager['verbose'] = verbose;
       const debugSpy = vi.spyOn(manager['log'], 'debug');
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
@@ -1001,7 +1034,7 @@ describe('ThreadsManager', () => {
       });
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
 
@@ -1045,7 +1078,7 @@ describe('ThreadsManager', () => {
       });
 
       const { ThreadsManager: ThreadsManagerMocked } = await import('../src/threadsManager.js');
-      const manager = new ThreadsManagerMocked();
+      const manager = new ThreadsManagerMocked(coreDirectory);
       const errorSpy = vi.spyOn((manager as any).log, 'error');
       // Worker is mocked, so the resolved path only needs to exist to pass the file check.
       vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));

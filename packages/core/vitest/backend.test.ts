@@ -1,5 +1,5 @@
 /**
- * @file packages/thread/vitest/backend.test.ts
+ * @file packages/core/vitest/backend.test.ts
  * @description This file contains the tests for the Backend class.
  * @author Luca Liguori
  */
@@ -16,23 +16,23 @@ import tls from 'node:tls';
 
 import { getFreePort } from '@matterbridge/test-utils';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
-import { NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import { type ApiMatter, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { WebSocket } from 'ws';
 
 import { Backend } from '../src/backend.js';
-import { BroadcastServer } from '../src/broadcastServer.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
 
 const CERTS_DIR = path.join(HOMEDIR, 'certs');
 
-const caCert = readFileSync(new URL('./fixtures/certs/ca.crt', import.meta.url), 'utf8');
-const clientCert = readFileSync(new URL('./fixtures/certs/client.crt', import.meta.url), 'utf8');
-const clientKey = readFileSync(new URL('./fixtures/certs/client.key', import.meta.url), 'utf8');
+const caCert = readFileSync(new URL('../src/mock/certs/ca.crt', import.meta.url), 'utf8');
+const clientCert = readFileSync(new URL('../src/mock/certs/client.crt', import.meta.url), 'utf8');
+const clientKey = readFileSync(new URL('../src/mock/certs/client.key', import.meta.url), 'utf8');
 
 /**
  * Create the shared Matterbridge object used by the Backend.
@@ -52,13 +52,13 @@ function createSharedMatterbridge(ipv4Address: string = '', ipv6Address: string 
 /**
  * Empty the certs directory and copy the given mock certificates into it.
  *
- * @param {Record<string, string>} files - Map of destination file name in the certs directory to the source file name in fixtures/certs.
+ * @param {Record<string, string>} files - Map of destination file name in the certs directory to the source file name in src/mock/certs.
  */
 function setCerts(files: Record<string, string>): void {
   rmSync(CERTS_DIR, { recursive: true, force: true });
   mkdirSync(CERTS_DIR, { recursive: true });
   for (const [destination, source] of Object.entries(files)) {
-    copyFileSync(new URL(`./fixtures/certs/${source}`, import.meta.url), path.join(CERTS_DIR, destination));
+    copyFileSync(new URL(`../src/mock/certs/${source}`, import.meta.url), path.join(CERTS_DIR, destination));
   }
 }
 
@@ -253,11 +253,14 @@ describe('Backend', () => {
     process.argv = [...originalProcessArgv.slice(0, 2), flag];
     backend = new Backend(createSharedMatterbridge());
 
+    const matterServer = new BroadcastServer('matter', log);
+    matterServer.on('broadcast_message', (msg: WorkerMessage) => {
+      if (matterServer.isWorkerRequestOfType(msg, 'matter_apimatter')) {
+        matterServer.respond({ ...msg, result: { matter: { id: msg.params.id } as unknown as ApiMatter } });
+      }
+    });
     const matterbridgeServer = new BroadcastServer('matterbridge', log);
     matterbridgeServer.on('broadcast_message', (msg: WorkerMessage) => {
-      if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_apimatter')) {
-        matterbridgeServer.respond({ ...msg, result: { matter: undefined } });
-      }
       if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_apisettings')) {
         matterbridgeServer.respond({ ...msg, result: { data: { test: 'settings' } as any, success: true } });
       }
@@ -275,7 +278,7 @@ describe('Backend', () => {
       }
     });
 
-    expect(await backend.getApiMatter('missing')).toBeUndefined();
+    expect(await backend.getApiMatter('Matterbridge')).toEqual({ id: 'Matterbridge' });
     expect(await backend.getApiSettings()).toEqual({ test: 'settings' });
     expect(await backend.getApiPlugins()).toEqual([{ name: 'plugin1' }]);
     expect(await backend.getApiDevices('plugin1')).toEqual([{ pluginName: 'plugin1' }]);
@@ -289,6 +292,7 @@ describe('Backend', () => {
       expect(stderrSpy.mock.calls.some(([message]) => timing.test(String(message)))).toBe(Boolean(flag));
     }
     stderrSpy.mockRestore();
+    matterServer.close();
     matterbridgeServer.close();
     pluginsServer.close();
     devicesServer.close();

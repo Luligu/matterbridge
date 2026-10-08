@@ -1,5 +1,5 @@
 /**
- * @file packages/thread/vitest/backendWsServer.test.ts
+ * @file packages/core/vitest/backendWsServer.test.ts
  * @description This file contains the tests for backendWsServer.
  * @author Luca Liguori
  */
@@ -10,12 +10,12 @@ import { EventEmitter } from 'node:events';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiMatter, SharedMatterbridge } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
 import { BackendWsServer } from '../src/backendWsServer.js';
-import { BroadcastServer } from '../src/broadcastServer.js';
 
 // Spy on BroadcastServer methods
 const isWorkerRequestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
@@ -233,7 +233,8 @@ describe('BackendWsServer', () => {
   test('should respond with pong when an API ping request is received', async () => {
     const client = new FakeClient();
     await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 9, src: 'Frontend', dst: 'Matterbridge', method: 'ping', params: {} })));
-    expect(client.send).toHaveBeenCalledExactlyOnceWith(JSON.stringify({ id: 9, method: 'pong', src: 'Matterbridge', dst: 'Frontend', success: true, response: 'pong' }));
+    expect(client.send).toHaveBeenCalledTimes(1);
+    expect(client.send).toHaveBeenCalledWith(JSON.stringify({ id: 9, method: 'pong', src: 'Matterbridge', dst: 'Frontend', success: true, response: 'pong' }));
   });
 
   test('should serialize bigint response values with an n suffix and preserve other values', async () => {
@@ -244,7 +245,8 @@ describe('BackendWsServer', () => {
       client,
       Buffer.from(JSON.stringify({ id: 8, src: 'Frontend', dst: 'Matterbridge', method: '/api/matter', params: { id: 'Matterbridge' } })),
     );
-    expect(client.send).toHaveBeenCalledExactlyOnceWith(
+    expect(client.send).toHaveBeenCalledTimes(1);
+    expect(client.send).toHaveBeenCalledWith(
       JSON.stringify({
         id: 8,
         method: '/api/matter',

@@ -1,5 +1,5 @@
 /**
- * @file packages/thread/src/threadBackend.ts
+ * @file packages/core/src/runners/threadBackend.ts
  * @description This file contains the threadBackend thread.
  * @author Luca Liguori
  * @created 2026-10-05
@@ -21,11 +21,10 @@
  * limitations under the License.
  */
 
+import { ThreadsWrapper } from '@matterbridge/thread/wrapper';
 import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
-
-import { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('Backend', '\u001B[35m');
 
@@ -35,7 +34,7 @@ export default new ThreadsWrapper('Backend', async (worker) => {
     worker.logger(LogLevel.DEBUG, 'Fetching shared Matterbridge state...');
     const shared = (await worker.server.fetch({ type: 'matterbridge_shared', src: 'matterbridge', dst: 'matterbridge' }, 1000)).result.data;
     worker.logger(LogLevel.DEBUG, 'Shared Matterbridge state fetched; importing Backend...');
-    const { Backend } = await import('./backend.js');
+    const { Backend } = await import('../backend.js');
     worker.logger(LogLevel.DEBUG, 'Backend imported; creating instance...');
     const backend = new Backend(shared);
     worker.logger(LogLevel.DEBUG, 'Starting Backend...');
