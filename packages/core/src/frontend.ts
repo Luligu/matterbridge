@@ -91,7 +91,7 @@ import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, n
 import type { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
+import { cliEmitter } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
 import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
@@ -1271,8 +1271,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
     this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
     this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
-    this.matterbridge.systemInformation.cpuUsage = formatPercent(lastOsCpuUsage);
-    this.matterbridge.systemInformation.processCpuUsage = formatPercent(lastProcessCpuUsage);
+    this.matterbridge.systemInformation.cpuUsage = formatPercent(0);
+    this.matterbridge.systemInformation.processCpuUsage = formatPercent(0);
     this.matterbridge.systemInformation.rss = formatBytes(memoryFootprint());
     this.matterbridge.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
     this.matterbridge.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);

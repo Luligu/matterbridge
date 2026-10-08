@@ -36,26 +36,3 @@ interface CliEvents {
 }
 
 export const cliEmitter = new EventEmitter<CliEvents>();
-
-export let lastOsCpuUsage = 0;
-export let lastProcessCpuUsage = 0;
-
-/**
- * Sets the last os CPU usage.
- *
- * @param {number} val - The os CPU usage percentage to set.
- * @returns {void}
- */
-export function setLastOsCpuUsage(val: number): void {
-  lastOsCpuUsage = val;
-}
-
-/**
- * Sets the last process CPU usage.
- *
- * @param {number} val - The process CPU usage percentage to set.
- * @returns {void}
- */
-export function setLastProcessCpuUsage(val: number): void {
-  lastProcessCpuUsage = val;
-}

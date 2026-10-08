@@ -59,6 +59,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Use `memoryFootprint()` for the system information RSS.
 - [core]: Refresh the variable system information (memory, uptime) in `Matterbridge.getApiSettings()`.
 - [frontend]: Enable https and wss with `--ssl`, `--tls` or `--mtls` (same as the backend); `--mtls` alone now also enables https and wss.
+- [core]: Remove the unused `lastOsCpuUsage`, `lastProcessCpuUsage` and their setters from `cliEmitter`; `Frontend.getApiSettings()` reports 0 cpu usage like `Matterbridge.getApiSettings()`.
 - [thread]: Include the worker thread ID in periodic status logs.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.13.
 - [scripts]: Sync the generic scripts (`clean`, `deep-clean`, `prepublish-clean`, `create-release`, `downloads`, `git-status`, `git-sync-dev`, `prune-releases`, `prune-tags`, `remove-workflows`, `version`) to v.2.0.0 and add `bun-bundle` from matterbridge-native.
