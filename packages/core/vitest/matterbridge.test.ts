@@ -197,6 +197,23 @@ describe('Matterbridge', () => {
     cleanupSpy.mockRestore();
   });
 
+  test.each([
+    { port: 5541, passcode: 20242025, discriminator: 1234 },
+    { port: undefined, passcode: undefined, discriminator: undefined },
+  ])('should return the current Matter settings when matterbridge_matterdata is requested with %j', async (settings) => {
+    const originalSettings = { port: matterbridge.port, passcode: matterbridge.passcode, discriminator: matterbridge.discriminator };
+    const request = { id: 123456, timestamp: 123456789, type: 'matterbridge_matterdata', src: 'frontend', dst: 'matterbridge', params: undefined } as const;
+    const handler = matterbridge as unknown as { msgHandler(message: WorkerMessage): Promise<void> };
+    Object.assign(matterbridge, settings);
+    try {
+      await handler.msgHandler(request);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(1);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledWith({ ...request, result: settings });
+    } finally {
+      Object.assign(matterbridge, originalSettings);
+    }
+  });
+
   test.each(['matterbridge_restart', 'matterbridge_shutdown'] as const)('should handle %s through the process lifecycle', async (type) => {
     const lifecycleSpy = vi.spyOn(matterbridge, type === 'matterbridge_restart' ? 'restartProcess' : 'shutdownProcess').mockResolvedValueOnce();
     try {
@@ -260,7 +277,6 @@ describe('Matterbridge', () => {
   });
 
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
-    // await setDebug(true);
     expect((Matterbridge as any).instance).toBeDefined();
     matterbridge = await Matterbridge.loadInstance(true);
     expect((matterbridge as any).initialized).toBeFalsy();

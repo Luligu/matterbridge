@@ -215,6 +215,10 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
   };
+  matterbridge_matterdata: {
+    request: { params: undefined };
+    response: { result: { port: number | undefined; passcode: number | undefined; discriminator: number | undefined } };
+  };
   matterbridge_restart: {
     request: { params: undefined };
     response: { result: { success: true } };

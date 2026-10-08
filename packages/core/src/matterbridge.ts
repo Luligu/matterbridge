@@ -567,6 +567,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
           this.server.respond({ ...msg, result: { success: true } });
           break;
+        case 'matterbridge_matterdata':
+          this.server.respond({ ...msg, result: { port: this.port, passcode: this.passcode, discriminator: this.discriminator } });
+          break;
         case 'matterbridge_platform':
           this.server.respond({ ...msg, result: { data: this.getPlatformMatterbridge(), success: true } });
           break;
