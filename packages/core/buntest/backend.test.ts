@@ -78,7 +78,8 @@ async function get(url: string, options: https.RequestOptions = {}): Promise<{ s
       let body = '';
       res.setEncoding('utf8');
       res.on('data', (chunk: string) => (body += chunk));
-      res.on('end', () => resolve({ statusCode: res.statusCode, body }));
+      // Resolve when the socket is closed: Bun on Windows crashes if the next connection starts while this one is still closing
+      res.on('end', () => req.once('close', () => resolve({ statusCode: res.statusCode, body })));
     });
     req.on('error', reject);
   });
