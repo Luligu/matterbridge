@@ -323,6 +323,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   async create(): Promise<void> {
     this.log.info('Creating Matter node...');
 
+    // Setup Matter parameters
+    const { result } = await this.server.fetch({ type: 'matterbridge_matterdata', src: this.server.name, dst: 'matterbridge' });
+    this.port = result.port;
+    this.passcode = result.passcode;
+    this.discriminator = result.discriminator;
+
     // Start matter storage
     await this.startMatterStorage();
 

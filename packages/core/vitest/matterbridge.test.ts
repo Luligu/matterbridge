@@ -199,6 +199,7 @@ describe('Matterbridge', () => {
 
   test.each([
     { port: 5541, passcode: 20242025, discriminator: 1234 },
+    { port: 0, passcode: 0, discriminator: 0 },
     { port: undefined, passcode: undefined, discriminator: undefined },
   ])('should return the current Matter settings when matterbridge_matterdata is requested with %j', async (settings) => {
     const originalSettings = { port: matterbridge.port, passcode: matterbridge.passcode, discriminator: matterbridge.discriminator };
@@ -209,6 +210,15 @@ describe('Matterbridge', () => {
       await handler.msgHandler(request);
       expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(1);
       expect(respondBroadcastServerSpy).toHaveBeenCalledWith({ ...request, result: settings });
+      const nextSettings = {
+        port: settings.port === undefined ? undefined : settings.port + 1,
+        passcode: settings.passcode === undefined ? undefined : settings.passcode + 1,
+        discriminator: settings.discriminator === undefined ? undefined : settings.discriminator + 1,
+      };
+      expect({ port: matterbridge.port, passcode: matterbridge.passcode, discriminator: matterbridge.discriminator }).toEqual(nextSettings);
+      await handler.msgHandler({ ...request, id: request.id + 1 });
+      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(2);
+      expect(respondBroadcastServerSpy).toHaveBeenLastCalledWith({ ...request, id: request.id + 1, result: nextSettings });
     } finally {
       Object.assign(matterbridge, originalSettings);
     }

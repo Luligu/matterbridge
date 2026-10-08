@@ -21,10 +21,11 @@ import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
 import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
-import type { SharedMatterbridge } from '@matterbridge/types';
+import { BroadcastServer } from '@matterbridge/thread';
+import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { er, LogLevel, zb } from 'node-ansi-logger';
+import { AnsiLogger, er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from '../src/deviceManager.js';
@@ -127,6 +128,17 @@ describe('MatterNode accessory', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
+  const matterbridgeServer = new BroadcastServer('matterbridge', new AnsiLogger({ logName: 'TestMatterbridgeServer' }));
+  const nextSettings = { port: MATTER_PORT, passcode: PASSCODE, discriminator: DISCRIMINATOR };
+  matterbridgeServer.on('broadcast_message', (msg: WorkerMessage) => {
+    if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_matterdata')) {
+      matterbridgeServer.respond({ ...msg, result: { ...nextSettings } });
+      nextSettings.port++;
+      nextSettings.passcode++;
+      nextSettings.discriminator++;
+    }
+  });
+
   beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode childbridge tests ===\n\n');
 
@@ -142,6 +154,7 @@ describe('MatterNode accessory', () => {
   afterAll(async () => {
     // Close broadcast server and mDNS instance
     await matter.destroy();
+    matterbridgeServer.close();
 
     // Close PluginManager and DeviceManager
     pluginManager.destroy();
@@ -172,7 +185,10 @@ describe('MatterNode accessory', () => {
   });
 
   test('Create MatterNode in childbridge mode', async () => {
+    Object.assign(matter, { port: undefined, passcode: undefined, discriminator: undefined });
     await matter.create();
+    expect(nextSettings).toEqual({ port: MATTER_PORT + 1, passcode: PASSCODE + 1, discriminator: DISCRIMINATOR + 1 });
+    expect(matter.port).toBe(MATTER_PORT);
     expect(matter.matterStorageService).toBeDefined();
     expect(matter.serverNode).toBeUndefined(); // In childbridge mode, serverNode is created on start
   });

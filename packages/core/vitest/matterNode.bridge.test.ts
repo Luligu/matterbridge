@@ -21,7 +21,7 @@ import url from 'node:url';
 import { closeServerNodeStores } from '@matterbridge/test-utils/vitest/matter';
 import { HOMEDIR, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
-import type { SharedMatterbridge } from '@matterbridge/types';
+import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
 import { AnsiLogger, er, LogLevel, TimestampFormat, zb } from 'node-ansi-logger';
@@ -127,6 +127,17 @@ describe('MatterNode bridge', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
+  const matterbridgeServer = new BroadcastServer('matterbridge', new AnsiLogger({ logName: 'TestMatterbridgeServer' }));
+  const nextSettings = { port: MATTER_PORT, passcode: PASSCODE, discriminator: DISCRIMINATOR };
+  matterbridgeServer.on('broadcast_message', (msg: WorkerMessage) => {
+    if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_matterdata')) {
+      matterbridgeServer.respond({ ...msg, result: { ...nextSettings } });
+      nextSettings.port++;
+      nextSettings.passcode++;
+      nextSettings.discriminator++;
+    }
+  });
+
   beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode bridge tests ===\n\n');
 
@@ -142,6 +153,7 @@ describe('MatterNode bridge', () => {
   afterAll(async () => {
     // Close broadcast server and mDNS instance
     await matter.destroy();
+    matterbridgeServer.close();
 
     // Close PluginManager and DeviceManager
     pluginManager.destroy();
@@ -176,7 +188,10 @@ describe('MatterNode bridge', () => {
     await expect(matter.start()).rejects.toThrow();
     await expect(matter.stop()).rejects.toThrow();
 
+    Object.assign(matter, { port: undefined, passcode: undefined, discriminator: undefined });
     await matter.create();
+    expect(nextSettings).toEqual({ port: MATTER_PORT + 1, passcode: PASSCODE + 1, discriminator: DISCRIMINATOR + 1 });
+    expect(matter.serverNode?.state.network.port).toBe(MATTER_PORT);
     expect(matter.matterStorageService).toBeDefined();
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(false);
