@@ -521,6 +521,7 @@ describe('Backend', () => {
       // Upgrade to a protocol other than websocket
       const notWebSocket = await rawRequest(port, secure, 'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: foo\r\n\r\n');
       expect(notWebSocket).toContain('400 Bad Request');
+      expect(loggerErrorSpy).toHaveBeenCalledWith('WebSocket upgrade error: Invalid upgrade header foo');
 
       // Missing password
       const noPassword = await rawRequest(port, secure, 'GET / HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n');

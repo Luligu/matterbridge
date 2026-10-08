@@ -824,6 +824,45 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading certificate file`));
   });
 
+  test('Frontend.start() -tls without certs shall reject', async () => {
+    process.argv = [...originalProcessArgv.slice(0, 2), '-tls', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+
+    const wsProtocol = new Promise<string>((resolve) => frontend.once('websocket_server_listening', resolve));
+    frontend.start(FRONTEND_PORT);
+    await new Promise<void>((resolve) => {
+      frontend.once('server_error', () => resolve());
+    });
+    expect(await wsProtocol).toBe('wss');
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading certificate file`));
+  });
+
+  test('Frontend.start() -mtls without certs shall reject', async () => {
+    process.argv = [
+      ...originalProcessArgv.slice(0, 2),
+      '-mtls',
+      '-novirtual',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-frontend',
+      FRONTEND_PORT.toString(),
+      '-port',
+      MATTER_PORT.toString(),
+    ];
+
+    const wsProtocol = new Promise<string>((resolve) => frontend.once('websocket_server_listening', resolve));
+    frontend.start(FRONTEND_PORT);
+    await new Promise<void>((resolve) => {
+      frontend.once('server_error', () => resolve());
+    });
+    expect(await wsProtocol).toBe('wss');
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading certificate file`));
+  });
+
   test('Frontend.start() -ssl without key certs shall reject', async () => {
     process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 

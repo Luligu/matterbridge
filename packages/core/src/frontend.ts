@@ -78,7 +78,7 @@ import {
   plg,
 } from '@matterbridge/types';
 import { isBun, memoryFootprint } from '@matterbridge/utils/bun';
-import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
@@ -356,8 +356,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   async start(port: number = 8283): Promise<void> {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
+    // --ssl, --tls and --mtls enable https and wss; --mtls also requires a client certificate
+    const secure = hasAnyParameter('ssl', 'tls', 'mtls');
 
-    this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
+    this.log.debug(`Initializing the frontend ${secure ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
 
     // Initialize multer with the upload directory
     const multer = await import('multer');
@@ -383,7 +385,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug(`Creating WebSocketServer...`);
     const ws = await import('ws');
     this.webSocketServer = new ws.WebSocketServer({ noServer: true });
-    this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
+    this.emit('websocket_server_listening', secure ? 'wss' : 'ws');
 
     this.webSocketServer.on('connection', (ws, request) => {
       const clientIp = request.socket.remoteAddress;
@@ -443,7 +445,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // oxlint-disable-next-line unicorn/no-negated-condition
-    if (!hasParameter('ssl')) {
+    if (!secure) {
       // Create an HTTP server and attach the express app
       const http = await import('node:http');
       try {

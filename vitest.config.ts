@@ -90,7 +90,7 @@ export default defineConfig({
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
         'packages/core/src/matterNode.ts', // Not released files
-        'packages/thread/src/backend*.ts', // Not released files
+        'packages/core/src/backend*.ts', // Not released files
       ],
       thresholds: {
         'perFile': true,

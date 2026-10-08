@@ -326,7 +326,7 @@ function help(): void {
       --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
       --root-power-source:     add a Power Source cluster for the mains power feed on the Root endpoint
       --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
-      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
+      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https); it also enables https, so --ssl --tls is not needed
       --vendorId:              override the default vendorId 0xfff1
       --vendorName:            override the default vendorName "Matterbridge"
       --productId:             override the default productId 0x8000

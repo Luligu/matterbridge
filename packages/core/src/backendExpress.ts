@@ -183,6 +183,11 @@ export class BackendExpress {
     this.expressApp.post('/api/login', express.json(), (req, res) => {
       const { password } = req.body;
       this.log.debug(`The frontend sent /api/login with password ${password ? '[redacted]' : '(empty)'}`);
+      if (this.backend.storedPassword === undefined) {
+        this.log.error('/api/login stored password not loaded');
+        res.status(500).json({ valid: false });
+        return;
+      }
       if (this.backend.storedPassword === '' || password === this.backend.storedPassword) {
         this.log.debug('/api/login password valid');
         res.json({ valid: true });

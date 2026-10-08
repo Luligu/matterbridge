@@ -17,7 +17,7 @@ import os from 'node:os';
 import path from 'node:path';
 import v8 from 'node:v8';
 
-import { log, originalProcessArgv, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { log, loggerErrorSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import {
   MATTER_LOGGER_FILE,
@@ -469,6 +469,17 @@ describe('BackendExpress', () => {
     const unauthorizedUpload = await makeMultipartRequest('/api/uploadpackage', 'test.zip', Buffer.from('ZIP', 'utf8'));
     expect(unauthorizedUpload.status).toBe(401);
     expect(unauthorizedUpload.body).toContain('Unauthorized');
+  });
+
+  test('POST /api/login stored password not loaded', async () => {
+    (mockedBackend as any).authClients.clear();
+    (mockedBackend as any).storedPassword = undefined;
+
+    const response = await makeRequest('/api/login', 'POST', {});
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ valid: false });
+    expect((mockedBackend as any).authClients.size).toBe(0);
+    expect(loggerErrorSpy).toHaveBeenCalledWith('/api/login stored password not loaded');
   });
 
   test('POST /api/login wrong password', async () => {

@@ -282,6 +282,20 @@ export class BackendWsServer {
       // TODO add methods
       if (data.method === 'ping') {
         sendResponse({ id: data.id, method: 'pong', src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
+      } else if (data.method === '/api/login') {
+        const storedPassword = this.backend.storedPassword;
+        if (storedPassword === undefined) {
+          this.log.error('Login stored password not loaded');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Internal error: stored password not loaded' });
+          return;
+        }
+        if (storedPassword === '' || storedPassword === data.params.password) {
+          this.log.debug('Login password valid');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } else {
+          this.log.debug('Error wrong password');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong password' });
+        }
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage('Restarting matterbridge...', 0);
         await this.server.fetch({ type: 'matterbridge_restart', src: 'frontend', dst: 'matterbridge', params: undefined });

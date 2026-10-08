@@ -25,6 +25,50 @@
 
 // WARNING: Not released yet and excluded from Vitest coverage
 
+/*
+ * Differences between Frontend (frontend.ts) and Backend (backend.ts, backendExpress.ts, backendWsServer.ts)
+ *
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ * | Frontend                                                   | Backend                                                    |
+ * +============================================================+============================================================+
+ * | 1) Base protocol http / https / ws / wss / upgrade                                                                      |
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ * | password read from matterbridge.nodeContext                | password read from its own NodeStorageManager              |
+ * | WebSocketServer created before the http(s) server          | WebSocketServer created after BackendExpress.start()       |
+ * | express routes registered after listen()                   | express routes registered before createServer()            |
+ * | createServer() failure only emits server_error             | createServer() failure also stops BackendExpress           |
+ * | async upgrade handler                                      | sync upgrade handler                                       |
+ * | auth clients cleared 250 ms after the last ws close        | auth clients cleared 1000 ms after the last ws close       |
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ * | 2) Express routes present in Frontend but missing in Backend                                                            |
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ * | /plugins/:name (static plugin frontend)                    | commented out in BackendExpress.start()                    |
+ * | /plugins/:name/api/:path (GET POST PUT PATCH DELETE)       | commented out in BackendExpress.start()                    |
+ * | /plugins/:name/{*splat} (SPA fallback)                     | commented out in BackendExpress.start()                    |
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ * | 3) WebSocket api present in Frontend but missing in Backend                                                             |
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ * | /api/checkupdates /api/shellysysupdate                     | missing                                                    |
+ * | /api/shellymainupdate /api/shellycreatesystemlog           | missing                                                    |
+ * | /api/shellynetconfig                                       | missing                                                    |
+ * | /api/softreset /api/hardreset /api/reboot                  | missing                                                    |
+ * | /api/install /api/uninstall                                | missing                                                    |
+ * | /api/addplugin /api/removeplugin                           | missing                                                    |
+ * | /api/enableplugin /api/disableplugin /api/restartplugin    | missing                                                    |
+ * | /api/savepluginconfig                                      | missing                                                    |
+ * | /api/create-backup /api/create-config-backup               | missing                                                    |
+ * | /api/create-matter-storage-backup                          | missing                                                    |
+ * | /api/create-matterbridge-storage-backup                    | missing                                                    |
+ * | /api/create-plugin-backup                                  | missing                                                    |
+ * | /api/unregister /api/reset /api/factoryreset               | missing                                                    |
+ * | /api/viewhistorypage /api/downloadhistorypage              | missing                                                    |
+ * | /api/select/devices /api/select/entities                   | missing                                                    |
+ * | /api/action /api/command /api/config                       | missing                                                    |
+ * | uptime / memory / cpu updates from cliEmitter              | not subscribed                                             |
+ * | /api/clusters                                              | getApiCluster() is a TODO stub and always returns undefined|
+ * +------------------------------------------------------------+------------------------------------------------------------+
+ */
+
 // Node.js built-in modules
 import EventEmitter from 'node:events';
 import type { Server as HttpServer } from 'node:http';
@@ -282,6 +326,7 @@ export class Backend extends EventEmitter<BackendEvents> {
           /* v8 ignore next - Node.js emits the upgrade event only when the Upgrade header is present, so the '' fallback is only a safety check */
           const upgrade = (req.headers.upgrade || '').toLowerCase();
           if (upgrade !== 'websocket') {
+            this.log.error(`WebSocket upgrade error: Invalid upgrade header ${req.headers.upgrade}`);
             socket.write('HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n');
             socket.destroy();
             return;

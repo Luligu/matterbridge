@@ -237,6 +237,29 @@ describe('BackendWsServer', () => {
     expect(client.send).toHaveBeenCalledWith(JSON.stringify({ id: 9, method: 'pong', src: 'Matterbridge', dst: 'Frontend', success: true, response: 'pong' }));
   });
 
+  test('should answer the login api request', async () => {
+    const client: any = new FakeClient();
+    const login = async (password?: string): Promise<any> => {
+      client.send.mockClear();
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 11, src: 'Frontend', dst: 'Matterbridge', method: '/api/login', params: { password } })));
+      expect(client.send).toHaveBeenCalledTimes(1);
+      return JSON.parse(client.send.mock.calls[0][0]);
+    };
+
+    (mockedBackend as any).storedPassword = undefined;
+    expect(await login('secret')).toEqual({ id: 11, method: '/api/login', src: 'Matterbridge', dst: 'Frontend', error: 'Internal error: stored password not loaded' });
+    expect(loggerErrorSpy).toHaveBeenCalledWith('Login stored password not loaded');
+
+    (mockedBackend as any).storedPassword = '';
+    expect(await login()).toEqual({ id: 11, method: '/api/login', src: 'Matterbridge', dst: 'Frontend', success: true });
+
+    (mockedBackend as any).storedPassword = 'secret';
+    expect(await login('secret')).toEqual({ id: 11, method: '/api/login', src: 'Matterbridge', dst: 'Frontend', success: true });
+    expect(await login('wrong')).toEqual({ id: 11, method: '/api/login', src: 'Matterbridge', dst: 'Frontend', error: 'Wrong password' });
+
+    (mockedBackend as any).storedPassword = undefined;
+  });
+
   test('should serialize bigint response values with an n suffix and preserve other values', async () => {
     const client = new FakeClient();
     const response = { id: 'Matterbridge', values: [9007199254740993n, -42n, 0n, 42, 'text', true, null], nested: { value: 12n } };
