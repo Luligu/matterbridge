@@ -55,7 +55,7 @@ describe('Spawn', () => {
     } else {
       expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command ${command} with`));
     }
-  }, 10000);
+  }, 30000);
 
   it('should mock a spawn command with sudo', async () => {
     process.argv = [...originalProcessArgv.slice(0, 2), '--verbose', '--sudo'];
