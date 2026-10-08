@@ -24,6 +24,10 @@
 /* oxlint-disable no-console */
 /* oxlint-disable n/no-process-exit */
 
+// Node.js modules
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
@@ -45,7 +49,7 @@ logModuleLoaded('Cli');
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
-const manager = new ThreadsManager();
+const manager = new ThreadsManager(path.dirname(fileURLToPath(import.meta.url)));
 
 /** Minimal ANSI styling */
 /* v8 ignore next cause colorEnabled is not relevant for coverage */
