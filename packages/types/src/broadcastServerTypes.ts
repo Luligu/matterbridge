@@ -169,6 +169,16 @@ export type WorkerMessageTypes = {
     };
     response: { result: { success: boolean } };
   };
+  manager_shutdown: {
+    request: {
+      /** Parameters for shutting down threads */
+      params: {
+        /** The name of the thread to shut down. If undefined, all the threads are shut down. */
+        thread?: ThreadNames;
+      };
+    };
+    response: { result: { success: boolean } };
+  };
   manager_spawn_response: {
     request: { params: undefined };
     response: { result: { command: string; args: string[]; packageCommand: 'install' | 'uninstall'; packageName: string; success: boolean } };

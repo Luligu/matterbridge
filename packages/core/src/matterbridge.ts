@@ -569,6 +569,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           break;
         case 'matterbridge_matterdata':
           this.server.respond({ ...msg, result: { port: this.port, passcode: this.passcode, discriminator: this.discriminator } });
+          // Each MatterNode gets its own port, passcode and discriminator
+          if (this.port !== undefined) this.port++;
+          if (this.passcode !== undefined) this.passcode++;
+          if (this.discriminator !== undefined) this.discriminator++;
           break;
         case 'matterbridge_platform':
           this.server.respond({ ...msg, result: { data: this.getPlatformMatterbridge(), success: true } });
@@ -1320,7 +1324,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Initialize frontend
-    if ((getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) && !hasParameter('experimental')) await this.frontend.start(getIntParameter('frontend'));
+    if ((getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) && !hasParameter('experimental-backend'))
+      await this.frontend.start(getIntParameter('frontend'));
 
     // Start the matter storage and create the matterbridge context
     try {
@@ -1439,10 +1444,32 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await wait(delay * 1000, 'Fixed race condition delay', true);
     }
 
+    /* v8 ignore next - not released yet */
+    if (hasParameter('experimental-tracker')) {
+      this.log.notice('***Experimental tracker enabled for Threads');
+      // Each Tracker thread, started by the ThreadsManager, runs its own Tracker
+      for (let i = 0; i < 10; i++) {
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'Tracker' } });
+      }
+    }
+
     // Start matterbridge in bridge mode
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
+      /* v8 ignore next - not released yet */
+      if (hasParameter('experimental-node')) {
+        // The bridge MatterNode runs in the RootNode thread, started by the ThreadsManager, with all the enabled plugins
+        this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
+        this.server.request({
+          type: 'manager_run',
+          src: 'matterbridge',
+          dst: 'manager',
+          params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge() } },
+        });
+        this.log.notice(`***Started experimental MatterNode in ${this.bridgeMode} mode`);
+        return;
+      }
       await this.startBridge();
       return;
     }
@@ -1451,6 +1478,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
+      /* v8 ignore next - not released yet */
+      if (hasParameter('experimental-node')) {
+        // A RootNode thread, started by the ThreadsManager, is requested for each enabled plugin
+        this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
+        for (const plugin of this.plugins.array().filter((p) => p.enabled)) {
+          this.server.request({
+            type: 'manager_run',
+            src: 'matterbridge',
+            dst: 'manager',
+            params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge(), pluginName: plugin.name } },
+          });
+        }
+        this.log.notice(`***Started experimental MatterNode in ${this.bridgeMode} mode`);
+        return;
+      }
       await this.startChildbridge();
       return;
     }
@@ -2084,6 +2126,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Close PluginManager and DeviceManager
       this.plugins.destroy();
       this.devices.destroy();
+
+      // Request all the threads to shut down
+      this.server.request({ type: 'manager_shutdown', src: 'matterbridge', dst: 'manager', params: {} });
+      await wait(100);
 
       // Stop thread messaging server
       this.server.close();

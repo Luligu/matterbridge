@@ -21,6 +21,7 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'node:events';
 import { isMainThread, parentPort, threadId, workerData } from 'node:worker_threads';
 
 import type { ParentPortMessage, ThreadNames, WorkerData } from '@matterbridge/types';
@@ -36,13 +37,21 @@ import { ThreadsManager } from './threadsManager.js';
 
 logModuleLoaded('ThreadsWrapper');
 
+/** Events emitted by ThreadsWrapper when the parent sends the matching control message. */
+export interface ThreadsWrapperEvents {
+  /** The parent requested the thread to start up. */
+  startup: [];
+  /** The parent requested the thread to shut down. */
+  shutdown: [];
+}
+
 /**
  * Worker wrapper
  * This class serves as a wrapper for worker threads in the Matterbridge application, providing a structured way to initialize, manage, and communicate with worker threads.
  * It handles the setup of logging, message passing between the worker and the parent thread, and ensures proper cleanup when the worker is destroyed.
  * The ThreadsWrapper class abstracts away the complexities of working with worker threads, allowing developers to focus on the specific tasks that each worker thread needs to perform.
  */
-export class ThreadsWrapper {
+export class ThreadsWrapper extends EventEmitter<ThreadsWrapperEvents> {
   debug = hasAnyParameter('debug', 'verbose', 'debug-threads', 'verbose-threads');
   verbose = hasAnyParameter('verbose', 'verbose-threads');
   useTracker = hasAnyParameter('tracker', 'tracker-threads');
@@ -68,6 +77,7 @@ export class ThreadsWrapper {
     public name: ThreadNames,
     public entrypoint: (worker: ThreadsWrapper) => Promise<boolean>,
   ) {
+    super();
     // Update debug, verbose and tracker flags if workerData is available
     if (this.workerData) {
       this.debug = this.workerData.debug ?? this.debug;
@@ -115,6 +125,14 @@ export class ThreadsWrapper {
             this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} received ping message type from parent: ${debugStringify(message)}`);
             this.parentPost({ type: 'pong', threadId, threadName: this.name });
             this.parentLog(this.name, LogLevel.DEBUG, `Worker ${this.name}:${threadId} sent pong message type to parent: ${debugStringify(message)}`);
+            break;
+          // The manager sends startup as soon as it receives init, which can arrive before the entrypoint (scheduled with setImmediate) has registered its
+          // listeners. setImmediate runs in order, so emitting from one runs after the entrypoint has started.
+          case 'startup':
+            setImmediate(() => this.emit('startup'));
+            break;
+          case 'shutdown':
+            setImmediate(() => this.emit('shutdown'));
             break;
           default:
             this.parentLog(this.name, LogLevel.WARN, `Worker ${this.name}:${threadId} received unknown message type from parent: ${debugStringify(message)}`);

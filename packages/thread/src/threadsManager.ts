@@ -77,6 +77,10 @@ interface ThreadInfo {
   type: ThreadType;
   /** Whether multiple instances of this thread are allowed. */
   multiple?: boolean;
+  /** Whether this thread should be started automatically on application startup. */
+  startup?: boolean;
+  /** Whether this thread should be stopped automatically on application shutdown. */
+  shutdown?: boolean;
   /** Last created Worker instance for this thread (if started). */
   worker?: Worker;
   /** Number of times this thread has been started via runThread(). */
@@ -121,6 +125,7 @@ export class ThreadsManager {
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
     { name: 'Backend', path: 'threadBackend.js', type: 'thread' },
     { name: 'RootNode', path: 'threadRootNode.js', type: 'thread', multiple: true },
+    { name: 'Tracker', path: 'threadTracker.js', type: 'thread', multiple: true, startup: true, shutdown: true },
   ];
 
   private terminateWorkers = new Set<Worker>();
@@ -165,6 +170,8 @@ export class ThreadsManager {
     // Clear the interval
     clearInterval(this.interval);
     this.terminateExitedWorkers();
+    // Request every running worker of a thread with shutdown set to shut down
+    this.sendShutdown(this.threads.filter((t) => t.shutdown));
     // Close broadcast servers and remove listeners
     this.server.off('broadcast_message', this.boundMsgHandler);
     this.server.close();
@@ -199,8 +206,32 @@ export class ThreadsManager {
             this.server.respond({ ...msg, result: { success: false } });
           }
           break;
+        case 'manager_shutdown': {
+          // Shut down the named thread, or all the threads when no thread is given
+          const threads = msg.params.thread === undefined ? this.threads : this.threads.filter((t) => t.name === msg.params.thread);
+          if (threads.length === 0) this.log.warn(`Failed to shut down thread ${CYAN}${msg.params.thread}${wr}: thread not found`);
+          this.sendShutdown(threads);
+          this.server.respond({ ...msg, result: { success: threads.length > 0 } });
+          break;
+        }
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+      }
+    }
+  }
+
+  /**
+   * Send the shutdown message to every running worker of the given threads, including each instance of a multiple thread.
+   *
+   * @param {ThreadInfo[]} threads - The threads to shut down.
+   */
+  private sendShutdown(threads: ThreadInfo[]): void {
+    for (const thread of threads) {
+      for (const info of [thread, ...(thread.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]) {
+        if (!info.worker) continue;
+        const shutdownMessage: ParentPortMessage = { type: 'shutdown', threadName: thread.name, threadId: info.worker.threadId };
+        info.worker.postMessage(shutdownMessage);
+        this.log.debug(`Thread ${thread.name} sent shutdown message to thread id ${info.worker.threadId}`);
       }
     }
   }
@@ -344,6 +375,12 @@ export class ThreadsManager {
       if (message.type === 'init') {
         threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
         this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
+        // The worker is loaded and listening on its parentPort: request it to start up
+        if (threadInfo.startup) {
+          const startupMessage: ParentPortMessage = { type: 'startup', threadName: threadInfo.name, threadId: worker.threadId };
+          worker.postMessage(startupMessage);
+          this.log.debug(`Thread ${threadInfo.name} sent startup message to thread id ${worker.threadId}`);
+        }
       } else if (message.type === 'pong') {
         this.log.debug(`Thread ${threadInfo.name} received a pong at ${new Date(now).toISOString()}`);
       } else if (message.type === 'log') {

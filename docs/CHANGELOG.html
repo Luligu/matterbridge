@@ -167,6 +167,7 @@
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[thread]: Run zip.js without web workers, so the ArchiveCommand thread exits right away on Bun instead of 5 seconds later.</li>
 <li>[core]: Import the test helpers from the <code>test-utils</code> <code>/vitest/setup</code> and <code>/vitest/matter</code> subpaths instead of <code>/vitest</code>.</li>
 <li>[dgram]: Use <code>@matterbridge/test-utils</code> in the tests instead of the local <code>vitest/setupTest.ts</code> and <code>vitest/freePort.ts</code>, and add it to the devDependencies.</li>
 <li>[utils]: Use <code>@matterbridge/test-utils</code> in the tests instead of the local <code>vitest/setupTest.ts</code>, and add it to the devDependencies.</li>

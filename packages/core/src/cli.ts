@@ -240,10 +240,10 @@ async function main(): Promise<void> {
   log.debug(`***Matterbridge.loadInstance(true) exited`);
 
   // v8 ignore next -- just experimental
-  if (hasParameter('experimental')) {
-    log.debug(`***Starting Backend thread...`);
+  if (hasParameter('experimental-backend')) {
+    log.debug(`***Starting experimental Backend thread...`);
     manager.runThread('Backend');
-    log.debug(`***Started Backend thread`);
+    log.debug(`***Started experimental Backend thread`);
   }
 
   // Check if the instance needs to shut down from parseCommandLine()

@@ -465,6 +465,28 @@ describe('ThreadsWrapper', () => {
     expect(sent).toContainEqual({ type: 'pong', threadId: 9, threadName: 'Pinger' });
   });
 
+  test('should emit startup and shutdown when the parent sends the matching message', async () => {
+    const { ThreadsWrapper, getOnMessageHandler } = await setup({ isMainThread: false, parentPortPresent: true, threadId: 10, threadName: 'ThreadLifecycle' });
+
+    const worker = new ThreadsWrapper('Lifecycle' as unknown as ThreadNames, asyncTrue);
+    const onStartup = vi.fn<() => void>();
+    const onShutdown = vi.fn<() => void>();
+    worker.on('startup', onStartup);
+    worker.on('shutdown', onShutdown);
+
+    getOnMessageHandler()?.({ type: 'startup' });
+    // The events are emitted on the next setImmediate, after the entrypoint has registered its listeners
+    expect(onStartup).not.toHaveBeenCalled();
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(onStartup).toHaveBeenCalledTimes(1);
+    expect(onShutdown).not.toHaveBeenCalled();
+
+    getOnMessageHandler()?.({ type: 'shutdown' });
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(onShutdown).toHaveBeenCalledTimes(1);
+    expect(onStartup).toHaveBeenCalledTimes(1);
+  });
+
   test('worker thread (debug+verbose): warns on unknown message types, pong included', async () => {
     const { ThreadsWrapper, parentPort, getOnMessageHandler, waitImmediate } = await setup({
       isMainThread: false,

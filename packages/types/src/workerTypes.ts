@@ -26,7 +26,7 @@ import type { LogLevel } from 'node-ansi-logger';
 import type { SharedMatterbridge } from './matterbridgeTypes.js';
 
 /** Thread names used in the thread system */
-export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend' | 'RootNode';
+export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'SpawnCommand' | 'ArchiveCommand' | 'DockerVersion' | 'Backend' | 'RootNode' | 'Tracker';
 
 /** Thread type used in the thread system */
 export type ThreadType = 'worker' | 'thread';

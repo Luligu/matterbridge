@@ -215,6 +215,62 @@ describe('ThreadsManager', () => {
       }
     });
 
+    test('should send the startup message on init only when the thread has startup set', async () => {
+      const { EventEmitter } = await import('node:events');
+      const manager = new ThreadsManager(coreDirectory);
+      const threads = manager['threads'] as Array<any>;
+      threads.push({ name: 'StartupWorker', path: 'does-not-exist.js', type: 'thread', startup: true }, { name: 'PlainWorker', path: 'does-not-exist.js', type: 'thread' });
+      let nextThreadId = 1;
+      vi.spyOn(manager, 'createESMWorker').mockImplementation(() => {
+        return Object.assign(new EventEmitter(), { threadId: nextThreadId++, postMessage: vi.fn<(...args: any[]) => any>() }) as unknown as ReturnType<
+          typeof manager.createESMWorker
+        >;
+      });
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
+      try {
+        const startupWorker = manager.runThread('StartupWorker');
+        expect(startupWorker.postMessage).not.toHaveBeenCalled();
+        startupWorker.emit('message', { type: 'init', threadId: 1, threadName: 'StartupWorker', success: true });
+        expect(startupWorker.postMessage).toHaveBeenCalledWith({ type: 'startup', threadName: 'StartupWorker', threadId: 1 });
+
+        const plainWorker = manager.runThread('PlainWorker');
+        plainWorker.emit('message', { type: 'init', threadId: 2, threadName: 'PlainWorker', success: true });
+        expect(plainWorker.postMessage).not.toHaveBeenCalled();
+      } finally {
+        manager.destroy();
+      }
+    });
+
+    test('should send the shutdown message on destroy to every running worker of a thread with shutdown set', async () => {
+      const { EventEmitter } = await import('node:events');
+      const manager = new ThreadsManager(coreDirectory);
+      const threads = manager['threads'] as Array<any>;
+      threads.push(
+        { name: 'ShutdownWorker', path: 'does-not-exist.js', type: 'thread', shutdown: true },
+        { name: 'ShutdownMultiple', path: 'does-not-exist.js', type: 'thread', multiple: true, shutdown: true },
+        { name: 'PlainWorker', path: 'does-not-exist.js', type: 'thread' },
+      );
+      let nextThreadId = 1;
+      vi.spyOn(manager, 'createESMWorker').mockImplementation(() => {
+        return Object.assign(new EventEmitter(), { threadId: nextThreadId++, postMessage: vi.fn<(...args: any[]) => any>() }) as unknown as ReturnType<
+          typeof manager.createESMWorker
+        >;
+      });
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
+      const single = manager.runThread('ShutdownWorker');
+      const first = manager.runThread('ShutdownMultiple');
+      const exited = manager.runThread('ShutdownMultiple');
+      const plain = manager.runThread('PlainWorker');
+      exited.emit('exit', 0);
+
+      manager.destroy();
+
+      expect(single.postMessage).toHaveBeenCalledWith({ type: 'shutdown', threadName: 'ShutdownWorker', threadId: 1 });
+      expect(first.postMessage).toHaveBeenCalledWith({ type: 'shutdown', threadName: 'ShutdownMultiple', threadId: 2 });
+      expect(exited.postMessage).not.toHaveBeenCalled();
+      expect(plain.postMessage).not.toHaveBeenCalled();
+    });
+
     test('throws when the thread is not found', () => {
       const manager = new ThreadsManager(coreDirectory);
       expect(() => manager.runThread('DoesNotExist')).toThrow('Thread DoesNotExist not found');
@@ -443,6 +499,46 @@ describe('ThreadsManager', () => {
       expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'manager_run', id: 11, src: 'frontend', dst: 'manager', result: { success: false } }));
 
       manager.destroy();
+    });
+
+    test('should send shutdown to the named thread or to all the threads when manager_shutdown is requested', async () => {
+      const { EventEmitter } = await import('node:events');
+      const manager = new ThreadsManager(coreDirectory);
+      const respondSpy = vi.spyOn((manager as any).server, 'respond').mockImplementation(() => {});
+      const warnSpy = vi.spyOn((manager as any).log, 'warn');
+      const threads = manager['threads'] as Array<any>;
+      threads.push({ name: 'FirstWorker', path: 'does-not-exist.js', type: 'thread' }, { name: 'SecondWorker', path: 'does-not-exist.js', type: 'thread', multiple: true });
+      let nextThreadId = 1;
+      vi.spyOn(manager, 'createESMWorker').mockImplementation(() => {
+        return Object.assign(new EventEmitter(), { threadId: nextThreadId++, postMessage: vi.fn<(...args: any[]) => any>() }) as unknown as ReturnType<
+          typeof manager.createESMWorker
+        >;
+      });
+      vi.spyOn(manager, 'resolvePath').mockReturnValue(url.fileURLToPath(import.meta.url));
+      const request = { type: 'manager_shutdown', id: 20, timestamp: 20, src: 'frontend', dst: 'manager' };
+      try {
+        const first = manager.runThread('FirstWorker');
+        const second = manager.runThread('SecondWorker');
+
+        // A named thread: only its workers get the shutdown message
+        await (manager as any).msgHandler({ ...request, params: { thread: 'SecondWorker' } });
+        expect(second.postMessage).toHaveBeenCalledWith({ type: 'shutdown', threadName: 'SecondWorker', threadId: 2 });
+        expect(first.postMessage).not.toHaveBeenCalled();
+        expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'manager_shutdown', id: 20, result: { success: true } }));
+
+        // No thread: every running worker gets the shutdown message
+        await (manager as any).msgHandler({ ...request, id: 21, params: {} });
+        expect(first.postMessage).toHaveBeenCalledWith({ type: 'shutdown', threadName: 'FirstWorker', threadId: 1 });
+        expect(second.postMessage).toHaveBeenCalledTimes(2);
+        expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'manager_shutdown', id: 21, result: { success: true } }));
+
+        // An unknown thread: warns and responds with success false
+        await (manager as any).msgHandler({ ...request, id: 22, params: { thread: 'DoesNotExist' } });
+        expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('thread not found'));
+        expect(respondSpy).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'manager_shutdown', id: 22, result: { success: false } }));
+      } finally {
+        manager.destroy();
+      }
     });
 
     test('ignores non-requests / wrong dst and logs unknown types when verbose', async () => {
