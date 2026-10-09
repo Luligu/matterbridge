@@ -35,6 +35,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.
 
+### Development news
+
+- [errata]: Clarification of the v.3.10.12 RVC release note: `SkipArea` conformance `[CurrentArea | Progress]` makes the command optional when either attribute is implemented (Matter 1.6.1 Core § 7.3.4; Application Cluster § 1.17.7). Advertising `SkipArea` by default is a choice in Matterbridge’s `RoboticVacuumCleaner` implementation, not a specification requirement; `SkipAreaResponse` is required when `SkipArea` is implemented.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.

@@ -157,6 +157,10 @@
 <ul>
 <li>[matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.</li>
 </ul>
+<h3 id="development-news">Development news</h3>
+<ul>
+<li>[errata]: Clarification of the v.3.10.12 RVC release note: <code>SkipArea</code> conformance <code>[CurrentArea | Progress]</code> makes the command optional when either attribute is implemented (Matter 1.6.1 Core § 7.3.4; Application Cluster § 1.17.7). Advertising <code>SkipArea</code> by default is a choice in Matterbridge’s <code>RoboticVacuumCleaner</code> implementation, not a specification requirement; <code>SkipAreaResponse</code> is required when <code>SkipArea</code> is implemented.</li>
+</ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.14.</li>
@@ -380,7 +384,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31010-2026-09-18">[3.10.10] - 2026-09-18</h2>
-<h3 id="development-news">Development News</h3>
+<h3 id="development-news-1">Development News</h3>
 <ul>
 <li>[chip]: Chime endpoint 1607 CHIP conformance is green ✅ for all automated harness tests covering the <code>Chime</code> cluster, including the optional <code>ChimeID</code> field of the <code>PlayChimeSound</code> command (<code>TC_CHIME_2_5.py</code>) and the <code>ChimeStartedPlaying</code> event (<code>TC_CHIME_2_6.py</code>).</li>
 <li>[chip]: Momentary Switch endpoint 606 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Switch</code> cluster, including the <code>MomentarySwitch</code>, <code>MomentarySwitchRelease</code>, <code>MomentarySwitchLongPress</code> and <code>MomentarySwitchMultiPress</code> features, with its own <code>generic-switch-momentary.pics</code>.</li>
@@ -435,7 +439,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3109-2026-09-11">[3.10.9] - 2026-09-11</h2>
-<h3 id="development-news-1">Development News</h3>
+<h3 id="development-news-2">Development News</h3>
 <ul>
 <li>[chip]: EVSE Complete endpoint 14011 CHIP conformance is green ✅ for all automated harness tests covering the <code>EnergyEvse</code> and <code>EnergyEvseMode</code> clusters, including the optional <code>SoCReporting</code>, <code>PlugAndCharge</code>, <code>Rfid</code>, and <code>V2X</code> features.</li>
 </ul>
@@ -489,7 +493,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3108-2026-09-04">[3.10.8] - 2026-09-04</h2>
-<h3 id="development-news-2">Development News</h3>
+<h3 id="development-news-3">Development News</h3>
 <ul>
 <li><p>[chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
 </li>
@@ -608,7 +612,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="development-news-3">Development News</h3>
+<h3 id="development-news-4">Development News</h3>
 <ul>
 <li>[chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>EnergyEvse</code> cluster.</li>
 <li>[chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the <code>EnergyEvseMode</code> cluster.</li>
@@ -695,7 +699,7 @@
 <ul>
 <li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
 </ul>
-<h3 id="development-news-4">Development News</h3>
+<h3 id="development-news-5">Development News</h3>
 <ul>
 <li>[chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the <code>RootNode</code> device type and <code>BasicInformation</code>, <code>PowerSource</code>, <code>AccessControl</code>, <code>GeneralDiagnostics</code>, <code>GroupKeyManagement</code>, <code>OperationalCredentials</code> and <code>GeneralCommissioning</code> clusters.</li>
 <li>[chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the <code>Aggregator</code> device type.</li>
@@ -766,7 +770,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3105-2026-08-14">[3.10.5] - 2026-08-14</h2>
-<h3 id="development-news-5">Development news</h3>
+<h3 id="development-news-6">Development news</h3>
 <ul>
 <li>[closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass). So far fully supported by SmartThings and partially by Matter Server dashboard.</li>
 </ul>
