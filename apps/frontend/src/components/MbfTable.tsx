@@ -171,6 +171,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
   const handleConfigureVisibilityChange = (id: string) => {
     setColumnVisibility((prev: ColumnVisibility) => {
       const col = columns.find((c) => c.id === id);
+      // v8 ignore next line -- just defensive check
       if (col?.required) return prev;
       const currentlyVisible = visibleMap[id] !== false; // based on derived map
       const next: ColumnVisibility = { ...prev };

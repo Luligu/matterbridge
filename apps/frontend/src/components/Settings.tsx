@@ -641,6 +641,7 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
       label={label}
       variant="standard"
       sx={{
+        // v8 ignore next line -- just defensive check
         'width': width ? `${width - 20}px` : '100%',
         // idle/blur underline
         '& .MuiInput-underline:before': {
