@@ -6,23 +6,35 @@
 
 const NAME = 'CliMain';
 
-import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { consoleLogSpy, loggerLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import { Inspector, Tracker } from '@matterbridge/utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import { cliEmitter } from '../src/cliEmitter.js';
-import { Matterbridge } from '../src/matterbridge.js';
+import type { Matterbridge } from '../src/matterbridge.js';
 // oxlint-disable-next-line typescript/ban-ts-comment
 // @ts-ignore cause is not included in the tsconfig include, but is needed for testing
 import { MockMatterbridge } from '../src/mock/mockMatterbridge.js';
 
-const loadInstance = vi.spyOn(Matterbridge, 'loadInstance').mockImplementation(async (_initialize?: boolean) => {
+const loadInstance = vi.hoisted(() => vi.fn<typeof Matterbridge.loadInstance>());
+vi.mock('../src/matterbridge.js', () => ({ Matterbridge: { loadInstance } }));
+
+// Keep spied-on classes stable when reloading the CLI for startup error cases.
+vi.mock('@matterbridge/thread/server', async (importOriginal) => importOriginal<typeof import('@matterbridge/thread/server')>());
+vi.mock('@matterbridge/utils/tracker', async (importOriginal) => importOriginal<typeof import('@matterbridge/utils/tracker')>());
+vi.mock('@matterbridge/utils/inspector', async (importOriginal) => importOriginal<typeof import('@matterbridge/utils/inspector')>());
+vi.mock('node-ansi-logger', async (importOriginal) => importOriginal<typeof import('node-ansi-logger')>());
+
+loadInstance.mockImplementation(async (_initialize?: boolean) => {
   return MockMatterbridge.loadInstance() as unknown as Matterbridge; // Simulate a successful load by returning an instance of MockMatterbridge
 });
 
 const exit = vi.spyOn(process, 'exit').mockImplementation((code?: string | number | null) => {
   return undefined as never; // Prevent actual exit during tests
 });
+
+const closeBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'close');
 
 const startTrackerSpy = vi.spyOn(Tracker.prototype, 'start').mockImplementation(function () {
   return;
@@ -59,7 +71,6 @@ await setupTest(NAME, false, [
   '--help',
   '--version',
   '--loader',
-  '--debug',
   '--verbose',
   '--logger',
   'debug',
@@ -67,17 +78,18 @@ await setupTest(NAME, false, [
   'debug',
 ]);
 
+afterAll(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllEnvs();
+  process.argv = [...originalProcessArgv];
+});
+
 describe('Matterbridge', () => {
   let matterbridge: Matterbridge;
 
   beforeEach(() => {
     // Clear all mocks before each test
     vi.clearAllMocks();
-  });
-
-  afterAll(() => {
-    // Restore all mocks
-    vi.restoreAllMocks();
   });
 
   it('should start matterbridge', async () => {
@@ -95,12 +107,17 @@ describe('Matterbridge', () => {
 
     expect(loadInstance).toHaveBeenCalledTimes(1);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
+    expect(loggerLogSpy.mock.contexts[0]).toMatchObject({ logLevel: LogLevel.DEBUG });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check starting...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check started');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) called');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, '***Matterbridge.loadInstance(true) exited');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Registering event handlers...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Registered event handlers');
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      expect.stringContaining('--tls:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)'),
+    );
+    expect(closeBroadcastServerSpy).not.toHaveBeenCalled();
   }, 10000);
 
   it('should trigger cpu and memory event', async () => {
@@ -121,62 +138,64 @@ describe('Matterbridge', () => {
   });
 
   it('should shutdown matterbridge', async () => {
-    matterbridge.emit('shutdown');
-    await new Promise<void>((resolve) => {
+    const shutdown = new Promise<void>((resolve) => {
       cliEmitter.once('shutdown', resolve);
     });
+    matterbridge.emit('shutdown');
+    await shutdown;
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received shutdown event, exiting...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cpu memory check stopping...'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Cpu memory check stopped'));
-    expect(exit).toHaveBeenCalled();
+    expect(closeBroadcastServerSpy).toHaveBeenCalledTimes(2);
+    expect(closeBroadcastServerSpy.mock.contexts).toMatchObject([{ name: 'cli' }, { name: 'manager' }]);
+    expect(closeBroadcastServerSpy.mock.invocationCallOrder[0]).toBeLessThan(exit.mock.invocationCallOrder[0]);
+    expect(exit).toHaveBeenCalledWith(0);
   });
 
-  it('should start memory check', async () => {
+  it('should start memory check', () => {
     matterbridge.emit('startmemorycheck');
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received start memory check event');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check starting...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check started');
     expect(exit).not.toHaveBeenCalled();
-    expect(startTrackerSpy).toHaveBeenCalled();
+    expect(startTrackerSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should stop memory check', async () => {
+  it('should stop memory check', () => {
     matterbridge.emit('stopmemorycheck');
-    await new Promise((resolve) => setTimeout(resolve, 100));
 
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received stop memory check event');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check stopping...');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check stopped');
     expect(exit).not.toHaveBeenCalled();
-    expect(stopTrackerSpy).toHaveBeenCalled();
+    expect(stopTrackerSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should start inspector', async () => {
+  it('should start inspector', () => {
     matterbridge.emit('startinspector');
-    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(startInspectorSpy).toHaveBeenCalled();
   });
 
-  it('should stop inspector', async () => {
+  it('should stop inspector', () => {
     matterbridge.emit('stopinspector');
-    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(stopInspectorSpy).toHaveBeenCalled();
   });
 
-  it('should call takeHeapSnapshot', async () => {
+  it('should call takeHeapSnapshot', () => {
     matterbridge.emit('takeheapsnapshot');
-    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(takeHeapSnapshotSpy).toHaveBeenCalled();
   });
 
-  it('should trigger gc', async () => {
+  it('should trigger gc', () => {
     matterbridge.emit('triggergarbagecollection');
-    await new Promise((resolve) => setTimeout(resolve, 100));
     expect(runGarbageCollectionSpy).toHaveBeenCalled();
   });
 
   it('should restart matterbridge', async () => {
     matterbridge.emit('restart');
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await vi.waitFor(() => {
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Registered event handlers');
+    });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received restart event, loading...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
@@ -184,15 +203,114 @@ describe('Matterbridge', () => {
 
   it('should update matterbridge', async () => {
     matterbridge.emit('update');
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await vi.waitFor(() => {
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Registered event handlers');
+    });
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Received update event, updating...');
     expect(loadInstance).toHaveBeenCalledTimes(1);
   });
 
   it('should shutdown again matterbridge', async () => {
+    const shutdown = new Promise<void>((resolve) => {
+      cliEmitter.once('shutdown', resolve);
+    });
     matterbridge.emit('shutdown');
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    expect(exit).toHaveBeenCalled();
+    await shutdown;
+    expect(closeBroadcastServerSpy).toHaveBeenCalledTimes(2);
+    expect(closeBroadcastServerSpy.mock.contexts).toMatchObject([{ name: 'cli' }, { name: 'manager' }]);
+    expect(exit).toHaveBeenCalledWith(0);
+  });
+});
+
+describe('Matterbridge startup errors', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+    loadInstance.mockResolvedValue(undefined as never);
+    process.argv = originalProcessArgv.slice(0, 2);
+  });
+
+  afterEach(() => {
+    process.argv = [...originalProcessArgv];
+  });
+
+  it('should shut down when loading Matterbridge fails', async () => {
+    process.argv.push('--debug', '--no-ansi');
+    loadInstance.mockRejectedValueOnce(new Error('Mock implementation of loadInstance called.'));
+    const { cliEmitter } = await import('../src/cliEmitter.js');
+    const shutdown = new Promise<void>((resolve) => {
+      cliEmitter.once('shutdown', resolve);
+    });
+    const cli = await import('../src/cli.js');
+    await shutdown;
+
+    expect(cli.instance).toBeUndefined();
+    expect(loadInstance).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(0);
+    expect(closeBroadcastServerSpy).toHaveBeenCalledTimes(2);
+    expect(closeBroadcastServerSpy.mock.contexts).toMatchObject([{ name: 'cli' }, { name: 'manager' }]);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
+    expect(loggerLogSpy.mock.contexts[0]).toMatchObject({ logLevel: LogLevel.DEBUG });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Matterbridge.loadInstance() failed with error:'));
+  });
+
+  it('should shut down when loading Matterbridge returns undefined', async () => {
+    process.argv.push('-no-ansi');
+    const { cliEmitter } = await import('../src/cliEmitter.js');
+    const shutdown = new Promise<void>((resolve) => {
+      cliEmitter.once('shutdown', resolve);
+    });
+    const cli = await import('../src/cli.js');
+    await shutdown;
+
+    expect(cli.instance).toBeUndefined();
+    expect(loadInstance).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(0);
+    expect(stopTrackerSpy).toHaveBeenCalledTimes(1);
+    expect(closeBroadcastServerSpy).toHaveBeenCalledTimes(2);
+    expect(closeBroadcastServerSpy.mock.contexts).toMatchObject([{ name: 'cli' }, { name: 'manager' }]);
+    expect(loggerLogSpy.mock.contexts[0]).toMatchObject({ logLevel: LogLevel.INFO });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Received shutdown event, exiting...'));
+  });
+});
+
+describe('Matterbridge ANSI output', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    loadInstance.mockResolvedValue(undefined as never);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    process.argv = [...originalProcessArgv];
+  });
+
+  it.each([
+    { name: 'colors are enabled', noColor: undefined, term: 'xterm', forceColor: undefined, argv: [], expected: undefined },
+    { name: 'NO_COLOR is set', noColor: 'true', term: 'xterm', forceColor: undefined, argv: [], expected: '1' },
+    { name: 'TERM is dumb', noColor: undefined, term: 'dumb', forceColor: undefined, argv: [], expected: '1' },
+    { name: 'FORCE_COLOR is zero', noColor: undefined, term: 'xterm', forceColor: '0', argv: [], expected: '1' },
+    { name: '--no-ansi is passed', noColor: undefined, term: 'xterm', forceColor: undefined, argv: ['--no-ansi'], expected: '1' },
+    { name: '-no-ansi is passed', noColor: undefined, term: 'xterm', forceColor: undefined, argv: ['-no-ansi'], expected: '1' },
+  ])('should configure ANSI output when $name', async ({ noColor, term, forceColor, argv, expected }) => {
+    vi.stubEnv('NO_COLOR', noColor);
+    vi.stubEnv('TERM', term);
+    vi.stubEnv('FORCE_COLOR', forceColor);
+    process.argv = [...originalProcessArgv.slice(0, 2), ...argv];
+
+    const cli = await import('../src/cli.js');
+    await cli.main();
+
+    expect(process.env.NO_COLOR).toBe(expected);
+    expect(loadInstance).toHaveBeenCalledTimes(1);
+    expect(startTrackerSpy).toHaveBeenCalledTimes(1);
+    expect(stopTrackerSpy).toHaveBeenCalledTimes(1);
+    expect(closeBroadcastServerSpy).toHaveBeenCalledTimes(2);
+    expect(closeBroadcastServerSpy.mock.contexts).toMatchObject([{ name: 'cli' }, { name: 'manager' }]);
+    expect(exit).toHaveBeenCalledTimes(1);
+    expect(exit).toHaveBeenCalledWith(0);
   });
 });

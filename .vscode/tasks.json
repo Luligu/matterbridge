@@ -641,8 +641,6 @@
         "--coverage.include=packages/core/src/mb_coap.ts",
         "--coverage.include=packages/core/src/mb_mdns.ts",
         "packages/core/vitest/cli.test.ts",
-        "packages/core/vitest/cli.error.test.ts",
-        "packages/core/vitest/cli.error2.test.ts",
         "packages/core/vitest/cliEmitter.test.ts",
         "packages/core/vitest/cliHistory.test.ts",
         "packages/core/vitest/mb_health.test.ts",

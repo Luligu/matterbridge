@@ -33,10 +33,10 @@ import type { ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedM
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
-export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
+export type WorkerSrcType = 'cli' | 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
 
 /** Types of worker destination */
-export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
+export type WorkerDstType = 'cli' | 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
 
 /** Normalized message request structure */
 // oxlint-disable-next-line typescript/no-generated-empty-object-type

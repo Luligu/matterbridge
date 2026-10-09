@@ -30,6 +30,7 @@ import { fileURLToPath } from 'node:url';
 
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatUptime } from '@matterbridge/utils/format';
@@ -49,15 +50,9 @@ logModuleLoaded('Cli');
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
+const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasAnyParameter('debug', 'verbose') ? LogLevel.DEBUG : LogLevel.INFO });
 const manager = new ThreadsManager(path.dirname(fileURLToPath(import.meta.url)));
-
-/** Minimal ANSI styling */
-/* v8 ignore next cause colorEnabled is not relevant for coverage */
-const colorEnabled = !process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi');
-/* v8 ignore next */
-if (!colorEnabled) process.env.NO_COLOR = '1';
-
-const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+const server = new BroadcastServer('cli', log);
 
 /**
  * Starts the CPU and memory tracker.
@@ -137,8 +132,8 @@ function registerHandlers(): void {
   instance.on('shutdown', () => void shutdown().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to shutdown', error)));
   instance.on('restart', () => void restart().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to restart', error)));
   instance.on('update', () => void update().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to update', error)));
-  instance.on('startmemorycheck', () => start());
-  instance.on('stopmemorycheck', () => stop());
+  instance.on('startmemorycheck', () => startCpuMemoryCheck());
+  instance.on('stopmemorycheck', () => stopCpuMemoryCheck());
   instance.on('startinspector', () => void startInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to start inspector', error)));
   instance.on('stopinspector', () => void stopInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to stop inspector', error)));
   instance.on(
@@ -158,6 +153,8 @@ async function shutdown(): Promise<void> {
   if (hasParameter('inspect')) await stopInspector();
 
   stopCpuMemoryCheck();
+
+  server.close();
 
   manager.destroy();
 
@@ -194,22 +191,6 @@ async function update(): Promise<void> {
 }
 
 /**
- * Starts the CPU and memory check when the -startmemorycheck parameter is passed.
- */
-function start(): void {
-  log.debug('Received start memory check event');
-  startCpuMemoryCheck();
-}
-
-/**
- * Stops the CPU and memory check when the -stopmemorycheck parameter is passed.
- */
-function stop(): void {
-  log.debug('Received stop memory check event');
-  stopCpuMemoryCheck();
-}
-
-/**
  * Main function that initializes the Matterbridge instance and starts the CLI.
  *
  * @remarks
@@ -226,8 +207,11 @@ function stop(): void {
  *
  * --snapshotinterval <milliseconds> can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
  */
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   log.debug(`Cli main() started`);
+
+  /** Minimal ANSI styling */
+  if (!(!process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi'))) process.env.NO_COLOR = '1';
 
   startCpuMemoryCheck();
 
@@ -325,6 +309,7 @@ function help(): void {
       --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
       --root-power-source:     add a Power Source cluster for the mains power feed on the Root endpoint
       --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
+      --tls:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
       --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https); it also enables https, so --ssl --tls is not needed
       --vendorId:              override the default vendorId 0xfff1
       --vendorName:            override the default vendorName "Matterbridge"

@@ -53,11 +53,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `vite` to v.8.3.4.
 - [frontend]: Bump `oxfmt` to v.0.72.0.
 - [frontend]: Bump `oxlint` to v.1.87.0.
+- [tests]: Consolidate CLI error tests and speed up the suite by mocking Matterbridge imports and replacing fixed delays.
 
 ### Fixed
 
 - [tests]: Prevent test output leakage.
-- [tests]: Align Bun system-check tests with the Node.js 22.13.0 minimum.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
