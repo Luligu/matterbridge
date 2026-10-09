@@ -898,6 +898,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     await this.nodeContext.set<number>('matterport', this.port);
     await this.nodeContext.set<number>('matterpasscode', this.passcode);
     await this.nodeContext.set<number>('matterdiscriminator', this.discriminator);
+    // Store the frontend port and protocol so that the mb_health bin can probe the same endpoint
+    await this.nodeContext.set<number>('frontendport', getIntParameter('frontend') ?? 8283);
+    await this.nodeContext.set<boolean>('frontendssl', hasParameter('ssl'));
+    await this.nodeContext.set<boolean>('frontendmtls', hasParameter('mtls'));
     this.log.debug(`Initializing server node for Matterbridge on port ${this.port} with passcode ${this.passcode} and discriminator ${this.discriminator}`);
 
     // Set matterbridge logger level (context: matterbridgeLogLevel)
