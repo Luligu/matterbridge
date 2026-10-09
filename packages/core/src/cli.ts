@@ -79,7 +79,6 @@ function startCpuMemoryCheck(): void {
       formatBytes(snapshot.external),
       formatBytes(snapshot.arrayBuffers),
     );
-
     cliEmitter.emit('cpu', snapshot.osCpu, snapshot.processCpu);
   });
   log.debug(`Cpu memory check started`);

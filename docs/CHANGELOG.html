@@ -152,7 +152,7 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
-<h2 id="31013-dev-branch">[3.10.13] - Dev branch</h2>
+<h2 id="31013-2026-10-09">[3.10.13] - 2026-10-09</h2>
 <h3 id="added">Added</h3>
 <ul>
 <li>[thread]: Add the Backend thread entry point.</li>
@@ -180,6 +180,8 @@
 <li>[utils]: Add <code>memoryFootprint()</code> to runtimeBun (Bun memory footprint, falling back to <code>process.memoryUsage().rss</code>).</li>
 <li>[core]: Use <code>memoryFootprint()</code> for the system information RSS.</li>
 <li>[core]: Refresh the variable system information (memory, uptime) in <code>Matterbridge.getApiSettings()</code>.</li>
+<li>[frontend]: Enable https and wss with <code>--ssl</code>, <code>--tls</code> or <code>--mtls</code> (same as the backend); <code>--mtls</code> alone now also enables https and wss.</li>
+<li>[core]: Remove the unused <code>lastOsCpuUsage</code>, <code>lastProcessCpuUsage</code> and their setters from <code>cliEmitter</code>; <code>Frontend.getApiSettings()</code> reports 0 cpu usage like <code>Matterbridge.getApiSettings()</code>.</li>
 <li>[thread]: Include the worker thread ID in periodic status logs.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.13.</li>
 <li>[scripts]: Sync the generic scripts (<code>clean</code>, <code>deep-clean</code>, <code>prepublish-clean</code>, <code>create-release</code>, <code>downloads</code>, <code>git-status</code>, <code>git-sync-dev</code>, <code>prune-releases</code>, <code>prune-tags</code>, <code>remove-workflows</code>, <code>version</code>) to v.2.0.0 and add <code>bun-bundle</code> from matterbridge-native.</li>

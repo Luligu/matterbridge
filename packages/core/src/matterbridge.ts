@@ -1480,7 +1480,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
       /* v8 ignore next - not released yet */
       if (hasParameter('experimental-node')) {
-        // A RootNode thread, started by the ThreadsManager, is requested for each enabled plugin
+        // A MatterNode thread, started by the ThreadsManager, is requested for each enabled plugin
         this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
         for (const plugin of this.plugins.array().filter((p) => p.enabled)) {
           this.server.request({

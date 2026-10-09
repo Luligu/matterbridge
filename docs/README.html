@@ -435,13 +435,13 @@ matterbridge --add matterbridge-zigbee2mqtt
 </ul>
 <p>Matterbridge looks first for .p12 certificate and, if they are not found, it looks for cert.pem and key.pem.</p>
 <h3 id="change-the-command-line">Change the command line</h3>
-<p>Add the <strong>--ssl</strong> parameter to the command line.</p>
+<p>Add the <strong>--ssl</strong> (or <strong>--tls</strong>) parameter to the command line.</p>
 <p>If desired, you can also change the frontend port with <strong>-frontend 443</strong>.</p>
 <pre><code class="language-bash">matterbridge --ssl --frontend 443
 </code></pre>
-<p>Add the <strong>--mtls</strong> parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).</p>
+<p>Add the <strong>--mtls</strong> parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible). <strong>--mtls</strong> also enables https and wss, so <strong>--ssl</strong> is not needed.</p>
 <p>The browser must provide the client certificate: on Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.</p>
-<pre><code class="language-bash">matterbridge --ssl --mtls --frontend 443
+<pre><code class="language-bash">matterbridge --mtls --frontend 443
 </code></pre>
 <h3 id="restart">Restart</h3>
 <p>If the certificate are correctly configured, you will be able to connect with https to the frontend.</p>
