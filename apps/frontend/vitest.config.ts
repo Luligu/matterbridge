@@ -15,10 +15,12 @@ export default defineConfig({
     execArgv: ['--no-experimental-webstorage'],
     coverage: {
       provider: 'v8',
-      reporter: ['lcov', 'text'],
+      reporter: ['lcov', 'text', 'json'],
       thresholds: {
-        functions: 100,
         lines: 100,
+        functions: 100,
+        branches: 90,
+        statements: 90,
       },
     },
   },
