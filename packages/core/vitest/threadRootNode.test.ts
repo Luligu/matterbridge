@@ -45,6 +45,7 @@ describe('ThreadRootNode', () => {
     }));
     wrapper = (await import('../src/runners/threadRootNode.js')).default;
     vi.spyOn(wrapper, 'logger').mockImplementation(() => {});
+    vi.spyOn(wrapper.log, 'log').mockImplementation(() => {});
     wrapper.workerData = { ...workerData };
   });
 

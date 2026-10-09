@@ -563,6 +563,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('reject SupportedModes without an Auto mode at initialization', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const invalid = new Refrigerator('Refrigerator No Auto', 'RF000000', {
       currentMode: 1,
       supportedModes: [{ label: 'RapidCool', mode: 1, modeTags: [{ value: RefrigeratorAndTemperatureControlledCabinetMode.ModeTag.RapidCool }] }],
@@ -570,6 +571,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, invalid)).toBeFalsy();
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device RefrigeratorNoAuto-RF000000'));
     loggerErrorSpy.mockClear();
+    stderrSpy.mockRestore();
   });
 
   test('start the server node', async () => {

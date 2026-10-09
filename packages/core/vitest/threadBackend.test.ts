@@ -36,6 +36,7 @@ describe('ThreadBackend', () => {
     }));
     wrapper = (await import('../src/runners/threadBackend.js')).default;
     vi.spyOn(wrapper, 'logger').mockImplementation(() => {});
+    vi.spyOn(wrapper.log, 'log').mockImplementation(() => {});
     responder = new BroadcastServer('matterbridge', wrapper.log);
     responder.on('broadcast_message', (msg) => {
       if (responder.isWorkerRequest(msg) && msg.type === 'matterbridge_shared') {

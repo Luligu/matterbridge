@@ -32,6 +32,7 @@ describe('ThreadTracker', () => {
     }));
     wrapper = (await import('../src/runners/threadTracker.js')).default;
     vi.spyOn(wrapper, 'logger').mockImplementation(() => {});
+    vi.spyOn(wrapper.log, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {

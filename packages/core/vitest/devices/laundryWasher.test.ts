@@ -414,6 +414,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('reject SupportedModes without a Normal mode at initialization', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const invalid = new LaundryWasher('Laundry Washer No Normal', 'LW000000', {
       currentMode: 1,
       supportedModes: [{ label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] }],
@@ -421,6 +422,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, invalid)).toBeFalsy();
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device LaundryWasherNoNormal-LW000000'));
     loggerErrorSpy.mockClear();
+    stderrSpy.mockRestore();
   });
 
   test('start the server node', async () => {

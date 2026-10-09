@@ -280,6 +280,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('reject SupportedModes without a Normal mode at initialization', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const invalid = new Dishwasher('Dishwasher No Normal', 'DW000000', {
       currentMode: 1,
       supportedModes: [{ label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] }],
@@ -287,6 +288,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, invalid)).toBeFalsy();
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device DishwasherNoNormal-DW000000'));
     loggerErrorSpy.mockClear();
+    stderrSpy.mockRestore();
   });
 
   test('encode DishwasherAlarm attributes with the cluster-specific bitmap', () => {
