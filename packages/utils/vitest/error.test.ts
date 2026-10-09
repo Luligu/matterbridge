@@ -4,8 +4,9 @@
  * @author Luca Liguori
  */
 
+import { log, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { getErrorMessage, inspectError, logError } from '../src/error.js';
-import { log, loggerErrorSpy, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Error', false);

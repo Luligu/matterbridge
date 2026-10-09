@@ -236,6 +236,7 @@ describe.each([false, true])('WebSocketProvider with debug=%s', (debug) => {
   test('should contain non-Error callback failures and process later responses', () => {
     const { result } = renderProvider();
     const listener = vi.fn().mockImplementationOnce(() => {
+      // oxlint-disable-next-line typescript/only-throw-error -- This test covers non-Error throw values.
       throw 'Listener failed';
     });
     result.current.socket.addListener(listener, 42);

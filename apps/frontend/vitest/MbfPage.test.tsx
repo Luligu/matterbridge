@@ -80,7 +80,7 @@ describe('MbfPage', () => {
   });
 
   it('logs when debug is enabled', async () => {
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const setCurrentPage = vi.fn();
     const { MbfPage: DebugMbfPage, UiContext: DebugUiContext } = await loadMbfPage(true);
 

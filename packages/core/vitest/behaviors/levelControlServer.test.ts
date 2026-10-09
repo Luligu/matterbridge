@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { getMoveRequest, getMoveToLevelRequest, getStepRequest, getStopRequest } from '@matterbridge/test-utils/matter';
 import {
   addDevice,
   aggregator,
@@ -18,13 +18,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  getMoveRequest,
-  getMoveToLevelRequest,
-  getStepRequest,
-  getStopRequest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';

@@ -4,7 +4,11 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { Mock } from 'vitest';
+
+// Setup the test environment
+await setupTest('DockerVersion', false);
 
 let httpsGetImpl: Mock<(...args: any[]) => any>;
 

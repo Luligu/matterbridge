@@ -24,6 +24,10 @@
 /* oxlint-disable no-console */
 /* oxlint-disable n/no-process-exit */
 
+// Node.js modules
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
@@ -45,7 +49,7 @@ logModuleLoaded('Cli');
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
-const manager = new ThreadsManager();
+const manager = new ThreadsManager(path.dirname(fileURLToPath(import.meta.url)));
 
 /** Minimal ANSI styling */
 /* v8 ignore next cause colorEnabled is not relevant for coverage */
@@ -75,7 +79,6 @@ function startCpuMemoryCheck(): void {
       formatBytes(snapshot.external),
       formatBytes(snapshot.arrayBuffers),
     );
-
     cliEmitter.emit('cpu', snapshot.osCpu, snapshot.processCpu);
   });
   log.debug(`Cpu memory check started`);
@@ -231,11 +234,16 @@ async function main(): Promise<void> {
   if (hasParameter('inspect')) await startInspector();
 
   log.debug(`***Matterbridge.loadInstance(true) called`);
-
   const { Matterbridge } = await import('./matterbridge.js');
   instance = await Matterbridge.loadInstance(true);
-
   log.debug(`***Matterbridge.loadInstance(true) exited`);
+
+  // v8 ignore next -- just experimental
+  if (hasParameter('experimental-backend')) {
+    log.debug(`***Starting experimental Backend thread...`);
+    manager.runThread('Backend');
+    log.debug(`***Started experimental Backend thread`);
+  }
 
   // Check if the instance needs to shut down from parseCommandLine()
   if (!instance || instance.shutdown) {
@@ -317,7 +325,7 @@ function help(): void {
       --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
       --root-power-source:     add a Power Source cluster for the mains power feed on the Root endpoint
       --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
-      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https)
+      --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https); it also enables https, so --ssl --tls is not needed
       --vendorId:              override the default vendorId 0xfff1
       --vendorName:            override the default vendorName "Matterbridge"
       --productId:             override the default productId 0x8000

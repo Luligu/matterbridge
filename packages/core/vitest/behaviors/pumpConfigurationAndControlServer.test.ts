@@ -12,7 +12,7 @@ import { Status } from '@matter/types';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
-import { flushAsync, setupTest } from '@matterbridge/vitest-utils';
+import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,
   aggregator,
@@ -22,7 +22,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeLevelControlServer } from '../../src/behaviors/levelControlServer.js';

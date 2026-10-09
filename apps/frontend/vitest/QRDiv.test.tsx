@@ -117,7 +117,7 @@ describe('QRDiv', () => {
   ])('should render the $name state on mobile and log its lifecycle', ({ overrides, heading }) => {
     appState.debug = true;
     appState.enableMobile = true;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { container, update, rerender, view, unmount } = renderQRDiv({ mobile: true });
     update(createMatter(overrides));
     expect(screen.getByText(heading)).toBeInTheDocument();
@@ -138,7 +138,7 @@ describe('QRDiv', () => {
     ].flatMap((overrides) => [false, true].map((debug) => ({ overrides, debug }))),
   )('should render nothing for incomplete pairing data: %j', ({ overrides, debug }) => {
     appState.debug = debug;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { container, update } = renderQRDiv();
     update(createMatter(overrides));
     expect(container).toBeEmptyDOMElement();
@@ -157,7 +157,7 @@ describe('QRDiv', () => {
     ),
   )('should send $command when clicking $button with debug=$debug', ({ advertising, commissioned, button, command, debug }) => {
     appState.debug = debug;
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     const { update, sendMessage } = renderQRDiv();
     update(createMatter({ advertising, commissioned }));
     sendMessage.mockClear();
@@ -174,7 +174,7 @@ describe('QRDiv', () => {
 
   test.each([false, true])('should count active sessions and subscriptions and confirm fabric removal with debug=%s', (debug) => {
     appState.debug = debug;
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     const fabric = {
       fabricIndex: 1,
       fabricId: '1',
@@ -265,8 +265,8 @@ describe('QRDiv', () => {
 
   test('should copy the raw manual code with the Clipboard API', async () => {
     appState.debug = true;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const writeText = vi.fn().mockResolvedValue(undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const writeText = vi.fn(async () => {});
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const { update } = renderQRDiv();
     update(createMatter({ advertising: true }));
@@ -294,7 +294,7 @@ describe('QRDiv', () => {
     const error = new Error('Clipboard permission denied');
     const writeText = vi.fn().mockRejectedValue(error);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
-    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     const { update } = renderQRDiv();
     update(createMatter({ advertising: true }));
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'copy manual pairing code' })));

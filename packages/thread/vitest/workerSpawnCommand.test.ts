@@ -4,8 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
+
+// Setup the test environment
+await setupTest('WorkerSpawnCommand', false);
 
 type RunOptions = Readonly<{
   spawnSuccess: boolean;
@@ -32,6 +36,7 @@ async function runWorkerSpawnCommand(options: RunOptions): Promise<RunWorkerSpaw
     args: ['--foo', 'bar'],
     packageCommand: 'install',
     packageName: '@matterbridge/thread',
+    type: 'worker',
     threadName: 'SpawnCommand',
     logLevel: LogLevel.INFO,
     debug: false,
@@ -59,12 +64,12 @@ async function runWorkerSpawnCommand(options: RunOptions): Promise<RunWorkerSpaw
 
   vi.doMock('../src/spawnCommand.js', () => ({ spawnCommand }));
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
-      constructor(name: string, callback: (w: any) => Promise<boolean>) {
+    ThreadsWrapper: class {
+      constructor(name: string, entrypoint: (w: any) => Promise<boolean>) {
         wrapperName = name;
-        runPromise = callback(worker);
+        runPromise = entrypoint(worker);
       }
     },
   }));
@@ -76,10 +81,6 @@ async function runWorkerSpawnCommand(options: RunOptions): Promise<RunWorkerSpaw
 }
 
 describe('workerSpawnCommand', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: spawns command and logs success', async () => {
     const { wrapperName, success, loggerMock, respondMock, spawnCommand, workerData } = await runWorkerSpawnCommand({ spawnSuccess: true });
 

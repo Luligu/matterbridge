@@ -46,7 +46,6 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { TargetNavigator } from '@matter/types/clusters/target-navigator';
 import { WakeOnLan } from '@matter/types/clusters/wake-on-lan';
 import type { ClusterId } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -58,7 +57,8 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';
 import { BasicVideoPlayer } from '../../src/devices/basicVideoPlayer.js';

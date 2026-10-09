@@ -7,11 +7,11 @@
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { CYAN, LogLevel, nf } from 'node-ansi-logger';
 
 import { Dgram } from '../src/dgram.js';
 import { Unicast } from '../src/unicast.js';
-import { loggerLogSpy, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Unicast', false);

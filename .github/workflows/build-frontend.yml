@@ -36,35 +36,53 @@ jobs:
       - name: Verify Npm version
         run: npm -v
 
-      - name: Install dependencies
+      - name: Install matterbridge dependencies
+        run: npm ci --no-fund --no-audit
+
+      - name: Build matterbridge
+        run: npm run build
+
+      - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
         working-directory: apps/frontend
 
-      - name: Lint the project
-        run: npm run lint
-        working-directory: apps/frontend
-
-      - name: Check formatting of the project
-        run: npm run format:check
-        working-directory: apps/frontend
-
-      - name: Build the project
+      - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Test the project
-        run: npm run test -- --testTimeout=30000
+      - name: Lint frontend
+        run: npm run lint
         working-directory: apps/frontend
 
+      - name: Check frontend formatting
+        run: npm run format:check
+        working-directory: apps/frontend
+
+      - name: Test frontend with coverage
+        run: npm run test:coverage -- --testTimeout=30000
+        working-directory: apps/frontend
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./apps/frontend/coverage/lcov.info
+          flags: frontend
+          fail_ci_if_error: true
+
       - name: List, audit, fix outdated dependencies, update and build again
+        timeout-minutes: 3
+        continue-on-error: true
         run: |
           npm outdated || true
           npm audit || true
-          npm audit fix || true
-          npm update || true
+          npx npm-check-updates -u || true
+          npm install --no-fund --no-audit || true
           npm outdated || true
           npm audit || true
-          npm run lint || true
           npm run build || true
+          npm run typecheck || true
+          npm run lint || true
+          npm run format:check || true
           npm run test -- --testTimeout=30000 || true
         working-directory: apps/frontend

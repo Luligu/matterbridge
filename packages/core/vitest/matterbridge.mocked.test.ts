@@ -22,10 +22,11 @@ import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { VendorId } from '@matter/types';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { plg } from '@matterbridge/types';
 import { getParameter } from '@matterbridge/utils/cli';
-import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { CYAN, er, LogLevel, nf, nt, wr } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 import type { MockedFunction } from 'vitest';
@@ -104,7 +105,7 @@ const { Matterbridge } = await import('../src/matterbridge.js');
 const { PluginManager } = await import('../src/pluginManager.js');
 const { DeviceManager } = await import('../src/deviceManager.js');
 
-// Spy on BroadcastServer and PluginManager methods (inlined: vitest-utils cannot depend on core)
+// Spy on BroadcastServer and PluginManager methods (inlined: test-utils cannot depend on core)
 const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
 const configurePluginSpy = vi.spyOn(PluginManager.prototype, 'configure');
 
@@ -118,11 +119,9 @@ describe('Matterbridge mocked', () => {
   let plugins: PluginManagerType;
   let devices: DeviceManagerType;
 
-  beforeAll(async () => {});
-
   beforeEach(async () => {
     // Reset the process.argv to simulate command line arguments (no frontend no matter server)
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest'];
 
     // Reset the Matterbridge instance
     (Matterbridge as any).instance = undefined;
@@ -320,8 +319,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -402,8 +400,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -436,8 +433,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -470,8 +466,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -502,8 +497,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -534,8 +528,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -566,8 +559,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -603,8 +595,7 @@ describe('Matterbridge mocked', () => {
     const availableAddresses = Object.entries(networkInterfaces);
     const availableInterfaces = Object.keys(networkInterfaces);
     process.argv = [
-      'node',
-      'matterbridge.mocked.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -638,8 +629,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.virtualMode).toBe('disabled');
 
     process.argv = [
-      'node',
-      'matterbridge.mocked.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -670,22 +660,7 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).nodeContext.set('mattermdnsinterface', '');
     await (matterbridge as any).nodeContext.remove('virtualmode');
 
-    process.argv = [
-      'node',
-      'matterbridge.mocked.test.js',
-      '-frontend',
-      '0',
-      '-test',
-      '-homedir',
-      HOMEDIR,
-      '-profile',
-      'Jest',
-      '-logger',
-      'null',
-      '-matterlogger',
-      'null',
-      '-debug',
-    ];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest', '-logger', 'null', '-matterlogger', 'null', '-debug'];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -705,7 +680,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() plugins', async () => {
-    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -849,7 +824,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() devices', async () => {
-    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -863,8 +838,7 @@ describe('Matterbridge mocked', () => {
     });
     // Reset the process.argv to simulate command line arguments
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-service',
       '-novirtual',
       '-frontend',
@@ -895,8 +869,7 @@ describe('Matterbridge mocked', () => {
     });
     // Reset the process.argv to simulate command line arguments
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-docker',
       '-norestore',
       '-novirtual',
@@ -927,8 +900,7 @@ describe('Matterbridge mocked', () => {
     });
     // Reset the process.argv to simulate command line arguments
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-novirtual',
       '-frontend',
       '0',
@@ -948,7 +920,7 @@ describe('Matterbridge mocked', () => {
 
   test('Matterbridge.initialize() reset', async () => {
     // Reset the process.argv to simulate reset of a registered plugin
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
     vi.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
@@ -960,7 +932,7 @@ describe('Matterbridge mocked', () => {
     await destroyInstance(matterbridge);
 
     // Reset the process.argv to simulate reset of not registered plugin
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-noplugin'];
     vi.spyOn(matterbridge as any, 'logNodeAndSystemInfo').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
@@ -976,7 +948,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     // Mock the checkUpdates from update module before importing it
     vi.useFakeTimers();
     await (matterbridge as any).initialize();
@@ -994,7 +966,7 @@ describe('Matterbridge mocked', () => {
       return Promise.resolve();
     });
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger', '-no-ansi'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-matterlogger', 'debug', '-matterfilelogger', '-no-ansi'];
     const createDestinationMatterLoggerSpy = vi.spyOn(Matterbridge.prototype as any, 'createDestinationMatterLogger');
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1043,7 +1015,7 @@ describe('Matterbridge mocked', () => {
   test('Matterbridge.initialize() logNodeAndSystemInfo networkInterfaces', async () => {
     // setDebug(false);
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1103,7 +1075,7 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('matterbridge.initialize() loads the global node modules directory', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1127,7 +1099,7 @@ describe('Matterbridge mocked', () => {
     const expectedGlobalModulesDirectory = path.join(bunInstall, 'install', 'global', 'node_modules');
     const originalBunInstall = process.env.BUN_INSTALL;
     const originalVersions = process.versions;
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
 
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1154,7 +1126,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() logs global node modules lookup failures', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1184,7 +1156,7 @@ describe('Matterbridge mocked', () => {
 
   test('Matterbridge.initialize() parseCommandLine', async () => {
     // Reset the process.argv to simulate command line arguments
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     writeFileSync(
       path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest', 'pairing.json'),
       JSON.stringify(
@@ -1236,7 +1208,7 @@ describe('Matterbridge mocked', () => {
     matterbridge.aggregatorUniqueId = 'yyyy';
     matterbridge.matterStorageService = { open: vi.fn().mockImplementation(async () => Promise.resolve()) } as any; // Mock the matterStorageService to avoid errors
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-list'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-list'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1245,7 +1217,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Registered plugins'));
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-logstorage'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-logstorage'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1254,7 +1226,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`${plg}Matterbridge${nf} storage log`));
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-loginterfaces'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-loginterfaces'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1263,7 +1235,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(logInterfacesMock).toHaveBeenCalled();
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './packages/core/src/mock/plugin1'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-disable', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1272,7 +1244,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(false);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-enable', './packages/core/src/mock/plugin1'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-enable', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1282,7 +1254,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.plugins.length).toBe(6);
     expect(matterbridge.plugins.get('matterbridge-mock1')?.enabled).toBe(true);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-remove', './packages/core/src/mock/plugin1'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-remove', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1291,7 +1263,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(5);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-add', './packages/core/src/mock/plugin1'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-add', './packages/core/src/mock/plugin1'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1300,7 +1272,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(6);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-reset'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-reset'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1309,7 +1281,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.shutdown).toBe(true);
     expect(matterbridge.plugins.length).toBe(0);
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-factoryreset'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-factoryreset'];
     matterbridge.shutdown = false;
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
@@ -1325,7 +1297,7 @@ describe('Matterbridge mocked', () => {
     vi.spyOn(os, 'uptime').mockImplementationOnce(() => {
       return 10; // Simulate a low uptime for testing
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-delay'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-delay'];
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1335,13 +1307,13 @@ describe('Matterbridge mocked', () => {
     vi.spyOn(Matterbridge.prototype as any, 'startBridge').mockImplementationOnce(async () => {
       return Promise.resolve();
     });
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-fixed_delay'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-homedir', HOMEDIR, '-fixed_delay'];
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
     clearInterval((matterbridge as any).checkUpdateInterval);
     expect(wait).toHaveBeenCalledWith(120000, 'Fixed race condition delay', true);
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-homedir', HOMEDIR];
   }, 10000);
 
   test('Matterbridge.initialize() startBridge and startChildbridge', async () => {
@@ -1357,7 +1329,7 @@ describe('Matterbridge mocked', () => {
     await matterbridge.nodeContext?.remove('bridgeMode');
     vi.clearAllMocks();
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-homedir', HOMEDIR];
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1368,7 +1340,7 @@ describe('Matterbridge mocked', () => {
     expect(await matterbridge.nodeContext?.get<string>('bridgeMode', '')).toBe('bridge');
     vi.clearAllMocks();
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-bridge'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-homedir', HOMEDIR, '-bridge'];
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1378,7 +1350,7 @@ describe('Matterbridge mocked', () => {
     expect(startChildBridgeSpy).not.toHaveBeenCalled();
     vi.clearAllMocks();
 
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-homedir', HOMEDIR, '-childbridge'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-homedir', HOMEDIR, '-childbridge'];
     await (matterbridge as any).parseCommandLine();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1393,7 +1365,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() restartProcess', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1417,7 +1389,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() unregisterAndShutdownProcess', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1472,7 +1444,7 @@ describe('Matterbridge mocked', () => {
   });
 
   test('Matterbridge.initialize() cleanup()', async () => {
-    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1530,7 +1502,7 @@ describe('Matterbridge mocked', () => {
     const startPluginsSpy = vi.spyOn(matterbridge as any, 'startPlugins').mockImplementation(async () => Promise.resolve());
     const startServerNodeSpy = vi.spyOn(matterbridge as any, 'startServerNode').mockImplementation(async () => Promise.resolve());
 
-    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-delay', '-fixed_delay'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-delay', '-fixed_delay'];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1633,7 +1605,7 @@ describe('Matterbridge mocked', () => {
     });
     vi.advanceTimersByTime(60000); // Simulate 1 minute for the interval
     vi.useRealTimers();
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the next tick
+    await flushAsync(3, 10, 0); // Let the configure callback settle
     expect(configurePluginSpy).toHaveBeenCalledTimes(2);
     expect((matterbridge as any).startMatterInterval).toBeUndefined(); // Reset the interval after testing
 
@@ -1656,7 +1628,7 @@ describe('Matterbridge mocked', () => {
     const startPluginsSpy = vi.spyOn(matterbridge as any, 'startPlugins').mockImplementation(async () => Promise.resolve());
     const startServerNodeSpy = vi.spyOn(matterbridge as any, 'startServerNode').mockImplementation(async () => Promise.resolve());
 
-    process.argv = ['node', 'matterbridge.mocked.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);
@@ -1809,7 +1781,7 @@ describe('Matterbridge mocked', () => {
     });
     vi.advanceTimersByTime(60000); // Simulate 1 minute for the interval
     vi.useRealTimers();
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Wait for the next tick
+    await flushAsync(3, 10, 0); // Let the configure callback settle
     expect(plugin5.error).toBe(true);
     expect(configurePluginSpy).toHaveBeenCalledTimes(5);
 
@@ -1829,7 +1801,7 @@ describe('Matterbridge mocked', () => {
   }, 10000);
 
   test('Matterbridge.initialize() removeAllBridgedEndpoints', async () => {
-    process.argv = ['node', 'matterbridge.test.js', '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();
     clearTimeout((matterbridge as any).systemCheckTimeout);
     clearTimeout((matterbridge as any).checkUpdateTimeout);

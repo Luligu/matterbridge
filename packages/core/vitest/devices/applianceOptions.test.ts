@@ -5,7 +5,7 @@
  */
 
 import { EndpointNumber } from '@matter/types/datatype';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { AirConditioner } from '../../src/devices/airConditioner.js';
 import { Cooktop } from '../../src/devices/cooktop.js';
@@ -18,6 +18,7 @@ import { Oven } from '../../src/devices/oven.js';
 import { Refrigerator } from '../../src/devices/refrigerator.js';
 import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
+// Setup the test environment
 await setupTest('ApplianceOptions', false);
 
 describe('Chapter 13 appliance endpoint options', () => {

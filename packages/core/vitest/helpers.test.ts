@@ -19,7 +19,6 @@ import type { Endpoint } from '@matter/node';
 import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { consoleLogSpy, log, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import {
   aggregator,
   createServerNode,
@@ -29,7 +28,8 @@ import {
   getMatterbridge,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { consoleLogSpy, log, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from '../src/helpers.js';
 import type { Matterbridge } from '../src/matterbridge.js';

@@ -4,8 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
+
+// Setup the test environment
+await setupTest('WorkerDockerVersion', false);
 
 type RunOptions = Readonly<{
   getDockerVersionThrows?: boolean;
@@ -65,12 +69,12 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
       })
     : vi.fn<(...args: any[]) => any>(() => options.dockerBuildConfigJson ?? '{"version":"3.5.4","dev":false}');
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
-      constructor(name: string, callback: (w: any) => Promise<boolean>) {
+    ThreadsWrapper: class {
+      constructor(name: string, entrypoint: (w: any) => Promise<boolean>) {
         wrapperName = name;
-        runPromise = callback(worker);
+        runPromise = entrypoint(worker);
       }
     },
   }));
@@ -86,10 +90,6 @@ async function runWorkerDockerVersion(options: RunOptions): Promise<RunWorkerDoc
 }
 
 describe('workerDockerVersion', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: gets latest + dev docker versions and logs success with current docker build version', async () => {
     const { wrapperName, success, loggerMock, snackBarMock, requestMock, getDockerVersion, readFileSync } = await runWorkerDockerVersion({
       dockerVersionLatest: '3.5.5',

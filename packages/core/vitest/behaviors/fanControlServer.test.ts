@@ -9,7 +9,6 @@ const MATTER_PORT = 11900;
 const MATTER_CREATE_ONLY = true;
 
 import { FanControl } from '@matter/types/clusters/fan-control';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -19,7 +18,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeFanControlServer } from '../../src/behaviors/fanControlServer.js';
@@ -50,8 +50,6 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

@@ -79,7 +79,7 @@ describe('MbfScreen', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     debugValue = false;
     enableMobileValue = true;
     localStorage.clear();

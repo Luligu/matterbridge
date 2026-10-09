@@ -1,4 +1,4 @@
-// vitest.config.ts v.2.0.6
+// vitest.config.ts v.2.0.7
 
 // This Vitest configuration is designed for a TypeScript project.
 
@@ -24,8 +24,8 @@ export default defineConfig({
       '**/vendor/',
       '**/jest-utils/', // Plugins test package for Jest
       '**/vitest-utils/', // Plugins test package for Vitest
-      '**/matterNode*.test.ts', // Not released yet, so ignore for now
-      '**/backend*.test.ts', // Not released yet, so ignore for now
+      'packages/core/vitest/matterNode.*.ts',
+      'packages/thread/vitest/backend*.ts',
     ],
     globals: true,
     clearMocks: false,
@@ -89,11 +89,8 @@ export default defineConfig({
         'packages/core/src/matterbridgeEndpointTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
-
-        'packages/core/src/backend.ts', // Not released yet, so ignore for now
-        'packages/core/src/backendExpress.ts', // Not released yet, so ignore for now
-        'packages/core/src/backendWsServer.ts', // Not released yet, so ignore for now
-        'packages/core/src/matterNode.ts', // Not released yet, so ignore for now
+        'packages/core/src/matterNode.ts', // Not released files
+        'packages/core/src/backend*.ts', // Not released files
       ],
       thresholds: {
         'perFile': true,
@@ -111,7 +108,7 @@ export default defineConfig({
           functions: 100,
           lines: 100,
         },
-        'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory}.ts':
+        'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory,matterNodeHelpers}.ts':
           {
             perFile: true,
             statements: 100,
@@ -119,7 +116,7 @@ export default defineConfig({
             functions: 100,
             lines: 100,
           },
-        'packages/core/src/{frontend,matterbridge,matterbridgeEndpoint}.ts': {
+        'packages/core/src/{frontend,matterbridge,matterbridgeEndpoint,matterNode}.ts': {
           perFile: true,
           statements: 98,
           branches: 80,

@@ -4,13 +4,11 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable no-use-before-define */
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
 
-const MATTER_PORT = 10040;
+const MATTER_PORT = 10400;
 const NAME = 'MatterNodeAccessory';
-const HOMEDIR = path.join('.cache', 'vitest', NAME);
 const PASSCODE = 123458;
 const DISCRIMINATOR = 3862;
 const STRESS_TEST_ITERATIONS = 5;
@@ -21,11 +19,12 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
-import type { SharedMatterbridge } from '@matterbridge/types';
+import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { BroadcastServer } from '@matterbridge/thread';
+import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { loggerInfoSpy, setupTest } from '@matterbridge/vitest-utils';
-import { er, LogLevel, zb } from 'node-ansi-logger';
+import { AnsiLogger, er, LogLevel, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from '../src/deviceManager.js';
@@ -34,6 +33,9 @@ import { bridgedNode, occupancySensor, onOffPlugInUnit, powerSource, pressureSen
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { PluginManager } from '../src/pluginManager.js';
+
+// Setup the test environment
+await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
@@ -99,9 +101,6 @@ const matterbridge: SharedMatterbridge = {
 };
 // process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
-// Setup the test environment
-await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
-
 describe('MatterNode accessory', () => {
   let matter: MatterNode;
 
@@ -128,6 +127,17 @@ describe('MatterNode accessory', () => {
   /* Simulate normal environment in test */
   const deviceManager = new DeviceManager();
 
+  const matterbridgeServer = new BroadcastServer('matterbridge', new AnsiLogger({ logName: 'TestMatterbridgeServer' }));
+  const nextSettings = { port: MATTER_PORT, passcode: PASSCODE, discriminator: DISCRIMINATOR };
+  matterbridgeServer.on('broadcast_message', (msg: WorkerMessage) => {
+    if (matterbridgeServer.isWorkerRequestOfType(msg, 'matterbridge_matterdata')) {
+      matterbridgeServer.respond({ ...msg, result: { ...nextSettings } });
+      nextSettings.port++;
+      nextSettings.passcode++;
+      nextSettings.discriminator++;
+    }
+  });
+
   beforeAll(() => {
     // process.stdout.write('=== Starting MatterNode childbridge tests ===\n\n');
 
@@ -140,11 +150,10 @@ describe('MatterNode accessory', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
-
   afterAll(async () => {
     // Close broadcast server and mDNS instance
     await matter.destroy();
+    matterbridgeServer.close();
 
     // Close PluginManager and DeviceManager
     pluginManager.destroy();
@@ -175,7 +184,10 @@ describe('MatterNode accessory', () => {
   });
 
   test('Create MatterNode in childbridge mode', async () => {
+    Object.assign(matter, { port: undefined, passcode: undefined, discriminator: undefined });
     await matter.create();
+    expect(nextSettings).toEqual({ port: MATTER_PORT + 1, passcode: PASSCODE + 1, discriminator: DISCRIMINATOR + 1 });
+    expect(matter.port).toBe(MATTER_PORT);
     expect(matter.matterStorageService).toBeDefined();
     expect(matter.serverNode).toBeUndefined(); // In childbridge mode, serverNode is created on start
   });

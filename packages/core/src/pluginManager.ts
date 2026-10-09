@@ -52,6 +52,7 @@ import { isMatterbridgeAccessoryPlatform } from './matterbridgeAccessoryPlatform
 import { isMatterbridgeDynamicPlatform } from './matterbridgeDynamicPlatform.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { assertMatterbridgePlatform, type MatterbridgePlatform } from './matterbridgePlatform.js';
+import { getServerNodeData } from './matterNodeHelpers.js';
 
 logModuleLoaded('Plugin Manager');
 
@@ -543,7 +544,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       schemaJson: plugin.schemaJson,
       hasWhiteList: plugin.hasWhiteList,
       hasBlackList: plugin.hasBlackList,
-      matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
+      matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
     };
   }
 

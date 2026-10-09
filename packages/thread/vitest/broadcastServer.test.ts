@@ -9,12 +9,12 @@ const MATTER_PORT = 0;
 
 import { BroadcastChannel } from 'node:worker_threads';
 
+import { flushAsync } from '@matterbridge/test-utils';
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
-import { flushAsync } from './flushAsync.js';
-import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -23,14 +23,10 @@ describe('BroadcastServer', () => {
   const log = new AnsiLogger({ logName: 'BroadcastServer', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   let server: BroadcastServer;
 
-  beforeAll(async () => {});
-
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(() => {
     // Restore all mocks
@@ -78,19 +74,19 @@ describe('BroadcastServer', () => {
     // @ts-expect-error: access private method for test
     server.closed = true;
 
-    server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager' });
+    server.broadcast({ type: 'test_simple', src: 'frontend', dst: 'manager' });
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
     vi.clearAllMocks();
 
-    server.request({ type: 'jest_simple', src: 'frontend', dst: 'manager' });
+    server.request({ type: 'test_simple', src: 'frontend', dst: 'manager' });
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
     vi.clearAllMocks();
 
-    server.respond({ type: 'jest_simple', src: 'frontend', dst: 'manager', result: { success: true } });
+    server.respond({ type: 'test_simple', src: 'frontend', dst: 'manager', result: { success: true } });
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Broadcast channel is closed/));
     vi.clearAllMocks();
 
-    await expect(server.fetch({ type: 'jest_simple', src: 'frontend', dst: 'manager' })).rejects.toThrow(/Broadcast channel is closed/);
+    await expect(server.fetch({ type: 'test_simple', src: 'frontend', dst: 'manager' })).rejects.toThrow(/Broadcast channel is closed/);
     vi.clearAllMocks();
 
     // @ts-expect-error: access private method for test
@@ -109,9 +105,9 @@ describe('BroadcastServer', () => {
 
   test('type guards: isWorkerRequest and isWorkerResponse', () => {
     // Prepare messages with proper BaseMessage structure
-    const requestMsg = { id: 123456, timestamp: 0, type: 'jest', src: 'frontend', dst: 'manager' };
-    const responseMsg = { id: 123456, timestamp: 0, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 30 } };
-    const responseErrorMsg = { id: 123456, timestamp: 0, type: 'jest', src: 'manager', dst: 'frontend', error: 'Not found' };
+    const requestMsg = { id: 123456, timestamp: 0, type: 'test', src: 'frontend', dst: 'manager' };
+    const responseMsg = { id: 123456, timestamp: 0, type: 'test', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 30 } };
+    const responseErrorMsg = { id: 123456, timestamp: 0, type: 'test', src: 'manager', dst: 'frontend', error: 'Not found' };
     const responseWithBoth = { ...responseMsg, error: 'duplicate' };
     const requestWithResult = { ...requestMsg, result: { duplicate: true } };
     const requestWithError = { ...requestMsg, error: 'should fail' };
@@ -135,95 +131,95 @@ describe('BroadcastServer', () => {
     expect(server.isWorkerResponse(null)).toBe(false);
 
     // Test missing fields
-    const invalidMsg = { id: 123456, type: 'jest' }; // missing src, dst
+    const invalidMsg = { id: 123456, type: 'test' }; // missing src, dst
     expect(server.isWorkerRequest(invalidMsg)).toBe(false);
   });
 
   test('type guards: isWorkerRequestOfType and isWorkerResponseOfType', () => {
-    const requestMsg = { id: 123457, timestamp: 1, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 7 } } as const;
-    const simpleRequestMsg = { id: 123458, timestamp: 2, type: 'jest_simple', src: 'frontend', dst: 'manager' } as const;
-    const responseMsg = { id: 123457, timestamp: 3, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 31 } } as const;
-    const responseErrorMsg = { id: 123457, timestamp: 4, type: 'jest', src: 'manager', dst: 'frontend', error: 'Not found' } as const;
+    const requestMsg = { id: 123457, timestamp: 1, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 7 } } as const;
+    const simpleRequestMsg = { id: 123458, timestamp: 2, type: 'test_simple', src: 'frontend', dst: 'manager' } as const;
+    const responseMsg = { id: 123457, timestamp: 3, type: 'test', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 31 } } as const;
+    const responseErrorMsg = { id: 123457, timestamp: 4, type: 'test', src: 'manager', dst: 'frontend', error: 'Not found' } as const;
 
     // Positive request cases
-    expect(server.isWorkerRequestOfType(requestMsg, 'jest')).toBe(true);
-    expect(server.isWorkerRequestOfType(simpleRequestMsg, 'jest_simple')).toBe(true);
+    expect(server.isWorkerRequestOfType(requestMsg, 'test')).toBe(true);
+    expect(server.isWorkerRequestOfType(simpleRequestMsg, 'test_simple')).toBe(true);
 
     // Negative request cases
-    expect(server.isWorkerRequestOfType(requestMsg, 'jest_simple')).toBe(false);
-    expect(server.isWorkerRequestOfType(simpleRequestMsg, 'jest')).toBe(false);
-    expect(server.isWorkerRequestOfType(responseMsg, 'jest')).toBe(false);
+    expect(server.isWorkerRequestOfType(requestMsg, 'test_simple')).toBe(false);
+    expect(server.isWorkerRequestOfType(simpleRequestMsg, 'test')).toBe(false);
+    expect(server.isWorkerRequestOfType(responseMsg, 'test')).toBe(false);
 
     // Positive response cases
-    expect(server.isWorkerResponseOfType(responseMsg, 'jest')).toBe(true);
-    expect(server.isWorkerResponseOfType(responseErrorMsg, 'jest')).toBe(true);
+    expect(server.isWorkerResponseOfType(responseMsg, 'test')).toBe(true);
+    expect(server.isWorkerResponseOfType(responseErrorMsg, 'test')).toBe(true);
 
     // Negative response cases
-    expect(server.isWorkerResponseOfType(responseMsg, 'jest_simple')).toBe(false);
-    expect(server.isWorkerResponseOfType(requestMsg, 'jest')).toBe(false);
-    const malformedResponse = { id: 123459, timestamp: 5, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 32 }, error: 'duplicate' };
-    expect(server.isWorkerResponseOfType(malformedResponse, 'jest')).toBe(false);
+    expect(server.isWorkerResponseOfType(responseMsg, 'test_simple')).toBe(false);
+    expect(server.isWorkerResponseOfType(requestMsg, 'test')).toBe(false);
+    const malformedResponse = { id: 123459, timestamp: 5, type: 'test', src: 'manager', dst: 'frontend', result: { name: 'Alice', age: 32 }, error: 'duplicate' };
+    expect(server.isWorkerResponseOfType(malformedResponse, 'test')).toBe(false);
   });
 
   test('broadcast: should broadcast a valid simple request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager' });
-    server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager', result: { success: true } });
-    server.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager', error: 'Any error' });
+    server.broadcast({ type: 'test_simple', src: 'frontend', dst: 'manager' });
+    server.broadcast({ type: 'test_simple', src: 'frontend', dst: 'manager', result: { success: true } });
+    server.broadcast({ type: 'test_simple', src: 'frontend', dst: 'manager', error: 'Any error' });
     expect(postMessageSpy).toHaveBeenCalledTimes(3);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest_simple', src: 'manager', dst: 'manager' });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test_simple', src: 'manager', dst: 'manager' });
     expect(postMessageSpy).toHaveBeenCalledWith({
       id: expect.any(Number),
       timestamp: expect.any(Number),
-      type: 'jest_simple',
+      type: 'test_simple',
       src: 'manager',
       dst: 'manager',
       result: { success: true },
     });
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest_simple', src: 'manager', dst: 'manager', error: 'Any error' });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test_simple', src: 'manager', dst: 'manager', error: 'Any error' });
     postMessageSpy.mockRestore();
   });
 
   test('broadcast: should broadcast a valid request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    server.broadcast({ type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } });
-    server.broadcast({ type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Bob', age: 42 } });
-    server.broadcast({ type: 'jest', src: 'frontend', dst: 'manager', error: 'Not found' });
+    server.broadcast({ type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } });
+    server.broadcast({ type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Bob', age: 42 } });
+    server.broadcast({ type: 'test', src: 'frontend', dst: 'manager', error: 'Not found' });
     expect(postMessageSpy).toHaveBeenCalledTimes(3);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } });
     expect(postMessageSpy).toHaveBeenCalledWith({
       id: expect.any(Number),
       timestamp: expect.any(Number),
-      type: 'jest',
+      type: 'test',
       src: 'manager',
       dst: 'manager',
       result: { name: 'Bob', age: 42 },
     });
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', error: 'Not found' });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test', src: 'manager', dst: 'manager', error: 'Not found' });
     postMessageSpy.mockRestore();
   });
 
   test('request: should broadcast a valid simple request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    const requestMsg = { type: 'jest_simple', src: 'frontend', dst: 'manager' } as const;
+    const requestMsg = { type: 'test_simple', src: 'frontend', dst: 'manager' } as const;
     server.request(requestMsg);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest_simple', src: 'manager', dst: 'manager' });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test_simple', src: 'manager', dst: 'manager' });
     postMessageSpy.mockRestore();
   });
 
   test('request: should broadcast a valid request message', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const requestMsg = { type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } });
     postMessageSpy.mockRestore();
   });
 
   test('request: should broadcast a valid request message adding id and timestamp', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const requestMsg = { type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
-    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } });
+    expect(postMessageSpy).toHaveBeenCalledWith({ id: expect.any(Number), timestamp: expect.any(Number), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } });
     postMessageSpy.mockRestore();
   });
 
@@ -231,7 +227,7 @@ describe('BroadcastServer', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage').mockImplementation(() => {});
     const logErrorSpy = vi.spyOn(log, 'error').mockImplementation(() => {});
     // @ts-expect-error: purposely wrong message (missing src/dst and has response)
-    server.request({ id: 1, type: 'jest', response: { name: 'Eve', age: 99 } });
+    server.request({ id: 1, type: 'test', response: { name: 'Eve', age: 99 } });
     expect(postMessageSpy).not.toHaveBeenCalled();
     expect(logErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Invalid request message format/));
     postMessageSpy.mockRestore();
@@ -240,13 +236,13 @@ describe('BroadcastServer', () => {
 
   test('respond: should broadcast a valid response message adding elapsed', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    const responseMsg = { id: 654321, timestamp: Date.now() - 1000, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
+    const responseMsg = { id: 654321, timestamp: Date.now() - 1000, type: 'test', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
     expect(postMessageSpy).toHaveBeenCalledWith({
       id: 654321,
       timestamp: expect.any(Number),
       elapsed: expect.any(Number),
-      type: 'jest',
+      type: 'test',
       src: 'manager',
       dst: 'frontend',
       result: { name: 'Bob', age: 42 },
@@ -256,13 +252,13 @@ describe('BroadcastServer', () => {
 
   test('respond: should broadcast a valid response message adding timestamp but not elapsed', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage');
-    const responseMsg = { id: 654321, type: 'jest', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
+    const responseMsg = { id: 654321, type: 'test', src: 'manager', dst: 'frontend', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
     expect(postMessageSpy).toHaveBeenCalledWith({
       id: 654321,
       timestamp: expect.any(Number),
       elapsed: undefined,
-      type: 'jest',
+      type: 'test',
       src: 'manager',
       dst: 'frontend',
       result: { name: 'Bob', age: 42 },
@@ -275,7 +271,7 @@ describe('BroadcastServer', () => {
     const responseMsg = {
       id: 654321,
       timestamp: Date.now() - 1000,
-      type: 'jest',
+      type: 'test',
       src: 'frontend',
       dst: 'manager',
       params: { userId: 1 },
@@ -286,7 +282,7 @@ describe('BroadcastServer', () => {
       id: 654321,
       timestamp: expect.any(Number),
       elapsed: expect.any(Number),
-      type: 'jest',
+      type: 'test',
       src: 'manager',
       dst: 'frontend',
       params: { userId: 1 },
@@ -300,7 +296,7 @@ describe('BroadcastServer', () => {
     const responseMsg = {
       id: 654321,
       timestamp: Date.now() - 1000,
-      type: 'jest',
+      type: 'test',
       src: 'frontend',
       dst: 'all',
       result: { name: 'Bob', age: 42 },
@@ -310,7 +306,7 @@ describe('BroadcastServer', () => {
       id: 654321,
       timestamp: expect.any(Number),
       elapsed: expect.any(Number),
-      type: 'jest',
+      type: 'test',
       src: 'manager',
       dst: 'all',
       result: { name: 'Bob', age: 42 },
@@ -322,7 +318,7 @@ describe('BroadcastServer', () => {
     const postMessageSpy = vi.spyOn((server as any).broadcastChannel, 'postMessage').mockImplementation(() => {});
     const logErrorSpy = vi.spyOn(log, 'error').mockImplementation(() => {});
     // @ts-expect-error: purposely wrong message (missing src/dst and response)
-    server.respond({ id: 2, type: 'jest' });
+    server.respond({ id: 2, type: 'test' });
     expect(postMessageSpy).not.toHaveBeenCalled();
     expect(logErrorSpy).toHaveBeenCalledWith(expect.stringMatching(/Invalid response message format/));
     postMessageSpy.mockRestore();
@@ -335,7 +331,7 @@ describe('BroadcastServer', () => {
 
     const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
-    const testMessage = { id: 123456, type: 'jest', src: 'frontend', dst: 'manager' } as const;
+    const testMessage = { id: 123456, type: 'test', src: 'frontend', dst: 'manager' } as const;
     // @ts-expect-error: access private method for test
     testServer.broadcastChannel.postMessage(testMessage);
     testServer.close();
@@ -366,28 +362,28 @@ describe('BroadcastServer', () => {
   });
 
   test('fetch: should resolve with correct response', async () => {
-    const requestMsg = { id: 111111, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
-    const responseMsg = { id: 111111, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
+    const requestMsg = { id: 111111, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const responseMsg = { id: 111111, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
     setTimeout(() => {
       // Simulate receiving the response
       (server as any).broadcastChannel.onmessage({ data: responseMsg });
     }, 10);
     const result = await server.fetch(requestMsg);
-    expect(result).toEqual({ id: 111111, timestamp: expect.any(Number), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
+    expect(result).toEqual({ id: 111111, timestamp: expect.any(Number), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
   });
 
   test('fetch: should resolve with correct response without id', async () => {
     const generatedId = 123456789;
     const getUniqueIdSpy = vi.spyOn(server, 'getUniqueId').mockReturnValue(generatedId);
-    const requestMsg = { type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
-    const responseMsg = { type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
+    const requestMsg = { type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const responseMsg = { type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
     setTimeout(() => {
       // Simulate receiving the response
       (server as any).broadcastChannel.onmessage({ data: { ...responseMsg, id: generatedId, timestamp: Date.now() } });
     }, 10);
     try {
       const result = await server.fetch(requestMsg);
-      expect(result).toEqual({ id: generatedId, timestamp: expect.any(Number), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
+      expect(result).toEqual({ id: generatedId, timestamp: expect.any(Number), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
       expect((requestMsg as { id?: number }).id).toBeUndefined();
     } finally {
       getUniqueIdSpy.mockRestore();
@@ -396,8 +392,8 @@ describe('BroadcastServer', () => {
 
   test('fetch: should keep provided timestamp', async () => {
     const originalTimestamp = 123456;
-    const requestMsg = { id: 888888, timestamp: originalTimestamp, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
-    const responseMsg = { id: 888888, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
+    const requestMsg = { id: 888888, timestamp: originalTimestamp, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const responseMsg = { id: 888888, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
     setTimeout(() => {
       // Simulate receiving the response
       (server as any).broadcastChannel.onmessage({ data: responseMsg });
@@ -408,7 +404,7 @@ describe('BroadcastServer', () => {
 
   test('fetch: should resolve with correct response from another thread', async () => {
     const handler = (msg: any): void => {
-      if (msg.type === 'jest' && !('response' in msg)) {
+      if (msg.type === 'test' && !('response' in msg)) {
         server.respond({ ...msg, src: 'manager', dst: msg.src, result: { name: 'Alice', age: 33 } });
       }
     };
@@ -417,14 +413,14 @@ describe('BroadcastServer', () => {
     // Use a separate BroadcastServer instance to simulate another worker
     const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('frontend', log, NAME);
-    const result = await testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } });
+    const result = await testServer.fetch({ id: 123456, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } });
     testServer.close();
     expect(result).toEqual({
       id: 123456,
       timestamp: expect.any(Number),
       elapsed: expect.any(Number),
       params: { userId: 1 },
-      type: 'jest',
+      type: 'test',
       src: 'manager',
       dst: 'frontend',
       result: { name: 'Alice', age: 33 },
@@ -434,15 +430,15 @@ describe('BroadcastServer', () => {
   });
 
   test('fetch: should reject on error response', async () => {
-    const requestMsg = { id: 666666, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 4 } } as const;
+    const requestMsg = { id: 666666, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 4 } } as const;
     setTimeout(() => {
-      (server as any).broadcastChannel.onmessage({ data: { id: 666666, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager', error: 'Nope' } });
+      (server as any).broadcastChannel.onmessage({ data: { id: 666666, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', error: 'Nope' } });
     }, 10);
     await expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch received error response Nope/);
   });
 
   test('fetch: should reject malformed response', async () => {
-    const requestMsg = { id: 777777, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 5 } } as const;
+    const requestMsg = { id: 777777, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 5 } } as const;
     const originalGuard = server.isWorkerResponseOfType.bind(server);
     const guardSpy = vi.spyOn(server, 'isWorkerResponseOfType').mockImplementation((value, type) => {
       if ((value as any).id === 777777) {
@@ -451,7 +447,7 @@ describe('BroadcastServer', () => {
       return originalGuard(value, type);
     });
     setTimeout(() => {
-      (server as any).broadcastChannel.onmessage({ data: { id: 777777, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager' } });
+      (server as any).broadcastChannel.onmessage({ data: { id: 777777, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager' } });
     }, 10);
     try {
       await expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch received malformed response/);
@@ -461,7 +457,7 @@ describe('BroadcastServer', () => {
   });
 
   test('fetch: should reject on timeout', async () => {
-    const requestMsg = { id: 222222, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const requestMsg = { id: 222222, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     await expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch timeout/);
   });
 
@@ -469,12 +465,12 @@ describe('BroadcastServer', () => {
     // Use a separate BroadcastServer instance to simulate another worker
     const { BroadcastServer } = await import('../src/broadcastServer.js');
     const testServer = new BroadcastServer('manager', log, NAME);
-    await expect(testServer.fetch({ id: 123456, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 10)).rejects.toThrow(/Fetch timeout/);
+    await expect(testServer.fetch({ id: 123456, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 10)).rejects.toThrow(/Fetch timeout/);
     testServer.close();
   });
 
   test('fetch: should ignore wrong response type', async () => {
-    const requestMsg = { id: 333333, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const requestMsg = { id: 333333, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
     const wrongResponse = { id: 333333, type: 'plugins_length', src: 'manager', dst: 'frontend', response: { length: 5 } };
     setTimeout(() => {
       (server as any).broadcastChannel.onmessage({ data: wrongResponse });
@@ -483,10 +479,10 @@ describe('BroadcastServer', () => {
   });
 
   test('fetch: should handle multiple fetches independently', async () => {
-    const req1 = { id: 444444, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
-    const req2 = { id: 555555, type: 'jest', src: 'frontend', dst: 'manager', params: { userId: 2 } } as const;
-    const res1 = { id: 444444, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'A', age: 1 } } as const;
-    const res2 = { id: 555555, timestamp: Date.now(), type: 'jest', src: 'frontend', dst: 'manager', result: { name: 'B', age: 2 } } as const;
+    const req1 = { id: 444444, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const req2 = { id: 555555, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 2 } } as const;
+    const res1 = { id: 444444, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'A', age: 1 } } as const;
+    const res2 = { id: 555555, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'B', age: 2 } } as const;
     setTimeout(() => {
       (server as any).broadcastChannel.onmessage({ data: res2 });
       (server as any).broadcastChannel.onmessage({ data: res1 });
@@ -505,7 +501,7 @@ describe('BroadcastServer', () => {
 
   test('broadcast: should log error if the port is closed', async () => {
     const broadcastServerBroadcastSpy = vi.spyOn(BroadcastServer.prototype, 'broadcast');
-    const requestMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
+    const requestMsg = { id: 654321, timestamp: Date.now(), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
     server.broadcast(requestMsg);
     await flushAsync(undefined, undefined, 50);
     expect(broadcastServerBroadcastSpy).toHaveBeenCalledWith(requestMsg);
@@ -515,7 +511,7 @@ describe('BroadcastServer', () => {
 
   test('request: should log error if the port is closed', async () => {
     const broadcastServerRequestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
-    const requestMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
+    const requestMsg = { id: 654321, timestamp: Date.now(), type: 'test', src: 'manager', dst: 'manager', params: { userId: 1 } } as const;
     server.request(requestMsg);
     await flushAsync(undefined, undefined, 50);
     expect(broadcastServerRequestSpy).toHaveBeenCalledWith(requestMsg);
@@ -525,7 +521,7 @@ describe('BroadcastServer', () => {
 
   test('respond: should log error if the port is closed', async () => {
     const broadcastServerRespondSpy = vi.spyOn(BroadcastServer.prototype, 'respond');
-    const responseMsg = { id: 654321, timestamp: Date.now(), type: 'jest', src: 'manager', dst: 'manager', result: { name: 'Bob', age: 42 } } as const;
+    const responseMsg = { id: 654321, timestamp: Date.now(), type: 'test', src: 'manager', dst: 'manager', result: { name: 'Bob', age: 42 } } as const;
     server.respond(responseMsg);
     await flushAsync(undefined, undefined, 50);
     expect(broadcastServerRespondSpy).toHaveBeenCalledWith(responseMsg);
@@ -540,10 +536,10 @@ describe('BroadcastServer', () => {
       throw new Error('postMessage failed');
     });
 
-    expect(() => isolatedServer.broadcast({ type: 'jest_simple', src: 'frontend', dst: 'manager' } as any)).not.toThrow();
-    expect(() => isolatedServer.request({ type: 'jest_simple', src: 'frontend', dst: 'manager' } as any)).not.toThrow();
+    expect(() => isolatedServer.broadcast({ type: 'test_simple', src: 'frontend', dst: 'manager' } as any)).not.toThrow();
+    expect(() => isolatedServer.request({ type: 'test_simple', src: 'frontend', dst: 'manager' } as any)).not.toThrow();
     // respond() requires an id to pass validation and reach postMessage.
-    expect(() => isolatedServer.respond({ id: 1, timestamp: Date.now(), type: 'jest_simple', src: 'frontend', dst: 'manager', result: { success: true } } as any)).not.toThrow();
+    expect(() => isolatedServer.respond({ id: 1, timestamp: Date.now(), type: 'test_simple', src: 'frontend', dst: 'manager', result: { success: true } } as any)).not.toThrow();
 
     expect(postMessageSpy).toHaveBeenCalledTimes(3);
     postMessageSpy.mockRestore();

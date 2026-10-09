@@ -9,7 +9,6 @@ const MATTER_PORT = 11800;
 const MATTER_CREATE_ONLY = true;
 
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -19,7 +18,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { deviceEnergyManagement } from '../../src/matterbridgeDeviceTypes.js';
@@ -52,8 +52,6 @@ describe('Client clusters and behaviors', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

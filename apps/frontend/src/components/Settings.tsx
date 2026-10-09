@@ -641,7 +641,8 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
       label={label}
       variant="standard"
       sx={{
-        width: width ? `${width - 20}px` : '100%',
+        // v8 ignore next line -- just defensive check
+        'width': width ? `${width - 20}px` : '100%',
         // idle/blur underline
         '& .MuiInput-underline:before': {
           borderBottomColor: 'var(--main-label-color)',
@@ -665,15 +666,15 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
         input: {
           readOnly: true,
           sx: {
-            color: 'var(--div-text-color)',
+            'color': 'var(--div-text-color)',
             '&:before': { borderBottomColor: 'var(--main-label-color)' },
             '&:after': { borderBottomColor: 'var(--main-label-color)' },
           },
         },
         inputLabel: {
           sx: {
-            marginTop: '3px',
-            color: 'var(--main-label-color)',
+            'marginTop': '3px',
+            'color': 'var(--main-label-color)',
             '&.Mui-focused': {
               color: 'var(--main-label-color)',
             },

@@ -24,7 +24,6 @@ import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import type { ClusterId } from '@matter/types/datatype';
-import { log, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -34,7 +33,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { log, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
@@ -98,8 +98,6 @@ describe('Options helpers', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

@@ -305,7 +305,7 @@ describe('ConfigPluginDialog', () => {
     unmount();
     const Title = templates.ArrayFieldTitleTemplate;
     const Description = templates.ArrayFieldDescriptionTemplate;
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const props = { fieldPathId: { $id: 'array', path: [] }, title: 'Array title', description: 'Array description', schema: {}, registry: createRegistry() };
     const { container } = render(
       <>
@@ -402,12 +402,12 @@ describe('ConfigPluginDialog', () => {
     plugin.schemaJson = {
       type: 'object',
       properties: {
-        nested: { type: 'object', properties: { value: { type: 'string', 'ui:help': 'Nested help', 'ui:placeholder': 'Nested value' } } },
-        items: { type: 'array', items: { type: 'object', properties: { value: { type: 'string', 'ui:help': 'Item help' } } } },
+        nested: { type: 'object', properties: { value: { 'type': 'string', 'ui:help': 'Nested help', 'ui:placeholder': 'Nested value' } } },
+        items: { type: 'array', items: { type: 'object', properties: { value: { 'type': 'string', 'ui:help': 'Item help' } } } },
       },
-      allOf: [{ properties: { all: { type: 'string', 'ui:help': 'All help' } } }],
-      anyOf: [{ properties: { any: { type: 'string', 'ui:help': 'Any help' } } }],
-      oneOf: [{ properties: { one: { type: 'string', 'ui:help': 'One help' } } }],
+      allOf: [{ properties: { all: { 'type': 'string', 'ui:help': 'All help' } } }],
+      anyOf: [{ properties: { any: { 'type': 'string', 'ui:help': 'Any help' } } }],
+      oneOf: [{ properties: { one: { 'type': 'string', 'ui:help': 'One help' } } }],
     };
     plugin.configJson = extendConfig(plugin, { items: [], nested: {} });
     renderDialog(plugin);
@@ -619,8 +619,8 @@ describe('ConfigPluginDialog', () => {
   it('selects array values from device, entity, and device-entity dialogs', async () => {
     const plugin = createPlugin();
     plugin.configJson = extendConfig(plugin, {
-      deviceSerials: [],
-      entityDescriptions: [],
+      'deviceSerials': [],
+      'entityDescriptions': [],
       'Kitchen Sensor': [],
     });
 
@@ -740,8 +740,8 @@ describe('ConfigPluginDialog', () => {
   it('hides already-selected uniqueItems from device, entity, and device-entity selector lists', async () => {
     const plugin = createPlugin();
     plugin.configJson = extendConfig(plugin, {
-      deviceSerials: ['wifi-001'],
-      entityDescriptions: ['WiFi Desc'],
+      'deviceSerials': ['wifi-001'],
+      'entityDescriptions': ['WiFi Desc'],
       'Kitchen Sensor': ['Matter Desc'],
     });
 
@@ -867,10 +867,10 @@ describe('ConfigPluginDialog', () => {
       },
     };
     schemaProperties.hiddenConfig = {
-      type: 'string',
-      title: 'Hidden Config',
+      'type': 'string',
+      'title': 'Hidden Config',
       'ui:widget': 'hidden',
-      default: 'secret',
+      'default': 'secret',
     };
 
     const { addListener } = renderDialog(plugin);
@@ -914,15 +914,15 @@ describe('ConfigPluginDialog', () => {
 
     const schemaProperties = plugin.schemaJson?.properties as Record<string, any>;
     schemaProperties.loggerOnFile = {
-      type: 'array',
-      title: 'Logger On File',
-      description: 'Set the logger on file for the plugin',
-      items: {
+      'type': 'array',
+      'title': 'Logger On File',
+      'description': 'Set the logger on file for the plugin',
+      'items': {
         type: 'string',
         enum: ['debug', 'info', 'notice', 'warn', 'error', 'fatal'],
       },
-      uniqueItems: true,
-      default: [],
+      'uniqueItems': true,
+      'default': [],
       'ui:enumDisabled': ['warn'],
     };
 
@@ -1056,10 +1056,10 @@ describe('ConfigPluginDialog', () => {
       default: 'unexpected',
     };
     schemaProperties.hiddenField = {
-      type: 'string',
-      title: 'Hidden Field',
+      'type': 'string',
+      'title': 'Hidden Field',
       'ui:widget': 'hidden',
-      default: 'hidden-value',
+      'default': 'hidden-value',
     };
 
     renderDialog(plugin);

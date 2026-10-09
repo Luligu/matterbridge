@@ -44,25 +44,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 // @matter
-import { Diagnostic, Lifecycle, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
+import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
-import { getClusterNameById } from '@matter/types/cluster';
-import { AirQuality } from '@matter/types/clusters/air-quality';
-import type { Binding } from '@matter/types/clusters/binding';
-import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
-import { ClosureControl } from '@matter/types/clusters/closure-control';
-import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
-import { FanControl } from '@matter/types/clusters/fan-control';
-import { OperationalState } from '@matter/types/clusters/operational-state';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
-import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
-import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { CommissioningOptions } from '@matter/types/commissioning';
-import { type ClusterId, type EndpointNumber, FabricIndex } from '@matter/types/datatype';
-import { ThreeLevelAuto } from '@matter/types/globals';
+import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -91,9 +77,9 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import { isBun } from '@matterbridge/utils/bun';
-import { getParameter, hasParameter } from '@matterbridge/utils/cli';
-import { getEnumDescription } from '@matterbridge/utils/enum';
+import { isBun, memoryFootprint } from '@matterbridge/utils/bun';
+import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
+import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -105,11 +91,11 @@ import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, n
 import type { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import { cliEmitter, lastOsCpuUsage, lastProcessCpuUsage } from './cliEmitter.js';
+import { cliEmitter } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
-import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { capitalizeFirstLetter, getAttribute } from './matterbridgeEndpointHelpers.js';
+import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
+import { deleteAdvertisingNode, getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
 import type { Plugin } from './pluginManager.js';
 
 logModuleLoaded('Frontend');
@@ -146,6 +132,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private serverFetchTimeout = 2000;
   private readonly debug = hasParameter('debug') || hasParameter('verbose');
   private readonly verbose = hasParameter('verbose');
+  private readonly diagnostic = hasParameter('diagnostic');
 
   // Frontend settings
   public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
@@ -369,8 +356,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   async start(port: number = 8283): Promise<void> {
     this.port = port;
     this.storedPassword = await this.matterbridge.nodeContext?.get('password', '');
+    // --ssl, --tls and --mtls enable https and wss; --mtls also requires a client certificate
+    const secure = hasAnyParameter('ssl', 'tls', 'mtls');
 
-    this.log.debug(`Initializing the frontend ${hasParameter('ssl') ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
+    this.log.debug(`Initializing the frontend ${secure ? 'https' : 'http'} server on port ${YELLOW}${this.port}${db}`);
 
     // Initialize multer with the upload directory
     const multer = await import('multer');
@@ -396,7 +385,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.log.debug(`Creating WebSocketServer...`);
     const ws = await import('ws');
     this.webSocketServer = new ws.WebSocketServer({ noServer: true });
-    this.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
+    this.emit('websocket_server_listening', secure ? 'wss' : 'ws');
 
     this.webSocketServer.on('connection', (ws, request) => {
       const clientIp = request.socket.remoteAddress;
@@ -456,7 +445,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // oxlint-disable-next-line unicorn/no-negated-condition
-    if (!hasParameter('ssl')) {
+    if (!secure) {
       // Create an HTTP server and attach the express app
       const http = await import('node:http');
       try {
@@ -1282,9 +1271,9 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
     this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
     this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
-    this.matterbridge.systemInformation.cpuUsage = formatPercent(lastOsCpuUsage);
-    this.matterbridge.systemInformation.processCpuUsage = formatPercent(lastProcessCpuUsage);
-    this.matterbridge.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.matterbridge.systemInformation.cpuUsage = formatPercent(0);
+    this.matterbridge.systemInformation.processCpuUsage = formatPercent(0);
+    this.matterbridge.systemInformation.rss = formatBytes(memoryFootprint());
     this.matterbridge.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
     this.matterbridge.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 
@@ -1336,280 +1325,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the reachable attribute.
-   *
-   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint object.
-   * @returns {boolean} The reachable attribute.
-   */
-  private getReachability(device: MatterbridgeEndpoint): boolean {
-    if (this.matterbridge.hasCleanupStarted) return false; // Skip if cleanup has started
-    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return false;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    if (device.hasClusterServer(BridgedDeviceBasicInformation.id)) return device.getAttribute(BridgedDeviceBasicInformation, 'reachable') as boolean;
-    if (device.mode === 'server' && device.serverNode?.state.basicInformation.reachable !== undefined) return device.serverNode.state.basicInformation.reachable;
-    if (this.matterbridge.bridgeMode === 'childbridge') return true;
-    return false;
-  }
-
-  /**
-   * Retrieves the power source attribute.
-   *
-   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice to retrieve the power source from.
-   * @returns {'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined} The power source attribute.
-   */
-  private getPowerSource(endpoint: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined {
-    if (this.matterbridge.hasCleanupStarted) return undefined; // Skip if cleanup has started
-    if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
-
-    const powerSource = (device: MatterbridgeEndpoint): 'ac' | 'dc' | 'ok' | 'warning' | 'critical' | undefined => {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      const featureMap = device.getAttribute(PowerSource.id, 'featureMap') as Record<string, boolean>;
-      if (featureMap.wired) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        const wiredCurrentType = device.getAttribute(PowerSource.id, 'wiredCurrentType') as PowerSource.WiredCurrentType;
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        return ['ac', 'dc'][wiredCurrentType] as 'ac' | 'dc' | undefined;
-      }
-      if (featureMap.battery) {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        const batChargeLevel = device.getAttribute(PowerSource.id, 'batChargeLevel') as PowerSource.BatChargeLevel;
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        return ['ok', 'warning', 'critical'][batChargeLevel] as 'ok' | 'warning' | 'critical' | undefined;
-      }
-      return undefined;
-    };
-
-    // Root endpoint
-    if (endpoint.hasClusterServer(PowerSource.id)) return powerSource(endpoint);
-    // Child endpoints
-    for (const child of endpoint.getChildEndpoints()) {
-      /* v8 ignore next */
-      if (child.hasClusterServer(PowerSource.id)) return powerSource(child);
-    }
-    return undefined;
-  }
-
-  /**
-   * Retrieves the battery level attribute.
-   *
-   * @param {MatterbridgeEndpoint} endpoint - The MatterbridgeDevice to retrieve the power source from.
-   * @returns {number | undefined} The battery level attribute.
-   */
-  private getBatteryLevel(endpoint: MatterbridgeEndpoint): number | undefined {
-    if (this.matterbridge.hasCleanupStarted) return undefined; // Skip if cleanup has started
-    if (!endpoint.lifecycle.isReady || endpoint.construction.status !== Lifecycle.Status.Active) return undefined;
-
-    const batteryLevel = (device: MatterbridgeEndpoint): number | undefined => {
-      const featureMap = device.getAttribute(PowerSource.id, 'featureMap') as Record<string, boolean>;
-      if (featureMap.battery) {
-        const batChargeLevel = device.getAttribute(PowerSource.id, 'batPercentRemaining') as number | undefined;
-        return isValidNumber(batChargeLevel) ? batChargeLevel / 2 : undefined;
-      }
-      return undefined;
-    };
-
-    // Root endpoint
-    if (endpoint.hasClusterServer(PowerSource.id)) return batteryLevel(endpoint);
-    // Child endpoints
-    for (const child of endpoint.getChildEndpoints()) {
-      /* v8 ignore next */
-      if (child.hasClusterServer(PowerSource.id)) return batteryLevel(child);
-    }
-    return undefined;
-  }
-
-  /**
-   * Retrieves the cluster text description from a given device.
-   * The output is a string with the attributes description of the cluster servers in the device to show in the frontend.
-   *
-   * @param {MatterbridgeEndpoint} device - The MatterbridgeEndpoint to retrieve the cluster text from.
-   * @returns {string} The attributes description of the cluster servers in the device.
-   */
-  private getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
-    if (this.matterbridge.hasCleanupStarted) return ''; // Skip if cleanup has started
-    /* v8 ignore next */
-    if (!device.lifecycle.isReady || device.construction.status !== Lifecycle.Status.Active) return '';
-
-    // TODO: Remove
-    /* v8 ignore next */
-    const getUserLabel = (device: MatterbridgeEndpoint): string => {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      const labelList = getAttribute(device, 'userLabel', 'labelList') as { label: string; value: string }[];
-      if (labelList) {
-        const composed = labelList.find((entry) => entry.label === 'composed');
-        if (composed) return 'Composed: ' + composed.value;
-      }
-      /* v8 ignore next cause is not reachable */
-      return '';
-    };
-
-    // TODO: Remove
-    /* v8 ignore next */
-    const getFixedLabel = (device: MatterbridgeEndpoint): string => {
-      // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-      const labelList = getAttribute(device, 'fixedLabel', 'labelList') as { label: string; value: string }[];
-      if (labelList) {
-        const composed = labelList.find((entry) => entry.label === 'composed');
-        if (composed) return 'Composed: ' + composed.value;
-      }
-      /* v8 ignore next cause is not reacheable */
-      return '';
-    };
-
-    let attributes = '';
-    let supportedModes: { label: string; mode: number }[] = [];
-    const getMeasurementText = (value: unknown, scale: number, unit: string): string => {
-      if (value === null) return 'unknown';
-      if (isValidNumber(value) || typeof value === 'bigint') return `${Number(value) / scale}${unit}`;
-      return '';
-    };
-    const getEnergyText = (value: unknown): string => {
-      if (value === null) return 'unknown';
-      if (isValidObject(value) && 'energy' in value && (isValidNumber(value.energy) || typeof value.energy === 'bigint')) return `${Number(value.energy) / 1_000_000}kWh`;
-      return '';
-    };
-    const appendMeasurement = (label: string, value: string): void => {
-      if (value) attributes += `${label}: ${value} `;
-    };
-
-    // TODO: Remove
-    /* v8 ignore next */
-    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-      // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
-      if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-      if (clusterName === 'descriptor' && attributeName === 'clientList' && isValidArray(attributeValue, 1))
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        attributes += `Client cluster(s): [${(attributeValue as ClusterId[]).map((id) => getClusterNameById(id)).join(', ')}] `;
-      if (clusterName === 'binding' && attributeName === 'binding' && isValidArray(attributeValue)) {
-        if (attributeValue.length === 0) attributes += `Bound cluster(s): none `;
-        else {
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          const targets = attributeValue as Binding.Target[];
-          const formatted = targets.map((target) => {
-            const parts: string[] = [];
-            if (target.node !== undefined) parts.push(`node: ${target.node}`);
-            if (target.group !== undefined) parts.push(`group: ${target.group}`);
-            if (target.endpoint !== undefined) parts.push(`endpoint: ${target.endpoint}`);
-            if (target.cluster !== undefined) parts.push(`cluster: ${getClusterNameById(target.cluster)}`);
-            if (target.fabricIndex !== undefined) parts.push(`fabricIndex: ${target.fabricIndex}`);
-            return `[${parts.join(', ')}]`;
-          });
-          attributes += `Bound cluster(s): ${formatted.join(' ')} `;
-        }
-      }
-      if (clusterName === 'onOff' && attributeName === 'onOff') attributes += `OnOff: ${attributeValue} `;
-      if (clusterName === 'switch' && attributeName === 'currentPosition') attributes += `Position: ${attributeValue} `;
-      if (clusterName === 'windowCovering' && attributeName === 'currentPositionLiftPercent100ths' && isValidNumber(attributeValue, 0, 10000))
-        attributes += `Cover position: ${attributeValue / 100}% `;
-      if (clusterName === 'doorLock' && attributeName === 'lockState') attributes += `State: ${attributeValue === 1 ? 'Locked' : 'Not locked'} `;
-      if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && attributeValue === null)
-        attributes += `Position: unknown Latch: unknown Speed: unknown SecureState: unknown `;
-      if (clusterName === 'closureControl' && attributeName === 'overallCurrentState' && isValidObject(attributeValue)) {
-        const overallCurrentState = attributeValue as ClosureControl.OverallCurrentState;
-        attributes += `Position: ${getEnumDescription(ClosureControl.CurrentPosition, overallCurrentState.position, { fallback: 'unknown' })} `;
-        if (overallCurrentState.latch !== undefined) attributes += `Latch: ${overallCurrentState.latch} `;
-        if (overallCurrentState.speed !== undefined) attributes += `Speed: ${getEnumDescription(ThreeLevelAuto, overallCurrentState.speed)} `;
-        attributes += `SecureState: ${overallCurrentState.secureState ?? 'unknown'} `;
-      }
-      if (clusterName === 'thermostat' && attributeName === 'localTemperature' && isValidNumber(attributeValue)) attributes += `Temperature: ${attributeValue / 100}°C `;
-      if (clusterName === 'thermostat' && attributeName === 'occupiedHeatingSetpoint' && isValidNumber(attributeValue)) attributes += `Heat to: ${attributeValue / 100}°C `;
-      if (clusterName === 'thermostat' && attributeName === 'occupiedCoolingSetpoint' && isValidNumber(attributeValue)) attributes += `Cool to: ${attributeValue / 100}°C `;
-
-      const modeClusters = new Set(['modeSelect', 'rvcRunMode', 'rvcCleanMode', 'laundryWasherMode', 'ovenMode', 'microwaveOvenMode', 'deviceEnergyManagementMode']);
-      if (modeClusters.has(clusterName) && attributeName === 'supportedModes') {
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        supportedModes = attributeValue as { label: string; mode: number }[];
-      }
-      if (modeClusters.has(clusterName) && attributeName === 'currentMode') {
-        const supportedMode = supportedModes.find((mode) => mode.mode === attributeValue);
-        if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
-      }
-      if (clusterName === 'operationalState' && attributeName === 'operationalState')
-        attributes += `OpState: ${getEnumDescription(OperationalState.OperationalStateEnum, attributeValue as OperationalState.OperationalStateEnum)} `;
-      if (clusterName === 'rvcOperationalState' && attributeName === 'operationalState')
-        attributes += `OpState: ${getEnumDescription(RvcOperationalState.OperationalState, attributeValue as RvcOperationalState.OperationalState)} `;
-
-      if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
-
-      if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState')
-        attributes += `State: ${getEnumDescription(ValveConfigurationAndControl.ValveState, attributeValue as ValveConfigurationAndControl.ValveState, { fallback: 'unknown' })} `;
-
-      if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
-
-      if (clusterName === 'applicationBasic' && attributeName === 'applicationName') attributes += `App: ${attributeValue} `;
-
-      if (clusterName === 'colorControl' && attributeName === 'colorMode' && isValidNumber(attributeValue, 0, 2)) attributes += `Mode: ${['HS', 'XY', 'CT'][attributeValue]} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentHue' && isValidNumber(attributeValue))
-        attributes += `Hue: ${Math.round(attributeValue)} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 0 && attributeName === 'currentSaturation' && isValidNumber(attributeValue))
-        attributes += `Saturation: ${Math.round(attributeValue)} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentX' && isValidNumber(attributeValue))
-        attributes += `X: ${Math.round(attributeValue / 655.36) / 100} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 1 && attributeName === 'currentY' && isValidNumber(attributeValue))
-        attributes += `Y: ${Math.round(attributeValue / 655.36) / 100} `;
-      if (clusterName === 'colorControl' && getAttribute(device, 'colorControl', 'colorMode') === 2 && attributeName === 'colorTemperatureMireds' && isValidNumber(attributeValue))
-        attributes += `ColorTemp: ${Math.round(attributeValue)} `;
-
-      if (clusterName === 'booleanState' && attributeName === 'stateValue') attributes += `Contact: ${attributeValue} `;
-      if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue))
-        attributes += `Active alarms: ${stringify(attributeValue)} `;
-
-      if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState')
-        attributes += `Smoke: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
-      if (clusterName === 'smokeCoAlarm' && attributeName === 'coState')
-        attributes += `Co: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
-
-      if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${getEnumDescription(FanControl.FanMode, attributeValue as FanControl.FanMode)} `;
-      if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue}% `;
-      if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
-      if (clusterName === 'fanControl' && attributeName === 'rockSetting' && isValidObject(attributeValue)) attributes += `Rock: ${stringify(attributeValue)} `;
-      if (clusterName === 'fanControl' && attributeName === 'windSetting' && isValidObject(attributeValue)) attributes += `Wind: ${stringify(attributeValue)} `;
-      if (clusterName === 'fanControl' && attributeName === 'airflowDirection')
-        attributes += `Direction: ${getEnumDescription(FanControl.AirflowDirection, attributeValue as FanControl.AirflowDirection)} `;
-
-      if (clusterName === 'hepaFilterMonitoring' && attributeName === 'condition') attributes += `Hepa filter: ${attributeValue}% `;
-      if (clusterName === 'activatedCarbonFilterMonitoring' && attributeName === 'condition') attributes += `Carbon filter: ${attributeValue}% `;
-      if (clusterName === 'waterTankLevelMonitoring' && attributeName === 'condition') attributes += `Water tank: ${attributeValue}% `;
-
-      if (clusterName === 'temperatureAlarm' && attributeName === 'state' && isValidObject(attributeValue)) attributes += `Temp alarm: ${stringify(attributeValue)} `;
-
-      if (clusterName === 'occupancySensing' && attributeName === 'occupancy' && isValidObject(attributeValue, 1))
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        attributes += `Occupancy: ${(attributeValue as { occupied: boolean }).occupied} `;
-      if (clusterName === 'illuminanceMeasurement' && attributeName === 'measuredValue') {
-        if (attributeValue === null) attributes += `Illuminance: unknown `;
-        else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} lx`;
-      }
-      if (clusterName === 'airQuality' && attributeName === 'airQuality')
-        attributes += `Air quality: ${getEnumDescription(AirQuality.AirQualityEnum, attributeValue as AirQuality.AirQualityEnum)} `;
-      if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue')
-        appendMeasurement('Voc', getMeasurementText(attributeValue, 1, ''));
-      if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm1', getMeasurementText(attributeValue, 1, ''));
-      if (clusterName === 'pm25ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm2.5', getMeasurementText(attributeValue, 1, ''));
-      if (clusterName === 'pm10ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm10', getMeasurementText(attributeValue, 1, ''));
-      if (clusterName === 'formaldehydeConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('CH₂O', getMeasurementText(attributeValue, 1, ''));
-      if (clusterName === 'temperatureMeasurement' && attributeName === 'measuredValue') appendMeasurement('Temperature', getMeasurementText(attributeValue, 100, ' °C'));
-      if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') appendMeasurement('Humidity', getMeasurementText(attributeValue, 100, '%'));
-      if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pressure', getMeasurementText(attributeValue, 1, ' hPa'));
-      if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') appendMeasurement('Flow', getMeasurementText(attributeValue, 10, ' m³/h'));
-      if (clusterId === SoilMeasurement.id && attributeName === 'soilMoistureMeasuredValue') appendMeasurement('Soil moisture', getMeasurementText(attributeValue, 1, '%'));
-      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'voltage') appendMeasurement('Voltage', getMeasurementText(attributeValue, 1_000, 'V'));
-      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activeCurrent') appendMeasurement('Current', getMeasurementText(attributeValue, 1_000, 'A'));
-      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activePower') appendMeasurement('Power', getMeasurementText(attributeValue, 1_000_000, 'kW'));
-      if (clusterName === 'electricalPowerMeasurement' && attributeName === 'frequency') appendMeasurement('Frequency', getMeasurementText(attributeValue, 1_000, 'Hz'));
-      if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyImported') appendMeasurement('Imported', getEnergyText(attributeValue));
-      if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyExported') appendMeasurement('Exported', getEnergyText(attributeValue));
-      if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaCanGenerate') attributes += `ESA can generate: ${attributeValue} `;
-      if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaState')
-        attributes += `ESA state: ${DeviceEnergyManagement.EsaState[attributeValue as DeviceEnergyManagement.EsaState]} `;
-      if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
-      if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
-    });
-    // console.log(`${device.deviceName}.forEachAttribute: ${attributes}`);
-    return attributes.trimStart().trimEnd();
-  }
-
-  /**
    * Retrieves the registered plugins sanitized for res.json().
    *
    * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
@@ -1648,7 +1363,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         hasBlackList: plugin.configJson?.blackList !== undefined,
         frontendPath: plugin.frontendPath,
         // Childbridge mode specific data
-        matter: plugin.serverNode ? this.matterbridge.getServerNodeData(plugin.serverNode) : undefined,
+        matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
       });
     }
     return plugins;
@@ -1677,11 +1392,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         productUrl: device.productUrl,
         configUrl: device.configUrl,
         uniqueId: device.uniqueId,
-        reachable: this.getReachability(device),
-        powerSource: this.getPowerSource(device),
-        batteryLevel: this.getBatteryLevel(device),
-        matter: device.mode === 'server' && device.serverNode ? this.matterbridge.getServerNodeData(device.serverNode) : undefined,
-        cluster: this.getClusterTextFromDevice(device),
+        reachable: getReachability(device),
+        powerSource: getPowerSource(device),
+        batteryLevel: getBatteryLevel(device),
+        matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
+        cluster: getClusterTextFromDevice(device),
       });
     }
     return devices;
@@ -1698,14 +1413,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string} [uniqueId] - The device unique ID to filter by (optional).
    * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
    */
-  getClusters(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
+  getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
     if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices
       .array()
       .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber) && (!uniqueId || d.uniqueId === uniqueId));
     if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
       this.log.error(
-        `getClusters: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
+        `getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
       );
       return;
     }
@@ -1741,7 +1456,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     childEndpoints.forEach((childEndpoint) => {
       /* v8 ignore next cause is not reachable: should never happen but ... */
       if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
-        this.log.error(`getClusters: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
+        this.log.error(`getApiCluster: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
         return;
       }
 
@@ -2169,7 +1884,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${localData.params.id} in /api/matter` });
           return;
         }
-        const matter = this.matterbridge.getServerNodeData(serverNode);
+        const matter = getServerNodeData(serverNode);
         this.log.debug(`*Server node ${serverNode.id}: commissioned ${serverNode.state.commissioning.commissioned} upTime ${serverNode.state.generalDiagnostics.upTime}.`);
         if (data.params.server) {
           this.log.debug(`*Sending data for node ${data.params.id}`);
@@ -2177,13 +1892,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         if (data.params.startCommission) {
           await serverNode.env.get(DeviceCommissioner)?.allowBasicCommissioning();
-          this.matterbridge.advertisingNodes.set(serverNode.id, Date.now());
+          setAdvertisingNode(serverNode.id, Date.now());
           this.log.debug(`*Allow commissioning has been sent for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: Date.now(), advertising: true } });
         }
         if (data.params.stopCommission) {
           await serverNode.env.get(DeviceCommissioner)?.endCommissioning();
-          this.matterbridge.advertisingNodes.delete(serverNode.id);
+          deleteAdvertisingNode(serverNode.id);
           this.log.debug(`*End commissioning has been sent for node ${data.params.id}`);
           this.wssSendRefreshRequired('matter', { matter: { ...matter, advertiseTime: 0, advertising: false } });
         }
@@ -2201,11 +1916,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
       } else if (data.method === '/api/settings') {
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: this.getApiSettings() });
+        const start = performance.now();
+        const settings = this.getApiSettings();
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
       } else if (data.method === '/api/plugins') {
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: this.getApiPlugins() });
+        const start = performance.now();
+        const plugins = this.getApiPlugins();
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
+        const start = performance.now();
         const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.plugin, 10)) {
@@ -2216,15 +1942,18 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
           return;
         }
-        const response = this.getClusters(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
-        if (response) {
+        const start = performance.now();
+        const clusters = this.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (clusters) {
           sendResponse({
             id: data.id,
             method: data.method,
             src: 'Matterbridge',
             dst: data.src,
             success: true,
-            response,
+            response: clusters,
           });
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
@@ -2239,9 +1968,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/devices' });
           return;
         }
+        const start = performance.now();
         /* v8 ignore next */
-        const selectDeviceValues = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDeviceValues });
+        const selectDevices = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDevices });
       } else if (data.method === '/api/select/entities') {
         if (!isValidString(data.params.plugin, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' });
@@ -2252,9 +1984,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' });
           return;
         }
+        const start = performance.now();
         /* v8 ignore next */
-        const selectEntityValues = !plugin.platform ? [] : plugin.platform.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntityValues });
+        const selectEntities = !plugin.platform ? [] : plugin.platform.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectEntities() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectEntities });
       } else if (data.method === '/api/action') {
         const localData = data;
         if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.action, 1)) {

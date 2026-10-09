@@ -37,12 +37,12 @@ import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
-import { inspectError } from '@matterbridge/utils/error';
 // node-ansi-logger module
 import { er, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from '../flushAsync.js';
+import { inspectError } from '../inspectError.js';
 import { HOMEDIR, log, NAME } from './setupTest.js';
 
 export let environment: Environment;
@@ -169,10 +169,10 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.10.12',
-    matterbridgeLatestVersion: '3.10.12',
-    matterbridgeDevVersion: '3.10.12',
-    frontendVersion: '3.6.3',
+    matterbridgeVersion: '3.10.13',
+    matterbridgeLatestVersion: '3.10.13',
+    matterbridgeDevVersion: '3.10.13',
+    frontendVersion: '3.6.4',
     bridgeMode: 'none',
     restartMode: 'none',
     virtualMode: 'mounted_switch',

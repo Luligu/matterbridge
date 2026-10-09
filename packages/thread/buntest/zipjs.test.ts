@@ -1,0 +1,179 @@
+/**
+ * @file packages/thread/buntest/zipjs.test.ts
+ * @description This file contains the tests for zipjs.
+ * @author Luca Liguori
+ */
+
+import { afterAll, beforeEach, describe, expect, spyOn, test, vi } from 'bun:test';
+import { execFile } from 'node:child_process';
+import type { Stats } from 'node:fs';
+// oxlint-disable-next-line import/no-namespace
+import * as fsPromises from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+import { promisify } from 'node:util';
+
+import { loggerInfoSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { ERR_UNSAFE_FILENAME, Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
+
+import { createZip, readZip, unZip } from '../src/zipjs.js';
+
+const execFileAsync = promisify(execFile);
+const tempDirectories: string[] = [];
+
+// Setup the test environment
+await setupTest('ZipJs', false);
+
+async function createTempDirectory(): Promise<string> {
+  const directory = await mkdtemp(path.join(tmpdir(), 'matterbridge-zipjs-'));
+  tempDirectories.push(directory);
+  return directory;
+}
+
+async function createArchive(zipPath: string, entries: Array<{ filename: string; content?: string; directory?: boolean }>): Promise<void> {
+  const writer = new ZipWriter(new Uint8ArrayWriter());
+
+  for (const entry of entries) {
+    if (entry.directory) {
+      await writer.add(entry.filename, undefined, { directory: true, level: 0 });
+      continue;
+    }
+
+    await writer.add(entry.filename, new Uint8ArrayReader(new TextEncoder().encode(entry.content ?? '')), { level: 0 });
+  }
+
+  await writeFile(zipPath, await writer.close());
+}
+
+describe('zipjs', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    await Promise.all(tempDirectories.map(async (directory) => rm(directory, { recursive: true, force: true })));
+    vi.restoreAllMocks();
+    resetTest();
+  });
+
+  test('creates, reads and extracts a zip archive', async () => {
+    const tempDirectory = await createTempDirectory();
+    const sourceDirectory = path.join(tempDirectory, 'source');
+    const nestedDirectory = path.join(sourceDirectory, 'nested');
+    const standaloneFile = path.join(tempDirectory, 'standalone.txt');
+    const zipPath = path.join(tempDirectory, 'archive.zip');
+
+    await mkdir(nestedDirectory, { recursive: true });
+    await writeFile(path.join(sourceDirectory, 'root.txt'), 'root-content');
+    await writeFile(path.join(nestedDirectory, 'child.txt'), 'child-content');
+    await writeFile(standaloneFile, 'standalone-content');
+
+    const byteLength = await createZip(zipPath, [sourceDirectory, standaloneFile]);
+
+    expect(byteLength).toBeGreaterThan(0);
+    expect((await stat(zipPath)).size).toBe(byteLength);
+
+    const content = await readZip(zipPath);
+
+    expect(content.map((entry) => entry.filename)).toEqual(['source/', 'source/nested/', 'source/nested/child.txt', 'source/root.txt', 'standalone.txt']);
+    expect(content.filter((entry) => entry.directory)).toHaveLength(2);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Created zip ${zipPath}`));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('source/'));
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('standalone.txt'));
+
+    const extractedDirectory = await unZip(zipPath);
+
+    expect(extractedDirectory).toBe(path.join(tempDirectory, 'archive'));
+    expect(readFile(path.join(extractedDirectory, 'source', 'root.txt'), 'utf-8')).resolves.toBe('root-content');
+    expect(readFile(path.join(extractedDirectory, 'source', 'nested', 'child.txt'), 'utf-8')).resolves.toBe('child-content');
+    expect(readFile(path.join(extractedDirectory, 'standalone.txt'), 'utf-8')).resolves.toBe('standalone-content');
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Extracted 5 entries from ${zipPath} to ${extractedDirectory}.`));
+  });
+
+  test('reads an empty zip archive', async () => {
+    const tempDirectory = await createTempDirectory();
+    const zipPath = path.join(tempDirectory, 'empty.zip');
+
+    await createArchive(zipPath, []);
+
+    expect(readZip(zipPath)).resolves.toEqual([]);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Zip ${zipPath} is empty.`));
+  });
+
+  test('rejects createZip when no sources are provided', async () => {
+    const tempDirectory = await createTempDirectory();
+
+    expect(createZip(path.join(tempDirectory, 'empty.zip'), [])).rejects.toThrow('No files or directories provided to createZip.');
+  });
+
+  test('rejects zip entries that escape the destination directory and normalizes backslashes', async () => {
+    const tempDirectory = await createTempDirectory();
+    const safeZipPath = path.join(tempDirectory, 'windows.zip');
+    const traversalZipPath = path.join(tempDirectory, 'traversal.zip');
+    const customDestination = path.join(tempDirectory, 'custom-destination');
+
+    await createArchive(safeZipPath, [{ filename: 'folder\\child.txt', content: 'windows-content' }]);
+    await createArchive(traversalZipPath, [{ filename: '..\\escape.txt', content: 'escape-content' }]);
+
+    expect(unZip(safeZipPath, customDestination)).resolves.toBe(customDestination);
+    expect(readFile(path.join(customDestination, 'folder', 'child.txt'), 'utf-8')).resolves.toBe('windows-content');
+
+    // zip.js 2.15.0 rejects backslash traversal during getEntries(), before our destination guard.
+    expect(unZip(traversalZipPath, path.join(tempDirectory, 'traversal'))).rejects.toMatchObject({
+      message: ERR_UNSAFE_FILENAME,
+      filename: '..\\escape.txt',
+    });
+    expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+  });
+
+  test('should reject traversal when an unsafe filename reaches the destination guard', async () => {
+    const tempDirectory = await createTempDirectory();
+    const zipPath = path.join(tempDirectory, 'traversal.zip');
+    await createArchive(zipPath, [{ filename: '..\\escape.txt', content: 'escape-content' }]);
+
+    // Bypass upstream validation only in this test to exercise our independent guard.
+    const reader = new ZipReader(new Uint8ArrayReader(await readFile(zipPath)), { filenameValidation: 'tolerant' });
+    try {
+      const entries = await reader.getEntries();
+      const getEntriesSpy = vi.spyOn(ZipReader.prototype, 'getEntries').mockResolvedValueOnce(entries);
+      try {
+        expect(unZip(zipPath, path.join(tempDirectory, 'destination'))).rejects.toThrow('Refusing to extract zip entry outside destination: ..\\escape.txt');
+        expect(stat(path.join(tempDirectory, 'escape.txt'))).rejects.toMatchObject({ code: 'ENOENT' });
+      } finally {
+        getEntriesSpy.mockRestore();
+      }
+    } finally {
+      await reader.close();
+    }
+  });
+
+  test('rejects unsupported source path types when stat is neither file nor directory', async () => {
+    const tempDirectory = await createTempDirectory();
+    const sourcePath = path.join(tempDirectory, 'unsupported-source');
+    const unsupportedStats = {
+      isDirectory: () => false,
+      isFile: () => false,
+      mtime: new Date(),
+    } as Stats;
+    // Bun updates the live stat binding already imported by zipjs.ts, so no module reset is needed.
+    const statSpy = spyOn(fsPromises, 'stat').mockResolvedValue(unsupportedStats);
+
+    try {
+      expect(createZip(path.join(tempDirectory, 'unsupported.zip'), [sourcePath])).rejects.toThrow(`Unsupported source path type: ${sourcePath}`);
+    } finally {
+      statSpy.mockRestore();
+    }
+  });
+
+  test('rejects unsupported source path types', async () => {
+    if (process.platform === 'win32') return;
+
+    const tempDirectory = await createTempDirectory();
+    const fifoPath = path.join(tempDirectory, 'pipe');
+
+    await execFileAsync('mkfifo', [fifoPath]);
+
+    expect(createZip(path.join(tempDirectory, 'fifo.zip'), [fifoPath])).rejects.toThrow(`Unsupported source path type: ${fifoPath}`);
+  });
+});

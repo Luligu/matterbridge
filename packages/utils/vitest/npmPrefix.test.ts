@@ -23,11 +23,12 @@ vi.doMock('node:child_process', () => {
   return { exec: mockedExec };
 });
 
-import { setupTest } from './vitestSetupTest.js';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const { getGlobalNodeModules } = await import('../src/npmPrefix.js');
 
-await setupTest('NpmRoot');
+// Setup the test environment
+await setupTest('NpmRoot', false);
 
 describe('getGlobalNodeModules()', () => {
   it('resolves with trimmed global modules path', async () => {

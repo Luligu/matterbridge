@@ -17,33 +17,16 @@ import path from 'node:path';
 
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { waiter } from '@matterbridge/utils';
-import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the matter args afterwards
-process.argv = [
-  'node',
-  'matterbridge.matterjs.test.js',
-  '--novirtual',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--bridge',
-  '--frontend',
-  '0',
-  '--homedir',
-  HOMEDIR,
-  '--port',
-  MATTER_PORT.toString(),
-];
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()]);
+process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;

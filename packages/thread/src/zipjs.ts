@@ -24,8 +24,13 @@
 import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
+import { configure, Uint8ArrayReader, Uint8ArrayWriter, ZipReader, ZipWriter } from '@zip.js/zip.js';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
+
+// Compress inline instead of in zip.js web workers. Bun has a global Worker, so zip.js would spawn codec workers and keep
+// them alive for terminateWorkerTimeout (5 s) after use, holding the calling thread open. Node has no global Worker and
+// always runs inline, so this also makes the two runtimes behave the same. We already run inside a worker thread.
+configure({ useWebWorkers: false });
 
 export interface ZipContentEntry {
   filename: string;

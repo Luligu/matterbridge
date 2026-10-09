@@ -123,22 +123,14 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (debug) console.log('SystemInfoTable received WebSocket Message:', msg);
-      if (
-        msg.method === 'memory_update' &&
-        msg.response &&
-        msg.response.totalMemory &&
-        msg.response.freeMemory &&
-        msg.response.heapTotal &&
-        msg.response.heapUsed &&
-        msg.response.rss
-      ) {
+      if (msg.method === 'memory_update' && msg.response?.totalMemory && msg.response.freeMemory && msg.response.heapTotal && msg.response.heapUsed && msg.response.rss) {
         if (debug) console.log('SystemInfoTable received memory_update', msg);
         handleMemoryUpdate(msg.response.totalMemory, msg.response.freeMemory, msg.response.heapTotal, msg.response.heapUsed, msg.response.rss);
-      } else if (msg.method === 'cpu_update' && msg.response && msg.response.cpuUsage) {
+      } else if (msg.method === 'cpu_update' && msg.response?.cpuUsage) {
         if (debug) console.log('SystemInfoTable received cpu_update', msg);
         handleCpuUpdate(msg.response.cpuUsage);
         handleProcessCpuUpdate(msg.response.processCpuUsage);
-      } else if (msg.method === 'uptime_update' && msg.response && msg.response.systemUptime && msg.response.processUptime) {
+      } else if (msg.method === 'uptime_update' && msg.response?.systemUptime && msg.response.processUptime) {
         if (debug) console.log('SystemInfoTable received uptime_update', msg);
         handleUptimeUpdate(msg.response.systemUptime, msg.response.processUptime);
       } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {

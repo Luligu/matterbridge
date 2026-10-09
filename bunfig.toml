@@ -11,46 +11,57 @@
 # preload = ["./buntest/setup.ts"]
 
 # Bun scans root for *.test.{js|jsx|ts|tsx} *_test.{js|jsx|ts|tsx} *.spec.{js|jsx|ts|tsx} *_spec.{js|jsx|ts|tsx}.
+# Directory entries end in /** so they match the directory's contents, the same form the coverage list
+# below needs. A bare trailing slash ('**/dist/') happens to work here, because the runner prunes a
+# matched directory while scanning, but it fails silently in coveragePathIgnorePatterns.
 pathIgnorePatterns = [
-  '**/.cache/',
-  '**/apps/',
-  '**/build/',
-  '**/chip/',
-  '**/coverage/',
-  '**/dist/',
-  '**/node_modules/',
-  '**/screenshots/',
-  '**/scripts/',
-  '**/src/mock/',
-  '**/temp/',
-  '**/test/',
-  '**/vendor/',
-  '**/jest/',
-  '**/vitest/',
-  '**/jest-utils/',
-  '**/vitest-utils/',
-  '**/test-utils/',
-  '**/matterNode*.test.ts',
-  '**/backend*.test.ts',
+  '**/.cache/**',
+  '**/apps/**',
+  '**/build/**',
+  '**/chip/**',
+  '**/coverage/**',
+  '**/dist/**',
+  '**/node_modules/**',
+  '**/screenshots/**',
+  '**/scripts/**',
+  '**/src/mock/**',
+  '**/temp/**',
+  '**/tmp/**',
+  '**/test/**',
+  '**/vitest/**',
+  '**/jest-utils/**',
+  '**/vitest-utils/**',
+  '**/test-utils/**',
 ]
 
 # Source files kept out of the coverage report. pathIgnorePatterns above decides which files are
 # scanned for tests; this one decides which files are measured. Whole paths only: Bun has no
 # line-level ignore, so /* istanbul ignore */, /* c8 ignore */ and /* v8 ignore */ do nothing.
+# Each pattern is matched against every source file path after the run, never against a directory,
+# so a directory entry must end in /** ('**/dist/**'). A bare trailing slash ('**/dist/') matches no
+# file and excludes nothing, without any warning.
 coveragePathIgnorePatterns = [
-  '**/.cache/',
-  '**/apps/',
-  '**/build/',
-  '**/chip/',
-  '**/coverage/',
-  '**/dist/',
-  '**/node_modules/',
-  '**/screenshots/',
-  '**/scripts/',
-  '**/src/mock/',
-  '**/temp/',
-  '**/vendor/',
+  '**/.cache/**',
+  '**/apps/**',
+  '**/build/**',
+  '**/chip/**',
+  '**/coverage/**',
+  '**/dist/**',
+  '**/node_modules/**',
+  '**/screenshots/**',
+  '**/scripts/**',
+  '**/src/mock/**',
+  '**/temp/**',
+  '**/tmp/**',
+  '**/test/**',
+  '**/buntest/**',
   '**/vitest/**',
+  # packages/core: measure only the files that have a buntest (backend, matterNode, matterNodeHelpers, matterbridge*Platform and runners files)
+  '**/packages/core/src/{behaviors,clusters,devices,dgram,matter,utils}/**',
+  '**/packages/core/src/{chipTests,cli,cliEmitter,cliHistory,demoDevices,deviceManager,export,frontend,helpers,matterbridge,matterbridgeDeviceTypes,matterbridgeEndpoint,matterbridgeEndpointCommandHandler,matterbridgeEndpointHelpers,matterbridgeEndpointTypes,matterbridgeFactory,mb_coap,mb_health,mb_mdns,pluginManager}.ts',
+  '**/packages/jest-utils/**',
+  '**/packages/test-utils/**',
+  '**/packages/vitest-utils/**',
   '**/src/**/*.d.ts',
   '**/src/**/*.{spec,test}.{ts,mts,cts}',
 ]
@@ -60,7 +71,7 @@ coveragePathIgnorePatterns = [
 # the text reporter is enabled, and an lcov-only run exits 0 however low the coverage is.
 coverageReporter = ['lcov', 'text']
 
-# Where the lcov reporter writes. Covered by the '**/coverage/' entries in both ignore lists above,
+# Where the lcov reporter writes. Covered by the '**/coverage/**' entries in both ignore lists above,
 # so the report never measures itself.
 coverageDir = "./coverage/bun"
 
@@ -72,3 +83,9 @@ coverageIgnoreSourcemaps = false
 
 # Fail the run if coverage drops below 100%. Applies to the whole run, not per file.
 # coverageThreshold = { lines = 1.0, functions = 1.0 }
+
+[test.reporter]
+
+# Every run also writes a JUnit XML report with the duration of each test (handy to find slow tests:
+# --parallel prints no per-test lines). It holds test results only, coverage stays in coverageDir.
+junit = ".cache/bun/junit.xml"

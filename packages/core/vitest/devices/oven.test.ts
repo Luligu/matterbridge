@@ -19,7 +19,6 @@ import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-o
 import { OvenMode } from '@matter/types/clusters/oven-mode';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -30,7 +29,8 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from '../../src/devices/oven.js';

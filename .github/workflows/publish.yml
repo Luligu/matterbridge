@@ -46,33 +46,28 @@ jobs:
       - name: Build matterbridge
         run: npm run build
 
-      - name: Install matterbridge globally
-        run: npm install --no-fund --no-audit --global .
+      - name: Link matterbridge globally
+        run: npm link --no-fund --no-audit
 
       - name: Test matterbridge cli
         run: matterbridge --version
+
+      - name: Install frontend dependencies
+        run: npm ci --no-fund --no-audit
+        working-directory: apps/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: apps/frontend
+
+      - name: Typecheck matterbridge
+        run: npm run typecheck
 
       - name: Lint matterbridge
         run: npm run lint
 
       - name: Check matterbridge formatting
         run: npm run format:check
-
-      - name: Install frontend dependencies
-        run: npm ci --no-fund --no-audit
-        working-directory: apps/frontend
-
-      - name: Lint frontend
-        run: npm run lint
-        working-directory: apps/frontend
-
-      - name: Check frontend formatting
-        run: npm run format:check
-        working-directory: apps/frontend
-
-      - name: Build frontend
-        run: npm run build
-        working-directory: apps/frontend
 
       - name: Test frontend
         run: npm run test
@@ -276,33 +271,28 @@ jobs:
       - name: Build matterbridge
         run: npm run build
 
-      - name: Install matterbridge globally
-        run: npm install --no-fund --no-audit --global .
+      - name: Link matterbridge globally
+        run: npm link --no-fund --no-audit
 
       - name: Test matterbridge cli
         run: matterbridge --version
+
+      - name: Install frontend dependencies
+        run: npm ci --no-fund --no-audit
+        working-directory: apps/frontend
+
+      - name: Build frontend
+        run: npm run build
+        working-directory: apps/frontend
+
+      - name: Typecheck matterbridge
+        run: npm run typecheck
 
       - name: Lint matterbridge
         run: npm run lint
 
       - name: Check matterbridge formatting
         run: npm run format:check
-
-      - name: Install frontend dependencies
-        run: npm ci --no-fund --no-audit
-        working-directory: apps/frontend
-
-      - name: Lint frontend
-        run: npm run lint
-        working-directory: apps/frontend
-
-      - name: Check frontend formatting
-        run: npm run format:check
-        working-directory: apps/frontend
-
-      - name: Build frontend
-        run: npm run build
-        working-directory: apps/frontend
 
       - name: Test frontend
         run: npm run test

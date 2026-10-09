@@ -31,7 +31,9 @@ import { viewportHeight, viewportWidth } from '../viewport';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
 
-// oxlint-disable-next-line max-lines-per-function
+// oxlint-disable unicorn/no-negated-condition
+// oxlint-disable max-lines-per-function
+
 function Header() {
   // Contexts
   const { mobile, showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);

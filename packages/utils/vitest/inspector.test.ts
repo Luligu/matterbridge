@@ -6,13 +6,12 @@
 
 /* oxlint-disable typescript/explicit-function-return-type */
 
-import { consoleLogSpy, setDebug, setupTest } from './vitestSetupTest.js';
+import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // Setup the test environment
 await setupTest('Inspector', false);
 
 describe('Inspector', () => {
-  const originalArgv = [...process.argv];
   const originalGc = global.gc;
 
   beforeEach(async () => {
@@ -25,7 +24,7 @@ describe('Inspector', () => {
   });
 
   afterEach(() => {
-    process.argv = [...originalArgv];
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     vi.useRealTimers();
     // Restore all mocks
@@ -33,7 +32,7 @@ describe('Inspector', () => {
   });
 
   afterAll(() => {
-    process.argv = originalArgv;
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     // Restore all mocks
     vi.restoreAllMocks();
@@ -638,7 +637,7 @@ describe('Inspector', () => {
     expect(inspector.session).toBeUndefined();
     await inspector.start();
     inspector.emit('start');
-    await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
+    // await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
     await inspector.stop();
   });
 
@@ -650,6 +649,6 @@ describe('Inspector', () => {
     await inspector.start();
     await inspector.stop();
     inspector.emit('stop');
-    await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
+    // await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
   });
 });

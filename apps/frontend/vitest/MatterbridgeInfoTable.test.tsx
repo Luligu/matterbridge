@@ -98,7 +98,7 @@ function valueCell(label: string) {
 beforeEach(() => {
   settings.debug = false;
   settings.enableMobile = true;
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(() => {

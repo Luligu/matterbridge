@@ -12,8 +12,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { Status } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
-import { wait } from '@matterbridge/utils/wait';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -23,7 +21,9 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
@@ -66,8 +66,6 @@ describe('Client clusters and behaviors', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

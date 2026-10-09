@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { WebRtcTransportRequestorServer } from '@matter/node/behaviors/web-rtc-transport-requestor';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -20,14 +19,16 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { createDefaultWebRtcTransportRequestorClusterServer, MatterbridgeWebRtcTransportRequestorServer } from '../../src/behaviors/webRtcTransportRequestorServer.js';
 import { Intercom } from '../../src/devices/intercom.js';
 import { intercom } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 /** The payload used for all the signaling commands: each command reads only the fields it needs. */
 const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };

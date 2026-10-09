@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { deepEqual } from '../src/deepEqual.js';
+
+// Setup the test environment
+await setupTest('DeepEqual', false);
 
 describe('deepEqual', () => {
   // Primitives and same references

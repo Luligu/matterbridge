@@ -4,8 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
+
+// Setup the test environment
+await setupTest('WorkerArchiveCommand', false);
 
 type RunOptions = Readonly<{
   command?: 'zip' | 'verify' | 'unzip';
@@ -33,6 +37,7 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
   const respondMock = vi.fn<(...args: any[]) => any>();
 
   const workerData = {
+    type: 'worker',
     threadName: 'ArchiveCommand',
     logLevel: LogLevel.INFO,
     debug: false,
@@ -62,12 +67,12 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
 
   vi.doMock('../src/zipjs.js', () => ({ createZip, readZip, unZip }));
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
-      constructor(name: string, callback: (w: any) => Promise<boolean>) {
+    ThreadsWrapper: class {
+      constructor(name: string, entrypoint: (w: any) => Promise<boolean>) {
         wrapperName = name;
-        runPromise = callback(worker);
+        runPromise = entrypoint(worker);
       }
     },
   }));
@@ -79,10 +84,6 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
 }
 
 describe('workerArchiveCommand', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: zip command creates archive and logs success', async () => {
     const { wrapperName, success, loggerMock, respondMock, createZip, readZip, unZip, workerData } = await runWorkerArchiveCommand({
       command: 'zip',

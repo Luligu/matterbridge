@@ -12,21 +12,21 @@
 
 const NAME = 'MatterbridgeGlobal';
 const MATTER_PORT = 6000;
+const FRONTEND_PORT = 8803;
 
 import { rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import type { SessionsBehavior } from '@matter/node';
+import type { ServerNode } from '@matter/node';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import type { ExposedFabricInformation } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerLogSpy, loggerWarnSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import { plg } from '@matterbridge/types';
+import { type ApiMatter, plg, type WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
-import { flushAsync, HOMEDIR, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel, nf } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 
@@ -34,7 +34,7 @@ import { Matterbridge } from '../src/matterbridge.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
-// Spy on BroadcastServer methods (inlined: vitest-utils cannot depend on core)
+// Spy on BroadcastServer methods (inlined: test-utils cannot depend on core)
 const isWorkerRequestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerRequest');
 const isWorkerResponseBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'isWorkerResponse');
 const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
@@ -43,27 +43,11 @@ const fetchBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'fetch');
 const broadcastMessageHandlerBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'broadcastMessageHandler');
 
 // Setup the test environment
-await setupTest(NAME, false, [], { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' });
-
-// setupTest resets process.argv; set the matter args afterwards
-process.argv = [
-  'node',
-  'matterbridge.test.js',
-  '--novirtual',
-  '--frontend',
-  '0',
-  '--port',
-  MATTER_PORT.toString(),
-  '--homedir',
-  HOMEDIR,
-  '--profile',
-  'Jest',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--debug',
-];
+await setupTest(NAME, false, ['--novirtual', '--frontend', '0', '--port', MATTER_PORT.toString(), '--profile', 'Jest', '--logger', 'debug', '--matterlogger', 'debug', '--debug'], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
+process.argv.push('--homedir', HOMEDIR);
 
 rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 
@@ -167,13 +151,13 @@ describe('Matterbridge', () => {
 
     expect((matterbridge as any).server).toBeInstanceOf(BroadcastServer);
 
-    await (matterbridge as any).msgHandler({ type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // no id
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge' } as any); // valid
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: false } } as any);
-    await (matterbridge as any).msgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all', response: { success: true } } as any);
+    await (matterbridge as any).msgHandler({ type: 'test', src: 'manager', dst: 'matterbridge' } as any); // no id
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'matterbridge' } as any); // valid
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all' } as any); // valid
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'matterbridge', params: {} } as any); // valid
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all', response: { success: false } } as any);
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all', response: { success: true } } as any);
 
     await (matterbridge as any).msgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'matterbridge' } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'matterbridge', params: { level: LogLevel.DEBUG } } as any);
@@ -195,7 +179,8 @@ describe('Matterbridge', () => {
       src: 'manager',
       dst: 'matterbridge',
       params: {},
-      result: { data: apiSettings, success: true },
+      // systemInformation is refreshed on every getApiSettings() call (memory, uptime)
+      result: { data: { ...apiSettings, systemInformation: expect.objectContaining({ hostname: apiSettings.systemInformation.hostname }) }, success: true },
     });
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
@@ -212,8 +197,96 @@ describe('Matterbridge', () => {
     cleanupSpy.mockRestore();
   });
 
+  test.each([
+    { port: 5541, passcode: 20242025, discriminator: 1234 },
+    { port: 0, passcode: 0, discriminator: 0 },
+    { port: undefined, passcode: undefined, discriminator: undefined },
+  ])('should return the current Matter settings when matterbridge_matterdata is requested with %j', async (settings) => {
+    const originalSettings = { port: matterbridge.port, passcode: matterbridge.passcode, discriminator: matterbridge.discriminator };
+    const request = { id: 123456, timestamp: 123456789, type: 'matterbridge_matterdata', src: 'frontend', dst: 'matterbridge', params: undefined } as const;
+    const handler = matterbridge as unknown as { msgHandler(message: WorkerMessage): Promise<void> };
+    Object.assign(matterbridge, settings);
+    try {
+      await handler.msgHandler(request);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(1);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledWith({ ...request, result: settings });
+      const nextSettings = {
+        port: settings.port === undefined ? undefined : settings.port + 1,
+        passcode: settings.passcode === undefined ? undefined : settings.passcode + 1,
+        discriminator: settings.discriminator === undefined ? undefined : settings.discriminator + 1,
+      };
+      expect({ port: matterbridge.port, passcode: matterbridge.passcode, discriminator: matterbridge.discriminator }).toEqual(nextSettings);
+      await handler.msgHandler({ ...request, id: request.id + 1 });
+      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(2);
+      expect(respondBroadcastServerSpy).toHaveBeenLastCalledWith({ ...request, id: request.id + 1, result: nextSettings });
+    } finally {
+      Object.assign(matterbridge, originalSettings);
+    }
+  });
+
+  test.each(['matterbridge_restart', 'matterbridge_shutdown'] as const)('should handle %s through the process lifecycle', async (type) => {
+    const lifecycleSpy = vi.spyOn(matterbridge, type === 'matterbridge_restart' ? 'restartProcess' : 'shutdownProcess').mockResolvedValueOnce();
+    try {
+      await (matterbridge as any).msgHandler({ id: 123456, timestamp: Date.now(), type, src: 'frontend', dst: 'matterbridge', params: undefined });
+      expect(respondBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type, result: { success: true } }));
+      expect(lifecycleSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      lifecycleSpy.mockRestore();
+    }
+  });
+
+  test.each(['root', 'missing-root', 'plugin', 'device', 'unknown', 'duplicate'] as const)('should respond to matterbridge_apimatter for the %s node lookup', async (scenario) => {
+    const originalServerNode = matterbridge.serverNode;
+    const rootNode = { id: 'Matterbridge' } as ServerNode;
+    const pluginNode = { id: 'plugin-node' } as ServerNode;
+    const deviceNode = { id: scenario === 'duplicate' ? 'plugin-node' : 'device-node' } as ServerNode;
+    const pluginsSpy = vi
+      .spyOn(matterbridge.plugins, 'array')
+      .mockReturnValue([{}, { serverNode: { id: 'other-plugin' } }, { serverNode: pluginNode }] as unknown as ReturnType<typeof matterbridge.plugins.array>);
+    const devicesSpy = vi
+      .spyOn(matterbridge.devices, 'array')
+      .mockReturnValue([{}, { serverNode: { id: 'other-device' } }, { serverNode: deviceNode }] as unknown as ReturnType<typeof matterbridge.devices.array>);
+    const expectedNode = scenario === 'root' ? rootNode : scenario === 'plugin' || scenario === 'duplicate' ? pluginNode : scenario === 'device' ? deviceNode : undefined;
+    const matter: ApiMatter = {
+      id: expectedNode?.id ?? '',
+      online: true,
+      commissioned: false,
+      advertising: false,
+      advertiseTime: 0,
+      windowStatus: 0,
+      qrPairingCode: 'MT:TEST',
+      manualPairingCode: '12345678901',
+      fabricInformations: [],
+      sessionInformations: [],
+      serialNumber: 'TEST',
+    };
+    const matterNodeHelpers = await import('../src/matterNodeHelpers.js');
+    const getServerNodeDataSpy = vi.spyOn(matterNodeHelpers, 'getServerNodeData').mockReturnValue(matter);
+    const request = {
+      id: 123456,
+      type: 'matterbridge_apimatter',
+      src: 'frontend',
+      dst: 'matterbridge',
+      params: { id: scenario === 'root' || scenario === 'missing-root' ? 'Matterbridge' : scenario === 'unknown' ? 'missing-node' : (expectedNode?.id ?? '') },
+    } as const;
+    matterbridge.serverNode = scenario === 'missing-root' ? undefined : rootNode;
+    try {
+      const handler = matterbridge as unknown as { msgHandler(message: WorkerMessage): Promise<void> };
+      await handler.msgHandler(request);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(1);
+      expect(respondBroadcastServerSpy).toHaveBeenCalledWith({ ...request, result: { matter: expectedNode ? matter : undefined } });
+      expect(getServerNodeDataSpy.mock.calls).toEqual(expectedNode ? [[expectedNode]] : []);
+      expect(pluginsSpy).toHaveBeenCalledTimes(scenario === 'root' || scenario === 'missing-root' ? 0 : 1);
+      expect(devicesSpy).toHaveBeenCalledTimes(scenario === 'device' || scenario === 'unknown' ? 1 : 0);
+    } finally {
+      matterbridge.serverNode = originalServerNode;
+      pluginsSpy.mockRestore();
+      devicesSpy.mockRestore();
+      getServerNodeDataSpy.mockRestore();
+    }
+  });
+
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
-    // await setDebug(true);
     expect((Matterbridge as any).instance).toBeDefined();
     matterbridge = await Matterbridge.loadInstance(true);
     expect((matterbridge as any).initialized).toBeFalsy();
@@ -307,7 +380,18 @@ describe('Matterbridge', () => {
 
   test('Matterbridge.loadInstance(true) with frontend', async () => {
     await setDebug(false);
-    process.argv = ['node', 'matterbridge.test.js', '--novirtual', '--frontend', '8081', '--port', MATTER_PORT.toString(), '--homedir', HOMEDIR, '--profile', 'Jest'];
+    process.argv = [
+      ...originalProcessArgv.slice(0, 2),
+      '--novirtual',
+      '--frontend',
+      FRONTEND_PORT.toString(),
+      '--port',
+      MATTER_PORT.toString(),
+      '--homedir',
+      HOMEDIR,
+      '--profile',
+      'Jest',
+    ];
 
     expect((Matterbridge as any).instance).toBeUndefined();
     matterbridge = await Matterbridge.loadInstance(true);
@@ -360,8 +444,8 @@ describe('Matterbridge', () => {
       expect.stringContaining(`Directory Matterbridge Matter Certificate Directory already exists at path: ${path.join(HOMEDIR, '.mattercert', 'profiles', 'Jest')}`),
     );
 
-    // -frontend 8081
-    expect((matterbridge as any).frontend.port).toBe(8081);
+    // -frontend FRONTEND_PORT
+    expect((matterbridge as any).frontend.port).toBe(FRONTEND_PORT);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
     expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
     expect((matterbridge as any).frontend.expressApp).toBeDefined();
@@ -376,8 +460,7 @@ describe('Matterbridge', () => {
 
   test('Matterbridge profile', async () => {
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--novirtual',
       '--frontend',
       '0',
@@ -446,141 +529,6 @@ describe('Matterbridge', () => {
     expect(hasParameter('frontend')).toBeTruthy();
   });
 
-  test('Sanitize fabrics', () => {
-    const fabricInfos: ExposedFabricInformation[] = [
-      {
-        fabricIndex: FabricIndex(1),
-        fabricId: FabricId(45653242346465555556n),
-        nodeId: NodeId(556546442432656555556n),
-        rootNodeId: NodeId(5565442324264656555556n),
-        rootVendorId: VendorId(4996),
-        label: 'Fabric 1 label',
-      },
-      {
-        fabricIndex: FabricIndex(2),
-        fabricId: FabricId(45654621214656555556n),
-        nodeId: NodeId(556546462112156555556n),
-        rootNodeId: NodeId(556546412212656555556n),
-        rootVendorId: VendorId(4937),
-        label: 'Fabric 2 label',
-      },
-    ];
-    expect((matterbridge as any).sanitizeFabricInformations(fabricInfos).length).toBe(2);
-    expect(() => {
-      JSON.stringify(fabricInfos);
-    }).toThrow();
-    expect(JSON.stringify((matterbridge as any).sanitizeFabricInformations(fabricInfos)).length).toBe(402);
-  });
-
-  test('Sanitize sessions', () => {
-    let sessionInfos: SessionsBehavior.Session[] = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: true,
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect(() => {
-      JSON.stringify(sessionInfos);
-    }).toThrow();
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos)).toEqual([
-      {
-        fabric: {
-          fabricId: '456546212146567986',
-          fabricIndex: 2,
-          label: 'SmartThings Hub 0503',
-          nodeId: '1678420619586823323397986',
-          rootNodeId: '18446744060824623349729',
-          rootVendorId: 4362,
-          rootVendorName: '(SmartThings)',
-        },
-        isPeerActive: true,
-        lastActiveTimestamp: '1720035761223121',
-        lastInteractionTimestamp: '1720035723121269',
-        name: 'secure/64351',
-        nodeId: '16784206195868397986',
-        numberOfActiveSubscriptions: 0,
-        peerNodeId: '1604858123872676291',
-      },
-    ]);
-    expect(JSON.stringify((matterbridge as any).sanitizeSessionInformation(sessionInfos)).length).toBe(450);
-    sessionInfos = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: false, // isPeerActive false should cause the session to be filtered out
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(0);
-    sessionInfos = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: undefined,
-        isPeerActive: true, // isPeerActive true should not cause the session to be filtered out
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect((matterbridge as any).sanitizeSessionInformation(sessionInfos)).toEqual([
-      {
-        isPeerActive: true,
-        lastActiveTimestamp: '1720035761223121',
-        lastInteractionTimestamp: '1720035723121269',
-        name: 'secure/64351',
-        nodeId: '16784206195868397986',
-        numberOfActiveSubscriptions: 0,
-        peerNodeId: '1604858123872676291',
-      },
-    ]);
-  });
-
-  test('getVendorIdName', () => {
-    expect((matterbridge as any).getVendorIdName()).toBe('');
-    expect((matterbridge as any).getVendorIdName(4937)).toContain('AppleHome');
-    expect((matterbridge as any).getVendorIdName(4996)).toContain('AppleKeyChain');
-    expect((matterbridge as any).getVendorIdName(4362)).toContain('SmartThings');
-    expect((matterbridge as any).getVendorIdName(4939)).toContain('HomeAssistant');
-    expect((matterbridge as any).getVendorIdName(24582)).toContain('GoogleHome');
-    expect((matterbridge as any).getVendorIdName(4631)).toContain('Alexa');
-    expect((matterbridge as any).getVendorIdName(4701)).toContain('Tuya');
-    expect((matterbridge as any).getVendorIdName(4718)).toContain('Xiaomi');
-    expect((matterbridge as any).getVendorIdName(4742)).toContain('eWeLink');
-    expect((matterbridge as any).getVendorIdName(5264)).toContain('Shelly');
-    expect((matterbridge as any).getVendorIdName(0x1488)).toContain('ShortcutLabsFlic');
-    expect((matterbridge as any).getVendorIdName(65521)).toContain('MatterTest');
-    expect((matterbridge as any).getVendorIdName(matterbridge.aggregatorVendorId)).toContain('MatterTest');
-    expect((matterbridge as any).getVendorIdName(1)).toContain('Unknown vendorId');
-  });
-
   test('matterbridge -add mockPlugin1', async () => {
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
@@ -589,8 +537,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-frontend',
       '0',
       '-port',
@@ -631,8 +578,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -673,8 +619,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -715,8 +660,7 @@ describe('Matterbridge', () => {
     expect(matterbridge.devices).toHaveLength(0);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -748,8 +692,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -785,8 +728,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -822,8 +764,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -884,8 +825,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -939,8 +879,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -979,8 +918,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -1018,8 +956,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -1063,8 +1000,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',
@@ -1122,8 +1058,7 @@ describe('Matterbridge', () => {
     });
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-frontend',
       '0',
       '-port',
@@ -1157,8 +1092,7 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).shutdown).toBe(false);
 
     process.argv = [
-      'node',
-      'matterbridge.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '--frontend',
       '0',
       '--port',

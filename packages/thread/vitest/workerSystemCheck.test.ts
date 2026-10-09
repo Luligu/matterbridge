@@ -4,8 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
+
+// Setup the test environment
+await setupTest('WorkerSystemCheck', false);
 
 type RunOptions = Readonly<{
   nodeVersion: string;
@@ -82,12 +86,12 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
   let wrapperName: string | undefined;
   let runPromise: Promise<boolean> | undefined;
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
-      constructor(name: string, callback: (w: any) => Promise<boolean>) {
+    ThreadsWrapper: class {
+      constructor(name: string, entrypoint: (w: any) => Promise<boolean>) {
         wrapperName = name;
-        runPromise = callback(worker);
+        runPromise = entrypoint(worker);
       }
     },
   }));
@@ -126,10 +130,6 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
 }
 
 describe('workerSystemCheck', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: covers node 20 branch, NVM warning, excluded interface warn, interface scan', async () => {
     const { wrapperName, success, loggerMock, snackBarMock, fetchMock } = await runWorkerSystemCheck({
       nvmBin: true,

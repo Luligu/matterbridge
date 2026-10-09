@@ -7,11 +7,11 @@
 import os from 'node:os';
 import path from 'node:path';
 
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { Mock } from 'vitest';
 
-import { setupTest } from './vitestSetupTest.js';
-
-await setupTest('RuntimeBun');
+// Setup the test environment
+await setupTest('RuntimeBun', false);
 
 type RuntimeBunModule = typeof import('../src/runtimeBun.js');
 type ExistsSyncFn = (path: string) => boolean;
@@ -20,7 +20,6 @@ type ExecFileSyncFn = (file: string, args: string[], options: { stdio: 'ignore' 
 const originalBunDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'Bun');
 const originalBunInstall = process.env.BUN_INSTALL;
 const originalHome = process.env.HOME;
-const originalArgv = [...process.argv];
 const originalVersions = process.versions;
 
 let mockedExistsSync: Mock<ExistsSyncFn>;
@@ -50,7 +49,7 @@ afterEach(() => {
   vi.doUnmock('node:fs');
   restoreBunGlobal();
   setProcessVersions();
-  process.argv.splice(0, process.argv.length, ...originalArgv);
+  process.argv.splice(0, process.argv.length, ...originalProcessArgv);
   if (originalBunInstall === undefined) delete process.env.BUN_INSTALL;
   else process.env.BUN_INSTALL = originalBunInstall;
   if (originalHome === undefined) delete process.env.HOME;
@@ -286,5 +285,45 @@ describe('Bun runtime helpers', () => {
       arch: process.arch,
       platform: process.platform,
     });
+  });
+});
+
+describe('memoryFootprint()', () => {
+  it('should return RSS when the Bun global is unavailable', async () => {
+    restoreBunGlobal();
+    setProcessVersions();
+    vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 456, heapUsed: 1, heapTotal: 2, external: 3, arrayBuffers: 4 });
+
+    const { memoryFootprint } = await importRuntimeBun();
+
+    expect(memoryFootprint()).toBe(456);
+  });
+
+  it.each([
+    { name: 'valid footprint', bun: { unsafe: { memoryFootprint: (): number => 123 } }, expected: 123 },
+    { name: 'missing unsafe API', bun: {}, expected: 456 },
+    { name: 'missing footprint API', bun: { unsafe: {} }, expected: 456 },
+    { name: 'undefined footprint', bun: { unsafe: { memoryFootprint: (): undefined => {} } }, expected: 456 },
+    { name: 'zero footprint', bun: { unsafe: { memoryFootprint: (): number => 0 } }, expected: 456 },
+    { name: 'negative footprint', bun: { unsafe: { memoryFootprint: (): number => -1 } }, expected: 456 },
+    { name: 'non-finite footprint', bun: { unsafe: { memoryFootprint: (): number => Number.NaN } }, expected: 456 },
+    {
+      name: 'throwing footprint API',
+      bun: {
+        unsafe: {
+          memoryFootprint: (): never => {
+            throw new Error('Unavailable');
+          },
+        },
+      },
+      expected: 456,
+    },
+  ])('should handle the Bun global with $name', async ({ bun, expected }) => {
+    setBunGlobal(bun);
+    vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 456, heapUsed: 1, heapTotal: 2, external: 3, arrayBuffers: 4 });
+
+    const { memoryFootprint } = await importRuntimeBun();
+
+    expect(memoryFootprint()).toBe(expected);
   });
 });

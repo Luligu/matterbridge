@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { Status, TlvOfModel } from '@matter/types';
 import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -20,7 +19,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { debugStringify, LogLevel, nf } from 'node-ansi-logger';
 
 import { MatterbridgeTemperatureAlarmServer } from '../../src/behaviors/temperatureAlarmServer.js';

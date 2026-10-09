@@ -47,8 +47,13 @@ jobs:
       - name: Build matterbridge
         run: bun run build
 
-      - name: Typecheck matterbridge
-        run: bun run typecheck
+      - name: Link matterbridge globally
+        run: bun link
+
+      - name: Test matterbridge cli
+        run: |
+          bunx --bun matterbridge --version
+          bunx --bun matterbridge --loginterfaces
 
       - name: Install frontend dependencies
         run: bun install
@@ -58,9 +63,28 @@ jobs:
         run: bun run build
         working-directory: apps/frontend
 
-      - name: Typecheck frontend
+      - name: Typecheck matterbridge
         run: bun run typecheck
-        working-directory: apps/frontend
+
+      - name: Lint matterbridge
+        run: bun run lint
+
+      - name: Check matterbridge formatting
+        run: bun run format:check
 
       - name: Test matterbridge
-        run: bun test
+        run: bun run test:bun
+
+      - name: List, audit, fix outdated dependencies and build again
+        timeout-minutes: 3
+        continue-on-error: true
+        run: |
+          bun outdated --recursive || true
+          bun audit || true
+          bun update --latest --recursive || true
+          bun outdated --recursive || true
+          bun audit || true
+          bun run build || true
+          bun run typecheck || true
+          bun run lint || true
+          bun run format:check || true

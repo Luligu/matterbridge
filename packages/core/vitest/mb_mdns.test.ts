@@ -6,7 +6,7 @@
 
 import os from 'node:os';
 
-import { originalProcessArgv, setupTest } from '@matterbridge/vitest-utils';
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const mockMdnsInstances: MockMdns[] = [];
 const scheduledIntervals: Array<{ callback: () => void; delay: number | undefined; unref: ReturnType<typeof vi.fn> }> = [];
@@ -82,6 +82,7 @@ const {
   startMbMdns,
 } = await import('../src/mb_mdns.js');
 
+// Setup the test environment
 await setupTest('MbMdns', false);
 
 describe('mb_mdns', () => {
@@ -118,8 +119,7 @@ describe('mb_mdns', () => {
 
   test('parses CLI options', () => {
     process.argv = [
-      'node',
-      'mb_mdns',
+      ...originalProcessArgv.slice(0, 2),
       '--advertise',
       '5000',
       '--query',
@@ -167,7 +167,7 @@ describe('mb_mdns', () => {
   });
 
   test('prints help and exits', () => {
-    process.argv = ['node', 'mb_mdns', '--help'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--help'];
     const exitFn = vi.fn();
     const logFn = vi.fn();
 
@@ -186,7 +186,7 @@ describe('mb_mdns', () => {
   });
 
   test('mbMdnsMain uses default exit and log handlers for help', () => {
-    process.argv = ['node', 'mb_mdns', '--help'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--help'];
     const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const processExitSpy = vi.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
@@ -196,7 +196,7 @@ describe('mb_mdns', () => {
   });
 
   test('mbMdnsMain starts runtime when help is not requested', () => {
-    process.argv = ['node', 'mb_mdns', '--no-timeout'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--no-timeout'];
 
     const runtime = mbMdnsMain(vi.fn() as any, vi.fn());
 
@@ -411,7 +411,7 @@ describe('mb_mdns', () => {
   });
 
   test('uses default intervals and applies timeout', async () => {
-    process.argv = ['node', 'mb_mdns', '--query', '--advertise', '--noIpv4'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--query', '--advertise', '--noIpv4'];
     const options = getMbMdnsOptions();
 
     const runtime = startMbMdns(options, false);
@@ -533,7 +533,7 @@ describe('mb_mdns', () => {
   });
 
   test('lists network interfaces for verbose IPv4 and IPv6-only startup', () => {
-    process.argv = ['node', 'mb_mdns', '--verbose'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--verbose'];
 
     startMbMdns(
       {

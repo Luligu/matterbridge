@@ -12,7 +12,6 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -23,7 +22,8 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { stringify } from 'node-ansi-logger';
 
 import { SoilSensor } from '../../src/devices/soilSensor.js';

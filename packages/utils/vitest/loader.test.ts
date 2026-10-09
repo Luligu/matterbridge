@@ -4,22 +4,21 @@
  * @author Luca Liguori
  */
 
+import { consoleLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { logModuleLoaded } from '../src/loader.js';
-import { consoleLogSpy, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Loader', false);
 
 describe('logModuleLoaded()', () => {
-  const ORIGINAL_ARGV = process.argv;
-
   beforeEach(() => {
     vi.clearAllMocks();
-    process.argv = ['node', 'script.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
   });
 
   afterAll(() => {
-    process.argv = ORIGINAL_ARGV;
+    process.argv = [...originalProcessArgv];
     vi.restoreAllMocks();
   });
 

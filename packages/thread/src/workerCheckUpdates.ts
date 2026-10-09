@@ -26,11 +26,11 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
 import { checkUpdates } from './checkUpdates.js';
-import { WorkerWrapper } from './workerWrapper.js';
+import { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('CheckUpdates', '\u001B[35m');
 
-export default new WorkerWrapper('CheckUpdates', async (worker) => {
+export default new ThreadsWrapper('CheckUpdates', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting check updates...`);
   let success = false;
   try {

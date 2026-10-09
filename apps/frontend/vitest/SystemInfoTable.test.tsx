@@ -98,7 +98,7 @@ function valueCell(label: string) {
 beforeEach(() => {
   settings.debug = false;
   settings.enableMobile = true;
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(window, 'open').mockReturnValue(null);
 });
 
@@ -116,21 +116,21 @@ describe('SystemInfoTable rendering', () => {
       'IPv4 address': '192.168.1.2',
       'IPv6 address': '::1',
       'Node version': '24.0.0',
-      Hostname: 'bridge',
-      User: 'tester',
-      Os: 'Linux',
-      osRelease: '6.8',
-      Platform: 'linux',
-      osArch: 'arm64',
-      totalMemory: '8 GB',
-      Memory: '4 GB',
+      'Hostname': 'bridge',
+      'User': 'tester',
+      'Os': 'Linux',
+      'osRelease': '6.8',
+      'Platform': 'linux',
+      'osArch': 'arm64',
+      'totalMemory': '8 GB',
+      'Memory': '4 GB',
       'System uptime': '2 days',
       'Process uptime': '1 hour',
       'Host CPU': '12 %',
       'Process CPU': '3 %',
-      Rss: '100 MB',
-      heapTotal: '80 MB',
-      Heap: '40 MB',
+      'Rss': '100 MB',
+      'heapTotal': '80 MB',
+      'Heap': '40 MB',
     };
     for (const [label, value] of Object.entries(expected)) expect(valueCell(label)).toHaveTextContent(value);
     const rows = screen.getAllByRole('row');

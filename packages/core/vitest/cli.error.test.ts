@@ -6,8 +6,8 @@
 
 const NAME = 'CliError';
 
+import { loggerLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { Inspector, Tracker } from '@matterbridge/utils';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
 import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
@@ -60,7 +60,7 @@ describe('Matterbridge', () => {
   });
 
   it('should start matterbridge and fail', async () => {
-    process.argv = ['node', './cli.js', '-frontend', '0', '-logger', 'debug', '-matterlogger', 'debug', '--no-ansi'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-frontend', '0', '-logger', 'debug', '-matterlogger', 'debug', '--no-ansi'];
     const cli = await import('../src/cli.js');
     await new Promise((resolve) => setTimeout(resolve, 100));
     expect(cli.instance).toBeUndefined();

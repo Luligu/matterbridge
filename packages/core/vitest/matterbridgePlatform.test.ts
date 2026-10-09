@@ -13,10 +13,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
-import { BroadcastServer } from '@matterbridge/thread/server';
-import type { PlatformMatterbridge, WorkerMessage } from '@matterbridge/types';
-import { dev, plg } from '@matterbridge/types';
-import { flushAsync, log, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
+import { flushAsync } from '@matterbridge/test-utils';
 import {
   addBridgedEndpoint,
   addVirtualEndpoint,
@@ -29,7 +26,11 @@ import {
   removeBridgedEndpoint,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { log, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import type { PlatformMatterbridge, WorkerMessage } from '@matterbridge/types';
+import { dev, plg } from '@matterbridge/types';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, wr } from 'node-ansi-logger';
 
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';

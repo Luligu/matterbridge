@@ -531,7 +531,7 @@ Matterbridge looks first for .p12 certificate and, if they are not found, it loo
 
 ### Change the command line
 
-Add the **--ssl** parameter to the command line.
+Add the **--ssl** (or **--tls**) parameter to the command line.
 
 If desired, you can also change the frontend port with **-frontend 443**.
 
@@ -539,12 +539,12 @@ If desired, you can also change the frontend port with **-frontend 443**.
 matterbridge --ssl --frontend 443
 ```
 
-Add the **--mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).
+Add the **--mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible). **--mtls** also enables https and wss, so **--ssl** is not needed.
 
 The browser must provide the client certificate: on Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
 
 ```bash
-matterbridge --ssl --mtls --frontend 443
+matterbridge --mtls --frontend 443
 ```
 
 ### Restart

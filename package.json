@@ -1,6 +1,6 @@
 {
   "name": "matterbridge",
-  "version": "3.10.12",
+  "version": "3.10.13",
   "description": "Matterbridge plugin manager for Matter",
   "author": "https://github.com/Luligu",
   "license": "Apache-2.0",
@@ -123,13 +123,37 @@
       "import": "./dist/test-utils/jest/export.js",
       "types": "./dist/test-utils/jest/export.d.ts"
     },
+    "./test-utils/jest/setup": {
+      "import": "./dist/test-utils/jest/setup.js",
+      "types": "./dist/test-utils/jest/setup.d.ts"
+    },
+    "./test-utils/jest/matter": {
+      "import": "./dist/test-utils/jest/matter.js",
+      "types": "./dist/test-utils/jest/matter.d.ts"
+    },
     "./test-utils/vitest": {
       "import": "./dist/test-utils/vitest/export.js",
       "types": "./dist/test-utils/vitest/export.d.ts"
     },
+    "./test-utils/vitest/setup": {
+      "import": "./dist/test-utils/vitest/setup.js",
+      "types": "./dist/test-utils/vitest/setup.d.ts"
+    },
+    "./test-utils/vitest/matter": {
+      "import": "./dist/test-utils/vitest/matter.js",
+      "types": "./dist/test-utils/vitest/matter.d.ts"
+    },
     "./test-utils/buntest": {
       "import": "./dist/test-utils/buntest/export.js",
       "types": "./dist/test-utils/buntest/export.d.ts"
+    },
+    "./test-utils/buntest/setup": {
+      "import": "./dist/test-utils/buntest/setup.js",
+      "types": "./dist/test-utils/buntest/setup.d.ts"
+    },
+    "./test-utils/buntest/matter": {
+      "import": "./dist/test-utils/buntest/matter.js",
+      "types": "./dist/test-utils/buntest/matter.d.ts"
     },
     "./logger": {
       "import": "./dist/logger/export.js",
@@ -205,6 +229,10 @@
     },
     "entryPoints": [
       {
+        "in": "packages/thread/src/threadBackend.ts",
+        "out": "workers/threadBackend"
+      },
+      {
         "in": "packages/thread/src/workerArchiveCommand.ts",
         "out": "workers/workerArchiveCommand"
       },
@@ -251,13 +279,15 @@
     "start:controller:discover": "node ./bin/matterbridge.js --controller --frontend 0 --port 6000 --discover",
     "start:controller:unpairall": "node ./bin/matterbridge.js --controller --frontend 0 --port 6000 --unpairall",
     "start:inspect": "node --inspect=0.0.0.0:9229 ./bin/matterbridge.js --tracker --loader",
-    "start:gc": "node --expose-gc ./bin/matterbridge.js --force-gc --tracker",
-    "start:tracegc": "node --expose-gc --trace-gc ./bin/matterbridge.js --force-gc --tracker",
-    "start:tracegcverbose": "node --expose-gc --trace-gc-verbose ./bin/matterbridge.js --force-gc --tracker",
+    "start:gc": "node --expose-gc ./bin/matterbridge.js --force-gc --tracker --loader",
+    "start:tracegc": "node --expose-gc --trace-gc ./bin/matterbridge.js --force-gc --tracker --loader",
+    "start:tracegcverbose": "node --expose-gc --trace-gc-verbose ./bin/matterbridge.js --force-gc --tracker --loader",
     "start:nocolor": "cross-env NO_COLOR=1 node ./bin/matterbridge.js",
     "start:noansi": "node ./bin/matterbridge.js --no-ansi",
-    "start:bun": "bun --bun ./bin/matterbridge.js --force-gc --tracker --debug-threads --loader",
-    "start:bun:src": "bun scripts/clean.mjs --workspaces && bun --bun ./bin/matterbridge.js --force-gc --tracker --debug-threads --loader",
+    "start:node": "node --expose-gc ./bin/matterbridge.js --profile Node --force-gc --tracker --loader",
+    "start:node:experimental": "node --expose-gc ./bin/matterbridge.js --profile Node --experimental --force-gc --tracker --loader",
+    "start:bun": "bun --bun ./bin/matterbridge.js --profile Bun --force-gc --tracker --loader",
+    "start:bun:experimental": "bun --bun ./bin/matterbridge.js --profile Bun --experimental --force-gc --tracker --loader",
     "build": "tsc --build tsconfig.build.json",
     "buildProduction": "tsc --build tsconfig.build.production.json",
     "watch": "tsc --build tsconfig.build.json --watch",
@@ -270,12 +300,22 @@
     "test": "vitest run",
     "test:watch": "vitest --reporter verbose",
     "test:verbose": "vitest run --reporter verbose",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --reporter verbose --coverage",
     "test:bun": "bun test --parallel",
+    "test:bun:core": "bun test --parallel packages/core",
+    "test:bun:dgram": "bun test --parallel packages/dgram",
+    "test:bun:thread": "bun test --parallel packages/thread",
+    "test:bun:types": "bun test --parallel packages/types",
+    "test:bun:utils": "bun test --parallel packages/utils",
     "test:bun:watch": "bun test --parallel --watch ",
     "test:bun:coverage": "bun test --parallel --coverage",
-    "lint": "oxlint --disable-nested-config",
-    "lint:fix": "oxlint --disable-nested-config --fix",
+    "test:bun:coverage:core": "bun test --parallel --coverage packages/core",
+    "test:bun:coverage:dgram": "bun test --parallel --coverage packages/dgram",
+    "test:bun:coverage:thread": "bun test --parallel --coverage packages/thread",
+    "test:bun:coverage:types": "bun test --parallel --coverage packages/types",
+    "test:bun:coverage:utils": "bun test --parallel --coverage packages/utils",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "preversion": "npm run runMeBeforePublish",
@@ -348,11 +388,11 @@
     "docker:build:local:s6-rc": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc -t matterbridge:s6-rc .",
     "docker:run:local:s6-rc": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-local -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 matterbridge:s6-rc",
     "docker:run:hub:s6-rc": "npm run docker:rm:all && docker pull luligu/matterbridge:s6-rc && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-hub -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 luligu/matterbridge:s6-rc",
-    "docker:run:hub:s6-rc:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.10.1 && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-hub -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 luligu/matterbridge:2026.10.1",
+    "docker:run:hub:s6-rc:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.10.2 && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-hub -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 luligu/matterbridge:2026.10.2",
     "docker:build:local:s6-rc-legacy": "docker build --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy .",
     "docker:run:local:s6-rc-legacy": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-legacy-local -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 matterbridge:s6-rc-legacy",
     "docker:run:hub:s6-rc-legacy": "npm run docker:rm:all && docker pull luligu/matterbridge:s6-rc-legacy && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-legacy-hub -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 luligu/matterbridge:s6-rc-legacy",
-    "docker:run:hub:s6-rc-legacy:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.10.1-legacy && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-legacy-hub -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 luligu/matterbridge:2026.10.1-legacy",
+    "docker:run:hub:s6-rc-legacy:tag": "npm run docker:rm:all && docker pull luligu/matterbridge:2026.10.2-legacy && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-s6-rc-legacy-hub -v docker-storage:/addons/matterbridge/.matterbridge -v docker-plugins:/addons/matterbridge/Matterbridge -v docker-cert:/addons/matterbridge/.mattercert -p 8283:8283 luligu/matterbridge:2026.10.2-legacy",
     "docker:buildx:local:s6-rc-legacy:amd64": "docker buildx build --platform linux/amd64 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy-amd64 --load .",
     "docker:buildx:local:s6-rc-legacy:arm64": "docker buildx build --platform linux/arm64 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy-arm64 --load .",
     "docker:buildx:local:s6-rc-legacy:armv7": "docker buildx build --platform linux/arm/v7 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t matterbridge:s6-rc-legacy-armv7 --load .",
@@ -376,11 +416,11 @@
     "docker:buildx:cloud:bun-dev-container": "docker buildx build --builder cloud-luligu-matterbridge-builder --platform linux/amd64,linux/arm64 --pull -f docker/Dockerfile.bun-dev-container -t luligu/matterbridge:bun-dev-container --push .",
     "docker:run:hub:bun-dev-container": "docker pull luligu/matterbridge:bun-dev-container && docker run -it --rm --network matterbridge --name matterbridge-bun-dev-container-hub luligu/matterbridge:bun-dev-container bash",
     "docker:build:localnode": "docker build --pull -f docker/Dockerfile.local.node -t matterbridge:local-node .",
-    "docker:run:localnode": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-local-node -v docker-storage:/root/.matterbridge -v docker-plugins:/root/Matterbridge -v docker-cert:/root/.mattercert -p 8283:8283 matterbridge:local-node",
+    "docker:run:localnode": "npm run docker:rm:all && docker run -dit --network matterbridge --restart unless-stopped --stop-timeout 60 --name matterbridge-local-node -v docker-storage:/root/.matterbridge -v docker-plugins:/root/Matterbridge -v docker-cert:/root/.mattercert -p 8283:8283 matterbridge:local-node",
     "docker:exec:localnode": "docker exec -it matterbridge-local-node bash",
     "docker:log:localnode": "docker logs -f matterbridge-local-node --tail 1000",
     "docker:build:localbun": "docker build --pull -f docker/Dockerfile.local.bun -t matterbridge:local-bun .",
-    "docker:run:localbun": "npm run docker:rm:all && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-local-bun -v docker-storage:/root/.matterbridge -v docker-plugins:/root/Matterbridge -v docker-cert:/root/.mattercert -p 8283:8283 matterbridge:local-bun",
+    "docker:run:localbun": "npm run docker:rm:all && docker run -dit --network matterbridge --restart unless-stopped --stop-timeout 60 --name matterbridge-local-bun -v docker-storage:/root/.matterbridge -v docker-plugins:/root/Matterbridge -v docker-cert:/root/.mattercert -p 8283:8283 matterbridge:local-bun",
     "docker:exec:localbun": "docker exec -it matterbridge-local-bun bash",
     "docker:log:localbun": "docker logs -f matterbridge-local-bun --tail 1000",
     "docker:build:local:chip-test": "docker build --pull -f docker/Dockerfile.chip-test -t matterbridge:chip-test .",
@@ -393,8 +433,8 @@
     "docker:buildx:cloud:chip-test": "docker buildx build --builder cloud-luligu-matterbridge-builder --platform linux/amd64,linux/arm64 --pull -f docker/Dockerfile.chip-test -t luligu/matterbridge:chip-test --push .",
     "docker:buildx:default:chip-test": "docker buildx build --platform linux/amd64,linux/arm64 --pull -f docker/Dockerfile.chip-test -t luligu/matterbridge:chip-test --push .",
     "docker:run:hub:chip-test": "npm run docker:rm:all && docker pull luligu/matterbridge:chip-test && docker run -dit --network matterbridge --restart always --stop-timeout 60 --name matterbridge-chip-test-hub -p 8283:8283 luligu/matterbridge:chip-test",
-    "docker:buildx:hub:s6-rc": "docker buildx build --platform linux/amd64,linux/arm64 --no-cache --pull -f docker/Dockerfile.s6-rc -t luligu/matterbridge:s6-rc -t luligu/matterbridge:2026.9.1 --push .",
-    "docker:buildx:hub:s6-rc-legacy": "docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t luligu/matterbridge:s6-rc-legacy -t luligu/matterbridge:2026.9.1-legacy --push .",
+    "docker:buildx:hub:s6-rc": "docker buildx build --platform linux/amd64,linux/arm64 --no-cache --pull -f docker/Dockerfile.s6-rc -t luligu/matterbridge:s6-rc -t luligu/matterbridge:2026.10.2 --push .",
+    "docker:buildx:hub:s6-rc-legacy": "docker buildx build --platform linux/amd64,linux/arm64,linux/arm/v7 --no-cache --pull -f docker/Dockerfile.s6-rc-legacy -t luligu/matterbridge:s6-rc-legacy -t luligu/matterbridge:2026.10.2-legacy --push .",
     "docker:stop:all": "docker stop matterbridge-local-node matterbridge-local-bun matterbridge-bundev-local matterbridge-bundev-hub matterbridge-bun-local matterbridge-bun-hub matterbridge-latest-local matterbridge-dev-local matterbridge-ubuntu-local matterbridge-node-ubuntu-slim-local matterbridge-bun-ubuntu-slim-local matterbridge-alpine-local matterbridge-s6-rc-local matterbridge-s6-rc-hub matterbridge-s6-rc-legacy-local matterbridge-s6-rc-legacy-hub matterbridge-latest-hub matterbridge-dev-hub matterbridge-ubuntu-hub matterbridge-node-ubuntu-slim-hub matterbridge-bun-ubuntu-slim-hub matterbridge-alpine-hub matterbridge-chip-test-local matterbridge-chip-test-hub || node -e \"process.exit(0)\"",
     "docker:rm:all": "npm run docker:stop:all && docker rm -f matterbridge-local-node matterbridge-local-bun matterbridge-bundev-local matterbridge-bundev-hub matterbridge-bun-local matterbridge-bun-hub matterbridge-latest-local matterbridge-dev-local matterbridge-ubuntu-local matterbridge-node-ubuntu-slim-local matterbridge-bun-ubuntu-slim-local matterbridge-alpine-local matterbridge-s6-rc-local matterbridge-s6-rc-hub matterbridge-s6-rc-legacy-local matterbridge-s6-rc-legacy-hub matterbridge-latest-hub matterbridge-dev-hub matterbridge-ubuntu-hub matterbridge-node-ubuntu-slim-hub matterbridge-bun-ubuntu-slim-hub matterbridge-alpine-hub matterbridge-chip-test-local matterbridge-chip-test-hub || node -e \"process.exit(0)\"",
     "docker:buildx:create:matterbridge": "docker buildx create --name matterbridge --driver docker-container --driver-opt image=moby/buildkit:latest --use && docker run --privileged --rm tonistiigi/binfmt --install all && docker buildx inspect --bootstrap && docker buildx ls",
@@ -472,21 +512,21 @@
     "pack:latest:monorepo": "node scripts/pack-monorepo.mjs --scope \"@matterbridge\" --tag latest && npm run reset"
   },
   "dependencies": {
-    "@matterbridge/core": "3.10.12",
-    "@matterbridge/dgram": "3.10.12",
-    "@matterbridge/jest-utils": "3.10.12",
-    "@matterbridge/test-utils": "3.10.12",
-    "@matterbridge/thread": "3.10.12",
-    "@matterbridge/types": "3.10.12",
-    "@matterbridge/utils": "3.10.12",
-    "@matterbridge/vitest-utils": "3.10.12",
+    "@matterbridge/core": "3.10.13",
+    "@matterbridge/dgram": "3.10.13",
+    "@matterbridge/jest-utils": "3.10.13",
+    "@matterbridge/test-utils": "3.10.13",
+    "@matterbridge/thread": "3.10.13",
+    "@matterbridge/types": "3.10.13",
+    "@matterbridge/utils": "3.10.13",
+    "@matterbridge/vitest-utils": "3.10.13",
     "node-ansi-logger": "3.3.1",
     "node-persist-manager": "2.1.1"
   },
   "devDependencies": {
     "@matter/main": "0.17.9",
     "@types/bun": "1.4.2",
-    "@types/node": "26.6.3",
+    "@types/node": "26.6.4",
     "@vitest/coverage-v8": "5.0.3",
     "cross-spawn": "7.0.6",
     "marked": "18.0.14",

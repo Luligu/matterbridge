@@ -64,4 +64,6 @@ jobs:
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/vitest/lcov.info
+          flags: vitest
           fail_ci_if_error: true

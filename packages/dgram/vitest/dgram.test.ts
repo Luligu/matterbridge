@@ -6,22 +6,20 @@
 
 import os from 'node:os';
 
+import { loggerDebugSpy, loggerLogSpy, originalProcessArgv, originalProcessEnv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
 import { Dgram } from '../src/dgram.js';
-import { loggerDebugSpy, loggerLogSpy, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Dgram', false);
 
 describe('Dgram', () => {
   let dgram: Dgram;
-  const originalEnv = process.env;
-  const originalArgv = process.argv;
 
   beforeEach(() => {
-    process.env = { ...originalEnv };
-    process.argv = ['jest', 'dgram.test.ts'];
+    process.env = { ...originalProcessEnv };
+    process.argv = originalProcessArgv.slice(0, 2);
   });
 
   afterEach(() => {
@@ -30,8 +28,8 @@ describe('Dgram', () => {
 
   afterAll(() => {
     vi.restoreAllMocks();
-    process.env = originalEnv;
-    process.argv = originalArgv;
+    process.env = { ...originalProcessEnv };
+    process.argv = [...originalProcessArgv];
   });
 
   test('Create the dgram with udp4', async () => {

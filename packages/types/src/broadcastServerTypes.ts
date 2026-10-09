@@ -29,7 +29,7 @@ import type { LogLevel } from 'node-ansi-logger';
 // matterbridge
 import type { ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type { ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
@@ -128,12 +128,12 @@ export type WorkerMessage<K extends keyof WorkerMessageTypes = keyof WorkerMessa
 
 /** Map of all worker message types with their request and response structures */
 export type WorkerMessageTypes = {
-  // Jest example message
-  jest: {
+  // Test example messages
+  test: {
     request: { params: { userId: number } };
     response: { result: { name: string; age: number } };
   };
-  jest_simple: {
+  test_simple: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
@@ -165,6 +165,16 @@ export type WorkerMessageTypes = {
         execArgv?: string[];
         /** Whether to pipe the output of the worker */
         pipedOutput?: boolean;
+      };
+    };
+    response: { result: { success: boolean } };
+  };
+  manager_shutdown: {
+    request: {
+      /** Parameters for shutting down threads */
+      params: {
+        /** The name of the thread to shut down. If undefined, all the threads are shut down. */
+        thread?: ThreadNames;
       };
     };
     response: { result: { success: boolean } };
@@ -215,6 +225,22 @@ export type WorkerMessageTypes = {
     request: { params: undefined };
     response: { result: { data: SharedMatterbridge; success: true } };
   };
+  matterbridge_matterdata: {
+    request: { params: undefined };
+    response: { result: { port: number | undefined; passcode: number | undefined; discriminator: number | undefined } };
+  };
+  matterbridge_restart: {
+    request: { params: undefined };
+    response: { result: { success: true } };
+  };
+  matterbridge_shutdown: {
+    request: { params: undefined };
+    response: { result: { success: true } };
+  };
+  matterbridge_apimatter: {
+    request: { params: { id: string } };
+    response: { result: { matter: ApiMatter | undefined } };
+  };
   matterbridge_apisettings: {
     request: { params: undefined };
     response: { result: { data: ApiSettings; success: true } };
@@ -244,6 +270,10 @@ export type WorkerMessageTypes = {
   matter_stop: {
     request: { params: { storeId: string } };
     response: { result: { storeId: string; success: true } };
+  };
+  matter_apimatter: {
+    request: { params: { id: string } };
+    response: { result: { matter: ApiMatter } };
   };
 
   // Frontend methods
@@ -465,5 +495,9 @@ export type WorkerMessageTypes = {
   devices_basearray: {
     request: { params: { pluginName?: string } };
     response: { result: { devices: BaseDevice[] } };
+  };
+  devices_apidevicearray: {
+    request: { params: { pluginName?: string } };
+    response: { result: { devices: ApiDevice[] } };
   };
 };

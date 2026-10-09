@@ -51,6 +51,7 @@ describe('getQRColor', () => {
 
   it('returns red when matter is undefined', async () => {
     const { getQRColor } = await loadGetQRColor();
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- getQRColor requires the argument; this test covers the undefined case.
     expect(getQRColor(undefined)).toBe('red');
   });
 
@@ -58,6 +59,7 @@ describe('getQRColor', () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const { getQRColor } = await loadGetQRColor(true);
 
+    // oxlint-disable-next-line unicorn/no-useless-undefined -- getQRColor requires the argument; this test covers the undefined case.
     expect(getQRColor(undefined)).toBe('red');
     expect(consoleSpy).toHaveBeenCalledWith('getQRColor (id: undefined) received matter:', 'undefined');
   });

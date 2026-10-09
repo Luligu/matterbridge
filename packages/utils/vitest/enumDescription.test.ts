@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { getEnumDescription } from '../src/enumDescription.js';
+
+// Setup the test environment
+await setupTest('EnumDescription', false);
 
 enum DoorState {
   DoorOpen = 0,

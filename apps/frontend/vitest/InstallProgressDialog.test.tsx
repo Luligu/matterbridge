@@ -58,7 +58,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   window.localStorage.clear();
   Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, writable: true, value: scrollIntoView });
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(() => {

@@ -6,6 +6,8 @@
 
 /* oxlint-disable unicorn/no-useless-undefined */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import {
   isValidArray,
   isValidBoolean,
@@ -20,6 +22,9 @@ import {
   isValidUndefined,
   parseVersionString,
 } from '../src/validate.js';
+
+// Setup the test environment
+await setupTest('Validate', false);
 
 describe('Validation Functions', () => {
   describe('isValidIpv4Address', () => {

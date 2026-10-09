@@ -17,7 +17,6 @@ import { EndpointNumber, FabricIndex, NodeId, StreamUsage, ThreeLevelAuto } from
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
-import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -27,7 +26,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeCameraAvStreamManagementServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
 import {
@@ -40,7 +40,8 @@ import { camera } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 // Timeout raised for the STUN gathering stall described in the file header above: the WeriftWebRtcSession
 // instances these tests drive gather ICE the same way.

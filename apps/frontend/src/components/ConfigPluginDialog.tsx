@@ -1,7 +1,7 @@
-// oxlint-disable max-lines unicorn/no-array-for-each
-// oxlint-disable react/hooks -- RJSF renders the nested templates/widgets as components with per-instance hooks; retain this structure pending extraction to module scope to stabilize component identities.
-
 // TODO: verify each rule
+// oxlint-disable max-lines
+// oxlint-disable react/hooks -- RJSF renders the nested templates/widgets as components with per-instance hooks; retain this structure pending extraction to module scope to stabilize component identities.
+// oxlint-disable unicorn/no-negated-condition
 // oxlint-disable react/no-unstable-nested-components
 // oxlint-disable typescript/no-unsafe-type-assertion
 
@@ -191,7 +191,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     if (debug) console.log('ConfigPluginDialog mounting with uiSchema:', uiSchema);
 
     // Move the ui: properties from the schema to the uiSchema
-    if (formData && schema && schema.properties) {
+    if (formData && schema?.properties) {
       if (rjsfDebug) console.log('ConfigPluginDialog moveToUiSchema:', schema, uiSchema);
 
       const moveUiPropertiesToUiSchema = (schemaObj: RJSFSchema, uiSchemaObj: UiSchema, path: string[] = []) => {
@@ -471,8 +471,8 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     } = props;
     if (rjsfDebug) console.log('BaseInputTemplate:', props);
     const handleChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(value === '' ? options.emptyValue : value);
-    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target && target.value);
-    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target && target.value);
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, target?.value);
+    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, target?.value);
     return (
       <Box sx={{ padding: '0px', margin: '0px' }}>
         <TextField
@@ -1168,8 +1168,8 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     const isEmpty = typeof value === 'undefined' || (multiple && value.length < 1) || (!multiple && value === emptyValue);
 
     const handleChange = ({ target: { value } }: React.ChangeEvent<HTMLInputElement>) => onChange(enumOptionsValueForIndex(value, enumOptions, optEmptyVal));
-    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
-    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target && target.value, enumOptions, optEmptyVal));
+    const handleBlur = ({ target }: React.FocusEvent<HTMLInputElement>) => onBlur(id, enumOptionsValueForIndex(target?.value, enumOptions, optEmptyVal));
+    const handleFocus = ({ target }: React.FocusEvent<HTMLInputElement>) => onFocus(id, enumOptionsValueForIndex(target?.value, enumOptions, optEmptyVal));
     const selectedIndexes = enumOptionsIndexForValue(value, enumOptions, multiple);
     const renderSelectedValues = (selected: unknown) => {
       if (!Array.isArray(selected) || !Array.isArray(enumOptions)) return '';
@@ -1206,7 +1206,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
       >
         {Array.isArray(enumOptions) &&
           enumOptions.map(({ value, label }, i) => {
-            const disabled = Array.isArray(enumDisabled) && enumDisabled.indexOf(value) !== -1;
+            const disabled = Array.isArray(enumDisabled) && enumDisabled.includes(value);
             const isSelected = Array.isArray(selectedIndexes) && selectedIndexes.includes(String(i));
             return (
               <MenuItem key={i} value={String(i)} disabled={disabled}>

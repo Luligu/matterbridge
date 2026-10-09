@@ -1,22 +1,31 @@
 /**
  * remove-workflows.mjs
- * Version: 1.0.2
+ * Version: 2.0.0
  *
  * Removes GitHub Actions workflow runs that are older than one week, plus all
- * cancelled workflow runs regardless of age.
+ * cancelled workflow runs regardless of age. Collects all pages before deleting runs
+ * so deletions cannot shift unvisited runs onto earlier pages.
  *
  * Usage:
+ *   node scripts/remove-workflows.mjs --version, -v  Show the script version
  *   node scripts/remove-workflows.mjs [--dry-run]
  *
  * Requirements:
  *   gh CLI installed and authenticated
  *   git remote.origin.url configured, or package.json repository.url set
+ *
+ * The script runs only when executed directly. Importing it exposes `main` without side effects.
  */
+
+/* oxlint-disable no-console */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+/* oxlint-disable typescript/prefer-nullish-coalescing */
 
 import { spawn } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 
-const SCRIPT_VERSION = '1.0.1';
+const scriptVersion = '2.0.0';
 const PAGE_SIZE = 100;
 const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const ACTIVE_STATUSES = new Set(['queued', 'in_progress', 'waiting', 'pending', 'requested']);
@@ -49,7 +58,7 @@ Requirements:
  * @returns {void}
  */
 function printVersion() {
-  console.log(SCRIPT_VERSION);
+  console.log(scriptVersion);
 }
 
 /**
@@ -92,7 +101,7 @@ function parseArgs(argv) {
  * @param {string[]} args - Command arguments.
  * @returns {Promise<{ stdout: string, stderr: string }>} Captured output.
  */
-function execCapture(command, args) {
+async function execCapture(command, args) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       shell: false,
@@ -284,10 +293,12 @@ function getDeletionFlags(run, cutoffTime) {
  * @param {string} owner - Repository owner.
  * @param {string} repo - Repository name.
  * @param {number} page - Page number.
- * @returns {Promise<unknown>} Workflow run page.
+ * @returns {Promise<{workflow_runs?: (Parameters<typeof formatRun>[0] & {id: number, status: string, html_url?: string})[]}>} Workflow run page.
  */
 async function listWorkflowRuns(owner, repo, page) {
-  return ghApiJson(`repos/${owner}/${repo}/actions/runs?per_page=${PAGE_SIZE}&page=${page}`);
+  return /** @type {{workflow_runs?: (Parameters<typeof formatRun>[0] & {id: number, status: string, html_url?: string})[]}} */ (
+    await ghApiJson(`repos/${owner}/${repo}/actions/runs?per_page=${PAGE_SIZE}&page=${page}`)
+  );
 }
 
 /**
@@ -303,27 +314,26 @@ async function deleteWorkflowRun(owner, repo, runId) {
 }
 
 /**
- * Entrypoint.
+ * Remove the workflow runs.
  *
- * @returns {Promise<void>}
+ * @param {string[]} args - CLI arguments.
+ * @returns {Promise<number>} The exit code.
  */
-async function main() {
-  const { dryRun, showHelp, showVersion } = parseArgs(process.argv.slice(2));
+async function run(args) {
+  const { dryRun, showHelp, showVersion } = parseArgs(args);
   if (showHelp) {
     printHelp();
-    return;
+    return 0;
   }
 
   if (showVersion) {
     printVersion();
-    return;
+    return 0;
   }
 
   const repository = await getRepositoryNameWithOwner();
+  // normalizeRepositoryUrl() only returns a non-empty owner/repo pair.
   const [owner, repo] = repository.split('/');
-  if (!owner || !repo) {
-    throw new Error(`Invalid repository identifier: ${repository}`);
-  }
 
   const cutoffDate = new Date(Date.now() - ONE_WEEK_MS);
   const cutoffTime = cutoffDate.getTime();
@@ -342,6 +352,8 @@ async function main() {
   let skippedActive = 0;
   let failed = 0;
 
+  /** @type {(Parameters<typeof formatRun>[0] & {id: number, status: string, html_url?: string})[]} */
+  const allRuns = [];
   while (true) {
     const data = await listWorkflowRuns(owner, repo, page);
     const runs = Array.isArray(data?.workflow_runs) ? data.workflow_runs : [];
@@ -349,51 +361,51 @@ async function main() {
       break;
     }
 
-    for (const run of runs) {
-      scanned += 1;
-
-      if (ACTIVE_STATUSES.has(run.status)) {
-        skippedActive += 1;
-        console.log(`[skip] ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
-        continue;
-      }
-
-      const deletionFlags = getDeletionFlags(run, cutoffTime);
-      if (!deletionFlags.shouldDelete) {
-        continue;
-      }
-
-      matched += 1;
-      if (deletionFlags.isOlderThanCutoff) {
-        matchedOlderThanCutoff += 1;
-      }
-      if (deletionFlags.isCancelled) {
-        matchedCancelled += 1;
-      }
-
-      const reason =
-        deletionFlags.isOlderThanCutoff && deletionFlags.isCancelled ? 'older-than-one-week,cancelled' : deletionFlags.isCancelled ? 'cancelled' : 'older-than-one-week';
-
-      if (dryRun) {
-        console.log(`[dry-run] Would delete (${reason}) ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
-        continue;
-      }
-
-      try {
-        await deleteWorkflowRun(owner, repo, run.id);
-        deleted += 1;
-        console.log(`[delete] Deleted (${reason}) ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
-      } catch (error) {
-        failed += 1;
-        console.error(`[error] Failed to delete ${formatRun(run)}: ${error?.message || error}`);
-      }
-    }
-
+    allRuns.push(...runs);
     if (runs.length < PAGE_SIZE) {
       break;
     }
-
     page += 1;
+  }
+
+  for (const run of allRuns) {
+    scanned += 1;
+
+    if (ACTIVE_STATUSES.has(run.status)) {
+      skippedActive += 1;
+      console.log(`[skip] ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
+      continue;
+    }
+
+    const deletionFlags = getDeletionFlags(run, cutoffTime);
+    if (!deletionFlags.shouldDelete) {
+      continue;
+    }
+
+    matched += 1;
+    if (deletionFlags.isOlderThanCutoff) {
+      matchedOlderThanCutoff += 1;
+    }
+    if (deletionFlags.isCancelled) {
+      matchedCancelled += 1;
+    }
+
+    const reason = deletionFlags.isOlderThanCutoff && deletionFlags.isCancelled ? 'older-than-one-week,cancelled' : deletionFlags.isCancelled ? 'cancelled' : 'older-than-one-week';
+
+    if (dryRun) {
+      console.log(`[dry-run] Would delete (${reason}) ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
+      continue;
+    }
+
+    try {
+      await deleteWorkflowRun(owner, repo, run.id);
+      deleted += 1;
+      console.log(`[delete] Deleted (${reason}) ${formatRun(run)} html_url=${run.html_url || 'n/a'}`);
+    } catch (error) {
+      failed += 1;
+      // oxlint-disable-next-line typescript/restrict-template-expressions -- Preserve reporting of non-Error exceptions.
+      console.error(`[error] Failed to delete ${formatRun(run)}: ${/** @type {Error} */ (error)?.message || error}`);
+    }
   }
 
   console.log('');
@@ -406,13 +418,24 @@ async function main() {
   console.log(`${dryRun ? 'Would delete' : 'Deleted'}: ${dryRun ? matched : deleted}`);
   console.log(`Failed: ${failed}`);
 
-  if (failed > 0) {
-    process.exitCode = 1;
+  return failed > 0 ? 1 : 0;
+}
+
+/**
+ * Entrypoint.
+ *
+ * @param {string[]} [args] - CLI arguments, without the runtime and script paths.
+ * @returns {Promise<number>} The exit code.
+ */
+export async function main(args = process.argv.slice(2)) {
+  try {
+    return await run(args);
+  } catch (error) {
+    console.error(`remove-workflows: ${error instanceof Error ? error.message : String(error)}`);
+    console.error('Make sure GitHub CLI is installed and authenticated: gh auth status');
+    return 1;
   }
 }
 
-main().catch((error) => {
-  console.error(`remove-workflows: ${error?.message || error}`);
-  console.error('Make sure GitHub CLI is installed and authenticated: gh auth status');
-  process.exitCode = 1;
-});
+// `import.meta.main` needs Node.js 22.18 or 24.2; older runtimes fall back to comparing the executed script path.
+if (import.meta.main ?? path.resolve(process.argv[1] ?? '') === import.meta.filename) process.exitCode = await main();

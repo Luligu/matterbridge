@@ -106,7 +106,6 @@ const config = (name: string, value: unknown) => ({ id: 23, sender: 'Settings', 
 function renderSettings(ui: UiContextType = uiContext) {
   const sendMessage = vi.fn();
   let listener: ((message: unknown) => void) | undefined;
-  // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
   const addListener = vi.fn((callback: (message: unknown) => void) => {
     listener = callback;
   });
@@ -137,7 +136,6 @@ describe('Settings', () => {
     const sendMessage = vi.fn();
     const removeListener = vi.fn();
     let listener: ((message: unknown) => void) | undefined;
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
     const addListener = vi.fn((callback: (message: unknown) => void) => {
       listener = callback;
     });

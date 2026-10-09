@@ -10,8 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { WindowCoveringServer } from '@matter/node/behaviors/window-covering';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import { wait, waiter } from '@matterbridge/utils/wait';
-import { flushAsync, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
+import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,
   aggregator,
@@ -21,7 +20,9 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { wait, waiter } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeWindowCoveringServer } from '../../src/behaviors/windowCoveringServer.js';

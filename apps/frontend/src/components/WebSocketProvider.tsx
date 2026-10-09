@@ -1,6 +1,3 @@
-// oxlint-disable unicorn/prefer-add-event-listener
-// oxlint-disable unicorn/no-array-for-each
-
 // TODO: verify each rule
 // oxlint-disable react/only-export-components
 
@@ -266,17 +263,17 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
           if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
           offlineTimeoutRef.current = null;
           return;
-        } else if (msg.method === 'snackbar' && msg.response && msg.response.message) {
+        } else if (msg.method === 'snackbar' && msg.response?.message) {
           if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
           showSnackbarMessage(msg.response.message, msg.response.timeout, msg.response.severity);
           return;
-        } else if (msg.method === 'close_snackbar' && msg.response && msg.response.message) {
+        } else if (msg.method === 'close_snackbar' && msg.response?.message) {
           if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
           closeSnackbarMessage(msg.response.message);
           return;
         } else if (msg.method === 'log') {
           // Process only valid log messages
-          if (!msg.response || !msg.response.level || !msg.response.time || !msg.response.name || !msg.response.message) return;
+          if (!msg.response?.level || !msg.response.time || !msg.response.name || !msg.response.message) return;
 
           // Send to InstallProgressDialog if it's an install log
           if (msg.response.level === 'spawn') {

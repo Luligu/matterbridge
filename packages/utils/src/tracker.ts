@@ -3,7 +3,7 @@
  * @description This file contains the Tracker class.
  * @author Luca Liguori
  * @created 2025-10-10
- * @version 1.0.1
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -28,7 +28,7 @@ import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YE
 
 import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
 import { logModuleLoaded } from './loader.js';
-import { isBun, gc, setGcLevel } from './runtimeBun.js';
+import { isBun, gc, memoryFootprint, setGcLevel } from './runtimeBun.js';
 
 logModuleLoaded('Tracker');
 
@@ -237,8 +237,9 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       entry.totalMemory = os.totalmem();
       entry.peakTotalMemory = Math.max(prevEntry.peakTotalMemory, entry.totalMemory);
       const mem = process.memoryUsage();
-      entry.rss = mem.rss;
-      entry.peakRss = Math.max(prevEntry.peakRss, mem.rss);
+      // On Bun, report process footprint; RSS can include reusable resident pages on macOS.
+      entry.rss = memoryFootprint();
+      entry.peakRss = Math.max(prevEntry.peakRss, entry.rss);
       entry.heapUsed = mem.heapUsed;
       entry.peakHeapUsed = Math.max(prevEntry.peakHeapUsed, mem.heapUsed);
       entry.heapTotal = mem.heapTotal;
@@ -254,7 +255,6 @@ export class Tracker extends EventEmitter<TrackerEvents> {
 
       // Debug output
       if (this.debug) {
-        /* v8 ignore next cause is just a precaution for debug/verbose flags which are only used for development and testing, not in production */
         this.log.debug(
           `Time: ${formatTimeStamp(entry.timestamp)} ` +
             `os ${CYAN}${BRIGHT}${formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${formatPercent(entry.peakOsCpu)}${db}) ` +
@@ -305,24 +305,20 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     if (!bun && global.gc && typeof global.gc === 'function') {
       try {
         global.gc({ type, execution });
-        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (${type}-${execution}) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', type, execution);
       } catch {
         global.gc();
-        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Garbage collection (minor-async) triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', 'minor', 'async');
       }
     } else if (bun && typeof gc === 'function' && typeof setGcLevel === 'function') {
       try {
         setGcLevel(2);
-        gc(execution === 'sync');
-        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
+        gc(true);
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
         this.emit('gc_done', type, execution);
       } catch {
-        /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
         if (this.debug) this.log.debug(`${CYAN}${BRIGHT}Bun garbage collection failed triggered at ${new Date(Date.now()).toLocaleString()}.${RESET}${db}`);
       }
     } else {

@@ -4,12 +4,10 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable no-use-before-define */
 /* oxlint-disable typescript/prefer-nullish-coalescing */
 
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
-const HOMEDIR = path.join('.cache', 'vitest', NAME);
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 
@@ -19,17 +17,16 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import type { SessionsBehavior } from '@matter/node';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import type { ExposedFabricInformation } from '@matter/protocol';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
+import { FabricIndex } from '@matter/types/datatype';
+import { closeServerNodeStores } from '@matterbridge/test-utils/vitest/matter';
+import { HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
-import { closeServerNodeStores } from '@matterbridge/vitest-utils/matter';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -39,6 +36,9 @@ import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, t
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
+
+// Setup the test environment
+await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
@@ -104,9 +104,6 @@ const matterbridge: SharedMatterbridge = {
 };
 // process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
-// Setup the test environment
-await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
-
 describe('MatterNode', () => {
   let matter: MatterNode;
 
@@ -133,8 +130,6 @@ describe('MatterNode', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Close broadcast server and mDNS instance
@@ -368,32 +363,35 @@ describe('MatterNode', () => {
     await Promise.all([startPromise, onlinePromise]);
   });
 
-  test('Get server node for Matterbridge data', () => {
-    expect(matter.serverNode).toBeDefined();
-    if (matter.serverNode === undefined) return;
-    expect(matter.getServerNodeData(matter.serverNode)).toEqual({
-      advertiseTime: expect.any(Number),
-      advertising: false,
-      commissioned: true,
-      fabricInformations: [
-        {
-          fabricId: '2',
-          fabricIndex: 1,
-          label: 'Home',
-          nodeId: '116',
-          rootNodeId: '112233',
-          rootVendorId: 4939,
-          rootVendorName: '(HomeAssistant)',
-        },
-      ],
-      id: 'Matterbridge',
-      manualPairingCode: '35792000079',
-      online: true,
-      qrPairingCode: 'MT:Y.K904QI14UIQ663000',
-      serialNumber: expect.any(String),
-      sessionInformations: [],
-      windowStatus: 0,
-    });
+  test.each([
+    { args: [], expectedVersion: 1, description: 'leave the version unchanged without the flag' },
+    { args: ['--configuration-version'], expectedVersion: 2, description: 'increment the current version with a bare flag' },
+    { args: ['--configuration-version', 'invalid'], expectedVersion: 2, description: 'increment the current version with an invalid value' },
+    { args: ['--configuration-version', '42'], expectedVersion: 42, description: 'use the explicit version' },
+    { args: ['--configuration-version', '0'], expectedVersion: 1, description: 'clamp zero to one' },
+    { args: ['--configuration-version', '-10'], expectedVersion: 2, description: 'increment when the value is parsed as another flag' },
+    { args: ['--configuration-version', '4294967296'], expectedVersion: 4294967295, description: 'clamp the version to UINT32_MAX' },
+  ])('should $description when the server node goes online', async ({ args, expectedVersion }) => {
+    const serverNode = matter.serverNode;
+    if (!serverNode) throw new Error('Server node is not initialized');
+    const savedArgv = process.argv;
+    const originalVersion = serverNode.state.basicInformation.configurationVersion;
+    const setStateSpy = vi.spyOn(serverNode, 'setStateOf').mockImplementation(async () => await Promise.resolve());
+    process.argv = [...savedArgv, ...args];
+    try {
+      await serverNode.act(async (agent) => {
+        await serverNode.lifecycle.online.emit(agent.context);
+      });
+      await Promise.all(setStateSpy.mock.results.map((result) => result.value));
+      expect(setStateSpy.mock.calls).toEqual(args.length > 0 ? [[BasicInformationServer, { configurationVersion: expectedVersion }]] : []);
+      expect(serverNode.state.basicInformation.configurationVersion).toBe(originalVersion);
+      expect(loggerNoticeSpy.mock.calls.filter(([message]) => message.startsWith('Configuration version for server node Matterbridge is now'))).toEqual(
+        args.length > 0 ? [[`Configuration version for server node Matterbridge is now ${expectedVersion}`]] : [],
+      );
+    } finally {
+      process.argv = savedArgv;
+      setStateSpy.mockRestore();
+    }
   });
 
   test('Server node commissioned', () => {
@@ -428,6 +426,20 @@ describe('MatterNode', () => {
   test('Server node sessions.subscriptionsChanged', () => {
     matter.serverNode?.events.sessions.subscriptionsChanged.emit({} as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Session subscriptions changed on server node for Matterbridge`));
+  });
+
+  test('Broadcast matter_apimatter', async () => {
+    expect(matter.serverNode).toBeDefined();
+    if (!matter.serverNode) return;
+    // The shared testServer is closed in a previous test
+    const apiServer = new BroadcastServer('frontend', log);
+    // The owner of the server node responds with its data
+    const response = await apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: matter.serverNode.id } });
+    expect(response.result.matter.id).toBe(matter.serverNode.id);
+    expect(response.result.matter.qrPairingCode).toBe(matter.serverNode.state.commissioning.pairingCodes.qrPairingCode);
+    // No MatterNode owns an unknown server node, so nobody responds and the fetch times out
+    await expect(apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: 'unknown' } }, 100)).rejects.toThrow();
+    apiServer.close();
   });
 
   test('Set aggregator reachability', async () => {
@@ -805,95 +817,5 @@ describe('MatterNode', () => {
   test('Stop matter storage', async () => {
     expect(await matter.stopMatterStorage()).toBeUndefined();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Closed matter node storage`);
-  });
-
-  test('Sanitize fabrics', () => {
-    const fabricInfos: ExposedFabricInformation[] = [
-      {
-        fabricIndex: FabricIndex(1),
-        fabricId: FabricId(45653242346465555556n),
-        nodeId: NodeId(556546442432656555556n),
-        rootNodeId: NodeId(5565442324264656555556n),
-        rootVendorId: VendorId(4996),
-        label: 'Fabric 1 label',
-      },
-      {
-        fabricIndex: FabricIndex(2),
-        fabricId: FabricId(45654621214656555556n),
-        nodeId: NodeId(556546462112156555556n),
-        rootNodeId: NodeId(556546412212656555556n),
-        rootVendorId: VendorId(4937),
-        label: 'Fabric 2 label',
-      },
-    ];
-    expect(matter.sanitizeFabricInformations(fabricInfos).length).toBe(2);
-    expect(() => {
-      JSON.stringify(fabricInfos);
-    }).toThrow();
-    expect(JSON.stringify(matter.sanitizeFabricInformations(fabricInfos)).length).toBe(402);
-  });
-
-  test('Sanitize sessions', () => {
-    let sessionInfos: SessionsBehavior.Session[] = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: true,
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect(() => {
-      JSON.stringify(sessionInfos);
-    }).toThrow();
-    expect(matter.sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect(JSON.stringify(matter.sanitizeSessionInformation(sessionInfos)).length).toBe(450);
-    sessionInfos = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: false,
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect(matter.sanitizeSessionInformation(sessionInfos).length).toBe(0);
-  });
-
-  test('Get VendorId name', () => {
-    expect((matter as any).getVendorIdName()).toBe('');
-    expect((matter as any).getVendorIdName(4937)).toContain('AppleHome');
-    expect((matter as any).getVendorIdName(4996)).toContain('AppleKeyChain');
-    expect((matter as any).getVendorIdName(4362)).toContain('SmartThings');
-    expect((matter as any).getVendorIdName(4939)).toContain('HomeAssistant');
-    expect((matter as any).getVendorIdName(24582)).toContain('GoogleHome');
-    expect((matter as any).getVendorIdName(4631)).toContain('Alexa');
-    expect((matter as any).getVendorIdName(4701)).toContain('Tuya');
-    expect((matter as any).getVendorIdName(4718)).toContain('Xiaomi');
-    expect((matter as any).getVendorIdName(4742)).toContain('eWeLink');
-    expect((matter as any).getVendorIdName(5264)).toContain('Shelly');
-    expect((matter as any).getVendorIdName(0x1488)).toContain('ShortcutLabsFlic');
-    expect((matter as any).getVendorIdName(65521)).toContain('MatterTest');
-    expect((matter as any).getVendorIdName(1)).toContain('Unknown vendorId');
   });
 });

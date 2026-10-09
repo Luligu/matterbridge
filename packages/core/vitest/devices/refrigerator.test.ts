@@ -19,7 +19,6 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -30,7 +29,8 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeRefrigeratorAlarmServer, MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer, Refrigerator } from '../../src/devices/refrigerator.js';

@@ -4,11 +4,11 @@
  * @author Luca Liguori
  */
 
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { AnsiLogger, LogLevel } from 'node-ansi-logger';
 import type { MockInstance } from 'vitest';
 
 import { fireAndForget, wait, waiter, withTimeout } from '../src/wait.js';
-import { loggerLogSpy, setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest('Wait', false);

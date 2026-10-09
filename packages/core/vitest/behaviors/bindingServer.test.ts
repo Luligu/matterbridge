@@ -21,8 +21,17 @@ import type { Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { flushAsync, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
-import { aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';
+import { flushAsync } from '@matterbridge/test-utils';
+import {
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { debugStringify } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';

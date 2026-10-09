@@ -13,5 +13,13 @@ export default defineConfig({
     // It is a Node bootstrap flag, so it must be passed to the pool worker processes (where
     // the tests run) via execArgv rather than set from within this config at runtime.
     execArgv: ['--no-experimental-webstorage'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['lcov', 'text'],
+      thresholds: {
+        functions: 100,
+        lines: 100,
+      },
+    },
   },
 });

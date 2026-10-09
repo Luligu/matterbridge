@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { Status } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -20,7 +19,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { contactSensor } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';

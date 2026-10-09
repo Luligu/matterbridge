@@ -6,25 +6,25 @@
 
 import type { RemoteInfo } from 'node:dgram';
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { getMacAddress } from '@matterbridge/utils';
 
 import { DnsClass, DnsRecordType, Mdns, type MdnsMessage } from '../src/mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT } from '../src/multicast.js';
-import { setupTest } from './vitestSetupTest.js';
-
-process.argv.push('--verbose');
 
 // Setup the test environment
-await setupTest('MdnsReal', false);
+await setupTest('MdnsReal', false, ['--verbose']);
 
 describe('Mdns Real Interaction Tests', () => {
+  const MAC_ADDRESSES = new Set(['c4:cb:76:b3:cd:1f', 'fc:b2:14:d7:2e:9a']);
+
   let mdnsServer: Mdns;
   let mdnsClient: Mdns;
   let serverReady = false;
   let clientReady = false;
 
   beforeAll(async () => {
-    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+    if (!MAC_ADDRESSES.has(getMacAddress() ?? '')) return; // Skip test if not running on one of the expected MAC addresses
 
     // Create two mDNS instances that will communicate with each other
     mdnsServer = new Mdns('mDNS Server', MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0');
@@ -60,7 +60,7 @@ describe('Mdns Real Interaction Tests', () => {
   });
 
   afterAll(async () => {
-    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+    if (!MAC_ADDRESSES.has(getMacAddress() ?? '')) return; // Skip test if not running on one of the expected MAC addresses
 
     // Wait for both instances to be closed
     const serverClosedPromise = new Promise<void>((resolve) => {
@@ -92,7 +92,7 @@ describe('Mdns Real Interaction Tests', () => {
   });
 
   test('should have both mDNS instances ready', () => {
-    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+    if (!MAC_ADDRESSES.has(getMacAddress() ?? '')) return; // Skip test if not running on one of the expected MAC addresses
 
     expect(serverReady).toBe(true);
     expect(clientReady).toBe(true);
@@ -101,7 +101,7 @@ describe('Mdns Real Interaction Tests', () => {
   });
 
   test('should send query from client and receive response from server', async () => {
-    if (getMacAddress() !== 'c4:cb:76:b3:cd:1f') return; // Skip test if not running on the expected MAC address
+    if (!MAC_ADDRESSES.has(getMacAddress() ?? '')) return; // Skip test if not running on one of the expected MAC addresses
 
     expect(serverReady).toBe(true);
     expect(clientReady).toBe(true);

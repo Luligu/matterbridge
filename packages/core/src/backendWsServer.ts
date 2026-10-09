@@ -25,13 +25,11 @@
 
 // WARNING: Not released yet and excluded from Vitest coverage
 
-// TODO: analyze each rule
-
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiMatter,
   BridgeStatus,
@@ -44,7 +42,8 @@ import type {
   WsMessageBroadcast,
   WsMessageErrorApiResponse,
 } from '@matterbridge/types';
-import { hasParameter } from '@matterbridge/utils/cli';
+import { hasAnyParameter } from '@matterbridge/utils/cli';
+import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidNumber, isValidString } from '@matterbridge/utils/validate';
@@ -68,6 +67,7 @@ logModuleLoaded('BackendWsServer');
 export class BackendWsServer {
   private debug: boolean;
   private verbose: boolean;
+  private diagnostic: boolean;
   private log: AnsiLogger;
   private backend: Backend;
   private matterbridge: SharedMatterbridge;
@@ -82,12 +82,11 @@ export class BackendWsServer {
    * @param {Backend} backend - The backend instance to which this WebSocket server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
-    this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
-    this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
+    this.debug = hasAnyParameter('debug', 'verbose', 'debug-backend', 'verbose-backend');
+    this.verbose = hasAnyParameter('verbose', 'verbose-backend');
+    this.diagnostic = hasAnyParameter('diagnostic', 'diagnostic-backend');
     this.backend = backend;
     this.matterbridge = matterbridge;
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'BackendWsServer',
       logNameColor: '\x1b[38;5;97m',
@@ -95,7 +94,7 @@ export class BackendWsServer {
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
-    this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
+    this.server.on('broadcast_message', (msg) => fireAndForget(this.broadcastMsgHandler(msg), this.log, 'Broadcast message handler'));
   }
 
   /**
@@ -110,8 +109,8 @@ export class BackendWsServer {
    *
    * @param {WorkerMessage} msg - The message received from the frontend.
    */
-  private broadcastMsgHandler(msg: WorkerMessage): void {
-    /* v8 ignore next */
+  // oxlint-disable-next-line typescript/require-await
+  private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
         case 'get_log_level':
@@ -121,8 +120,7 @@ export class BackendWsServer {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
-        default:
-        //
+        // no default
       }
     }
   }
@@ -137,8 +135,7 @@ export class BackendWsServer {
     // Create a WebSocket server to be wired to the http or https server
     this.log.debug(`Creating WebSocketServer...`);
     this.webSocketServer = new WebSocketServer({ noServer: true });
-    /* v8 ignore next */
-    this.backend.emit('websocket_server_listening', hasParameter('ssl') ? 'wss' : 'ws');
+    this.backend.emit('websocket_server_listening', this.backend.secure ? 'wss' : 'ws');
 
     this.webSocketServer.on('connection', (websocket, request) => {
       const clientIp = request.socket.remoteAddress;
@@ -171,7 +168,6 @@ export class BackendWsServer {
           AnsiLogger.setGlobalCallback(undefined);
           this.log.debug('All WebSocket clients disconnected. WebSocketServer logger global callback removed');
           setTimeout(() => {
-            /* v8 ignore next */
             if (this.webSocketServer?.clients.size === 0) {
               this.log.debug('All WebSocket clients disconnected. Auth clients list cleared');
               this.backend.authClients.clear();
@@ -209,7 +205,6 @@ export class BackendWsServer {
       this.log.debug('Closing WebSocket server...');
       // Close all active connections
       this.webSocketServer.clients.forEach((client) => {
-        /* v8 ignore next */
         if (client.readyState === WebSocket.OPEN) {
           client.close();
         }
@@ -254,17 +249,15 @@ export class BackendWsServer {
    * @param {WebSocket.RawData} rawData - The raw data of the message received from the client.
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
-  // oxlint-disable-next-line typescript/require-await
   private async wsMessageHandler(client: WebSocket, rawData: WebSocket.RawData): Promise<void> {
     let data: WsMessageApiRequest;
 
     const sendResponse = (data: WsMessageApiResponse | WsMessageErrorApiResponse): void => {
       if (client.readyState === client.OPEN) {
-        /* v8 ignore next */
         if ('response' in data) {
           const { response, ...rest } = data;
           this.log.debug(`Sending api response message: ${debugStringify(rest)}`);
-        } else if ('error' in data) {
+        } else {
           this.log.debug(`Sending api error message: ${debugStringify(data)}`);
         }
         // Use a replacer to convert bigint to string with an n suffix, since JSON.stringify does not support bigint and the frontend needs to know that it is a bigint to parse it correctly
@@ -287,6 +280,75 @@ export class BackendWsServer {
 
       // Handle the message based on the method
       // TODO add methods
+      if (data.method === 'ping') {
+        sendResponse({ id: data.id, method: 'pong', src: 'Matterbridge', dst: data.src, success: true, response: 'pong' });
+      } else if (data.method === '/api/login') {
+        const storedPassword = this.backend.storedPassword;
+        if (storedPassword === undefined) {
+          this.log.error('Login stored password not loaded');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Internal error: stored password not loaded' });
+          return;
+        }
+        if (storedPassword === '' || storedPassword === data.params.password) {
+          this.log.debug('Login password valid');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } else {
+          this.log.debug('Error wrong password');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong password' });
+        }
+      } else if (data.method === '/api/restart') {
+        this.wssSendSnackbarMessage('Restarting matterbridge...', 0);
+        await this.server.fetch({ type: 'matterbridge_restart', src: 'frontend', dst: 'matterbridge', params: undefined });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/shutdown') {
+        this.wssSendSnackbarMessage('Shutting down matterbridge...', 0);
+        await this.server.fetch({ type: 'matterbridge_shutdown', src: 'frontend', dst: 'matterbridge', params: undefined });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/settings') {
+        const start = performance.now();
+        const settings = await this.backend.getApiSettings();
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
+      } else if (data.method === '/api/plugins') {
+        const start = performance.now();
+        const plugins = await this.backend.getApiPlugins();
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
+      } else if (data.method === '/api/devices') {
+        const start = performance.now();
+        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
+      } else if (data.method === '/api/clusters') {
+        if (!isValidString(data.params.plugin, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' });
+          return;
+        }
+        if (!isValidNumber(data.params.endpoint, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
+          return;
+        }
+        const start = performance.now();
+        const clusters = await this.backend.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (clusters) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: clusters });
+        } else {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
+        }
+      } else if (data.method === '/api/matter') {
+        if (!isValidString(data.params.id)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter id in /api/matter' });
+          return;
+        }
+        const matter = await this.backend.getApiMatter(data.params.id);
+        if (!matter) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown server node id ${data.params.id} in /api/matter` });
+          return;
+        }
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
+        this.wssSendRefreshRequired('matter', { matter });
+      }
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);
       return;
@@ -297,15 +359,13 @@ export class BackendWsServer {
    * Helper function to send a broadcast message to all connected clients.
    *
    * @param {WsMessageBroadcast} msg - The message to send.
+   * @remarks Do not call the logger here: the global log callback broadcasts through this function and would recurse.
    */
   wssBroadcastMessage(msg: WsMessageBroadcast): void {
     if (!this.hasActiveClients()) return;
     try {
       const stringifiedMsg = JSON.stringify(msg);
-      /* v8 ignore next debug/verbose branch */
-      if (this.verbose) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
       this.webSocketServer?.clients.forEach((client) => {
-        /* v8 ignore next */
         if (client.readyState === client.OPEN) {
           client.send(stringifiedMsg);
         }
@@ -379,7 +439,6 @@ export class BackendWsServer {
    */
   wssSendRefreshRequired(changed: RefreshRequiredChanged, params?: { matter?: ApiMatter; lock?: string }): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a refresh required message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed, lock: params?.lock, ...params } });
   }
@@ -392,12 +451,10 @@ export class BackendWsServer {
    */
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a restart required message to all connected clients');
     // TODO check
     // this.backend.restartRequired = true;
     // this.backend.fixedRestartRequired = fixed;
-    /* v8 ignore next */
     if (snackbar) this.wssSendSnackbarMessage(`Restart required`, 0);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
   }
@@ -409,11 +466,9 @@ export class BackendWsServer {
    */
   wssSendRestartNotRequired(snackbar: boolean = true): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a restart not required message to all connected clients');
     // TODO check
     // this.backend.restartRequired = false;
-    /* v8 ignore next */
     if (snackbar) this.wssSendCloseSnackbarMessage(`Restart required`);
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
   }
@@ -426,7 +481,6 @@ export class BackendWsServer {
    */
   wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a matterbridge version update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
@@ -442,7 +496,6 @@ export class BackendWsServer {
    */
   wssSendPluginUpdateRequired(plugin: string, version: string, devVersion: boolean = false): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a plugin version update required message to all connected clients');
     // TODO check
     // this.backend.updateRequired = true;
@@ -457,9 +510,7 @@ export class BackendWsServer {
    */
   wssSendPluginStatusUpdate(plugin: string, status: PluginStatusUpdate): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a plugin status update message to all connected clients');
-    // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin, status } });
   }
 
@@ -470,9 +521,7 @@ export class BackendWsServer {
    */
   wssSendMatterbridgeStatusUpdate(status: BridgeStatus): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a matterbridge status update message to all connected clients');
-    // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } });
   }
 
@@ -484,7 +533,6 @@ export class BackendWsServer {
    */
   wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a cpu update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
@@ -509,7 +557,6 @@ export class BackendWsServer {
    */
   wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a memory update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,
@@ -529,7 +576,6 @@ export class BackendWsServer {
    */
   wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a uptime update message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
   }
@@ -547,7 +593,6 @@ export class BackendWsServer {
    */
   wssSendSnackbarMessage(message: string, timeout: number = 5, severity: 'info' | 'warning' | 'error' | 'success' = 'info'): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a snackbar message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'snackbar', success: true, response: { message, timeout, severity } });
   }
@@ -560,7 +605,6 @@ export class BackendWsServer {
    */
   wssSendCloseSnackbarMessage(message: string): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending a close snackbar message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'close_snackbar', success: true, response: { message } });
   }
@@ -588,7 +632,6 @@ export class BackendWsServer {
     value: number | string | boolean | null,
   ): void {
     if (!this.hasActiveClients()) return;
-    /* v8 ignore next debug/verbose branch */
     if (this.verbose) this.log.debug('Sending an attribute update message to all connected clients');
     this.wssBroadcastMessage({
       id: 0,

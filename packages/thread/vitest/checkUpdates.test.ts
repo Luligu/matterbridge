@@ -6,6 +6,8 @@
 
 const NAME = 'MatterbridgeUpdate';
 
+import { flushAsync } from '@matterbridge/test-utils';
+import { loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { ApiPlugin } from '@matterbridge/types';
 import { plg } from '@matterbridge/types';
 import { AnsiLogger, db, LogLevel, nt, TimestampFormat, wr } from 'node-ansi-logger';
@@ -13,9 +15,7 @@ import type { Mock } from 'vitest';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
 import { checkUpdates, checkUpdatesAndLog, getMatterbridgeDevVersion, getMatterbridgeLatestVersion, getPluginDevVersion, getPluginLatestVersion } from '../src/checkUpdates.js';
-import { flushAsync } from './flushAsync.js';
 import { matterbridge, startMatterbridge, stopMatterbridge } from './sharedMatterbridge.js';
-import { loggerDebugSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from './vitestSetupTest.js';
 
 // Spy on the @matterbridge/utils subpath exports (tree-shaken subpath imports). Using spy mode patches the real module
 // exports in place, so every (possibly concurrent) dynamic import inside checkUpdates() sees the same spy.
@@ -23,6 +23,7 @@ vi.mock('@matterbridge/utils/npm-version', { spy: true });
 
 vi.mock('@matterbridge/utils/github-version', { spy: true });
 
+// Setup the test environment
 await setupTest(NAME, false);
 
 describe(`Test ${NAME}`, () => {
