@@ -56,9 +56,9 @@ coveragePathIgnorePatterns = [
   '**/test/**',
   '**/buntest/**',
   '**/vitest/**',
-  # packages/core: measure only the files that have a buntest (backend, matterNode, matterNodeHelpers, matterbridge*Platform and runners files)
+  # packages/core: measure only the files that have a buntest (backend, cli, cliEmitter, matterNode, matterNodeHelpers, matterbridge*Platform and runners files)
   '**/packages/core/src/{behaviors,clusters,devices,dgram,matter,utils}/**',
-  '**/packages/core/src/{chipTests,cli,cliEmitter,cliHistory,demoDevices,deviceManager,export,frontend,helpers,matterbridge,matterbridgeDeviceTypes,matterbridgeEndpoint,matterbridgeEndpointCommandHandler,matterbridgeEndpointHelpers,matterbridgeEndpointTypes,matterbridgeFactory,mb_coap,mb_health,mb_mdns,pluginManager}.ts',
+  '**/packages/core/src/{chipTests,cliHistory,demoDevices,deviceManager,export,frontend,helpers,matterbridge,matterbridgeDeviceTypes,matterbridgeEndpoint,matterbridgeEndpointCommandHandler,matterbridgeEndpointHelpers,matterbridgeEndpointTypes,matterbridgeFactory,mb_coap,mb_health,mb_mdns,pluginManager}.ts',
   '**/packages/jest-utils/**',
   '**/packages/test-utils/**',
   '**/packages/vitest-utils/**',
