@@ -1203,12 +1203,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     );
 
     // Check node version and throw error
-    const minNodeVersion = 20;
+    const minNodeVersion = 22;
+    const minNodeMinorVersion = 13;
     const nodeVersion = process.versions.node;
-    const [versionMajor] = nodeVersion.split('.').map(Number);
-    if (versionMajor < minNodeVersion) {
-      this.log.error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
-      throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
+    const [versionMajor, versionMinor] = nodeVersion.split('.').map(Number);
+    if (versionMajor < minNodeVersion || (versionMajor === minNodeVersion && versionMinor < minNodeMinorVersion)) {
+      this.log.error(`Node version ${nodeVersion} is not supported. Please upgrade to ${minNodeVersion}.${minNodeMinorVersion}.0 or above.`);
+      throw new Error(`Node version ${nodeVersion} is not supported. Please upgrade to ${minNodeVersion}.${minNodeMinorVersion}.0 or above.`);
     }
 
     // Parse command line

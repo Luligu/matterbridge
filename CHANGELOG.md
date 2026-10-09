@@ -29,6 +29,37 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.14] - Dev branch
+
+### Breaking changes
+
+- [matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.14.
+- [matterbridge]: Bump `marked` to v.18.1.0.
+- [matterbridge]: Bump `oxfmt` to v.0.72.0.
+- [matterbridge]: Bump `oxlint` to v.1.87.0.
+- [core]: Bump `express-rate-limit` to v.8.7.1.
+- [core]: Bump `werift` to v.0.25.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.23.0.
+- [frontend]: Bump `frontend` version to v.3.6.5.
+- [frontend]: Bump `@mui/material` to v.9.5.0.
+- [frontend]: Bump `@mui/icons-material` to v.9.5.0.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.1.2.
+- [frontend]: Bump `jsdom` to v.30.1.2.
+- [frontend]: Bump `vite` to v.8.3.4.
+- [frontend]: Bump `oxfmt` to v.0.72.0.
+- [frontend]: Bump `oxlint` to v.1.87.0.
+
+### Fixed
+
+- [tests]: Prevent test output leakage.
+- [tests]: Align Bun system-check tests with the Node.js 22.13.0 minimum.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.13] - 2026-10-09
 
 ### Added

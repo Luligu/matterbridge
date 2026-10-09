@@ -33,9 +33,9 @@ It is also possible to add two custom properties to the package.json: **help** a
 
 Add your plugin logic in module.ts.
 
-The Matterbridge Plugin Template has already configured Jest and Vitest test suites (with 100% coverage) that you can expand while you add your own plugin logic.
+The Matterbridge Plugin Template has already configured Vitest test suites (with 100% coverage) that you can expand while you add your own plugin logic.
 
-It also has a workflow configured to run on push and pull request that build, lint and test the plugin on node 20, 22 and 24 with ubuntu, macOS and windows.
+It also has a workflow configured to run on push and pull request that builds, lints and tests the plugin on Node.js 22, 24 and 26 with Ubuntu, macOS and Windows.
 
 ## Matterbridge Dev Container
 

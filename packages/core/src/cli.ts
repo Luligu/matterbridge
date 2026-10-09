@@ -270,7 +270,7 @@ main().catch((error: unknown) => {
  * Displays the version and exits.
  */
 async function version(): Promise<void> {
-  // Dynamic JSON import (Node >= 20) with import attributes
+  // Dynamic JSON import with import attributes
   const { default: pkg } = await import('../package.json', { with: { type: 'json' } });
   console.log(`Matterbridge version ${pkg.version}`);
   process.exit(0);

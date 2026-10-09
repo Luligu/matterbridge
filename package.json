@@ -54,7 +54,7 @@
     "mb_health": "bin/mb_health.js"
   },
   "engines": {
-    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
+    "node": ">=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
   },
   "workspaces": [
     "packages/types",
@@ -339,7 +339,7 @@
     "update-htmls": "node ./scripts/update-htmls.mjs",
     "scan-deps": "node ./scripts/scan-deps.mjs",
     "sync-workspaces": "node scripts/sync-workspaces.mjs --scope \"@matterbridge\" && npm run softReset",
-    "runMeBeforePublish": "npm run format && npm run lint && npm run update-htmls && npm run cleanBuild && npm run typecheck && npm run test:coverage",
+    "runMeBeforePublish": "npm run cleanBuild && npm run typecheck && npm run format && npm run lint && npm run update-htmls && npm run test:coverage",
     "runMeBeforePublish:all": "npm run runMeBeforePublish && npm --prefix apps/frontend run runMeBeforePublish",
     "prepublishOnly": "npm run cleanBuildProduction && npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts workspaces && node scripts/prepublish-clean.mjs --workspaces && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "checkDependencies": "npm install --no-fund --no-audit --no-save npm-check-updates && npx --workspaces --include-workspace-root ncu && npm run softReset",
@@ -529,9 +529,9 @@
     "@types/node": "26.6.4",
     "@vitest/coverage-v8": "5.0.3",
     "cross-spawn": "7.0.6",
-    "marked": "18.0.14",
-    "oxfmt": "0.71.0",
-    "oxlint": "1.86.0",
+    "marked": "18.1.0",
+    "oxfmt": "0.72.0",
+    "oxlint": "1.87.0",
     "oxlint-tsgolint": "7.0.2003",
     "typescript": "7.0.2",
     "vitest": "5.0.3"

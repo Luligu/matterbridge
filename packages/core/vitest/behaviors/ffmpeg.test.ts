@@ -6,7 +6,7 @@
 
 const NAME = 'Ffmpeg';
 
-import { spawn as realSpawn } from 'node:child_process';
+import { spawn as realSpawn, spawnSync as realSpawnSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -19,10 +19,11 @@ await setupTest(NAME, false);
 
 vi.mock('node:child_process', async () => {
   const actual = await vi.importActual<typeof import('node:child_process')>('node:child_process');
-  return { ...actual, spawn: vi.fn() };
+  return { ...actual, spawn: vi.fn(), spawnSync: vi.fn() };
 });
 
 const spawnMock = vi.mocked(realSpawn);
+const spawnSyncMock = vi.mocked(realSpawnSync);
 
 /**
  * Builds a fake ChildProcess-like EventEmitter that asynchronously emits either `exit` (with the given code) or
@@ -40,7 +41,18 @@ function fakeChild(outcome: number | Error): EventEmitter {
   return child;
 }
 
-describe('ffmpeg resolution at module load', () => {
+/**
+ * Builds a fake SpawnSyncReturns-like object for spawnSync mocks.
+ *
+ * @param {number | Error} outcome - The exit code or Error.
+ * @returns {ReturnType<typeof realSpawnSync>} The fake sync spawn return value.
+ */
+function fakeSync(outcome: number | Error): ReturnType<typeof realSpawnSync> {
+  if (outcome instanceof Error) return { status: null, error: outcome } as unknown as ReturnType<typeof realSpawnSync>;
+  return { status: outcome } as unknown as ReturnType<typeof realSpawnSync>;
+}
+
+describe('ffmpeg resolution', () => {
   const originalPath = process.env.PATH;
   const originalLocalAppData = process.env.LOCALAPPDATA;
   const originalProgramFiles = process.env.ProgramFiles;
@@ -49,6 +61,7 @@ describe('ffmpeg resolution at module load', () => {
 
   beforeEach(() => {
     spawnMock.mockReset();
+    spawnSyncMock.mockReset();
   });
 
   afterEach(() => {
@@ -61,7 +74,7 @@ describe('ffmpeg resolution at module load', () => {
   });
 
   it('should resolve ffmpeg and let runFfmpeg spawn it when the bare command runs successfully', async () => {
-    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
 
     vi.resetModules();
     const { hasFfmpeg, runFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
@@ -77,7 +90,7 @@ describe('ffmpeg resolution at module load', () => {
     delete process.env.LOCALAPPDATA;
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
 
     vi.resetModules();
     const { hasFfmpeg, runFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
@@ -92,9 +105,7 @@ describe('ffmpeg resolution at module load', () => {
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
     Object.defineProperty(process, 'platform', { value: 'linux' });
-    spawnMock.mockImplementation(
-      (_command, args) => fakeChild((args as string[]).includes('-version') ? 0 : new Error('unknown option --version')) as ReturnType<typeof realSpawn>,
-    );
+    spawnSyncMock.mockImplementation((_command, args) => fakeSync((args as string[]).includes('-version') ? 0 : new Error('unknown option --version')));
 
     vi.resetModules();
     const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
@@ -108,12 +119,53 @@ describe('ffmpeg resolution at module load', () => {
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
     Object.defineProperty(process, 'platform', { value: 'linux' });
-    spawnMock.mockImplementation(() => fakeChild(1) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(1));
 
     vi.resetModules();
     const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
 
     expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should handle spawnSync throwing an error and return false', async () => {
+    process.env.PATH = '';
+    delete process.env.LOCALAPPDATA;
+    process.env.ProgramFiles = '';
+    process.env['ProgramFiles(x86)'] = '';
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    spawnSyncMock.mockImplementation(() => {
+      throw new Error('EACCES');
+    });
+
+    vi.resetModules();
+    const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should reject a candidate whose probe is killed by a signal without an exit code', async () => {
+    process.env.PATH = '';
+    delete process.env.LOCALAPPDATA;
+    process.env.ProgramFiles = '';
+    process.env['ProgramFiles(x86)'] = '';
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    spawnSyncMock.mockImplementation(() => ({ status: null, signal: 'SIGKILL' }) as unknown as ReturnType<typeof realSpawnSync>);
+
+    vi.resetModules();
+    const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should enable DEBUG logLevel when debug CLI parameter is present', async () => {
+    process.argv.push('--debug');
+    try {
+      vi.resetModules();
+      const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+      expect(hasFfmpeg).toBeDefined();
+    } finally {
+      process.argv.pop();
+    }
   });
 
   it('should include the winget Gyan.FFmpeg package bin path on Windows', async () => {
@@ -130,14 +182,14 @@ describe('ffmpeg resolution at module load', () => {
     process.env.PATH = '';
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation((command) => fakeChild(command === expectedBin ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === expectedBin ? 0 : new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
       const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
 
       expect(hasFfmpeg()).toBe(true);
-      expect(spawnMock).toHaveBeenCalledWith(expectedBin, expect.any(Array), expect.anything());
+      expect(spawnSyncMock).toHaveBeenCalledWith(expectedBin, expect.any(Array), expect.anything());
     } finally {
       await rm(localAppData, { force: true, recursive: true });
     }
@@ -153,7 +205,7 @@ describe('ffmpeg resolution at module load', () => {
     process.env.PATH = '';
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
@@ -175,7 +227,7 @@ describe('ffmpeg resolution at module load', () => {
     process.env.PATH = '';
     process.env.ProgramFiles = programFiles;
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation((command) => fakeChild(command === expectedBin ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === expectedBin ? 0 : new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
@@ -207,6 +259,8 @@ describe('webcam discovery', () => {
 
   beforeEach(() => {
     spawnMock.mockReset();
+    spawnSyncMock.mockReset();
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
   });
 
   afterEach(() => {
@@ -331,6 +385,8 @@ describe('playWebcam', () => {
 
   beforeEach(() => {
     spawnMock.mockReset();
+    spawnSyncMock.mockReset();
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
   });
 
   afterEach(() => {
@@ -373,7 +429,8 @@ describe('playWebcam', () => {
     delete process.env.LOCALAPPDATA;
     process.env.ProgramFiles = dir;
     Object.defineProperty(process, 'platform', { value: 'win32' });
-    spawnMock.mockImplementation((command) => fakeChild(command === 'ffmpeg' ? new Error('spawn ENOENT') : 0) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'ffmpeg' ? new Error('spawn ENOENT') : 0));
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
 
     try {
       vi.resetModules();
@@ -393,7 +450,7 @@ describe('playWebcam', () => {
   it('should throw when ffmpeg is not found', async () => {
     const originalPath = process.env.PATH;
     process.env.PATH = '';
-    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
@@ -423,12 +480,15 @@ describe('installFfmpeg', () => {
     Object.defineProperty(process, 'platform', { value: platform });
     process.getuid = (): number => uid;
     spawnMock.mockClear();
+    spawnSyncMock.mockClear();
     return module;
   }
 
   beforeEach(() => {
     spawnMock.mockReset();
-    // ffmpeg is not found at load: every spawn fails.
+    spawnSyncMock.mockReset();
+    // ffmpeg is not found at load: every spawn/spawnSync fails.
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
     spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
   });
 
@@ -441,31 +501,31 @@ describe('installFfmpeg', () => {
     const { installFfmpeg } = await load('darwin', 0);
 
     expect(await installFfmpeg()).toBe(false);
-    expect(spawnMock).not.toHaveBeenCalled();
+    expect(spawnSyncMock).not.toHaveBeenCalled();
   });
 
   it('should not install without root privileges', async () => {
     const { installFfmpeg } = await load('linux', 1000);
 
     expect(await installFfmpeg()).toBe(false);
-    expect(spawnMock).not.toHaveBeenCalled();
+    expect(spawnSyncMock).not.toHaveBeenCalled();
   });
 
   it('should not install when no package manager is found', async () => {
     const { installFfmpeg } = await load('linux', 0);
 
     expect(await installFfmpeg()).toBe(false);
-    expect(spawnMock).not.toHaveBeenCalledWith('apk', ['add', '--no-cache', 'ffmpeg'], expect.anything());
+    expect(spawnSyncMock).not.toHaveBeenCalledWith('apk', ['add', '--no-cache', 'ffmpeg'], expect.anything());
   });
 
   it('should install ffmpeg with apk and resolve it again', async () => {
     const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
     expect(hasFfmpeg()).toBe(false);
     let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
     spawnMock.mockImplementation((command, args) => {
       if (command === 'apk' && (args as string[])[0] === 'add') installed = true;
-      const ok = command === 'apk' || (command === 'ffmpeg' && installed);
-      return fakeChild(ok ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+      return fakeChild(command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
     });
 
     expect(await installFfmpeg()).toBe(true);
@@ -476,10 +536,10 @@ describe('installFfmpeg', () => {
   it('should install ffmpeg with apt-get and resolve it again', async () => {
     const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
     let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apt-get' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
     spawnMock.mockImplementation((command, args) => {
       if (command === 'env' && (args as string[]).includes('install')) installed = true;
-      const ok = command === 'apt-get' || command === 'env' || (command === 'ffmpeg' && installed);
-      return fakeChild(ok ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+      return fakeChild(command === 'apt-get' || command === 'env' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
     });
 
     expect(await installFfmpeg()).toBe(true);
@@ -490,9 +550,8 @@ describe('installFfmpeg', () => {
 
   it('should return false when the installation fails', async () => {
     const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
-    spawnMock.mockImplementation(
-      (command, args) => fakeChild(command === 'apk' && (args as string[])[0] === 'add' ? 1 : command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>,
-    );
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command) => fakeChild(command === 'apk' ? 1 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
 
     expect(await installFfmpeg()).toBe(false);
     expect(hasFfmpeg()).toBe(false);
@@ -500,9 +559,19 @@ describe('installFfmpeg', () => {
 
   it('should return false when ffmpeg is installed but cannot be resolved', async () => {
     const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' ? 0 : new Error('spawn ENOENT')));
     spawnMock.mockImplementation((command) => fakeChild(command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
 
     expect(await installFfmpeg()).toBe(false);
     expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should run the package manager with the async spawn, not spawnSync', async () => {
+    const { installFfmpeg } = await load('linux', 0);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command) => fakeChild(command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+
+    await installFfmpeg();
+    expect(spawnSyncMock).not.toHaveBeenCalledWith('apk', ['add', '--no-cache', 'ffmpeg'], expect.anything());
   });
 });

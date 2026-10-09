@@ -808,19 +808,22 @@ describe('Matterbridge mocked', () => {
     resolveSpy.mockRestore();
   });
 
-  test('Matterbridge.initialize() node version', async () => {
+  test.each(['18.0.0', '20.19.0', '20.20.0', '22.12.0'])('Matterbridge.initialize() rejects unsupported node version %s', async (nodeVersion) => {
     // Test throw error for unsupported Node version
     const originalNodeVersion = process.versions.node;
     Object.defineProperty(process.versions, 'node', {
-      get: () => '18.0.0',
+      get: () => nodeVersion,
     });
-    await expect((matterbridge as any).initialize()).rejects.toThrow(`Node version 18 is not supported. Please upgrade to 20 or above.`);
-    clearTimeout((matterbridge as any).systemCheckTimeout);
-    clearTimeout((matterbridge as any).checkUpdateTimeout);
-    clearInterval((matterbridge as any).checkUpdateInterval);
-    Object.defineProperty(process.versions, 'node', {
-      get: () => originalNodeVersion,
-    });
+    try {
+      await expect((matterbridge as any).initialize()).rejects.toThrow(`Node version ${nodeVersion} is not supported. Please upgrade to 22.13.0 or above.`);
+      clearTimeout((matterbridge as any).systemCheckTimeout);
+      clearTimeout((matterbridge as any).checkUpdateTimeout);
+      clearInterval((matterbridge as any).checkUpdateInterval);
+    } finally {
+      Object.defineProperty(process.versions, 'node', {
+        get: () => originalNodeVersion,
+      });
+    }
   });
 
   test('Matterbridge.initialize() devices', async () => {
