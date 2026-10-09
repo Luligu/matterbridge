@@ -44,6 +44,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Bump `express-rate-limit` to v.8.7.1.
 - [core]: Bump `werift` to v.0.25.0.
 - [thread]: Bump `@zip.js/zip.js` to v.2.23.0.
+- [frontend]: Rename system info labels to `Host memory`, `Process rss` and `Process heap`.
 - [frontend]: Bump `frontend` version to v.3.6.5.
 - [frontend]: Bump `@mui/material` to v.9.5.0.
 - [frontend]: Bump `@mui/icons-material` to v.9.5.0.

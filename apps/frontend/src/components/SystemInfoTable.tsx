@@ -25,13 +25,13 @@ const keyNameMap = new Map<string, string>([
   ['user', 'User'],
   ['osType', 'Os'],
   ['osPlatform', 'Platform'],
-  ['freeMemory', 'Memory'],
+  ['freeMemory', 'Host memory'],
   ['systemUptime', 'System uptime'],
   ['processUptime', 'Process uptime'],
   ['cpuUsage', 'Host CPU'],
   ['processCpuUsage', 'Process CPU'],
-  ['rss', 'Rss'],
-  ['heapUsed', 'Heap'],
+  ['rss', 'Process rss'],
+  ['heapUsed', 'Process heap'],
 ]);
 
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation; compact: boolean }) {

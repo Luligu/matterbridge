@@ -123,14 +123,14 @@ describe('SystemInfoTable rendering', () => {
       'Platform': 'linux',
       'osArch': 'arm64',
       'totalMemory': '8 GB',
-      'Memory': '4 GB',
+      'Host memory': '4 GB',
       'System uptime': '2 days',
       'Process uptime': '1 hour',
       'Host CPU': '12 %',
       'Process CPU': '3 %',
-      'Rss': '100 MB',
+      'Process rss': '100 MB',
       'heapTotal': '80 MB',
-      'Heap': '40 MB',
+      'Process heap': '40 MB',
     };
     for (const [label, value] of Object.entries(expected)) expect(valueCell(label)).toHaveTextContent(value);
     const rows = screen.getAllByRole('row');
@@ -142,16 +142,16 @@ describe('SystemInfoTable rendering', () => {
   test('should combine paired fields without mutating input when compact and restore separate fields when expanded', () => {
     const systemInfo = Object.freeze(createSystemInfo());
     const { rerenderTable } = renderTable({ systemInfo, compact: true });
-    expect(valueCell('Memory')).toHaveTextContent('4 GB / 8 GB');
-    expect(valueCell('Heap')).toHaveTextContent('40 MB / 80 MB');
+    expect(valueCell('Host memory')).toHaveTextContent('4 GB / 8 GB');
+    expect(valueCell('Process heap')).toHaveTextContent('40 MB / 80 MB');
     expect(valueCell('Os')).toHaveTextContent('Linux (6.8)');
     expect(valueCell('Platform')).toHaveTextContent('linux (arm64)');
     for (const key of ['totalMemory', 'heapTotal', 'osRelease', 'osArch']) expect(screen.queryByText(key)).not.toBeInTheDocument();
     expect(systemInfo).toEqual(createSystemInfo());
     rerenderTable(false);
-    expect(valueCell('Memory')).toHaveTextContent(/^4 GB$/);
+    expect(valueCell('Host memory')).toHaveTextContent(/^4 GB$/);
     expect(valueCell('totalMemory')).toHaveTextContent('8 GB');
-    expect(valueCell('Heap')).toHaveTextContent(/^40 MB$/);
+    expect(valueCell('Process heap')).toHaveTextContent(/^40 MB$/);
     expect(valueCell('heapTotal')).toHaveTextContent('80 MB');
     expect(valueCell('Os')).toHaveTextContent(/^Linux$/);
     expect(valueCell('osRelease')).toHaveTextContent('6.8');
@@ -160,9 +160,9 @@ describe('SystemInfoTable rendering', () => {
   });
 
   test.each([
-    ['totalMemory', 'Memory', '4 GB'],
+    ['totalMemory', 'Host memory', '4 GB'],
     ['freeMemory', 'totalMemory', '8 GB'],
-    ['heapTotal', 'Heap', '40 MB'],
+    ['heapTotal', 'Process heap', '40 MB'],
     ['heapUsed', 'heapTotal', '80 MB'],
     ['osRelease', 'Os', 'Linux'],
     ['osType', 'osRelease', '6.8'],
@@ -220,9 +220,9 @@ describe('SystemInfoTable WebSocket messages', () => {
     const { update, sendMessage, getUniqueId, rerenderTable, addListener, removeListener, listener, unmount } = renderTable({ systemInfo, compact: true });
     expect(addListener).toHaveBeenCalledExactlyOnceWith(listener, 42);
     update({ method: 'memory_update', response: { totalMemory: '16 GB', freeMemory: '12 GB', heapTotal: '200 MB', heapUsed: '90 MB', rss: '300 MB' } });
-    expect(valueCell('Memory')).toHaveTextContent('12 GB / 16 GB');
-    expect(valueCell('Heap')).toHaveTextContent('90 MB / 200 MB');
-    expect(valueCell('Rss')).toHaveTextContent('300 MB');
+    expect(valueCell('Host memory')).toHaveTextContent('12 GB / 16 GB');
+    expect(valueCell('Process heap')).toHaveTextContent('90 MB / 200 MB');
+    expect(valueCell('Process rss')).toHaveTextContent('300 MB');
     update({ method: 'cpu_update', response: { cpuUsage: 12.345, processCpuUsage: 0 } });
     expect(valueCell('Host CPU')).toHaveTextContent('12.35 %');
     expect(valueCell('Process CPU')).toHaveTextContent('0.00 %');
@@ -256,10 +256,10 @@ describe('SystemInfoTable WebSocket messages', () => {
     const { [key]: _missing, ...incompleteResponse } = response;
     update({ method: 'memory_update', response: incompleteResponse });
     expect(valueCell('totalMemory')).toHaveTextContent('8 GB');
-    expect(valueCell('Memory')).toHaveTextContent('4 GB');
+    expect(valueCell('Host memory')).toHaveTextContent('4 GB');
     expect(valueCell('heapTotal')).toHaveTextContent('80 MB');
-    expect(valueCell('Heap')).toHaveTextContent('40 MB');
-    expect(valueCell('Rss')).toHaveTextContent('100 MB');
+    expect(valueCell('Process heap')).toHaveTextContent('40 MB');
+    expect(valueCell('Process rss')).toHaveTextContent('100 MB');
   });
 
   test.each([
