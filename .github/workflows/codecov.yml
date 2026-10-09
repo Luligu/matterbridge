@@ -53,17 +53,25 @@ jobs:
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Test matterbridge
+      - name: Test matterbridge with coverage
         run: npm run test:coverage -- --testTimeout=30000
 
-      - name: Test frontend
-        run: npm run test
+      - name: Test frontend with coverage
+        run: npm run test:coverage -- --testTimeout=30000
         working-directory: apps/frontend
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/vitest/lcov.info
+          files: ./coverage/vitest/lcov.info,./coverage/vitest/coverage-final.json
           flags: vitest
+          fail_ci_if_error: true
+
+      - name: Upload frontend results to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./apps/frontend/coverage/lcov.info,./apps/frontend/coverage/coverage-final.json
+          flags: frontend
           fail_ci_if_error: true
