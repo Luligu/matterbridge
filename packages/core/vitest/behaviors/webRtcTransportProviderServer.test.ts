@@ -596,7 +596,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       ).resolves.toBeUndefined();
 
       expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('local webcam (test-webcam-device, 1280x720)'));
-      clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
+      clearExpectedWarnings(
+        'No injectable video codec available on negotiated transceivers',
+        'Cannot inject video stream: missing dependency ffmpeg',
+        'ffmpeg could not be resolved on this host',
+      );
 
       const currentSessions = device.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
       const webRtcSessionId = currentSessions[currentSessions.length - 1].id;
@@ -1309,7 +1313,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
         }),
       ).resolves.toBeUndefined();
 
-      clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
+      clearExpectedWarnings(
+        'No injectable video codec available on negotiated transceivers',
+        'Cannot inject video stream: missing dependency ffmpeg',
+        'ffmpeg could not be resolved on this host',
+      );
       const currentSessions = endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
       expect(currentSessions[0].videoStreams).toEqual([videoStreamId]);
       expect(currentSessions[0].streamUsage).toBe(StreamUsage.LiveView);
