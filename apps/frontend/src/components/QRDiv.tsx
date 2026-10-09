@@ -291,16 +291,12 @@ function QRDiv({ id }: QRDivProps) {
               </p>
               {fabric.label !== '' && <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>Label: {fabric.label}</p>}
               <p style={{ margin: '0px 20px 0px 20px', color: 'var(--div-text-color)' }}>
-                Sessions:{' '}
-                {matter.sessionInformations
-                  ? matter.sessionInformations.filter((session) => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive).length
-                  : '0'}{' '}
-                subscriptions:{' '}
-                {matter.sessionInformations
-                  ? matter.sessionInformations.filter(
-                      (session) => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive && session.numberOfActiveSubscriptions > 0,
-                    ).length
-                  : '0'}
+                Sessions: {matter.sessionInformations.filter((session) => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive).length} subscriptions:{' '}
+                {
+                  matter.sessionInformations.filter(
+                    (session) => session.fabric?.fabricIndex === fabric.fabricIndex && session.isPeerActive && session.numberOfActiveSubscriptions > 0,
+                  ).length
+                }
               </p>
             </div>
           ))}
