@@ -256,6 +256,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
         // oxlint-disable-next-line typescript/no-unsafe-type-assertion
         if ((msg as unknown as WsMessageErrorApiResponse).error) {
           if (debug || localDebug) console.error(`WebSocket error message response:`, msg);
+          const listener = listenersRef.current.find((listener) => listener.id === msg.id);
+          listener?.listener(msg);
           return;
         }
         if (msg.id === uniqueIdRef.current && msg.method === 'pong' && msg.response === 'pong') {

@@ -529,6 +529,25 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
+  test('Websocket API should persist and apply a Matter device rename', async () => {
+    const plugin = matterbridge.plugins.get('matterbridge-mock1');
+    const endpoint = matterbridge.devices.array().find((device) => device.serialNumber === 'SerialSwitch1');
+    expect(plugin?.platform).toBeDefined();
+    expect(endpoint).toBeDefined();
+    const data = await waitMessageId(++WS_ID, '/api/command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/command',
+      params: { command: 'renameDevice', plugin: 'matterbridge-mock1', serial: 'SerialSwitch1', name: 'Renamed switch' },
+    });
+    expect(data.success).toBe(true);
+    expect(endpoint?.getAttribute('BridgedDeviceBasicInformation', 'nodeLabel')).toBe('Renamed switch');
+    expect(plugin?.configJson?.deviceNameOverrides).toMatchObject({ SerialSwitch1: 'Renamed switch' });
+    expect((frontend as any).getApiDevices('matterbridge-mock1').find((device: any) => device.serial === 'SerialSwitch1')?.matterName).toBe('Renamed switch');
+    expect(wssSendRefreshRequiredFrontendSpy).toHaveBeenCalledWith('devices');
+  });
+
   test('Websocket API send /api/devices with params', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/devices', {
       id: WS_ID,

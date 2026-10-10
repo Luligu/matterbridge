@@ -43,9 +43,11 @@ vi.mock('../src/components/MbfTable', () => ({
           const availability = columns.find((column) => column.label === 'Availability');
           const power = columns.find((column) => column.label === 'Power');
           const actions = columns.find((column) => column.label === 'Actions');
+          const matterName = columns.find((column) => column.label === 'Matter name');
           return (
             <div key={getRowKey(row)} data-testid={`row-${getRowKey(row)}`}>
               <span>{typeof row.name === 'string' ? row.name : ''}</span>
+              {matterName?.render?.(undefined, getRowKey(row), row, matterName)}
               {availability?.render?.(undefined, getRowKey(row), row, availability)}
               {power?.render?.(undefined, getRowKey(row), row, power)}
               {actions?.render?.(undefined, getRowKey(row), row, actions)}
@@ -760,5 +762,50 @@ describe('HomeDevices', () => {
     Object.defineProperty(iframe, 'contentDocument', { value: null, configurable: true });
 
     expect(() => fireEvent.load(iframe)).not.toThrow();
+  });
+
+  it('renders Matter name and handles renaming a device', () => {
+    const { sendMessage, sendWebSocketMessage } = renderWithDevice('/plugins/matterbridge-test', {
+      origin: 'device',
+      matterName: 'Custom Light',
+    });
+
+    expect(screen.getByText('Custom Light')).toBeInTheDocument();
+
+    const renameButton = screen.getByRole('button', { name: 'Rename Matter device' });
+    expect(renameButton).toBeInTheDocument();
+
+    fireEvent.click(renameButton);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+
+    const input = screen.getByRole('textbox', { name: 'Matter Device Name' });
+    expect(input).toHaveValue('Custom Light');
+
+    fireEvent.change(input, { target: { value: 'Living Room Light' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      id: 7,
+      sender: 'HomeDevices',
+      method: '/api/command',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: {
+        command: 'renameDevice',
+        plugin: 'matterbridge-test',
+        serial: '123456',
+        name: 'Living Room Light',
+      },
+    });
+
+    sendWebSocketMessage({
+      id: 7,
+      method: '/api/command',
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      success: true,
+    });
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });

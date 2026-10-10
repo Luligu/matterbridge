@@ -11,6 +11,7 @@ const NAME = 'MatterbridgePlatform';
 const MATTER_PORT = 7000;
 const MATTER_CREATE_ONLY = true;
 
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
@@ -579,6 +580,20 @@ describe('Matterbridge platform', () => {
     await (platform as any).destroy();
   });
 
+  test('applies a persisted bridged device name override after endpoint registration', async () => {
+    platform.config.deviceNameOverrides = { serialOverride: 'Renamed device' };
+    const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'override', number: EndpointNumber(102) }, true);
+    testDevice.createDefaultBridgedDeviceBasicInformationClusterServer('Original device', 'serialOverride');
+    testDevice.addRequiredClusterServers();
+
+    await platform.registerDevice(testDevice);
+
+    expect(testDevice.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel')).toBe('Renamed device');
+    expect(addBridgedEndpointMatterbridgeSpy).toHaveBeenCalledWith(platform.name, testDevice);
+    await platform.unregisterDevice(testDevice);
+    delete platform.config.deviceNameOverrides;
+  });
+
   test('should check checkNotLatinCharacters', async () => {
     const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'nonLatin' }, true);
     testDevice.createDefaultBasicInformationClusterServer('nonLatin조명', 'serial012345');
@@ -757,6 +772,29 @@ describe('Matterbridge platform', () => {
     // @ts-expect-error access private property
     matterbridge.bridgeMode = 'bridge';
     expect(await platform.registerVirtualDevice('Virtual', 'switch', testCallback)).toBe(true);
+  });
+
+  test('registerDevice should apply configured Matter name overrides', async () => {
+    const originalConfig = platform.config;
+    const originalType = platform.type;
+    const originalBridgeMode = matterbridge.bridgeMode;
+    // @ts-expect-error access private property
+    matterbridge.bridgeMode = 'bridge';
+    platform.type = 'DynamicPlatform';
+    platform.config = { ...originalConfig, deviceNameOverrides: { serial01234: 'Friendly name' } };
+    try {
+      const testDevice = new MatterbridgeEndpoint([bridgedNode, powerSource]);
+      testDevice.createDefaultBridgedDeviceBasicInformationClusterServer('test', 'serial01234');
+      await platform.registerDevice(testDevice);
+      expect(testDevice.getAttribute('BridgedDeviceBasicInformation', 'nodeLabel')).toBe('Friendly name');
+      expect(testDevice.deviceName).toBe('test');
+      await platform.unregisterDevice(testDevice);
+    } finally {
+      platform.config = originalConfig;
+      platform.type = originalType;
+      // @ts-expect-error access private property
+      matterbridge.bridgeMode = originalBridgeMode;
+    }
   });
 
   test('registerDevice calls matterbridge.addBridgedEndpoint', async () => {

@@ -8,6 +8,7 @@ import Battery4BarIcon from '@mui/icons-material/Battery4Bar';
 import Battery5BarIcon from '@mui/icons-material/Battery5Bar';
 import Battery6BarIcon from '@mui/icons-material/Battery6Bar';
 import BatteryFullIcon from '@mui/icons-material/BatteryFull';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import SettingsIcon from '@mui/icons-material/Settings';
@@ -18,12 +19,22 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
+import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 // React
 import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
 
 import { basePath, debug, enableMobile } from '../appState';
-import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin, type BridgeStatus } from '../utils/backendShared';
+import {
+  type ApiDevice,
+  type ApiMatter,
+  type ApiPlugin,
+  type ApiSelectDevice,
+  type ApiSettings,
+  type BridgeStatus,
+  type WsMessageApiResponse,
+  type WsMessageErrorApiResponse,
+} from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
 import { Connecting } from './Connecting';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
@@ -71,6 +82,7 @@ interface MixedApiDevices {
   type?: string;
   endpoint?: number | undefined;
   name: string;
+  matterName?: string;
   serial: string;
   productUrl?: string;
   configUrl?: string;
@@ -115,7 +127,7 @@ interface HomeDevicesProps {
 function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
-  const { mobile } = useContext(UiContext);
+  const { mobile, showSnackbarMessage } = useContext(UiContext);
 
   // States: `Registered devices: ${registeredCount.toString()}/${mixedDevices.length.toString()}`
   const [footerLeft, setFooterLeft] = useState('Waiting for the plugins to fully load...'); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
@@ -124,10 +136,14 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const [plugins, setPlugins] = useState<ExtendedBaseRegisteredPlugin[]>([]);
   const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table shows these: registered devices plus not-yet-registered selectable ones.
   const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
+  const [renameDevice, setRenameDevice] = useState<MixedApiDevices | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [renamePending, setRenamePending] = useState(false);
   const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
   // Refs
   const uniqueId = useRef(getUniqueId());
+  const renamePendingRef = useRef(false);
 
   const devicesColumns: MbfTableColumn<MixedApiDevices>[] = [
     {
@@ -202,6 +218,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     },
     */
     {
+      label: 'Matter name',
+      id: 'matterName',
+      render: (_value, _rowKey, mixedDevice) => (mixedDevice.origin === 'device' ? (mixedDevice.matterName ?? mixedDevice.name) : ''),
+    },
+    {
       label: 'Actions',
       id: 'selected',
       required: true,
@@ -220,6 +241,25 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
                 sx={{ margin: 0, padding: 0, color: getQRColor(mixedDevice.matter) }}
               >
                 <QrCode2 fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <div style={{ width: '20px', height: '20px' }}></div>
+          )}
+          {mixedDevice.origin === 'device' &&
+          mixedDevice.matterName !== undefined &&
+          (settings?.matterbridgeInformation.bridgeMode === 'bridge' ||
+            (settings?.matterbridgeInformation.bridgeMode === 'childbridge' && plugins.find((plugin) => plugin.name === mixedDevice.pluginName)?.type === 'DynamicPlatform')) ? (
+            <Tooltip title="Rename Matter device">
+              <IconButton
+                onClick={() => {
+                  setRenameDevice(mixedDevice);
+                  setRenameValue(mixedDevice.matterName ?? mixedDevice.name);
+                }}
+                aria-label="Rename Matter device"
+                sx={{ margin: 0, padding: 0 }}
+              >
+                <EditOutlinedIcon fontSize="small" />
               </IconButton>
             </Tooltip>
           ) : (
@@ -356,7 +396,20 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         }
       }
       // Local messages
-      if (msg.id === uniqueId.current && msg.method === '/api/settings') {
+      if (msg.id === uniqueId.current && msg.method === '/api/command') {
+        if (renamePendingRef.current) {
+          renamePendingRef.current = false;
+          setRenamePending(false);
+          if ('success' in msg && msg.success) {
+            showSnackbarMessage('Matter device name updated', 5, 'success');
+            setRenameDevice(null);
+          } else {
+            showSnackbarMessage((msg as WsMessageErrorApiResponse).error, 5, 'error');
+          }
+        } else if ('error' in msg) {
+          showSnackbarMessage((msg as WsMessageErrorApiResponse).error, 5, 'error');
+        }
+      } else if (msg.id === uniqueId.current && msg.method === '/api/settings') {
         if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received settings:`, msg.response);
         setSettings(msg.response);
         setFooterRight(msg.response.matterbridgeInformation.restartRequired || msg.response.matterbridgeInformation.fixedRestartRequired ? 'Restart Required' : '');
@@ -442,7 +495,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     };
 
     addListener(handleWebSocketMessage, uniqueId.current);
-    if (debug || localDebug) console.log(`HomeDevices added WebSocket listener id ${uniqueId.current}`);
+    if (debug || localDebug) console.log(`HomeDevices added WebSocket listener ${uniqueId.current}`);
 
     return () => {
       removeListener(handleWebSocketMessage);
@@ -531,6 +584,21 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     }
   };
 
+  const handleRenameDevice = () => {
+    if (!renameDevice || renameValue.trim().length === 0 || renameValue.trim().length > 32) return;
+    if (renamePendingRef.current) return;
+    renamePendingRef.current = true;
+    setRenamePending(true);
+    sendMessage({
+      id: uniqueId.current,
+      sender: 'HomeDevices',
+      method: '/api/command',
+      src: 'Frontend',
+      dst: 'Matterbridge',
+      params: { command: 'renameDevice', plugin: renameDevice.pluginName, serial: renameDevice.serial, name: renameValue.trim() },
+    });
+  };
+
   const handleDeviceFrontendLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
     const iframeDocument = event.currentTarget.contentDocument;
     if (!iframeDocument?.head) return;
@@ -575,6 +643,27 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       <MbfWindow style={{ flex: '1 1 auto' }}>
         <MbfTable name="Devices" getRowKey={getRowKey} rows={mixedDevices} columns={devicesColumns} footerLeft={displayFooterLeft} footerRight={footerRight} />
       </MbfWindow>
+      <Dialog open={renameDevice !== null} onClose={() => setRenameDevice(null)}>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            label="Matter device name"
+            value={renameValue}
+            onChange={(event) => setRenameValue(event.target.value)}
+            inputProps={{ maxLength: 32 }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') handleRenameDevice();
+            }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setRenameDevice(null)}>Cancel</Button>
+          <Button onClick={handleRenameDevice} disabled={renamePending || !renameValue.trim() || renameValue.trim().length > 32}>
+            {renamePending ? 'Saving…' : 'Save'}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={selectedDeviceFrontend !== null}
         onClose={() => setSelectedDeviceFrontend(null)}

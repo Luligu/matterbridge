@@ -47,6 +47,7 @@ import path from 'node:path';
 import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { CommissioningOptions } from '@matter/types/commissioning';
 import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
 // @matterbridge
@@ -1389,6 +1390,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         endpoint: device.number,
         name: device.deviceName,
         serial: device.serialNumber,
+        matterName: device.hasAttributeServer(BridgedDeviceBasicInformation, 'nodeLabel') ? device.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel') : undefined,
         productUrl: device.productUrl,
         configUrl: device.configUrl,
         uniqueId: device.uniqueId,
@@ -2224,6 +2226,50 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
       } else if (data.method === '/api/command') {
         const localData = data;
+        if (data.params.command === 'renameDevice') {
+          const { plugin: pluginName, serial, name } = data.params;
+          if (!isValidString(pluginName, 1) || !isValidString(serial, 1) || !isValidString(name, 1, 32)) {
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid device rename request' });
+            return;
+          }
+          const trimmedName = name.trim();
+          const plugin = this.matterbridge.plugins.get(pluginName);
+          const endpoint = this.matterbridge.devices.array().find((device) => device.plugin === pluginName && device.serialNumber === serial);
+          if (
+            trimmedName.length === 0 ||
+            !plugin?.platform ||
+            !(this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && plugin.platform.type === 'DynamicPlatform')) ||
+            !endpoint ||
+            endpoint.plugin !== pluginName ||
+            endpoint.mode !== undefined ||
+            !endpoint.hasAttributeServer(BridgedDeviceBasicInformation, 'nodeLabel')
+          ) {
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid device rename request' });
+            return;
+          }
+          const originalConfig = plugin.platform.config;
+          const originalConfigJson = plugin.configJson;
+          const originalName = endpoint.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel');
+          const overrides = isValidObject(originalConfig.deviceNameOverrides) ? originalConfig.deviceNameOverrides : {};
+          plugin.platform.config = { ...originalConfig, deviceNameOverrides: { ...overrides, [serial]: trimmedName } };
+          try {
+            await endpoint.setStateOf(BridgedDeviceBasicInformation, { nodeLabel: trimmedName });
+            await this.matterbridge.plugins.saveConfigFromPlugin(plugin);
+          } catch (error) {
+            plugin.platform.config = originalConfig;
+            plugin.configJson = originalConfigJson;
+            try {
+              await endpoint.setStateOf(BridgedDeviceBasicInformation, { nodeLabel: originalName });
+            } catch (restoreError) {
+              this.log.error(`Could not restore Matter device name for ${plg}${pluginName}${db} serial ${serial}: ${getErrorMessage(restoreError)}`);
+            }
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Could not save device name' });
+            return;
+          }
+          this.wssSendRefreshRequired('devices');
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+          return;
+        }
         if (!isValidString(data.params.command, 5)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' });
           return;
