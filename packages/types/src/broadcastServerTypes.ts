@@ -209,14 +209,6 @@ export type WorkerMessageTypes = {
     request: { params: { prefix: string } };
     response: { result: { success: true } };
   };
-  matterbridge_shelly_sys_update: {
-    request: { params: { available: boolean } };
-    response: { result: { success: true } };
-  };
-  matterbridge_shelly_main_update: {
-    request: { params: { available: boolean } };
-    response: { result: { success: true } };
-  };
   matterbridge_platform: {
     request: { params: undefined };
     response: { result: { data: PlatformMatterbridge; success: true } };

@@ -149,9 +149,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
   // Frontend settings
   public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
-  public readonly shellyBoard = hasParameter('shelly');
-  public shellySysUpdate = false;
-  public shellyMainUpdate = false;
   /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
   public restartRequired = false;
   /** It indicates whether a fixed restart is required. It cannot be unset once set. */
@@ -1311,9 +1308,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterDiscriminator: this.matterbridge.initialDiscriminator,
       matterPasscode: this.matterbridge.initialPasscode,
       readOnly: this.readOnly,
-      shellyBoard: this.shellyBoard,
-      shellySysUpdate: this.shellySysUpdate,
-      shellyMainUpdate: this.shellyMainUpdate,
       restartRequired: this.restartRequired,
       fixedRestartRequired: this.fixedRestartRequired,
       updateRequired: this.updateRequired,
@@ -1768,49 +1762,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
         }, 5_000).unref();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/shellysysupdate') {
-        /*
-        const { triggerShellySysUpdate } = await import('./shelly.js');
-        triggerShellySysUpdate(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/shellymainupdate') {
-        /*
-        const { triggerShellyMainUpdate } = await import('./shelly.js');
-        triggerShellyMainUpdate(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/shellycreatesystemlog') {
-        /*
-        const { createShellySystemLog } = await import('./shelly.js');
-        createShellySystemLog(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/shellynetconfig') {
-        /*
-        this.log.debug('/api/shellynetconfig:', data.params);
-        const { triggerShellyChangeIp } = await import('./shelly.js');
-        triggerShellyChangeIp(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/softreset') {
-        /*
-        const { triggerShellySoftReset } = await import('./shelly.js');
-        triggerShellySoftReset(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/hardreset') {
-        /*
-        const { triggerShellyHardReset } = await import('./shelly.js');
-        triggerShellyHardReset(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/reboot') {
-        /*
-        const { triggerShellyReboot } = await import('./shelly.js');
-        triggerShellyReboot(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();

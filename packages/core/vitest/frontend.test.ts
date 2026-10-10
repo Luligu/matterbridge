@@ -206,7 +206,7 @@ describe('Matterbridge frontend', () => {
       type: 'frontend_broadcast_message',
       src: 'manager',
       dst: 'frontend',
-      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } },
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version: '1.0.0', devVersion: false } } },
     } as any);
     await (frontend as any).broadcastMsgHandler({
       id: 123456,

@@ -235,9 +235,6 @@ export interface MatterbridgeInformation {
   bridgeStatus: BridgeStatus;
   profile: string | undefined;
   readOnly: boolean;
-  shellyBoard: boolean;
-  shellySysUpdate: boolean;
-  shellyMainUpdate: boolean;
   loggerLevel: LogLevel;
   fileLogger: boolean;
   matterLoggerLevel: LogLevel;

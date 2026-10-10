@@ -224,56 +224,6 @@ export interface WsMessageApiCheckUpdatesResponse extends WsMessageSuccessApiRes
   method: '/api/checkupdates';
 }
 
-export interface WsMessageApiShellySysUpdateRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellysysupdate';
-}
-export interface WsMessageApiShellySysUpdateResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellysysupdate';
-}
-
-export interface WsMessageApiShellyMainUpdateRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellymainupdate';
-}
-export interface WsMessageApiShellyMainUpdateResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellymainupdate';
-}
-
-export interface WsMessageApiShellyCreateSystemLogRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellycreatesystemlog';
-}
-export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellycreatesystemlog';
-}
-
-export interface WsMessageApiShellyNetConfigRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellynetconfig';
-  params: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string };
-}
-export interface WsMessageApiShellyNetConfigResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellynetconfig';
-}
-
-export interface WsMessageApiSoftResetRequest extends WsMessageBaseApiRequest {
-  method: '/api/softreset';
-}
-export interface WsMessageApiSoftResetResponse extends WsMessageSuccessApiResponse {
-  method: '/api/softreset';
-}
-
-export interface WsMessageApiHardResetRequest extends WsMessageBaseApiRequest {
-  method: '/api/hardreset';
-}
-export interface WsMessageApiHardResetResponse extends WsMessageSuccessApiResponse {
-  method: '/api/hardreset';
-}
-
-export interface WsMessageApiRebootRequest extends WsMessageBaseApiRequest {
-  method: '/api/reboot';
-}
-export interface WsMessageApiRebootResponse extends WsMessageSuccessApiResponse {
-  method: '/api/reboot';
-}
-
 export interface WsMessageApiRestartRequest extends WsMessageBaseApiRequest {
   method: '/api/restart';
 }
@@ -609,18 +559,6 @@ export interface WsMessageApiStateUpdate extends WsMessageSuccessApiResponse {
   };
 }
 
-export interface WsMessageApiShellySysUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'shelly_sys_update';
-  response: { available: boolean };
-}
-
-export interface WsMessageApiShellyMainUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'shelly_main_update';
-  response: { available: boolean };
-}
-
 export interface WsMessageApiArchive extends WsMessageSuccessApiResponse {
   id: 0;
   method: 'archive';
@@ -645,13 +583,6 @@ export type WsMessageApiRequest =
   | WsMessageApiRestartPluginRequest
   | WsMessageApiSavePluginConfigRequest
   | WsMessageApiCheckUpdatesRequest
-  | WsMessageApiShellySysUpdateRequest
-  | WsMessageApiShellyMainUpdateRequest
-  | WsMessageApiShellyCreateSystemLogRequest
-  | WsMessageApiShellyNetConfigRequest
-  | WsMessageApiSoftResetRequest
-  | WsMessageApiHardResetRequest
-  | WsMessageApiRebootRequest
   | WsMessageApiRestartRequest
   | WsMessageApiShutdownRequest
   | WsMessageApiCreateBackupRequest
@@ -688,13 +619,6 @@ export type WsMessageApiResponse =
   | WsMessageApiRestartPluginResponse
   | WsMessageApiSavePluginConfigResponse
   | WsMessageApiCheckUpdatesResponse
-  | WsMessageApiShellySysUpdateResponse
-  | WsMessageApiShellyMainUpdateResponse
-  | WsMessageApiShellyCreateSystemLogResponse
-  | WsMessageApiShellyNetConfigResponse
-  | WsMessageApiSoftResetResponse
-  | WsMessageApiHardResetResponse
-  | WsMessageApiRebootResponse
   | WsMessageApiRestartResponse
   | WsMessageApiShutdownResponse
   | WsMessageApiCreateBackupResponse
@@ -729,8 +653,6 @@ export type WsMessageApiResponse =
   | WsMessageApiStateUpdate
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
-  | WsMessageApiShellySysUpdate
-  | WsMessageApiShellyMainUpdate
   | WsMessageApiArchive;
 
 // Union type for all specific WebSocket broadcast message types
@@ -747,8 +669,6 @@ export type WsMessageBroadcast =
   | WsMessageApiStateUpdate
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
-  | WsMessageApiShellySysUpdate
-  | WsMessageApiShellyMainUpdate
   | WsMessageApiArchive;
 
 /**

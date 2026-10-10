@@ -48,10 +48,7 @@
  * +------------------------------------------------------------+------------------------------------------------------------+
  * | 3) WebSocket api present in Frontend but missing in Backend                                                             |
  * +------------------------------------------------------------+------------------------------------------------------------+
- * | /api/checkupdates /api/shellysysupdate                     | missing                                                    |
- * | /api/shellymainupdate /api/shellycreatesystemlog           | missing                                                    |
- * | /api/shellynetconfig                                       | missing                                                    |
- * | /api/softreset /api/hardreset /api/reboot                  | missing                                                    |
+ * | /api/checkupdates                                          | missing                                                    |
  * | /api/install /api/uninstall                                | missing                                                    |
  * | /api/addplugin /api/removeplugin                           | missing                                                    |
  * | /api/enableplugin /api/disableplugin /api/restartplugin    | missing                                                    |
