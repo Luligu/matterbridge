@@ -75,6 +75,7 @@ describe('matterbridgePlatformTypes', () => {
       osArch: 'x64',
       totalMemory: '8 GB',
       freeMemory: '4 GB',
+      constrainedMemory: '8 GB',
       systemUptime: '1 hour',
       processUptime: '1 minute',
       cpuUsage: '1 %',
@@ -108,7 +109,7 @@ describe('matterbridgePlatformTypes', () => {
 
     test('should expose the system information without the Bun version', () => {
       expectTypeOf<keyof PlatformMatterbridge['systemInformation']>().toEqualTypeOf<Exclude<keyof SystemInformation, 'bunVersion'>>();
-      expect(Object.keys(matterbridge.systemInformation)).toHaveLength(20);
+      expect(Object.keys(matterbridge.systemInformation)).toHaveLength(21);
     });
 
     test('should use the matterbridge mode types', () => {

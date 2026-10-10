@@ -9,6 +9,7 @@ const NAME = 'CliMain';
 import { consoleLogSpy, loggerLogSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { Inspector, Tracker } from '@matterbridge/utils';
+import { formatBytes, formatUptime } from '@matterbridge/utils/format';
 import { LogLevel } from 'node-ansi-logger';
 
 import { cliEmitter } from '../src/cliEmitter.js';
@@ -35,6 +36,7 @@ const exit = vi.spyOn(process, 'exit').mockImplementation((code?: string | numbe
 });
 
 const closeBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'close');
+const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
 
 const startTrackerSpy = vi.spyOn(Tracker.prototype, 'start').mockImplementation(function () {
   return;
@@ -129,12 +131,42 @@ describe('Matterbridge', () => {
       processCpu: 23.45,
       totalMemory: 123456789,
       freeMemory: 987654321,
+      constrainedMemory: 1073741824,
       rss: 12345678,
       heapTotal: 87654321,
       heapUsed: 6543210,
       external: 123456,
       arrayBuffers: 98765,
     } as any);
+
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith({
+      type: 'frontend_broadcast_message',
+      src: 'cli',
+      dst: 'frontend',
+      params: {
+        msg: {
+          id: 0,
+          src: 'Matterbridge',
+          dst: 'Frontend',
+          method: 'system_update',
+          success: true,
+          response: {
+            systemUptime: formatUptime(12),
+            processUptime: formatUptime(23),
+            totalMemory: formatBytes(123456789),
+            freeMemory: formatBytes(987654321),
+            constrainedMemory: formatBytes(1073741824),
+            rss: formatBytes(12345678),
+            heapTotal: formatBytes(87654321),
+            heapUsed: formatBytes(6543210),
+            external: formatBytes(123456),
+            arrayBuffers: formatBytes(98765),
+            cpuUsage: 12.34,
+            processCpuUsage: 23.45,
+          },
+        },
+      },
+    });
   });
 
   it('should shutdown matterbridge', async () => {
@@ -154,12 +186,16 @@ describe('Matterbridge', () => {
   });
 
   it('should start memory check', () => {
+    // Node.js 20 returns undefined when there is no memory constraint
+    const constrainedMemorySpy = vi.spyOn(process, 'constrainedMemory').mockReturnValueOnce(undefined as unknown as number);
     matterbridge.emit('startmemorycheck');
 
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check starting...');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check started');
     expect(exit).not.toHaveBeenCalled();
     expect(startTrackerSpy).toHaveBeenCalledTimes(1);
+    expect(constrainedMemorySpy).toHaveBeenCalledTimes(1);
+    constrainedMemorySpy.mockRestore();
   });
 
   it('should stop memory check', () => {

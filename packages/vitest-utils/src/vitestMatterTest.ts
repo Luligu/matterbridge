@@ -3,7 +3,7 @@
  * @description This file contains the Vitest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -154,6 +154,7 @@ export function getMatterbridge(): PlatformMatterbridge {
       osArch: 'arm64',
       totalMemory: '0 B',
       freeMemory: '0 B',
+      constrainedMemory: '0 B',
       systemUptime: '0s',
       processUptime: '0s',
       cpuUsage: '0%',

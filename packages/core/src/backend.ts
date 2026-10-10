@@ -64,7 +64,6 @@
  * | /api/viewhistorypage /api/downloadhistorypage              | missing                                                    |
  * | /api/select/devices /api/select/entities                   | missing                                                    |
  * | /api/action /api/command /api/config                       | missing                                                    |
- * | uptime / memory / cpu updates from cliEmitter              | not subscribed                                             |
  * | /api/clusters                                              | getApiCluster() is a TODO stub and always returns undefined|
  * +------------------------------------------------------------+------------------------------------------------------------+
  */

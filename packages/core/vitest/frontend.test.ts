@@ -37,7 +37,6 @@ import { db, LogLevel, YELLOW } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 import { WebSocket } from 'ws';
 
-import { cliEmitter } from '../src/cliEmitter.js';
 import type { Frontend as FrontendType } from '../src/frontend.js';
 import type { Matterbridge as MatterbridgeType } from '../src/matterbridge.js';
 import { destroyInstance } from './vitestUtils.js';
@@ -232,20 +231,6 @@ describe('Matterbridge frontend', () => {
 
       await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_archive_response', src: 'manager', dst: 'all', result: { success: true, command: 'zip', archivePath: 'test.zip', sourcePaths: ['file1', 'file2'], destinationPath: 'dest' } } as any);
     }
-  });
-
-  test('Frontend cliEmitter', () => {
-    // Test the cliEmitter functionality
-    expect(cliEmitter).toBeDefined();
-    expect(cliEmitter.on).toBeDefined();
-    expect(cliEmitter.emit).toBeDefined();
-    expect(cliEmitter.listeners('uptime')).toHaveLength(1);
-    expect(cliEmitter.listeners('memory')).toHaveLength(1);
-    expect(cliEmitter.listeners('cpu')).toHaveLength(1);
-
-    cliEmitter.emit('cpu', 12.34, 5.67);
-    cliEmitter.emit('uptime', '1 day, 10:00:00', '1 day, 10:00:00');
-    cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
   test('Frontend validateReq', async () => {
@@ -559,30 +544,6 @@ describe('Matterbridge frontend', () => {
       success: true,
       response: { status: 'started' },
     });
-
-    // Restore for next tests
-    (frontend as any).webSocketServer = savedWss;
-    (frontend as any).listening = false;
-    spy.mockRestore();
-  });
-
-  test('Frontend wssSendCpuUpdate wssSendMemoryUpdate wssSendUptimeUpdate', async () => {
-    // Mocks
-    const savedWss = (frontend as any).webSocketServer;
-    const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
-
-    (frontend as any).listening = false;
-    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
-    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
-    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(0);
-    vi.clearAllMocks();
-    (frontend as any).listening = true;
-    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
-    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
-    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
-    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(3);
 
     // Restore for next tests
     (frontend as any).webSocketServer = savedWss;

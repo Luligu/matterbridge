@@ -75,6 +75,11 @@ describe('BackendWsServer', () => {
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend' });
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } });
     expect((wsServer as any).log.logLevel).toBe(LogLevel.DEBUG);
+    const broadcastSpy = vi.spyOn(wsServer, 'wssBroadcastMessage');
+    const msg = { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'system_update', success: true, response: {} };
+    await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'frontend_broadcast_message', src: 'cli', dst: 'frontend', params: { msg } });
+    expect(broadcastSpy).toHaveBeenCalledWith(msg);
+    broadcastSpy.mockRestore();
   });
 
   test('should answer broadcast requests from another thread and ignore other messages', async () => {
@@ -389,9 +394,6 @@ describe('BackendWsServer', () => {
     wsServer.wssSendUpdateRequired('3.0.0', true);
     wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0', false);
     wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0', true);
-    wsServer.wssSendCpuUpdate(1, 2);
-    wsServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
-    wsServer.wssSendUptimeUpdate('sys', 'proc');
     wsServer.wssSendSnackbarMessage('hello');
     wsServer.wssSendSnackbarMessage('hello', 0, 'success');
     wsServer.wssSendCloseSnackbarMessage('hello');
@@ -426,9 +428,6 @@ describe('BackendWsServer', () => {
     // expect((mockedBackend as any).updateRequired).toBe(true);
 
     wsServer.wssSendRefreshRequired('settings');
-    wsServer.wssSendCpuUpdate(12.3456, 23.4567);
-    wsServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
-    wsServer.wssSendUptimeUpdate('sys', 'proc');
     wsServer.wssSendSnackbarMessage('hello', 0, 'success');
     wsServer.wssSendCloseSnackbarMessage('hello');
     wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
@@ -547,9 +546,6 @@ describe('BackendWsServer', () => {
       quietServer.wssSendPluginUpdateRequired('plugin', '3.0.0');
       quietServer.wssSendPluginStatusUpdate('plugin', {});
       quietServer.wssSendMatterbridgeStatusUpdate({} as any);
-      quietServer.wssSendCpuUpdate(1, 2);
-      quietServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
-      quietServer.wssSendUptimeUpdate('sys', 'proc');
       quietServer.wssSendSnackbarMessage('hello');
       quietServer.wssSendCloseSnackbarMessage('hello');
       quietServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);

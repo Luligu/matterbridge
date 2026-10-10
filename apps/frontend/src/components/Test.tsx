@@ -21,17 +21,6 @@ function Test() {
   const [_settings, setSettings] = useState<ApiSettings | null>(null);
   const [_plugins, setPlugins] = useState<ApiPlugin[]>([]);
   const [_devices, setDevices] = useState<ApiDevice[]>([]);
-  const [_cpu, setCpu] = useState<{ cpuUsage: number }>({ cpuUsage: 0 });
-  const [_memory, setMemory] = useState<{ totalMemory: string; freeMemory: string; heapTotal: string; heapUsed: string; external: string; arrayBuffers: string; rss: string }>({
-    totalMemory: '',
-    freeMemory: '',
-    heapTotal: '',
-    heapUsed: '',
-    external: '',
-    arrayBuffers: '',
-    rss: '',
-  });
-  const [_uptime, setUptime] = useState<{ systemUptime: string; processUptime: string }>({ systemUptime: '', processUptime: '' });
 
   // Local refs
   const uniqueId = useRef(getUniqueId());
@@ -48,15 +37,6 @@ function Test() {
         sendMessage({ id: uniqueId.current, method: '/api/settings', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
         sendMessage({ id: uniqueId.current, method: '/api/plugins', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
         sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
-      } else if (msg.method === 'memory_update') {
-        if (debug || localDebug) console.log('Test received memory_update', msg);
-        setMemory(msg.response);
-      } else if (msg.method === 'cpu_update') {
-        if (debug || localDebug) console.log('Test received cpu_update', msg);
-        setCpu(msg.response);
-      } else if (msg.method === 'uptime_update') {
-        if (debug || localDebug) console.log('Test received uptime_update', msg);
-        setUptime(msg.response);
       } else if (msg.method === '/api/settings' && msg.response) {
         if (debug || localDebug) console.log('Test received /api/settings:', msg.response);
         showSnackbarMessage('Test received /api/settings', 0);

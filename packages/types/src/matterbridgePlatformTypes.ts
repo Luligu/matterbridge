@@ -3,7 +3,7 @@
  * @description This file contains the types for MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.7.0
+ * @version 1.7.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -60,6 +60,7 @@ export type PlatformMatterbridge = {
       | 'osArch'
       | 'totalMemory'
       | 'freeMemory'
+      | 'constrainedMemory'
       | 'systemUptime'
       | 'processUptime'
       | 'cpuUsage'

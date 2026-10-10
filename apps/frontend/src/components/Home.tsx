@@ -137,7 +137,7 @@ function Home(): React.JSX.Element {
         {enableMobile && mobile && (
           <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px' }}>
             <QRDiv id={storeId} />
-            <SystemInfoTable systemInfo={systemInfo} compact={true} />
+            <SystemInfoTable systemInfo={systemInfo} compact={false} />
             <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />
           </div>
         )}

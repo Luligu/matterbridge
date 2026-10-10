@@ -3,7 +3,7 @@
  * @description This file contains the types for Matterbridge.
  * @author Luca Liguori
  * @created 2024-07-12
- * @version 1.0.4
+ * @version 1.0.5
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -68,28 +68,32 @@ export type BridgeStatus = 'inactive' | 'starting' | 'started' | 'stopping' | 's
  * A type representing a read-only subset of the Matterbridge properties.
  */
 export type SharedMatterbridge = Readonly<{
-  systemInformation: {
-    interfaceName: string;
-    macAddress: string;
-    ipv4Address: string;
-    ipv6Address: string;
-    nodeVersion: string;
-    hostname: string;
-    user: string;
-    osType: string;
-    osRelease: string;
-    osPlatform: string;
-    osArch: string;
-    totalMemory: string;
-    freeMemory: string;
-    systemUptime: string;
-    processUptime: string;
-    cpuUsage: string;
-    processCpuUsage: string;
-    rss: string;
-    heapTotal: string;
-    heapUsed: string;
-  };
+  systemInformation: Readonly<
+    Pick<
+      SystemInformation,
+      | 'interfaceName'
+      | 'macAddress'
+      | 'ipv4Address'
+      | 'ipv6Address'
+      | 'nodeVersion'
+      | 'hostname'
+      | 'user'
+      | 'osType'
+      | 'osRelease'
+      | 'osPlatform'
+      | 'osArch'
+      | 'totalMemory'
+      | 'freeMemory'
+      | 'constrainedMemory'
+      | 'systemUptime'
+      | 'processUptime'
+      | 'cpuUsage'
+      | 'processCpuUsage'
+      | 'rss'
+      | 'heapTotal'
+      | 'heapUsed'
+    >
+  >;
   uuid: string;
   rootDirectory: string;
   homeDirectory: string;
@@ -199,6 +203,7 @@ export interface SystemInformation {
   // Cpu and memory properties
   totalMemory: string;
   freeMemory: string;
+  constrainedMemory: string;
   systemUptime: string;
   processUptime: string;
   cpuUsage: string;

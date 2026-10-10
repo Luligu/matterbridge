@@ -39,6 +39,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [errata]: Clarification of the v.3.10.12 RVC release note: `SkipArea` conformance `[CurrentArea | Progress]` makes the command optional when either attribute is implemented (Matter 1.6.1 Core § 7.3.4; Application Cluster § 1.17.7). Advertising `SkipArea` by default is a choice in Matterbridge’s `RoboticVacuumCleaner` implementation, not a specification requirement; `SkipAreaResponse` is required when `SkipArea` is implemented.
 
+### Added
+
+- [utils]: Add `constrainedMemory()` to `@matterbridge/utils/bun`: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.
+- [utils]: Add `constrainedMemory` and `peakConstrainedMemory` to the `Tracker` snapshot.
+- [types]: Add `constrainedMemory` to `SystemInformation`, `PlatformMatterbridge` and `SharedMatterbridge`.
+- [types]: Add the `ApiSystemUpdate` type and the `system_update` WebSocket message.
+- [core]: The cli broadcasts a single `system_update` WebSocket message (uptime, memory, memory limit and cpu) on each tracker snapshot.
+- [test-utils]: Add `getSharedMatterbridge()`, a mocked `SharedMatterbridge` for vitest, jest and bun.
+- [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
+
 ### Changed
 
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.
@@ -48,7 +58,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Bump `express-rate-limit` to v.8.7.1.
 - [core]: Bump `werift` to v.0.25.0.
 - [thread]: Bump `@zip.js/zip.js` to v.2.23.0.
+- [core]: Remove the legacy `cpu_update`, `memory_update` and `uptime_update` WebSocket messages, the `wssSend*Update` methods and the matching `cliEmitter` events (replaced by `system_update`).
+- [types]: `SharedMatterbridge.systemInformation` is now a read-only `Pick` of `SystemInformation`.
+- [utils]: `Tracker` reads its flags with the `hasParameter` helpers; the verbose start log groups the CPUs by model and also logs the memory limit and the uptimes.
 - [frontend]: Rename system info labels to `Host memory`, `Process rss` and `Process heap`.
+- [frontend]: Show the full (not compact) system info table on mobile.
 - [frontend]: Bump `frontend` version to v.3.6.5.
 - [frontend]: Bump `@mui/material` to v.9.5.0.
 - [frontend]: Bump `@mui/icons-material` to v.9.5.0.
@@ -57,6 +71,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `vite` to v.8.3.4.
 - [frontend]: Bump `oxfmt` to v.0.72.0.
 - [frontend]: Bump `oxlint` to v.1.87.0.
+- [tests]: Use `getSharedMatterbridge()` in the matterNode tests, add the `cliHistory` bun test and include `cliHistory` in the bun coverage.
 - [tests]: Consolidate CLI error tests and speed up the suite by mocking Matterbridge imports and replacing fixed delays.
 
 ### Fixed

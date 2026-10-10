@@ -4,7 +4,6 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/prefer-nullish-coalescing */
 /* oxlint-disable typescript/explicit-function-return-type */
 
 const MATTER_PORT = 10400;
@@ -15,17 +14,16 @@ const STRESS_TEST_ITERATIONS = 5;
 
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
+import { getSharedMatterbridge } from '@matterbridge/test-utils/buntest/matter';
 import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
-import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { AnsiLogger, er, LogLevel, zb } from 'node-ansi-logger';
+import { AnsiLogger, er, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from '../src/deviceManager.js';
@@ -40,65 +38,23 @@ await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_T
 
 const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
 const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
-const nic = getInterfaceDetails();
 
 const matterbridge: SharedMatterbridge = {
+  ...getSharedMatterbridge(),
   uuid: '',
   rootDirectory: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../'),
-  homeDirectory: HOMEDIR,
-  matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
-  matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
-  matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
   globalModulesDirectory: path.join('.', 'node_modules'),
   matterbridgeVersion: matterbridgePackageJson.version,
   matterbridgeLatestVersion: matterbridgePackageJson.version,
   matterbridgeDevVersion: matterbridgePackageJson.version,
   frontendVersion: frontendPackageJson.version,
-  dockerDev: undefined,
-  dockerVersion: undefined,
-  dockerLatestVersion: undefined,
-  dockerDevVersion: undefined,
   bridgeMode: 'childbridge',
-  restartMode: 'none',
   virtualMode: 'disabled',
-  profile: undefined,
-  logLevel: LogLevel.DEBUG,
   fileLogger: true,
-  matterLogLevel: LogLevel.DEBUG,
   matterFileLogger: true,
-  mdnsInterface: undefined,
-  ipv4Address: undefined,
-  ipv6Address: undefined,
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
-  startupAt: 0,
-  shutdownAt: 0,
-  runningTimes: 0,
-  runningDays: 0,
-  systemInformation: {
-    interfaceName: nic?.interfaceName || '',
-    macAddress: nic?.macAddress || '',
-    ipv4Address: nic?.ipv4Address || '',
-    ipv6Address: nic?.ipv6Address || '',
-    nodeVersion: process.versions.node,
-    hostname: os.hostname(),
-    user: os.userInfo().username,
-    osType: os.type(),
-    osRelease: os.release(),
-    osPlatform: os.platform(),
-    osArch: os.arch(),
-
-    totalMemory: formatBytes(os.totalmem()),
-    freeMemory: formatBytes(os.freemem()),
-    systemUptime: formatUptime(os.uptime()),
-    processUptime: formatUptime(Math.floor(process.uptime())),
-    cpuUsage: formatPercent(0),
-    processCpuUsage: formatPercent(0),
-    rss: formatBytes(process.memoryUsage().rss),
-    heapTotal: formatBytes(process.memoryUsage().heapTotal),
-    heapUsed: formatBytes(process.memoryUsage().heapUsed),
-  },
 };
 // process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 

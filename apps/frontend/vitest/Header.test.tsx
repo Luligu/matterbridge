@@ -98,6 +98,7 @@ const settings = {
     osArch: '',
     totalMemory: '',
     freeMemory: '',
+    constrainedMemory: '',
     systemUptime: '',
     processUptime: '',
     cpuUsage: '',

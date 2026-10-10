@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.0
+ * @version 1.8.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -72,7 +72,7 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import { isBun, getGlobalBunModules, memoryFootprint } from '@matterbridge/utils/bun';
+import { constrainedMemory, isBun, getGlobalBunModules, memoryFootprint } from '@matterbridge/utils/bun';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
@@ -170,6 +170,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Cpu and memory properties
     totalMemory: '',
     freeMemory: '',
+    constrainedMemory: '',
     systemUptime: '',
     processUptime: '',
     cpuUsage: '',
@@ -390,6 +391,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getPlatformMatterbridge(): PlatformMatterbridge {
     // Update the variable system information properties
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -427,6 +429,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getSharedMatterbridge(): SharedMatterbridge {
     // Update the variable system information properties
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -479,6 +482,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getApiSettings(): ApiSettings {
     // Update the variable system information properties
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -1665,6 +1669,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
     this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(process.uptime());
@@ -1689,6 +1694,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- Architecture: ${this.systemInformation.osArch}`);
     this.log.debug(`- Total Memory: ${this.systemInformation.totalMemory}`);
     this.log.debug(`- Free Memory: ${this.systemInformation.freeMemory}`);
+    this.log.debug(`- Constrained Memory: ${this.systemInformation.constrainedMemory}`);
     this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
     this.log.debug(`- Process Uptime: ${this.systemInformation.processUptime}`);
     this.log.debug(`- RSS: ${this.systemInformation.rss}`);

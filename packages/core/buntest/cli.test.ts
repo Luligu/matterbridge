@@ -33,6 +33,7 @@ await mock.module('../src/matterbridge.js', () => ({ Matterbridge: { loadInstanc
 
 const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 const closeBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'close');
+const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
 const startTrackerSpy = vi.spyOn(Tracker.prototype, 'start').mockImplementation(() => {});
 const stopTrackerSpy = vi.spyOn(Tracker.prototype, 'stop').mockImplementation(() => {});
 const startInspectorSpy = vi.spyOn(Inspector.prototype, 'start').mockImplementation(async () => {});
@@ -167,20 +168,14 @@ describe('Cli', () => {
       expect(exitSpy).not.toHaveBeenCalled();
     });
 
-    test('should forward the tracker uptime and snapshot to the cli emitter', () => {
-      const uptime = vi.fn();
-      const memory = vi.fn();
-      const cpu = vi.fn();
-      cliEmitter.once('uptime', uptime);
-      cliEmitter.once('memory', memory);
-      cliEmitter.once('cpu', cpu);
-
+    test('should broadcast the tracker uptime and snapshot as a system update', () => {
       cli.tracker.emit('uptime', 61.5, 3601.9);
       cli.tracker.emit('snapshot', {
         osCpu: 12.5,
         processCpu: 3.25,
         totalMemory: 2048,
         freeMemory: 1024,
+        constrainedMemory: 4096,
         rss: 512,
         heapTotal: 256,
         heapUsed: 128,
@@ -188,12 +183,39 @@ describe('Cli', () => {
         arrayBuffers: 32,
       } as TrackerSnapshot);
 
-      expect(uptime).toHaveBeenCalledWith(formatUptime(61), formatUptime(3601));
-      expect(memory).toHaveBeenCalledWith(...[2048, 1024, 512, 256, 128, 64, 32].map((bytes) => formatBytes(bytes)));
-      expect(cpu).toHaveBeenCalledWith(12.5, 3.25);
+      expect(requestBroadcastServerSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'cli',
+        dst: 'frontend',
+        params: {
+          msg: {
+            id: 0,
+            src: 'Matterbridge',
+            dst: 'Frontend',
+            method: 'system_update',
+            success: true,
+            response: {
+              systemUptime: formatUptime(61),
+              processUptime: formatUptime(3601),
+              totalMemory: formatBytes(2048),
+              freeMemory: formatBytes(1024),
+              constrainedMemory: formatBytes(4096),
+              rss: formatBytes(512),
+              heapTotal: formatBytes(256),
+              heapUsed: formatBytes(128),
+              external: formatBytes(64),
+              arrayBuffers: formatBytes(32),
+              cpuUsage: 12.5,
+              processCpuUsage: 3.25,
+            },
+          },
+        },
+      });
     });
 
     test('should handle the memory check, inspector and gc events', async () => {
+      // Node.js 20 returns undefined when there is no memory constraint
+      const constrainedMemorySpy = vi.spyOn(process, 'constrainedMemory').mockReturnValueOnce(undefined as unknown as number);
       matterbridge.emit('startmemorycheck');
       matterbridge.emit('stopmemorycheck');
       matterbridge.emit('startinspector');
@@ -207,6 +229,8 @@ describe('Cli', () => {
       expect(startInspectorSpy).toHaveBeenCalledTimes(1);
       expect(stopInspectorSpy).toHaveBeenCalledTimes(1);
       expect(takeHeapSnapshotSpy).toHaveBeenCalledTimes(1);
+      expect(constrainedMemorySpy).toHaveBeenCalledTimes(1);
+      constrainedMemorySpy.mockRestore();
       expect(runGarbageCollectorSpy).toHaveBeenCalledTimes(1);
       expect(exitSpy).not.toHaveBeenCalled();
     });

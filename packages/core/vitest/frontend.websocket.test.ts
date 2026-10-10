@@ -25,7 +25,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
-import type { WorkerMessage, WsMessageApiLog, WsMessageApiMemoryUpdate } from '@matterbridge/types';
+import type { WorkerMessage, WsMessageApiLog, WsMessageApiSystemUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, BridgeStatus, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -1581,92 +1581,6 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeUndefined();
   });
 
-  test('Websocket SendCpuUpdate', async () => {
-    expect(ws).toBeDefined();
-    expect(ws.readyState).toBe(WebSocket.OPEN);
-    const received = new Promise((resolve) => {
-      const onMessage = (event: WebSocket.MessageEvent) => {
-        const data = JSON.parse(event.data as string);
-        if (data.method === 'cpu_update') {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
-        }
-      };
-      ws.addEventListener('message', onMessage);
-    });
-    matterbridge.frontend.wssSendCpuUpdate(50, 35);
-    const response = await received;
-    expect(response).toBeDefined();
-    const data = JSON.parse(response as string);
-    expect(data).toBeDefined();
-    expect(data.id).toBe(0);
-    expect(data.src).toBe('Matterbridge');
-    expect(data.dst).toBe('Frontend');
-    expect(data.method).toBe('cpu_update');
-    expect(data.response).toEqual({ cpuUsage: 50, processCpuUsage: 35 });
-    expect(data.error).toBeUndefined();
-  });
-
-  test('Websocket SendMemoryUpdate', async () => {
-    expect(ws).toBeDefined();
-    expect(ws.readyState).toBe(WebSocket.OPEN);
-    const received = new Promise((resolve) => {
-      const onMessage = (event: WebSocket.MessageEvent) => {
-        const data = JSON.parse(event.data as string);
-        if (data.method === 'memory_update') {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
-        }
-      };
-      ws.addEventListener('message', onMessage);
-    });
-    matterbridge.frontend.wssSendMemoryUpdate('totalMemory', 'freeMemory', 'rss', 'heapTotal', 'heapUsed', 'external', 'arrayBuffers');
-    const response = await received;
-    expect(response).toBeDefined();
-    const data = JSON.parse(response as string);
-    expect(data).toBeDefined();
-    expect(data.id).toBe(0);
-    expect(data.src).toBe('Matterbridge');
-    expect(data.dst).toBe('Frontend');
-    expect(data.method).toBe('memory_update');
-    expect(data.response).toEqual({
-      totalMemory: 'totalMemory',
-      freeMemory: 'freeMemory',
-      rss: 'rss',
-      heapTotal: 'heapTotal',
-      heapUsed: 'heapUsed',
-      external: 'external',
-      arrayBuffers: 'arrayBuffers',
-    });
-    expect(data.error).toBeUndefined();
-  });
-
-  test('Websocket SendUptimeUpdate', async () => {
-    expect(ws).toBeDefined();
-    expect(ws.readyState).toBe(WebSocket.OPEN);
-    const received = new Promise((resolve) => {
-      const onMessage = (event: WebSocket.MessageEvent) => {
-        const data = JSON.parse(event.data as string);
-        if (data.method === 'uptime_update') {
-          ws.removeEventListener('message', onMessage);
-          resolve(event.data);
-        }
-      };
-      ws.addEventListener('message', onMessage);
-    });
-    matterbridge.frontend.wssSendUptimeUpdate('1 hour', '2 minutes');
-    const response = await received;
-    expect(response).toBeDefined();
-    const data = JSON.parse(response as string);
-    expect(data).toBeDefined();
-    expect(data.id).toBe(0);
-    expect(data.src).toBe('Matterbridge');
-    expect(data.dst).toBe('Frontend');
-    expect(data.method).toBe('uptime_update');
-    expect(data.response).toEqual({ systemUptime: '1 hour', processUptime: '2 minutes' });
-    expect(data.error).toBeUndefined();
-  });
-
   test('Websocket SendSnackbarMessage', async () => {
     expect(ws).toBeDefined();
     expect(ws.readyState).toBe(WebSocket.OPEN);
@@ -1760,20 +1674,33 @@ describe('Matterbridge frontend', () => {
     const received = new Promise((resolve) => {
       const onMessage = (event: WebSocket.MessageEvent) => {
         const data = JSON.parse(event.data as string);
-        if (data.method === 'memory_update') {
+        if (data.method === 'system_update') {
           ws.removeEventListener('message', onMessage);
           resolve(event.data);
         }
       };
       ws.addEventListener('message', onMessage);
     });
-    const msg: WsMessageApiMemoryUpdate = {
+    const msg: WsMessageApiSystemUpdate = {
       id: 0,
-      method: 'memory_update',
+      method: 'system_update',
       src: 'Matterbridge',
       dst: 'Frontend',
       success: true,
-      response: { totalMemory: 'tm', freeMemory: 'fm', heapTotal: 'ht', heapUsed: 'hu', external: 'ext', arrayBuffers: 'ab', rss: 'rss' },
+      response: {
+        systemUptime: 'su',
+        processUptime: 'pu',
+        totalMemory: 'tm',
+        freeMemory: 'fm',
+        constrainedMemory: 'cm',
+        rss: 'rss',
+        heapTotal: 'ht',
+        heapUsed: 'hu',
+        external: 'ext',
+        arrayBuffers: 'ab',
+        cpuUsage: 1.23,
+        processCpuUsage: 4.56,
+      },
     };
     expect(isBroadcast(msg as any)).toBeTruthy();
     expect(isApiRequest(msg as any)).toBeFalsy();
@@ -1786,7 +1713,7 @@ describe('Matterbridge frontend', () => {
     expect(data.id).toBe(0);
     expect(data.src).toBe('Matterbridge');
     expect(data.dst).toBe('Frontend');
-    expect(data.method).toBe('memory_update');
+    expect(data.method).toBe('system_update');
     expect(data.response).toEqual(msg.response);
     expect(data.error).toBeUndefined();
   });

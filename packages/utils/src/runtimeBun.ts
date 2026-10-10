@@ -3,7 +3,7 @@
  * @description This file contains Bun runtime helpers.
  * @author Luca Liguori
  * @created 2026-06-24
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -252,6 +252,22 @@ export function memoryFootprint(): number {
     }
   }
   return process.memoryUsage().rss;
+}
+
+/**
+ * Memory limit of the process in bytes: the container (cgroup) limit when there is one, otherwise the total system memory.
+ *
+ * Normalizes `process.constrainedMemory()` across runtimes. Without a limit, Node.js 20 returns `undefined`, newer Node.js
+ * returns 0 on macOS and Windows and UINT64_MAX in a Linux container, while Bun returns the total system memory.
+ *
+ * @returns {number} The memory limit in bytes, never more than `os.totalmem()`.
+ * @example
+ * const bytes = constrainedMemory();
+ */
+export function constrainedMemory(): number {
+  const totalMemory = os.totalmem();
+  const constrained = process.constrainedMemory() as number | undefined;
+  return typeof constrained === 'number' && Number.isFinite(constrained) && constrained > 0 && constrained < totalMemory ? constrained : totalMemory;
 }
 
 /* -------------------------------------------------------------------------- */

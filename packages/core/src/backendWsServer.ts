@@ -3,7 +3,7 @@
  * @description This file contains the class BackendWsServer.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -119,6 +119,10 @@ export class BackendWsServer {
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
+          break;
+        case 'frontend_broadcast_message':
+          this.wssBroadcastMessage(msg.params.msg);
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         // no default
       }
@@ -523,61 +527,6 @@ export class BackendWsServer {
     if (!this.hasActiveClients()) return;
     if (this.verbose) this.log.debug('Sending a matterbridge status update message to all connected clients');
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } });
-  }
-
-  /**
-   * Sends a cpu update message to all connected clients.
-   *
-   * @param {number} cpuUsage - The CPU usage percentage to send.
-   * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
-   */
-  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
-    if (!this.hasActiveClients()) return;
-    if (this.verbose) this.log.debug('Sending a cpu update message to all connected clients');
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'cpu_update',
-      success: true,
-      response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 },
-    });
-  }
-
-  /**
-   * Sends a memory update message to all connected clients.
-   *
-   * @param {string} totalMemory - The total memory in bytes.
-   * @param {string} freeMemory - The free memory in bytes.
-   * @param {string} rss - The resident set size in bytes.
-   * @param {string} heapTotal - The total heap memory in bytes.
-   * @param {string} heapUsed - The used heap memory in bytes.
-   * @param {string} external - The external memory in bytes.
-   * @param {string} arrayBuffers - The array buffers memory in bytes.
-   */
-  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
-    if (!this.hasActiveClients()) return;
-    if (this.verbose) this.log.debug('Sending a memory update message to all connected clients');
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'memory_update',
-      success: true,
-      response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers },
-    });
-  }
-
-  /**
-   * Sends an uptime update message to all connected clients.
-   *
-   * @param {string} systemUptime - The system uptime in a human-readable format.
-   * @param {string} processUptime - The process uptime in a human-readable format.
-   */
-  wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
-    if (!this.hasActiveClients()) return;
-    if (this.verbose) this.log.debug('Sending a uptime update message to all connected clients');
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
   }
 
   /**

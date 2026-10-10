@@ -3,7 +3,7 @@
  * @description This file contains the class Frontend.
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.3
+ * @version 1.4.4
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -77,7 +77,7 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import { isBun, memoryFootprint } from '@matterbridge/utils/bun';
+import { constrainedMemory, isBun, memoryFootprint } from '@matterbridge/utils/bun';
 import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
@@ -91,7 +91,6 @@ import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, n
 import type { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import { cliEmitter } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
 import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
@@ -677,18 +676,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       });
     }
 
-    // Subscribe to cli events
-    cliEmitter.removeAllListeners();
-    cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
-      this.wssSendUptimeUpdate(systemUptime, processUptime);
-    });
-    cliEmitter.on('memory', (totalMememory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) => {
-      this.wssSendMemoryUpdate(totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
-    });
-    cliEmitter.on('cpu', (cpuUsage: number, processCpuUsage: number) => {
-      this.wssSendCpuUpdate(cpuUsage, processCpuUsage);
-    });
-
     // Endpoint to validate login code
     // curl -X POST "http://localhost:8283/api/login" -H "Content-Type: application/json" -d "{\"password\":\"Here\"}"
     this.expressApp.post('/api/login', express.json(), (req, res) => {
@@ -1268,6 +1255,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   getApiSettings(): ApiSettings {
     // Update the variable system information properties
     this.matterbridge.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.matterbridge.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
     this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
     this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -2484,67 +2472,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Sends a cpu update message to all connected clients.
-   *
-   * @param {number} cpuUsage - The CPU usage percentage to send.
-   * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
-   */
-  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
-    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    /* v8 ignore next */
-    if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
-    // Send the message to all connected clients
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'cpu_update',
-      success: true,
-      response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 },
-    });
-  }
-
-  /**
-   * Sends a memory update message to all connected clients.
-   *
-   * @param {string} totalMemory - The total memory in bytes.
-   * @param {string} freeMemory - The free memory in bytes.
-   * @param {string} rss - The resident set size in bytes.
-   * @param {string} heapTotal - The total heap memory in bytes.
-   * @param {string} heapUsed - The used heap memory in bytes.
-   * @param {string} external - The external memory in bytes.
-   * @param {string} arrayBuffers - The array buffers memory in bytes.
-   */
-  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
-    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    /* v8 ignore next */
-    if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
-    // Send the message to all connected clients
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'memory_update',
-      success: true,
-      response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers },
-    });
-  }
-
-  /**
-   * Sends an uptime update message to all connected clients.
-   *
-   * @param {string} systemUptime - The system uptime in a human-readable format.
-   * @param {string} processUptime - The process uptime in a human-readable format.
-   */
-  wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
-    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    /* v8 ignore next */
-    if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
-    // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
-  }
-
-  /**
    * Sends an open snackbar message to all connected clients.
    *
    * @param {string} message - The message to send.
@@ -2624,7 +2551,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);
-    if (!['log', 'cpu_update', 'memory_update', 'uptime_update'].includes(msg.method)) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
+    if (!['log', 'system_update'].includes(msg.method)) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
       /* v8 ignore next */
       if (client.readyState === client.OPEN) {

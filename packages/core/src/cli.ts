@@ -3,7 +3,7 @@
  * @description This file contains the CLI entry point of Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 3.0.0
+ * @version 3.1.0
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -25,12 +25,15 @@
 /* oxlint-disable n/no-process-exit */
 
 // Node.js modules
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
 import { BroadcastServer } from '@matterbridge/thread/server';
+import type { ApiSystemUpdate } from '@matterbridge/types';
+import { constrainedMemory, memoryFootprint } from '@matterbridge/utils/bun';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatUptime } from '@matterbridge/utils/format';
@@ -58,23 +61,44 @@ const server = new BroadcastServer('cli', log);
  * Starts the CPU and memory tracker.
  */
 function startCpuMemoryCheck(): void {
+  const memoryUsage = process.memoryUsage();
+  const systemUpdate: ApiSystemUpdate = {
+    systemUptime: formatUptime(Math.floor(os.uptime())),
+    processUptime: formatUptime(Math.floor(process.uptime())),
+    totalMemory: formatBytes(os.totalmem()),
+    freeMemory: formatBytes(os.freemem()),
+    constrainedMemory: formatBytes(constrainedMemory()),
+    rss: formatBytes(memoryFootprint()),
+    heapTotal: formatBytes(memoryUsage.heapTotal),
+    heapUsed: formatBytes(memoryUsage.heapUsed),
+    external: formatBytes(memoryUsage.external),
+    arrayBuffers: formatBytes(memoryUsage.arrayBuffers),
+    cpuUsage: 0,
+    processCpuUsage: 0,
+  };
   log.debug(`Cpu memory check starting...`);
   tracker.start();
-  tracker.on('uptime', (os: number, process: number) => {
-    cliEmitter.emit('uptime', formatUptime(Math.floor(os)), formatUptime(Math.floor(process)));
+  tracker.on('uptime', (systemUptime: number, processUptime: number) => {
+    systemUpdate.systemUptime = formatUptime(Math.floor(systemUptime));
+    systemUpdate.processUptime = formatUptime(Math.floor(processUptime));
   });
   tracker.on('snapshot', (snapshot: TrackerSnapshot) => {
-    cliEmitter.emit(
-      'memory',
-      formatBytes(snapshot.totalMemory),
-      formatBytes(snapshot.freeMemory),
-      formatBytes(snapshot.rss),
-      formatBytes(snapshot.heapTotal),
-      formatBytes(snapshot.heapUsed),
-      formatBytes(snapshot.external),
-      formatBytes(snapshot.arrayBuffers),
-    );
-    cliEmitter.emit('cpu', snapshot.osCpu, snapshot.processCpu);
+    systemUpdate.totalMemory = formatBytes(snapshot.totalMemory);
+    systemUpdate.freeMemory = formatBytes(snapshot.freeMemory);
+    systemUpdate.constrainedMemory = formatBytes(snapshot.constrainedMemory);
+    systemUpdate.rss = formatBytes(snapshot.rss);
+    systemUpdate.heapTotal = formatBytes(snapshot.heapTotal);
+    systemUpdate.heapUsed = formatBytes(snapshot.heapUsed);
+    systemUpdate.external = formatBytes(snapshot.external);
+    systemUpdate.arrayBuffers = formatBytes(snapshot.arrayBuffers);
+    systemUpdate.cpuUsage = Math.round(snapshot.osCpu * 100) / 100;
+    systemUpdate.processCpuUsage = Math.round(snapshot.processCpu * 100) / 100;
+    server.request({
+      type: 'frontend_broadcast_message',
+      src: 'cli',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'system_update', success: true, response: systemUpdate } },
+    });
   });
   log.debug(`Cpu memory check started`);
 }

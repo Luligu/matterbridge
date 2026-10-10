@@ -3,7 +3,7 @@
  * @description This file contains the Jest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -36,9 +36,9 @@ import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-c
 import { AggregatorEndpoint } from '@matter/node/endpoints';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
+import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';
 // node-ansi-logger module
-import { er, rs } from 'node-ansi-logger';
+import { er, LogLevel, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from '../flushAsync.js';
@@ -154,6 +154,7 @@ export function getMatterbridge(): PlatformMatterbridge {
       osArch: 'arm64',
       totalMemory: '0 B',
       freeMemory: '0 B',
+      constrainedMemory: '0 B',
       systemUptime: '0s',
       processUptime: '0s',
       cpuUsage: '0%',
@@ -180,6 +181,73 @@ export function getMatterbridge(): PlatformMatterbridge {
     aggregatorVendorName: 'Matterbridge',
     aggregatorProductId: 0x8000,
     aggregatorProductName: 'Matterbridge Jest',
+  };
+  return matterbridge;
+}
+
+/**
+ * Get a mocked SharedMatterbridge.
+ *
+ * @returns {SharedMatterbridge} An object representing the mocked SharedMatterbridge.
+ */
+export function getSharedMatterbridge(): SharedMatterbridge {
+  const matterbridge: SharedMatterbridge = {
+    systemInformation: {
+      interfaceName: 'eth0',
+      macAddress: 'aa:bb:cc:dd:ee:ff',
+      ipv4Address: '192.168.68.100',
+      ipv6Address: 'fd78:cbf8:4939:46e2:51b2:2163:7f88:c33d',
+      nodeVersion: '24.16.0',
+      hostname: 'matterbridge',
+      user: 'jest',
+      osType: 'Linux',
+      osRelease: '6.8.0-xxxx',
+      osPlatform: 'linux',
+      osArch: 'arm64',
+      totalMemory: '0 B',
+      freeMemory: '0 B',
+      constrainedMemory: '0 B',
+      systemUptime: '0s',
+      processUptime: '0s',
+      cpuUsage: '0%',
+      processCpuUsage: '0%',
+      rss: '0 B',
+      heapTotal: '0 B',
+      heapUsed: '0 B',
+    },
+    uuid: '00000000-0000-0000-0000-000000000000',
+    rootDirectory: HOMEDIR,
+    homeDirectory: HOMEDIR,
+    matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
+    matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
+    matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
+    globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
+    matterbridgeVersion: '3.10.14',
+    matterbridgeLatestVersion: '3.10.14',
+    matterbridgeDevVersion: '3.10.14',
+    frontendVersion: '3.6.5',
+    dockerDev: undefined,
+    dockerVersion: undefined,
+    dockerLatestVersion: undefined,
+    dockerDevVersion: undefined,
+    bridgeMode: 'none',
+    restartMode: 'none',
+    virtualMode: 'mounted_switch',
+    profile: undefined,
+    logLevel: LogLevel.DEBUG,
+    fileLogger: false,
+    matterLogLevel: LogLevel.DEBUG,
+    matterFileLogger: false,
+    mdnsInterface: undefined,
+    ipv4Address: undefined,
+    ipv6Address: undefined,
+    port: undefined,
+    discriminator: undefined,
+    passcode: undefined,
+    startupAt: 0,
+    shutdownAt: 0,
+    runningTimes: 0,
+    runningDays: 0,
   };
   return matterbridge;
 }

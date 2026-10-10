@@ -28,17 +28,11 @@ describe('cliEmitter', () => {
     const listener = vi.fn();
     cliEmitter.once('ready', listener);
     cliEmitter.once('shutdown', listener);
-    cliEmitter.once('cpu', listener);
-    cliEmitter.once('memory', listener);
-    cliEmitter.once('uptime', listener);
 
     cliEmitter.emit('ready');
     cliEmitter.emit('shutdown');
-    cliEmitter.emit('cpu', 12.5, 3.25);
-    cliEmitter.emit('memory', '2 GB', '1 GB', '512 MB', '256 MB', '128 MB', '64 MB', '32 MB');
-    cliEmitter.emit('uptime', '1 hour', '1 minute');
 
-    expect(listener.mock.calls).toEqual([[], [], [12.5, 3.25], ['2 GB', '1 GB', '512 MB', '256 MB', '128 MB', '64 MB', '32 MB'], ['1 hour', '1 minute']]);
+    expect(listener.mock.calls).toEqual([[], []]);
     expect(cliEmitter.eventNames()).toEqual([]);
   });
 });

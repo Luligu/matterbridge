@@ -3,7 +3,7 @@
  * @description This file contains the types for WebSocket messages.
  * @author Luca Liguori
  * @created 2025-09-17
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -53,6 +53,21 @@ export interface ApiSelectEntity {
   name: string;
   description: string;
   icon?: string;
+}
+
+export interface ApiSystemUpdate {
+  systemUptime: string;
+  processUptime: string;
+  totalMemory: string;
+  freeMemory: string;
+  constrainedMemory: string;
+  rss: string;
+  heapTotal: string;
+  heapUsed: string;
+  external: string;
+  arrayBuffers: string;
+  cpuUsage: number;
+  processCpuUsage: number;
 }
 
 /**
@@ -509,36 +524,10 @@ export interface WsMessageApiRestartNotRequired extends WsMessageSuccessApiRespo
   method: 'restart_not_required';
 }
 
-export interface WsMessageApiCpuUpdate extends WsMessageSuccessApiResponse {
+export interface WsMessageApiSystemUpdate extends WsMessageSuccessApiResponse {
   id: 0;
-  method: 'cpu_update';
-  response: {
-    cpuUsage: number;
-    processCpuUsage: number;
-  };
-}
-
-export interface WsMessageApiMemoryUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'memory_update';
-  response: {
-    totalMemory: string;
-    freeMemory: string;
-    heapTotal: string;
-    heapUsed: string;
-    external: string;
-    arrayBuffers: string;
-    rss: string;
-  };
-}
-
-export interface WsMessageApiUptimeUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'uptime_update';
-  response: {
-    systemUptime: string;
-    processUptime: string;
-  };
+  method: 'system_update';
+  response: ApiSystemUpdate;
 }
 
 export interface WsMessageApiSnackbar extends WsMessageSuccessApiResponse {
@@ -736,9 +725,7 @@ export type WsMessageApiResponse =
   | WsMessageApiPluginUpdateRequired
   | WsMessageApiPluginStatusUpdate
   | WsMessageApiMatterbridgeStatusUpdate
-  | WsMessageApiCpuUpdate
-  | WsMessageApiMemoryUpdate
-  | WsMessageApiUptimeUpdate
+  | WsMessageApiSystemUpdate
   | WsMessageApiStateUpdate
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
@@ -756,9 +743,7 @@ export type WsMessageBroadcast =
   | WsMessageApiPluginUpdateRequired
   | WsMessageApiPluginStatusUpdate
   | WsMessageApiMatterbridgeStatusUpdate
-  | WsMessageApiCpuUpdate
-  | WsMessageApiMemoryUpdate
-  | WsMessageApiUptimeUpdate
+  | WsMessageApiSystemUpdate
   | WsMessageApiStateUpdate
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar

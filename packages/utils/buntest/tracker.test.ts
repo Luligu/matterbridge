@@ -7,7 +7,8 @@
 import { afterAll, afterEach, beforeEach, describe, expect, spyOn, test, vi } from 'bun:test';
 import os, { type CpuInfo } from 'node:os';
 
-import { consoleLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { consoleLogSpy, loggerLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { CYAN, db, LogLevel } from 'node-ansi-logger';
 
 import { logModuleLoaded } from '../src/loader.js';
 
@@ -74,14 +75,59 @@ describe('Tracker', () => {
     expect(spyMem).toHaveBeenCalled();
   });
 
-  test('single-dash debug and verbose flags do not enable verbose mode', async () => {
+  test('single-dash debug and verbose flags enable verbose mode', async () => {
     process.argv.push('-verbose', '-debug');
     const spyMem = track(spyOn(process, 'memoryUsage'));
 
     const { Tracker } = await import('../src/tracker.js');
     new Tracker('SingleDashTester');
 
-    expect(spyMem).not.toHaveBeenCalled();
+    expect(spyMem).toHaveBeenCalled();
+  });
+
+  test('verbose mode logs one-line system info summaries', async () => {
+    process.argv.push('--verbose', '--debug');
+    const cpu = (model: string, speed: number): CpuInfo => ({ model, speed, times: { user: 0, nice: 0, sys: 0, idle: 0, irq: 0 } });
+    track(spyOn(os, 'cpus')).mockReturnValue([cpu('Big', 3000), cpu('Big', 3000), cpu('Little', 2000)]);
+    track(spyOn(os, 'availableParallelism')).mockReturnValue(3);
+    track(spyOn(process, 'cpuUsage')).mockReturnValue({ user: 1_500_000, system: 250_000 });
+    track(spyOn(process, 'memoryUsage')).mockReturnValue({
+      rss: 1024 * 1024,
+      heapTotal: 2 * 1024 * 1024,
+      heapUsed: 3 * 1024 * 1024,
+      external: 4 * 1024 * 1024,
+      arrayBuffers: 5 * 1024 * 1024,
+    });
+    track(spyOn(process, 'constrainedMemory')).mockReturnValue(512 * 1024 * 1024);
+    track(spyOn(os, 'uptime')).mockReturnValue(2 * 86400 + 5);
+    track(spyOn(process, 'uptime')).mockReturnValue(3 * 3600 + 7);
+
+    const { Tracker } = await import('../src/tracker.js');
+    new Tracker('SummaryTester');
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `os.cpus(): ${CYAN}2 × Big @ 3000 MHz${db}, ${CYAN}1 × Little @ 2000 MHz${db} (availableParallelism ${CYAN}3${db})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `process.cpuUsage(): user ${CYAN}1.50 s${db}, system ${CYAN}0.25 s${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `process.memoryUsage(): rss ${CYAN}1.00 MB${db}, heapTotal ${CYAN}2.00 MB${db}, heapUsed ${CYAN}3.00 MB${db}, external ${CYAN}4.00 MB${db}, arrayBuffers ${CYAN}5.00 MB${db}`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `constrainedMemory(): ${CYAN}512.00 MB${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `os.uptime(): ${CYAN}2 days${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `process.uptime(): ${CYAN}3 hours${db}`);
+  });
+
+  test('verbose mode logs unknown cpus and no memory constraint', async () => {
+    process.argv.push('--verbose', '--debug');
+    track(spyOn(os, 'cpus')).mockReturnValue([]);
+    track(spyOn(os, 'availableParallelism')).mockReturnValue(1);
+    track(spyOn(process, 'constrainedMemory')).mockReturnValue(0);
+    track(spyOn(os, 'totalmem')).mockReturnValue(8 * 1024 * 1024 * 1024);
+
+    const { Tracker } = await import('../src/tracker.js');
+    new Tracker('UnknownCpuTester');
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `os.cpus(): ${CYAN}unknown${db} (availableParallelism ${CYAN}1${db})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `constrainedMemory(): ${CYAN}8.00 GB${db}`);
   });
 
   test('does not print loader banner when flag is absent', async () => {
@@ -135,6 +181,24 @@ describe('Tracker', () => {
 
     expect(memorySpy).toHaveBeenCalledWith(expect.any(Number), expect.any(Number), expected, 1, 2, 3, 4);
     expect(snapshotSpy).toHaveBeenCalledWith(expect.objectContaining({ rss: expected, peakRss: expected }));
+  });
+
+  test('samples the total memory as constrained memory when Node.js 20 returns undefined', async () => {
+    vi.useFakeTimers();
+    const constrainedMemorySpy = track(spyOn(process, 'constrainedMemory').mockReturnValueOnce(undefined as unknown as number));
+    track(spyOn(os, 'totalmem')).mockReturnValue(8 * 1024 * 1024 * 1024);
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('ConstrainedMemory');
+    tracker.resetPeaks();
+    const snapshotSpy = vi.fn();
+    tracker.on('snapshot', snapshotSpy);
+
+    tracker.start(20);
+    vi.advanceTimersByTime(20);
+    tracker.stop();
+
+    expect(constrainedMemorySpy).toHaveBeenCalledTimes(1);
+    expect(snapshotSpy).toHaveBeenCalledWith(expect.objectContaining({ constrainedMemory: 8 * 1024 * 1024 * 1024 }));
   });
 
   test('constructor tracker flag does not enable sample debug output without debug flag', async () => {
