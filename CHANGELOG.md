@@ -77,6 +77,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [tests]: Prevent test output leakage.
+- [core]: Don't answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught `ERR_HTTP_HEADERS_SENT` (oven-sh/bun#44925).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

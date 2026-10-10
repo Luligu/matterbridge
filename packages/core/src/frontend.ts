@@ -100,6 +100,20 @@ import type { Plugin } from './pluginManager.js';
 logModuleLoaded('Frontend');
 
 /**
+ * Sends the 500 response of a failed res.download(), unless the client aborted the request (ECONNABORTED).
+ * The client is gone in that case, and answering breaks on Bun 1.4.3, where ending the orphaned response
+ * sets res._header but leaves res.headersSent false, so send throws ERR_HTTP_HEADERS_SENT (https://github.com/oven-sh/bun/issues/44925).
+ *
+ * @param {import('express').Response} res - The response of the download.
+ * @param {Error} error - The error passed to the res.download() callback.
+ * @param {string} message - The message to send with the 500 status.
+ */
+function sendDownloadError(res: import('express').Response, error: Error, message: string): void {
+  if ((error as NodeJS.ErrnoException).code === 'ECONNABORTED' || res.headersSent) return;
+  res.status(500).send(message);
+}
+
+/**
  * Represents the Frontend events.
  */
 interface FrontendEvents {
@@ -806,7 +820,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         if (error) {
           logError(this.log, `Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}`, error);
-          res.status(500).send('Error downloading the matterbridge log file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge log file');
         } else {
           this.log.debug(`Matterbridge log file ${MATTERBRIDGE_LOGGER_FILE} downloaded successfully`);
         }
@@ -845,7 +859,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         if (error) {
           logError(this.log, `Error downloading log file ${MATTER_LOGGER_FILE}`, error);
-          res.status(500).send('Error downloading the matter log file');
+          sendDownloadError(res, error, 'Error downloading the matter log file');
         } else {
           this.log.debug(`Matter log file ${MATTER_LOGGER_FILE} downloaded successfully`);
         }
@@ -886,7 +900,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the diagnostic log file');
+          sendDownloadError(res, error, 'Error downloading the diagnostic log file');
         } else {
           this.log.debug(`Diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE} downloaded successfully`);
         }
@@ -921,7 +935,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
             logError(this.log, `Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
-            res.status(500).send('Error downloading history file');
+            sendDownloadError(res, error, 'Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
@@ -940,7 +954,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
         if (error) {
           logError(this.log, `Error downloading file matterbridge.backup.zip`, error);
-          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${getErrorMessage(error)}`);
+          sendDownloadError(res, error, `Error downloading file matterbridge.backup.zip: ${getErrorMessage(error)}`);
         } else {
           this.log.debug('Backup matterbridge.backup.zip downloaded successfully');
         }
@@ -955,7 +969,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
         if (error) {
           this.log.error(`Error downloading file matterbridge.${NODE_STORAGE_DIR}.zip: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matterbridge storage file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge storage file');
         } else {
           this.log.debug(`Matterbridge storage matterbridge.${NODE_STORAGE_DIR}.zip downloaded successfully`);
         }
@@ -970,7 +984,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating matter storage backup...');
         if (error) {
           logError(this.log, `Error downloading the matter storage matterbridge.${MATTER_STORAGE_DIR}.zip`, error);
-          res.status(500).send('Error downloading the matter storage zip file');
+          sendDownloadError(res, error, 'Error downloading the matter storage zip file');
         } else {
           this.log.debug(`Matter storage matterbridge.${MATTER_STORAGE_DIR}.zip downloaded successfully`);
         }
@@ -985,7 +999,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating plugin backup...');
         if (error) {
           logError(this.log, `Error downloading file matterbridge.pluginstorage.zip`, error);
-          res.status(500).send('Error downloading the matterbridge plugin storage file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge plugin storage file');
         } else {
           this.log.debug('Plugin storage matterbridge.pluginstorage.zip downloaded successfully');
         }
@@ -1000,7 +1014,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating config backup...');
         if (error) {
           logError(this.log, `Error downloading file matterbridge.pluginconfig.zip`, error);
-          res.status(500).send('Error downloading the matterbridge plugin config file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge plugin config file');
         } else {
           this.log.debug('Plugin config matterbridge.pluginconfig.zip downloaded successfully');
         }
