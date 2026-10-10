@@ -76,6 +76,7 @@ export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDev
  * Manages Matterbridge devices.
  */
 export class DeviceManager {
+  /** A map of unique IDs to Matterbridge endpoints for quick lookup. Keyed by the unique ID of each device. */
   private readonly _devices = new Map<string, MatterbridgeEndpoint>();
   private readonly log: AnsiLogger;
   private readonly server: BroadcastServer;

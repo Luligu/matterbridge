@@ -19,7 +19,7 @@ import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
 import { getSharedMatterbridge } from '@matterbridge/test-utils/buntest/matter';
-import { HOMEDIR, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { HOMEDIR, loggerDebugSpy, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
@@ -100,6 +100,7 @@ describe('MatterNode dynamic', () => {
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge, 'matterbridge-mock1');
+    expect(loggerDebugSpy).toHaveBeenCalledWith('MatterNode for matterbridge-mock1 loaded');
   });
 
   beforeEach(() => {

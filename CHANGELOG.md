@@ -53,6 +53,11 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [core]: Fetch platform and shared Matterbridge data after MatterNode construction.
+- [core]: Return the MatterNode shared Matterbridge instance to plugin platforms.
+- [core]: Bind plugin endpoint callbacks to their MatterNode instance.
+- [core]: Catch and log MatterNode broadcast message handler rejections with `fireAndForget`.
+- [core]: Skip unchanged values when initializing MatterNode storage contexts.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.
 - [matterbridge]: Bump `marked` to v.18.1.0.
 - [matterbridge]: Bump `oxfmt` to v.0.72.0.

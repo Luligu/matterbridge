@@ -2124,8 +2124,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
 
       // Stop the frontend
-      await this.frontend.stop();
-      this.frontend.destroy();
+      if (!hasParameter('experimental-backend')) {
+        await this.frontend.stop();
+        this.frontend.destroy();
+      }
 
       // Close PluginManager and DeviceManager
       this.plugins.destroy();
@@ -2268,6 +2270,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       },
     });
   }
+
   /**
    * Starts the Matterbridge in bridge mode.
    *

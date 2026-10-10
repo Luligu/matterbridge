@@ -18,7 +18,7 @@ import path from 'node:path';
 import url from 'node:url';
 
 import { getSharedMatterbridge } from '@matterbridge/test-utils/buntest/matter';
-import { HOMEDIR, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { HOMEDIR, loggerDebugSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { NODE_STORAGE_DIR } from '@matterbridge/types';
@@ -159,6 +159,7 @@ describe('MatterNode server', () => {
     spy.mockRestore();
     void matter.dependantMatterNodes.get('Temperaturesensor')?.destroy();
     expect(await matter.addBridgedEndpoint('matterbridge-mock1', tmpSensor)).not.toBeUndefined();
+    expect(loggerDebugSpy).toHaveBeenCalledWith('MatterNode for Temperaturesensor loaded');
   }, 30000);
 
   test('Stress test adding and removing server mode endpoints in bridge mode not started', async () => {

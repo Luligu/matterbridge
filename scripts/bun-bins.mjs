@@ -1,11 +1,11 @@
 /**
  * bun-bins.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Rewrites shebangs in bin files from Node to Bun.
  *
  * Usage:
- *   node scripts/bun-bins.mjs [--dry-run]
+ *   bun scripts/bun-bins.mjs [--dry-run]
  */
 
 import fs from 'node:fs/promises';
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 function usage() {
   return [
-    'Usage: node scripts/bun-bins.mjs [--dry-run]',
+    'Usage: bun scripts/bun-bins.mjs [--dry-run]',
     '',
     'What it does:',
     '  1) Reads files in the bin folder',

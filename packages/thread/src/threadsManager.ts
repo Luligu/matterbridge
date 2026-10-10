@@ -123,8 +123,8 @@ export class ThreadsManager {
     { name: 'SpawnCommand', path: 'workerSpawnCommand.js', type: 'worker' },
     { name: 'ArchiveCommand', path: 'workerArchiveCommand.js', type: 'worker' },
     { name: 'DockerVersion', path: 'workerDockerVersion.js', type: 'worker' },
-    { name: 'Backend', path: 'threadBackend.js', type: 'thread' },
-    { name: 'RootNode', path: 'threadRootNode.js', type: 'thread', multiple: true },
+    { name: 'Backend', path: 'threadBackend.js', type: 'thread', startup: true, shutdown: true },
+    { name: 'RootNode', path: 'threadRootNode.js', type: 'thread', multiple: true, startup: true, shutdown: true },
     { name: 'Tracker', path: 'threadTracker.js', type: 'thread', multiple: true, startup: true, shutdown: true },
   ];
 
