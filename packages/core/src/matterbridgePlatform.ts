@@ -672,6 +672,17 @@ export class MatterbridgePlatform {
     }
 
     await this.#addBridgedEndpoint?.(this.name, device);
+    const nameOverrides = this.config.deviceNameOverrides;
+    if (
+      device.mode === undefined &&
+      (this.matterbridge.bridgeMode === 'bridge' || (this.matterbridge.bridgeMode === 'childbridge' && this.type === 'DynamicPlatform')) &&
+      isValidObject(nameOverrides)
+    ) {
+      const override = Object.getOwnPropertyDescriptor(nameOverrides, device.serialNumber)?.value;
+      if (isValidString(override, 1, 32) && device.hasAttributeServer(BridgedDeviceBasicInformation, 'nodeLabel')) {
+        await device.setStateOf(BridgedDeviceBasicInformation, { nodeLabel: override });
+      }
+    }
     this.#registeredEndpoints.set(device.uniqueId, device);
   }
 

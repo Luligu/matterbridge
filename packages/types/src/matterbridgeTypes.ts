@@ -285,6 +285,8 @@ export interface ApiDevice {
   type: string;
   endpoint: EndpointNumber | undefined;
   name: string;
+  /** The device's Matter node label, if it has a BridgedDeviceBasicInformation cluster. */
+  matterName?: string;
   serial: string;
   productUrl: string;
   configUrl?: string;

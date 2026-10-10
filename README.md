@@ -200,6 +200,8 @@ Home page
 
 [Devices page](./screenshots/Screenshot%20devices.jpg)
 
+On the Devices page, use the edit button to set a Matter device name (up to 32 characters). The name is saved as a per-plugin serial-number override and reapplied when the bridged device is registered again.
+
 [Logs page](./screenshots/Screenshot%20logs.jpg)
 
 [Config editor](./screenshots/Screenshot%20config%20editor.jpg)
