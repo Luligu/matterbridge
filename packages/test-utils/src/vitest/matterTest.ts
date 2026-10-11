@@ -43,6 +43,7 @@ import { er, LogLevel, rs } from 'node-ansi-logger';
 // local modules
 import { flushAsync } from '../flushAsync.js';
 import { inspectError } from '../inspectError.js';
+import { getInterfaceName } from '../network.js';
 import { HOMEDIR, log, NAME } from './setupTest.js';
 
 export let environment: Environment;
@@ -521,6 +522,10 @@ export async function createServerNode(
 ): Promise<[ServerNode, Endpoint<AggregatorEndpoint>]> {
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
+
+  // Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+  const mdnsInterface = getInterfaceName();
+  if (mdnsInterface) environment.vars.set('mdns.networkInterface', mdnsInterface);
 
   // Create the server node
   server = await ServerNode.create({
