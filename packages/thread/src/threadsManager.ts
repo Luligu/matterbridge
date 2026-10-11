@@ -282,12 +282,14 @@ export class ThreadsManager {
     for (const thread of this.threads) {
       // A multiple thread keeps its workers in instances, the others in the thread info itself
       for (const info of [thread, ...(thread.instances ?? [])] as (ThreadInfo | ThreadInstanceInfo)[]) {
-        if (info.worker && Date.now() - (info.lastSeen ?? 0) > this.intervalMs) {
+        // Ping the worker to check if it is still responsive.
+        if (info.worker) {
           const msg: ParentPortMessage = { type: 'ping', threadId: info.worker.threadId, threadName: thread.name };
           info.worker.postMessage(msg);
+          this.log.debug(`Sent ping to thread ${thread.name} threadId ${info.worker.threadId}`);
         }
         if (info.worker && Date.now() - (info.lastSeen ?? 0) > this.intervalMs * 2) {
-          this.log.warn(`Thread ${CYAN}${thread.name}${db} has not been seen for more than ${this.intervalMs * 2} ms. It may be unresponsive.`);
+          this.log.warn(`Thread ${CYAN}${thread.name}${wr} has not been seen for more than ${this.intervalMs * 2} ms. It may be unresponsive.`);
         }
       }
     }
@@ -374,8 +376,10 @@ export class ThreadsManager {
       if (this.verbose) this.log.debug(`Thread ${threadInfo.name} sent a message at ${new Date(now).toISOString()}: ${debugStringify(message)}`);
       if (message.type === 'init') {
         threadInfo.runCount = (threadInfo.runCount ?? 0) + 1;
-        this.log.debug(`Thread ${threadInfo.name} is online started at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
-        // The worker is loaded and listening on its parentPort: request it to start up
+        this.log.debug(`Thread ${threadInfo.name} is initialized at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
+      } else if (message.type === 'ready') {
+        this.log.debug(`Thread ${threadInfo.name} is ready at ${new Date(now).toISOString()} with thread id ${worker.threadId}`);
+        // The worker is fully loaded: request it to start up
         if (threadInfo.startup) {
           const startupMessage: ParentPortMessage = { type: 'startup', threadName: threadInfo.name, threadId: worker.threadId };
           worker.postMessage(startupMessage);

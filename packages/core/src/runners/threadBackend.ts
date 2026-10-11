@@ -26,9 +26,15 @@ import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
+import type { Backend } from '../backend.js';
+
 logModuleLoaded('Backend', '\u001B[35m');
 
-export default new ThreadsWrapper('Backend', async (worker) => {
+export default new ThreadsWrapper('Backend', entrypoint, startup, shutdown);
+
+let backend: Backend | undefined;
+
+async function entrypoint(worker: ThreadsWrapper): Promise<boolean> {
   worker.logger(LogLevel.INFO, 'Creating backend...');
   try {
     worker.logger(LogLevel.DEBUG, 'Fetching shared Matterbridge state...');
@@ -36,15 +42,26 @@ export default new ThreadsWrapper('Backend', async (worker) => {
     worker.logger(LogLevel.DEBUG, 'Shared Matterbridge state fetched; importing Backend...');
     const { Backend } = await import('../backend.js');
     worker.logger(LogLevel.DEBUG, 'Backend imported; creating instance...');
-    const backend = new Backend(shared);
-    worker.logger(LogLevel.DEBUG, 'Starting Backend...');
-    // Start the backend server. It will keep running until explicitly stopped.
-    await backend.start();
-    worker.logger(LogLevel.DEBUG, 'Backend started');
+    backend = new Backend(shared);
+    worker.logger(LogLevel.DEBUG, 'Backend instance created');
     return true;
   } catch (error) {
     const errorMessage = inspectError(worker.log, 'Failed to create backend', error);
     worker.logger(LogLevel.ERROR, errorMessage);
     return false;
   }
-});
+}
+
+async function startup(worker: ThreadsWrapper): Promise<void> {
+  if (!backend) return;
+  worker.logger(LogLevel.DEBUG, 'Starting up Backend...');
+  await backend.start();
+  worker.logger(LogLevel.DEBUG, 'Backend has been started');
+}
+
+async function shutdown(worker: ThreadsWrapper): Promise<void> {
+  if (!backend) return;
+  worker.logger(LogLevel.DEBUG, 'Shutting down Backend...');
+  await backend.stop();
+  worker.logger(LogLevel.DEBUG, 'Backend has been shut down');
+}

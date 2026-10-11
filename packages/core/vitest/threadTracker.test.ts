@@ -6,6 +6,7 @@
 
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { ThreadsWrapper } from '@matterbridge/thread/wrapper';
+import { LogLevel } from 'node-ansi-logger';
 
 // Setup the test environment
 await setupTest('ThreadTracker', false);
@@ -44,13 +45,30 @@ describe('ThreadTracker', () => {
   test('should create the Tracker and start and stop it on startup and shutdown', async () => {
     await expect(wrapper.entrypoint(wrapper)).resolves.toBe(true);
     expect(wrapper.name).toBe('Tracker');
-    expect(createTracker).toHaveBeenCalledWith('Tracker', true, false, true);
+    expect(createTracker).toHaveBeenCalledWith('Tracker', false, false, true);
     expect(start).not.toHaveBeenCalled();
-    wrapper.emit('startup');
+    await wrapper.startup?.(wrapper);
     expect(start).toHaveBeenCalledTimes(1);
     expect(stop).not.toHaveBeenCalled();
-    wrapper.emit('shutdown');
+    await wrapper.shutdown?.(wrapper);
     expect(stop).toHaveBeenCalledTimes(1);
+  });
+
+  test('should log the startup and shutdown events', async () => {
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(true);
+    wrapper.emit('startup');
+    wrapper.emit('shutdown');
+    expect(wrapper.logger).toHaveBeenCalledWith(LogLevel.NOTICE, 'Tracker received startup');
+    expect(wrapper.logger).toHaveBeenCalledWith(LogLevel.NOTICE, 'Tracker received shutdown');
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  test('should do nothing on startup and shutdown when the Tracker was not created', async () => {
+    await wrapper.startup?.(wrapper);
+    await wrapper.shutdown?.(wrapper);
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
   });
 
   test('should report failure when Tracker construction fails', async () => {

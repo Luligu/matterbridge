@@ -50,21 +50,12 @@ describe('ThreadTracker', () => {
     resetTest();
   });
 
-  test('should create the Tracker and start and stop it on startup and shutdown', async () => {
-    expect(await wrapper.entrypoint(wrapper)).toBe(true);
-    expect(wrapper.name).toBe('Tracker');
-    expect(createTracker).toHaveBeenCalledWith('Tracker', true, false, true);
-    expect(logger).toHaveBeenCalledWith(LogLevel.DEBUG, 'Tracker created');
+  // The runner keeps the Tracker in module state across tests: this test must run before any successful entrypoint
+  test('should do nothing on startup and shutdown when the Tracker was not created', async () => {
+    await wrapper.startup?.(wrapper);
+    await wrapper.shutdown?.(wrapper);
     expect(start).not.toHaveBeenCalled();
-
-    wrapper.emit('startup');
-    expect(start).toHaveBeenCalledTimes(1);
     expect(stop).not.toHaveBeenCalled();
-    expect(logger).toHaveBeenCalledWith(LogLevel.NOTICE, 'Tracker received startup');
-
-    wrapper.emit('shutdown');
-    expect(stop).toHaveBeenCalledTimes(1);
-    expect(logger).toHaveBeenCalledWith(LogLevel.NOTICE, 'Tracker received shutdown');
   });
 
   test('should report failure when Tracker construction fails', async () => {
@@ -75,5 +66,30 @@ describe('ThreadTracker', () => {
     expect(logger).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Failed to create tracker'));
     expect(wrapper.listenerCount('startup')).toBe(0);
     expect(start).not.toHaveBeenCalled();
+  });
+
+  test('should create the Tracker and start and stop it on startup and shutdown', async () => {
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    expect(wrapper.name).toBe('Tracker');
+    expect(createTracker).toHaveBeenCalledWith('Tracker', false, false, true);
+    expect(logger).toHaveBeenCalledWith(LogLevel.DEBUG, 'Tracker created');
+    expect(start).not.toHaveBeenCalled();
+
+    await wrapper.startup?.(wrapper);
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+
+    await wrapper.shutdown?.(wrapper);
+    expect(stop).toHaveBeenCalledTimes(1);
+  });
+
+  test('should log the startup and shutdown events', async () => {
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    wrapper.emit('startup');
+    wrapper.emit('shutdown');
+    expect(logger).toHaveBeenCalledWith(LogLevel.NOTICE, 'Tracker received startup');
+    expect(logger).toHaveBeenCalledWith(LogLevel.NOTICE, 'Tracker received shutdown');
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
   });
 });

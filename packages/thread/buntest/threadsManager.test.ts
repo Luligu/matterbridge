@@ -222,7 +222,7 @@ describe('ThreadsManager', () => {
       }
     });
 
-    test('should send the startup message on init only when the thread has startup set', async () => {
+    test('should send the startup message on ready only when the thread has startup set', async () => {
       const { EventEmitter } = await import('node:events');
       const manager = new ThreadsManager(coreDirectory);
       const threads = manager['threads'] as Array<any>;
@@ -238,10 +238,13 @@ describe('ThreadsManager', () => {
         const startupWorker = manager.runThread('StartupWorker');
         expect(startupWorker.postMessage).not.toHaveBeenCalled();
         startupWorker.emit('message', { type: 'init', threadId: 1, threadName: 'StartupWorker', success: true });
+        expect(startupWorker.postMessage).not.toHaveBeenCalled();
+        startupWorker.emit('message', { type: 'ready', threadId: 1, threadName: 'StartupWorker', success: true });
         expect(startupWorker.postMessage).toHaveBeenCalledWith({ type: 'startup', threadName: 'StartupWorker', threadId: 1 });
 
         const plainWorker = manager.runThread('PlainWorker');
         plainWorker.emit('message', { type: 'init', threadId: 2, threadName: 'PlainWorker', success: true });
+        plainWorker.emit('message', { type: 'ready', threadId: 2, threadName: 'PlainWorker', success: true });
         expect(plainWorker.postMessage).not.toHaveBeenCalled();
       } finally {
         manager.destroy();
@@ -876,7 +879,7 @@ describe('ThreadsManager', () => {
       manager.destroy();
     });
 
-    test('pings after interval and warns after 2x interval', () => {
+    test('pings on every interval and warns after 2x interval', () => {
       const manager = new ThreadsManager(coreDirectory, 1000);
       const warnSpy = vi.spyOn((manager as any).log, 'warn');
 
@@ -886,11 +889,11 @@ describe('ThreadsManager', () => {
 
       const nowSpy = vi.spyOn(Date, 'now');
       try {
-        // Not stale yet: no ping, no warn (covers false branches when worker exists)
+        // Not stale yet: ping, no warn
         nowSpy.mockReturnValue(10_000);
         thread.lastSeen = 9_500;
         (manager as any).intervalHandler();
-        expect(thread.worker.postMessage).not.toHaveBeenCalled();
+        expect(thread.worker.postMessage).toHaveBeenCalledWith({ type: 'ping', threadId: 123, threadName: thread.name });
         expect(warnSpy).not.toHaveBeenCalled();
 
         // Between 1x and 2x: ping but no warn
@@ -927,7 +930,7 @@ describe('ThreadsManager', () => {
         rootNode.instances = [{ worker: staleWorker, lastSeen: 7_999 }, { worker: freshWorker, lastSeen: 9_500 }, { lastSeen: 0 }];
         (manager as any).intervalHandler();
         expect(staleWorker.postMessage).toHaveBeenCalledWith({ type: 'ping', threadId: 7, threadName: 'RootNode' });
-        expect(freshWorker.postMessage).not.toHaveBeenCalled();
+        expect(freshWorker.postMessage).toHaveBeenCalledWith({ type: 'ping', threadId: 8, threadName: 'RootNode' });
         expect(warnSpy).toHaveBeenCalledTimes(1);
         expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('RootNode'));
       } finally {

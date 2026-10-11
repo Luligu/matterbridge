@@ -61,7 +61,7 @@ import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types';
 import { PowerSource } from '@matter/types/clusters/power-source';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { PluginName, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import type { BridgeStatus, PluginName, PluginStatusUpdate, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
@@ -372,6 +372,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       // Load only the specified plugin
       this.log.debug(`Loading plugin ${CYAN}${this.pluginName}${db}...`);
       await this.pluginManager.load(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { loaded: true });
       this.log.debug(`Loaded plugin ${CYAN}${this.pluginName}${db}`);
 
       this.log.debug(`Created MatterNode instance for plugin ${CYAN}${this.pluginName}${db}`);
@@ -388,6 +389,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         loadPromises.push(this.pluginManager.load(plugin));
       }
       await Promise.all(loadPromises);
+      for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
+        this.pluginStatusUpdate(plugin.name, { loaded: true });
+      }
       this.log.debug('Loaded all plugins');
 
       this.log.debug('Created MatterNode instance for all plugins');
@@ -422,6 +426,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         startPromises.push(this.pluginManager.start(plugin, 'Starting MatterNode'));
       }
       await Promise.all(startPromises);
+      for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
+        this.pluginStatusUpdate(plugin.name, { started: true });
+      }
       this.log.debug(`Started all plugins for ${this.storeId}`);
 
       // Start the server node
@@ -436,10 +443,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         configurePromises.push(this.pluginManager.configure(plugin));
       }
       await Promise.all(configurePromises);
+      for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
+        this.pluginStatusUpdate(plugin.name, { configured: true });
+      }
       this.log.debug(`Configured all plugins for ${this.storeId}`);
     } else {
       // Start the loaded plugin
+      this.log.debug(`Starting plugin ${this.pluginName}...`);
       await this.pluginManager.start(this.pluginName, 'Starting MatterNode');
+      this.pluginStatusUpdate(this.pluginName, { started: true });
+      this.log.debug(`Started plugin ${this.pluginName}...`);
 
       // Start the server node
       this.log.debug(`Starting MatterNode for plugin ${this.storeId}...`);
@@ -447,7 +460,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.debug(`Started MatterNode for plugin ${this.storeId}`);
 
       // Configure the plugin
+      this.log.debug(`Configuring plugin ${this.pluginName}...`);
       await this.pluginManager.configure(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { configured: true });
+      this.log.debug(`Configured plugin ${this.pluginName}...`);
     }
 
     // Start the dependant MatterNodes
@@ -1572,6 +1588,37 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await child.setStateOf(BridgedDeviceBasicInformationServer, { reachable });
       child.act((agent) => child.eventsOf(BridgedDeviceBasicInformationServer).reachableChanged.emit({ reachableNewValue: true }, agent.context));
     }
+  }
+
+  /**
+   * Sends a plugin status update to the frontend.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {PluginStatusUpdate} status - The status properties to update.
+   * @returns {void}
+   */
+  pluginStatusUpdate(pluginName: string, status: PluginStatusUpdate): void {
+    this.server.request({
+      type: 'frontend_broadcast_message',
+      src: 'matter',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin: pluginName, status } } },
+    });
+  }
+
+  /**
+   * Sends a matterbridge status update to the frontend.
+   *
+   * @param {BridgeStatus} status - The new matterbridge status.
+   * @returns {void}
+   */
+  matterbridgeStatusUpdate(status: BridgeStatus): void {
+    this.server.request({
+      type: 'frontend_broadcast_message',
+      src: 'matter',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } } },
+    });
   }
 
   /**

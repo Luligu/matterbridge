@@ -25,7 +25,7 @@ export default defineConfig({
       '**/jest-utils/', // Plugins test package for Jest
       '**/vitest-utils/', // Plugins test package for Vitest
       'packages/core/vitest/matterNode.*.ts',
-      'packages/thread/vitest/backend*.ts',
+      'packages/core/vitest/backend*.ts',
     ],
     globals: true,
     clearMocks: false,

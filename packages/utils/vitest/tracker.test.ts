@@ -79,7 +79,7 @@ describe('Tracker', () => {
     expect(snapshotSpy).toHaveBeenCalledWith(expect.objectContaining({ constrainedMemory: 8 * 1024 * 1024 * 1024 }));
   });
 
-  test('should log increasing and unchanged memory and CPU peaks in debug mode', async () => {
+  test('should log increasing and unchanged memory and CPU peaks in tracker mode', async () => {
     vi.useFakeTimers();
     const cpu = (user: number): CpuInfo => ({ model: 'test', speed: 1, times: { user, nice: 0, sys: 0, idle: 0, irq: 0 } });
     vi.spyOn(os, 'cpus')
@@ -87,13 +87,16 @@ describe('Tracker', () => {
       .mockReturnValueOnce([cpu(100)])
       .mockReturnValue([cpu(200)]);
     vi.spyOn(process, 'memoryUsage').mockReturnValue({ rss: 1000, heapUsed: 1000, heapTotal: 1000, external: 1000, arrayBuffers: 1000 });
+    // The process CPU peak increases on the first sample and stays unchanged on the second
+    const processCpuDiffs = [{ user: 1000, system: 0 }];
+    vi.spyOn(process, 'cpuUsage').mockImplementation((previous) => (previous ? (processCpuDiffs.shift() ?? { user: 0, system: 0 }) : { user: 0, system: 0 }));
     const { Tracker } = await import('../src/tracker.js');
-    const tracker = new Tracker('DebugPeaks', true);
-    const debugSpy = vi.spyOn(tracker['log'], 'debug');
+    const tracker = new Tracker('TrackerPeaks', false, false, true);
+    const infoSpy = vi.spyOn(tracker['log'], 'info');
     tracker.start(20);
     vi.advanceTimersByTime(40);
     tracker.stop();
-    expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('rss:'));
+    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining('rss:'));
   });
 
   test('does not print loader banner when loader flag missing', async () => {

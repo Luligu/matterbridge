@@ -6,7 +6,6 @@
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, test, vi } from 'bun:test';
 
-import { flushAsync } from '@matterbridge/test-utils';
 import { resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ThreadsWrapper } from '@matterbridge/thread/wrapper';
@@ -18,7 +17,7 @@ await setupTest('ThreadBackend', false);
 describe('ThreadBackend', () => {
   const matterbridge = { matterbridgeVersion: '3.10.13' } as unknown as SharedMatterbridge;
   const start = vi.fn<() => Promise<void>>();
-  const destroy = vi.fn();
+  const stop = vi.fn<() => Promise<void>>();
   const createBackend = vi.fn();
   let wrapper: ThreadsWrapper;
   let responder: BroadcastServer;
@@ -30,7 +29,7 @@ describe('ThreadBackend', () => {
       Backend: class {
         constructor(shared: unknown) {
           createBackend(shared);
-          return { start, destroy };
+          return { start, stop };
         }
       },
     }));
@@ -40,7 +39,7 @@ describe('ThreadBackend', () => {
 
   beforeEach(() => {
     start.mockReset().mockImplementation(async () => await Promise.resolve());
-    destroy.mockClear();
+    stop.mockReset().mockImplementation(async () => await Promise.resolve());
     createBackend.mockReset();
     responder = new BroadcastServer('matterbridge', wrapper.log);
     responder.on('broadcast_message', (msg) => {
@@ -60,22 +59,12 @@ describe('ThreadBackend', () => {
     resetTest();
   });
 
-  test('should fetch shared state and await Backend startup without destroying it', async () => {
-    let completeStartup: () => void = () => {};
-    start.mockReturnValue(
-      new Promise<void>((resolve) => {
-        completeStartup = resolve;
-      }),
-    );
-    const result = wrapper.entrypoint(wrapper);
-    for (let i = 0; i < 50 && start.mock.calls.length === 0; i++) await flushAsync(1, 10, 0);
-    expect(start).toHaveBeenCalledTimes(1);
-    expect(createBackend).toHaveBeenCalledWith(matterbridge);
-    expect(wrapper.name).toBe('Backend');
-    expect(destroy).not.toHaveBeenCalled();
-    completeStartup();
-    expect(await result).toBe(true);
-    expect(destroy).not.toHaveBeenCalled();
+  // The runner keeps the Backend in module state across tests: this test must run before any successful entrypoint
+  test('should do nothing on startup and shutdown when the Backend was not created', async () => {
+    await wrapper.startup?.(wrapper);
+    await wrapper.shutdown?.(wrapper);
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
   });
 
   test('should report failure when fetching shared state fails', async () => {
@@ -83,8 +72,6 @@ describe('ThreadBackend', () => {
     expect(await wrapper.entrypoint(wrapper)).toBe(false);
     fetchSpy.mockRestore();
     expect(createBackend).not.toHaveBeenCalled();
-    expect(start).not.toHaveBeenCalled();
-    expect(destroy).not.toHaveBeenCalled();
   });
 
   test('should report failure when Backend construction fails', async () => {
@@ -92,14 +79,33 @@ describe('ThreadBackend', () => {
       throw new Error('Backend construction failed');
     });
     expect(await wrapper.entrypoint(wrapper)).toBe(false);
+    await wrapper.startup?.(wrapper);
     expect(start).not.toHaveBeenCalled();
-    expect(destroy).not.toHaveBeenCalled();
   });
 
-  test('should report failure when Backend startup rejects', async () => {
-    start.mockRejectedValue(new Error('Backend startup failed'));
-    expect(await wrapper.entrypoint(wrapper)).toBe(false);
+  test('should fetch shared state and create the Backend without starting it', async () => {
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    expect(wrapper.name).toBe('Backend');
+    expect(createBackend).toHaveBeenCalledWith(matterbridge);
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  test('should start the Backend on startup and stop it on shutdown', async () => {
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    await wrapper.startup?.(wrapper);
     expect(start).toHaveBeenCalledTimes(1);
-    expect(destroy).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+    await wrapper.shutdown?.(wrapper);
+    expect(stop).toHaveBeenCalledTimes(1);
+  });
+
+  test('should reject startup when Backend start rejects', async () => {
+    start.mockRejectedValue(new Error('Backend startup failed'));
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    let error: unknown;
+    await wrapper.startup?.(wrapper).catch((err: unknown) => (error = err));
+    expect((error as Error).message).toBe('Backend startup failed');
+    expect(start).toHaveBeenCalledTimes(1);
   });
 });

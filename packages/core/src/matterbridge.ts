@@ -1965,6 +1965,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug('Matterbridge reachability timeout cleared');
       }
 
+      // Request all the threads to shut down
+      this.server.request({ type: 'manager_shutdown', src: 'matterbridge', dst: 'manager', params: {} });
+
       // Call the shutdown method of each plugin and clear the plugins reachability timeout
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
@@ -2132,10 +2135,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Close PluginManager and DeviceManager
       this.plugins.destroy();
       this.devices.destroy();
-
-      // Request all the threads to shut down
-      this.server.request({ type: 'manager_shutdown', src: 'matterbridge', dst: 'manager', params: {} });
-      await wait(100);
 
       // Stop thread messaging server
       this.server.close();

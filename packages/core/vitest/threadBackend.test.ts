@@ -15,7 +15,7 @@ await setupTest('ThreadBackend', false);
 describe('ThreadBackend', () => {
   const matterbridge = { matterbridgeVersion: '3.10.13' } as unknown as SharedMatterbridge;
   const start = vi.fn<() => Promise<void>>();
-  const destroy = vi.fn();
+  const stop = vi.fn<() => Promise<void>>();
   const createBackend = vi.fn();
   let wrapper: ThreadsWrapper;
   let responder: BroadcastServer;
@@ -23,14 +23,14 @@ describe('ThreadBackend', () => {
   beforeEach(async () => {
     vi.resetModules();
     start.mockReset().mockImplementation(async () => await Promise.resolve());
-    destroy.mockClear();
+    stop.mockReset().mockImplementation(async () => await Promise.resolve());
     createBackend.mockReset();
     vi.doMock('../src/backend.js', () => ({
       // oxlint-disable-next-line typescript/no-extraneous-class -- Mock the Backend constructor without starting real servers.
       Backend: class {
         constructor(shared: unknown) {
           createBackend(shared);
-          return { start, destroy };
+          return { start, stop };
         }
       },
     }));
@@ -52,29 +52,34 @@ describe('ThreadBackend', () => {
     vi.doUnmock('../src/backend.js');
   });
 
-  test('should fetch shared state and await Backend startup without destroying it', async () => {
-    let completeStartup: () => void = () => {};
-    start.mockReturnValue(
-      new Promise<void>((resolve) => {
-        completeStartup = resolve;
-      }),
-    );
-    const result = wrapper.entrypoint(wrapper);
-    await vi.waitFor(() => expect(start).toHaveBeenCalledTimes(1));
-    expect(createBackend).toHaveBeenCalledWith(matterbridge);
+  test('should fetch shared state and create the Backend without starting it', async () => {
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(true);
     expect(wrapper.name).toBe('Backend');
-    expect(destroy).not.toHaveBeenCalled();
-    completeStartup();
-    await expect(result).resolves.toBe(true);
-    expect(destroy).not.toHaveBeenCalled();
+    expect(createBackend).toHaveBeenCalledWith(matterbridge);
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  test('should start the Backend on startup and stop it on shutdown', async () => {
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(true);
+    await wrapper.startup?.(wrapper);
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+    await wrapper.shutdown?.(wrapper);
+    expect(stop).toHaveBeenCalledTimes(1);
+  });
+
+  test('should do nothing on startup and shutdown when the Backend was not created', async () => {
+    await wrapper.startup?.(wrapper);
+    await wrapper.shutdown?.(wrapper);
+    expect(start).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
   });
 
   test('should report failure when fetching shared state fails', async () => {
     vi.spyOn(wrapper.server, 'fetch').mockRejectedValue(new Error('Shared state unavailable'));
     await expect(wrapper.entrypoint(wrapper)).resolves.toBe(false);
     expect(createBackend).not.toHaveBeenCalled();
-    expect(start).not.toHaveBeenCalled();
-    expect(destroy).not.toHaveBeenCalled();
   });
 
   test('should report failure when Backend construction fails', async () => {
@@ -82,14 +87,14 @@ describe('ThreadBackend', () => {
       throw new Error('Backend construction failed');
     });
     await expect(wrapper.entrypoint(wrapper)).resolves.toBe(false);
+    await wrapper.startup?.(wrapper);
     expect(start).not.toHaveBeenCalled();
-    expect(destroy).not.toHaveBeenCalled();
   });
 
-  test('should report failure when Backend startup rejects', async () => {
+  test('should reject startup when Backend start rejects', async () => {
     start.mockRejectedValue(new Error('Backend startup failed'));
-    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(false);
+    await expect(wrapper.entrypoint(wrapper)).resolves.toBe(true);
+    await expect(wrapper.startup?.(wrapper)).rejects.toThrow('Backend startup failed');
     expect(start).toHaveBeenCalledTimes(1);
-    expect(destroy).not.toHaveBeenCalled();
   });
 });

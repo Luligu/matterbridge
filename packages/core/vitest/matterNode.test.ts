@@ -13,7 +13,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 
-import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
+import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
@@ -79,6 +79,7 @@ describe('MatterNode', () => {
 
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
+    expect(loggerDebugSpy).toHaveBeenCalledWith('MatterNode for Matterbridge loaded');
   });
 
   beforeEach(() => {
@@ -128,6 +129,20 @@ describe('MatterNode', () => {
     expect(testServer.close()).toBeUndefined();
   });
 
+  test('should log errors when the broadcast message handler rejects', async () => {
+    const error = new Error('Broadcast handler rejection');
+    const handlerSpy = vi.spyOn(matter, 'msgHandler').mockRejectedValueOnce(error);
+    try {
+      // @ts-expect-error access private property
+      matter.server.emit('broadcast_message', { type: 'get_log_level', src: 'test', dst: 'matter' });
+      await Promise.resolve();
+      expect(handlerSpy).toHaveBeenCalledTimes(1);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Broadcast message handler failed'));
+    } finally {
+      handlerSpy.mockRestore();
+    }
+  });
+
   test('MatterNode instance', () => {
     expect(matter).toBeDefined();
     expect(matter).toBeInstanceOf(MatterNode);
@@ -147,7 +162,52 @@ describe('MatterNode', () => {
     destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
+  test('pluginStatusUpdate should broadcast a plugin_status_update message to the frontend', () => {
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      matter.pluginStatusUpdate('matterbridge-test', { started: true, registeredDevices: 2 });
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'matter',
+        dst: 'frontend',
+        params: {
+          msg: {
+            id: 0,
+            src: 'Matterbridge',
+            dst: 'Frontend',
+            method: 'plugin_status_update',
+            success: true,
+            response: { plugin: 'matterbridge-test', status: { started: true, registeredDevices: 2 } },
+          },
+        },
+      });
+    } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
+  test('matterbridgeStatusUpdate should broadcast a matterbridge_status_update message to the frontend', () => {
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      matter.matterbridgeStatusUpdate('started');
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'matter',
+        dst: 'frontend',
+        params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status: 'started' } } },
+      });
+    } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
   test('PluginManager instance', () => {
+    // @ts-expect-error access private property
+    expect(matter.pluginManager.matterbridge.getPlatformMatterbridge()).toBe(matterbridge);
     expect(pluginManager).toBeDefined();
     expect(pluginManager).toBeInstanceOf(PluginManager);
     expect(pluginManager.length).toBe(0);
@@ -204,6 +264,10 @@ describe('MatterNode', () => {
     });
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
+    // @ts-expect-error access private properties
+    matter.pluginManager.matterbridge.nodeStorage = pluginManager.matterbridge.nodeStorage;
+    // @ts-expect-error access private properties
+    matter.pluginManager.matterbridge.nodeContext = pluginManager.matterbridge.nodeContext;
 
     expect(await pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     expect(await pluginManager.add('./packages/core/src/mock/plugin2')).not.toBeNull();
@@ -245,6 +309,40 @@ describe('MatterNode', () => {
   test('Start matter storage', async () => {
     expect(await matter.startMatterStorage()).toBeUndefined();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
+  });
+
+  test('should write missing and changed context values while preserving unchanged values and identity', async () => {
+    const setSpy = vi.spyOn(StorageContext.prototype, 'set');
+    const createContext = async (name: string, serialNumber?: string, uniqueId?: string): Promise<StorageContext> =>
+      matter.createServerNodeContext(
+        'ConditionalWrites',
+        name,
+        matter.aggregatorDeviceType,
+        matter.aggregatorVendorId,
+        matter.aggregatorVendorName,
+        matter.aggregatorProductId,
+        matter.aggregatorProductName,
+        serialNumber,
+        uniqueId,
+      );
+    try {
+      const context = await createContext('Original node');
+      expect(setSpy).toHaveBeenCalledTimes(17);
+      const serialNumber = await context.get('serialNumber');
+      const uniqueId = await context.get('uniqueId');
+      setSpy.mockClear();
+      await createContext('Original node', 'Replacement serial', 'Replacement ID');
+      expect(setSpy).not.toHaveBeenCalled();
+      await createContext('Renamed node');
+      expect(setSpy.mock.calls).toMatchObject([
+        ['deviceName', 'Renamed node'],
+        ['nodeLabel', 'Renamed node'],
+      ]);
+      expect(await context.get('serialNumber')).toBe(serialNumber);
+      expect(await context.get('uniqueId')).toBe(uniqueId);
+    } finally {
+      setSpy.mockRestore();
+    }
   });
 
   test('should validate commissioning and Basic Information values before creating a Matter node', async () => {
@@ -542,10 +640,14 @@ describe('MatterNode', () => {
 
     // Test adding AccessoryPlugin
     (matter as any).matterbridge.bridgeMode = 'childbridge';
+    // @ts-expect-error access private property
+    matter.pluginManager.matterbridge.bridgeMode = 'childbridge';
     expect(await matter.pluginManager.add('./packages/core/src/mock/plugin4')).not.toBeNull();
     expect(await matter.addVirtualEndpoint('matterbridge-mock4', 'Virtual device', 'switch', async () => {})).toBe(false);
     expect(loggerErrorSpy).toHaveBeenCalledWith(`Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform`);
     (matter as any).matterbridge.bridgeMode = 'bridge';
+    // @ts-expect-error access private property
+    matter.pluginManager.matterbridge.bridgeMode = 'bridge';
 
     // Test adding with no aggregator node
     const saved = matter.aggregatorNode;

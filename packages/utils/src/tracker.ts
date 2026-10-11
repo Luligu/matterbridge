@@ -3,7 +3,7 @@
  * @description This file contains the Tracker class.
  * @author Luca Liguori
  * @created 2025-10-10
- * @version 1.2.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -121,9 +121,9 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    * Creates a Tracker instance.
    *
    * @param {string} name - Logger and tracker instance name.
-   * @param {boolean} debug - Enables debug logging, including per-sample tracker output.
+   * @param {boolean} debug - Enables debug logging.
    * @param {boolean} verbose - Enables verbose startup diagnostics for CPU and memory state.
-   * @param {boolean} tracker - Enables tracker mode and DEBUG log level for tracker lifecycle output.
+   * @param {boolean} tracker - Enables tracker output for tracker lifecycle output.
    * @param {boolean} forceGc - Forces garbage collection during each tracker sampling interval.
    */
   constructor(
@@ -134,7 +134,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     private readonly forceGc: boolean = false,
   ) {
     super();
-    if (hasAnyParameter('debug', 'verbose', 'tracker')) {
+    if (hasAnyParameter('debug', 'verbose')) {
       this.debug = true;
     }
     if (hasParameter('verbose')) {
@@ -146,7 +146,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     if (hasParameter('force-gc')) {
       this.forceGc = true;
     }
-    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug || this.tracker ? LogLevel.DEBUG : LogLevel.INFO });
+    if (this.verbose) this.debug = true;
+    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.logNameColor = YELLOW;
     if (this.verbose) {
       // Group the cores by model and speed, so hybrid CPUs show one entry per core type
@@ -275,10 +276,11 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       // Emit tracker event with current snapshot
       this.emit('snapshot', entry);
 
-      // Debug output
-      if (this.debug) {
-        this.log.debug(
-          `Time: ${formatTimeStamp(entry.timestamp)} ` +
+      // Tracker output
+      if (this.tracker) {
+        this.log.info(
+          db +
+            `Time: ${formatTimeStamp(entry.timestamp)} ` +
             `os ${CYAN}${BRIGHT}${formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${formatPercent(entry.peakOsCpu)}${db}) ` +
             `process ${CYAN}${BRIGHT}${formatPercent(entry.processCpu)}${RESET}${db} (${entry.peakProcessCpu > prevEntry.peakProcessCpu ? RED : ''}${formatPercent(entry.peakProcessCpu)}${db}) ` +
             `rss: ${CYAN}${BRIGHT}${formatBytes(entry.rss)}${RESET}${db} (${entry.peakRss > prevEntry.peakRss ? RED : ''}${formatBytes(entry.peakRss)}${db}) ` +
@@ -359,18 +361,19 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     }
 
     // Log all history entries
-    if (this.debug) {
-      this.log.debug(`Tracker history for ${YELLOW}${BRIGHT}${this.name}:${RESET}`);
-      this.log.debug(
-        'Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers',
+    if (this.tracker) {
+      this.log.info(db + `Tracker history for ${YELLOW}${BRIGHT}${this.name}:${RESET}`);
+      this.log.info(
+        db + 'Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers',
       );
       //              10/10/2025, 20:52:12   4.76 % (  4.76 %)   0.16 % (  0.16 %)  38.45 MB ( 38.45 MB)   3.75 MB (  3.75 MB)   5.29 MB (  5.29 MB)   1.66 MB (  1.66 MB)  10.25 KB ( 10.25 KB)
       for (let i = 0; i < Tracker.historySize; i++) {
         const index = (Tracker.historyIndex + i) % Tracker.historySize;
         const entry = Tracker.history[index];
         if (entry.timestamp === 0) continue;
-        this.log.debug(
-          `${formatTimeStamp(entry.timestamp)} ` +
+        this.log.info(
+          db +
+            `${formatTimeStamp(entry.timestamp)} ` +
             `${CYAN}${BRIGHT}${formatPercent(entry.osCpu).padStart(8)}${RESET} (${formatPercent(entry.peakOsCpu).padStart(8)}) ` +
             `${CYAN}${BRIGHT}${formatPercent(entry.processCpu).padStart(8)}${RESET} (${formatPercent(entry.peakProcessCpu).padStart(8)}) ` +
             `${CYAN}${BRIGHT}${formatBytes(entry.rss).padStart(9)}${RESET} (${formatBytes(entry.peakRss).padStart(9)}) ` +

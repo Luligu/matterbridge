@@ -163,6 +163,49 @@ describe('MatterNode', () => {
     destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
+  test('pluginStatusUpdate should broadcast a plugin_status_update message to the frontend', () => {
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      matter.pluginStatusUpdate('matterbridge-test', { started: true, registeredDevices: 2 });
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'matter',
+        dst: 'frontend',
+        params: {
+          msg: {
+            id: 0,
+            src: 'Matterbridge',
+            dst: 'Frontend',
+            method: 'plugin_status_update',
+            success: true,
+            response: { plugin: 'matterbridge-test', status: { started: true, registeredDevices: 2 } },
+          },
+        },
+      });
+    } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
+  test('matterbridgeStatusUpdate should broadcast a matterbridge_status_update message to the frontend', () => {
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      matter.matterbridgeStatusUpdate('started');
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'matter',
+        dst: 'frontend',
+        params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status: 'started' } } },
+      });
+    } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
   test('PluginManager instance', () => {
     // @ts-expect-error access private property
     expect(matter.pluginManager.matterbridge.getPlatformMatterbridge()).toBe(matterbridge);
