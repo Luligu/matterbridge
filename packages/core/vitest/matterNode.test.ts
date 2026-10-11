@@ -162,12 +162,18 @@ describe('MatterNode', () => {
     destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
-  test('pluginStatusUpdate should broadcast a plugin_status_update message to the frontend', () => {
+  test('pluginStatusUpdate should update the plugin manager and broadcast a plugin_status_update message to the frontend', () => {
     // @ts-expect-error access private property
     const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
     try {
       matter.pluginStatusUpdate('matterbridge-test', { started: true, registeredDevices: 2 });
-      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledTimes(2);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'plugins_set',
+        src: 'matter',
+        dst: 'plugins',
+        params: { plugin: { name: 'matterbridge-test', started: true, registeredDevices: 2 } },
+      });
       expect(requestSpy).toHaveBeenCalledWith({
         type: 'frontend_broadcast_message',
         src: 'matter',

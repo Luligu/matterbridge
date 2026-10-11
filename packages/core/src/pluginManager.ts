@@ -215,7 +215,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           }
           break;
         case 'plugins_set':
-          this.server.respond({ ...msg, result: { plugin: this.set(msg.params.plugin) } });
+          {
+            // Merge the properties into the existing plugin, so the fields not sent are preserved
+            const plugin = this.get(msg.params.plugin.name);
+            if (plugin) {
+              Object.assign(plugin, msg.params.plugin);
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.plugin.name} not found` });
+            }
+          }
           break;
         case 'plugins_storagepluginarray':
           this.server.respond({ ...msg, result: { plugins: this.storagePluginArray() } });

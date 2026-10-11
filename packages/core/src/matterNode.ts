@@ -372,7 +372,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       // Load only the specified plugin
       this.log.debug(`Loading plugin ${CYAN}${this.pluginName}${db}...`);
       await this.pluginManager.load(this.pluginName);
-      this.pluginStatusUpdate(this.pluginName, { loaded: true });
+      this.pluginStatusUpdate(this.pluginName, { loaded: this.pluginManager.get(this.pluginName)?.loaded });
       this.log.debug(`Loaded plugin ${CYAN}${this.pluginName}${db}`);
 
       this.log.debug(`Created MatterNode instance for plugin ${CYAN}${this.pluginName}${db}`);
@@ -390,7 +390,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
       await Promise.all(loadPromises);
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
-        this.pluginStatusUpdate(plugin.name, { loaded: true });
+        this.pluginStatusUpdate(plugin.name, { loaded: plugin.loaded });
       }
       this.log.debug('Loaded all plugins');
 
@@ -427,7 +427,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
       await Promise.all(startPromises);
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
-        this.pluginStatusUpdate(plugin.name, { started: true });
+        this.pluginStatusUpdate(plugin.name, { started: plugin.started, registeredDevices: plugin.registeredDevices });
       }
       this.log.debug(`Started all plugins for ${this.storeId}`);
 
@@ -444,14 +444,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
       await Promise.all(configurePromises);
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
-        this.pluginStatusUpdate(plugin.name, { configured: true });
+        this.pluginStatusUpdate(plugin.name, { configured: plugin.configured });
       }
       this.log.debug(`Configured all plugins for ${this.storeId}`);
     } else {
       // Start the loaded plugin
       this.log.debug(`Starting plugin ${this.pluginName}...`);
       await this.pluginManager.start(this.pluginName, 'Starting MatterNode');
-      this.pluginStatusUpdate(this.pluginName, { started: true });
+      const plugin = this.pluginManager.get(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { started: plugin?.started, registeredDevices: plugin?.registeredDevices });
       this.log.debug(`Started plugin ${this.pluginName}...`);
 
       // Start the server node
@@ -462,7 +463,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       // Configure the plugin
       this.log.debug(`Configuring plugin ${this.pluginName}...`);
       await this.pluginManager.configure(this.pluginName);
-      this.pluginStatusUpdate(this.pluginName, { configured: true });
+      this.pluginStatusUpdate(this.pluginName, { configured: this.pluginManager.get(this.pluginName)?.configured });
       this.log.debug(`Configured plugin ${this.pluginName}...`);
     }
 
@@ -1591,13 +1592,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   }
 
   /**
-   * Sends a plugin status update to the frontend.
+   * Sends a plugin status update to the global plugin manager and to the frontend.
    *
    * @param {string} pluginName - The name of the plugin.
    * @param {PluginStatusUpdate} status - The status properties to update.
    * @returns {void}
    */
   pluginStatusUpdate(pluginName: string, status: PluginStatusUpdate): void {
+    // Update the global plugin manager the frontend api plugins come from
+    this.server.request({ type: 'plugins_set', src: 'matter', dst: 'plugins', params: { plugin: { name: pluginName, ...status } } });
     this.server.request({
       type: 'frontend_broadcast_message',
       src: 'matter',

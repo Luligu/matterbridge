@@ -355,7 +355,7 @@ export type WorkerMessageTypes = {
     response: { result: { plugin: ApiPlugin | undefined } };
   };
   plugins_set: {
-    request: { params: { plugin: ApiPlugin } };
+    request: { params: { plugin: Partial<ApiPlugin> & { name: string } } };
     response: { result: { plugin: ApiPlugin } };
   };
   plugins_clear: {
