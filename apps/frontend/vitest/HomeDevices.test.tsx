@@ -23,7 +23,7 @@ vi.mock('../src/appState', () => ({ basePath: '/', debug: true, enableMobile: tr
 vi.mock('../src/components/Connecting', () => ({ Connecting: () => <div>Connecting</div> }));
 vi.mock('../src/components/MbfWindow', () => ({ MbfWindow: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
 vi.mock('../src/components/MbfTable', () => ({
-  default: <T extends { name?: unknown; serial?: unknown } & object>({
+  default: <T extends { deviceName?: unknown; serialNumber?: unknown } & object>({
     rows,
     columns,
     getRowKey,
@@ -45,7 +45,7 @@ vi.mock('../src/components/MbfTable', () => ({
           const actions = columns.find((column) => column.label === 'Actions');
           return (
             <div key={getRowKey(row)} data-testid={`row-${getRowKey(row)}`}>
-              <span>{typeof row.name === 'string' ? row.name : ''}</span>
+              <span>{typeof row.deviceName === 'string' ? row.deviceName : ''}</span>
               {availability?.render?.(undefined, getRowKey(row), row, availability)}
               {power?.render?.(undefined, getRowKey(row), row, power)}
               {actions?.render?.(undefined, getRowKey(row), row, actions)}
@@ -133,7 +133,7 @@ function renderWithDevice(
   helpers.sendWebSocketMessage({
     id: 7,
     method: '/api/devices',
-    response: [{ pluginName: 'matterbridge-test', name: 'Test Device', serial: 'test1', configUrl, ...deviceOverrides }],
+    response: [{ plugin: 'matterbridge-test', deviceName: 'Test Device', serialNumber: 'test1', configUrl, ...deviceOverrides }],
   });
   return helpers;
 }
@@ -250,7 +250,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'other-plugin', name: 'Other Plugin Device', serial: 'other1' }],
+      response: [{ plugin: 'other-plugin', deviceName: 'Other Plugin Device', serialNumber: 'other1' }],
     });
 
     expect(screen.getByText('Offline')).toBeInTheDocument();
@@ -303,7 +303,7 @@ describe('HomeDevices', () => {
     expect(screen.getByTestId('footer-left')).toHaveTextContent('Loading plugins...');
 
     sendWebSocketMessage({ id: 7, method: '/api/plugins', response: plugins });
-    sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ pluginName: 'matterbridge-test', name: 'Test Device', serial: 'test1' }] });
+    sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ plugin: 'matterbridge-test', deviceName: 'Test Device', serialNumber: 'test1' }] });
 
     expect(screen.getByTestId('footer-left')).toHaveTextContent('Registered devices: 1/1');
   });
@@ -344,7 +344,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'matterbridge-test', name: 'Select Only Device', serial: 'select-only' }],
+      response: [{ plugin: 'matterbridge-test', deviceName: 'Select Only Device', serialNumber: 'select-only' }],
     });
 
     expect(screen.getByTestId('row-matterbridge-test::select-only')).toBeInTheDocument();
@@ -356,7 +356,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'matterbridge-test', name: 'Newly Registered Device', serial: 'promoted' }],
+      response: [{ plugin: 'matterbridge-test', deviceName: 'Newly Registered Device', serialNumber: 'promoted' }],
     });
     expect(screen.getByText('Newly Registered Device')).toBeInTheDocument();
 
@@ -366,8 +366,8 @@ describe('HomeDevices', () => {
       id: 7,
       method: '/api/devices',
       response: [
-        { pluginName: 'matterbridge-test', name: 'Test Device', serial: 'test1' },
-        { pluginName: 'matterbridge-test', name: 'Newly Registered Device', serial: 'promoted', reachable: true },
+        { plugin: 'matterbridge-test', deviceName: 'Test Device', serialNumber: 'test1' },
+        { plugin: 'matterbridge-test', deviceName: 'Newly Registered Device', serialNumber: 'promoted', reachable: true },
       ],
     });
 
@@ -385,8 +385,8 @@ describe('HomeDevices', () => {
       id: 7,
       method: '/api/select/devices',
       response: [
-        { pluginName: 'matterbridge-test', name: 'Duplicate Name', serial: 'test1' },
-        { pluginName: 'matterbridge-test', name: 'Not Yet Registered', serial: 'unregistered' },
+        { plugin: 'matterbridge-test', deviceName: 'Duplicate Name', serialNumber: 'test1' },
+        { plugin: 'matterbridge-test', deviceName: 'Not Yet Registered', serialNumber: 'unregistered' },
       ],
     });
 
@@ -403,7 +403,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'matterbridge-test', name: 'Duplicate Name', serial: 'test1' }],
+      response: [{ plugin: 'matterbridge-test', deviceName: 'Duplicate Name', serialNumber: 'test1' }],
     });
 
     expect(screen.getAllByTestId('row-matterbridge-test::test1')).toHaveLength(1);
@@ -419,7 +419,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'matterbridge-test', name: 'Select Version', serial: 'test1', reachable: false }],
+      response: [{ plugin: 'matterbridge-test', deviceName: 'Select Version', serialNumber: 'test1', reachable: false }],
     });
 
     expect(screen.getAllByTestId('row-matterbridge-test::test1')).toHaveLength(1);
@@ -436,7 +436,7 @@ describe('HomeDevices', () => {
     // A second /api/plugins response resets devices/selectDevices, then a new /api/devices response
     // arrives without the old device: the mixed list must reflect the new snapshot, not keep stale rows.
     sendWebSocketMessage({ id: 7, method: '/api/plugins', response: plugins });
-    sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ pluginName: 'matterbridge-test', name: 'Replacement Device', serial: 'test2' }] });
+    sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ plugin: 'matterbridge-test', deviceName: 'Replacement Device', serialNumber: 'test2' }] });
 
     expect(screen.queryByText('Test Device')).not.toBeInTheDocument();
     expect(screen.getByText('Replacement Device')).toBeInTheDocument();
@@ -466,7 +466,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'matterbridge-test', name: 'Select Only Device', serial: 'select-only' }],
+      response: [{ plugin: 'matterbridge-test', deviceName: 'Select Only Device', serialNumber: 'select-only' }],
     });
 
     const checkbox = within(screen.getByTestId('row-matterbridge-test::select-only')).getByRole('checkbox');
@@ -513,7 +513,7 @@ describe('HomeDevices', () => {
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
-      response: [{ pluginName: 'other-plugin', name: 'Other Plugin Device', serial: 'other1' }],
+      response: [{ plugin: 'other-plugin', deviceName: 'Other Plugin Device', serialNumber: 'other1' }],
     });
 
     expect(checkbox).not.toBeChecked();
@@ -619,10 +619,10 @@ describe('HomeDevices', () => {
   it('replaces previously received selectDevices for the same plugin without leaving stale rows', () => {
     const { sendWebSocketMessage } = renderWithDevice('/plugins/matterbridge-test');
 
-    sendWebSocketMessage({ id: 7, method: '/api/select/devices', response: [{ pluginName: 'matterbridge-test', name: 'First Select', serial: 'select-a' }] });
+    sendWebSocketMessage({ id: 7, method: '/api/select/devices', response: [{ plugin: 'matterbridge-test', deviceName: 'First Select', serialNumber: 'select-a' }] });
     expect(screen.getByText('First Select')).toBeInTheDocument();
 
-    sendWebSocketMessage({ id: 7, method: '/api/select/devices', response: [{ pluginName: 'matterbridge-test', name: 'Second Select', serial: 'select-b' }] });
+    sendWebSocketMessage({ id: 7, method: '/api/select/devices', response: [{ plugin: 'matterbridge-test', deviceName: 'Second Select', serialNumber: 'select-b' }] });
     expect(screen.getByText('Second Select')).toBeInTheDocument();
     expect(screen.queryByText('First Select')).not.toBeInTheDocument();
   });
@@ -658,19 +658,19 @@ describe('HomeDevices', () => {
       id: 7,
       method: '/api/select/devices',
       response: [
-        { pluginName: 'serial-plugin', name: 'Allowed Serial Device', serial: 'allowed-serial' },
-        { pluginName: 'serial-plugin', name: 'Other Serial Device', serial: 'other-serial' },
-        { pluginName: 'serial-plugin', name: 'Blocked Serial Device', serial: 'blocked-serial' },
-        { pluginName: 'ghost-plugin', name: 'Unknown Plugin Device', serial: 'ghost-serial' },
+        { plugin: 'serial-plugin', deviceName: 'Allowed Serial Device', serialNumber: 'allowed-serial' },
+        { plugin: 'serial-plugin', deviceName: 'Other Serial Device', serialNumber: 'other-serial' },
+        { plugin: 'serial-plugin', deviceName: 'Blocked Serial Device', serialNumber: 'blocked-serial' },
+        { plugin: 'ghost-plugin', deviceName: 'Unknown Plugin Device', serialNumber: 'ghost-serial' },
       ],
     });
     sendWebSocketMessage({
       id: 7,
       method: '/api/select/devices',
       response: [
-        { pluginName: 'name-plugin', name: 'Allowed Name', serial: 's1' },
-        { pluginName: 'name-plugin', name: 'Other Name', serial: 's2' },
-        { pluginName: 'name-plugin', name: 'Blocked Name', serial: 's3' },
+        { plugin: 'name-plugin', deviceName: 'Allowed Name', serialNumber: 's1' },
+        { plugin: 'name-plugin', deviceName: 'Other Name', serialNumber: 's2' },
+        { plugin: 'name-plugin', deviceName: 'Blocked Name', serialNumber: 's3' },
       ],
     });
 

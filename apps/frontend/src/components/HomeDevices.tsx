@@ -36,10 +36,10 @@ const localDebug = false; // Set to true to enable debug logs only in HomeDevice
 /**
  * Get the unique row ID for a device.
  * @param {MixedApiDevices} row - The device row.
- * @returns {string} A string in the format 'pluginName::serial'.
+ * @returns {string} A string in the format 'plugin::serial'.
  */
 const getRowKey = (row: MixedApiDevices) => {
-  return `${row.pluginName}::${row.serial}`;
+  return `${row.plugin}::${row.serialNumber}`;
 };
 
 const getBatteryIcon = (batteryLevel: number | undefined, fallbackIcon: typeof Battery6BarIcon) => {
@@ -67,11 +67,11 @@ interface ApiSelectDevicesWithSelected extends ApiSelectDevice {
 }
 
 interface MixedApiDevices {
-  pluginName: string;
+  plugin: string;
   type?: string;
   endpoint?: number | undefined;
-  name: string;
-  serial: string;
+  deviceName: string;
+  serialNumber: string;
   productUrl?: string;
   configUrl?: string;
   uniqueId?: string;
@@ -132,16 +132,16 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const devicesColumns: MbfTableColumn<MixedApiDevices>[] = [
     {
       label: 'Plugin',
-      id: 'pluginName',
+      id: 'plugin',
     },
     {
       label: 'Name',
-      id: 'name',
+      id: 'deviceName',
       required: true,
     },
     {
       label: 'Serial',
-      id: 'serial',
+      id: 'serialNumber',
     },
     {
       label: 'Availability',
@@ -254,11 +254,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Function to determine if a device is selected based on the plugin's whiteList/blackList and selectFrom configuration
   const isSelected = useCallback(
     (device: ApiSelectDevicesWithSelected) => {
-      // if (debug || localDebug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} name ${device.name} serial ${device.serial}`);
+      // if (debug || localDebug) console.log(`HomeDevices isSelected: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
       device.selected = undefined;
-      const plugin = plugins.find((p) => p.name === device.pluginName);
+      const plugin = plugins.find((p) => p.name === device.plugin);
       if (!plugin) {
-        console.error(`HomeDevices isSelected: plugin ${device.pluginName} not found for device ${device.name} `);
+        console.error(`HomeDevices isSelected: plugin ${device.plugin} not found for device ${device.deviceName} `);
         return device.selected;
       }
       const selectMode = plugin.schemaJson?.properties?.whiteList?.selectFrom;
@@ -270,31 +270,31 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           selectMode === 'serial' &&
           plugin.configJson.whiteList &&
           plugin.configJson.whiteList.length > 0 &&
-          plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+          plugin.configJson.whiteList.includes(postfix ? device.serialNumber.replace('-' + postfix, '') : device.serialNumber)
         )
           device.selected = true;
         if (
           selectMode === 'serial' &&
           plugin.configJson.whiteList &&
           plugin.configJson.whiteList.length > 0 &&
-          !plugin.configJson.whiteList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+          !plugin.configJson.whiteList.includes(postfix ? device.serialNumber.replace('-' + postfix, '') : device.serialNumber)
         )
           device.selected = false;
         if (
           selectMode === 'serial' &&
           plugin.configJson.blackList &&
           plugin.configJson.blackList.length > 0 &&
-          plugin.configJson.blackList.includes(postfix ? device.serial.replace('-' + postfix, '') : device.serial)
+          plugin.configJson.blackList.includes(postfix ? device.serialNumber.replace('-' + postfix, '') : device.serialNumber)
         )
           device.selected = false;
-        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.name))
+        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && plugin.configJson.whiteList.includes(device.deviceName))
           device.selected = true;
-        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.name))
+        if (selectMode === 'name' && plugin.configJson.whiteList && plugin.configJson.whiteList.length > 0 && !plugin.configJson.whiteList.includes(device.deviceName))
           device.selected = false;
-        if (selectMode === 'name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.name))
+        if (selectMode === 'name' && plugin.configJson.blackList && plugin.configJson.blackList.length > 0 && plugin.configJson.blackList.includes(device.deviceName))
           device.selected = false;
       }
-      // if (debug || localDebug) console.log(`HomeDevices isSelected: plugin ${device.pluginName} selectMode ${selectMode} postfix ${postfix} name ${device.name} serial ${device.serial} select ${device.selected}`);
+      // if (debug || localDebug) console.log(`HomeDevices isSelected: plugin ${device.plugin} selectMode ${selectMode} postfix ${postfix} name ${device.deviceName} serial ${device.serialNumber} select ${device.selected}`);
       return device.selected;
     },
     [plugins],
@@ -316,7 +316,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.method === 'refresh_required' && msg.response.changed === 'matter') {
         if (debug || localDebug) console.log(`HomeDevices received refresh_required: changed=${msg.response.changed} and setting matter id ${msg.response.matter?.id}`);
         setMixedDevices((prev) => {
-          const i = prev.findIndex((d) => d.name.replaceAll(' ', '') === msg.response.matter?.id);
+          const i = prev.findIndex((d) => d.deviceName.replaceAll(' ', '') === msg.response.matter?.id);
           if (i < 0) {
             if (debug || localDebug) console.debug(`HomeDevices: matter id ${msg.response.matter?.id} not found`);
             return prev;
@@ -342,7 +342,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           const reachable = msg.response.value as boolean;
           setMixedDevices((prev) => {
-            const index = prev.findIndex((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
+            const index = prev.findIndex((d) => d.plugin === msg.response.plugin && d.serialNumber === msg.response.serialNumber);
             if (index < 0) {
               if (debug || localDebug) console.warn(`HomeDevices: device to update not found for plugin ${msg.response.plugin} serial ${msg.response.serialNumber}`);
               return prev;
@@ -403,8 +403,8 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           );
           setFooterLeft('Registering devices...');
           setMixedDevices((prev) => {
-            const registeredKeys = new Set(registered.map((d) => `${d.pluginName}::${d.serial}`));
-            const keptSelectOnly = prev.filter((row) => row.origin === 'select' && !registeredKeys.has(`${row.pluginName}::${row.serial}`));
+            const registeredKeys = new Set(registered.map((d) => `${d.plugin}::${d.serialNumber}`));
+            const keptSelectOnly = prev.filter((row) => row.origin === 'select' && !registeredKeys.has(`${row.plugin}::${row.serialNumber}`));
             return [...registered, ...keptSelectOnly];
           });
           setFooterLeft('Registered devices:');
@@ -414,11 +414,11 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
         if (debug || localDebug)
           console.log(
-            `HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].pluginName : 'without select devices'}:`,
+            `HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].plugin : 'without select devices'}:`,
             msg.response,
           );
         if (msg.response && msg.response.length > 0) {
-          const pluginName = msg.response[0].pluginName;
+          const pluginName = msg.response[0].plugin;
           // console.log(`HomeDevices registering selected devices for plugin ${pluginName}`);
           // const start = new Date();
           setFooterLeft(`Registering selected devices for ${pluginName}...`);
@@ -427,10 +427,10 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
             // previous select-only rows, then add back only the devices not already covered by a
             // 'device'-origin row - the ones this plugin also reports as registered are skipped, since
             // api/devices already has the richer, authoritative row for them.
-            const withoutStaleSelectOnly = prev.filter((row) => !(row.origin === 'select' && row.pluginName === pluginName));
+            const withoutStaleSelectOnly = prev.filter((row) => !(row.origin === 'select' && row.plugin === pluginName));
             const registeredRows = withoutStaleSelectOnly.filter((row) => row.origin === 'device');
             const newSelectOnlyRows: MixedApiDevices[] = (msg.response as ApiSelectDevicesWithSelected[])
-              .filter((device) => !registeredRows.some((row) => row.pluginName === device.pluginName && row.serial.includes(device.serial)))
+              .filter((device) => !registeredRows.some((row) => row.plugin === device.plugin && row.serialNumber.includes(device.serialNumber)))
               .map((device) => Object.assign(device, { selected: isSelected(device), origin: 'select' as const }));
             return [...withoutStaleSelectOnly, ...newSelectOnlyRows];
           });
@@ -470,13 +470,13 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
 
   // Handle checkbox change to select/unselect a device
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>, device: MixedApiDevices) => {
-    if (debug || localDebug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.name} serial ${device.serial}`);
+    if (debug || localDebug) console.log(`handleCheckboxChange: checkbox changed to ${event.target.checked} for device ${device.deviceName} serial ${device.serialNumber}`);
     const selected = event.target.checked;
     setMixedDevices((prev) => {
-      const index = prev.findIndex((d) => d.pluginName === device.pluginName && d.serial === device.serial);
+      const index = prev.findIndex((d) => d.plugin === device.plugin && d.serialNumber === device.serialNumber);
       // v8 ignore next -- just a logical check for index existence
       if (index < 0) {
-        console.error(`handleCheckboxChange: device ${device.name} serial ${device.serial} not found in mixedDevices`);
+        console.error(`handleCheckboxChange: device ${device.deviceName} serial ${device.serialNumber} not found in mixedDevices`);
         return prev;
       }
       const next = [...prev];
@@ -490,7 +490,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         method: '/api/command',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { command: 'selectdevice', plugin: device.pluginName, serial: device.serial, name: device.name },
+        params: { command: 'selectdevice', plugin: device.plugin, serial: device.serialNumber, name: device.deviceName },
       });
     } else {
       sendMessage({
@@ -499,14 +499,14 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         method: '/api/command',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { command: 'unselectdevice', plugin: device.pluginName, serial: device.serial, name: device.name },
+        params: { command: 'unselectdevice', plugin: device.plugin, serial: device.serialNumber, name: device.deviceName },
       });
     }
   };
 
   // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/ or ./plugins/), show it in the dialog iframe, otherwise open it in a new tab.
   const handleConfigUrl = (device: MixedApiDevices) => {
-    if (debug || localDebug) console.log('handleConfigUrl device:', device.name, 'configUrl:', device.configUrl);
+    if (debug || localDebug) console.log('handleConfigUrl device:', device.deviceName, 'configUrl:', device.configUrl);
     if (!device.configUrl) return;
     if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
       const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
@@ -517,7 +517,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       if (debug || localDebug)
         console.log(
           'handleConfigUrl opening plugin frontend for device:',
-          device.name,
+          device.deviceName,
           'basePath:',
           basePath,
           'configUrl:',
@@ -525,7 +525,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           'computed pluginFrontendPath:',
           pluginFrontendPathWithTrailingSlash,
         );
-      setSelectedDeviceFrontend({ name: device.name, path: pluginFrontendPathWithTrailingSlash });
+      setSelectedDeviceFrontend({ name: device.deviceName, path: pluginFrontendPathWithTrailingSlash });
     } else {
       window.open(device.configUrl, '_blank');
     }

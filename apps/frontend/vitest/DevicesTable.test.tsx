@@ -34,8 +34,8 @@ describe('DevicesTable', () => {
   it('should request devices, render rows, filter rows, open config, and clean up the listener', async () => {
     const socket = createSocket();
     const windowOpen = vi.spyOn(window, 'open').mockImplementation(() => null);
-    const firstDevice = createDevice({ name: 'Kitchen Light', serial: 'LIGHT-001', uniqueId: 'light-001', configUrl: 'https://config.example/light' });
-    const secondDevice = createDevice({ pluginName: 'other-plugin', name: 'Hall Sensor', serial: 'SENSOR-001', uniqueId: 'sensor-001' });
+    const firstDevice = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', configUrl: 'https://config.example/light' });
+    const secondDevice = createDevice({ plugin: 'other-plugin', deviceName: 'Hall Sensor', serialNumber: 'SENSOR-001', uniqueId: 'sensor-001' });
 
     const rendered = render(
       <WebSocketContext.Provider value={socket.context}>
@@ -72,7 +72,7 @@ describe('DevicesTable', () => {
 
   it('should open clusters for a selected device, update cluster values, and toggle the cluster table', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Kitchen Light', serial: 'LIGHT-001', uniqueId: 'light-001', endpoint: endpointNumber(1) });
+    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', endpoint: endpointNumber(1) });
     const clusters = [
       createCluster('1', 'Light', [0x0100], 'Descriptor', 'serverList', '[6]', [6]),
       createCluster('1', 'Light', [0x0100], 'OnOff', 'onOff', 'false', false),
@@ -101,7 +101,15 @@ describe('DevicesTable', () => {
       dst: 'Frontend',
       method: '/api/clusters',
       success: true,
-      response: { plugin: device.pluginName, deviceName: device.name, serialNumber: device.serial, number: endpointNumber(1), id: 'Light', deviceTypes: [0x0100], clusters },
+      response: {
+        plugin: device.plugin,
+        deviceName: device.deviceName,
+        serialNumber: device.serialNumber,
+        number: endpointNumber(1),
+        id: 'Light',
+        deviceTypes: [0x0100],
+        clusters,
+      },
     });
 
     expect(await screen.findByText('Clusters')).toBeInTheDocument();
@@ -112,12 +120,12 @@ describe('DevicesTable', () => {
     expect(screen.getByText('false')).toBeInTheDocument();
 
     await waitFor(() => expect(socket.removeListener).toHaveBeenCalled());
-    socket.emit(createStateUpdate({ uniqueId: device.uniqueId, serialNumber: device.serial, value: true }));
+    socket.emit(createStateUpdate({ uniqueId: device.uniqueId, serialNumber: device.serialNumber, value: true }));
 
     expect(await screen.findByText('true')).toBeInTheDocument();
     expect(screen.queryByText('false')).toBeNull();
 
-    socket.emit(createStateUpdate({ uniqueId: device.uniqueId, serialNumber: device.serial, attribute: 'missingAttribute', value: false }));
+    socket.emit(createStateUpdate({ uniqueId: device.uniqueId, serialNumber: device.serialNumber, attribute: 'missingAttribute', value: false }));
     expect(screen.getByText('true')).toBeInTheDocument();
 
     fireEvent.click(screen.getAllByText('Kitchen Light')[0]);
@@ -144,7 +152,7 @@ describe('DevicesTable', () => {
 
   it('should ignore state updates for devices outside the filtered list', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Filtered Light', serial: 'FILTER-001', uniqueId: 'filter-001', endpoint: endpointNumber(1) });
+    const device = createDevice({ deviceName: 'Filtered Light', serialNumber: 'FILTER-001', uniqueId: 'filter-001', endpoint: endpointNumber(1) });
 
     render(
       <WebSocketContext.Provider value={socket.context}>
@@ -208,11 +216,11 @@ function createSocket(online = true): TestSocket {
 
 function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
   return {
-    pluginName: 'matterbridge-test',
+    plugin: 'matterbridge-test',
     type: 'DynamicPlatform',
     endpoint: endpointNumber(1),
-    name: 'Test Device',
-    serial: 'TEST-001',
+    deviceName: 'Test Device',
+    serialNumber: 'TEST-001',
     productUrl: '',
     uniqueId: 'test-device',
     reachable: true,

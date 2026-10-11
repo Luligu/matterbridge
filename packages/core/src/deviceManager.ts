@@ -66,6 +66,7 @@ export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDev
     originalId: device.originalId,
     name: device.name,
     deviceType: device.deviceType,
+    deviceTypes: device.deviceTypes instanceof Map ? Array.from(device.deviceTypes.keys()) : device.deviceTypes,
     // Endpoint properties
     number: device.number,
     id: device.id,
@@ -293,11 +294,11 @@ export class DeviceManager {
       // Check if the device has the required properties
       if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
       devices.push({
-        pluginName: device.plugin,
+        plugin: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
         endpoint: device.number,
-        name: device.deviceName,
-        serial: device.serialNumber,
+        deviceName: device.deviceName,
+        serialNumber: device.serialNumber,
         productUrl: device.productUrl,
         configUrl: device.configUrl,
         uniqueId: device.uniqueId,

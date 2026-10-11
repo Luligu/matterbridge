@@ -18,7 +18,7 @@ const localDebug = false; // Set to true to enable debug logs only in DevicesTab
 const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   {
     label: 'Plugin name',
-    id: 'pluginName',
+    id: 'plugin',
     required: true,
   },
   {
@@ -32,12 +32,12 @@ const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   },
   {
     label: 'Name',
-    id: 'name',
+    id: 'deviceName',
     required: true,
   },
   {
     label: 'Serial number',
-    id: 'serial',
+    id: 'serialNumber',
   },
   {
     label: 'Unique ID',
@@ -107,7 +107,7 @@ const clustersColumns: MbfTableColumn<Cluster>[] = [
 ];
 
 const getDeviceRowKey = (row: ApiDevice) => {
-  return `${row.pluginName}::${row.uniqueId}`;
+  return `${row.plugin}::${row.uniqueId}`;
 };
 
 const getClusterRowKey = (row: Cluster) => {
@@ -142,10 +142,12 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
     let next = devices;
     if (filterByPlugin) {
-      next = next.filter((device) => device.pluginName.toLowerCase() === normalizedPlugin);
+      next = next.filter((device) => device.plugin.toLowerCase() === normalizedPlugin);
     }
     if (filterDevices !== '') {
-      next = next.filter((device) => device.name.toLowerCase().includes(filterDevices.toLowerCase()) || device.serial.toLowerCase().includes(filterDevices.toLowerCase()));
+      next = next.filter(
+        (device) => device.deviceName.toLowerCase().includes(filterDevices.toLowerCase()) || device.serialNumber.toLowerCase().includes(filterDevices.toLowerCase()),
+      );
     }
     return next;
   }, [devices, filterPlugins, filterDevices]);
@@ -164,14 +166,14 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
           `DevicesTable received state_update "${msg.response.cluster}.${msg.response.attribute}" for "${msg.response.id}:${msg.response.number}": "${msg.response.value}"`,
           msg.response,
         );
-      const updateDevice = filteredDevicesRef.current.find((device) => device.pluginName === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
+      const updateDevice = filteredDevicesRef.current.find((device) => device.plugin === msg.response.plugin && device.uniqueId === msg.response.uniqueId);
       if (!updateDevice) {
         /* v8 ignore next */
         if (debug || debugUpdate || localDebug)
           console.warn(`DevicesTable updater device of plugin "${msg.response.plugin}" serial "${msg.response.serialNumber}" not found in filteredDevicesRef.current`);
         return;
       }
-      if (pluginName && endpoint && updateDevice.pluginName === pluginName && updateDevice.uniqueId === selectedDeviceUniqueId && msg.response.number.toString() === endpoint) {
+      if (pluginName && endpoint && updateDevice.plugin === pluginName && updateDevice.uniqueId === selectedDeviceUniqueId && msg.response.number.toString() === endpoint) {
         const updatedCluster = clusters.find(
           (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
         );
@@ -179,7 +181,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
           /* v8 ignore next */
           if (debug || debugUpdate || localDebug)
             console.warn(
-              `DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.name}" serial "${updateDevice.serial}" not found in clusters`,
+              `DevicesTable updater cluster ${msg.response.cluster}.${msg.response.attribute} for device "${updateDevice.deviceName}" serial "${updateDevice.serialNumber}" not found in clusters`,
             );
           return;
         }
@@ -189,7 +191,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
         /* v8 ignore next */
         if (debug || debugUpdate || localDebug)
           console.log(
-            `DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
+            `DevicesTable updated attribute ${updatedCluster.clusterName}.${updatedCluster.attributeName} for device "${updateDevice.deviceName}" serial "${updateDevice.serialNumber}" to "${updatedCluster.attributeValue}"`,
           );
       }
     },
@@ -273,11 +275,11 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     }
     /* v8 ignore next */
     if (debug || localDebug)
-      console.log(`DevicesTable handleDeviceClick: selected device "${row.name}" with uniqueId "${row.uniqueId}", plugin "${row.pluginName}", endpoint "${row.endpoint}"`);
+      console.log(`DevicesTable handleDeviceClick: selected device "${row.deviceName}" with uniqueId "${row.uniqueId}", plugin "${row.plugin}", endpoint "${row.endpoint}"`);
     setSelectedDeviceUniqueId(row.uniqueId);
-    setPluginName(row.pluginName);
+    setPluginName(row.plugin);
     setEndpoint(row.endpoint ? row.endpoint.toString() : null);
-    setDeviceName(row.name);
+    setDeviceName(row.deviceName);
   };
 
   if (debug || localDebug) console.log('DevicesTable rendering...');

@@ -274,14 +274,14 @@ describe('Backend', () => {
     const devicesServer = new BroadcastServer('devices', log);
     devicesServer.on('broadcast_message', (msg: WorkerMessage) => {
       if (devicesServer.isWorkerRequestOfType(msg, 'devices_apidevicearray')) {
-        devicesServer.respond({ ...msg, result: { devices: msg.params.pluginName === 'plugin1' ? [{ pluginName: 'plugin1' } as any] : [] } });
+        devicesServer.respond({ ...msg, result: { devices: msg.params.pluginName === 'plugin1' ? [{ plugin: 'plugin1' } as any] : [] } });
       }
     });
 
     expect(await backend.getApiMatter('Matterbridge')).toEqual({ id: 'Matterbridge' });
     expect(await backend.getApiSettings()).toEqual({ test: 'settings' });
     expect(await backend.getApiPlugins()).toEqual([{ name: 'plugin1' }]);
-    expect(await backend.getApiDevices('plugin1')).toEqual([{ pluginName: 'plugin1' }]);
+    expect(await backend.getApiDevices('plugin1')).toEqual([{ plugin: 'plugin1' }]);
     expect(await backend.getApiDevices()).toEqual([]);
     await expect(backend.getApiCluster('plugin1', 1)).resolves.toBeUndefined();
     await expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).resolves.toBeUndefined();

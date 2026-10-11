@@ -12,7 +12,7 @@ import type { BaseDevice } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { DeviceManager } from '../src/deviceManager.js';
+import { DeviceManager, toBaseDevice } from '../src/deviceManager.js';
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -97,6 +97,20 @@ describe('DeviceManager', () => {
 
     expect((await testServer.fetch({ type: 'devices_size', src: testServer.name, dst: 'devices' })).result.size).toBe(3);
     expect((await testServer.fetch({ type: 'devices_length', src: testServer.name, dst: 'devices' })).result.length).toBe(3);
+  });
+
+  test('toBaseDevice converts the deviceTypes map to the device type codes', () => {
+    const endpoint = {
+      uniqueId: 'DeviceUniqueIdTypes',
+      deviceTypes: new Map([
+        [0x0100, {}],
+        [0x0013, {}],
+      ]),
+    } as unknown as MatterbridgeEndpoint;
+    expect(toBaseDevice(endpoint).deviceTypes).toEqual([0x0100, 0x0013]);
+    const baseDevice = { uniqueId: 'DeviceUniqueIdTypes', deviceTypes: [0x0100, 0x0013] } as unknown as BaseDevice;
+    expect(toBaseDevice(baseDevice).deviceTypes).toEqual([0x0100, 0x0013]);
+    expect(toBaseDevice({ uniqueId: 'DeviceUniqueIdTypes' } as unknown as BaseDevice).deviceTypes).toBeUndefined();
   });
 
   test('set without uniqueId to throw', () => {
@@ -377,11 +391,11 @@ describe('DeviceManager', () => {
     const all = devices.apiDeviceArray();
     expect(all.map((d) => d.uniqueId)).toEqual(['unique', 'other', 'server']);
     expect(all[0]).toEqual({
-      pluginName: 'plugin1',
+      plugin: 'plugin1',
       type: 'OnOffLight (0x0100)',
       endpoint: 5,
-      name: 'Light',
-      serial: 'SN',
+      deviceName: 'Light',
+      serialNumber: 'SN',
       productUrl: 'https://product',
       configUrl: 'https://config',
       uniqueId: 'unique',

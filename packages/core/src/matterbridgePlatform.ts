@@ -852,7 +852,8 @@ export class MatterbridgePlatform {
   getSelectDevices(): ApiSelectDevice[] {
     const selectDevices: ApiSelectDevice[] = [];
     for (const device of this.#selectDevices.values()) {
-      selectDevices.push({ pluginName: this.name, ...device });
+      const { serial, name, ...rest } = device;
+      selectDevices.push({ plugin: this.name, serialNumber: serial, deviceName: name, ...rest });
     }
     return selectDevices;
   }
@@ -907,7 +908,7 @@ export class MatterbridgePlatform {
   getSelectEntities(): ApiSelectEntity[] {
     const selectEntities: ApiSelectEntity[] = [];
     for (const entity of this.#selectEntities.values()) {
-      selectEntities.push({ pluginName: this.name, ...entity });
+      selectEntities.push({ plugin: this.name, ...entity });
     }
     return selectEntities;
   }

@@ -283,18 +283,36 @@ export interface SanitizedSession {
 
 /** Define an interface for API device information */
 export interface ApiDevice {
-  pluginName: string;
+  // MatterbridgeEndpoint device information
+
+  /** The plugin name to be in sync with BaseDevice, ApiSelectDevice and ApiSelectEntity */
+  plugin: string;
+  /** The device type name and code, e.g. 'OnOffLight (0x0100)' */
   type: string;
-  endpoint: EndpointNumber | undefined;
-  name: string;
-  serial: string;
-  productUrl: string;
-  configUrl?: string;
+  /** The endpoint number */
+  endpoint: number | undefined;
+  /** The device name */
+  deviceName: string;
+  /** The device serial number */
+  serialNumber: string;
+  /** The device unique id */
   uniqueId: string;
+  /** The product url */
+  productUrl: string;
+  /** The device configuration url */
+  configUrl?: string;
+
+  // Lifecycle and state information of the MatterbridgeEndpoint device
+
+  /** MatterbridgeEndpoint state: the device reachability */
   reachable: boolean;
+  /** MatterbridgeEndpoint state: the device power source */
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
+  /** MatterbridgeEndpoint state: the device battery level in percent 0-100 (the PowerSource batPercentRemaining 0-200 divided by 2, so it can be x.5) */
   batteryLevel?: number;
+  /** MatterbridgeEndpoint state: the attributes description of the cluster servers in the device, from getClusterTextFromDevice() in packages/core/src/matterNodeHelpers.ts */
   cluster: string;
+  /** Root node information for the devices in server mode */
   matter?: ApiMatter;
 }
 
@@ -322,8 +340,10 @@ export interface BaseDevice {
   originalId: string | undefined;
   name: string | undefined;
   deviceType: number | undefined;
+  deviceTypes: number[] | undefined; // The codes of the MatterbridgeEndpoint deviceTypes map
+
   // Endpoint properties
-  number: EndpointNumber | undefined;
+  number: number | undefined;
   id: string | undefined;
 }
 

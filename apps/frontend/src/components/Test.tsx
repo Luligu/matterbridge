@@ -50,14 +50,14 @@ function Test() {
         showSnackbarMessage('Test received /api/devices', 0);
         setDevices(msg.response);
         for (const device of msg.response) {
-          if (debug || localDebug) console.log('Test sending /api/clusters for device:', device.pluginName, device.name, device.endpoint);
+          if (debug || localDebug) console.log('Test sending /api/clusters for device:', device.plugin, device.deviceName, device.endpoint);
           sendMessage({
             id: uniqueId.current,
             method: '/api/clusters',
             sender: 'Test',
             src: 'Frontend',
             dst: 'Matterbridge',
-            params: { plugin: device.pluginName, endpoint: device.endpoint || 0 },
+            params: { plugin: device.plugin, endpoint: device.endpoint || 0 },
           });
         }
       }

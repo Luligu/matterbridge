@@ -240,7 +240,9 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
   const energyCluster = energyImportedCluster ?? energyExportedCluster;
   const energyValue = energyImported ?? (energyExported !== null ? `+ ${energyExported}` : null);
 
-  if (debug) console.log(`Device "${device.name}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length})`);
+  /* v8 ignore next */
+  if (debug)
+    console.log(`Device "${device.deviceName}" endpoint "${endpoint}" id "${id}" deviceType "0x${deviceType.toString(16).padStart(4, '0')}" clusters (${clusters?.length})`);
 
   // Descriptor tagList details
   const tagList = clusters.find((cluster) => cluster.clusterName === 'Descriptor' && cluster.attributeName === 'tagList')?.attributeLocalValue as
@@ -674,7 +676,7 @@ function Device({ device, endpoint, id, deviceType, clusters }: DeviceProps): Re
         <Typography sx={detailsSx}>{details}</Typography>
       </Box>
       <Box sx={nameBoxSx}>
-        <Typography sx={nameSx}>{device.name}</Typography>
+        <Typography sx={nameSx}>{device.deviceName}</Typography>
       </Box>
       <Box sx={endpointBoxSx}>
         {debug && <Typography sx={endpointSx}>{endpoint}</Typography>}
@@ -726,7 +728,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     }
     const devices = devicesRef.current;
     const clusters = clustersRef.current;
-    const updateDevice = devices.find((d) => d.pluginName === msg.response.plugin && d.serial === msg.response.serialNumber);
+    const updateDevice = devices.find((d) => d.plugin === msg.response.plugin && d.serialNumber === msg.response.serialNumber);
     if (!updateDevice) {
       /* v8 ignore next */
       if (debug || debugUpdate || localDebug)
@@ -735,14 +737,14 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
         );
       return;
     }
-    const updatedCluster = clusters[updateDevice.serial]?.find(
+    const updatedCluster = clusters[updateDevice.serialNumber]?.find(
       (c) => c.endpoint === msg.response.number.toString() && c.clusterName === msg.response.cluster && c.attributeName === msg.response.attribute,
     );
     if (!updatedCluster) {
       /* v8 ignore next */
       if (debug || debugUpdate || localDebug)
         console.warn(
-          `DevicesIcons updater device "${updateDevice.name}" serial "${updateDevice.serial}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serial]?.length})`,
+          `DevicesIcons updater device "${updateDevice.deviceName}" serial "${updateDevice.serialNumber}" cluster "${msg.response.cluster}" attribute "${msg.response.attribute}" not found in clusters(${clusters[updateDevice.serialNumber]?.length})`,
         );
       return;
     }
@@ -752,7 +754,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     /* v8 ignore next */
     if (debug || debugUpdate || localDebug)
       console.log(
-        `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.name}" serial "${updateDevice.serial}" to "${updatedCluster.attributeValue}"`,
+        `DevicesIcons updated "${updatedCluster.clusterName}.${updatedCluster.attributeName}" for device "${updateDevice.deviceName}" serial "${updateDevice.serialNumber}" to "${updatedCluster.attributeValue}"`,
       );
   }, []);
 
@@ -804,7 +806,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
             method: '/api/clusters',
             src: 'Frontend',
             dst: 'Matterbridge',
-            params: { plugin: device.pluginName, endpoint: device.endpoint || 0, serialNumber: device.serial },
+            params: { plugin: device.plugin, endpoint: device.endpoint || 0, serialNumber: device.serialNumber },
           });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {
@@ -842,22 +844,22 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     <div style={{ display: 'flex', flexWrap: 'wrap', paddingBottom: '5px', gap: '20px', width: '100%', overflow: 'auto' }}>
       {devices
         .filter((device) => {
-          if (filterByPlugin && device.pluginName.toLowerCase() !== normalizedPlugin) return false;
+          if (filterByPlugin && device.plugin.toLowerCase() !== normalizedPlugin) return false;
           if (filterDevices === '') return true;
-          return device.name.toLowerCase().includes(filterDevices.toLowerCase()) || device.serial.toLowerCase().includes(filterDevices.toLowerCase());
+          return device.deviceName.toLowerCase().includes(filterDevices.toLowerCase()) || device.serialNumber.toLowerCase().includes(filterDevices.toLowerCase());
         })
         .map(
           (device) =>
-            endpoints[device.serial] &&
-            endpoints[device.serial].map((endpoint) =>
+            endpoints[device.serialNumber] &&
+            endpoints[device.serialNumber].map((endpoint) =>
               endpoint.deviceTypes.map((deviceType) => (
                 <MemoizedDevice
-                  key={`${device.pluginName}-${device.uniqueId}-${endpoint.endpoint}-${endpoint.id}-${deviceType.toString()}`}
+                  key={`${device.plugin}-${device.uniqueId}-${endpoint.endpoint}-${endpoint.id}-${deviceType.toString()}`}
                   device={device}
                   endpoint={endpoint.endpoint}
                   id={endpoint.id}
                   deviceType={deviceType}
-                  clusters={(clusters[device.serial] ?? []).filter((c) => c.endpoint === endpoint.endpoint)}
+                  clusters={(clusters[device.serialNumber] ?? []).filter((c) => c.endpoint === endpoint.endpoint)}
                 />
               )),
             ),

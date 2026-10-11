@@ -27,6 +27,7 @@ import { HOMEDIR, loggerLogSpy, loggerWarnSpy, originalProcessArgv, setDebug, se
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { type ApiMatter, plg, type WorkerMessage } from '@matterbridge/types';
 import { getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { LogLevel, nf } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 
@@ -48,6 +49,9 @@ await setupTest(NAME, false, ['--novirtual', '--frontend', '0', '--port', MATTER
   MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
 });
 process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
 
 rmSync(HOMEDIR, { recursive: true, force: true }); // Ensure the home directory doesn't exist before starting the tests
 

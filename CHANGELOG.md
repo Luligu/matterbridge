@@ -34,8 +34,10 @@ If you like this project and find it useful, please consider giving it a star on
 ### Breaking changes
 
 - [matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.
-- [types]: Remove the Shelly board api: the `shellyBoard`, `shellySysUpdate` and `shellyMainUpdate` fields, the `/api/shelly*`, `/api/softreset`, `/api/hardreset` and `/api/reboot` WebSocket messages and the `matterbridge_shelly_*` broadcast messages.
-- [frontend]: Remove the Shelly board menus (system and software update, system log, reboot, network and factory reset) and the network configuration dialog. These handlers were already inactive.
+
+### Development Breaking changes
+
+- [types]: Rename the `ApiDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, the `ApiSelectDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, and the `ApiSelectEntity` field `pluginName` to `plugin`, to be in sync with `BaseDevice`. `ApiDevice.endpoint` is now a `number`. These types are for the Matterbridge frontend only and should not be used by plugins: `platform.getSelectDevices()` and `platform.getSelectEntities()` return the renamed fields.
 
 ### Development news
 

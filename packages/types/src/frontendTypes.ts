@@ -33,25 +33,48 @@ export interface ApiSettings {
   systemInformation: SystemInformation;
 }
 
+/**
+ * A device the plugin offers for selection in the config editor (whiteList/blackList with selectFrom: 'serial' or 'name').
+ * Set by the plugin with platform.setSelectDevice(), returned by platform.getSelectDevices() for /api/select/devices.
+ */
 export interface ApiSelectDevice {
-  pluginName: string;
-  serial: string;
-  name: string;
+  /** The plugin name to be in sync with ApiDevice and BaseDevice */
+  plugin: string;
+  /** The device serial number (serial in setSelectDevice) */
+  serialNumber: string;
+  /** The device name (name in setSelectDevice) */
+  deviceName: string;
+  /** The device configuration url */
   configUrl?: string;
+  /** The device icon: 'wifi', 'ble', 'hub' */
   icon?: string;
+  /** The entities of this device */
   entities?: ApiSelectDeviceEntity[];
 }
 
+/** An entity of a select device (ApiSelectDevice.entities). */
 export interface ApiSelectDeviceEntity {
+  /** The entity name */
   name: string;
+  /** The entity description */
   description: string;
+  /** The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter' */
   icon?: string;
 }
 
+/**
+ * An entity the plugin offers for selection in the config editor (e.g. entityBlackList with selectEntityFrom: 'name' or 'description').
+ * Entities are the components a device is made of (e.g. the switches or sensors of a device), not devices themselves.
+ * Set by the plugin with platform.setSelectEntity(), returned by platform.getSelectEntities() for /api/select/entities.
+ */
 export interface ApiSelectEntity {
-  pluginName: string;
+  /** The plugin name to be in sync with ApiDevice and BaseDevice */
+  plugin: string;
+  /** The entity name */
   name: string;
+  /** The entity description */
   description: string;
+  /** The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter' */
   icon?: string;
 }
 

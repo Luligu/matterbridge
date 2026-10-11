@@ -617,9 +617,9 @@ describe('Matterbridge frontend', () => {
     expect(msg.response.length).toBe(1);
     expect(msg.response).toEqual([
       {
-        name: 'Switch plugin 1',
-        pluginName: 'matterbridge-mock1',
-        serial: '0x123456789',
+        deviceName: 'Switch plugin 1',
+        plugin: 'matterbridge-mock1',
+        serialNumber: '0x123456789',
         configUrl: '192.168.0.0',
         icon: 'hub',
         entities: [
@@ -663,7 +663,7 @@ describe('Matterbridge frontend', () => {
       params: { plugin: 'matterbridge-mock1' },
     });
     expect(msg.error).toBeUndefined();
-    expect(msg.response).toEqual([{ description: 'Switch', icon: 'matter', name: 'Switch', pluginName: 'matterbridge-mock1' }]);
+    expect(msg.response).toEqual([{ description: 'Switch', icon: 'matter', name: 'Switch', plugin: 'matterbridge-mock1' }]);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 

@@ -1380,11 +1380,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // Check if the device has the required properties
       if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
       devices.push({
-        pluginName: device.plugin,
+        plugin: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
         endpoint: device.number,
-        name: device.deviceName,
-        serial: device.serialNumber,
+        deviceName: device.deviceName,
+        serialNumber: device.serialNumber,
         productUrl: device.productUrl,
         configUrl: device.configUrl,
         uniqueId: device.uniqueId,
@@ -1923,7 +1923,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         const start = performance.now();
         /* v8 ignore next */
-        const selectDevices = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        const selectDevices = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.deviceName.localeCompare(keyB.deviceName));
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDevices });

@@ -562,8 +562,8 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
       // console.log('ArrayFieldTemplate: handleSelectValue', value);
       setDialogDeviceOpen(false);
       // Trigger onAddClick to add the selected new item
-      if (schema.selectFrom === 'serial' && hasSchemaItemsWithDefault(schema)) schema.items.default = value.serial;
-      else if (schema.selectFrom === 'name' && hasSchemaItemsWithDefault(schema)) schema.items.default = value.name;
+      if (schema.selectFrom === 'serial' && hasSchemaItemsWithDefault(schema)) schema.items.default = value.serialNumber;
+      else if (schema.selectFrom === 'name' && hasSchemaItemsWithDefault(schema)) schema.items.default = value.deviceName;
       onAddClick();
     };
 
@@ -651,8 +651,8 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
             </Box>
             <List dense>
               {selectDevices
-                .filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase()))
-                .filter((d) => !schema.uniqueItems || !formData.includes(schema.selectFrom === 'serial' ? d.serial : d.name))
+                .filter((v) => v.serialNumber.toLowerCase().includes(filter.toLowerCase()) || v.deviceName.toLowerCase().includes(filter.toLowerCase()))
+                .filter((d) => !schema.uniqueItems || !formData.includes(schema.selectFrom === 'serial' ? d.serialNumber : d.deviceName))
                 .map((value, index) => (
                   <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
                     {value.icon === 'wifi' && (
@@ -671,8 +671,8 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
                       </ListItemIcon>
                     )}
                     <ListItemText
-                      primary={value.name}
-                      secondary={value.serial}
+                      primary={value.deviceName}
+                      secondary={value.serialNumber}
                       slotProps={{ primary: { style: listItemTextPrimaryStyle }, secondary: { style: listItemTextSecondaryStyle } }}
                     />
                   </ListItemButton>
@@ -769,7 +769,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
           <DialogContent>
             <List dense>
               {selectDevices
-                .filter((d) => d.serial === title || d.name === title)
+                .filter((d) => d.serialNumber === title || d.deviceName === title)
                 .map((value) => {
                   // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue value:', value, value.entities);
                   // console.log('ArrayFieldTemplate: handleSelectDeviceEntityValue schema:', schema);
@@ -838,11 +838,11 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     };
 
     const handleSelectDeviceValue = (value: ApiSelectDevice) => {
-      if (debug) console.log(`ObjectFieldTemplate: handleSelectValue value "${value.serial}" for schema "${schema.selectFrom}"`);
+      if (debug) console.log(`ObjectFieldTemplate: handleSelectValue value "${value.serialNumber}" for schema "${schema.selectFrom}"`);
       setDialogDeviceOpen(false);
       let nextKey = '';
-      if (schema.selectFrom === 'serial') nextKey = value.serial;
-      else if (schema.selectFrom === 'name') nextKey = value.name;
+      if (schema.selectFrom === 'serial') nextKey = value.serialNumber;
+      else if (schema.selectFrom === 'name') nextKey = value.deviceName;
       pendingAdditionalPropertyKeyRef.current = nextKey;
       if (debug) console.log(`ObjectFieldTemplate: handleSelectValue pendingAdditionalPropertyKey "${nextKey}"`);
 
@@ -945,7 +945,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
             </Box>
             <List dense>
               {selectDevices
-                .filter((v) => v.serial.toLowerCase().includes(filter.toLowerCase()) || v.name.toLowerCase().includes(filter.toLowerCase()))
+                .filter((v) => v.serialNumber.toLowerCase().includes(filter.toLowerCase()) || v.deviceName.toLowerCase().includes(filter.toLowerCase()))
                 .map((value, index) => (
                   <ListItemButton onClick={() => handleSelectDeviceValue(value)} key={index} sx={listItemButtonSx}>
                     {value.icon === 'wifi' && (
@@ -964,8 +964,8 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
                       </ListItemIcon>
                     )}
                     <ListItemText
-                      primary={value.name}
-                      secondary={value.serial}
+                      primary={value.deviceName}
+                      secondary={value.serialNumber}
                       slotProps={{ primary: { style: listItemTextPrimaryStyle }, secondary: { style: listItemTextSecondaryStyle } }}
                     />
                   </ListItemButton>
