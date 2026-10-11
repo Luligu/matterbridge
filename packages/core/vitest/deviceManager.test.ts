@@ -159,6 +159,21 @@ describe('DeviceManager', () => {
       serialNumber: 'DeviceSerial1bis',
       uniqueId: 'DeviceUniqueId1bis',
     });
+    // A partial update merges into the existing device and preserves the fields not sent
+    const partialDevice = { uniqueId: 'DeviceUniqueId1bis', productLabel: 'Updated label' } as unknown as BaseDevice;
+    getDevice = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: partialDevice } })).result.device;
+    expect(devices.size).toBe(4);
+    expect(getDevice).toEqual({
+      deviceName: 'Device1bis',
+      id: 'DeviceId1bis',
+      name: 'DeviceType1bis',
+      number: 10,
+      productLabel: 'Updated label',
+      productUrl: 'https://matterbridge.io/device',
+      configurationVersion: 2,
+      serialNumber: 'DeviceSerial1bis',
+      uniqueId: 'DeviceUniqueId1bis',
+    });
     expect((await testServer.fetch({ type: 'devices_remove', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.success).toBe(true);
     expect(devices.size).toBe(3);
   });

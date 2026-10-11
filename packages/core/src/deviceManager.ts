@@ -131,8 +131,18 @@ export class DeviceManager {
           }
           break;
         case 'devices_set':
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+          {
+            // Merge the properties into the existing device, so the fields not sent are preserved, otherwise add the device
+            const device = msg.params.device.uniqueId ? this._devices.get(msg.params.device.uniqueId) : undefined;
+            if (device) {
+              Object.assign(device, Object.fromEntries(Object.entries(toBaseDevice(msg.params.device)).filter(([, value]) => value !== undefined)));
+              // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+              this.server.respond({ ...msg, result: { device: device as unknown as BaseDevice } });
+            } else {
+              // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+              this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+            }
+          }
           break;
         case 'devices_remove':
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
