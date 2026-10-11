@@ -534,6 +534,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     };
   }
 
+  /**
+   * Handles the broadcast messages sent to matterbridge.
+   * Only the request messages with destination 'all' or 'matterbridge' are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   * @returns {Promise<void>} A promise that resolves when the message has been handled.
+   */
   private async msgHandler(msg: WorkerMessage): Promise<void> {
     if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
       /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */

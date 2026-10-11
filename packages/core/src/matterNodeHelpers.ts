@@ -49,7 +49,7 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import type { ClusterId } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 // @matterbridge
-import type { ApiMatter, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
+import type { ApiMatter, BaseDevice, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 import { isValidArray, isValidNumber, isValidObject } from '@matterbridge/utils/validate';
 // Third-party modules
@@ -61,6 +61,43 @@ import { featuresFor, getAttribute } from './matterbridgeEndpointHelpers.js';
 
 /** Advertising nodes map: time advertising started keyed by storeId */
 const advertisingNodes = new Map<string, number>();
+
+/**
+ * Converts a MatterbridgeEndpoint to a BaseDevice.
+ *
+ * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
+ * @returns {BaseDevice} The converted BaseDevice.
+ */
+export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDevice {
+  return {
+    // MatterbridgeEndpoint properties
+    mode: device.mode,
+    plugin: device.plugin,
+    configUrl: device.configUrl,
+    deviceName: device.deviceName,
+    serialNumber: device.serialNumber,
+    uniqueId: device.uniqueId,
+    vendorId: device.vendorId,
+    vendorName: device.vendorName,
+    productId: device.productId,
+    productName: device.productName,
+    productLabel: device.productLabel,
+    productUrl: device.productUrl,
+    configurationVersion: device.configurationVersion,
+    softwareVersion: device.softwareVersion,
+    softwareVersionString: device.softwareVersionString,
+    hardwareVersion: device.hardwareVersion,
+    hardwareVersionString: device.hardwareVersionString,
+    tagList: device.tagList,
+    originalId: device.originalId,
+    name: device.name,
+    deviceType: device.deviceType,
+    deviceTypes: device.deviceTypes instanceof Map ? Array.from(device.deviceTypes.keys()) : device.deviceTypes,
+    // Endpoint properties
+    number: device.number,
+    id: device.id,
+  };
+}
 
 /**
  * Retrieves the reachable attribute.

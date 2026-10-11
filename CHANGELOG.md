@@ -37,7 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development Breaking changes
 
-- [types]: Rename the `ApiDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, the `ApiSelectDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, and the `ApiSelectEntity` field `pluginName` to `plugin`, to be in sync with `BaseDevice`. `ApiDevice.endpoint` is now a `number`. These types are for the Matterbridge frontend only and should not be used by plugins: `platform.getSelectDevices()` and `platform.getSelectEntities()` return the renamed fields.
+- [types]: Rename the `ApiDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, the `ApiSelectDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, and the `ApiSelectEntity` field `pluginName` to `plugin`, to be in sync with `BaseDevice`. `ApiDevice.endpoint` is renamed to `number` and `ApiDevice` gets the endpoint `id`. These types are for the Matterbridge frontend only and should not be used by plugins: `platform.getSelectDevices()` and `platform.getSelectEntities()` return the renamed fields.
 
 ### Development news
 

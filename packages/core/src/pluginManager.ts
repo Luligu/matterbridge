@@ -181,6 +181,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     return this.findInvalidDependencies(packageJson) === null;
   }
 
+  /**
+   * Handles the broadcast messages sent to the plugin manager.
+   * Only the request messages are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   * @returns {Promise<void>} A promise that resolves when the message has been handled.
+   */
   private async msgHandler(msg: WorkerMessage): Promise<void> {
     /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {

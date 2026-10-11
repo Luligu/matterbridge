@@ -12,7 +12,7 @@ import type { BaseDevice } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
-import { DeviceManager, toBaseDevice } from '../src/deviceManager.js';
+import { DeviceManager } from '../src/deviceManager.js';
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -99,22 +99,18 @@ describe('DeviceManager', () => {
     expect((await testServer.fetch({ type: 'devices_length', src: testServer.name, dst: 'devices' })).result.length).toBe(3);
   });
 
-  test('toBaseDevice converts the deviceTypes map to the device type codes', () => {
-    const endpoint = {
-      uniqueId: 'DeviceUniqueIdTypes',
-      deviceTypes: new Map([
-        [0x0100, {}],
-        [0x0013, {}],
-      ]),
-    } as unknown as MatterbridgeEndpoint;
-    expect(toBaseDevice(endpoint).deviceTypes).toEqual([0x0100, 0x0013]);
-    const baseDevice = { uniqueId: 'DeviceUniqueIdTypes', deviceTypes: [0x0100, 0x0013] } as unknown as BaseDevice;
-    expect(toBaseDevice(baseDevice).deviceTypes).toEqual([0x0100, 0x0013]);
-    expect(toBaseDevice({ uniqueId: 'DeviceUniqueIdTypes' } as unknown as BaseDevice).deviceTypes).toBeUndefined();
-  });
-
   test('set without uniqueId to throw', () => {
     expect(() => devices.set({ name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1' } as unknown as MatterbridgeEndpoint)).toThrow();
+    expect(() =>
+      (devices as any).msgHandler({
+        id: 123456,
+        timestamp: Date.now(),
+        type: 'devices_set',
+        src: 'frontend',
+        dst: 'devices',
+        params: { device: { name: 'DeviceType1', serialNumber: 'DeviceSerial1', deviceName: 'Device1' } },
+      }),
+    ).toThrow();
   });
 
   test('set already registered device to log error', async () => {
@@ -393,7 +389,8 @@ describe('DeviceManager', () => {
     expect(all[0]).toEqual({
       plugin: 'plugin1',
       type: 'OnOffLight (0x0100)',
-      endpoint: 5,
+      number: 5,
+      id: 'light',
       deviceName: 'Light',
       serialNumber: 'SN',
       productUrl: 'https://product',
@@ -416,8 +413,26 @@ describe('DeviceManager', () => {
     devices.clear();
   });
 
+  test('should ignore the message when it is not a request', () => {
+    const respondSpy = vi.spyOn((devices as any).server, 'respond');
+    (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_size', src: 'frontend', dst: 'devices', result: { size: 0 } });
+    expect(respondSpy).not.toHaveBeenCalled();
+  });
+
   test('destroy', () => {
     devices.destroy();
     expect(devices).toBeInstanceOf(DeviceManager);
+  });
+
+  test('should log at debug level the requests and the unknown messages when verbose', async () => {
+    process.argv.push('--verbose');
+    const verboseDevices = new DeviceManager();
+    expect((verboseDevices as any).log.logLevel).toBe(LogLevel.DEBUG);
+    expect((await testServer.fetch({ type: 'devices_size', src: testServer.name, dst: 'devices' })).result.size).toBe(0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Received request message'));
+    (verboseDevices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_unknown', src: 'frontend', dst: 'devices', params: {} });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('Unknown broadcast message'));
+    verboseDevices.destroy();
+    process.argv.splice(process.argv.indexOf('--verbose'), 1);
   });
 });

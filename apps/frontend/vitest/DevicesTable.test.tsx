@@ -72,7 +72,7 @@ describe('DevicesTable', () => {
 
   it('should open clusters for a selected device, update cluster values, and toggle the cluster table', async () => {
     const socket = createSocket();
-    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', endpoint: endpointNumber(1) });
+    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
     const clusters = [
       createCluster('1', 'Light', [0x0100], 'Descriptor', 'serverList', '[6]', [6]),
       createCluster('1', 'Light', [0x0100], 'OnOff', 'onOff', 'false', false),
@@ -152,7 +152,7 @@ describe('DevicesTable', () => {
 
   it('should ignore state updates for devices outside the filtered list', async () => {
     const socket = createSocket();
-    const device = createDevice({ deviceName: 'Filtered Light', serialNumber: 'FILTER-001', uniqueId: 'filter-001', endpoint: endpointNumber(1) });
+    const device = createDevice({ deviceName: 'Filtered Light', serialNumber: 'FILTER-001', uniqueId: 'filter-001', number: endpointNumber(1) });
 
     render(
       <WebSocketContext.Provider value={socket.context}>
@@ -218,7 +218,8 @@ function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
   return {
     plugin: 'matterbridge-test',
     type: 'DynamicPlatform',
-    endpoint: endpointNumber(1),
+    number: endpointNumber(1),
+    id: 'TestDevice',
     deviceName: 'Test Device',
     serialNumber: 'TEST-001',
     productUrl: '',

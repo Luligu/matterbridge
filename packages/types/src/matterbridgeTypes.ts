@@ -290,7 +290,9 @@ export interface ApiDevice {
   /** The device type name and code, e.g. 'OnOffLight (0x0100)' */
   type: string;
   /** The endpoint number */
-  endpoint: number | undefined;
+  number: number | undefined;
+  /** The endpoint id */
+  id: string | undefined;
   /** The device name */
   deviceName: string;
   /** The device serial number */
@@ -302,7 +304,7 @@ export interface ApiDevice {
   /** The device configuration url */
   configUrl?: string;
 
-  // Lifecycle and state information of the MatterbridgeEndpoint device
+  // Lifecycle and state information of the MatterbridgeEndpoint device, from the helpers in packages/core/src/matterNodeHelpers.ts
 
   /** MatterbridgeEndpoint state: the device reachability */
   reachable: boolean;
@@ -310,7 +312,7 @@ export interface ApiDevice {
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
   /** MatterbridgeEndpoint state: the device battery level in percent 0-100 (the PowerSource batPercentRemaining 0-200 divided by 2, so it can be x.5) */
   batteryLevel?: number;
-  /** MatterbridgeEndpoint state: the attributes description of the cluster servers in the device, from getClusterTextFromDevice() in packages/core/src/matterNodeHelpers.ts */
+  /** MatterbridgeEndpoint state: the attributes description of the cluster servers in the device */
   cluster: string;
   /** Root node information for the devices in server mode */
   matter?: ApiMatter;

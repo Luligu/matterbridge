@@ -75,13 +75,12 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, Times
 import { NodeStorageManager } from 'node-persist-manager';
 
 // matterbridge
-import { toBaseDevice } from './deviceManager.js';
 import { addVirtualDevice } from './helpers.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { MatterbridgePlatform } from './matterbridgePlatform.js';
-import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
+import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toBaseDevice } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('MatterNode');

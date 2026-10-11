@@ -3,7 +3,7 @@
  * @description This file contains the DeviceManager class.
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.1.3
+ * @version 1.1.4
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -32,46 +32,9 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampForm
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData } from './matterNodeHelpers.js';
+import { getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData, toBaseDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('Device Manager');
-
-/**
- * Converts a MatterbridgeEndpoint to a BaseDevice.
- *
- * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
- * @returns {BaseDevice} The converted BaseDevice.
- */
-export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDevice {
-  return {
-    // MatterbridgeEndpoint properties
-    mode: device.mode,
-    plugin: device.plugin,
-    configUrl: device.configUrl,
-    deviceName: device.deviceName,
-    serialNumber: device.serialNumber,
-    uniqueId: device.uniqueId,
-    vendorId: device.vendorId,
-    vendorName: device.vendorName,
-    productId: device.productId,
-    productName: device.productName,
-    productLabel: device.productLabel,
-    productUrl: device.productUrl,
-    configurationVersion: device.configurationVersion,
-    softwareVersion: device.softwareVersion,
-    softwareVersionString: device.softwareVersionString,
-    hardwareVersion: device.hardwareVersion,
-    hardwareVersionString: device.hardwareVersionString,
-    tagList: device.tagList,
-    originalId: device.originalId,
-    name: device.name,
-    deviceType: device.deviceType,
-    deviceTypes: device.deviceTypes instanceof Map ? Array.from(device.deviceTypes.keys()) : device.deviceTypes,
-    // Endpoint properties
-    number: device.number,
-    id: device.id,
-  };
-}
 
 /**
  * Manages Matterbridge devices.
@@ -88,8 +51,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
-    /* v8 ignore next cause debug logs are not relevant for coverage */
-    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
@@ -103,10 +65,14 @@ export class DeviceManager {
     this.server.close();
   }
 
+  /**
+   * Handles the broadcast messages sent to the device manager.
+   * Only the request messages are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   */
   private msgHandler(msg: WorkerMessage): void {
-    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
-      /* v8 ignore next cause debug logs are not relevant for coverage */
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -160,7 +126,6 @@ export class DeviceManager {
           this.server.respond({ ...msg, result: { devices: this.apiDeviceArray(msg.params.pluginName) } });
           break;
         default:
-          /* v8 ignore next cause debug logs are not relevant for coverage */
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
@@ -296,7 +261,8 @@ export class DeviceManager {
       devices.push({
         plugin: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        endpoint: device.number,
+        number: device.number,
+        id: device.id,
         deviceName: device.deviceName,
         serialNumber: device.serialNumber,
         productUrl: device.productUrl,

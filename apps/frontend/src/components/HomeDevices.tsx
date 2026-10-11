@@ -69,7 +69,8 @@ interface ApiSelectDevicesWithSelected extends ApiSelectDevice {
 interface MixedApiDevices {
   plugin: string;
   type?: string;
-  endpoint?: number | undefined;
+  number?: number | undefined;
+  id?: string | undefined;
   deviceName: string;
   serialNumber: string;
   productUrl?: string;

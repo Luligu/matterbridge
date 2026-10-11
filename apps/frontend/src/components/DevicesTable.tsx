@@ -27,7 +27,7 @@ const devicesColumns: MbfTableColumn<ApiDevice>[] = [
   },
   {
     label: 'Endpoint',
-    id: 'endpoint',
+    id: 'number',
     align: 'right',
   },
   {
@@ -275,10 +275,10 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     }
     /* v8 ignore next */
     if (debug || localDebug)
-      console.log(`DevicesTable handleDeviceClick: selected device "${row.deviceName}" with uniqueId "${row.uniqueId}", plugin "${row.plugin}", endpoint "${row.endpoint}"`);
+      console.log(`DevicesTable handleDeviceClick: selected device "${row.deviceName}" with uniqueId "${row.uniqueId}", plugin "${row.plugin}", endpoint "${row.number}"`);
     setSelectedDeviceUniqueId(row.uniqueId);
     setPluginName(row.plugin);
-    setEndpoint(row.endpoint ? row.endpoint.toString() : null);
+    setEndpoint(row.number ? row.number.toString() : null);
     setDeviceName(row.deviceName);
   };
 

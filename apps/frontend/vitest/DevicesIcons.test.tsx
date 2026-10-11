@@ -593,7 +593,8 @@ function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
   return {
     plugin: 'matterbridge-test',
     type: 'DynamicPlatform',
-    endpoint: undefined,
+    number: undefined,
+    id: undefined,
     deviceName: 'Controller Test',
     serialNumber: 'CONTROLLER-001',
     productUrl: '',

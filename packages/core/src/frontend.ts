@@ -1382,7 +1382,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       devices.push({
         plugin: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        endpoint: device.number,
+        number: device.number,
+        id: device.id,
         deviceName: device.deviceName,
         serialNumber: device.serialNumber,
         productUrl: device.productUrl,

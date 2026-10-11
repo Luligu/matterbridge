@@ -62,6 +62,7 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+import type { BaseDevice } from '@matterbridge/types';
 
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
@@ -76,6 +77,7 @@ import {
   sanitizeFabricInformations,
   sanitizeSessionInformation,
   setAdvertisingNode,
+  toBaseDevice,
 } from '../src/matterNodeHelpers.js';
 
 const colorAttributes: Record<string, unknown> = { colorMode: 0 };
@@ -620,5 +622,19 @@ describe('matterNodeHelpers', () => {
       clearAdvertisingNodes(); // no-op when empty
       expect(getServerNodeData(serverNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
     });
+  });
+
+  test('toBaseDevice converts the deviceTypes map to the device type codes', () => {
+    const endpoint = {
+      uniqueId: 'DeviceUniqueIdTypes',
+      deviceTypes: new Map([
+        [0x0100, {}],
+        [0x0013, {}],
+      ]),
+    } as unknown as MatterbridgeEndpoint;
+    expect(toBaseDevice(endpoint).deviceTypes).toEqual([0x0100, 0x0013]);
+    const baseDevice = { uniqueId: 'DeviceUniqueIdTypes', deviceTypes: [0x0100, 0x0013] } as unknown as BaseDevice;
+    expect(toBaseDevice(baseDevice).deviceTypes).toEqual([0x0100, 0x0013]);
+    expect(toBaseDevice({ uniqueId: 'DeviceUniqueIdTypes' } as unknown as BaseDevice).deviceTypes).toBeUndefined();
   });
 });
