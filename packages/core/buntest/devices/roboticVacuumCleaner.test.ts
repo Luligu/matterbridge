@@ -1,0 +1,654 @@
+/**
+ * @file packages/core/buntest/devices/roboticVacuumCleaner.test.ts
+ * @description This file contains the tests for the RoboticVacuumCleaner device.
+ * @author Luca Liguori
+ */
+
+const NAME = 'Vacuum';
+const MATTER_PORT = 8013;
+const MATTER_CREATE_ONLY = true;
+
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
+
+import { CommonNumberTag } from '@matter/node';
+import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
+import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
+import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
+import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
+import { Identify } from '@matter/types/clusters/identify';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
+import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
+import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
+import { ServiceArea } from '@matter/types/clusters/service-area';
+import { EndpointNumber } from '@matter/types/datatype';
+import {
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/buntest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { er, hk, LogLevel, stringify } from 'node-ansi-logger';
+
+import { MatterbridgeServiceAreaServer } from '../../src/behaviors/serviceAreaServer.js';
+import {
+  MatterbridgeRvcCleanModeServer,
+  MatterbridgeRvcOperationalStateServer,
+  MatterbridgeRvcRunModeServer,
+  RoboticVacuumCleaner,
+} from '../../src/devices/roboticVacuumCleaner.js';
+import { roboticVacuumCleaner } from '../../src/matterbridgeDeviceTypes.js';
+import { getSemtag } from '../../src/matterbridgeEndpointHelpers.js';
+
+/**
+ * Bun has no vi.advanceTimersByTimeAsync: advance the fake clock 1ms at a time and drain the microtasks
+ * between steps, so promise chains started by a timer callback settle before the next timer fires.
+ *
+ * @param {number} ms The time in milliseconds to advance the fake clock.
+ */
+async function advanceTimersByTimeAsync(ms: number): Promise<void> {
+  for (let elapsed = 0; elapsed <= ms; elapsed++) {
+    vi.advanceTimersByTime(elapsed === 0 ? 0 : 1);
+    for (let j = 0; j < 10; j++) await Promise.resolve();
+  }
+}
+
+// Setup the test environment
+await setupTest(NAME, false);
+
+describe('Matterbridge Robotic Vacuum Cleaner', () => {
+  let device: RoboticVacuumCleaner;
+
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    await createTestEnvironment();
+  });
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
+
+  afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
+    vi.restoreAllMocks();
+  });
+
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, roboticVacuumCleaner.code, 0, 0, 0);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('create an RVC device', () => {
+    device = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
+    expect(device).toBeDefined();
+    expect(device.id).toBe('RVCTestDevice-RVC123456');
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(RvcRunMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(RvcCleanMode.id)).toBeTruthy();
+    expect(device.hasClusterServer(RvcOperationalState.id)).toBeTruthy();
+    expect(device.hasClusterServer(ServiceArea.id)).toBeTruthy();
+  });
+
+  test('create an RVC device with endpoint options', () => {
+    const tagList = [getSemtag(CommonNumberTag.One)];
+    const supportedRunModes = [
+      { label: 'Idle', mode: 1, modeTags: [{ value: RvcRunMode.ModeTag.Idle }] },
+      { label: 'Cleaning', mode: 2, modeTags: [{ value: RvcRunMode.ModeTag.Cleaning }] },
+    ];
+    const supportedCleanModes = [
+      { label: 'Vacuum', mode: 1, modeTags: [{ value: RvcCleanMode.ModeTag.Vacuum }] },
+      { label: 'Mop', mode: 2, modeTags: [{ value: RvcCleanMode.ModeTag.Mop }] },
+    ];
+    const phaseList = ['Cleaning'];
+    const operationalStateList = [{ operationalStateId: RvcOperationalState.OperationalState.Running }];
+    const supportedMaps = [{ mapId: 7, name: 'Main floor' }];
+    const supportedAreas = [
+      {
+        areaId: 8,
+        mapId: 7,
+        areaInfo: { locationInfo: { locationName: 'Office', floorNumber: 0, areaType: null }, landmarkInfo: null },
+      },
+    ];
+    const runModeSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultRvcRunModeClusterServer').mockReturnThis();
+    const cleanModeSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultRvcCleanModeClusterServer').mockReturnThis();
+    const operationalStateSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultRvcOperationalStateClusterServer').mockReturnThis();
+    const serviceAreaSpy = vi.spyOn(RoboticVacuumCleaner.prototype, 'createDefaultServiceAreaClusterServer').mockReturnThis();
+    const configuredDevice = new RoboticVacuumCleaner('Configured RVC', 'RVC654321', {
+      id: 'ConfiguredRvc',
+      number: EndpointNumber(12_01),
+      tagList,
+      currentRunMode: 2,
+      supportedRunModes,
+      currentCleanMode: 2,
+      supportedCleanModes,
+      currentPhase: 0,
+      phaseList,
+      operationalState: RvcOperationalState.OperationalState.Running,
+      operationalStateList,
+      supportedAreas,
+      selectedAreas: [8],
+      currentArea: 8,
+      supportedMaps,
+    });
+
+    expect(configuredDevice.id).toBe('ConfiguredRvc');
+    expect(configuredDevice.number).toBe(EndpointNumber(12_01));
+    expect(configuredDevice.tagList).toEqual(tagList);
+    expect(runModeSpy).toHaveBeenCalledWith(2, supportedRunModes);
+    expect(cleanModeSpy).toHaveBeenCalledWith(2, supportedCleanModes);
+    expect(operationalStateSpy).toHaveBeenCalledWith(phaseList, 0, operationalStateList, RvcOperationalState.OperationalState.Running);
+    expect(serviceAreaSpy).toHaveBeenCalledWith(supportedAreas, [8], 8, supportedMaps, undefined);
+
+    runModeSpy.mockRestore();
+    cleanModeSpy.mockRestore();
+    operationalStateSpy.mockRestore();
+    serviceAreaSpy.mockRestore();
+  });
+
+  test('create an RVC device with the deprecated positional parameters', () => {
+    // oxlint-disable-next-line typescript/no-deprecated
+    const legacyDevice = new RoboticVacuumCleaner('Legacy RVC', 'RVC000001', 'server', 1, undefined, 1, undefined, 0);
+    expect(legacyDevice).toBeDefined();
+  });
+
+  test('createDefaultRvcOperationalStateClusterServer argument normalization and chaining', () => {
+    const requireSpy = vi.spyOn(device.behaviors, 'require').mockImplementation(() => {});
+    // Call with all parameters
+    device.createDefaultRvcOperationalStateClusterServer(
+      ['Phase1', 'Phase2'],
+      1,
+      [{ operationalStateId: RvcOperationalState.OperationalState.Stopped }, { operationalStateId: RvcOperationalState.OperationalState.Running }],
+      RvcOperationalState.OperationalState.Running,
+      { errorStateId: RvcOperationalState.ErrorState.DustBinFull, errorStateDetails: 'Test error' },
+    );
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phaseList: ['Phase1', 'Phase2'],
+        currentPhase: 1,
+        operationalStateList: [{ operationalStateId: RvcOperationalState.OperationalState.Stopped }, { operationalStateId: RvcOperationalState.OperationalState.Running }],
+        operationalState: RvcOperationalState.OperationalState.Running,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.DustBinFull, errorStateDetails: 'Test error' },
+      }),
+    );
+    // Call with defaults
+    device.createDefaultRvcOperationalStateClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        phaseList: null,
+        currentPhase: null,
+        operationalStateList: expect.any(Array),
+        operationalState: RvcOperationalState.OperationalState.Docked,
+        operationalError: { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultRvcOperationalStateClusterServer()).toBe(device);
+    requireSpy.mockRestore();
+  });
+
+  test('createDefaultServiceAreaClusterServer argument normalization and chaining', () => {
+    const requireSpy = vi.spyOn(device.behaviors, 'require').mockImplementation(() => {});
+    // Call with all parameters
+    const supportedAreas: ServiceArea.Area[] = [];
+    const selectedAreas: number[] = [];
+    const currentArea: number | null = null;
+    const supportedMaps: ServiceArea.Map[] = [];
+    device.createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), { currentArea: null, estimatedEndTime: null, selectedAreas: [], supportedAreas: [], supportedMaps: [] });
+    // Call with defaults
+    vi.clearAllMocks();
+    device.createDefaultServiceAreaClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), {
+      currentArea: 1,
+      estimatedEndTime: null,
+      selectedAreas: [],
+      supportedAreas: [
+        {
+          areaId: 1,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 52,
+              floorNumber: 0,
+              locationName: 'Living',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 2,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 47,
+              floorNumber: 0,
+              locationName: 'Kitchen',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 3,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 7,
+              floorNumber: 1,
+              locationName: 'Bedroom',
+            },
+          },
+          mapId: null,
+        },
+        {
+          areaId: 4,
+          areaInfo: {
+            landmarkInfo: null,
+            locationInfo: {
+              areaType: 6,
+              floorNumber: 1,
+              locationName: 'Bathroom',
+            },
+          },
+          mapId: null,
+        },
+      ],
+      supportedMaps: [],
+    });
+    // Call with the progress option: the ProgressReporting feature is enabled and progress is forwarded as-is, even when empty.
+    vi.clearAllMocks();
+    const progress: ServiceArea.Progress[] = [];
+    device.createDefaultServiceAreaClusterServer(supportedAreas, selectedAreas, currentArea, supportedMaps, progress);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), {
+      currentArea: null,
+      estimatedEndTime: null,
+      selectedAreas: [],
+      supportedAreas: [],
+      supportedMaps: [],
+      progress: [],
+    });
+    requireSpy.mockRestore();
+  });
+
+  test('add an RVC device', async () => {
+    expect(await addDevice(server, device, 0, 0, 0, 0)).toBeTruthy();
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 116, revision: 4 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 84, 85, 97, 336 ]',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).activeBatFaults(0x12)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 11, 12, 13, 14, 15, 16, 17, 18, 26, 28, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).batChargeLevel(0xe)=0',
+        'powerSource(0x2f).batChargeState(0x1a)=3',
+        'powerSource(0x2f).batFunctionalWhileCharging(0x1c)=true',
+        'powerSource(0x2f).batPercentRemaining(0xc)=160',
+        'powerSource(0x2f).batPresent(0x11)=true',
+        'powerSource(0x2f).batReplaceability(0x10)=0',
+        'powerSource(0x2f).batReplacementNeeded(0xf)=false',
+        'powerSource(0x2f).batTimeRemaining(0xd)=null',
+        'powerSource(0x2f).batVoltage(0xb)=5900',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='Primary battery'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: false, battery: true, rechargeable: true, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'rvcCleanMode(0x55).acceptedCommandList(0xfff9)=[ 0 ]',
+        'rvcCleanMode(0x55).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'rvcCleanMode(0x55).clusterRevision(0xfffd)=5',
+        'rvcCleanMode(0x55).currentMode(0x1)=1',
+        'rvcCleanMode(0x55).featureMap(0xfffc)={ onOff: false, directModeChange: false }',
+        'rvcCleanMode(0x55).generatedCommandList(0xfff8)=[ 1 ]',
+        "rvcCleanMode(0x55).supportedModes(0x0)=[ { label: 'Vacuum', mode: 1, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Mop', mode: 2, modeTags: [ { mfgCode: undefined, value: 16386 } ] }, { label: 'DeepClean', mode: 3, modeTags: [ { mfgCode: undefined, value: 16384 } ] } ]",
+        'rvcOperationalState(0x61).acceptedCommandList(0xfff9)=[ 0, 3, 128 ]',
+        'rvcOperationalState(0x61).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'rvcOperationalState(0x61).clusterRevision(0xfffd)=3',
+        'rvcOperationalState(0x61).countdownTime(0x2)=null',
+        'rvcOperationalState(0x61).currentPhase(0x1)=null',
+        'rvcOperationalState(0x61).featureMap(0xfffc)={  }',
+        'rvcOperationalState(0x61).generatedCommandList(0xfff8)=[ 4 ]',
+        "rvcOperationalState(0x61).operationalError(0x5)={ errorStateId: 0, errorStateLabel: undefined, errorStateDetails: 'Fully operational' }",
+        'rvcOperationalState(0x61).operationalState(0x4)=66',
+        'rvcOperationalState(0x61).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 2, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined }, { operationalStateId: 64, operationalStateLabel: undefined }, { operationalStateId: 65, operationalStateLabel: undefined }, { operationalStateId: 66, operationalStateLabel: undefined } ]',
+        'rvcOperationalState(0x61).phaseList(0x0)=null',
+        'rvcRunMode(0x54).acceptedCommandList(0xfff9)=[ 0 ]',
+        'rvcRunMode(0x54).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'rvcRunMode(0x54).clusterRevision(0xfffd)=4',
+        'rvcRunMode(0x54).currentMode(0x1)=1',
+        'rvcRunMode(0x54).featureMap(0xfffc)={ onOff: false, directModeChange: false }',
+        'rvcRunMode(0x54).generatedCommandList(0xfff8)=[ 1 ]',
+        "rvcRunMode(0x54).supportedModes(0x0)=[ { label: 'Idle', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Cleaning', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Mapping', mode: 3, modeTags: [ { mfgCode: undefined, value: 16386 } ] }, { label: 'SpotCleaning', mode: 4, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 7 } ] } ]",
+        'serviceArea(0x150).acceptedCommandList(0xfff9)=[ 0, 2 ]',
+        'serviceArea(0x150).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'serviceArea(0x150).clusterRevision(0xfffd)=2',
+        'serviceArea(0x150).currentArea(0x3)=1',
+        'serviceArea(0x150).estimatedEndTime(0x4)=null',
+        'serviceArea(0x150).featureMap(0xfffc)={ selectWhileRunning: false, progressReporting: false, maps: true }',
+        'serviceArea(0x150).generatedCommandList(0xfff8)=[ 1, 3 ]',
+        'serviceArea(0x150).selectedAreas(0x2)=[  ]',
+        "serviceArea(0x150).supportedAreas(0x0)=[ { areaId: 1, mapId: null, areaInfo: { locationInfo: { locationName: 'Living', floorNumber: 0, areaType: 52 }, landmarkInfo: null } }, { areaId: 2, mapId: null, areaInfo: { locationInfo: { locationName: 'Kitchen', floorNumber: 0, areaType: 47 }, landmarkInfo: null } }, { areaId: 3, mapId: null, areaInfo: { locationInfo: { locationName: 'Bedroom', floorNumber: 1, areaType: 7 }, landmarkInfo: null } }, { areaId: 4, mapId: null, areaInfo: { locationInfo: { locationName: 'Bathroom', floorNumber: 1, areaType: 6 }, landmarkInfo: null } } ]",
+        'serviceArea(0x150).supportedMaps(0x1)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('invoke MatterbridgeRvcRunModeServer commands', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    device.subscribeCommand(RvcRunMode, 'changeToMode', (data) => emitted.push(data.request));
+    expect(device.behaviors.has(RvcRunModeServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeRvcRunModeServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(RvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeRvcRunModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((device as any).state['rvcRunMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['rvcRunMode'].generatedCommandList).toEqual([1]);
+    expect((device.stateOf(MatterbridgeRvcRunModeServer) as any).acceptedCommandList).toEqual([0]);
+    expect((device.stateOf(MatterbridgeRvcRunModeServer) as any).generatedCommandList).toEqual([1]);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('noCluster', 'changeToMode', { newMode: 0 }); // noCluster is invalid
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}changeToMode${er} not found on endpoint`));
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcRunMode', 'noCommand' as any, { newMode: 0 }); // noCommand is invalid
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeRvcRunModeServer: changeToMode called with unsupported newMode 0 (endpoint ${device.id}.${device.number})`,
+    );
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeRvcRunModeServer: changeToMode called with unsupported newMode 0 (endpoint ${device.id}.${device.number})`,
+    );
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 }); // 1 has Idle
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(1);
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 2 }); // 2 has Cleaning
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcRunModeServer: changing mode to 2 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcRunModeServer: changeToMode called with newMode Cleaning => Running (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Running);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 3 }); // 3 has Mapping
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcRunModeServer: changeToMode rejected direct non-Idle mode change from 2 to 3 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 });
+    expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.SeekingCharger);
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 3 });
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(3);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 4 }); // 4 has Cleaning and Max
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcRunModeServer: changeToMode rejected direct non-Idle mode change from 3 to 4 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(3);
+    // Successful mode changes are announced, rejected ones are not
+    expect(emitted).toContainEqual({ newMode: 2 });
+    expect(emitted).toContainEqual({ newMode: 3 });
+    expect(emitted).not.toContainEqual({ newMode: 0 });
+    expect(emitted).not.toContainEqual({ newMode: 4 });
+  });
+
+  test('invoke MatterbridgeRvcCleanModeServer commands', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    device.subscribeCommand(RvcCleanMode, 'changeToMode', (data) => emitted.push(data.request));
+    expect(device.behaviors.has(RvcCleanModeServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeRvcCleanModeServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(RvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeRvcCleanModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((device as any).state['rvcCleanMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['rvcCleanMode'].generatedCommandList).toEqual([1]);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeRvcCleanModeServer: changeToMode called with unsupported newMode 0 (endpoint ${device.id}.${device.number})`,
+    );
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcCleanModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(device.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(1);
+    await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 2 });
+    expect(device.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(1);
+    await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 1 });
+    await device.invokeBehaviorCommand('rvcCleanMode', 'changeToMode', { newMode: 2 });
+    expect(device.stateOf(MatterbridgeRvcCleanModeServer).currentMode).toBe(2);
+    expect(emitted).toContainEqual({ newMode: 2 });
+    expect(emitted).not.toContainEqual({ newMode: 0 });
+  });
+
+  test('invoke MatterbridgeRvcOperationalStateServer commands', async () => {
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: string[] = [];
+    device.subscribeCommand(RvcOperationalState, 'pause', () => emitted.push('pause'));
+    device.subscribeCommand(RvcOperationalState, 'resume', () => emitted.push('resume'));
+    device.subscribeCommand(RvcOperationalState, 'goHome', () => emitted.push('goHome'));
+    expect(device.behaviors.has(RvcOperationalStateServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeRvcOperationalStateServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(RvcOperationalStateServer).commands.has('pause')).toBeTruthy();
+    expect(device.behaviors.elementsOf(RvcOperationalStateServer).commands.has('resume')).toBeTruthy();
+    expect(device.behaviors.elementsOf(RvcOperationalStateServer).commands.has('goHome')).toBeTruthy();
+    expect((device.stateOf(RvcOperationalStateServer) as any).acceptedCommandList).toEqual([0, 3, 128]);
+    expect((device.stateOf(RvcOperationalStateServer) as any).generatedCommandList).toEqual([4]);
+    await device.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: 2 });
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Running });
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcOperationalState', 'pause');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: pause (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Paused);
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcOperationalState', 'resume');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: resume (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: resume called restoring operational state to 1 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Running);
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('rvcOperationalState', 'goHome');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeRvcOperationalStateServer: goHome (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.SeekingCharger);
+    expect(device.stateOf(MatterbridgeRvcRunModeServer).currentMode).toBe(2);
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Docked });
+    await device.invokeBehaviorCommand('rvcOperationalState', 'goHome');
+    expect(device.stateOf(MatterbridgeRvcOperationalStateServer).operationalState).toBe(RvcOperationalState.OperationalState.Docked);
+    expect(emitted).toEqual(expect.arrayContaining(['pause', 'resume', 'goHome']));
+  });
+
+  test('handle all RVC operational-state compatibility branches', async () => {
+    const invoke = async (command: 'pause' | 'resume' | 'goHome'): Promise<OperationalState.OperationalCommandResponse> =>
+      device.act(async (agent) => agent.get(MatterbridgeRvcOperationalStateServer)[command]());
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Paused });
+    expect(invoke('pause')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already paused' },
+    });
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Stopped });
+    expect(invoke('pause')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Pause-compatible in the current operational state' },
+    });
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.SeekingCharger });
+    expect(invoke('pause')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+    expect(invoke('resume')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Paused });
+    expect(invoke('resume')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Running });
+    expect(invoke('resume')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already running' },
+    });
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Stopped });
+    expect(invoke('resume')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Resume-compatible in the current operational state' },
+    });
+
+    await device.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.SeekingCharger });
+    expect(invoke('goHome')).resolves.toEqual({
+      commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already seeking charger' },
+    });
+  });
+
+  test('emit OperationCompletion with an unfinished paused interval', async () => {
+    const operationCompletion = vi.fn();
+    device.eventsOf(MatterbridgeRvcOperationalStateServer).operationCompletion.on(operationCompletion);
+
+    vi.useFakeTimers();
+    try {
+      await device.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: 1 });
+      await device.invokeBehaviorCommand('rvcRunMode', 'changeToMode', { newMode: 2 });
+      await device.act(async (agent) => agent.get(MatterbridgeRvcOperationalStateServer).beginOperation());
+      await advanceTimersByTimeAsync(1000);
+      await device.invokeBehaviorCommand('rvcOperationalState', 'pause');
+      await advanceTimersByTimeAsync(2000);
+      await device.act(async (agent) => agent.get(MatterbridgeRvcOperationalStateServer).completeOperation());
+      await device.act(async (agent) => agent.get(MatterbridgeRvcOperationalStateServer).completeOperation());
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(operationCompletion).toHaveBeenCalledTimes(1);
+    expect(operationCompletion.mock.calls[0][0]).toEqual({ completionErrorCode: OperationalState.ErrorState.NoError, totalOperationalTime: 3, pausedTime: 2 });
+  });
+
+  test('invoke MatterbridgeServiceAreaServer commands', async () => {
+    expect(device.behaviors.has(ServiceAreaServer)).toBeTruthy();
+    // This device is built without the progress option, so the ServiceArea cluster server advertises Maps only, not ProgressReporting.
+    expect(device.behaviors.has(MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps))).toBeTruthy();
+    expect(device.behaviors.elementsOf(ServiceAreaServer).commands.has('selectAreas')).toBeTruthy();
+    expect(device.behaviors.elementsOf(ServiceAreaServer).commands.has('skipArea')).toBeTruthy();
+    expect((device.stateOf(ServiceAreaServer) as any).acceptedCommandList).toEqual([0, 2]);
+    expect((device.stateOf(ServiceAreaServer) as any).generatedCommandList).toEqual([1, 3]);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [1, 2, 3, 4] });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [1, 2, 3, 4] (endpoint ${device.id}.${device.number})`);
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('serviceArea', 'selectAreas', { newAreas: [0, 5] });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: selecting areas [0, 5] (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: selectAreas called with [0, 5] (endpoint ${device.id}.${device.number})`);
+
+    // SelectedAreas is still [1, 2, 3, 4] from the accepted selectAreas call above, so skipping a selected area succeeds.
+    vi.clearAllMocks();
+    const skipAreaCalls: Array<{ cluster: string; request: object }> = [];
+    device.addCommandHandler('skipArea', (data) => {
+      skipAreaCalls.push({ cluster: data.cluster, request: data.request });
+    });
+    const skippedResponse = await device.act(async (agent) => agent.get(MatterbridgeServiceAreaServer).skipArea({ skippedArea: 1 }));
+    expect(skippedResponse).toEqual({ status: ServiceArea.SkipAreaStatus.Success, statusText: '' });
+    expect(skipAreaCalls).toEqual([{ cluster: 'serviceArea', request: { skippedArea: 1 } }]);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeServiceAreaServer: skipping area 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeServiceAreaServer: skipArea called with 1 (endpoint ${device.id}.${device.number})`);
+    // ProgressReporting is not enabled on this device, so the progress attribute stays undefined instead of being updated.
+    expect((device.stateOf(ServiceAreaServer) as any).progress).toBeUndefined();
+
+    // 99 is not in SelectedAreas, so the request is refused.
+    vi.clearAllMocks();
+    const invalidSkippedResponse = await device.act(async (agent) => agent.get(MatterbridgeServiceAreaServer).skipArea({ skippedArea: 99 }));
+    expect(invalidSkippedResponse).toEqual({ status: ServiceArea.SkipAreaStatus.InvalidSkippedArea, statusText: 'AreaID 99 is not in the selected areas list' });
+  });
+
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode(0, 0, 0, 0);
+    else await stopServerNode();
+  });
+});

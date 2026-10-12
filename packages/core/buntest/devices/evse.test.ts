@@ -1,0 +1,1123 @@
+/**
+ * @file packages/core/buntest/devices/evse.test.ts
+ * @description This file contains the tests for the Evse device.
+ * @author Luca Liguori
+ */
+
+const NAME = 'Evse';
+const MATTER_PORT = 8005;
+const MATTER_CREATE_ONLY = true;
+
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test, vi } from 'bun:test';
+
+import { Time } from '@matter/general';
+import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
+import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
+import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { EnergyEvse } from '@matter/types/clusters/energy-evse';
+import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
+import { Identify } from '@matter/types/clusters/identify';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { EndpointNumber } from '@matter/types/datatype';
+import {
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/buntest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { LogLevel, stringify } from 'node-ansi-logger';
+
+import { MatterbridgeDeviceEnergyManagementModeServer } from '../../src/behaviors/deviceEnergyManagementModeServer.js';
+import { Evse, MatterbridgeEnergyEvseModeServer, MatterbridgeEnergyEvseServer } from '../../src/devices/evse.js';
+import { evse } from '../../src/matterbridgeDeviceTypes.js';
+
+/**
+ * Bun has no vi.advanceTimersByTimeAsync: advance the fake clock 1ms at a time and drain the microtasks
+ * between steps, so promise chains started by a timer callback settle before the next timer fires.
+ *
+ * @param {number} ms The time in milliseconds to advance the fake clock.
+ */
+async function advanceTimersByTimeAsync(ms: number): Promise<void> {
+  for (let elapsed = 0; elapsed <= ms; elapsed++) {
+    vi.advanceTimersByTime(elapsed === 0 ? 0 : 1);
+    for (let j = 0; j < 10; j++) await Promise.resolve();
+  }
+}
+
+// Setup the test environment
+await setupTest(NAME, false);
+
+describe('Matterbridge ' + NAME, () => {
+  let device: Evse;
+  let featureDevice: Evse;
+
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    await createTestEnvironment();
+  });
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
+
+  afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
+    vi.restoreAllMocks();
+  });
+
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, evse.code, 0, 0, 0);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('create a Evse device', () => {
+    device = new Evse('EVSE Test Device', 'EVSE12456');
+    expect(device).toBeDefined();
+    expect(device.id).toBe('EVSETestDevice-EVSE12456');
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(EnergyEvseServer)).toBeTruthy();
+    expect(device.hasClusterServer(EnergyEvseModeServer)).toBeTruthy();
+    expect(device.hasClusterServer(TemperatureMeasurementServer)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSourceServer)).toBeFalsy();
+    expect(device.hasClusterServer(ElectricalPowerMeasurementServer)).toBeFalsy();
+    expect(device.hasClusterServer(ElectricalEnergyMeasurementServer)).toBeFalsy();
+    expect(device.hasClusterServer(DeviceEnergyManagementServer)).toBeFalsy();
+    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
+  });
+
+  test('create an Evse with explicit endpoint and measurement options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: 1, tag: 1, label: 'One' }];
+    const optionsDevice = new Evse('EVSE', 'EVSE-OPTIONS', {
+      id: 'EvseOptions',
+      number: EndpointNumber(14_01),
+      tagList,
+      currentMode: 1,
+      supportedModes: [{ label: 'Manual', mode: 1, modeTags: [{ value: EnergyEvseMode.ModeTag.Manual }] }],
+      state: EnergyEvse.State.PluggedInDemand,
+      supplyState: EnergyEvse.SupplyState.Disabled,
+      faultState: EnergyEvse.FaultState.NoError,
+      voltage: 230_000,
+      current: 10_000,
+      power: 2_300_000,
+      energy: 5_000,
+      absMinPower: 1_000,
+      absMaxPower: 7_400_000,
+    });
+    expect(optionsDevice.id).toBe('EvseOptions');
+    expect(optionsDevice.number).toBe(EndpointNumber(14_01));
+    expect(optionsDevice.tagList).toEqual(tagList);
+  });
+
+  test('create an Evse with an empty options object', () => {
+    expect(new Evse('EVSE Defaults', 'EVSE-DEFAULTS', {})).toBeDefined();
+  });
+
+  test('createDefaultEnergyEvseClusterServer argument normalization and chaining', () => {
+    const requireSpy = vi.spyOn(device.behaviors, 'require').mockImplementation(() => {});
+    // Call with all parameters
+    device.createDefaultEnergyEvseClusterServer(EnergyEvse.State.PluggedInCharging, EnergyEvse.SupplyState.ChargingEnabled, EnergyEvse.FaultState.NoError);
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        state: EnergyEvse.State.PluggedInCharging,
+        supplyState: EnergyEvse.SupplyState.ChargingEnabled,
+        faultState: EnergyEvse.FaultState.NoError,
+        chargingEnabledUntil: null,
+        circuitCapacity: 32000,
+        minimumChargeCurrent: 6000,
+        maximumChargeCurrent: 32000,
+        userMaximumChargeCurrent: 32000,
+        sessionId: null,
+        sessionDuration: null,
+        sessionEnergyCharged: null,
+      }),
+    );
+    // Call with defaults
+    device.createDefaultEnergyEvseClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        state: EnergyEvse.State.NotPluggedIn,
+        supplyState: EnergyEvse.SupplyState.ChargingEnabled,
+        faultState: EnergyEvse.FaultState.NoError,
+        chargingEnabledUntil: null,
+        circuitCapacity: 32000,
+        minimumChargeCurrent: 6000,
+        maximumChargeCurrent: 32000,
+        userMaximumChargeCurrent: 32000,
+        sessionId: null,
+        sessionDuration: null,
+        sessionEnergyCharged: null,
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultEnergyEvseClusterServer()).toBe(device);
+    requireSpy.mockRestore();
+  });
+
+  test('add a Evse device', async () => {
+    expect(await addDevice(server, device, 0, 0, 0, 0)).toBeTruthy();
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1292, revision: 2 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 64, 153, 157, 1026 ]',
+        'energyEvse(0x99).acceptedCommandList(0xfff9)=[ 1, 2, 4, 5, 6, 7 ]',
+        'energyEvse(0x99).attributeList(0xfffb)=[ 0, 1, 2, 3, 5, 6, 7, 9, 35, 36, 37, 38, 64, 65, 66, 65528, 65529, 65531, 65532, 65533 ]',
+        'energyEvse(0x99).chargingEnabledUntil(0x3)=null',
+        'energyEvse(0x99).circuitCapacity(0x5)=32000',
+        'energyEvse(0x99).clusterRevision(0xfffd)=4',
+        'energyEvse(0x99).faultState(0x2)=0',
+        'energyEvse(0x99).featureMap(0xfffc)={ chargingPreferences: true, soCReporting: false, plugAndCharge: false, rfid: false, v2X: false }',
+        'energyEvse(0x99).generatedCommandList(0xfff8)=[ 0 ]',
+        'energyEvse(0x99).maximumChargeCurrent(0x7)=32000',
+        'energyEvse(0x99).minimumChargeCurrent(0x6)=6000',
+        'energyEvse(0x99).nextChargeRequiredEnergy(0x25)=null',
+        'energyEvse(0x99).nextChargeStartTime(0x23)=null',
+        'energyEvse(0x99).nextChargeTargetSoC(0x26)=null',
+        'energyEvse(0x99).nextChargeTargetTime(0x24)=null',
+        'energyEvse(0x99).sessionDuration(0x41)=null',
+        'energyEvse(0x99).sessionEnergyCharged(0x42)=null',
+        'energyEvse(0x99).sessionId(0x40)=null',
+        'energyEvse(0x99).state(0x0)=0',
+        'energyEvse(0x99).supplyState(0x1)=1',
+        'energyEvse(0x99).userMaximumChargeCurrent(0x9)=32000',
+        'energyEvseMode(0x9d).acceptedCommandList(0xfff9)=[ 0 ]',
+        'energyEvseMode(0x9d).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'energyEvseMode(0x9d).clusterRevision(0xfffd)=2',
+        'energyEvseMode(0x9d).currentMode(0x1)=1',
+        'energyEvseMode(0x9d).featureMap(0xfffc)={ onOff: false }',
+        'energyEvseMode(0x9d).generatedCommandList(0xfff8)=[ 1 ]',
+        "energyEvseMode(0x9d).supportedModes(0x0)=[ { label: 'On demand', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Scheduled', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Solar charging', mode: 3, modeTags: [ { mfgCode: undefined, value: 16386 } ] } ]",
+        'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
+        'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'fixedLabel(0x40).clusterRevision(0xfffd)=1',
+        'fixedLabel(0x40).featureMap(0xfffc)={  }',
+        'fixedLabel(0x40).generatedCommandList(0xfff8)=[  ]',
+        "fixedLabel(0x40).labelList(0x0)=[ { label: 'composed', value: 'EVSE' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
+        'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=6',
+        'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
+        'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
+        'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
+        'temperatureMeasurement(0x402).measuredValue(0x0)=2400',
+        'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
+        'temperatureMeasurement(0x402).tolerance(0x3)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('PowerSource child forEachAttribute', () => {
+    const child = device.getChildEndpointById('PowerSource');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47 ]',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 3 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalSensor child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalSensor');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 144, 145, 156 ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)={ energy: 0, startTimestamp: undefined, endTimestamp: undefined, startSystime: undefined, endSystime: undefined, apparentEnergy: undefined, reactiveEnergy: undefined }',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('DeviceEnergyManagement child forEachAttribute', () => {
+    const child = device.getChildEndpointById('DeviceEnergyManagement');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1293, revision: 3 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 152, 159 ]',
+        'deviceEnergyManagement(0x98).absMaxPower(0x4)=0',
+        'deviceEnergyManagement(0x98).absMinPower(0x3)=0',
+        'deviceEnergyManagement(0x98).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'deviceEnergyManagement(0x98).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 65528, 65529, 65531, 65532, 65533 ]',
+        'deviceEnergyManagement(0x98).clusterRevision(0xfffd)=4',
+        'deviceEnergyManagement(0x98).esaCanGenerate(0x1)=false',
+        'deviceEnergyManagement(0x98).esaState(0x2)=1',
+        'deviceEnergyManagement(0x98).esaType(0x0)=0',
+        'deviceEnergyManagement(0x98).featureMap(0xfffc)={ powerAdjustment: true, powerForecastReporting: true, stateForecastReporting: false, startTimeAdjustment: false, pausable: false, forecastAdjustment: false, constraintBasedAdjustment: false }',
+        'deviceEnergyManagement(0x98).forecast(0x6)=null',
+        'deviceEnergyManagement(0x98).generatedCommandList(0xfff8)=[  ]',
+        'deviceEnergyManagement(0x98).optOutState(0x7)=0',
+        'deviceEnergyManagement(0x98).powerAdjustmentCapability(0x5)=null',
+        'deviceEnergyManagementMode(0x9f).acceptedCommandList(0xfff9)=[ 0 ]',
+        'deviceEnergyManagementMode(0x9f).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'deviceEnergyManagementMode(0x9f).clusterRevision(0xfffd)=2',
+        'deviceEnergyManagementMode(0x9f).currentMode(0x1)=1',
+        'deviceEnergyManagementMode(0x9f).featureMap(0xfffc)={ onOff: false }',
+        'deviceEnergyManagementMode(0x9f).generatedCommandList(0xfff8)=[ 1 ]',
+        "deviceEnergyManagementMode(0x9f).supportedModes(0x0)=[ { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Device Energy Management', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 16386 } ] }, { label: 'Home Energy Management', mode: 3, modeTags: [ { mfgCode: undefined, value: 16387 }, { mfgCode: undefined, value: 16386 } ] }, { label: 'Grid Energy Management', mode: 4, modeTags: [ { mfgCode: undefined, value: 16387 } ] }, { label: 'Full Energy Management', mode: 5, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 16386 }, { mfgCode: undefined, value: 16387 } ] } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('invoke MatterbridgeDeviceEnergyManagementModeServer commands', async () => {
+    const dem = device.getChildEndpointById('DeviceEnergyManagement');
+    expect(dem).toBeDefined();
+    if (!dem) return;
+    expect(dem.behaviors.has(DeviceEnergyManagementModeServer)).toBeTruthy();
+    expect(dem.behaviors.has(MatterbridgeDeviceEnergyManagementModeServer)).toBeTruthy();
+    expect(dem.behaviors.elementsOf(DeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(dem.behaviors.elementsOf(MatterbridgeDeviceEnergyManagementModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((dem as any).state['deviceEnergyManagementMode'].acceptedCommandList).toEqual([0]);
+    expect((dem as any).state['deviceEnergyManagementMode'].generatedCommandList).toEqual([1]);
+    vi.clearAllMocks();
+    await dem.invokeBehaviorCommand(DeviceEnergyManagementModeServer, 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with unsupported newMode 0 (endpoint ${dem.id}.${dem.number})`,
+    );
+    vi.clearAllMocks();
+    await dem.invokeBehaviorCommand(DeviceEnergyManagementModeServer, 'changeToMode', { newMode: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeDeviceEnergyManagementModeServer: changing mode to 1 (endpoint ${dem.id}.${dem.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode 1 => No Energy Management (Forecast reporting only) (endpoint ${dem.id}.${dem.number})`,
+    );
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer commands', async () => {
+    expect(device.behaviors.has(EnergyEvseServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeEnergyEvseServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('disable')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('disable')).toBeTruthy();
+    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('enableCharging')).toBeTruthy();
+    expect((device as any).state['energyEvse'].acceptedCommandList).toEqual([1, 2, 4, 5, 6, 7]);
+    expect((device as any).state['energyEvse'].generatedCommandList).toEqual([0]);
+    expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).acceptedCommandList).toEqual([1, 2, 4, 5, 6, 7]);
+    expect((device.stateOf(MatterbridgeEnergyEvseServer) as any).generatedCommandList).toEqual([0]);
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: disable called (endpoint ${device.id}.${device.number})`);
+
+    vi.clearAllMocks();
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInCharging);
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: disable called (endpoint ${device.id}.${device.number})`);
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: enableCharging called (endpoint ${device.id}.${device.number})`);
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 60_000 });
+    expect(device.getAttribute(EnergyEvse.id, 'maximumChargeCurrent')).toBe(32_000);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: enableCharging called (endpoint ${device.id}.${device.number})`);
+
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 12_000 });
+    vi.useFakeTimers();
+    try {
+      await device.setAttribute('energyEvse', 'userMaximumChargeCurrent', 6_000);
+      await advanceTimersByTimeAsync(0);
+      expect(device.getAttribute(EnergyEvse.id, 'maximumChargeCurrent')).toBe(6_000);
+      await device.setAttribute('energyEvse', 'userMaximumChargeCurrent', 32_000);
+      await advanceTimersByTimeAsync(0);
+    } finally {
+      vi.useRealTimers();
+    }
+
+    vi.clearAllMocks();
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6000, maximumChargeCurrent: 0 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: enableCharging called (endpoint ${device.id}.${device.number})`);
+
+    vi.clearAllMocks();
+    const allDays = new EnergyEvse.TargetDayOfWeek(0x7f);
+    const weekdayTarget = { targetTimeMinutesPastMidnight: 720, addedEnergy: 25_000_000 };
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+      chargingTargetSchedules: [{ dayOfWeekForSequence: allDays, chargingTargets: [weekdayTarget] }],
+    });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`setTargets`));
+
+    vi.clearAllMocks();
+    const targets = await device.act(async (agent) => agent.get(MatterbridgeEnergyEvseServer).getTargets());
+    expect(targets).toEqual({ chargingTargetSchedules: [{ dayOfWeekForSequence: allDays, chargingTargets: [weekdayTarget] }] });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`getTargets`));
+
+    // Matter 1.6.0 § 9.3.9.5.2 replaces only the days selected by the update, preserving the other days.
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+      chargingTargetSchedules: [{ dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x40), chargingTargets: [] }],
+    });
+    expect(await device.act(async (agent) => agent.get(MatterbridgeEnergyEvseServer).getTargets())).toEqual({
+      chargingTargetSchedules: [
+        { dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x3f), chargingTargets: [weekdayTarget] },
+        { dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x40), chargingTargets: [] },
+      ],
+    });
+
+    expect(
+      device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+        chargingTargetSchedules: [
+          { dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x01), chargingTargets: [weekdayTarget] },
+          { dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x01), chargingTargets: [weekdayTarget] },
+        ],
+      }),
+    ).rejects.toThrow('each day may occur in only one ChargingTargetSchedule');
+
+    expect(
+      device.act(async (agent) =>
+        agent.get(MatterbridgeEnergyEvseServer).setTargets({
+          chargingTargetSchedules: [
+            {
+              dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x40),
+              chargingTargets: Array.from({ length: 11 }, (_, index) => ({ targetTimeMinutesPastMidnight: index * 60, targetSoC: 100 })),
+            },
+          ],
+        }),
+      ),
+    ).rejects.toThrow('a ChargingTargetSchedule supports at most 10 charging targets');
+
+    vi.clearAllMocks();
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.NotPluggedIn);
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', { chargingTargetSchedules: [] });
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'clearTargets');
+    expect(await device.act(async (agent) => agent.get(MatterbridgeEnergyEvseServer).getTargets())).toEqual({ chargingTargetSchedules: [] });
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeStartTime')).toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetTime')).toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`clearTargets`));
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer startDiagnostics command', async () => {
+    expect(device.behaviors.elementsOf(EnergyEvseServer).commands.has('startDiagnostics')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseServer).commands.has('startDiagnostics')).toBeTruthy();
+
+    vi.clearAllMocks();
+    await device.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Disabled);
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics');
+    expect(device.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.DisabledDiagnostics);
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeStartTime')).toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetTime')).toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: startDiagnostics called (endpoint ${device.id}.${device.number})`);
+
+    // Matter 1.6.0 § 9.3.9.4.1: StartDiagnostics is only valid while charging is disabled.
+    expect(device.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics')).rejects.toThrow('diagnostics can only start while charging is disabled');
+
+    // Matter 1.6.0 § 9.3.9.2.4: EnableCharging is rejected while diagnostics are active.
+    expect(
+      device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 }),
+    ).rejects.toThrow('cannot enable charging while an error or diagnostics are active');
+
+    // Restore a normal supply state for subsequent tests.
+    await device.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.ChargingEnabled);
+  });
+
+  test('derive the next charging target when scheduled charging is enabled', async () => {
+    vi.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 7, 27, 12, 0, 0));
+    try {
+      await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 2 });
+      await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+        chargingTargetSchedules: [
+          {
+            dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x7f),
+            chargingTargets: [{ targetTimeMinutesPastMidnight: 23 * 60 + 59, addedEnergy: 25_000_000 }],
+          },
+        ],
+      });
+      await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', {
+        chargingEnabledUntil: null,
+        minimumChargeCurrent: 6_000,
+        maximumChargeCurrent: 32_000,
+      });
+
+      const expectedTargetTime = Math.floor(new Date(2026, 7, 27, 23, 59, 0).getTime() / 1000);
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetTime')).toBe(expectedTargetTime);
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeStartTime')).toBeLessThan(expectedTargetTime);
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBe(25_000_000);
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
+
+      // Matter 1.6.0 §§ 9.3.8.14-15 make the energy and SoC attributes mutually descriptive for the next target.
+      await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+        chargingTargetSchedules: [
+          {
+            dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x7f),
+            chargingTargets: [
+              { targetTimeMinutesPastMidnight: 2, targetSoC: 100 },
+              { targetTimeMinutesPastMidnight: 1, targetSoC: 100 },
+            ],
+          },
+        ],
+      });
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBeNull();
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBe(100);
+
+      await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+        chargingTargetSchedules: [
+          {
+            dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x7f),
+            chargingTargets: [{ targetTimeMinutesPastMidnight: 1 }],
+          },
+        ],
+      });
+      expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
+    } finally {
+      await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'clearTargets');
+      await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 1 });
+      vi.useRealTimers();
+    }
+  });
+
+  test('derive scheduled targets after charging is enabled in manual mode', async () => {
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+      chargingTargetSchedules: [
+        {
+          dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x7f),
+          chargingTargets: [{ targetTimeMinutesPastMidnight: 23 * 60 + 59, addedEnergy: 25_000_000 }],
+        },
+      ],
+    });
+    await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', {
+      chargingEnabledUntil: null,
+      minimumChargeCurrent: 6_000,
+      maximumChargeCurrent: 32_000,
+    });
+
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetTime')).not.toBeNull();
+    expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBe(25_000_000);
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'clearTargets');
+  });
+
+  test('stop automatic charging when targets are cleared', async () => {
+    await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 2 });
+    await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInCharging);
+    await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'clearTargets');
+
+    expect(device.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+    expect(device.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+    await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 1 });
+  });
+
+  test('stop charging and emit EnergyTransferStopped when ChargingEnabledUntil expires', async () => {
+    vi.useFakeTimers();
+    try {
+      const energyTransferStopped = vi.fn();
+      (device.events as any).energyEvse.energyTransferStopped.on(energyTransferStopped);
+      await device.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await device.setAttribute('energyEvse', 'sessionId', 7);
+
+      await device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', {
+        chargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        minimumChargeCurrent: 6_000,
+        maximumChargeCurrent: 32_000,
+      });
+      expect(device.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      await advanceTimersByTimeAsync(5_000);
+      expect(device.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+      expect(device.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+      expect(device.getAttribute(EnergyEvse.id, 'minimumChargeCurrent')).toBe(0);
+      expect(device.getAttribute(EnergyEvse.id, 'maximumChargeCurrent')).toBe(0);
+      expect(energyTransferStopped).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 7,
+          state: EnergyEvse.State.PluggedInCharging,
+          reason: EnergyEvse.EnergyTransferStoppedReason.EvseStopped,
+          energyTransferred: 0,
+        }),
+        expect.anything(),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('invoke MatterbridgeEvseModeServer commands', async () => {
+    expect(device.behaviors.has(EnergyEvseModeServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeEnergyEvseModeServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(EnergyEvseModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeEnergyEvseModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((device as any).state['energyEvseMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['energyEvseMode'].generatedCommandList).toEqual([1]);
+
+    vi.clearAllMocks();
+    const response = await device.act(async (agent) => agent.get(MatterbridgeEnergyEvseModeServer).changeToMode({ newMode: 0 }));
+    expect(response).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeEnergyEvseModeServer: changeToMode called with unsupported newMode: 0 (endpoint ${device.id}.${device.number})`,
+    );
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeEnergyEvseModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeEnergyEvseModeServer: changeToMode called with newMode 1 => On demand (endpoint ${device.id}.${device.number})`,
+    );
+  });
+
+  test('create an Evse with SoCReporting, PlugAndCharge, Rfid and V2X features', async () => {
+    featureDevice = new Evse('EVSE Features', 'EVSE-FEATURES', {
+      id: 'EvseFeatures',
+      rfid: true,
+      v2x: true,
+      stateOfCharge: 80,
+      batteryCapacity: 40_000_000,
+      vehicleId: null,
+      esaCanGenerate: true,
+      absMinPower: -7_400_000,
+      absMaxPower: 7_400_000,
+    });
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'vehicleId')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil')).toBeTruthy();
+    expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'maximumDischargeCurrent')).toBeTruthy();
+
+    // The endpoint must be added (and thus constructed) before its live attribute state can be read.
+    expect(await addDevice(server, featureDevice, 0, 0, 0, 0)).toBeTruthy();
+
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'stateOfCharge')).toBe(80);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBe(40_000_000);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'vehicleId')).toBeNull();
+    expect(featureDevice.getAttribute(EnergyEvseMode.id, 'supportedModes')).toEqual(
+      expect.arrayContaining([expect.objectContaining({ mode: 4, modeTags: [{ mfgCode: undefined, value: EnergyEvseMode.ModeTag.V2X }] })]),
+    );
+    // Matter 1.6.0 § 9.3.6: EnableDischarging (command id 3) is only in AcceptedCommandList when V2X is supported.
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'acceptedCommandList')).toEqual([1, 2, 3, 4, 5, 6, 7]);
+
+    const dem = featureDevice.getChildEndpointById('DeviceEnergyManagement');
+    expect(dem).toBeDefined();
+    expect(dem?.getAttribute(DeviceEnergyManagement.id, 'esaCanGenerate')).toBe(true);
+    expect(dem?.getAttribute(DeviceEnergyManagement.id, 'absMinPower')).toBe(-7_400_000);
+    expect(dem?.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(7_400_000);
+  });
+
+  test('a default Evse has none of the SoCReporting/PlugAndCharge/V2X attributes', () => {
+    expect(device.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeFalsy();
+    expect(device.hasAttributeServer(EnergyEvse.id, 'vehicleId')).toBeFalsy();
+    expect(device.hasAttributeServer(EnergyEvse.id, 'dischargingEnabledUntil')).toBeFalsy();
+  });
+
+  test('SoCReporting without batteryCapacity defaults it to null', async () => {
+    const socOnlyDevice = new Evse('SoC Only', 'SOC-ONLY', { stateOfCharge: 50 });
+    expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'stateOfCharge')).toBeTruthy();
+    expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
+
+    // The endpoint must be added (and thus constructed) before its live attribute state can be read.
+    expect(await addDevice(server, socOnlyDevice, 0, 0, 0, 0)).toBeTruthy();
+    expect(socOnlyDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBeNull();
+  });
+
+  test('triggerRfidEvent', async () => {
+    const rfid = vi.fn();
+    (featureDevice.events as any).energyEvse.rfid.on(rfid);
+
+    expect(featureDevice.triggerRfidEvent(new Uint8Array(7))).resolves.toBeTruthy();
+    expect(rfid).toHaveBeenCalledWith(expect.objectContaining({ uid: expect.anything() }), expect.anything());
+
+    vi.clearAllMocks();
+    expect(featureDevice.triggerRfidEvent(new Uint8Array(5))).resolves.toBeFalsy();
+    expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('invalid RFID uid length 5'));
+    vi.clearAllMocks();
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer enableDischarging rejected while diagnostics are active', async () => {
+    await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Disabled);
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics');
+    expect(
+      featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', { dischargingEnabledUntil: null, maximumDischargeCurrent: 16_000 }),
+    ).rejects.toThrow('cannot enable discharging while an error or diagnostics are active');
+    // Reset to a clean, fully-disabled baseline for the following tests.
+    await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Disabled);
+  });
+
+  test('reject EnergyEvse enable commands while an EVSE error is active', async () => {
+    await featureDevice.setAttribute('energyEvse', 'faultState', EnergyEvse.FaultState.GroundFault);
+    await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.DisabledError);
+
+    expect(
+      featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 }),
+    ).rejects.toThrow('cannot enable charging while an error or diagnostics are active');
+    expect(
+      featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', { dischargingEnabledUntil: null, maximumDischargeCurrent: 16_000 }),
+    ).rejects.toThrow('cannot enable discharging while an error or diagnostics are active');
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.DisabledError);
+
+    await featureDevice.setAttribute('energyEvse', 'faultState', EnergyEvse.FaultState.NoError);
+    await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Disabled);
+  });
+
+  test('invoke MatterbridgeEnergyEvseServer enableDischarging and the charging/discharging interplay', async () => {
+    await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+      dischargingEnabledUntil: null,
+      maximumDischargeCurrent: 16_000,
+    });
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.DischargingEnabled);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'maximumDischargeCurrent')).toBe(16_000);
+
+    // Enabling charging while discharging is active moves SupplyState to Enabled (both directions).
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 });
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Enabled);
+
+    // Disabling stops both directions.
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+    expect(featureDevice.getAttribute(EnergyEvse.id, 'maximumDischargeCurrent')).toBe(0);
+  });
+
+  test('prefer TargetSoC over AddedEnergy when SoC reporting is available', async () => {
+    vi.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 7, 27, 12, 0, 0));
+    try {
+      expect(
+        featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+          chargingTargetSchedules: [
+            {
+              dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x7f),
+              chargingTargets: [{ targetTimeMinutesPastMidnight: 23 * 60 + 59, addedEnergy: 25_000_000 }],
+            },
+          ],
+        }),
+      ).rejects.toThrow('targetSoC is required when SoC reporting is available');
+
+      await featureDevice.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 2 });
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.setAttribute('energyEvse', 'stateOfCharge', 95);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
+        chargingTargetSchedules: [
+          {
+            dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x7f),
+            chargingTargets: [{ targetTimeMinutesPastMidnight: 23 * 60 + 59, targetSoC: 90, addedEnergy: 25_000_000 }],
+          },
+        ],
+      });
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', {
+        chargingEnabledUntil: null,
+        minimumChargeCurrent: 6_000,
+        maximumChargeCurrent: 32_000,
+      });
+
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBe(90);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBeNull();
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'nextChargeStartTime')).toBeNull();
+    } finally {
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'clearTargets');
+      await featureDevice.setAttribute('energyEvse', 'stateOfCharge', null);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 1 });
+      vi.useRealTimers();
+    }
+  });
+
+  test('stop discharging and emit EnergyTransferStopped when DischargingEnabledUntil expires', async () => {
+    vi.useFakeTimers();
+    try {
+      const energyTransferStopped = vi.fn();
+      (featureDevice.events as any).energyEvse.energyTransferStopped.on(energyTransferStopped);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.setAttribute('energyEvse', 'sessionId', 9);
+
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+        dischargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        maximumDischargeCurrent: 16_000,
+      });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDischarging);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDischarging);
+
+      await advanceTimersByTimeAsync(5_000);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInDemand);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'maximumDischargeCurrent')).toBe(0);
+      expect(energyTransferStopped).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: 9,
+          state: EnergyEvse.State.PluggedInDischarging,
+          reason: EnergyEvse.EnergyTransferStoppedReason.EvseStopped,
+          energyDischarged: 0,
+        }),
+        expect.anything(),
+      );
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('should use session zero when discharging stops without a session ID', async () => {
+    const energyTransferStopped = vi.fn();
+    (featureDevice.events as any).energyEvse.energyTransferStopped.on(energyTransferStopped);
+    await featureDevice.setAttribute(EnergyEvse.id, 'sessionId', null);
+    await featureDevice.setAttribute(EnergyEvse.id, 'state', EnergyEvse.State.PluggedInDemand);
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+      dischargingEnabledUntil: null,
+      maximumDischargeCurrent: 16_000,
+    });
+    await featureDevice.setAttribute(EnergyEvse.id, 'state', EnergyEvse.State.PluggedInDischarging);
+    await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+
+    expect(energyTransferStopped).toHaveBeenCalledWith(expect.objectContaining({ sessionId: 0 }), expect.anything());
+  });
+
+  test('should restore charging and discharging expiry timers during initialization', async () => {
+    const restoredDevice = new Evse('EVSE Restored', 'EVSE-RESTORED', { v2x: true });
+    const expiresAt = Math.floor(Time.nowMs / 1000) + 60;
+    const initialize = MatterbridgeEnergyEvseServer.prototype.initialize;
+    const initializeSpy = vi.spyOn(MatterbridgeEnergyEvseServer.prototype, 'initialize').mockImplementationOnce(async function (this: MatterbridgeEnergyEvseServer) {
+      this.state.chargingEnabledUntil = expiresAt;
+      this.state.dischargingEnabledUntil = expiresAt;
+      await initialize.call(this);
+    });
+    try {
+      expect(await addDevice(server, restoredDevice, 0, 0, 0, 0)).toBeTruthy();
+
+      expect(restoredDevice.getAttribute(EnergyEvse.id, 'chargingEnabledUntil')).toBe(expiresAt);
+      expect(restoredDevice.getAttribute(EnergyEvse.id, 'dischargingEnabledUntil')).toBe(expiresAt);
+      await restoredDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    } finally {
+      initializeSpy.mockRestore();
+    }
+  });
+
+  test('discharging expiry while charging remains active only stops the discharge direction', async () => {
+    vi.useFakeTimers();
+    try {
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      // Charging is already active, so enabling discharging on top moves SupplyState to Enabled without changing
+      // State (it only transitions away from PluggedInDemand, which charging already claimed).
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', {
+        dischargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        maximumDischargeCurrent: 16_000,
+      });
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Enabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+
+      await advanceTimersByTimeAsync(5_000);
+      // Only the discharge direction stops; charging remains enabled and State stays PluggedInCharging.
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.ChargingEnabled);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'state')).toBe(EnergyEvse.State.PluggedInCharging);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'maximumDischargeCurrent')).toBe(0);
+    } finally {
+      vi.useRealTimers();
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    }
+  });
+
+  test('charging expiry does not preserve an expired discharging permission', async () => {
+    vi.useFakeTimers();
+    try {
+      const now = Math.floor(Time.nowMs / 1000);
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.setAttribute('energyEvse', 'dischargingEnabledUntil', now - 1);
+      await featureDevice.setAttribute('energyEvse', 'supplyState', EnergyEvse.SupplyState.Enabled);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', {
+        chargingEnabledUntil: now + 5,
+        minimumChargeCurrent: 6_000,
+        maximumChargeCurrent: 32_000,
+      });
+
+      await advanceTimersByTimeAsync(5_000);
+      expect(featureDevice.getAttribute(EnergyEvse.id, 'supplyState')).toBe(EnergyEvse.SupplyState.Disabled);
+    } finally {
+      vi.useRealTimers();
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    }
+  });
+
+  test('include V2X fields when charging stops', async () => {
+    vi.useFakeTimers();
+    try {
+      const energyTransferStopped = vi.fn();
+      (featureDevice.events as any).energyEvse.energyTransferStopped.on(energyTransferStopped);
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInDemand);
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', {
+        chargingEnabledUntil: Math.floor(Time.nowMs / 1000) + 5,
+        minimumChargeCurrent: 6_000,
+        maximumChargeCurrent: 32_000,
+      });
+      await featureDevice.setAttribute('energyEvse', 'state', EnergyEvse.State.PluggedInCharging);
+
+      await advanceTimersByTimeAsync(5_000);
+      expect(energyTransferStopped).toHaveBeenCalledWith(expect.objectContaining({ energyDischarged: 0 }), expect.anything());
+    } finally {
+      vi.useRealTimers();
+      await featureDevice.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    }
+  });
+
+  test('should emit completed EVSE commands after forwarding and state updates', async () => {
+    const observed = new Evse('EVSE Observable', 'EVSE-OBSERVABLE', { v2x: true });
+    await addDevice(server, observed, 0, 0, 0, 0);
+    const order: string[] = [];
+    const commands = ['disable', 'enableCharging', 'enableDischarging', 'startDiagnostics', 'setTargets', 'getTargets', 'clearTargets'] as const;
+    for (const command of commands) {
+      observed.addCommandHandler(`EnergyEvse.${command}`, async () => {
+        await Promise.resolve();
+        order.push(`forwarded:${command}`);
+      });
+      observed.subscribeCommand(EnergyEvse, command, (data) => {
+        expect(data.context).toBeDefined();
+        order.push(`emitted:${command}`);
+      });
+    }
+    observed.addCommandHandler('EnergyEvseMode.changeToMode', async () => {
+      await Promise.resolve();
+      order.push('forwarded:changeToMode');
+    });
+    observed.subscribeCommand(EnergyEvseMode, 'changeToMode', (data) => {
+      expect(data.request).toEqual({ newMode: 2 });
+      order.push('emitted:changeToMode');
+    });
+    observed.subscribeCommand(EnergyEvse, 'enableCharging', (data) => {
+      expect(data.request.maximumChargeCurrent).toBe(16_000);
+    });
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 16_000 });
+    expect(observed.getAttribute(EnergyEvse.id, 'maximumChargeCurrent')).toBe(16_000);
+    await observed.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.V2X), 'enableDischarging', { dischargingEnabledUntil: null, maximumDischargeCurrent: 16_000 });
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'setTargets', { chargingTargetSchedules: [] });
+    const response = await observed.act(async (agent) => agent.get(MatterbridgeEnergyEvseServer).getTargets());
+    expect(response).toEqual({ chargingTargetSchedules: [] });
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'clearTargets');
+    await observed.invokeBehaviorCommand(EnergyEvseModeServer, 'changeToMode', { newMode: 2 });
+    expect(observed.getAttribute(EnergyEvseMode.id, 'currentMode')).toBe(2);
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'disable');
+    await observed.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics');
+    expect(order).toEqual(
+      ['disable', 'enableCharging', 'enableDischarging', 'setTargets', 'getTargets', 'clearTargets', 'changeToMode', 'disable', 'startDiagnostics'].flatMap((command) => [
+        `forwarded:${command}`,
+        `emitted:${command}`,
+      ]),
+    );
+    order.length = 0;
+    expect(
+      observed.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 16_000 }),
+    ).rejects.toThrow();
+    expect(order).toEqual(['forwarded:enableCharging']);
+  });
+
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode(0, 0, 0, 0);
+    else await stopServerNode();
+  });
+});

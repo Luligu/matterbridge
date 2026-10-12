@@ -23,6 +23,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { stringify } from 'node-ansi-logger';
 
 import { MatterbridgeCameraAvStreamManagementServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
 import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
@@ -31,6 +32,8 @@ import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
 await setupTest(NAME, false);
 
 describe('SnapshotCamera', () => {
+  let defaultDevice: SnapshotCamera;
+
   beforeAll(async () => {
     // Setup the Matter test environment
     await createTestEnvironment();
@@ -86,6 +89,74 @@ describe('SnapshotCamera', () => {
     // A default snapshot stream is self-allocated on construction (see MatterbridgeCameraAvStreamManagementServer#initialize).
     expect(device.getAttribute(CameraAvStreamManagement, 'allocatedSnapshotStreams')).toEqual([expect.objectContaining({ snapshotStreamId: 0 })]);
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.Recording]);
+  });
+
+  it('should create the default device for the attribute snapshot', async () => {
+    defaultDevice = new SnapshotCamera('Snapshot Camera Snapshot', 'SNAPSHOT-CAMERA-SNAPSHOT');
+    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+  });
+
+  it('should expose the expected attributes on the device', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    defaultDevice.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'cameraAvStreamManagement(0x551).acceptedCommandList(0xfff9)=[ 7, 10, 11, 12 ]',
+        'cameraAvStreamManagement(0x551).allocatedSnapshotStreams(0x11)=[ { snapshotStreamId: 0, imageCodec: 0, frameRate: 10, minResolution: { width: 640, height: 480 }, maxResolution: { width: 1920, height: 1080 }, quality: 90, referenceCount: 0, encodedPixels: false, hardwareEncoder: false, watermarkEnabled: undefined, osdEnabled: undefined } ]',
+        'cameraAvStreamManagement(0x551).attributeList(0xfffb)=[ 0, 1, 6, 10, 11, 14, 17, 18, 65528, 65529, 65531, 65532, 65533 ]',
+        'cameraAvStreamManagement(0x551).clusterRevision(0xfffd)=2',
+        'cameraAvStreamManagement(0x551).featureMap(0xfffc)={ audio: false, video: false, snapshot: true, privacy: false, speaker: false, imageControl: false, watermark: false, onScreenDisplay: false, localStorage: false, highDynamicRange: false, nightVision: false }',
+        'cameraAvStreamManagement(0x551).generatedCommandList(0xfff8)=[ 8, 13 ]',
+        'cameraAvStreamManagement(0x551).maxConcurrentEncoders(0x0)=1',
+        'cameraAvStreamManagement(0x551).maxContentBufferSize(0x6)=1024',
+        'cameraAvStreamManagement(0x551).maxEncodedPixelRate(0x1)=10000000',
+        'cameraAvStreamManagement(0x551).maxNetworkBandwidth(0xb)=10000',
+        'cameraAvStreamManagement(0x551).snapshotCapabilities(0xa)=[ { resolution: { width: 640, height: 480 }, maxFrameRate: 10, imageCodec: 0, requiresEncodedPixels: false, requiresHardwareEncoder: undefined }, { resolution: { width: 1280, height: 720 }, maxFrameRate: 10, imageCodec: 0, requiresEncodedPixels: false, requiresHardwareEncoder: undefined }, { resolution: { width: 1920, height: 1080 }, maxFrameRate: 10, imageCodec: 0, requiresEncodedPixels: false, requiresHardwareEncoder: undefined } ]',
+        'cameraAvStreamManagement(0x551).streamUsagePriorities(0x12)=[ 1 ]',
+        'cameraAvStreamManagement(0x551).supportedStreamUsages(0xe)=[ 1 ]',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 325, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 1361 ]',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 3 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
   });
 
   it('should create a snapshot camera device with identify enabled', async () => {

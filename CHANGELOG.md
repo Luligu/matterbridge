@@ -85,6 +85,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [tests]: Use `getSharedMatterbridge()` in the matterNode tests, add the `cliHistory` bun test and include `cliHistory` in the bun coverage.
 - [tests]: Consolidate CLI error tests and speed up the suite by mocking Matterbridge imports and replacing fixed delays.
 - [tests]: Use fake timers in the windowCovering movement and doorLock relock tests, and drop the duplicated timed windowCovering tests from `matterbridgeEndpoint-matterjs`.
+- [tests]: Add the bun tests of all the device classes (`packages/core/buntest/devices`), with zero-pause test helpers.
+- [tests]: Add an exact `forEachAttribute` attribute snapshot to every device class test (device and child endpoints) to catch matter.js drifts, and drop the per-attribute type checks already covered by the snapshot.
+- [tests]: Move the root `matterTest` bun test to port 15000 (was colliding with the intercom test).
+- [vscode]: Add the `Buntest: <Area>` tasks and `Buntest: All`.
+- [bun]: Document in [README-BUN.md](./README-BUN.md) known issues that `bun test --coverage` never counts implicit class constructors as called (upstream [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730)).
 
 ### Fixed
 

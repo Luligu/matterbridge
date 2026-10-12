@@ -275,6 +275,14 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: All",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Verbose",
       "type": "shell",
       "command": "node",
@@ -287,6 +295,14 @@
       "type": "shell",
       "command": "node",
       "args": ["node_modules/vitest/vitest.mjs", "run", "--reporter", "verbose", "--reporter", "junit", "--coverage", "--maxWorkers=100%"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Coverage",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "--coverage"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },

@@ -103,23 +103,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
