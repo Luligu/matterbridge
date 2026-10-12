@@ -242,7 +242,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @param {WorkerMessage} msg - The incoming message.
    */
   async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matter')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':

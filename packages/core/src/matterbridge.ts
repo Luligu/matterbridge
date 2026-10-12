@@ -542,7 +542,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {Promise<void>} A promise that resolves when the message has been handled.
    */
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+    if (this.server.isWorkerRequest(msg)) {
       /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
@@ -596,20 +596,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           await this.shutdownProcess();
           break;
-        case 'matterbridge_apimatter': {
-          let serverNode: ServerNode | undefined;
-          if (msg.params.id === 'Matterbridge') serverNode = this.serverNode;
-          else
-            serverNode =
-              this.plugins.array().find((p) => p.serverNode && p.serverNode.id === msg.params.id)?.serverNode ??
-              this.devices.array().find((d) => d.serverNode && d.serverNode.id === msg.params.id)?.serverNode;
-          if (!serverNode) {
-            this.server.respond({ ...msg, result: { matter: undefined } });
-            break;
-          }
-          this.server.respond({ ...msg, result: { matter: getServerNodeData(serverNode) } });
-          break;
-        }
         case 'matterbridge_apisettings':
           this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
           break;

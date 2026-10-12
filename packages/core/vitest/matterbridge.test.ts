@@ -239,57 +239,6 @@ describe('Matterbridge', () => {
     }
   });
 
-  test.each(['root', 'missing-root', 'plugin', 'device', 'unknown', 'duplicate'] as const)('should respond to matterbridge_apimatter for the %s node lookup', async (scenario) => {
-    const originalServerNode = matterbridge.serverNode;
-    const rootNode = { id: 'Matterbridge' } as ServerNode;
-    const pluginNode = { id: 'plugin-node' } as ServerNode;
-    const deviceNode = { id: scenario === 'duplicate' ? 'plugin-node' : 'device-node' } as ServerNode;
-    const pluginsSpy = vi
-      .spyOn(matterbridge.plugins, 'array')
-      .mockReturnValue([{}, { serverNode: { id: 'other-plugin' } }, { serverNode: pluginNode }] as unknown as ReturnType<typeof matterbridge.plugins.array>);
-    const devicesSpy = vi
-      .spyOn(matterbridge.devices, 'array')
-      .mockReturnValue([{}, { serverNode: { id: 'other-device' } }, { serverNode: deviceNode }] as unknown as ReturnType<typeof matterbridge.devices.array>);
-    const expectedNode = scenario === 'root' ? rootNode : scenario === 'plugin' || scenario === 'duplicate' ? pluginNode : scenario === 'device' ? deviceNode : undefined;
-    const matter: ApiMatter = {
-      id: expectedNode?.id ?? '',
-      online: true,
-      commissioned: false,
-      advertising: false,
-      advertiseTime: 0,
-      windowStatus: 0,
-      qrPairingCode: 'MT:TEST',
-      manualPairingCode: '12345678901',
-      fabricInformations: [],
-      sessionInformations: [],
-      serialNumber: 'TEST',
-    };
-    const matterNodeHelpers = await import('../src/matterNodeHelpers.js');
-    const getServerNodeDataSpy = vi.spyOn(matterNodeHelpers, 'getServerNodeData').mockReturnValue(matter);
-    const request = {
-      id: 123456,
-      type: 'matterbridge_apimatter',
-      src: 'frontend',
-      dst: 'matterbridge',
-      params: { id: scenario === 'root' || scenario === 'missing-root' ? 'Matterbridge' : scenario === 'unknown' ? 'missing-node' : (expectedNode?.id ?? '') },
-    } as const;
-    matterbridge.serverNode = scenario === 'missing-root' ? undefined : rootNode;
-    try {
-      const handler = matterbridge as unknown as { msgHandler(message: WorkerMessage): Promise<void> };
-      await handler.msgHandler(request);
-      expect(respondBroadcastServerSpy).toHaveBeenCalledTimes(1);
-      expect(respondBroadcastServerSpy).toHaveBeenCalledWith({ ...request, result: { matter: expectedNode ? matter : undefined } });
-      expect(getServerNodeDataSpy.mock.calls).toEqual(expectedNode ? [[expectedNode]] : []);
-      expect(pluginsSpy).toHaveBeenCalledTimes(scenario === 'root' || scenario === 'missing-root' ? 0 : 1);
-      expect(devicesSpy).toHaveBeenCalledTimes(scenario === 'device' || scenario === 'unknown' ? 1 : 0);
-    } finally {
-      matterbridge.serverNode = originalServerNode;
-      pluginsSpy.mockRestore();
-      devicesSpy.mockRestore();
-      getServerNodeDataSpy.mockRestore();
-    }
-  });
-
   test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
     expect((Matterbridge as any).instance).toBeDefined();
     matterbridge = await Matterbridge.loadInstance(true);

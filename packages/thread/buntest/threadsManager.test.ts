@@ -551,7 +551,7 @@ describe('ThreadsManager', () => {
       }
     });
 
-    test('ignores non-requests / wrong dst and logs unknown types when verbose', async () => {
+    test('ignores non-requests and logs unknown types when verbose', async () => {
       const savedArgv = process.argv;
       process.argv = [...originalProcessArgv.slice(0, 2), '--verbose'];
 
@@ -563,10 +563,6 @@ describe('ThreadsManager', () => {
 
         // Invalid request structure => isWorkerRequest(false) => no respond.
         await (manager as any).msgHandler({ type: 'get_log_level', src: 'frontend', dst: 'manager' });
-        expect(respondSpy).not.toHaveBeenCalled();
-
-        // Valid request but wrong dst => ignored.
-        await (manager as any).msgHandler({ type: 'get_log_level', id: 1, timestamp: 1, src: 'frontend', dst: 'plugins' });
         expect(respondSpy).not.toHaveBeenCalled();
 
         // Valid request with unknown type => hits default branch.

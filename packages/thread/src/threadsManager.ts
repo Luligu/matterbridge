@@ -184,7 +184,7 @@ export class ThreadsManager {
    * @param {WorkerMessage} msg - The message received from the broadcast server.
    */
   private msgHandler(msg: WorkerMessage): void {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'manager')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':

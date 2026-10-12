@@ -321,6 +321,7 @@ export interface ApiDevice {
 /** Define an interface for base device information */
 export interface BaseDevice {
   // MatterbridgeEndpoint properties
+
   mode: 'server' | 'matter' | undefined;
   plugin: string | undefined;
   configUrl: string | undefined;
@@ -339,12 +340,17 @@ export interface BaseDevice {
   hardwareVersion: number | undefined;
   hardwareVersionString: string | undefined;
   tagList: Semtag[] | undefined;
+  /** The id passed in the MatterbridgeEndpoint constructor options, as is: the endpoint id is the same without spaces and dots (matter.js doesn't allow them), e.g. 'Light 1.0' gives id 'Light10' */
   originalId: string | undefined;
+  /** The name of the first device type of the MatterbridgeEndpoint, e.g. 'OnOffLight' */
   name: string | undefined;
+  /** The code of the first device type of the MatterbridgeEndpoint, e.g. 0x0100 */
   deviceType: number | undefined;
-  deviceTypes: number[] | undefined; // The codes of the MatterbridgeEndpoint deviceTypes map
+  /** The codes of all the device types of the MatterbridgeEndpoint (the keys of its deviceTypes map), the first one is deviceType */
+  deviceTypes: number[] | undefined;
 
   // Endpoint properties
+
   number: number | undefined;
   id: string | undefined;
 }
