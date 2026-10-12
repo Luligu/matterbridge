@@ -737,7 +737,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(WindowCovering.id, 'type')).toBe(WindowCovering.WindowCoveringType.TiltBlindTiltOnly);
-    expect(device.getAttribute(WindowCovering.id, 'endProductType')).toBe(WindowCovering.EndProductType.InteriorVenetianBlind);
+    expect(device.getAttribute(WindowCovering.id, 'endProductType')).toBe(WindowCovering.EndProductType.TiltOnlyInteriorBlind);
     expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(0);
     expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(0);
     expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({

@@ -108,7 +108,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
   test('Device type: coverTilt', async () => {
     // movementDuration > 0 enables the built-in movement simulation, so operationalStatus reflects the direction while moving.
     coverTilt = new MatterbridgeEndpoint(windowCovering, { id: 'coverTilt' });
-    coverTilt.createDefaultTiltWindowCoveringClusterServer(5000, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.InteriorVenetianBlind, 60_000);
+    coverTilt.createDefaultTiltWindowCoveringClusterServer(5000, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.TiltOnlyInteriorBlind, 60_000);
     coverTilt.addRequiredClusterServers();
     expect(coverTilt).toBeDefined();
     expect(await addDevice(aggregator, coverTilt)).toBeTruthy();

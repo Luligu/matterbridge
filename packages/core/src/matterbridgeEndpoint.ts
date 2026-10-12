@@ -3331,7 +3331,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   createDefaultTiltWindowCoveringClusterServer(
     positionTiltPercent100ths: number | null = 0,
     type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
-    endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorVenetianBlind,
+    endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.TiltOnlyInteriorBlind,
     movementDuration: number = 0,
   ): this {
     this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {

@@ -547,7 +547,7 @@ describe('Client clusters and behaviors', () => {
       userName: 'Guest Updated',
       userUniqueId: 4321,
       userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      userType: DoorLock.UserType.NonAccessUser,
       credentialRule: DoorLock.CredentialRule.Single,
     });
     const modifiedUser = await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
@@ -566,7 +566,7 @@ describe('Client clusters and behaviors', () => {
       userName: 'Guest Updated',
       userUniqueId: 4321,
       userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      userType: DoorLock.UserType.NonAccessUser,
       credentialRule: DoorLock.CredentialRule.Single,
     });
     expect(lockUserChange).toHaveBeenCalledTimes(2);
@@ -593,26 +593,42 @@ describe('Client clusters and behaviors', () => {
     const updatedPin = Buffer.from('5678');
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Add,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
-      credentialData: initialPin,
-      userIndex: 1,
-      userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.UnrestrictedUser,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Add,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+          credentialData: initialPin,
+          userIndex: 1,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.Success });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
     const createdCredential = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Modify,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
-      credentialData: updatedPin,
-      userIndex: 1,
-      userStatus: null,
-      userType: null,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Modify,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+          credentialData: updatedPin,
+          userIndex: 1,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.Success });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
     await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: null });
     const clearedCredential = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
@@ -897,14 +913,22 @@ describe('Client clusters and behaviors', () => {
 
     const branchDoorLockServer = branchDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Add,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 },
-      credentialData: Buffer.alloc(0),
-      userIndex: null,
-      userStatus: null,
-      userType: null,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Add,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 },
+          credentialData: Buffer.alloc(0),
+          userIndex: null,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.InvalidCommand });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
 
     expect(
       await branchDoorLock.act(async (agent) =>
@@ -925,14 +949,22 @@ describe('Client clusters and behaviors', () => {
       credentialRule: DoorLock.CredentialRule.Single,
     });
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Add,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
-      credentialData: Buffer.from('2468'),
-      userIndex: 3,
-      userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.UnrestrictedUser,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Add,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+          credentialData: Buffer.from('2468'),
+          userIndex: 3,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.Success });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
 
     expect(
       await branchDoorLock.act(async (agent) =>
