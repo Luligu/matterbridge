@@ -22,7 +22,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
-import { wait, waiter } from '@matterbridge/utils/wait';
+import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeWindowCoveringServer } from '../../src/behaviors/windowCoveringServer.js';
@@ -34,12 +34,23 @@ import { expectCommand } from '../vitestUtils.js';
 await setupTest(NAME, false);
 
 /*
- * The movement simulation completes on a real timer, so the tests below poll for the completion to become
- * observable with waiter() instead of sleeping for a fixed amount, which on a loaded CI runner can expire before
- * the timer has fired. waiter() rejects on timeout (exitWithReject), so a stuck simulation fails the test.
+ * The movement simulation completes on a matter.js timer, which is backed by the global setTimeout. The timed tests
+ * below fake setTimeout/clearTimeout and advance the clock by the movementDuration instead of waiting for it in real
+ * time, so they neither take seconds nor race the completion timer on a loaded CI runner.
  */
-const MOVEMENT_TIMEOUT = 15000;
-const MOVEMENT_INTERVAL = 20;
+const MOVEMENT_DURATION = 1000;
+const MOVEMENT_MAX_STEPS = 10;
+
+/**
+ * Advance the fake timers in movementDuration steps until the condition holds, failing if it never does.
+ *
+ * @param {() => boolean} condition The condition that signals the simulated movement has completed.
+ * @returns {Promise<void>} Resolves once the condition holds.
+ */
+async function advanceMovement(condition: () => boolean): Promise<void> {
+  for (let step = 0; step < MOVEMENT_MAX_STEPS && !condition(); step++) await vi.advanceTimersByTimeAsync(MOVEMENT_DURATION);
+  expect(condition()).toBe(true);
+}
 
 describe('MatterbridgeWindowCoveringServer', () => {
   let coverLift: MatterbridgeEndpoint;
@@ -60,6 +71,11 @@ describe('MatterbridgeWindowCoveringServer', () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore the real timers if a timed test failed before restoring them
+    vi.useRealTimers();
   });
 
   afterAll(async () => {
@@ -343,9 +359,10 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const timedCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTimed' });
     // movementDuration must stay comfortably longer than a command round trip, so the mid-movement assertions below
     // are not racing the completion timer on a slow runner.
-    timedCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 1000);
+    timedCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, MOVEMENT_DURATION);
     timedCover.addRequiredClusterServers();
     expect(await addDevice(aggregator, timedCover)).toBeTruthy();
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
@@ -354,7 +371,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     });
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(0);
 
-    await waiter('lift movement complete', () => timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000, true, MOVEMENT_TIMEOUT, MOVEMENT_INTERVAL);
+    await advanceMovement(() => timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000);
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
       global: WindowCovering.MovementStatus.Stopped,
@@ -367,12 +384,14 @@ describe('MatterbridgeWindowCoveringServer', () => {
       tilt: WindowCovering.MovementStatus.Closing,
     });
 
-    await waiter('tilt movement complete', () => timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000, true, MOVEMENT_TIMEOUT, MOVEMENT_INTERVAL);
+    await advanceMovement(() => timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000);
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
       global: WindowCovering.MovementStatus.Stopped,
       tilt: WindowCovering.MovementStatus.Stopped,
     });
+
+    vi.useRealTimers();
 
     // StopMotion cancels an in-flight simulation before it completes and settles target = current.
     await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 0 });
@@ -456,7 +475,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
 
   test('WindowCovering movement simulation edge cases', async () => {
     const edgeCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverEdge' });
-    edgeCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 1000);
+    edgeCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, MOVEMENT_DURATION);
     edgeCover.addRequiredClusterServers();
     expect(await addDevice(aggregator, edgeCover)).toBeTruthy();
 
@@ -507,10 +526,11 @@ describe('MatterbridgeWindowCoveringServer', () => {
       if (attribute === 'operationalStatus' && nullOperationalStatus) return null;
       return originalGetAttribute(cluster as never, attribute as never);
     });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     try {
       await edgeCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
       nullOperationalStatus = true;
-      await waiter('lift movement complete', () => originalGetAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000, true, MOVEMENT_TIMEOUT, MOVEMENT_INTERVAL);
+      await advanceMovement(() => originalGetAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000);
       nullOperationalStatus = false;
       expect(edgeCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
       expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
@@ -521,7 +541,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
 
       await edgeCover.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
       nullOperationalStatus = true;
-      await waiter('tilt movement complete', () => originalGetAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000, true, MOVEMENT_TIMEOUT, MOVEMENT_INTERVAL);
+      await advanceMovement(() => originalGetAttribute(WindowCovering, 'currentPositionTiltPercent100ths') === 10000);
       nullOperationalStatus = false;
       expect(edgeCover.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(10000);
       expect(edgeCover.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
@@ -530,6 +550,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
         tilt: WindowCovering.MovementStatus.Stopped,
       });
     } finally {
+      vi.useRealTimers();
       getAttributeSpy.mockRestore();
     }
   });

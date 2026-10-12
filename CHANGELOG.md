@@ -82,6 +82,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxlint` to v.1.87.0.
 - [tests]: Use `getSharedMatterbridge()` in the matterNode tests, add the `cliHistory` bun test and include `cliHistory` in the bun coverage.
 - [tests]: Consolidate CLI error tests and speed up the suite by mocking Matterbridge imports and replacing fixed delays.
+- [tests]: Use fake timers in the windowCovering movement and doorLock relock tests, and drop the duplicated timed windowCovering tests from `matterbridgeEndpoint-matterjs`.
 
 ### Fixed
 

@@ -23,7 +23,6 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
-import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
@@ -65,6 +64,11 @@ describe('Client clusters and behaviors', () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    // Restore the real timers if a timed test failed before restoring them
+    vi.useRealTimers();
   });
 
   afterAll(async () => {
@@ -119,36 +123,45 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Auto relock', async () => {
+    // The relock runs on a matter.js timer backed by setTimeout: fake it and advance the clock instead of waiting.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await lock.setAttribute(DoorLock, 'autoRelockTime', 1); // Set autoRelockTime to 1 second
     await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1000); // Wait for autoRelockTime to trigger
+    await vi.advanceTimersByTimeAsync(1000); // Advance past autoRelockTime to trigger the relock
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
     await lock.setAttribute(DoorLock, 'autoRelockTime', 0); // Set autoRelockTime to 0 (disabled)
+    vi.useRealTimers();
   });
 
   test('Unlock with timeout', async () => {
+    // The relock runs on a matter.js timer backed by setTimeout: fake it and advance the clock instead of waiting.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1000); // Wait for unlockWithTimeout to trigger
+    await vi.advanceTimersByTimeAsync(1000); // Advance past the unlockWithTimeout timeout to trigger the relock
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    vi.useRealTimers();
   });
 
   test('Unlock commands without timeout scheduling', async () => {
+    // The relock runs on a matter.js timer backed by setTimeout: fake it and advance the clock instead of waiting.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await lock.setAttribute(DoorLock, 'autoRelockTime', 0);
 
     await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1100);
+    await vi.advanceTimersByTimeAsync(1100);
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
 
     await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1100);
+    await vi.advanceTimersByTimeAsync(1100);
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
 
     await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    vi.useRealTimers();
   });
 
   test('Create userPinDoorLock device', async () => {
