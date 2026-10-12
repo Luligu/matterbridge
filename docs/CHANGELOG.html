@@ -216,10 +216,16 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
-<li>[tests]: Prevent test output leakage.</li>
-<li>[core]: Don&#39;t answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught <code>ERR_HTTP_HEADERS_SENT</code> (oven-sh/bun#44925).</li>
-<li>[test-utils]: <code>addDevice()</code> and <code>deleteDevice()</code> passed <code>pause</code> as the <code>ticks</code> argument of <code>flushAllEndpointNumberPersistence()</code>, adding ~60ms to every call.</li>
-<li>[core]: <code>setWindowCoveringCurrentTargetStatus()</code> threw a conformance error on a tilt only window covering: it now sets the tilt positions when the server has no Lift feature.</li>
+<li><p>[core]: Use the compliant TiltOnlyInteriorBlind end product type for tilt-only window coverings.</p>
+</li>
+<li><p>[tests]: Prevent test output leakage.</p>
+</li>
+<li><p>[core]: Don&#39;t answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught <code>ERR_HTTP_HEADERS_SENT</code> (oven-sh/bun#44925).</p>
+</li>
+<li><p>[test-utils]: <code>addDevice()</code> and <code>deleteDevice()</code> passed <code>pause</code> as the <code>ticks</code> argument of <code>flushAllEndpointNumberPersistence()</code>, adding ~60ms to every call.</p>
+</li>
+<li><p>[core]: <code>setWindowCoveringCurrentTargetStatus()</code> threw a conformance error on a tilt only window covering: it now sets the tilt positions when the server has no Lift feature.</p>
+</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31013-2026-10-09">[3.10.13] - 2026-10-09</h2>
