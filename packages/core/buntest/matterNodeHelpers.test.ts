@@ -78,6 +78,7 @@ import {
   sanitizeFabricInformations,
   sanitizeSessionInformation,
   setAdvertisingNode,
+  toApiDevice,
 } from '../src/matterNodeHelpers.js';
 
 const colorAttributes: Record<string, unknown> = { colorMode: 0 };
@@ -172,6 +173,52 @@ function text(...list: Attribute[]): string {
 }
 
 describe('matterNodeHelpers', () => {
+  describe('toApiDevice', () => {
+    const metadata = {
+      plugin: 'plugin',
+      deviceType: 0x0100,
+      name: 'OnOffLight',
+      deviceName: 'Light',
+      serialNumber: 'SN',
+      uniqueId: 'unique',
+      id: 'light',
+      number: 5,
+      productUrl: 'https://product',
+      configUrl: 'https://config',
+    };
+
+    test('should convert a ready endpoint to the complete API device shape', () => {
+      expect(toApiDevice(Object.assign(fake(), metadata))).toEqual({
+        plugin: 'plugin',
+        type: 'OnOffLight (0x0100)',
+        number: 5,
+        id: 'light',
+        deviceName: 'Light',
+        serialNumber: 'SN',
+        productUrl: 'https://product',
+        configUrl: 'https://config',
+        uniqueId: 'unique',
+        reachable: false,
+        powerSource: undefined,
+        batteryLevel: undefined,
+        matter: undefined,
+        cluster: '',
+      });
+    });
+
+    test('should skip endpoints that are not ready or lack required metadata', () => {
+      expect(toApiDevice(Object.assign(fake({ ready: false }), metadata))).toBeUndefined();
+      for (const property of ['plugin', 'deviceType', 'name', 'deviceName', 'serialNumber', 'uniqueId']) {
+        expect(toApiDevice(Object.assign(fake(), metadata, { [property]: undefined }))).toBeUndefined();
+      }
+    });
+
+    test('should omit Matter data when a server endpoint has no server node', () => {
+      const device = Object.assign(fake(), metadata, { mode: 'server', serverNode: undefined });
+      expect(toApiDevice(device)?.matter).toBeUndefined();
+    });
+  });
+
   describe('getReachability', () => {
     test('returns false when endpoint not ready/active', () => {
       expect(getReachability(fake())).toBe(false);
@@ -590,6 +637,18 @@ describe('matterNodeHelpers', () => {
         serialNumber: 'SN123',
       });
       expect(() => JSON.stringify(data)).not.toThrow();
+      const device = Object.assign(fake({ mode: 'server' }), {
+        plugin: 'plugin',
+        deviceType: 0x0100,
+        name: 'OnOffLight',
+        deviceName: 'Light',
+        serialNumber: 'SN123',
+        uniqueId: 'unique',
+        serverNode,
+      });
+      const apiDevice = toApiDevice(device);
+      expect(apiDevice?.matter).toEqual(data);
+      expect(() => JSON.stringify(apiDevice)).not.toThrow();
     });
 
     test('reports advertising when the node is in the advertising map', () => {

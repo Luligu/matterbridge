@@ -1049,11 +1049,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       'https://matterbridge.io',
       1,
     );
-    this.serverNode = await this.createServerNode(
-      this.port ? this.port++ : undefined,
-      this.passcode ? this.passcode++ : undefined,
-      this.discriminator ? this.discriminator++ : undefined,
-    );
+    this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
     this.aggregatorNode = await this.createAggregatorNode();
     this.log.debug(`Adding ${plg}Matterbridge${db} aggregator node...`);
     await this.serverNode.add(this.aggregatorNode);
@@ -1098,11 +1094,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.productUrl,
         device.configurationVersion,
       );
-      this.serverNode = await this.createServerNode(
-        this.port ? this.port++ : undefined,
-        this.passcode ? this.passcode++ : undefined,
-        this.discriminator ? this.discriminator++ : undefined,
-      );
+      this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node...`);
       await this.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
@@ -1146,11 +1138,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         plugin.homepage ?? 'https://matterbridge.io',
         plugin.configurationVersion,
       );
-      this.serverNode = await this.createServerNode(
-        this.port ? this.port++ : undefined,
-        this.passcode ? this.passcode++ : undefined,
-        this.discriminator ? this.discriminator++ : undefined,
-      );
+      this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
       this.aggregatorNode = await this.createAggregatorNode();
       this.log.debug(`Adding dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
@@ -1196,11 +1184,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.productUrl,
         device.configurationVersion,
       );
-      this.serverNode = await this.createServerNode(
-        this.port ? this.port++ : undefined,
-        this.passcode ? this.passcode++ : undefined,
-        this.discriminator ? this.discriminator++ : undefined,
-      );
+      this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
       await this.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);

@@ -32,7 +32,7 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampForm
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData, toBaseDevice } from './matterNodeHelpers.js';
+import { toApiDevice, toBaseDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('Device Manager');
 
@@ -256,24 +256,8 @@ export class DeviceManager {
     for (const device of this._devices.values()) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
-      // Check if the device has the required properties
-      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
-      devices.push({
-        plugin: device.plugin,
-        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        number: device.number,
-        id: device.id,
-        deviceName: device.deviceName,
-        serialNumber: device.serialNumber,
-        productUrl: device.productUrl,
-        configUrl: device.configUrl,
-        uniqueId: device.uniqueId,
-        reachable: getReachability(device),
-        powerSource: getPowerSource(device),
-        batteryLevel: getBatteryLevel(device),
-        matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
-        cluster: getClusterTextFromDevice(device),
-      });
+      const apiDevice = toApiDevice(device);
+      if (apiDevice) devices.push(apiDevice);
     }
     return devices;
   }

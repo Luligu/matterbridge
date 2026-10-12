@@ -47,6 +47,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [core]: Add plugin-targeted `platform_get_apidevices`, `platform_get_apiselectdevices` and `platform_get_apiselectentities` broadcast requests.
 - [utils]: Add `constrainedMemory()` to `@matterbridge/utils/bun`: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.
 - [utils]: Add `constrainedMemory` and `peakConstrainedMemory` to the `Tracker` snapshot.
 - [types]: Add `constrainedMemory` to `SystemInformation`, `PlatformMatterbridge` and `SharedMatterbridge`.

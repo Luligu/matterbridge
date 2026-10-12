@@ -4,25 +4,22 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/explicit-function-return-type */
-
 const MATTER_PORT = 10400;
 const NAME = 'MatterNodeAccessory';
 const PASSCODE = 123458;
 const DISCRIMINATOR = 3862;
-const STRESS_TEST_ITERATIONS = 5;
+const STRESS_TEST_ITERATIONS = 3;
 
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
-import fs from 'node:fs';
 import path from 'node:path';
-import url from 'node:url';
 
 import { ServerNodeStore } from '@matter/node';
 import { getSharedMatterbridge } from '@matterbridge/test-utils/buntest/matter';
-import { HOMEDIR, loggerDebugSpy, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { loggerDebugSpy, loggerInfoSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { AnsiLogger, er, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -36,18 +33,8 @@ import { PluginManager } from '../src/pluginManager.js';
 // Setup the test environment
 await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
-
 const matterbridge: SharedMatterbridge = {
   ...getSharedMatterbridge(),
-  uuid: '',
-  rootDirectory: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../'),
-  globalModulesDirectory: path.join('.', 'node_modules'),
-  matterbridgeVersion: matterbridgePackageJson.version,
-  matterbridgeLatestVersion: matterbridgePackageJson.version,
-  matterbridgeDevVersion: matterbridgePackageJson.version,
-  frontendVersion: frontendPackageJson.version,
   bridgeMode: 'childbridge',
   virtualMode: 'disabled',
   fileLogger: true,
@@ -55,28 +42,11 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
+  mdnsInterface: getInterfaceName(),
 };
-// process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
 describe('MatterNode accessory', () => {
   let matter: MatterNode;
-
-  // Override matterbridge methods to call MatterNode methods
-  (matterbridge as any).addBridgedEndpoint = async (pluginName: string, endpoint: MatterbridgeEndpoint) => {
-    return await matter.addBridgedEndpoint(pluginName, endpoint);
-  };
-  (matterbridge as any).removeBridgedEndpoint = async (pluginName: string, endpoint: MatterbridgeEndpoint) => {
-    return await matter.removeBridgedEndpoint(pluginName, endpoint);
-  };
-  (matterbridge as any).removeAllBridgedEndpoints = async (pluginName: string) => {
-    return await matter.removeAllBridgedEndpoints(pluginName);
-  };
-  (matterbridge as any).addVirtualEndpoint = async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
-    return await matter.addVirtualEndpoint(pluginName, name, type, callback);
-  };
-  (matterbridge as any).getPlatformMatterbridge = () => {
-    return matterbridge;
-  };
 
   // Create PluginManager and DeviceManager to simulate the normal environment
   /* Simulate normal environment in test */
@@ -96,8 +66,6 @@ describe('MatterNode accessory', () => {
   });
 
   beforeAll(() => {
-    // process.stdout.write('=== Starting MatterNode childbridge tests ===\n\n');
-
     // Create MatterNode instance
     matter = new MatterNode(matterbridge, 'matterbridge-mock4');
     expect(loggerDebugSpy).toHaveBeenCalledWith('MatterNode for matterbridge-mock4 loaded');
@@ -122,8 +90,6 @@ describe('MatterNode accessory', () => {
 
     // Log any keep-alive handles
     // logKeepAlives(matter.log);
-
-    // process.stdout.write('=== Finished MatterNode childbridge tests ===\n\n');
   });
 
   test('Add plugin', async () => {

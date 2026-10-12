@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.2
+ * @version 1.6.6
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -30,13 +30,13 @@ import { Descriptor } from '@matter/types/clusters/descriptor';
 import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
+import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget } from '@matterbridge/utils/wait';
 // Node AnsiLogger module
-import { type AnsiLogger, CYAN, db, er, type LogLevel, nf, wr } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, debugStringify, er, type LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
 import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
@@ -44,6 +44,7 @@ import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { assertMatterbridgeEndpoint, type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
+import { toApiDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('MatterbridgePlatform');
 
@@ -197,6 +198,7 @@ export class MatterbridgePlatform {
     this.config = config;
     this.name = config.name;
     this.#server = new BroadcastServer('platform', this.log);
+    this.#server.on('broadcast_message', this.#msgHandler.bind(this));
 
     // Set the brand
     Object.defineProperty(this, MATTERBRIDGE_PLATFORM_BRAND, {
@@ -260,6 +262,44 @@ export class MatterbridgePlatform {
       this.isReady = true;
       return;
     });
+  }
+
+  /**
+   * Handles broadcast requests sent to the platform.
+   * Device and select requests are answered only when params.plugin matches this platform's name.
+   *
+   * @param {WorkerMessage} msg - The broadcast message.
+   * @returns {void}
+   */
+  #msgHandler(msg: WorkerMessage): void {
+    if (!this.#server.isWorkerRequest(msg)) return;
+
+    /* v8 ignore next Debug logs are not relevant for coverage */
+    if (this.#verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+    switch (msg.type) {
+      case 'platform_get_apidevices':
+        if (msg.params.plugin !== this.name) return;
+        this.#server.respond({
+          ...msg,
+          result: {
+            devices: this.getDevices()
+              .map(toApiDevice)
+              .filter((device) => device !== undefined),
+          },
+        });
+        break;
+      case 'platform_get_apiselectdevices':
+        if (msg.params.plugin !== this.name) return;
+        this.#server.respond({ ...msg, result: { devices: this.getSelectDevices() } });
+        break;
+      case 'platform_get_apiselectentities':
+        if (msg.params.plugin !== this.name) return;
+        this.#server.respond({ ...msg, result: { entities: this.getSelectEntities() } });
+        break;
+      default:
+        /* v8 ignore next Debug logs are not relevant for coverage */
+        if (this.#verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+    }
   }
 
   /**

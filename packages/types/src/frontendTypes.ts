@@ -540,6 +540,7 @@ export interface WsMessageApiPluginUpdateRequired extends WsMessageSuccessApiRes
 }
 
 export interface PluginStatusUpdate {
+  /** Signal that the dedicated Matter server node of the plugin has been created (childbridge mode only). See ApiPlugin.locked. */
   locked?: boolean;
   error?: boolean;
   enabled?: boolean;

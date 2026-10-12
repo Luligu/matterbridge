@@ -143,6 +143,11 @@ export interface ApiPlugin extends StoragePlugin {
   changelog?: string;
   funding?: string;
   frontendPath?: string;
+  /**
+   * Signal that the dedicated Matter server node of the plugin has been created (childbridge mode only).
+   * It is set when the server node of an AccessoryPlatform (with its single device) or of a DynamicPlatform (with its aggregator) is created,
+   * and guards against creating it twice. It is reset when the plugin is loaded at startup and when the plugin is shut down.
+   */
   locked?: boolean;
   error?: boolean;
   loaded?: boolean;

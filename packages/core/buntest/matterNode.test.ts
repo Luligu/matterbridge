@@ -12,7 +12,6 @@ const DISCRIMINATOR = 3860;
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
-import url from 'node:url';
 
 import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
@@ -20,11 +19,12 @@ import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
 import { FabricIndex } from '@matter/types/datatype';
 import { closeServerNodeStores, getSharedMatterbridge } from '@matterbridge/test-utils/buntest/matter';
-import { HOMEDIR, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { copyDirectory } from '@matterbridge/utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -38,18 +38,8 @@ import { type Plugin, PluginManager } from '../src/pluginManager.js';
 // Setup the test environment
 await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
-
 const matterbridge: SharedMatterbridge = {
   ...getSharedMatterbridge(),
-  uuid: '',
-  rootDirectory: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../'),
-  globalModulesDirectory: path.join('.', 'node_modules'),
-  matterbridgeVersion: matterbridgePackageJson.version,
-  matterbridgeLatestVersion: matterbridgePackageJson.version,
-  matterbridgeDevVersion: matterbridgePackageJson.version,
-  frontendVersion: frontendPackageJson.version,
   bridgeMode: 'bridge',
   virtualMode: 'disabled',
   fileLogger: true,
@@ -57,8 +47,8 @@ const matterbridge: SharedMatterbridge = {
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
+  mdnsInterface: getInterfaceName(),
 };
-// process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
 describe('MatterNode', () => {
   let matter: MatterNode;
@@ -76,8 +66,6 @@ describe('MatterNode', () => {
   let device: MatterbridgeEndpoint;
 
   beforeAll(() => {
-    // process.stdout.write('=== Starting MatterNode tests ===\n\n');
-
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
     expect(loggerDebugSpy).toHaveBeenCalledWith('MatterNode for Matterbridge loaded');
@@ -101,8 +89,6 @@ describe('MatterNode', () => {
 
     // Log any keep-alive handles
     // logKeepAlives(matter.log);
-
-    // process.stdout.write('=== Finished MatterNode tests ===\n\n');
   });
 
   test('Broadcast unknown server message type', () => {
@@ -399,6 +385,17 @@ describe('MatterNode', () => {
     );
 
     await invalidServerNode.close();
+  });
+
+  test('should not add the TestEventTrigger server when MATTERBRIDGE_CHIP_TEST is set and chipTests.js is not available', async () => {
+    process.env.MATTERBRIDGE_CHIP_TEST = '1';
+    try {
+      const chipServerNode = await matter.createServerNode(MATTER_PORT + 1, PASSCODE, DISCRIMINATOR);
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running TestEventTrigger server. *');
+      await chipServerNode.close();
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
   });
 
   test('Create server node for Matterbridge', async () => {

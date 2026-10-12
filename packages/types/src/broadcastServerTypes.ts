@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer types.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.0
+ * @version 2.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -25,7 +25,7 @@
 import type { LogLevel } from 'node-ansi-logger';
 
 // matterbridge
-import type { ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { ApiSelectDevice, ApiSelectEntity, ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
 import type { ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
@@ -144,6 +144,20 @@ export type WorkerMessageTypes = {
   set_log_level: {
     request: { params: { logLevel: LogLevel } };
     response: { result: { logLevel: LogLevel } };
+  };
+
+  // Platform methods: only the platform matching params.plugin responds.
+  platform_get_apidevices: {
+    request: { params: { plugin: string } };
+    response: { result: { devices: ApiDevice[] } };
+  };
+  platform_get_apiselectdevices: {
+    request: { params: { plugin: string } };
+    response: { result: { devices: ApiSelectDevice[] } };
+  };
+  platform_get_apiselectentities: {
+    request: { params: { plugin: string } };
+    response: { result: { entities: ApiSelectEntity[] } };
   };
 
   // ThreadsManager methods

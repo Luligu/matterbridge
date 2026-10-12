@@ -506,6 +506,7 @@
       "args": [
         "test",
         "--parallel",
+        "--coverage",
         "packages/core/buntest/matterbridgePlatform.test.ts",
         "packages/core/buntest/matterbridgeAccessoryPlatform.test.ts",
         "packages/core/buntest/matterbridgeDynamicPlatform.test.ts"
@@ -555,7 +556,7 @@
       "label": "Buntest: DeviceManager",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/core/buntest/deviceManager.test.ts"],
+      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/deviceManager.test.ts"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -601,7 +602,7 @@
       "label": "Buntest: Dgram",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/dgram/buntest"],
+      "args": ["test", "--parallel", "--coverage", "packages/dgram/buntest"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -628,7 +629,7 @@
       "label": "Buntest: Utils",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/utils/buntest"],
+      "args": ["test", "--parallel", "--coverage", "packages/utils/buntest"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -655,7 +656,7 @@
       "label": "Buntest: Threads",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/thread/buntest"],
+      "args": ["test", "--parallel", "--coverage", "packages/thread/buntest"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -682,7 +683,7 @@
       "label": "Buntest: Types",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/types/buntest"],
+      "args": ["test", "--parallel", "--coverage", "packages/types/buntest"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -713,7 +714,14 @@
       "label": "Buntest: Backend",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/core/buntest/backend.test.ts", "packages/core/buntest/backendWsServer.test.ts", "packages/core/buntest/backendExpress.test.ts"],
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/backend.test.ts",
+        "packages/core/buntest/backendWsServer.test.ts",
+        "packages/core/buntest/backendExpress.test.ts"
+      ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -737,6 +745,7 @@
         "packages/core/vitest/matterNode.accessory.test.ts",
         "packages/core/vitest/matterNode.dynamic.test.ts",
         "packages/core/vitest/matterNode.server.test.ts",
+        "packages/core/vitest/matterNode.quiet.test.ts",
         "packages/core/vitest/matterNodeHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
@@ -749,11 +758,13 @@
       "args": [
         "test",
         "--parallel",
+        "--coverage",
         "packages/core/buntest/matterNode.test.ts",
         "packages/core/buntest/matterNode.bridge.test.ts",
         "packages/core/buntest/matterNode.accessory.test.ts",
         "packages/core/buntest/matterNode.dynamic.test.ts",
         "packages/core/buntest/matterNode.server.test.ts",
+        "packages/core/buntest/matterNode.quiet.test.ts",
         "packages/core/buntest/matterNodeHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
@@ -792,7 +803,7 @@
       "label": "Buntest: Cli",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "packages/core/buntest/cli.test.ts", "packages/core/buntest/cliEmitter.test.ts", "packages/core/buntest/cliHistory.test.ts"],
+      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/cli.test.ts", "packages/core/buntest/cliEmitter.test.ts", "packages/core/buntest/cliHistory.test.ts"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },

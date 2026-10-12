@@ -3,7 +3,7 @@
  * @description This file contains the helper functions of the Matter nodes.
  * @author Luca Liguori
  * @created 2026-10-05
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -49,7 +49,7 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import type { ClusterId } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 // @matterbridge
-import type { ApiMatter, BaseDevice, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
+import type { ApiDevice, ApiMatter, BaseDevice, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 import { isValidArray, isValidNumber, isValidObject } from '@matterbridge/utils/validate';
 // Third-party modules
@@ -96,6 +96,32 @@ export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDev
     // Endpoint properties
     number: device.number,
     id: device.id,
+  };
+}
+
+/**
+ * Converts a ready endpoint with the required metadata to the frontend API device format.
+ *
+ * @param {MatterbridgeEndpoint} device The endpoint to convert.
+ * @returns {ApiDevice | undefined} The API device, or undefined when the endpoint is not ready or lacks required metadata.
+ */
+export function toApiDevice(device: MatterbridgeEndpoint): ApiDevice | undefined {
+  if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return undefined;
+  return {
+    plugin: device.plugin,
+    type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
+    number: device.number,
+    id: device.id,
+    deviceName: device.deviceName,
+    serialNumber: device.serialNumber,
+    productUrl: device.productUrl,
+    configUrl: device.configUrl,
+    uniqueId: device.uniqueId,
+    reachable: getReachability(device),
+    powerSource: getPowerSource(device),
+    batteryLevel: getBatteryLevel(device),
+    matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
+    cluster: getClusterTextFromDevice(device),
   };
 }
 

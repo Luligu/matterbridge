@@ -24,7 +24,7 @@ export default defineConfig({
       '**/vendor/',
       '**/jest-utils/', // Plugins test package for Jest
       '**/vitest-utils/', // Plugins test package for Vitest
-      'packages/core/vitest/matterNode.*.ts',
+      //'packages/core/vitest/matterNode.*.ts',
       'packages/core/vitest/backend*.ts',
     ],
     globals: true,
@@ -93,7 +93,7 @@ export default defineConfig({
         'packages/core/src/matterbridgeEndpointTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
-        'packages/core/src/matterNode.ts', // Not released files
+        // 'packages/core/src/matterNode.ts', // Not released files
         'packages/core/src/backend*.ts', // Not released files
       ],
       thresholds: {
