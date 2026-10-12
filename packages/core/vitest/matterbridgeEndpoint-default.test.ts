@@ -169,6 +169,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(aggregator, device)).toBe(true);
   }
 
+  function thermostatOptions(id: string, create: (device: MatterbridgeEndpoint) => void): ReturnType<MatterbridgeEndpoint['getClusterServerOptions']> {
+    const device = new MatterbridgeEndpoint(thermostat, { id });
+    create(device);
+    return device.getClusterServerOptions(Thermostat.id);
+  }
+
   test('capitalizeFirstLetter', () => {
     const result = capitalizeFirstLetter('hello');
     expect(result).toBe('Hello');
@@ -1089,7 +1095,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await addDevice(aggregator, device);
-    await flushAsync();
+    await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 6, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
@@ -1646,7 +1652,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await addDevice(aggregator, device);
-    await flushAsync();
+    await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 5, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
@@ -1831,7 +1837,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await addDevice(aggregator, device);
-    await flushAsync();
+    await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     expect(device.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
@@ -2673,7 +2679,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(200);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
 
-    await flushAsync();
+    await flushAsync(3, 10, 0);
   });
 
   test('power source replaceable', async () => {
@@ -2959,5 +2965,132 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(AirQuality.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+  test('thermostat cluster servers with occupancy, unoccupied setpoints and outdoor temperature variants', () => {
+    // Occupancy without unoccupied setpoints falls back to the default unoccupied setpoints, and a null outdoor temperature is kept as null.
+    expect(
+      thermostatOptions('ThermoOccupiedNoSetpoints', (d) => d.createDefaultThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, true, null)),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      outdoorTemperature: null,
+    });
+    expect(thermostatOptions('ThermoHeatingOccupied', (d) => d.createDefaultHeatingThermostatClusterServer(23, 21, 0, 50, 18, true, 15))).toMatchObject({
+      unoccupiedHeatingSetpoint: 1800,
+      outdoorTemperature: 1500,
+    });
+    expect(thermostatOptions('ThermoCoolingOccupied', (d) => d.createDefaultCoolingThermostatClusterServer(23, 25, 0, 50, 28, true, 30))).toMatchObject({
+      unoccupiedCoolingSetpoint: 2800,
+      outdoorTemperature: 3000,
+    });
+    expect(
+      thermostatOptions('ThermoPresetsOccupied', (d) => d.createDefaultPresetsThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, true, null)),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      outdoorTemperature: null,
+    });
+    expect(thermostatOptions('ThermoSchedulesOccupied', (d) => d.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, 18, 28, true, 15))).toMatchObject({
+      unoccupiedHeatingSetpoint: 1800,
+      unoccupiedCoolingSetpoint: 2800,
+      occupancy: { occupied: true },
+      externallyMeasuredOccupancy: true,
+      outdoorTemperature: 1500,
+    });
+    expect(
+      thermostatOptions('ThermoSchedulesOccupiedNoSetpoints', (d) =>
+        d.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, false, null),
+      ),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      occupancy: { occupied: false },
+      outdoorTemperature: null,
+    });
+    expect(thermostatOptions('ThermoSuggestionsOccupied', (d) => d.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 0, 0, 50, 0, 50, 18, 28, true, 15))).toMatchObject({
+      unoccupiedHeatingSetpoint: 1800,
+      unoccupiedCoolingSetpoint: 2800,
+      occupancy: { occupied: true },
+      externallyMeasuredOccupancy: true,
+      outdoorTemperature: 1500,
+    });
+    expect(
+      thermostatOptions('ThermoSuggestionsOccupiedNoSetpoints', (d) =>
+        d.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, false, null),
+      ),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      occupancy: { occupied: false },
+      outdoorTemperature: null,
+    });
+  });
+
+  test('thermostat preset, schedule and suggestion lists with null handles and no preset types', () => {
+    const preset: Thermostat.Preset = { presetHandle: null, presetScenario: Thermostat.PresetScenario.Occupied, heatingSetpoint: 2100, builtIn: true };
+
+    // A null presetTypes list produces an empty list, and a null presetHandle is kept as null.
+    expect(
+      thermostatOptions('ThermoPresetsNoTypes', (d) =>
+        d.createDefaultPresetsThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, undefined, undefined, null, [preset], null),
+      ),
+    ).toMatchObject({ numberOfPresets: 1, presets: [{ presetHandle: null }], presetTypes: [] });
+    expect(
+      thermostatOptions('ThermoSuggestionsNoTypes', (d) =>
+        d.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, undefined, undefined, null, [preset], null),
+      ),
+    ).toMatchObject({ numberOfPresets: 1, presets: [{ presetHandle: null }], presetTypes: [] });
+
+    // A null scheduleHandle is kept as null, and a schedule presetHandle is copied.
+    const schedule: Thermostat.Schedule = { scheduleHandle: null, systemMode: Thermostat.SystemMode.Heat, presetHandle: new Uint8Array([1]), transitions: [], builtIn: false };
+    expect(
+      thermostatOptions('ThermoSchedulesNullHandle', (d) =>
+        d.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, undefined, undefined, null, [schedule]),
+      ),
+    ).toMatchObject({ schedules: [{ scheduleHandle: null, presetHandle: new Uint8Array([1]), transitions: [], builtIn: false }] });
+  });
+
+  test('createOnOffFanControlClusterServer with the fan on', () => {
+    const device = new MatterbridgeEndpoint(fan, { id: 'OnOffFanOn' });
+    device.createOnOffFanControlClusterServer(FanControl.FanMode.High);
+    expect(device.getClusterServerOptions(FanControl.id)).toMatchObject({ fanMode: FanControl.FanMode.High, percentSetting: 100, percentCurrent: 100 });
+  });
+
+  test('configureColorControlMode and configureEnhancedColorControlMode ignore an out of range mode', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'ColorModeOutOfRange' });
+    const setAttributeSpy = vi.spyOn(device, 'setAttribute');
+    await device.configureColorControlMode(3 as ColorControl.ColorMode);
+    await device.configureEnhancedColorControlMode(4 as ColorControl.EnhancedColorMode);
+    expect(setAttributeSpy).not.toHaveBeenCalled();
+  });
+
+  test('setWindowCoveringTargetAsCurrentAndStopped with null current positions', async () => {
+    const liftTilt = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringNullPositions' });
+    liftTilt.createDefaultLiftTiltWindowCoveringClusterServer(null, null);
+    await add(liftTilt);
+    // A null current position is not copied to the target position.
+    await liftTilt.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(liftTilt.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(liftTilt.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(liftTilt.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+  });
+
+  test('setWindowCoveringCurrentTargetStatus on a tilt only server sets the tilt positions', async () => {
+    const tiltOnly = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringTiltOnlyStatus' });
+    tiltOnly.createDefaultTiltWindowCoveringClusterServer();
+    await add(tiltOnly);
+    // The server does not support the Lift feature: the positions go to the tilt axis and the lift field is not reported.
+    await tiltOnly.setWindowCoveringCurrentTargetStatus(4000, 6000, WindowCovering.MovementStatus.Opening);
+    expect(tiltOnly.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(4000);
+    expect(tiltOnly.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBe(6000);
+    expect(tiltOnly.getAttribute(WindowCovering, 'operationalStatus')).toEqual({ global: WindowCovering.MovementStatus.Opening, tilt: WindowCovering.MovementStatus.Opening });
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 4000, targetPositionTiltPercent100ths: 6000 and operationalStatus: 1.`),
+    );
   });
 });

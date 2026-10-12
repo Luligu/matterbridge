@@ -112,7 +112,7 @@ export default defineConfig({
           functions: 100,
           lines: 100,
         },
-        'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory,matterNodeHelpers}.ts':
+        'packages/core/src/{deviceManager,helpers,matterbridgeEndpoint,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory,matterNodeHelpers}.ts':
           {
             perFile: true,
             statements: 100,
@@ -120,7 +120,7 @@ export default defineConfig({
             functions: 100,
             lines: 100,
           },
-        'packages/core/src/{frontend,matterbridge,matterbridgeEndpoint,matterNode}.ts': {
+        'packages/core/src/{frontend,matterbridge,matterNode}.ts': {
           perFile: true,
           statements: 98,
           branches: 80,

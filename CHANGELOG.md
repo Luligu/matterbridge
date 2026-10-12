@@ -89,6 +89,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [tests]: Add an exact `forEachAttribute` attribute snapshot to every device class test (device and child endpoints) to catch matter.js drifts, and drop the per-attribute type checks already covered by the snapshot.
 - [tests]: Move the root `matterTest` bun test to port 15000 (was colliding with the intercom test).
 - [vscode]: Add the `Buntest: <Area>` tasks and `Buntest: All`.
+- [tests]: Drop the cluster behavior tests from `matterbridgeEndpoint-matterjs` (covered by the behaviors and devices suites) and cover the remaining `MatterbridgeEndpoint` branches.
 - [bun]: Document in [README-BUN.md](./README-BUN.md) known issues that `bun test --coverage` never counts implicit class constructors as called (upstream [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730)).
 
 ### Fixed
@@ -96,6 +97,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [tests]: Prevent test output leakage.
 - [core]: Don't answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught `ERR_HTTP_HEADERS_SENT` (oven-sh/bun#44925).
 - [test-utils]: `addDevice()` and `deleteDevice()` passed `pause` as the `ticks` argument of `flushAllEndpointNumberPersistence()`, adding ~60ms to every call.
+- [core]: `setWindowCoveringCurrentTargetStatus()` threw a conformance error on a tilt only window covering: it now sets the tilt positions when the server has no Lift feature.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

@@ -1970,8 +1970,6 @@ export class MatterbridgeEndpoint extends Endpoint {
     for (const [clusterName, clusterAttributes] of Object.entries(
       this.state as unknown as Record<string, Record<string, boolean | number | bigint | string | object | undefined | null>>,
     )) {
-      // Skip if the key / cluster name is a number, cause they are double indexed.
-      if (!Number.isNaN(Number(clusterName))) continue;
       for (const [attributeName, attributeValue] of Object.entries(clusterAttributes)) {
         // Skip if the behavior has no associated cluster (i.e. matterbridge server)
         const clusterId = getClusterId(this, clusterName);
@@ -2548,17 +2546,23 @@ export class MatterbridgeEndpoint extends Endpoint {
     availableEndpoints: EndpointNumber[] = [],
     activeEndpoints: EndpointNumber[] = [],
   ): this {
-    if (feature === PowerTopology.Feature.NodeTopology) {
-      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.NodeTopology));
-    } else if (feature === PowerTopology.Feature.TreeTopology) {
-      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
-    } else if (feature === PowerTopology.Feature.SetTopology) {
-      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology), { availableEndpoints });
-    } else if (feature === PowerTopology.Feature.DynamicPowerFlow) {
-      this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology, PowerTopology.Feature.DynamicPowerFlow), {
-        availableEndpoints,
-        activeEndpoints,
-      });
+    switch (feature) {
+      case PowerTopology.Feature.NodeTopology:
+        this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.NodeTopology));
+        break;
+      case PowerTopology.Feature.TreeTopology:
+        this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.TreeTopology));
+        break;
+      case PowerTopology.Feature.SetTopology:
+        this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology), { availableEndpoints });
+        break;
+      case PowerTopology.Feature.DynamicPowerFlow:
+        this.behaviors.require(PowerTopologyServer.with(PowerTopology.Feature.SetTopology, PowerTopology.Feature.DynamicPowerFlow), {
+          availableEndpoints,
+          activeEndpoints,
+        });
+        break;
+      // no default
     }
     return this;
   }
@@ -3389,16 +3393,25 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
-   * Sets the lift current and target position and the status of a window covering.
+   * Sets the lift (or tilt) current and target position and the status of a window covering.
    *
    * @param {number} current - The current position of the window covering.
    * @param {number} target - The target position of the window covering.
    * @param {WindowCovering.MovementStatus} status - The movement status of the window covering.
+   *
+   * @remarks The positions are set on the lift axis when the server supports the Lift feature, otherwise on the tilt axis of a tilt only server.
    */
   async setWindowCoveringCurrentTargetStatus(current: number, target: number, status: WindowCovering.MovementStatus): Promise<void> {
-    await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
-    await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
     const { lift, tilt } = featuresFor(this, WindowCovering);
+    const axis = lift ? 'Lift' : 'Tilt';
+    if (lift) {
+      await this.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', current, this.log);
+      await this.setAttribute(WindowCovering, 'targetPositionLiftPercent100ths', target, this.log);
+    } else {
+      // Lift and Tilt have conformance O.a+: a server without the Lift feature supports the Tilt feature (Matter 1.6.1 Application Cluster Spec §5.3.4).
+      await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', current, this.log);
+      await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', target, this.log);
+    }
     // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
@@ -3410,7 +3423,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       },
       this.log,
     );
-    this.log.debug(`Set WindowCovering currentPositionLiftPercent100ths: ${current}, targetPositionLiftPercent100ths: ${target} and operationalStatus: ${status}.`);
+    this.log.debug(`Set WindowCovering currentPosition${axis}Percent100ths: ${current}, targetPosition${axis}Percent100ths: ${target} and operationalStatus: ${status}.`);
   }
 
   /**
@@ -3684,13 +3697,13 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Math.max(
-          Array.isArray(presets) ? presets.length : 0,
-          Array.isArray(presetTypes) ? Math.max(0, ...presetTypes.map((pt) => pt.numberOfPresets ?? 0)) : 0,
+          Array.isArray(presets) ? presets.length : /* v8 ignore next -- @preserve defensive: typed as a non-nullable array */ 0,
+          Array.isArray(presetTypes) ? Math.max(0, ...presetTypes.map((pt) => pt.numberOfPresets)) : 0,
           1,
         ), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute, and must be consistent with the per-type capacities advertised in presetTypes.
         activePresetHandle: activePresetHandle ? Uint8Array.from(activePresetHandle) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
-        presets: (presets ?? []).map((p) => ({
+        presets: presets.map((p) => ({
           presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
           presetScenario: p.presetScenario,
           name: p.name,
@@ -3701,8 +3714,8 @@ export class MatterbridgeEndpoint extends Endpoint {
         presetTypes: (presetTypes ?? []).map((pt) => ({
           // oxlint-disable-next-line typescript/no-misused-spread
           ...pt,
-          numberOfPresets: pt.numberOfPresets ?? 0,
-          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
+          numberOfPresets: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ pt.numberOfPresets ?? 0,
+          presetTypeFeatures: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
         })),
       },
     );
@@ -3800,27 +3813,34 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.MatterScheduleConfiguration
         numberOfSchedules: Math.max(
-          Array.isArray(schedules) ? schedules.length : 0,
-          Array.isArray(scheduleTypes) ? Math.max(0, ...scheduleTypes.map((st) => st.numberOfSchedules ?? 0)) : 0,
+          Array.isArray(schedules) ? schedules.length : /* v8 ignore next -- @preserve defensive: typed as a non-nullable array */ 0,
+          Array.isArray(scheduleTypes)
+            ? Math.max(0, ...scheduleTypes.map((st) => st.numberOfSchedules))
+            : /* v8 ignore next -- @preserve defensive: typed as a non-nullable array */ 0,
           1,
         ), // This attribute SHALL indicate the maximum number of entries supported by the Schedules attribute, and must be consistent with the per-type capacities advertised in scheduleTypes.
         numberOfScheduleTransitions,
         numberOfScheduleTransitionPerDay,
         activeScheduleHandle: activeScheduleHandle ? Uint8Array.from(activeScheduleHandle) : null,
         // Ensure scheduleHandle and presetHandle are proper Uint8Array by creating new instances
-        schedules: (schedules ?? []).map((s) => ({
+        schedules: schedules.map((s) => ({
           scheduleHandle: s.scheduleHandle ? Uint8Array.from(s.scheduleHandle) : null,
           systemMode: s.systemMode,
           name: s.name,
           presetHandle: s.presetHandle ? Uint8Array.from(s.presetHandle) : undefined,
-          transitions: s.transitions ?? [],
+          transitions: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ s.transitions ?? [],
           builtIn: s.builtIn ?? true,
         })),
-        scheduleTypes: (scheduleTypes ?? []).map((st) => ({
+        scheduleTypes: scheduleTypes.map((st) => ({
           // oxlint-disable-next-line typescript/no-misused-spread
           ...st,
-          numberOfSchedules: st.numberOfSchedules ?? 0,
-          scheduleTypeFeatures: st.scheduleTypeFeatures ?? { supportsSetpoints: true, supportsNames: true, supportsPresets: false, supportsOff: false },
+          numberOfSchedules: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ st.numberOfSchedules ?? 0,
+          scheduleTypeFeatures: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ st.scheduleTypeFeatures ?? {
+            supportsSetpoints: true,
+            supportsNames: true,
+            supportsPresets: false,
+            supportsOff: false,
+          },
         })),
       },
     );
@@ -3919,13 +3939,13 @@ export class MatterbridgeEndpoint extends Endpoint {
         ...(occupied !== undefined ? { externallyMeasuredOccupancy: true } : {}),
         // Thermostat.Feature.Presets
         numberOfPresets: Math.max(
-          Array.isArray(presets) ? presets.length : 0,
-          Array.isArray(presetTypes) ? Math.max(0, ...presetTypes.map((pt) => pt.numberOfPresets ?? 0)) : 0,
+          Array.isArray(presets) ? presets.length : /* v8 ignore next -- @preserve defensive: typed as a non-nullable array */ 0,
+          Array.isArray(presetTypes) ? Math.max(0, ...presetTypes.map((pt) => pt.numberOfPresets)) : 0,
           1,
         ), // This attribute SHALL indicate the maximum number of entries supported by the Presets attribute, and must be consistent with the per-type capacities advertised in presetTypes.
         activePresetHandle: activePresetHandle ? Uint8Array.from(activePresetHandle) : null,
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
-        presets: (presets ?? []).map((p) => ({
+        presets: presets.map((p) => ({
           presetHandle: p.presetHandle ? Uint8Array.from(p.presetHandle) : null, // Ensure presetHandle is a proper Uint8Array by creating a new instance
           presetScenario: p.presetScenario,
           name: p.name,
@@ -3936,13 +3956,16 @@ export class MatterbridgeEndpoint extends Endpoint {
         presetTypes: (presetTypes ?? []).map((pt) => ({
           // oxlint-disable-next-line typescript/no-misused-spread
           ...pt,
-          numberOfPresets: pt.numberOfPresets ?? 0,
-          presetTypeFeatures: pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
+          numberOfPresets: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ pt.numberOfPresets ?? 0,
+          presetTypeFeatures: /* v8 ignore next -- @preserve defensive: required by the Matter struct */ pt.presetTypeFeatures ?? { automatic: false, supportsNames: true },
         })),
         // Thermostat.Feature.ThermostatSuggestions
-        maxThermostatSuggestions: Math.max(Array.isArray(thermostatSuggestions) ? thermostatSuggestions.length : 0, 5), // This attribute SHALL indicate the maximum number of entries supported by the ThermostatSuggestions attribute.
+        maxThermostatSuggestions: Math.max(
+          Array.isArray(thermostatSuggestions) ? thermostatSuggestions.length : /* v8 ignore next -- @preserve defensive: typed as a non-nullable array */ 0,
+          5,
+        ), // This attribute SHALL indicate the maximum number of entries supported by the ThermostatSuggestions attribute.
         // Ensure presetHandle is a proper Uint8Array by creating a new instance
-        thermostatSuggestions: (thermostatSuggestions ?? []).map((s) => ({
+        thermostatSuggestions: thermostatSuggestions.map((s) => ({
           uniqueId: s.uniqueId,
           presetHandle: Uint8Array.from(s.presetHandle), // Ensure presetHandle is a proper Uint8Array by creating a new instance
           effectiveTime: s.effectiveTime,
