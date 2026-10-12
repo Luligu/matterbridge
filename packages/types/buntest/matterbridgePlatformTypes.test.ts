@@ -6,7 +6,7 @@
 
 import { describe, expect, expectTypeOf, test } from 'bun:test';
 
-import type { VendorId } from '@matter/types';
+import type { VendorId } from '@matter/types/datatype';
 
 import type { BasePlatformConfig, PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema } from '../src/matterbridgePlatformTypes.js';
 import type { BridgeMode, RestartMode, SystemInformation, VirtualMode } from '../src/matterbridgeTypes.js';

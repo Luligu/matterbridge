@@ -18,28 +18,19 @@ const MATTER_CREATE_ONLY = true;
 
 import { Lifecycle } from '@matter/general';
 import { type ActionContext, Endpoint } from '@matter/node';
-import {
-  BooleanStateBehavior,
-  BooleanStateServer,
-  ColorControlBehavior,
-  DescriptorBehavior,
-  DescriptorServer,
-  EnergyPreferenceServer,
-  GroupsBehavior,
-  GroupsServer,
-  IdentifyBehavior,
-  IdentifyServer,
-  LevelControlBehavior,
-  OnOffBehavior,
-  OnOffServer,
-  TemperatureMeasurementServer,
-  ThermostatBehavior,
-  ThermostatServer,
-  ThermostatUserInterfaceConfigurationServer,
-  TimeSynchronizationServer,
-} from '@matter/node/behaviors';
+import { BooleanStateBehavior, BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { ColorControlBehavior } from '@matter/node/behaviors/color-control';
+import { DescriptorBehavior, DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { EnergyPreferenceServer } from '@matter/node/behaviors/energy-preference';
+import { GroupsBehavior, GroupsServer } from '@matter/node/behaviors/groups';
+import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
+import { LevelControlBehavior } from '@matter/node/behaviors/level-control';
+import { OnOffBehavior, OnOffServer } from '@matter/node/behaviors/on-off';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ThermostatBehavior, ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
+import { TimeSynchronizationServer } from '@matter/node/behaviors/time-synchronization';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
-import { EndpointNumber } from '@matter/types';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -92,6 +83,7 @@ import {
   WaterTankLevelMonitoring,
   WindowCovering,
 } from '@matter/types/clusters';
+import { EndpointNumber } from '@matter/types/datatype';
 import {
   addDevice,
   aggregator,

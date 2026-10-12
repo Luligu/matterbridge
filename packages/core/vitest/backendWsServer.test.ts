@@ -396,7 +396,7 @@ describe('BackendWsServer', () => {
     wsServer.wssSendSnackbarMessage('hello');
     wsServer.wssSendSnackbarMessage('hello', 0, 'success');
     wsServer.wssSendCloseSnackbarMessage('hello');
-    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1, 'id', 'cluster', 'attr', true);
 
     // Attach a fake server + open client for active paths
     class FakeClient extends EventEmitter {
@@ -429,7 +429,7 @@ describe('BackendWsServer', () => {
     wsServer.wssSendRefreshRequired('settings');
     wsServer.wssSendSnackbarMessage('hello', 0, 'success');
     wsServer.wssSendCloseSnackbarMessage('hello');
-    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1, 'id', 'cluster', 'attr', true);
 
     wsServer.wssSendLogMessage('info', 't', 'n', `***hello\n\tworld ${'x'.repeat(150)}`);
     wsServer.wssSendLogMessage('spawn', 't', 'n', 'no-split');
@@ -547,7 +547,7 @@ describe('BackendWsServer', () => {
       quietServer.wssSendMatterbridgeStatusUpdate({} as any);
       quietServer.wssSendSnackbarMessage('hello');
       quietServer.wssSendCloseSnackbarMessage('hello');
-      quietServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+      quietServer.wssSendAttributeChangedMessage('p', 's', 'u', 1, 'id', 'cluster', 'attr', true);
       expect(client.send).toHaveBeenCalled();
       expect(loggerDebugSpy).not.toHaveBeenCalledWith(expect.stringContaining('to all connected clients'));
 

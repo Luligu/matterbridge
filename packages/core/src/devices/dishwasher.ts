@@ -26,13 +26,14 @@ import type { MaybePromise } from '@matter/general';
 import { AttributeElement, CommandElement, EventElement, FieldElement } from '@matter/model';
 import { DishwasherAlarmServer } from '@matter/node/behaviors/dishwasher-alarm';
 import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
-import { type EndpointNumber, Status, StatusResponseError } from '@matter/types';
 import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
-import type { Semtag } from '@matter/types/globals';
+import { StatusResponseError } from '@matter/types/common';
+import type { EndpointNumber } from '@matter/types/datatype';
+import { type Semtag, Status } from '@matter/types/globals';
 import { debugStringify, nf } from 'node-ansi-logger';
 
 // Matterbridge

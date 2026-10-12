@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
-// @matter
-import type { EndpointNumber } from '@matter/types';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
+// @matter
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';

@@ -13,10 +13,11 @@ const MATTER_PORT = 6005;
 const MATTER_CREATE_ONLY = true;
 
 import { Node } from '@matter/main';
-import { EndpointNumber, FabricIndex, NodeId, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
+import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
+import { StreamUsage, ThreeLevelAuto } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

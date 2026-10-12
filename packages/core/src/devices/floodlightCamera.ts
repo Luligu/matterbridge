@@ -22,11 +22,10 @@
  * limitations under the License.
  */
 
-import { StreamUsage } from '@matter/types';
-import type { Semtag } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import type { EndpointNumber } from '@matter/types/datatype';
+import { type Semtag, StreamUsage } from '@matter/types/globals';
 import { fireAndForget } from '@matterbridge/utils';
 
 import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';

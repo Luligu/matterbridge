@@ -27,8 +27,9 @@ import type { MaybePromise } from '@matter/general';
 import { LevelControlServer } from '@matter/node/behaviors/level-control';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { PumpConfigurationAndControlServer } from '@matter/node/behaviors/pump-configuration-and-control';
-import { Status, StatusResponseError } from '@matter/types';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';

@@ -8,7 +8,9 @@ const NAME = 'WaterHeater';
 const MATTER_PORT = 8016;
 const MATTER_CREATE_ONLY = true;
 
-import { ThermostatServer, WaterHeaterManagementServer, WaterHeaterModeServer } from '@matter/node/behaviors';
+import { ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
+import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';

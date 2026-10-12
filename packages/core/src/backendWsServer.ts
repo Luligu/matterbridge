@@ -27,7 +27,6 @@
 
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -564,7 +563,7 @@ export class BackendWsServer {
    * @param {string | undefined} plugin - The name of the plugin.
    * @param {string | undefined} serialNumber - The serial number of the device.
    * @param {string | undefined} uniqueId - The unique identifier of the device.
-   * @param {EndpointNumber} number - The endpoint number where the attribute belongs.
+   * @param {number} number - The endpoint number where the attribute belongs.
    * @param {string} id - The endpoint id where the attribute belongs.
    * @param {string} cluster - The cluster name where the attribute belongs.
    * @param {string} attribute - The name of the attribute that changed.
@@ -574,7 +573,7 @@ export class BackendWsServer {
     plugin: string,
     serialNumber: string,
     uniqueId: string,
-    number: EndpointNumber,
+    number: number,
     id: string,
     cluster: string,
     attribute: string,

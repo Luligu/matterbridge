@@ -9,9 +9,8 @@ const MATTER_PORT = 8012;
 const MATTER_CREATE_ONLY = true;
 
 import { CommonPositionTag, RefrigeratorTag } from '@matter/node';
-import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors';
+import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
-import { TlvOfModel } from '@matter/types';
 import { Identify } from '@matter/types/clusters/identify';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -19,6 +18,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import { EndpointNumber } from '@matter/types/datatype';
+import { TlvOfModel } from '@matter/types/tlv';
 import {
   addDevice,
   aggregator,

@@ -23,8 +23,9 @@
  */
 
 import { ChimeServer } from '@matter/node/behaviors/chime';
-import { Status, StatusResponseError } from '@matter/types';
 import { Chime } from '@matter/types/clusters/chime';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';

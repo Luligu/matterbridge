@@ -16,7 +16,7 @@ const NAME = 'MatterbridgeMatterjs';
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
-import { FabricIndex } from '@matter/types';
+import { FabricIndex } from '@matter/types/datatype';
 import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { waiter } from '@matterbridge/utils';
 import { getInterfaceName } from '@matterbridge/utils/network';

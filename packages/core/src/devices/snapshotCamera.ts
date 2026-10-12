@@ -22,9 +22,9 @@
  * limitations under the License.
  */
 
-import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import { StreamUsage } from '@matter/types/globals';
 
 import { createDefaultSnapshotCameraAvStreamManagementClusterServer, type SnapshotSource } from '../behaviors/cameraAvStreamManagementServer.js';
 import { powerSource, snapshotCamera } from '../matterbridgeDeviceTypes.js';

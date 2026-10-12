@@ -9,16 +9,14 @@ const MATTER_PORT = 8005;
 const MATTER_CREATE_ONLY = true;
 
 import { Time } from '@matter/general';
-import {
-  DeviceEnergyManagementModeServer,
-  DeviceEnergyManagementServer,
-  ElectricalEnergyMeasurementServer,
-  ElectricalPowerMeasurementServer,
-  EnergyEvseModeServer,
-  EnergyEvseServer,
-  PowerSourceServer,
-  TemperatureMeasurementServer,
-} from '@matter/node/behaviors';
+import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
+import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
+import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
+import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
+import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';

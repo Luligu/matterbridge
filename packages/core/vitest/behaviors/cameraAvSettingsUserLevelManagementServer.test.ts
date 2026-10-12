@@ -8,9 +8,9 @@ const NAME = 'CameraAvSettingsUserLevelManagementServerBehavior';
 const MATTER_PORT = 6011;
 const MATTER_CREATE_ONLY = true;
 
-import { Status, StreamUsage } from '@matter/types';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
+import { Status, StreamUsage } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

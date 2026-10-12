@@ -9,8 +9,8 @@ const MATTER_PORT = 8004;
 const MATTER_CREATE_ONLY = true;
 
 // @matter
-import { DishwasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
-import { Status, TlvOfModel } from '@matter/types';
+import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
+import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { Identify } from '@matter/types/clusters/identify';
@@ -18,6 +18,8 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { Status } from '@matter/types/globals';
+import { TlvOfModel } from '@matter/types/tlv';
 import {
   addDevice,
   aggregator,

@@ -26,8 +26,9 @@
 
 import { Millis, Seconds, Time, type MaybePromise, type Timer } from '@matter/general';
 import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
-import { Status, StatusResponseError } from '@matter/types';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

@@ -14,26 +14,22 @@ const NAME = 'EndpointDefault';
 const MATTER_PORT = 11200;
 const MATTER_CREATE_ONLY = true;
 
-import {
-  AirQualityServer,
-  BooleanStateServer,
-  CarbonDioxideConcentrationMeasurementServer,
-  CarbonMonoxideConcentrationMeasurementServer,
-  ColorControlBehavior,
-  ColorControlServer,
-  DescriptorBehavior,
-  FormaldehydeConcentrationMeasurementServer,
-  NitrogenDioxideConcentrationMeasurementServer,
-  OzoneConcentrationMeasurementServer,
-  Pm1ConcentrationMeasurementServer,
-  Pm10ConcentrationMeasurementServer,
-  Pm25ConcentrationMeasurementServer,
-  RadonConcentrationMeasurementServer,
-  SoilMeasurementServer,
-  TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
-} from '@matter/node/behaviors';
+import { AirQualityServer } from '@matter/node/behaviors/air-quality';
+import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { ColorControlBehavior, ColorControlServer } from '@matter/node/behaviors/color-control';
+import { DescriptorBehavior } from '@matter/node/behaviors/descriptor';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
-import { Status } from '@matter/types';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
+import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
+import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -81,6 +77,7 @@ import {
   WindowCovering,
 } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
+import { Status } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,

@@ -7,9 +7,7 @@ import DevicesTable from '../src/components/DevicesTable';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
 
-// Endpoint numbers are a branded type in the shared API types; this test-only cast avoids
-// depending on the underlying branding package directly from this frontend package.
-const endpointNumber = (value: number): Cluster['number'] => value as Cluster['number'];
+const endpointNumber = (value: number): Cluster['number'] => value;
 
 describe('DevicesTable', () => {
   afterEach(() => {

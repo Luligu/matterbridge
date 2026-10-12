@@ -8,10 +8,10 @@ const NAME = 'SnapshotCameraDevice';
 const MATTER_PORT = 6002;
 const MATTER_CREATE_ONLY = true;
 
-import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { StreamUsage } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

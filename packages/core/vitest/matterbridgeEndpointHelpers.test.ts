@@ -17,13 +17,12 @@ const MATTER_CREATE_ONLY = true;
 import { CommonNumberTag, PowerSourceTag } from '@matter/node';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
-import { VendorId } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import type { ClusterId } from '@matter/types/datatype';
+import { type ClusterId, VendorId } from '@matter/types/datatype';
 import {
   addDevice,
   aggregator,

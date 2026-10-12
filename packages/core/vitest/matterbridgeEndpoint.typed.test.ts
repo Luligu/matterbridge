@@ -19,12 +19,15 @@ const NAME = 'EndpointTypeChecks';
 
 import { OnOffServer } from '@matter/main/behaviors/on-off';
 import type { ActionContext } from '@matter/node';
-import { BooleanStateBehavior, BooleanStateServer, IdentifyBehavior, IdentifyServer, PowerSourceBehavior, SwitchServer } from '@matter/node/behaviors';
+import { BooleanStateBehavior, BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
 import { OnOffBehavior } from '@matter/node/behaviors/on-off';
+import { PowerSourceBehavior } from '@matter/node/behaviors/power-source';
+import { SwitchServer } from '@matter/node/behaviors/switch';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
-import { type ClusterId, EndpointNumber } from '@matter/types';
 import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
 import { OnOff } from '@matter/types/clusters/on-off';
+import { type ClusterId, EndpointNumber } from '@matter/types/datatype';
 import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 

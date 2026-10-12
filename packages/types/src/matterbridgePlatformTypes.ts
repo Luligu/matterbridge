@@ -22,7 +22,7 @@
  */
 
 // @matter
-import type { VendorId } from '@matter/types';
+import type { VendorId } from '@matter/types/datatype';
 
 // Matterbridge
 import type { BridgeMode, RestartMode, SystemInformation, VirtualMode } from './matterbridgeTypes.js';

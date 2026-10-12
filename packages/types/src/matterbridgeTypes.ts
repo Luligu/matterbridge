@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-// @matter
-import type { EndpointNumber, FabricIndex, Semtag, VendorId } from '@matter/types';
 import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
+// @matter
+import type { FabricIndex, VendorId } from '@matter/types/datatype';
+import type { Semtag } from '@matter/types/globals';
 // AnsiLogger
 import type { LogLevel } from 'node-ansi-logger';
 
@@ -325,6 +326,7 @@ export interface BaseDevice {
   mode: 'server' | 'matter' | undefined;
   plugin: string | undefined;
   configUrl: string | undefined;
+
   deviceName: string | undefined;
   serialNumber: string | undefined;
   uniqueId: string | undefined;
@@ -355,7 +357,7 @@ export interface BaseDevice {
   id: string | undefined;
 }
 
-/** Define an interface for API matter information */
+/** Define an interface for root node information */
 export interface ApiMatter {
   id: string;
   online: boolean;
@@ -376,7 +378,7 @@ export interface ApiClusters {
   deviceName: string;
   serialNumber: string;
   /** Endpoint number */
-  number: EndpointNumber;
+  number: number;
   /** Endpoint id */
   id: string;
   deviceTypes: number[];
@@ -388,7 +390,7 @@ export interface Cluster {
   /** Endpoint number > string */
   endpoint: string;
   /** Endpoint number */
-  number: EndpointNumber;
+  number: number;
   /** Endpoint id or main for the device root endpoint */
   id: string;
   deviceTypes: number[];

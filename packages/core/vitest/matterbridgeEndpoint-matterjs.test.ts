@@ -23,49 +23,37 @@ import path from 'node:path';
 
 import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, type StorageContext } from '@matter/general';
 import { Endpoint } from '@matter/node';
-import {
-  BooleanStateConfigurationServer,
-  BooleanStateServer,
-  ColorControlServer,
-  DescriptorBehavior,
-  DescriptorServer,
-  DeviceEnergyManagementModeServer,
-  EnergyEvseModeServer,
-  EnergyEvseServer,
-  FanControlServer,
-  GroupsBehavior,
-  GroupsServer,
-  IdentifyBehavior,
-  IdentifyServer,
-  IlluminanceMeasurementServer,
-  LevelControlServer,
-  ModeSelectServer,
-  OccupancySensingServer,
-  OnOffBehavior,
-  OnOffServer,
-  OperationalStateServer,
-  RvcCleanModeServer,
-  RvcOperationalStateServer,
-  RvcRunModeServer,
-  ScenesManagementBehavior,
-  ScenesManagementServer,
-  ServiceAreaServer,
-  SmokeCoAlarmServer,
-  TemperatureMeasurementServer,
-  ValveConfigurationAndControlServer,
-  WaterHeaterManagementServer,
-  WaterHeaterModeServer,
-  WindowCoveringServer,
-} from '@matter/node/behaviors';
-import {
-  ContactSensorDevice,
-  OccupancySensorDevice,
-  OccupancySensorDeviceDefinition,
-  OnOffLightSwitchDevice,
-  OnOffLightSwitchRequirements,
-  OnOffPlugInUnitDevice,
-  OnOffPlugInUnitDeviceDefinition,
-} from '@matter/node/devices';
+import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
+import { ColorControlServer } from '@matter/node/behaviors/color-control';
+import { DescriptorBehavior, DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
+import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
+import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
+import { FanControlServer } from '@matter/node/behaviors/fan-control';
+import { GroupsBehavior, GroupsServer } from '@matter/node/behaviors/groups';
+import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
+import { IlluminanceMeasurementServer } from '@matter/node/behaviors/illuminance-measurement';
+import { LevelControlServer } from '@matter/node/behaviors/level-control';
+import { ModeSelectServer } from '@matter/node/behaviors/mode-select';
+import { OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
+import { OnOffBehavior, OnOffServer } from '@matter/node/behaviors/on-off';
+import { OperationalStateServer } from '@matter/node/behaviors/operational-state';
+import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
+import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
+import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
+import { ScenesManagementBehavior, ScenesManagementServer } from '@matter/node/behaviors/scenes-management';
+import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
+import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ValveConfigurationAndControlServer } from '@matter/node/behaviors/valve-configuration-and-control';
+import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
+import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
+import { WindowCoveringServer } from '@matter/node/behaviors/window-covering';
+import { ContactSensorDevice } from '@matter/node/devices/contact-sensor';
+import { OccupancySensorDevice, OccupancySensorDeviceDefinition } from '@matter/node/devices/occupancy-sensor';
+import { OnOffLightSwitchDevice, OnOffLightSwitchRequirements } from '@matter/node/devices/on-off-light-switch';
+import { OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices/on-off-plug-in-unit';
 import { FabricManager } from '@matter/protocol';
 import {
   ColorControl,

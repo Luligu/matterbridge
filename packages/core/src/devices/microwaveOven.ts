@@ -27,11 +27,12 @@
 // @matter
 import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
 import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
-import { Status, StatusResponseError, type EndpointNumber } from '@matter/types';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
 import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
 import { OperationalState } from '@matter/types/clusters/operational-state';
-import type { Semtag } from '@matter/types/globals';
+import { StatusResponseError } from '@matter/types/common';
+import type { EndpointNumber } from '@matter/types/datatype';
+import { type Semtag, Status } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';

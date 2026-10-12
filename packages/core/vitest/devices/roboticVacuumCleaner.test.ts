@@ -9,8 +9,10 @@ const MATTER_PORT = 8013;
 const MATTER_CREATE_ONLY = true;
 
 import { CommonNumberTag } from '@matter/node';
-import { RvcCleanModeServer, RvcOperationalStateServer, RvcRunModeServer, ServiceAreaServer } from '@matter/node/behaviors';
-import { EndpointNumber } from '@matter/types';
+import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
+import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
+import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
+import { ServiceAreaServer } from '@matter/node/behaviors/service-area';
 import { Identify } from '@matter/types/clusters/identify';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -18,6 +20,7 @@ import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/types/clusters/service-area';
+import { EndpointNumber } from '@matter/types/datatype';
 import {
   addDevice,
   aggregator,

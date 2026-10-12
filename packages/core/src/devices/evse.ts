@@ -32,12 +32,14 @@ import { Seconds, Time, type Timer } from '@matter/general';
 import { Supervision } from '@matter/node';
 import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
-import { MATTER_EPOCH_OFFSET_S, StatusResponse, type EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import { StatusResponse } from '@matter/types/common';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
+import { MATTER_EPOCH_OFFSET_S } from '@matter/types/tlv';
 import { fireAndForget } from '@matterbridge/utils/wait';
 import { debugStringify, type AnsiLogger } from 'node-ansi-logger';
 

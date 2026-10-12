@@ -10,8 +10,8 @@ const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

@@ -29,7 +29,6 @@ import { CommonAreaNamespaceTag } from '@matter/node';
 import { RvcCleanModeServer } from '@matter/node/behaviors/rvc-clean-mode';
 import { RvcOperationalStateServer } from '@matter/node/behaviors/rvc-operational-state';
 import { RvcRunModeServer } from '@matter/node/behaviors/rvc-run-mode';
-import type { EndpointNumber } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
@@ -37,6 +36,7 @@ import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { ServiceArea } from '@matter/types/clusters/service-area';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge

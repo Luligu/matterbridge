@@ -8,9 +8,9 @@ const NAME = 'ColorControlServer';
 const MATTER_PORT = 13200;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { ColorControl } from '@matter/types/clusters/color-control';
 import { OnOff } from '@matter/types/clusters/on-off';
+import { Status } from '@matter/types/globals';
 import {
   getEnhancedMoveHueRequest,
   getEnhancedMoveToHueAndSaturationRequest,

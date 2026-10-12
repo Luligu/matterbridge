@@ -26,8 +26,9 @@
 
 import type { MaybePromise } from '@matter/general';
 import { BooleanStateConfigurationServer } from '@matter/node/behaviors/boolean-state-configuration';
-import { Status, StatusResponseError } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 import { debugStringify, nf } from 'node-ansi-logger';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

@@ -21,7 +21,8 @@ const DISCRIMINATOR = 3860;
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
-import { BridgedDeviceBasicInformationServer, PressureMeasurementServer } from '@matter/node/behaviors';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { PressureMeasurementServer } from '@matter/node/behaviors/pressure-measurement';
 import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { MATTER_STORAGE_DIR, plg } from '@matterbridge/types';

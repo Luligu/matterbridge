@@ -22,11 +22,10 @@
  * limitations under the License.
  */
 
-import { StreamUsage } from '@matter/types';
-import type { Viewport } from '@matter/types';
 import type { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import { StreamUsage, type Viewport } from '@matter/types/globals';
 
 import { createDefaultCameraAvSettingsUserLevelManagementClusterServer } from '../behaviors/cameraAvSettingsUserLevelManagementServer.js';
 import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';

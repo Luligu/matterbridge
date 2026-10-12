@@ -8,8 +8,8 @@ const NAME = 'LaundryWasher';
 const MATTER_PORT = 8009;
 const MATTER_CREATE_ONLY = true;
 
-import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
-import { Status } from '@matter/types';
+import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
+import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { Identify } from '@matter/types/clusters/identify';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
@@ -18,6 +18,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

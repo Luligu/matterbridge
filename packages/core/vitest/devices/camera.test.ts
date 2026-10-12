@@ -9,12 +9,12 @@ const MATTER_PORT = 6003;
 const MATTER_CREATE_ONLY = true;
 
 import { WebRtcTransportRequestorClient } from '@matter/node/behaviors/web-rtc-transport-requestor';
-import { StreamUsage } from '@matter/types';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import { StreamUsage } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

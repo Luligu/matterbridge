@@ -33,7 +33,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';

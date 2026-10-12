@@ -9,10 +9,9 @@ const MATTER_PORT = 8023;
 const MATTER_CREATE_ONLY = true;
 
 import { ClosurePanelTag } from '@matter/node';
-import { Status } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
-import { ThreeLevelAuto } from '@matter/types/globals';
+import { Status, ThreeLevelAuto } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

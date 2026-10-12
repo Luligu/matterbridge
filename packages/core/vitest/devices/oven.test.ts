@@ -9,7 +9,8 @@ const MATTER_PORT = 8011;
 const MATTER_CREATE_ONLY = true;
 
 import { CommonPositionTag } from '@matter/node';
-import { OvenCavityOperationalStateServer, OvenModeServer } from '@matter/node/behaviors';
+import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
+import { OvenModeServer } from '@matter/node/behaviors/oven-mode';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
 import { Identify } from '@matter/types/clusters/identify';
 import { ModeBase } from '@matter/types/clusters/mode-base';

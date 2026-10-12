@@ -21,10 +21,10 @@
  * limitations under the License.
  */
 
-// @matter
-import type { EndpointNumber } from '@matter/types';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
+// @matter
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 
 // Matterbridge

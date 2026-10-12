@@ -10,7 +10,6 @@ const MATTER_CREATE_ONLY = true;
 
 import { ChimeClient } from '@matter/node/behaviors/chime';
 import { WebRtcTransportRequestorClient } from '@matter/node/behaviors/web-rtc-transport-requestor';
-import { StreamUsage } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Chime } from '@matter/types/clusters/chime';
 import { FixedLabel } from '@matter/types/clusters/fixed-label';
@@ -19,6 +18,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { Switch } from '@matter/types/clusters/switch';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { EndpointNumber } from '@matter/types/datatype';
+import { StreamUsage } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

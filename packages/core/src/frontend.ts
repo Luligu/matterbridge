@@ -48,7 +48,7 @@ import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLe
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
 import { CommissioningOptions } from '@matter/types/commissioning';
-import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { FabricIndex } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -2474,7 +2474,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string | undefined} plugin - The name of the plugin.
    * @param {string | undefined} serialNumber - The serial number of the device.
    * @param {string | undefined} uniqueId - The unique identifier of the device.
-   * @param {EndpointNumber} number - The endpoint number where the attribute belongs.
+   * @param {number} number - The endpoint number where the attribute belongs.
    * @param {string} id - The endpoint id where the attribute belongs.
    * @param {string} cluster - The cluster name where the attribute belongs.
    * @param {string} attribute - The name of the attribute that changed.
@@ -2488,7 +2488,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     plugin: string,
     serialNumber: string,
     uniqueId: string,
-    number: EndpointNumber,
+    number: number,
     id: string,
     cluster: string,
     attribute: string,

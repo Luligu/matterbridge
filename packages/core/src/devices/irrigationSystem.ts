@@ -22,8 +22,8 @@
  */
 
 import { CommonLocationTag } from '@matter/main/node';
-import type { EndpointNumber } from '@matter/types';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 import { fireAndForget } from '@matterbridge/utils';
 

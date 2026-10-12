@@ -21,8 +21,7 @@
  * limitations under the License.
  */
 
-import type { EndpointNumber } from '@matter/types';
-
+// matterbridge
 import type { PlatformConfig } from './matterbridgePlatformTypes.js';
 import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BridgeStatus, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
@@ -574,7 +573,7 @@ export interface WsMessageApiStateUpdate extends WsMessageSuccessApiResponse {
     plugin: string;
     serialNumber: string;
     uniqueId: string;
-    number: EndpointNumber;
+    number: number;
     id: string;
     cluster: string;
     attribute: string;

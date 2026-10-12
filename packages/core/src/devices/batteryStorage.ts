@@ -25,10 +25,10 @@
 // @matter
 import { PowerSourceTag } from '@matter/node';
 import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
-import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';

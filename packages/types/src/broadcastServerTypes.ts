@@ -21,8 +21,6 @@
  * limitations under the License.
  */
 
-// @matter
-import type { EndpointNumber } from '@matter/types/datatype';
 // AnsiLogger
 import type { LogLevel } from 'node-ansi-logger';
 
@@ -315,7 +313,7 @@ export type WorkerMessageTypes = {
         plugin: string;
         serialNumber: string;
         uniqueId: string;
-        number: EndpointNumber;
+        number: number;
         id: string;
         cluster: string;
         attribute: string;

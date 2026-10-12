@@ -21,7 +21,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { VendorId } from '@matter/types';
+import { VendorId } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
