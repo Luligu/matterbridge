@@ -453,6 +453,14 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: Endpoint Single Classes",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/core/buntest/devices"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Platform",
       "type": "process",
       "command": "node",
@@ -471,6 +479,20 @@
         "packages/core/vitest/matterbridgePlatform.test.ts",
         "packages/core/vitest/matterbridgeAccessoryPlatform.test.ts",
         "packages/core/vitest/matterbridgeDynamicPlatform.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Platform",
+      "type": "process",
+      "command": "bun",
+      "args": [
+        "test",
+        "--parallel",
+        "packages/core/buntest/matterbridgePlatform.test.ts",
+        "packages/core/buntest/matterbridgeAccessoryPlatform.test.ts",
+        "packages/core/buntest/matterbridgeDynamicPlatform.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -495,25 +517,6 @@
       "problemMatcher": []
     },
     {
-      "label": "Test: Helpers",
-      "type": "process",
-      "command": "node",
-      "args": [
-        "node_modules/vitest/vitest.mjs",
-        "run",
-        "--reporter",
-        "verbose",
-        "--reporter",
-        "junit",
-        "--coverage",
-        "--maxWorkers=100%",
-        "--coverage.include=packages/core/src/helpers.ts",
-        "packages/core/vitest/helpers.test.ts"
-      ],
-      "group": { "kind": "test", "isDefault": false },
-      "problemMatcher": []
-    },
-    {
       "label": "Test: DeviceManager",
       "type": "process",
       "command": "node",
@@ -528,6 +531,33 @@
         "--maxWorkers=100%",
         "--coverage.include=packages/core/src/deviceManager.ts",
         "packages/core/vitest/deviceManager.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: DeviceManager",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/core/buntest/deviceManager.test.ts"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Helpers",
+      "type": "process",
+      "command": "node",
+      "args": [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--reporter",
+        "verbose",
+        "--reporter",
+        "junit",
+        "--coverage",
+        "--maxWorkers=100%",
+        "--coverage.include=packages/core/src/helpers.ts",
+        "packages/core/vitest/helpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -552,6 +582,14 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: Dgram",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/dgram/buntest"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Utils",
       "type": "process",
       "command": "node",
@@ -567,6 +605,14 @@
         "--coverage.include=packages/utils/src/*.ts",
         "packages/utils/vitest"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Utils",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/utils/buntest"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -590,6 +636,14 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: Threads",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/thread/buntest"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Types",
       "type": "process",
       "command": "node",
@@ -605,6 +659,14 @@
         "--coverage.include=packages/types/src/*.ts",
         "packages/types/vitest"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Types",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/types/buntest"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -628,6 +690,14 @@
         "packages/thread/vitest/backendWsServer.test.ts",
         "packages/thread/vitest/backendExpress.test.ts"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Backend",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/core/buntest/backend.test.ts", "packages/core/buntest/backendWsServer.test.ts", "packages/core/buntest/backendExpress.test.ts"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -657,6 +727,23 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: MatterNode",
+      "type": "process",
+      "command": "bun",
+      "args": [
+        "test",
+        "--parallel",
+        "packages/core/buntest/matterNode.test.ts",
+        "packages/core/buntest/matterNode.bridge.test.ts",
+        "packages/core/buntest/matterNode.accessory.test.ts",
+        "packages/core/buntest/matterNode.dynamic.test.ts",
+        "packages/core/buntest/matterNode.server.test.ts",
+        "packages/core/buntest/matterNodeHelpers.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Cli",
       "type": "process",
       "command": "node",
@@ -670,6 +757,7 @@
         "--coverage",
         "--maxWorkers=100%",
         "--coverage.include=packages/core/src/cli.ts",
+        "--coverage.include=packages/core/src/cliEmitter.ts",
         "--coverage.include=packages/core/src/cliHistory.ts",
         "--coverage.include=packages/core/src/mb_health.ts",
         "--coverage.include=packages/core/src/mb_coap.ts",
@@ -681,6 +769,14 @@
         "packages/core/vitest/mb_coap.test.ts",
         "packages/core/vitest/mb_mdns.test.ts"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Cli",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "packages/core/buntest/cli.test.ts", "packages/core/buntest/cliEmitter.test.ts", "packages/core/buntest/cliHistory.test.ts"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },

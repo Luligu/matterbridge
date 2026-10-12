@@ -778,7 +778,9 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  *
  * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
  * @param {Endpoint} device The device to add.
- * @param {number} rounds The number of rounds to perform after addition (default 3).
+ * @param {number} rounds The number of rounds to perform after addition (default 1).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield in each round (default 1).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform in each round (default 1).
  * @param {number} pause The pause time in milliseconds after addition (default 10ms).
  * @returns {Promise<void>} Resolves when the device has been added and is ready.
  * @example
@@ -786,14 +788,21 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  * expect(await addDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
+export async function addDevice(
+  owner: ServerNode | Endpoint<AggregatorEndpoint>,
+  device: Endpoint,
+  rounds: number = 1,
+  ticks: number = 1,
+  microTurns: number = 1,
+  pause: number = 10,
+): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
 
   /* v8 ignore next */
   try {
@@ -811,7 +820,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Active);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
   return true;
 }
 
@@ -820,7 +829,9 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
  *
  * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to remove the device from.
  * @param {Endpoint} device The device to remove.
- * @param {number} rounds The number of rounds to perform after deletion (default 3).
+ * @param {number} rounds The number of rounds to perform after deletion (default 1).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield in each round (default 1).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform in each round (default 1).
  * @param {number} pause The pause time in milliseconds after deletion (default 10ms).
  * @returns {Promise<void>} Resolves when the device has been removed and is no longer ready.
  * @example
@@ -828,14 +839,21 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
  * expect(await deleteDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
+export async function deleteDevice(
+  owner: ServerNode | Endpoint<AggregatorEndpoint>,
+  device: Endpoint,
+  rounds: number = 1,
+  ticks: number = 1,
+  microTurns: number = 1,
+  pause: number = 10,
+): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
 
   /* v8 ignore next */
   try {
@@ -852,6 +870,6 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
   return true;
 }
