@@ -721,6 +721,7 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
 /**
  * Flush any pending endpoint number persistence.
  *
+ * @param {number} rounds Number of endpoint number persistence flush cycles to run before closing the server (default 3).
  * @param {number} ticks Number of macrotask (setImmediate) turns to yield after stopping the server to allow asynchronous work to complete before returning (default 1).
  * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 1).
  * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server stop process to run before returning (default 10ms).
@@ -751,9 +752,9 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
  * await destroyTestEnvironment();
  * ```
  */
-export async function flushServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<void> {
+export async function flushServerNode(rounds: number = 3, ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<void> {
   // Flush any pending endpoint number persistence
-  await flushAllEndpointNumberPersistence(server);
+  await flushAllEndpointNumberPersistence(server, rounds, ticks, microTurns, pause);
 
   // Ensure all endpoint numbers are persisted
   await assertAllEndpointNumbersPersisted(server);

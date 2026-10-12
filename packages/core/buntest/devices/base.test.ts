@@ -62,7 +62,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create the server node', async () => {
-    await createServerNode(MATTER_PORT, bridge.code);
+    await createServerNode(MATTER_PORT, bridge.code, 0, 0, 0);
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
   });
@@ -172,7 +172,7 @@ describe('Matterbridge ' + NAME, () => {
   test('stop the server node', async () => {
     expect(server).toBeDefined();
     expect(aggregator).toBeDefined();
-    if (MATTER_CREATE_ONLY) await flushServerNode();
+    if (MATTER_CREATE_ONLY) await flushServerNode(0, 0, 0, 0);
     else await stopServerNode();
   });
 });
