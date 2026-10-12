@@ -792,7 +792,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
 
   /* v8 ignore next */
   try {
@@ -810,7 +810,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Active);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
   return true;
 }
 
@@ -834,7 +834,7 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
 
   /* v8 ignore next */
   try {
@@ -851,6 +851,6 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, 1, 1, pause);
   return true;
 }
