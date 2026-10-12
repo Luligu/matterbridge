@@ -93,6 +93,7 @@ import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activate
 import { AirQuality } from '@matter/types/clusters/air-quality';
 import { AmbientContextSensing } from '@matter/types/clusters/ambient-context-sensing';
 import { BasicInformation } from '@matter/types/clusters/basic-information';
+import { Binding } from '@matter/types/clusters/binding';
 import { BooleanState } from '@matter/types/clusters/boolean-state';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
@@ -463,6 +464,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === FixedLabel.id) return FixedLabelServer;
   if (clusterId === BasicInformation.id) return BasicInformationServer;
   if (clusterId === BridgedDeviceBasicInformation.id) return BridgedDeviceBasicInformationServer;
+  if (clusterId === Binding.id) return MatterbridgeBindingServer;
   if (clusterId === Identify.id) return MatterbridgeIdentifyServer;
   if (clusterId === Groups.id) return GroupsServer;
   if (clusterId === ScenesManagement.id) return ScenesManagementServer;

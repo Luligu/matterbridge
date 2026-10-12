@@ -127,9 +127,9 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
         `MatterbridgeCommodityTariffServer: no TariffComponent with id ${request.tariffComponentId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIDs.includes(request.tariffComponentId));
+    const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIds.includes(request.tariffComponentId));
     // Matter 1.6.0 § 9.12.7.1.2: Return information about the available requested tariff component.
-    const response = { label: period?.label ?? null, dayEntryIDs: period?.dayEntryIDs ?? [], tariffComponent };
+    const response = { label: period?.label ?? null, dayEntryIds: period?.dayEntryIds ?? [], tariffComponent };
     this.endpoint.emitCommand(CommodityTariff, 'getTariffComponent', request, this.context);
     return response;
   }

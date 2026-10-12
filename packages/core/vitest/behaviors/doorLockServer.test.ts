@@ -574,7 +574,7 @@ describe('Client clusters and behaviors', () => {
       lockDataType: DoorLock.LockDataType.UserIndex,
       dataOperationType: DoorLock.DataOperationType.Add,
       userIndex: 1,
-      dataIndex: null,
+      dataIndex: 1,
       operationSource: DoorLock.OperationSource.Remote,
       fabricIndex: expect.any(Number),
       sourceNode: null,
@@ -583,7 +583,7 @@ describe('Client clusters and behaviors', () => {
       lockDataType: DoorLock.LockDataType.UserIndex,
       dataOperationType: DoorLock.DataOperationType.Modify,
       userIndex: 1,
-      dataIndex: null,
+      dataIndex: 1,
     });
   });
 
@@ -664,7 +664,7 @@ describe('Client clusters and behaviors', () => {
     expect(lockUserChange.mock.calls[2]?.[0]).toMatchObject({
       lockDataType: DoorLock.LockDataType.Pin,
       dataOperationType: DoorLock.DataOperationType.Clear,
-      userIndex: null,
+      userIndex: 0xfffe,
       fabricIndex: expect.any(Number),
       sourceNode: null,
       dataIndex: 0xfffe,
@@ -825,7 +825,7 @@ describe('Client clusters and behaviors', () => {
       userIndex: 1,
       fabricIndex: expect.any(Number),
       sourceNode: null,
-      dataIndex: null,
+      dataIndex: 1,
     });
   });
 

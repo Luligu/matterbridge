@@ -36,7 +36,7 @@ import { OccupancySensorDevice, OccupancySensorDeviceDefinition } from '@matter/
 import { OnOffLightSwitchDevice, OnOffLightSwitchRequirements } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices/on-off-plug-in-unit';
 import { FabricManager } from '@matter/protocol';
-import { ColorControl, Descriptor, Groups, Identify, LevelControl, OccupancySensing, OnOff, ScenesManagement, Thermostat } from '@matter/types/clusters';
+import { Binding, ColorControl, Descriptor, Groups, Identify, LevelControl, OccupancySensing, OnOff, ScenesManagement, Thermostat } from '@matter/types/clusters';
 import { flushAsync } from '@matterbridge/test-utils';
 import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/test-utils/vitest/matter';
 import { HOMEDIR, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
@@ -765,11 +765,10 @@ describe('Matterbridge ' + NAME, () => {
 
     const mbServerMandatory = clusterIds((device.type as any).requirements?.server?.mandatory ?? {});
     const mjServerMandatory = clusterIds(OnOffLightSwitchRequirements.server.mandatory);
-    // matter.js: server mandatory = [Identify] only.
-    // Matterbridge: server mandatory = [Identify, OnOff] — OnOff is also kept as a server cluster
-    // so that bridge plugins receive OnOff commands directly.
-    expect(mjServerMandatory).toEqual([Identify.id]);
-    expect(mbServerMandatory).toContain(Identify.id);
+    // Device Library §1.1.7 requires Binding for Simple endpoints with application clients.
+    // On/Off Light Switch (§6.1) requires Identify server and Identify/OnOff clients.
+    expect(mjServerMandatory).toEqual([Identify.id, Binding.id]);
+    expect(mbServerMandatory).toEqual(mjServerMandatory);
     expect(mbServerMandatory).not.toContain(OnOff.id);
 
     const mbClientMandatory = clusterIds((device.type as any).requirements?.client?.mandatory ?? {});
