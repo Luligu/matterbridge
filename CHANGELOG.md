@@ -95,7 +95,6 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [core]: Use the compliant TiltOnlyInteriorBlind end product type for tilt-only window coverings.
-
 - [tests]: Prevent test output leakage.
 - [core]: Don't answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught `ERR_HTTP_HEADERS_SENT` (oven-sh/bun#44925).
 - [test-utils]: `addDevice()` and `deleteDevice()` passed `pause` as the `ticks` argument of `flushAllEndpointNumberPersistence()`, adding ~60ms to every call.
