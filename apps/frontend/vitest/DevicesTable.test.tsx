@@ -103,6 +103,7 @@ describe('DevicesTable', () => {
         plugin: device.plugin,
         deviceName: device.deviceName,
         serialNumber: device.serialNumber,
+        uniqueId: device.uniqueId,
         number: endpointNumber(1),
         id: 'Light',
         deviceTypes: [0x0100],

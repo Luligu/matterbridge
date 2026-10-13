@@ -290,11 +290,11 @@ export class MatterbridgePlatform {
         break;
       case 'platform_get_apiselectdevices':
         if (msg.params.plugin !== this.name) return;
-        this.#server.respond({ ...msg, result: { devices: this.getSelectDevices() } });
+        this.#server.respond({ ...msg, result: { devices: this.getSelectDevices().toSorted((keyA, keyB) => keyA.deviceName.localeCompare(keyB.deviceName)) } });
         break;
       case 'platform_get_apiselectentities':
         if (msg.params.plugin !== this.name) return;
-        this.#server.respond({ ...msg, result: { entities: this.getSelectEntities() } });
+        this.#server.respond({ ...msg, result: { entities: this.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name)) } });
         break;
       default:
         /* v8 ignore next Debug logs are not relevant for coverage */

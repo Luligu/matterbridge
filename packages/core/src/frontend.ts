@@ -1416,7 +1416,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     const endpoint = this.matterbridge.devices
       .array()
       .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber) && (!uniqueId || d.uniqueId === uniqueId));
-    if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
+    if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber || !endpoint.uniqueId) {
       this.log.error(
         `getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
       );
@@ -1425,12 +1425,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
     // Get the device types from the main endpoint
     const deviceTypes: number[] = [];
-    const clusters: Cluster[] = [];
     endpoint.state.descriptor.deviceTypeList.forEach((d) => {
       deviceTypes.push(d.deviceType);
     });
 
     // Get the clusters from the main endpoint
+    const clusters: Cluster[] = [];
     endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
       // oxfmt-ignore
@@ -1482,7 +1482,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         });
       });
     });
-    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, number: endpoint.number, id: endpoint.id, deviceTypes, clusters };
+    return {
+      plugin: endpoint.plugin,
+      deviceName: endpoint.deviceName,
+      serialNumber: endpoint.serialNumber,
+      uniqueId: endpoint.uniqueId,
+      number: endpoint.number,
+      id: endpoint.id,
+      deviceTypes,
+      clusters,
+    };
   }
 
   /**

@@ -506,7 +506,7 @@ export class Backend extends EventEmitter<BackendEvents> {
   }
 
   /**
-   * Retrieves the api settings data.
+   * Retrieves the api settings data from the Matterbridge.
    *
    * @returns {ApiSettings} The api settings object.
    */
@@ -518,7 +518,7 @@ export class Backend extends EventEmitter<BackendEvents> {
   }
 
   /**
-   * Retrieves the registered plugins sanitized for res.json().
+   * Retrieves the registered plugins sanitized for res.json() from the Plugin Manager.
    *
    * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
    */
@@ -530,7 +530,7 @@ export class Backend extends EventEmitter<BackendEvents> {
   }
 
   /**
-   * Retrieves the devices from Matterbridge.
+   * Retrieves the devices from the Device Manager.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
    * @param {boolean} [extended] - Whether to include extended information.
@@ -544,7 +544,7 @@ export class Backend extends EventEmitter<BackendEvents> {
   }
 
   /**
-   * Retrieves the clusters from a given plugin and endpoint number.
+   * Retrieves the clusters for a given plugin and endpoint number from the Platform.
    *
    * Response for /api/clusters
    *

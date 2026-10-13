@@ -130,6 +130,7 @@ describe('DevicesIcons', () => {
         plugin: device.plugin,
         deviceName: device.deviceName,
         serialNumber: device.serialNumber,
+        uniqueId: device.uniqueId,
         number: endpointNumber(1),
         id: 'main',
         deviceTypes: [0x002b],
@@ -224,7 +225,16 @@ describe('DevicesIcons', () => {
       dst: 'Frontend',
       method: '/api/clusters',
       success: true,
-      response: { plugin: 'matterbridge-test', deviceName: 'Empty', serialNumber: 'EMPTY-001', number: endpointNumber(1), id: 'main', deviceTypes: [], clusters: [] },
+      response: {
+        plugin: 'matterbridge-test',
+        deviceName: 'Empty',
+        serialNumber: 'EMPTY-001',
+        uniqueId: 'empty-test',
+        number: endpointNumber(1),
+        id: 'main',
+        deviceTypes: [],
+        clusters: [],
+      },
     });
 
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
@@ -556,6 +566,7 @@ function loadDevice(socket: TestSocket, device: ApiDevice, clusters: Cluster[]):
       plugin: device.plugin,
       deviceName: device.deviceName,
       serialNumber: device.serialNumber,
+      uniqueId: device.uniqueId,
       number: endpointNumber(1),
       id: 'main',
       deviceTypes: [...new Set(clusters.flatMap((cluster) => cluster.deviceTypes))],
