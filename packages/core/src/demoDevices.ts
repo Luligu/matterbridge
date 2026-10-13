@@ -1070,8 +1070,8 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   // Chapter 16 - Camera Device Types
   //
-  // FloodlightCamera and VideoDoorbell are composed devices: their mandatory child endpoints are created by the
-  // device class, which takes their endpoint numbers from cameraOptions/lightOptions and cameraOptions/doorbellOptions.
+  // FloodlightCamera, VideoDoorbell and Intercom are composed devices: their mandatory child endpoints are created by the
+  // device class, which takes their endpoint numbers from cameraOptions/lightOptions, cameraOptions/doorbellOptions and switchOptions.
   // CameraController hosts the required WebRtcTransportRequestor server cluster and the required
   // WebRtcTransportProvider client cluster.
   //
@@ -1130,6 +1130,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'Intercom',
     number: EndpointNumber(16_04),
     identifyType: Identify.IdentifyType.VisibleIndicator,
+    switchOptions: { number: EndpointNumber(16_04_2) },
     // Audio-only device type: no video transceiver is offered, and the audio track carries the synthetic test tone.
     weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
   });
@@ -1139,6 +1140,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'IntercomII',
     number: EndpointNumber(16_04_1),
     identifyType: Identify.IdentifyType.VisibleIndicator,
+    switchOptions: { number: EndpointNumber(16_04_1_2) },
     weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
   });
   await registerDevice(ep, 'Intercom II', 'CAMERA-16-04-1');
