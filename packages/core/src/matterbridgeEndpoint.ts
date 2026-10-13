@@ -2366,22 +2366,41 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @param {PowerSource.BatChargeLevel} [batChargeLevel] - The battery charge level (default: PowerSource.BatChargeLevel.Ok).
    * @param {number | null} [batVoltage] - The battery voltage in mV (default: 1500).
    * @param {PowerSource.BatReplaceability} [batReplaceability] - The replaceability of the battery (default: PowerSource.BatReplaceability.Unspecified).
+   * @param {number} [batCapacity] - The battery capacity in mAh. Omitted when not provided.
+   * @param {number | null} [batTimeToFullCharge] - The estimated time in seconds to fully charge the battery. Omitted when not provided.
+   * @param {number | null} [batChargingCurrent] - The battery charging current in mA. Omitted when not provided.
+   * @param {PowerSource.BatChargeFault[]} [activeBatChargeFaults] - The active battery charge faults. Omitted when not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
    * - order: The order of the power source is a persisted attribute that indicates the order in which the power sources are used.
    * - description: The description of the power source is a fixed attribute that describes the power source type.
    * - batReplaceability: The replaceability of the battery is a fixed attribute that indicates whether the battery is user-replaceable or not.
+   * - batCapacity, batTimeToFullCharge, batChargingCurrent and activeBatChargeFaults are optional in the Power Source cluster, but some device types
+   *   make them mandatory (e.g. the 2nd Power Source of a Battery Storage, Matter 1.6.1 Device Library § 14.4.6.2).
    */
   createDefaultPowerSourceRechargeableBatteryClusterServer(
     batPercentRemaining: number | null = 100,
     batChargeLevel: PowerSource.BatChargeLevel = PowerSource.BatChargeLevel.Ok,
     batVoltage: number | null = 1500,
     batReplaceability: PowerSource.BatReplaceability = PowerSource.BatReplaceability.Unspecified,
+    batCapacity?: number,
+    batTimeToFullCharge?: number | null,
+    batChargingCurrent?: number | null,
+    activeBatChargeFaults?: PowerSource.BatChargeFault[],
   ): this {
     this.behaviors.require(
       MatterbridgePowerSourceServer.with(PowerSource.Feature.Battery, PowerSource.Feature.Rechargeable),
-      getDefaultPowerSourceRechargeableBatteryClusterServer(batPercentRemaining, batChargeLevel, batVoltage, batReplaceability),
+      getDefaultPowerSourceRechargeableBatteryClusterServer(
+        batPercentRemaining,
+        batChargeLevel,
+        batVoltage,
+        batReplaceability,
+        batCapacity,
+        batTimeToFullCharge,
+        batChargingCurrent,
+        activeBatChargeFaults,
+      ),
     );
     return this;
   }

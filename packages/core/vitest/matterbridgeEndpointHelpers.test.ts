@@ -20,6 +20,7 @@ import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { type ClusterId, VendorId } from '@matter/types/datatype';
@@ -162,6 +163,23 @@ describe('Options helpers', () => {
     expect(getDefaultPowerSourceBatteryClusterServer(null).batPercentRemaining).toBe(null);
     expect(getDefaultPowerSourceReplaceableBatteryClusterServer(null).batPercentRemaining).toBe(null);
     expect(getDefaultPowerSourceRechargeableBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    // The optional rechargeable battery attributes are omitted unless provided
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batCapacity');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batTimeToFullCharge');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batChargingCurrent');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('activeBatChargeFaults');
+    expect(
+      getDefaultPowerSourceRechargeableBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, 3600, 1500, [
+        PowerSource.BatChargeFault.AmbientTooHot,
+      ]),
+    ).toMatchObject({ batCapacity: 200_000, batTimeToFullCharge: 3600, batChargingCurrent: 1500, activeBatChargeFaults: [PowerSource.BatChargeFault.AmbientTooHot] });
+    expect(
+      getDefaultPowerSourceRechargeableBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, null, null, []),
+    ).toMatchObject({
+      batTimeToFullCharge: null,
+      batChargingCurrent: null,
+      activeBatChargeFaults: [],
+    });
     expect(getDefaultElectricalEnergyMeasurementClusterServer()).toBeDefined();
     expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).toMatchObject({
       cumulativeEnergyImported: { energy: 1000 },

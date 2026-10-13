@@ -55,6 +55,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: The cli broadcasts a single `system_update` WebSocket message (uptime, memory, memory limit and cpu) on each tracker snapshot.
 - [test-utils]: Add `getSharedMatterbridge()`, a mocked `SharedMatterbridge` for vitest, jest and bun.
 - [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
+- [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 
 ### Changed
 
@@ -101,6 +102,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Don't answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught `ERR_HTTP_HEADERS_SENT` (oven-sh/bun#44925).
 - [test-utils]: `addDevice()` and `deleteDevice()` passed `pause` as the `ticks` argument of `flushAllEndpointNumberPersistence()`, adding ~60ms to every call.
 - [core]: `setWindowCoveringCurrentTargetStatus()` threw a conformance error on a tilt only window covering: it now sets the tilt positions when the server has no Lift feature.
+- [BatteryStorage]: Set the mandatory `BatCapacity`, `BatTimeToFullCharge`, `BatChargingCurrent` and `ActiveBatChargeFaults` on the battery Power Source (Matter 1.6.1 Device Library § 14.4.6.2), with the new `batCapacity` option.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
