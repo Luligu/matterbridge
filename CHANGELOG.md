@@ -61,6 +61,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [test-utils]: Set strict endpoint validation in all Matter test environment helpers.
+- [core]: Set warn endpoint validation in the Matterbridge and MatterNode environments.
 - [core]: Include required Binding and Descriptor clusters in device type definitions.
 - [core]: Update device type revisions to Matter 1.6.1.
 - [core]: Adapt commodity metering and tariff fields to the matter.js 0.18 `Ids` names.
