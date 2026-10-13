@@ -1479,7 +1479,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
         return;
       }
       const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
-      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)));
       if (!idleMode) {
         matterbridge.log.warn(`Ignoring RVC Reset CHIP test app pipe command because endpoint ${endpointId} has no Idle run mode`);
         return;
@@ -1533,7 +1533,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
     case 'Charged':
     case 'Docked': {
       const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
-      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)));
       if (idleMode) await endpoint.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: idleMode.mode });
       await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Docked });
       matterbridge.log.info(`CHIP test app pipe set RVC OperationalState to Docked on endpoint ${endpointId}`);

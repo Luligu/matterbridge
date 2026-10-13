@@ -358,7 +358,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
       context: this.context,
     });
     // Matter 1.6.0 § 1.14.6.2: Respond with ErrorStateID NoError and take no further action if Stop is received while already Stopped.
-    if (this.state.operationalState === OperationalState.OperationalStateEnum.Stopped) {
+    if (this.state.operationalState === (OperationalState.OperationalStateEnum.Stopped as number)) {
       device.log.debug(
         `MatterbridgeOvenCavityOperationalStateServer: stop received while already Stopped, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
@@ -398,7 +398,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
       context: this.context,
     });
     // Matter 1.6.0 § 1.14.6.3: Respond with ErrorStateID NoError and take no further action if Start is received while already Running.
-    if (this.state.operationalState === OperationalState.OperationalStateEnum.Running) {
+    if (this.state.operationalState === (OperationalState.OperationalStateEnum.Running as number)) {
       device.log.debug(
         `MatterbridgeOvenCavityOperationalStateServer: start received while already Running, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
