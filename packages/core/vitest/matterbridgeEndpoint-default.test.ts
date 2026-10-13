@@ -2634,6 +2634,19 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createDefaultPowerSourceRechargeableBatteryClusterServer forwards the optional rechargeable battery attributes', () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'RechargeableBatteryAttributes' });
+    device.createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, null, null, []);
+    expect(device.getClusterServerOptions(PowerSource.id)).toMatchObject({
+      batPercentRemaining: 160,
+      batVoltage: 24_000,
+      batCapacity: 200_000,
+      batTimeToFullCharge: null,
+      batChargingCurrent: null,
+      activeBatChargeFaults: [],
+    });
+  });
+
   test('createDefaultDeviceEnergyManagementClusterServer', async () => {
     const device = new MatterbridgeEndpoint([powerSource], { id: 'DeviceEnergyManagement' });
     expect(device).toBeDefined();
