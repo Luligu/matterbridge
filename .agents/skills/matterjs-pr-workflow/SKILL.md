@@ -1,6 +1,6 @@
 ---
 name: matterjs-pr-workflow
-description: Sync the matter.js fork, implement and test a fix or a new feature/enhancement, format, lint, commit, push, and open a PR against matter-js/matter.js. v.1.0.0
+description: Sync the matter.js fork, implement and test a fix or a new feature/enhancement, format, lint, commit, push, and open a PR against matter-js/matter.js. v.1.0.1
 ---
 
 # Open a PR against matter.js from the local fork
@@ -28,9 +28,14 @@ If the fast-forward fails, stop and reconcile with the user rather than force-pu
 ## 2. Rebuild
 
 ```bash
-cd ../matter.js && npm install   # triggers the `prepare` script (build-clean) if deps changed
-npm run build                    # full monorepo build (nacho-build); should report all packages "Up to date"
+cd ../matter.js && npm install   # triggers the `prepare` script (build-clean) only if deps changed
+npm run build-clean              # nacho-build --clean: clean, type check and transpile the whole monorepo
 ```
+
+Always use `build-clean` after a sync. When the pulled commits change only sources, `npm install` does not run
+`prepare`, and a plain `npm run build` reports `matter.js-monorepo ✓ Up to date (.0s)` without rebuilding anything,
+leaving the packages' `dist` stale. A successful `build-clean` shows the Clean, Type check and Transpile steps; check
+that a pulled source file's `dist/esm/...js` is newer than its `src/...ts`.
 
 ## 3. Create the branch
 
@@ -137,7 +142,8 @@ shouldn't, but verify anyway).
 cd ../matter.js && npm run build
 ```
 
-Should report all packages "Up to date" with no type-check errors.
+Should report all packages "Up to date" with no type-check errors. This incremental build is fine here because
+your own edits are what changed; after a sync, use `npm run build-clean` as in step 2.
 
 ## 10. Commit
 
