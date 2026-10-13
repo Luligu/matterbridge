@@ -143,12 +143,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private webSocketServer: WebSocketServer | undefined;
   private readonly server: BroadcastServer;
   private serverFetchTimeout = 2000;
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
-  private readonly verbose = hasParameter('verbose');
-  private readonly diagnostic = hasParameter('diagnostic');
+  private readonly debug = hasAnyParameter('debug', 'debug-frontend', 'verbose', 'verbose-frontend');
+  private readonly verbose = hasAnyParameter('verbose', 'verbose-frontend');
+  private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-frontend');
 
   // Frontend settings
-  public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
+  public readonly readOnly = hasParameter('readonly');
   /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
   public restartRequired = false;
   /** It indicates whether a fixed restart is required. It cannot be unset once set. */
@@ -778,7 +778,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
-      res.json(this.getApiDevices());
+      res.json(this.getApiDevices(undefined, true));
     });
 
     // Endpoint to view the matterbridge log
@@ -1369,9 +1369,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
+   * @param {boolean} extended - Whether to include extended device information.
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
-  getApiDevices(pluginName?: string): ApiDevice[] {
+  getApiDevices(pluginName?: string, extended: boolean = false): ApiDevice[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const devices: ApiDevice[] = [];
     for (const device of this.matterbridge.devices.array()) {
@@ -1389,11 +1390,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         productUrl: device.productUrl,
         configUrl: device.configUrl,
         uniqueId: device.uniqueId,
-        reachable: getReachability(device),
-        powerSource: getPowerSource(device),
-        batteryLevel: getBatteryLevel(device),
-        matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
-        cluster: getClusterTextFromDevice(device),
+        reachable: extended ? getReachability(device) : true,
+        powerSource: extended ? getPowerSource(device) : undefined,
+        batteryLevel: extended ? getBatteryLevel(device) : undefined,
+        matter: extended && device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
+        cluster: extended ? getClusterTextFromDevice(device) : '',
       });
     }
     return devices;
@@ -1872,18 +1873,26 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/settings') {
         const start = performance.now();
         const settings = this.getApiSettings();
+        // const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: undefined });
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
       } else if (data.method === '/api/plugins') {
         const start = performance.now();
         const plugins = this.getApiPlugins();
+        // const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: 'frontend', dst: 'plugins', params: undefined });
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
+        // const response = await this.server.fetch({
+        //   type: 'devices_apidevicearray',
+        //   src: 'frontend',
+        //   dst: 'devices',
+        //   params: { pluginName: data.params.pluginName, extended: data.params.extended },
+        // });
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
@@ -1899,7 +1908,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const start = performance.now();
         const clusters = this.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic)
+          writeDiagnostic(
+            `Frontend:${data.sender}`,
+            `getApiCluster(${data.params.plugin}, ${data.params.endpoint}, ${data.params.serialNumber}, ${data.params.uniqueId}) took ${(performance.now() - start).toFixed(2)} ms`,
+          );
         if (clusters) {
           sendResponse({
             id: data.id,

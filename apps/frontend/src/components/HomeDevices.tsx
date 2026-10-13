@@ -381,7 +381,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
           setMixedDevices([]); // Full reload: start from a clean slate so a plugin that's no longer running doesn't leave stale rows behind.
           // Request all the devices
-          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
+          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: true } });
           if (debug || localDebug) console.log(`HomeDevices sent /api/devices`);
           // Request the selected devices for each plugin
           for (const plugin of msg.response) {

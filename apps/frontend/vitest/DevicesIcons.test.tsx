@@ -92,7 +92,7 @@ describe('DevicesIcons', () => {
     expectText('Battery');
     expect(screen.getAllByText('---').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('Controller On')).toBeNull();
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/clusters' }));
   });
 
@@ -228,7 +228,7 @@ describe('DevicesIcons', () => {
     });
 
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
     expect(screen.queryByText('Empty')).toBeNull();
   });
 

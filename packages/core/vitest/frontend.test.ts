@@ -135,6 +135,29 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
   }, 60000);
 
+  test.each([
+    { flag: '', debug: false, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--debug', debug: true, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--debug-frontend', debug: true, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--verbose', debug: true, verbose: true, diagnostic: false, readOnly: false },
+    { flag: '--verbose-frontend', debug: true, verbose: true, diagnostic: false, readOnly: false },
+    { flag: '--diagnostic', debug: false, verbose: false, diagnostic: true, readOnly: false },
+    { flag: '--diagnostic-frontend', debug: false, verbose: false, diagnostic: true, readOnly: false },
+    { flag: '--readonly', debug: false, verbose: false, diagnostic: false, readOnly: true },
+    { flag: '--shelly', debug: false, verbose: false, diagnostic: false, readOnly: false },
+  ])('should configure frontend flags for $flag', ({ flag, ...expected }) => {
+    const savedArgv = process.argv;
+    let instance: FrontendType | undefined;
+    try {
+      process.argv = [...originalProcessArgv.slice(0, 2), ...(flag ? [flag] : [])];
+      instance = new Frontend(matterbridge);
+      expect(instance).toMatchObject(expected);
+    } finally {
+      instance?.destroy();
+      process.argv = savedArgv;
+    }
+  });
+
   test('broadcast handler', async () => {
     startSpy.mockImplementationOnce(async () => Promise.resolve());
     stopSpy.mockImplementationOnce(async () => Promise.resolve());

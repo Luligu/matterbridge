@@ -533,11 +533,12 @@ export class Backend extends EventEmitter<BackendEvents> {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
+   * @param {boolean} [extended] - Whether to include extended information.
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
-  async getApiDevices(pluginName?: string): Promise<ApiDevice[]> {
+  async getApiDevices(pluginName?: string, extended: boolean = false): Promise<ApiDevice[]> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'devices_apidevicearray', src: 'frontend', dst: 'devices', params: { pluginName } });
+    const response = await this.server.fetch({ type: 'devices_apidevicearray', src: 'frontend', dst: 'devices', params: { pluginName, extended } });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.devices;
   }

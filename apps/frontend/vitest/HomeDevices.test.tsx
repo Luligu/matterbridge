@@ -298,11 +298,12 @@ describe('HomeDevices', () => {
   });
 
   it('shows the loading footer message until the plugins finish loading, then the registered devices count', () => {
-    const { sendWebSocketMessage } = renderComponent();
+    const { sendMessage, sendWebSocketMessage } = renderComponent();
 
     expect(screen.getByTestId('footer-left')).toHaveTextContent('Loading plugins...');
 
     sendWebSocketMessage({ id: 7, method: '/api/plugins', response: plugins });
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
     sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ plugin: 'matterbridge-test', deviceName: 'Test Device', serialNumber: 'test1' }] });
 
     expect(screen.getByTestId('footer-left')).toHaveTextContent('Registered devices: 1/1');

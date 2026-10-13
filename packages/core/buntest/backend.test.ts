@@ -275,9 +275,11 @@ describe('Backend', () => {
         pluginsServer.respond({ ...msg, result: { plugins: [{ name: 'plugin1' }] as any } });
       }
     });
+    const deviceParamsSpy = vi.fn();
     const devicesServer = new BroadcastServer('devices', log);
     devicesServer.on('broadcast_message', (msg: WorkerMessage) => {
       if (devicesServer.isWorkerRequestOfType(msg, 'devices_apidevicearray')) {
+        deviceParamsSpy(msg.params);
         devicesServer.respond({ ...msg, result: { devices: msg.params.pluginName === 'plugin1' ? [{ plugin: 'plugin1' } as any] : [] } });
       }
     });
@@ -286,7 +288,13 @@ describe('Backend', () => {
     expect(await backend.getApiSettings()).toMatchObject({ test: 'settings' });
     expect(await backend.getApiPlugins()).toMatchObject([{ name: 'plugin1' }]);
     expect(await backend.getApiDevices('plugin1')).toMatchObject([{ plugin: 'plugin1' }]);
+    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1', extended: false });
+    for (const extended of [false, true]) {
+      expect(await backend.getApiDevices('plugin1', extended)).toMatchObject([{ plugin: 'plugin1' }]);
+      expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1', extended });
+    }
     expect(await backend.getApiDevices()).toEqual([]);
+    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: undefined, extended: false });
     expect(backend.getApiCluster('plugin1', 1)).resolves.toBeUndefined();
     expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).resolves.toBeUndefined();
     expect(backend.generateDiagnostic()).resolves.toBeUndefined();

@@ -148,7 +148,7 @@ export type WorkerMessageTypes = {
 
   // Platform methods: only the platform matching params.plugin responds.
   platform_get_apidevices: {
-    request: { params: { plugin: string } };
+    request: { params: { plugin: string; extended: boolean } };
     response: { result: { devices: ApiDevice[] } };
   };
   platform_get_apiselectdevices: {
@@ -497,7 +497,7 @@ export type WorkerMessageTypes = {
     response: { result: { devices: BaseDevice[] } };
   };
   devices_apidevicearray: {
-    request: { params: { pluginName?: string } };
+    request: { params: { pluginName?: string; extended?: boolean } };
     response: { result: { devices: ApiDevice[] } };
   };
 };

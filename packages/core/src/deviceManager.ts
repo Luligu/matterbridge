@@ -123,7 +123,7 @@ export class DeviceManager {
           this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
           break;
         case 'devices_apidevicearray':
-          this.server.respond({ ...msg, result: { devices: this.apiDeviceArray(msg.params.pluginName) } });
+          this.server.respond({ ...msg, result: { devices: this.apiDeviceArray(msg.params.pluginName, msg.params.extended) } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
@@ -249,14 +249,15 @@ export class DeviceManager {
    * Devices that are not ready or miss the required properties are skipped.
    *
    * @param {string} [pluginName] - Optional plugin name to filter devices.
+   * @param {boolean} [extended] - Whether to include extended information.
    * @returns {ApiDevice[]} An array of ApiDevice.
    */
-  apiDeviceArray(pluginName?: string): ApiDevice[] {
+  apiDeviceArray(pluginName?: string, extended?: boolean): ApiDevice[] {
     const devices: ApiDevice[] = [];
     for (const device of this._devices.values()) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
-      const apiDevice = toApiDevice(device);
+      const apiDevice = toApiDevice(device, extended);
       if (apiDevice) devices.push(apiDevice);
     }
     return devices;

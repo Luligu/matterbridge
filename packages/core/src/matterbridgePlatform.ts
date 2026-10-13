@@ -283,7 +283,7 @@ export class MatterbridgePlatform {
           ...msg,
           result: {
             devices: this.getDevices()
-              .map(toApiDevice)
+              .map((device) => toApiDevice(device, msg.params.extended))
               .filter((device) => device !== undefined),
           },
         });

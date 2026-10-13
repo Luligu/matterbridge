@@ -103,9 +103,10 @@ export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDev
  * Converts a ready endpoint with the required metadata to the frontend API device format.
  *
  * @param {MatterbridgeEndpoint} device The endpoint to convert.
+ * @param {boolean} [extended] Whether to include extended information.
  * @returns {ApiDevice | undefined} The API device, or undefined when the endpoint is not ready or lacks required metadata.
  */
-export function toApiDevice(device: MatterbridgeEndpoint): ApiDevice | undefined {
+export function toApiDevice(device: MatterbridgeEndpoint, extended: boolean = false): ApiDevice | undefined {
   if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) return undefined;
   return {
     plugin: device.plugin,
@@ -117,11 +118,11 @@ export function toApiDevice(device: MatterbridgeEndpoint): ApiDevice | undefined
     productUrl: device.productUrl,
     configUrl: device.configUrl,
     uniqueId: device.uniqueId,
-    reachable: getReachability(device),
-    powerSource: getPowerSource(device),
-    batteryLevel: getBatteryLevel(device),
-    matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
-    cluster: getClusterTextFromDevice(device),
+    reachable: extended ? getReachability(device) : true,
+    powerSource: extended ? getPowerSource(device) : undefined,
+    batteryLevel: extended ? getBatteryLevel(device) : undefined,
+    matter: extended && device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
+    cluster: extended ? getClusterTextFromDevice(device) : '',
   };
 }
 

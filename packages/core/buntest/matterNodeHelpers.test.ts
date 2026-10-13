@@ -187,7 +187,7 @@ describe('matterNodeHelpers', () => {
       configUrl: 'https://config',
     };
 
-    test('should convert a ready endpoint to the complete API device shape', () => {
+    test('should convert a ready endpoint to the basic API device shape by default', () => {
       expect(toApiDevice(Object.assign(fake(), metadata))).toEqual({
         plugin: 'plugin',
         type: 'OnOffLight (0x0100)',
@@ -198,12 +198,30 @@ describe('matterNodeHelpers', () => {
         productUrl: 'https://product',
         configUrl: 'https://config',
         uniqueId: 'unique',
-        reachable: false,
+        reachable: true,
         powerSource: undefined,
         batteryLevel: undefined,
         matter: undefined,
         cluster: '',
       });
+    });
+
+    test('should include live attributes and cluster text only when extended is true', () => {
+      const device = Object.assign(
+        fake({
+          servers: [PowerSource.id],
+          attributes: { [PowerSource.id]: { featureMap: { battery: true }, batChargeLevel: PowerSource.BatChargeLevel.Warning, batPercentRemaining: 150 } },
+          list: [at(OnOff, 'onOff', true)],
+        }),
+        metadata,
+      );
+      const getAttributeSpy = vi.spyOn(device, 'getAttribute');
+      const forEachAttributeSpy = vi.spyOn(device, 'forEachAttribute');
+      expect(toApiDevice(device, false)).toEqual(toApiDevice(device));
+      expect(getAttributeSpy).not.toHaveBeenCalled();
+      expect(forEachAttributeSpy).not.toHaveBeenCalled();
+      expect(toApiDevice(device, true)).toMatchObject({ reachable: false, powerSource: 'warning', batteryLevel: 75, cluster: getClusterTextFromDevice(device) });
+      expect(toApiDevice(device, true)?.cluster).not.toBe('');
     });
 
     test('should skip endpoints that are not ready or lack required metadata', () => {
@@ -215,7 +233,7 @@ describe('matterNodeHelpers', () => {
 
     test('should omit Matter data when a server endpoint has no server node', () => {
       const device = Object.assign(fake(), metadata, { mode: 'server', serverNode: undefined });
-      expect(toApiDevice(device)?.matter).toBeUndefined();
+      expect(toApiDevice(device, true)?.matter).toBeUndefined();
     });
   });
 
@@ -646,7 +664,8 @@ describe('matterNodeHelpers', () => {
         uniqueId: 'unique',
         serverNode,
       });
-      const apiDevice = toApiDevice(device);
+      expect(toApiDevice(device)?.matter).toBeUndefined();
+      const apiDevice = toApiDevice(device, true);
       expect(apiDevice?.matter).toEqual(data);
       expect(() => JSON.stringify(apiDevice)).not.toThrow();
     });

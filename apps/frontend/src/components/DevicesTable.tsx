@@ -204,7 +204,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       if (debug || localDebug) console.log('DevicesTable received WebSocket Message:', msg);
       if (msg.method === 'refresh_required' && msg.response.changed === 'devices') {
         if (debug || localDebug) console.log(`DevicesTable received refresh_required: changed=${msg.response.changed} and sending /api/devices request`);
-        sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: true } });
       } else if (msg.method === 'state_update' && msg.response) {
         updateDevices(msg);
       } else if (msg.method === '/api/devices') {
@@ -241,7 +241,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       if (debug || localDebug) console.log('DevicesTable sending api requests with id ', uniqueId.current);
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: true } });
     }
   }, [online, sendMessage]);
 

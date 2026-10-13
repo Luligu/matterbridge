@@ -152,7 +152,7 @@ describe('Matterbridge platform', () => {
     expect(() => assertMatterbridgePlatform(platform)).not.toThrow();
     expect(() => assertMatterbridgePlatform({})).toThrow();
     const [devices, selectDevices, selectEntities] = await Promise.all([
-      matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name } }),
+      matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name, extended: false } }),
       matterbridgeServer.fetch({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name } }),
       matterbridgeServer.fetch({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name } }),
     ]);
@@ -167,10 +167,10 @@ describe('Matterbridge platform', () => {
 
     try {
       matterbridgeServer.request({ type: 'test_simple', src: 'matterbridge', dst: 'platform' });
-      matterbridgeServer.request({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: 'missing-plugin' } });
+      matterbridgeServer.request({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: 'missing-plugin', extended: false } });
       matterbridgeServer.request({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { plugin: 'missing-plugin' } });
       matterbridgeServer.request({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { plugin: 'missing-plugin' } });
-      const current = await matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name } });
+      const current = await matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name, extended: false } });
       expect(current.result.devices).toEqual([]);
       expect(responseSpy).toHaveBeenCalledTimes(1);
       expect(responseSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'platform_get_apidevices' }));
@@ -963,17 +963,32 @@ describe('Matterbridge platform', () => {
     expect(platform.getDevices()[0]).toBe(device);
     const apiDevices = platform
       .getDevices()
-      .map(toApiDevice)
+      .map((endpoint) => toApiDevice(endpoint))
       .filter((endpoint) => endpoint !== undefined);
     expect(apiDevices).toMatchObject([{ plugin: platform.name, id: device.id, number: 155, deviceName: 'test', serialNumber: 'serial01234', uniqueId: 'uniqueId0123' }]);
-    const response = await matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name } });
+    const response = await matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name, extended: false } });
     expect(response.result.devices).toEqual(apiDevices);
+
+    for (const extended of [false, true]) {
+      const extendedResponse = await matterbridgeServer.fetch({
+        type: 'platform_get_apidevices',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { plugin: platform.name, extended },
+      });
+      expect(extendedResponse.result.devices).toEqual([toApiDevice(device, extended)].filter((endpoint) => endpoint !== undefined));
+    }
 
     const uniqueId = device.uniqueId;
     device.uniqueId = undefined;
     try {
       expect(platform.getDevices()).toHaveLength(1);
-      const incomplete = await matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { plugin: platform.name } });
+      const incomplete = await matterbridgeServer.fetch({
+        type: 'platform_get_apidevices',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { plugin: platform.name, extended: false },
+      });
       expect(incomplete.result.devices).toEqual([]);
     } finally {
       device.uniqueId = uniqueId;

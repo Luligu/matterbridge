@@ -789,7 +789,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
       // if (debug || localDebug) console.log('DevicesIcons received WebSocket Message:', msg);
       if (msg.method === 'refresh_required') {
         if (debug || localDebug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
-        sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
       } else if (msg.method === 'state_update' && msg.response) {
         stateUpdate(msg);
       } else if (msg.method === '/api/devices' && msg.response) {
@@ -827,7 +827,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     if (debug || localDebug) console.log('DevicesIcons useEffect online mounting');
     if (online) {
       if (debug || localDebug) console.log('DevicesIcons useEffect online sending api requests');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
     }
     if (debug || localDebug) console.log('DevicesIcons useEffect online mounted');
 

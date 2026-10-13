@@ -319,9 +319,13 @@ describe('BackendWsServer', () => {
     expect(mockedBackend.getApiPlugins).toHaveBeenCalled();
 
     expect(await request('/api/devices')).toMatchObject({ success: true, response: [{ name: 'Device' }] });
-    expect((mockedBackend.getApiDevices as unknown as Mock<(...args: any[]) => any>).mock.lastCall).toEqual([undefined]);
+    expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual([undefined, undefined]);
     expect(await request('/api/devices', { pluginName: 'matterbridge-test' })).toMatchObject({ success: true });
-    expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test');
+    expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual(['matterbridge-test', undefined]);
+    for (const extended of [false, true]) {
+      expect(await request('/api/devices', { pluginName: 'matterbridge-test', extended })).toMatchObject({ success: true });
+      expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', extended);
+    }
 
     expect(await request('/api/clusters', { plugin: 'short', endpoint: 1 })).toMatchObject({ error: 'Wrong parameter plugin in /api/clusters' });
     expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 0 })).toMatchObject({ error: 'Wrong parameter endpoint in /api/clusters' });

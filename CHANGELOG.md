@@ -60,6 +60,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [core]: Honor the `extended` flag in local frontend, backend and platform device API requests.
+- [frontend]: Request extended device data in HomeDevices and DevicesTable.
 - [test-utils]: Set strict endpoint validation in all Matter test environment helpers.
 - [core]: Set warn endpoint validation in the Matterbridge and MatterNode environments.
 - [core]: Fetch platform and shared Matterbridge data after MatterNode construction.

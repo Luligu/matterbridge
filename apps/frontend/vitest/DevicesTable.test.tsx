@@ -44,7 +44,7 @@ describe('DevicesTable', () => {
 
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/settings' }));
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/plugins' }));
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
 
     socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [firstDevice, secondDevice] });
     expect(await screen.findByText('Kitchen Light')).toBeInTheDocument();
@@ -145,7 +145,7 @@ describe('DevicesTable', () => {
 
     socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'devices' } });
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
   });
 
   it('should ignore state updates for devices outside the filtered list', async () => {
