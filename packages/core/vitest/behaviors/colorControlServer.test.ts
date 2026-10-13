@@ -480,7 +480,7 @@ describe('MatterbridgeColorControlServer', () => {
     });
 
     it('does not apply without the ColorTemperature feature', async () => {
-      const device = new MatterbridgeEndpoint([colorTemperatureLight, bridge], { id: 'suCtNoFeature' });
+      const device = new MatterbridgeEndpoint([onOffLight, bridge], { id: 'suCtNoFeature' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suCtNoFeature', 'SN-suCtNoFeature');
       device.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation), {
         colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,

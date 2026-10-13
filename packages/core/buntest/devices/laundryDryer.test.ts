@@ -309,11 +309,12 @@ describe('Matterbridge ' + NAME, () => {
 
   test('validate SelectedDrynessLevel writes against SupportedDrynessLevels', async () => {
     const endpoint = new MatterbridgeEndpoint(laundryDryer, { id: 'LaundryDryerControlsSubset' });
+    endpoint.createDefaultOperationalStateClusterServer();
     endpoint.behaviors.require(MatterbridgeLaundryDryerControlsServer, {
       supportedDrynessLevels: [LaundryDryerControls.DrynessLevel.Normal, LaundryDryerControls.DrynessLevel.Max],
       selectedDrynessLevel: LaundryDryerControls.DrynessLevel.Normal,
     });
-    expect(await addDevice(server, endpoint, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addDevice(aggregator, endpoint, 0, 0, 0, 0)).toBeTruthy();
     await endpoint.setAttribute(LaundryDryerControls.id, 'selectedDrynessLevel', LaundryDryerControls.DrynessLevel.Max);
     expect(endpoint.setAttribute(LaundryDryerControls.id, 'selectedDrynessLevel', LaundryDryerControls.DrynessLevel.Low)).rejects.toMatchObject({
       code: Status.ConstraintError,

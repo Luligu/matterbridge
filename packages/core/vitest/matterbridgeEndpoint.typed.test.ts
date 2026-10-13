@@ -535,6 +535,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorInvokeTypeCheck', number: EndpointNumber(907) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
+    device.addRequiredClusterServers();
     expect(await addDevice(aggregator, device)).toBe(true);
     try {
       const invokeFromBehavior: Promise<void> = device.invokeBehaviorCommand(IdentifyBehavior, 'identify', { identifyTime: 5 });
@@ -590,6 +591,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorSubscribeCommandTypeCheck', number: EndpointNumber(913) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
+    device.addRequiredClusterServers();
     expect(await addDevice(aggregator, device)).toBe(true);
     try {
       const subscribeFromBehavior: MatterbridgeEndpoint = device.subscribeCommand(IdentifyBehavior, 'identify', ({ request }) => {
@@ -696,6 +698,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorPowerSourceTypeCheck', number: EndpointNumber(908) }, true);
     expect(device).toBeDefined();
     device.createDefaultPowerSourceBatteryClusterServer();
+    device.addRequiredClusterServers();
     expect(await addDevice(aggregator, device)).toBe(true);
     try {
       const batteryBehavior = PowerSourceBehavior.with(PowerSource.Feature.Battery);

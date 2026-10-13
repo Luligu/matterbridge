@@ -383,7 +383,7 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Normal', mode: 5, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
       ],
     });
-    expect(await addDevice(server, custom)).toBeTruthy();
+    expect(await addDevice(aggregator, custom)).toBeTruthy();
     expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(1);
     await custom.invokeBehaviorCommand('onOff', 'off', {});
     expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(5);

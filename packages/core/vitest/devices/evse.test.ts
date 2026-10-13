@@ -766,7 +766,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(featureDevice.hasAttributeServer(EnergyEvse.id, 'maximumDischargeCurrent')).toBeTruthy();
 
     // The endpoint must be added (and thus constructed) before its live attribute state can be read.
-    expect(await addDevice(server, featureDevice)).toBeTruthy();
+    expect(await addDevice(aggregator, featureDevice)).toBeTruthy();
 
     expect(featureDevice.getAttribute(EnergyEvse.id, 'stateOfCharge')).toBe(80);
     expect(featureDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBe(40_000_000);
@@ -796,7 +796,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(socOnlyDevice.hasAttributeServer(EnergyEvse.id, 'batteryCapacity')).toBeTruthy();
 
     // The endpoint must be added (and thus constructed) before its live attribute state can be read.
-    expect(await addDevice(server, socOnlyDevice)).toBeTruthy();
+    expect(await addDevice(aggregator, socOnlyDevice)).toBeTruthy();
     expect(socOnlyDevice.getAttribute(EnergyEvse.id, 'batteryCapacity')).toBeNull();
   });
 
@@ -963,7 +963,7 @@ describe('Matterbridge ' + NAME, () => {
       await initialize.call(this);
     });
     try {
-      expect(await addDevice(server, restoredDevice)).toBeTruthy();
+      expect(await addDevice(aggregator, restoredDevice)).toBeTruthy();
 
       expect(restoredDevice.getAttribute(EnergyEvse.id, 'chargingEnabledUntil')).toBe(expiresAt);
       expect(restoredDevice.getAttribute(EnergyEvse.id, 'dischargingEnabledUntil')).toBe(expiresAt);
@@ -1044,7 +1044,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('should emit completed EVSE commands after forwarding and state updates', async () => {
     const observed = new Evse('EVSE Observable', 'EVSE-OBSERVABLE', { v2x: true });
-    await addDevice(server, observed);
+    await addDevice(aggregator, observed);
     const order: string[] = [];
     const commands = ['disable', 'enableCharging', 'enableDischarging', 'startDiagnostics', 'setTargets', 'getTargets', 'clearTargets'] as const;
     for (const command of commands) {

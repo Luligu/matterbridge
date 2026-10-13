@@ -510,7 +510,7 @@ describe('Matterbridge Water Heater', () => {
 
   test('should emit completed water heater commands after awaited plugin forwarding', async () => {
     const observed = new WaterHeater('Observed Heater', 'WH-OBS');
-    await addDevice(server, observed);
+    await addDevice(aggregator, observed);
     const order: string[] = [];
     const request0 = { boostInfo: { duration: 60 } };
     observed.addCommandHandler('WaterHeaterManagement.boost', async (data) => {

@@ -23,7 +23,7 @@ import {
 } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, extendedColorLight, lightSensor, occupancySensor, powerSource, speaker } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -191,7 +191,8 @@ describe('MatterbridgeLevelControlServer', () => {
     });
 
     it('does not apply without the Lighting feature', async () => {
-      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suLevelNoLighting' });
+      // Speaker requires OnOff without the Lighting feature (Matter 1.6.1)
+      const device = new MatterbridgeEndpoint([speaker, bridge], { id: 'suLevelNoLighting' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suLevelNoLighting', 'SN-suLevelNoLighting');
       device.createOnOffClusterServer(false);
       device.createLevelControlClusterServer(100);

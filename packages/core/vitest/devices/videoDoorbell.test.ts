@@ -396,15 +396,21 @@ describe('VideoDoorbell', () => {
   });
 
   it('should add an additional doorbell with an explicit endpoint number', async () => {
-    const device = new VideoDoorbell('Video Doorbell Doorbell Number', 'VIDEO-DOORBELL-DOORBELL-NUMBER');
-    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_3) });
+    // Sibling doorbells share a device type, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const device = new VideoDoorbell('Video Doorbell Doorbell Number', 'VIDEO-DOORBELL-DOORBELL-NUMBER', {
+      doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+    });
+    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_3), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(doorbellChild.number).toBe(EndpointNumber(16_03_3));
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should add additional doorbells with tags and trigger a switch event', async () => {
-    const device = new VideoDoorbell('Video Doorbell Multi Doorbell', 'VIDEO-DOORBELL-MULTI-DOORBELL');
+    // Sibling doorbells share a device type, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const device = new VideoDoorbell('Video Doorbell Multi Doorbell', 'VIDEO-DOORBELL-MULTI-DOORBELL', {
+      doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+    });
     const left = device.addDoorbell('Left Doorbell', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }] });
     const right = device.addDoorbell('Right Doorbell', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftDoorbell');

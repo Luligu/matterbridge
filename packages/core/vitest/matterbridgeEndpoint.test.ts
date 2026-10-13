@@ -107,6 +107,7 @@ import {
   contactSensor,
   dishwasher,
   extractorHood,
+  fan,
   flowSensor,
   humiditySensor,
   laundryWasher,
@@ -1130,7 +1131,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('subscribeCommand with the OffOnly OnOff cluster', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightOffOnlySubscribeCommand', number: EndpointNumber(301) });
+    // The On/Off Light device type requires the Lighting feature, so test the OffOnly OnOff cluster on a Fan, where On/Off has no feature constraint (Matter 1.6.1)
+    const device = new MatterbridgeEndpoint(fan, { id: 'OnOffLightOffOnlySubscribeCommand', number: EndpointNumber(301) });
     expect(device).toBeDefined();
     device.createOffOnlyOnOffClusterServer();
 
@@ -1372,7 +1374,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(37);
+    expect(count).toBe(56);
   });
 
   test('forEachAttribute DishWasher', async () => {
@@ -1394,13 +1396,14 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(20);
+    expect(count).toBe(39);
   });
 
   test('forEachAttribute LaundryWasher', async () => {
     const device = new MatterbridgeEndpoint(laundryWasher, { id: 'EachLaundryWasher' });
     expect(device).toBeDefined();
-    device.createOffOnlyOnOffClusterServer();
+    // The Laundry Washer device type requires the DeadFrontBehavior feature of the On/Off cluster (Matter 1.6.1)
+    device.createDeadFrontOnOffClusterServer();
     device.addRequiredClusterServers();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'operationalState']);
 
@@ -1419,7 +1422,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(26);
+    expect(count).toBe(45);
   });
 
   test('forEachAttribute ExtractorHood', async () => {
@@ -1451,7 +1454,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(41);
+    expect(count).toBe(60);
   });
 
   test('forEachAttribute AirQuality', async () => {
@@ -1492,7 +1495,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(attributeValue).toBeDefined();
       count++;
     });
-    expect(count).toBe(149);
+    expect(count).toBe(168);
 
     loggerLogSpy.mockClear();
     expect(await device.setAttribute(TemperatureMeasurementServer, 'measuredValue', 2500, device.log)).toBeTruthy();
@@ -1531,7 +1534,11 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add contact child to OnOffOutletWithSensors', () => {
-    const childEndpoint = device.addChildDeviceType('contactChild-1', contactSensor, { number: EndpointNumber(35) });
+    // The contact children are siblings with the same device type, so each one gets a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const childEndpoint = device.addChildDeviceType('contactChild-1', contactSensor, {
+      number: EndpointNumber(35),
+      tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.createDefaultIdentifyClusterServer();
     childEndpoint.createDefaultBooleanStateClusterServer(false);
@@ -1568,7 +1575,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add temperature child to OnOffOutletWithSensors', () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('temperatureChild-4', temperatureSensor, [TemperatureMeasurement.id]);
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('temperatureChild-4', temperatureSensor, [TemperatureMeasurement.id], {
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'One' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.createDefaultTemperatureMeasurementClusterServer(2500);
     expect(device.getChildEndpointById('temperatureChild-4')).toBeDefined();
@@ -1577,7 +1586,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add humidity child to OnOffOutletWithSensors', () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('humidityChild-5', [humiditySensor], [RelativeHumidityMeasurement.id]);
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('humidityChild-5', [humiditySensor], [RelativeHumidityMeasurement.id], {
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'One' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.createDefaultRelativeHumidityMeasurementClusterServer(8000);
     expect(device.getChildEndpointById('humidityChild-5')).toBeDefined();
@@ -1586,7 +1597,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add pressure child to OnOffOutletWithSensors', () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('pressureChild-6', pressureSensor, [PressureMeasurement.id]);
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('pressureChild-6', pressureSensor, [PressureMeasurement.id], {
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'One' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.createDefaultPressureMeasurementClusterServer(900);
     expect(device.getChildEndpointById('pressureChild-6')).toBeDefined();
@@ -1604,7 +1617,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add multiple device types children to OnOffOutletWithSensors', () => {
-    const childEndpoint = device.addChildDeviceType('multiChild-8', [temperatureSensor, humiditySensor, pressureSensor]);
+    // multiChild-8 overlaps the temperature, humidity and pressure children, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const childEndpoint = device.addChildDeviceType('multiChild-8', [temperatureSensor, humiditySensor, pressureSensor], {
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Two' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.addRequiredClusterServers();
     expect(device.getChildEndpointById('multiChild-8')).toBeDefined();
@@ -1613,7 +1629,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add multiple device types children with required to OnOffOutletWithSensors', () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('multiChild-9', [temperatureSensor, humiditySensor, pressureSensor]);
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('multiChild-9', [temperatureSensor, humiditySensor, pressureSensor], [], {
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Three' }],
+    });
     expect(childEndpoint).toBeDefined();
     expect(device.getChildEndpointById('multiChild-9')).toBeDefined();
     expect(device.getChildEndpoints().length).toBe(9);
@@ -1632,7 +1650,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceType to OnOffOutletWithSensors with lifecycle installed', async () => {
-    const childEndpoint = device.addChildDeviceType('contactChild-2', contactSensor, { number: EndpointNumber(36) });
+    const childEndpoint = device.addChildDeviceType('contactChild-2', contactSensor, {
+      number: EndpointNumber(36),
+      tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }],
+    });
     expect(childEndpoint).toBeDefined();
     childEndpoint.addRequiredClusterServers();
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceType: ${CYAN}contactChild-2${db}`));
@@ -1671,7 +1692,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed', async () => {
-    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3', contactSensor, [BooleanState.id], { number: EndpointNumber(37) });
+    const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3', contactSensor, [BooleanState.id], {
+      number: EndpointNumber(37),
+      tagList: [{ mfgCode: null, namespaceId: 8, tag: 2, label: 'Top' }],
+    });
     expect(childEndpoint).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceTypeWithClusterServer: ${CYAN}contactChild-3${db}`));
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`- with lifecycle installed`));
@@ -1684,7 +1708,7 @@ describe('Matterbridge ' + NAME, () => {
   test('addChildDeviceTypeWithClusterServer to OnOffOutletWithSensors with lifecycle installed and taglist', async () => {
     const childEndpoint = device.addChildDeviceTypeWithClusterServer('contactChild-3bis', contactSensor, [BooleanState.id], {
       number: EndpointNumber(47),
-      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }],
+      tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Two' }],
     });
     expect(childEndpoint).toBeDefined();
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`addChildDeviceTypeWithClusterServer: ${CYAN}contactChild-3bis${db}`));

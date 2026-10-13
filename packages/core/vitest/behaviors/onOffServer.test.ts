@@ -23,7 +23,7 @@ import {
 } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, extendedColorLight, lightSensor, occupancySensor, powerSource, speaker } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -170,7 +170,8 @@ describe('MatterbridgeOnOffServer', () => {
     });
 
     it('does not apply without the Lighting feature', async () => {
-      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suOnOffNoLighting' });
+      // Speaker requires OnOff without the Lighting feature (Matter 1.6.1)
+      const device = new MatterbridgeEndpoint([speaker, bridge], { id: 'suOnOffNoLighting' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suOnOffNoLighting', 'SN-suOnOffNoLighting');
       device.createOnOffClusterServer(false);
       device.addRequiredClusterServers();

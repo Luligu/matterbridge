@@ -17,12 +17,14 @@ import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
 import { getClusterNameById } from '@matter/types/cluster';
 import type { Binding } from '@matter/types/clusters/binding';
+import { Descriptor } from '@matter/types/clusters/descriptor';
 import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
+  addDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -96,7 +98,7 @@ describe('Client clusters and behaviors', () => {
       onOff: false,
     });
     device.addRequiredClusterServers();
-    expect(await aggregator.add(device)).toBeDefined();
+    expect(await addDevice(aggregator, device)).toBe(true);
     await device.construction.ready;
     Logger.get('client').notice(`Device clientList: ${device.stateOf(DescriptorServer).clientList.join(', ')}`);
     Logger.get('client').notice('Device behaviors:', device.behaviors);
@@ -197,7 +199,7 @@ describe('Client clusters and behaviors', () => {
       .createDefaultIdentifyClusterServer()
       .createDefaultOnOffClusterServer(false)
       .addRequiredClusterServers();
-    expect(await aggregator.add(sw)).toBeDefined();
+    expect(await addDevice(aggregator, sw)).toBe(true);
     await sw.construction.ready;
     await flushAsync(); // Wait for onSuccess to be processed
     // OccupancySensing must have been appended to the Descriptor clientList
@@ -219,7 +221,7 @@ describe('Client clusters and behaviors', () => {
   test('server-kind binding: occupancy sensor bound to OnOff light', async () => {
     // Create the occupancy sensor (the binding target)
     const sensor = new MatterbridgeEndpoint(occupancySensor, { id: 'OccSensor' }).createDefaultIdentifyClusterServer().addRequiredClusterServers();
-    expect(await aggregator.add(sensor)).toBeDefined();
+    expect(await addDevice(aggregator, sensor)).toBe(true);
     await sensor.construction.ready;
 
     // Create the OnOff light with OccupancySensing advertised as a client cluster
@@ -228,7 +230,7 @@ describe('Client clusters and behaviors', () => {
       .createDefaultIdentifyClusterServer()
       .createDefaultOnOffClusterServer(false)
       .addRequiredClusterServers();
-    expect(await aggregator.add(light)).toBeDefined();
+    expect(await addDevice(aggregator, light)).toBe(true);
     await light.construction.ready;
 
     // Descriptor of the light must advertise OccupancySensing as a client cluster
@@ -289,7 +291,7 @@ describe('Client clusters and behaviors', () => {
   test('add onOffOutlet', async () => {
     const endpoint = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'OnOffOutlet' }).addRequiredClusters().addClusterClients([OccupancySensing.id]);
     expect(endpoint).toBeDefined();
-    expect(await aggregator.add(endpoint)).toBeDefined();
+    expect(await addDevice(aggregator, endpoint)).toBe(true);
     await endpoint.construction.ready;
 
     // Descriptor of the plug must advertise OccupancySensing as a client cluster
@@ -315,8 +317,10 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('add OnOffPlugInUnitDevice', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(BindingServer).withClientClusters(OccupancySensingClient), {
+    // A sibling of the onOffOutlet plug-in unit with the same device type: it needs a TagList (Matter 1.6.1 Core § 9.2.9)
+    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(BindingServer, DescriptorServer.with(Descriptor.Feature.TagList)).withClientClusters(OccupancySensingClient), {
       id: 'OnOffPlugIn',
+      descriptor: { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Two' }] },
       identify: {
         identifyTime: 0,
         identifyType: Identify.IdentifyType.None,

@@ -368,7 +368,10 @@ describe('FloodlightCamera', () => {
   });
 
   it('should add additional lights with tags and a custom initial state', async () => {
-    const device = new FloodlightCamera('Floodlight Camera Multi Light', 'FLOODLIGHT-CAMERA-MULTI-LIGHT');
+    // Sibling lights share a device type, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const device = new FloodlightCamera('Floodlight Camera Multi Light', 'FLOODLIGHT-CAMERA-MULTI-LIGHT', {
+      lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+    });
     const left = device.addLight('Left Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }], onOff: true });
     const right = device.addLight('Right Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftFloodlight');
@@ -405,8 +408,11 @@ describe('FloodlightCamera', () => {
   });
 
   it('should add an additional light with an explicit endpoint number', async () => {
-    const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER');
-    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_3) });
+    // Sibling lights share a device type, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER', {
+      lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+    });
+    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_3), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(light.number).toBe(EndpointNumber(16_02_3));
 
     expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();

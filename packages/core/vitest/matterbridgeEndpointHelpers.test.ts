@@ -40,7 +40,7 @@ import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from '../src/behaviors/doorLockServer.js';
-import { closureController, doorLock, irrigationSystem, temperatureSensor, windowCovering } from '../src/matterbridgeDeviceTypes.js';
+import { closureController, doorLock, irrigationSystem, temperatureSensor, waterValve, windowCovering } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -444,6 +444,7 @@ describe('Options helpers', () => {
 
   test('addClusterClients with empty list is a no-op', async () => {
     device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsEmpty' });
+    device.addRequiredClusterServers();
     device.addClusterClients([]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
     await addDevice(aggregator, device);
@@ -452,6 +453,7 @@ describe('Options helpers', () => {
 
   test('addClusterClients with unknown cluster log message', async () => {
     device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsUnknown' });
+    device.addRequiredClusterServers();
     device.addClusterClients([0xffff as ClusterId]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeTruthy();
     await addDevice(aggregator, device);
@@ -461,6 +463,7 @@ describe('Options helpers', () => {
 
   test('addClusterClients called twice merges clientList without duplicates', async () => {
     device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsMerge' });
+    device.addRequiredClusterServers();
     device.addClusterClients([ClosureControl.id]);
     device.addClusterClients([FlowMeasurement.id, ClosureControl.id]);
     await addDevice(aggregator, device);
@@ -472,6 +475,7 @@ describe('Options helpers', () => {
 
   test('addClusterClients merges into existing options with no clientList', async () => {
     device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsNoList' });
+    device.addRequiredClusterServers();
     device.behaviors.require(MatterbridgeBindingServer, {});
     device.addClusterClients([ClosureControl.id]);
     await addDevice(aggregator, device);
@@ -490,6 +494,8 @@ describe('Options helpers', () => {
 
   test('addOptionalClusterClients requires MatterbridgeBindingServer for device types with optional client clusters', async () => {
     device = new MatterbridgeEndpoint(irrigationSystem, { id: 'ClusterClientsOptional' });
+    // Matter 1.6.1 requires at least one Water Valve component endpoint in the Irrigation System composition
+    device.addChildDeviceType('Valve', waterValve).createDefaultValveConfigurationAndControlClusterServer().addRequiredClusterServers();
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
     device.addOptionalClusterClients();
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);

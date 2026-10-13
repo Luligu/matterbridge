@@ -42,7 +42,9 @@ describe('Matterbridge ' + NAME, () => {
   let device4: MatterbridgeEndpoint;
 
   const createClosurePanelTestEndpoint = (name: string, serial: string, dimensionType: ClosureDimensionType, options: ClosurePanelOptions = {}): MatterbridgeEndpoint => {
-    const endpoint = new MatterbridgeEndpoint([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}` });
+    // Matter 1.6.1 requires exactly one ClosurePanel namespace (0x45) tag on every Closure Panel
+    const tag = dimensionType === 'lift' ? ClosurePanelTag.Lift : dimensionType === 'tilt' ? ClosurePanelTag.Tilt : ClosurePanelTag.Sliding;
+    const endpoint = new MatterbridgeEndpoint([closurePanel], { id: `${name.replaceAll(' ', '')}-${serial.replaceAll(' ', '')}`, tagList: [getSemtag(tag)] });
 
     endpoint.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Closure Panel');
     createClosureDimensionClusterServer(endpoint, dimensionType, options);
@@ -388,6 +390,7 @@ describe('Matterbridge ' + NAME, () => {
         .toSorted(),
     ).toEqual(
       [
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 69, tag: 0, label: undefined } ]',
         'closureDimension(0x105).acceptedCommandList(0xfff9)=[ 0, 1 ]',
         'closureDimension(0x105).attributeList(0xfffb)=[ 0, 1, 2, 3, 7, 11, 65528, 65529, 65531, 65532, 65533 ]',
         'closureDimension(0x105).clusterRevision(0xfffd)=1',
@@ -400,11 +403,11 @@ describe('Matterbridge ' + NAME, () => {
         'closureDimension(0x105).targetState(0x1)={ position: 100, latch: true, speed: 0 }',
         'closureDimension(0x105).translationDirection(0x7)=0',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
-        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
         'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 561, revision: 1 } ]',
-        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
         'descriptor(0x1d).serverList(0x1)=[ 29, 261 ]',

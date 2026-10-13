@@ -27,7 +27,7 @@ import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeLevelControlServer } from '../../src/behaviors/levelControlServer.js';
-import { pump } from '../../src/matterbridgeDeviceTypes.js';
+import { flowSensor, pump } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -179,8 +179,10 @@ describe('Server clusters and behaviors', () => {
   });
 
   test('should not react to OnOff when the Pump has no OnOff cluster', async () => {
-    const noOnOffPump = new MatterbridgeEndpoint(pump, { id: 'noOnOffPump' });
+    // Every Matter 1.6.1 device type with Pump Configuration and Control requires OnOff, so host it on a Flow Sensor
+    const noOnOffPump = new MatterbridgeEndpoint(flowSensor, { id: 'noOnOffPump' });
     noOnOffPump.createDefaultIdentifyClusterServer();
+    noOnOffPump.createDefaultFlowMeasurementClusterServer();
     // No OnOff cluster on this endpoint, so initialize() must skip registering the OnOff reactor entirely.
     noOnOffPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     expect(await addDevice(aggregator, noOnOffPump)).toBeTruthy();

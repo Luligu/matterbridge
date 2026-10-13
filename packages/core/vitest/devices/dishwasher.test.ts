@@ -250,7 +250,7 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Normal', mode: 5, modeTags: [{ value: DishwasherMode.ModeTag.Normal }] },
       ],
     });
-    expect(await addDevice(server, custom)).toBeTruthy();
+    expect(await addDevice(aggregator, custom)).toBeTruthy();
     expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(1);
     await custom.invokeBehaviorCommand('onOff', 'off', {});
     expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(5);
@@ -330,7 +330,7 @@ describe('Matterbridge ' + NAME, () => {
     );
     alarmDevice.behaviors.require(MatterbridgeDishwasherAlarmServer, { mask: allAlarms, latch: noAlarm, state: noAlarm, supported: allAlarms });
     alarmDevice.addRequiredClusterServers();
-    expect(await addDevice(server, alarmDevice)).toBeTruthy();
+    expect(await addDevice(aggregator, alarmDevice)).toBeTruthy();
     expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'acceptedCommandList')).toEqual([0, 1]);
 
     const notifyEvents: unknown[] = [];

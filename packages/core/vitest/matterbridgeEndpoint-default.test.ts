@@ -101,6 +101,7 @@ import {
   electricalSensor,
   fan,
   flowSensor,
+  laundryWasher,
   genericSwitch,
   humiditySensor,
   lightSensor,
@@ -112,6 +113,7 @@ import {
   pump,
   rainSensor,
   smokeCoAlarm,
+  speaker,
   soilSensor,
   temperatureSensor,
   thermostat,
@@ -411,7 +413,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight15', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    // The On/Off Light device type requires the Lighting feature, so test the plain OnOff cluster on a Speaker (Matter 1.6.1)
+    const device = new MatterbridgeEndpoint(speaker, { id: 'OnOffLight15', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -422,7 +425,8 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDeadFrontOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight16', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    // The On/Off Light device type requires the Lighting feature, so test the DeadFrontBehavior OnOff cluster on a Laundry Washer, which requires it (Matter 1.6.1)
+    const device = new MatterbridgeEndpoint(laundryWasher, { id: 'OnOffLight16', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDeadFrontOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -2307,6 +2311,8 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeAlarm' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
+    // Matter 1.6.1 requires a Power Source component endpoint in the Smoke CO Alarm composition
+    device.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     device.createDefaultSmokeCOAlarmClusterServer();
     expect(device.hasAttributeServer(SmokeCoAlarm.id, 'smokeState')).toBe(true);
     expect(device.hasAttributeServer(SmokeCoAlarm.id, 'coState')).toBe(true);
@@ -2323,6 +2329,8 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeAlarmSmokeOnly' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
+    // Matter 1.6.1 requires a Power Source component endpoint in the Smoke CO Alarm composition
+    device.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     device.createSmokeOnlySmokeCOAlarmClusterServer();
     expect(device.hasAttributeServer(SmokeCoAlarm.id, 'smokeState')).toBe(true);
     expect(device.hasAttributeServer(SmokeCoAlarm.id, 'coState')).toBe(false);
@@ -2338,6 +2346,8 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeAlarmCoOnly' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
+    // Matter 1.6.1 requires a Power Source component endpoint in the Smoke CO Alarm composition
+    device.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     device.createCoOnlySmokeCOAlarmClusterServer();
     expect(device.hasAttributeServer(SmokeCoAlarm.id, 'smokeState')).toBe(false);
     expect(device.hasAttributeServer(SmokeCoAlarm.id, 'coState')).toBe(true);
@@ -2682,6 +2692,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Test endpointList with child device
     const temp = device.addChildDeviceType('temperature', temperatureSensor);
+    temp.createDefaultIdentifyClusterServer();
     temp.createDefaultTemperatureMeasurementClusterServer(2200);
 
     await add(device);

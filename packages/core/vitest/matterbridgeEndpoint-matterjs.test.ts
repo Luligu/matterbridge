@@ -52,6 +52,7 @@ import {
   onOffLight,
   onOffLightSwitch,
   onOffPlugInUnit,
+  powerSource,
   smokeCoAlarm,
   thermostat,
   waterHeater,
@@ -237,7 +238,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a cover lift device', () => {
-    coverLift = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLift' });
+    coverLift = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLift', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'One' }] });
     coverLift.addRequiredClusterServers();
     expect(coverLift).toBeDefined();
     expect(coverLift.id).toBe('WindowCoverLift');
@@ -245,7 +246,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a cover tilt device', () => {
-    coverLiftTilt = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTilt' });
+    coverLiftTilt = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTilt', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Two' }] });
     coverLiftTilt.createDefaultLiftTiltWindowCoveringClusterServer();
     coverLiftTilt.addRequiredClusterServers();
     expect(coverLiftTilt).toBeDefined();
@@ -274,7 +275,7 @@ describe('Matterbridge ' + NAME, () => {
   test('create a water tank device', () => {
     // Water Tank Level Monitoring is only optional on the Humidifier/Dehumidifier device type (Matter 1.7, not yet
     // available in this SDK), so onOffLight is used here as a plain scaffold for the cluster server itself.
-    waterTank = new MatterbridgeEndpoint(onOffLight, { id: 'WaterTank' });
+    waterTank = new MatterbridgeEndpoint(onOffLight, { id: 'WaterTank', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Two' }] });
     waterTank.createDefaultWaterTankLevelMonitoringClusterServer();
     waterTank.addRequiredClusterServers();
     expect(waterTank).toBeDefined();
@@ -312,6 +313,8 @@ describe('Matterbridge ' + NAME, () => {
   test('create a smoke device', () => {
     smoke = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeSensor' });
     smoke.addRequiredClusterServers();
+    // Matter 1.6.1 requires a Power Source component endpoint in the Smoke CO Alarm composition
+    smoke.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     expect(smoke).toBeDefined();
     expect(smoke.id).toBe('SmokeSensor');
     expect(smoke.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'smokeCoAlarm']);
@@ -638,6 +641,9 @@ describe('Matterbridge ' + NAME, () => {
       });
       void endpoint.setStateOf(OccupancySensingServer, { occupancy: { occupied: true } });
     });
+
+    // Remove the untagged plug-in unit: the next plug-in unit siblings would put it in the Duplicate condition, which requires a TagList (Matter 1.6.1 Core § 9.2.9)
+    await endpoint.delete();
   });
 
   test('add deviceType to onOffPlugin with tagList', async () => {
@@ -701,7 +707,7 @@ describe('Matterbridge ' + NAME, () => {
           occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
         },
         descriptor: {
-          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Switch2' }],
           deviceTypeList: [
             { deviceType: onOffPlugInUnit.code, revision: onOffPlugInUnit.revision },
             { deviceType: occupancySensor.code, revision: occupancySensor.revision },

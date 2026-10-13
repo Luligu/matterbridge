@@ -23,7 +23,7 @@ import {
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
-import { smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';
+import { powerSource, smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -64,6 +64,8 @@ describe('MatterbridgeSmokeCoAlarmServer', () => {
     smoke = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'smokeSensor' });
     smoke.createDefaultSmokeCOAlarmClusterServer();
     smoke.addRequiredClusterServers();
+    // Matter 1.6.1 requires a Power Source component endpoint in the Smoke CO Alarm composition
+    smoke.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
     expect(smoke).toBeDefined();
     expect(await addDevice(aggregator, smoke)).toBeTruthy();
   });

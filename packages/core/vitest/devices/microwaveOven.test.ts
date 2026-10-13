@@ -32,7 +32,7 @@ import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest 
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from '../../src/devices/microwaveOven.js';
-import { microwaveOven } from '../../src/matterbridgeDeviceTypes.js';
+import { microwaveOven, temperatureSensor } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -350,7 +350,9 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addMoreTime without an Operational State cluster on the endpoint', async () => {
-    const endpoint = new MatterbridgeEndpoint(microwaveOven, { id: 'MicrowaveOvenNoOperationalState' });
+    // Every Matter 1.6.1 device type with Microwave Oven Control requires Operational State, so host it on a Temperature Sensor
+    const endpoint = new MatterbridgeEndpoint(temperatureSensor, { id: 'MicrowaveOvenNoOperationalState' });
+    endpoint.createDefaultIdentifyClusterServer().createDefaultTemperatureMeasurementClusterServer();
     endpoint.behaviors.require(MatterbridgeMicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerAsNumber, MicrowaveOvenControl.Feature.PowerNumberLimits), {
       powerSetting: 100,
       minPower: 10,
