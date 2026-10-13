@@ -17,8 +17,10 @@ import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-strea
 import { Chime } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { Switch } from '@matter/types/clusters/switch';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import { EndpointNumber } from '@matter/types/datatype';
 import { StreamUsage } from '@matter/types/globals';
 import {
   addDevice,
@@ -38,6 +40,7 @@ import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/w
 import { MatterbridgeWebRtcTransportRequestorServer } from '../../src/behaviors/webRtcTransportRequestorServer.js';
 import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { Intercom } from '../../src/devices/intercom.js';
+import { genericSwitch } from '../../src/matterbridgeDeviceTypes.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -95,7 +98,15 @@ describe('Intercom', () => {
     expect(device.type.clientClusters['webRtcTransportRequestor']).toBe(WebRtcTransportRequestorClient);
     expect(device.type.clientClusters['chime']).toBe(ChimeClient);
 
+    // Matter 1.6.1 § 16.4.4: the mandatory Generic Switch component is a child endpoint with a momentary switch (§ 16.4.8)
+    const switchChild = device.getChildEndpointById('Switch');
+    expect(switchChild).toBeDefined();
+    expect(switchChild?.deviceTypes.has(genericSwitch.code)).toBeTruthy();
+    expect(switchChild?.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(switchChild?.hasClusterServer(Switch.id)).toBeTruthy();
+
     expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(switchChild?.getAttribute(Switch.id, 'featureMap')).toMatchObject({ momentarySwitch: true, latchingSwitch: false });
     expect(device.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(65_536);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxNetworkBandwidth')).toBe(128_000);
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView]);
@@ -262,6 +273,33 @@ describe('Intercom', () => {
 
     expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
+  });
+
+  it('should create the mandatory switch with custom switchOptions', async () => {
+    const device = new Intercom('Intercom Switch Options', 'INTERCOM-SWITCH-OPTIONS', {
+      id: 'IntercomSwitchOptions',
+      number: EndpointNumber(16_04),
+      switchOptions: { name: 'Call Button', number: EndpointNumber(16_04_2), identifyTime: 5, identifyType: Identify.IdentifyType.VisibleIndicator },
+    });
+    const switchChild = device.getChildEndpointById('CallButton');
+    expect(switchChild).toBeDefined();
+    expect(switchChild?.number).toBe(EndpointNumber(16_04_2));
+
+    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(switchChild?.getAttribute(Identify, 'identifyTime')).toBe(5);
+    expect(switchChild?.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
+  });
+
+  it('should add additional switches with tags and trigger a switch event', async () => {
+    // Sibling switches share a device type, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
+    const device = new Intercom('Intercom Multi Switch', 'INTERCOM-MULTI-SWITCH', { switchOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] } });
+    const left = device.addSwitch('Left Switch', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }] });
+    expect(left.id).toBe('LeftSwitch');
+    expect(left.deviceTypes.has(genericSwitch.code)).toBeTruthy();
+
+    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await left.triggerSwitchEvent('Single', left.log)).toBeTruthy();
+    expect(left.getAttribute(Switch, 'currentPosition')).toBe(0);
   });
   it.each(['offer', 'answer', 'iceCandidates', 'end'] as const)('should notify %s subscribers only after the inherited handler succeeds', async (command) => {
     const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };
