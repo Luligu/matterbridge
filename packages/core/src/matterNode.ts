@@ -211,6 +211,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
+    this.environment.vars.set('endpoint.validation', 'strict');
     if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
     if (this.verbose) this.log.debug(`Matter Environment is ready`);
 

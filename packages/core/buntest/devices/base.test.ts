@@ -40,7 +40,8 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    await createTestEnvironment();
+    const environment = await createTestEnvironment();
+    expect(environment.vars.string('endpoint.validation')).toBe('strict');
   });
 
   beforeEach(() => {

@@ -97,6 +97,7 @@ export async function createTestEnvironment(): Promise<Environment> {
   environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
+  environment.vars.set('endpoint.validation', 'strict');
   return environment;
 }
 

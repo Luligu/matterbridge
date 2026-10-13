@@ -29,9 +29,38 @@ The audited snapshot includes inherited Binding and Descriptor requirements in d
 - Descriptor is mandatory for every device type under §1.1.7.
 - RootNode's intentionally empty cluster lists remain unchanged; the comparison expectation now includes the upstream optional Groupcast cluster (`0x0065`).
 
-## Door lock validation and events
+## Endpoint device type validation
 
-Door-lock tests now use a supported user type when schedule features are disabled, send null UserStatus and UserType when adding credentials to existing users (§5.2.10.20), and assert SetCredential response statuses. These test changes also pass with matter.js 0.17.9.
+matter.js 0.18 adds server-side validation of endpoints against their declared device types and the inherited Base requirements (Matter 1.6.1 Core §9.2). It checks mandatory and disallowed clusters, required server-cluster features and elements, component endpoint counts and requirements, singleton placement, and explicitly supplied condition names. Client clusters are checked for presence only; remote `ClientNode` peers are not validated.
+
+The `endpoint.validation` variable, also available as `MATTER_ENDPOINT_VALIDATION`, selects the mode:
+
+| Mode                      | During construction                                                                  | Automatic checks after construction                  |
+| ------------------------- | ------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `warn` (upstream default) | Reject new misplaced singletons; warn about other new violations.                    | Log and record violations without rejecting changes. |
+| `strict`                  | Reject any new device type violation.                                                | Log and record violations without rejecting changes. |
+| `off`                     | Only retain the early check for misplaced singletons declared by ancestor endpoints. | Disabled.                                            |
+
+Matterbridge sets `strict` before creating server nodes:
+
+```ts
+this.environment.vars.set('endpoint.validation', 'strict');
+```
+
+- Both production environment setup blocks and all five test-helper environment setup blocks use this setting. It has no validation effect with matter.js 0.17.9; it prepares these environments for 0.18.
+- The mode is read when the server node's environment is built. Changing the variable afterward does not change an existing node's mode.
+- Adding an endpoint can invalidate requirements on its parent or siblings, so a strict construction error can name an endpoint other than the one being added. Validation throws `DeviceTypeConformanceError`, containing individual `DeviceTypeViolationError` entries.
+- Automatic runtime checks follow endpoint removal and Descriptor `DeviceTypeList` changes. They do not reject those changes, even in `strict` mode. Adding or removing a server cluster alone does not trigger a device type check.
+- The mode also affects cluster implementation validation: a mandatory command using `Behavior.unimplemented` fails initialization in `strict` mode, but only logs a warning in `warn` or `off`. The command is excluded from `AcceptedCommandList` in every mode.
+- Before behaviors initialize, matter.js automatically adds `BindingServer` when the configured device types require it under Base's `Simple & Client` condition. This happens in every mode. Device types restored later from persistence or added at runtime do not trigger automatic Binding installation.
+
+For explicit checks, obtain `DeviceTypeConformanceService` from the node's environment and call `validate()` or `validateNodeScope()`. Use `{ refuse: false }` to report violations without throwing a conformance error. Explicit validation also works in `off` mode, but does not record results there.
+
+Migration implication: endpoint definitions and test fixtures must satisfy their advertised device types, and mandatory command stubs can now prevent initialization. `strict` is not continuous enforcement of every runtime mutation.
+
+See the upstream [Device Type Validation documentation](https://github.com/matter-js/matter.js/blob/main/docs/DEVICE_TYPE_VALIDATION.md) for the full rules and limitations.
+
+## Door lock validation and events
 
 The audited snapshot reports the user index in LockUserChange.DataIndex for user changes (§5.2.11.5.7), and reports UserIndex `0xFFFE` when clearing credentials for all users (§5.2.11.5.4). The corresponding event expectations are specific to 0.18; 0.17.9 reports null for these fields.
 
