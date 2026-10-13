@@ -353,6 +353,9 @@ describe('Matterbridge device cluster mappings', () => {
       'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026,100] md=[1026,82,73,72,100]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: optional mismatch -> mb=[1026,100] md=[1026,82,73,72,100]', // Double device type to account for heater/cooler and just one in matter.js
+      'closure: required mismatch -> mb=[3,260] md=[29,3,260]', // Descriptor omitted: matter.js lists DescriptorServer.with("TagList"); every endpoint has a Descriptor
+      'closurePanel: required mismatch -> mb=[261] md=[29,261]', // Descriptor omitted: matter.js lists DescriptorServer.with("TagList"); every endpoint has a Descriptor
+      'electricalEnergyTariff: required mismatch -> mb=[] md=[29]', // Descriptor omitted: matter.js lists DescriptorServer.with("TagList"); every endpoint has a Descriptor
     ]);
   });
 });

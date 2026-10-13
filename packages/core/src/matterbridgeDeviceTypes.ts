@@ -1245,7 +1245,7 @@ export const closure = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
   revision: 1,
-  requiredServerClusters: [Identify.id, ClosureControl.id, Descriptor.id],
+  requiredServerClusters: [Identify.id, ClosureControl.id],
   optionalServerClusters: [],
 });
 
@@ -1269,7 +1269,7 @@ export const closurePanel = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
   revision: 1,
-  requiredServerClusters: [ClosureDimension.id, Descriptor.id],
+  requiredServerClusters: [ClosureDimension.id],
   optionalServerClusters: [],
 });
 
@@ -2276,7 +2276,7 @@ export const electricalEnergyTariff = DeviceTypeDefinition({
   deviceClass: DeviceClasses.Simple,
   deviceScope: DeviceScopes.Endpoint,
   revision: 1,
-  requiredServerClusters: [Descriptor.id],
+  requiredServerClusters: [],
   optionalServerClusters: [CommodityPrice.id, ElectricalGridConditions.id, CommodityTariff.id],
 });
 
