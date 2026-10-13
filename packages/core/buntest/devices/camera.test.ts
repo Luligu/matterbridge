@@ -43,7 +43,8 @@ describe('Camera', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    await createTestEnvironment();
+    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
+    await createTestEnvironment('warn');
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT, undefined, 0, 0, 0);

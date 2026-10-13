@@ -47,7 +47,8 @@ describe('VideoDoorbell', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    await createTestEnvironment();
+    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
+    await createTestEnvironment('warn');
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT, undefined, 0, 0, 0);
@@ -402,8 +403,8 @@ describe('VideoDoorbell', () => {
     const device = new VideoDoorbell('Video Doorbell Doorbell Number', 'VIDEO-DOORBELL-DOORBELL-NUMBER', {
       doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
     });
-    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_3), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
-    expect(doorbellChild.number).toBe(EndpointNumber(16_03_3));
+    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_0), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
+    expect(doorbellChild.number).toBe(EndpointNumber(16_03_0));
 
     expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });

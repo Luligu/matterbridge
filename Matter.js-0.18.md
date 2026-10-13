@@ -116,7 +116,7 @@ To be reported upstream: keep the endpoint as a non-enumerable property, or stor
 
 Endpoint validation also reports violations that are Matterbridge gaps against Matter 1.6.1, not validator issues. They are reported in `warn` mode in production and rejected in `strict` mode in the tests:
 
-- Root Node conditions: Camera, Audio Doorbell, Intercom and Snapshot Camera require Root Node conditions for Time Synchronization, TLS Certificate Management, TLS Client Management and a Power Source; Electrical Utility Meter and Meter Reference Point require `TimeSyncCond` (§ 14.9.4). These apply to the node, also in bridge mode, so the Matterbridge server nodes must provide these clusters when such a device is present.
+- Root Node conditions: Camera, Audio Doorbell, Intercom and Snapshot Camera require Root Node conditions for Time Synchronization, TLS Certificate Management, TLS Client Management and a Power Source; Electrical Utility Meter and Meter Reference Point require `TimeSyncCond` (§ 14.9.4). These apply to the node, also in bridge mode, so the Matterbridge server nodes must provide these clusters when such a device is present. In the audited snapshot `TimeSynchronizationServer`, `TlsCertificateManagementServer` and `TlsClientManagementServer` are empty generated classes, so the tests of these device types (vitest and buntest) use `createTestEnvironment('warn')` until matter.js implements them; this is to be reported upstream with a request to relax only the Root Node conditions in `strict`.
 
 ## Door lock validation and events
 

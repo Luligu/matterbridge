@@ -45,7 +45,8 @@ describe('FloodlightCamera', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    await createTestEnvironment();
+    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
+    await createTestEnvironment('warn');
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT, undefined, 0, 0, 0);
@@ -412,8 +413,8 @@ describe('FloodlightCamera', () => {
     const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER', {
       lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
     });
-    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_3), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
-    expect(light.number).toBe(EndpointNumber(16_02_3));
+    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_0), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
+    expect(light.number).toBe(EndpointNumber(16_02_0));
 
     expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });

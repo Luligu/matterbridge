@@ -71,7 +71,8 @@ describe('Matterbridge ' + NAME, () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    await createTestEnvironment();
+    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
+    await createTestEnvironment('warn');
   });
 
   beforeEach(() => {
@@ -399,7 +400,7 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1297, revision: 1 }, { deviceType: 1298, revision: 1 }, { deviceType: 17, revision: 1 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
-        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5, 6, 7, 8, 9, 14091, 14092 ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 14091, 14092, 14093, 14094, 14095, 14096, 14097, 14098 ]',
         'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 64, 2822 ]',
         'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 1, label: undefined } ]',
         'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
@@ -428,7 +429,7 @@ describe('Matterbridge ' + NAME, () => {
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
         "powerSource(0x2f).description(0x2)='AC Power'",
-        'powerSource(0x2f).endpointList(0x1f)=[ 2, 3, 14091, 4, 5, 6, 14092, 7, 8, 9 ]',
+        'powerSource(0x2f).endpointList(0x1f)=[ 2, 3, 14091, 14093, 14094, 14095, 14092, 14096, 14097, 14098 ]',
         'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
         'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
         'powerSource(0x2f).order(0x1)=0',
