@@ -107,7 +107,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.18.0-alpha.0-20261008-6066b7499",
+    "@matter/main": "0.18.0-alpha.0-20261013-2e5a97ca3",
     "@matterbridge/types": "3.10.14",
     "node-ansi-logger": "3.3.1"
   },
