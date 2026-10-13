@@ -57,6 +57,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
 - [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
+- [test-utils]: Add the `validation` parameter (`'off'`, `'warn'` or `'strict'`, default `'strict'`) to `createTestEnvironment()` in the vitest, jest and bun helpers.
+- [test-utils]: Add `addBridgedNode()` to the vitest, jest and bun helpers; in strict validation mode, `addDevice()` uses it to bridge a `MatterbridgeEndpoint` added to an aggregator, like `registerDevice()` does in bridge mode.
 
 ### Changed
 

@@ -35,7 +35,12 @@ import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { DeviceTypeId, VendorId } from '@matter/types/datatype';
+import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { Descriptor } from '@matter/types/clusters/descriptor';
+import { EcosystemInformation } from '@matter/types/clusters/ecosystem-information';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { type ClusterId, DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';
 // node-ansi-logger module
@@ -57,7 +62,9 @@ const noop = (): void => undefined;
  * Create a matter test environment for testing:
  * - it will remove any existing home directory
  * - setup the matter environment with name, debug logging and ANSI format
+ * - set the endpoint device type validation mode (default 'strict')
  *
+ * @param {'off' | 'warn' | 'strict'} [validation] - The matter.js endpoint device type validation mode (`endpoint.validation`). Default is 'strict'.
  * @returns {Environment} - The default matter environment.
  * @example
  * ```typescript
@@ -86,7 +93,7 @@ const noop = (): void => undefined;
  * ```
  */
 // oxlint-disable-next-line typescript/require-await
-export async function createTestEnvironment(): Promise<Environment> {
+export async function createTestEnvironment(validation: 'off' | 'warn' | 'strict' = 'strict'): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
   expect(NAME.length).toBeGreaterThanOrEqual(4); // avoid accidental deletion of short paths like "/" or "C:\"
@@ -98,7 +105,7 @@ export async function createTestEnvironment(): Promise<Environment> {
   environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
-  environment.vars.set('endpoint.validation', 'strict');
+  environment.vars.set('endpoint.validation', validation);
   return environment;
 }
 
@@ -774,8 +781,121 @@ export async function flushServerNode(rounds: number = 3, ticks: number = 1, mic
   await flushAsync(ticks, microTurns, pause);
 }
 
+/** The BridgedNode device type definition, same as `bridgedNode` in the core matterbridgeDeviceTypes (this package cannot depend on core). */
+const bridgedNode = {
+  name: 'BridgedNode',
+  code: DeviceTypeId(0x0013),
+  deviceClass: 'Utility',
+  deviceScope: 'endpoint',
+  revision: 3,
+  requiredServerClusters: [BridgedDeviceBasicInformation.id],
+  optionalServerClusters: [PowerSource.id, EcosystemInformation.id, AdministratorCommissioning.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [],
+  requiredDeviceTypes: [],
+  requiredServerClustersOneOf: [],
+  composedOf: [],
+};
+
+/** The members of a MatterbridgeEndpoint used by {@link addBridgedNode}, so this package does not depend on core. */
+interface MatterbridgeEndpoint {
+  deviceTypes: Map<number, unknown>;
+  deviceName?: string;
+  serialNumber?: string;
+  vendorId?: number;
+  vendorName?: string;
+  productName?: string;
+  softwareVersion?: number;
+  softwareVersionString?: string;
+  hardwareVersion?: number;
+  hardwareVersionString?: string;
+  productLabel?: string;
+  productUrl?: string;
+  configurationVersion?: number;
+  productId?: number;
+  getClusterServerOptions(cluster: ClusterId): Record<string, unknown> | undefined;
+  hasClusterServer(cluster: ClusterId): boolean;
+  createDefaultBridgedDeviceBasicInformationClusterServer(
+    deviceName: string,
+    serialNumber: string,
+    vendorId?: number,
+    vendorName?: string,
+    productName?: string,
+    softwareVersion?: number,
+    softwareVersionString?: string,
+    hardwareVersion?: number,
+    hardwareVersionString?: string,
+    productLabel?: string,
+    productUrl?: string,
+    configurationVersion?: number,
+    productId?: number,
+  ): unknown;
+}
+
+let bridgedNodeFallbackCount = 0;
+
+/**
+ * Whether the device is a MatterbridgeEndpoint that {@link addBridgedNode} can bridge.
+ *
+ * @param {Endpoint} device The device to check.
+ * @returns {boolean} True when the device has the MatterbridgeEndpoint members used by {@link addBridgedNode}.
+ */
+function isMatterbridgeEndpoint(device: Endpoint): device is Endpoint & MatterbridgeEndpoint {
+  return (
+    'deviceTypes' in device &&
+    device.deviceTypes instanceof Map &&
+    'createDefaultBridgedDeviceBasicInformationClusterServer' in device &&
+    typeof device.createDefaultBridgedDeviceBasicInformationClusterServer === 'function'
+  );
+}
+
+/**
+ * Turn a MatterbridgeEndpoint into a bridged device before it is added to an aggregator, like `registerDevice()` does in bridge mode.
+ *
+ * Adds the BridgedNode device type to the device types and to the Descriptor deviceTypeList, and the
+ * BridgedDeviceBasicInformation cluster populated from the endpoint data when missing. Aggregator children with BridgedNode
+ * are disambiguated by their NodeLabel, so strict endpoint validation does not require a TagList on siblings sharing a
+ * device type (Matter 1.6.1 Core § 9.2.9, Device Library § 11.2.6). Other endpoints are returned unchanged.
+ *
+ * @param {Endpoint} device The device to bridge.
+ * @returns {Endpoint} The same device, for chaining.
+ */
+export function addBridgedNode<T extends Endpoint>(device: T): T {
+  if (!isMatterbridgeEndpoint(device)) return device;
+  if (!device.deviceTypes.has(bridgedNode.code)) {
+    device.deviceTypes.set(bridgedNode.code, bridgedNode);
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+    const deviceTypeList = device.getClusterServerOptions(Descriptor.id)?.deviceTypeList as { deviceType: number; revision: number }[] | undefined;
+    if (deviceTypeList && !deviceTypeList.some((dt) => dt.deviceType === bridgedNode.code)) deviceTypeList.push({ deviceType: bridgedNode.code, revision: bridgedNode.revision });
+  }
+  if (!device.hasClusterServer(BridgedDeviceBasicInformation.id)) {
+    // Same fields as registerDevice(), which requires deviceName and serialNumber: plain test endpoints that never called
+    // createDefaultBasicInformationClusterServer() fall back to their id, number or a counter. The name must be unique because
+    // matter.js derives the id of an endpoint without one from the BridgedDeviceBasicInformation uniqueId.
+    const deviceName = device.deviceName ?? device.maybeId ?? (device.maybeNumber === undefined ? `Device${++bridgedNodeFallbackCount}` : `Device${device.maybeNumber}`);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer(
+      deviceName,
+      device.serialNumber ?? `SN-${deviceName}`,
+      device.vendorId,
+      device.vendorName,
+      device.productName,
+      device.softwareVersion,
+      device.softwareVersionString,
+      device.hardwareVersion,
+      device.hardwareVersionString,
+      device.productLabel === 'Matter Endpoint' ? 'Matter Bridged Endpoint' : device.productLabel,
+      device.productUrl,
+      device.configurationVersion,
+      device.productId,
+    );
+  }
+  return device;
+}
+
 /**
  * Add a device (endpoint) to a matter server node or an aggregator.
+ *
+ * In strict endpoint validation mode, a device added to an aggregator is bridged first with {@link addBridgedNode}.
  *
  * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
  * @param {Endpoint} device The device to add.
@@ -804,6 +924,9 @@ export async function addDevice(
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
   await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
+
+  // In strict mode, bridge the devices added to an aggregator like registerDevice() does in bridge mode
+  if (environment?.vars.string('endpoint.validation') === 'strict' && owner.type.deviceType === AggregatorEndpoint.deviceType) addBridgedNode(device);
 
   /* v8 ignore next */
   try {
