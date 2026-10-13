@@ -732,7 +732,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
-    this.environment.vars.set('endpoint.validation', 'strict');
+    this.environment.vars.set('endpoint.validation', 'warn');
 
     // Register process handlers
     this.registerProcessHandlers();

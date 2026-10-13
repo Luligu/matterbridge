@@ -61,6 +61,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [test-utils]: Set strict endpoint validation in all Matter test environment helpers.
+- [core]: Set warn endpoint validation in the Matterbridge and MatterNode environments.
 - [core]: Fetch platform and shared Matterbridge data after MatterNode construction.
 - [core]: Return the MatterNode shared Matterbridge instance to plugin platforms.
 - [core]: Bind plugin endpoint callbacks to their MatterNode instance.
