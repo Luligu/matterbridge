@@ -22,11 +22,11 @@ This affects metered quantities, tariff periods, days, day patterns, calendar pe
 
 ## Inherited device cluster requirements
 
-The audited snapshot includes inherited Binding and Descriptor requirements in device definitions. Matterbridge now includes Binding in the affected Simple device definitions with mandatory application clients, and Descriptor in Closure, Closure Panel, and Electrical Energy Tariff.
+The audited snapshot includes the inherited Base Binding requirement in device definitions. Matterbridge now includes Binding in the affected Simple device definitions with mandatory application clients.
 
 - Binding is required by Matter 1.6.1 Device Library §1.1.7 when `Simple & Client` is true; §1.1.6 defines Client as having an application client cluster. This is confirmed by `chip/1.6.1/xml/device_types/BaseDeviceType.xml`.
 - On/Off Light Switch is Simple and requires Identify and On/Off clients (§6.1), so its mandatory server requirements include Identify and Binding. The server-behavior mapper now maps Binding to `MatterbridgeBindingServer`.
-- Descriptor is mandatory for every device type under §1.1.7.
+- Descriptor appears in the matter.js mandatory server list only for device types that require a Descriptor feature: Closure, Closure Panel and Electrical Energy Tariff require TagList (`DescriptorServer.with("TagList")` in the generated device classes). Other device types get a plain Descriptor implicitly and do not list it. Matterbridge does not add Descriptor to any device definition, since every endpoint has a Descriptor; the requirements test accepts these three mismatches.
 - RootNode's intentionally empty cluster lists remain unchanged; the comparison expectation now includes the upstream optional Groupcast cluster (`0x0065`).
 
 ## Open enums typed as `Enum | number`
@@ -102,7 +102,7 @@ This placement follows Matter 1.6.1:
   - Figure 23, "Example of a Heat Pump device" (§ 14.5.1): `EP1 DeviceTypeList: [HeatPump, PowerSource, ElectricalSensor, DeviceEnergyManagement]`, with only Temperature Sensor and Thermostat child endpoints.
   - Figure 30, "Example of a basic Electrical Utility Meter" (§ 14.9.6.1): `EP2: Electrical Meter` has `DeviceTypeList: [Electrical Meter, Electrical Energy Tariff, Electrical Sensor]` and no child endpoints. Figure 31, "Example of a phased Electrical Utility Meter", keeps the same EP2 device types and adds per-phase Electrical Sensor child endpoints.
 
-The validator follows the literal Core § 9.2.3 (Composed Device Types) sentence "The component device types exist on their own endpoints", which contradicts § 9.2.1 and the Device Library examples. Matterbridge keeps the spec-example composition; this is to be reported upstream so the validator counts utility component device types declared on the composing endpoint.
+The validator follows the literal Core § 9.2.3 (Composed Device Types) sentence "The component device types exist on their own endpoints", which contradicts § 9.2.1 and the Device Library examples. Matterbridge keeps the spec-example composition. Reported upstream in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) (point 1), asking the validator to count utility component device types declared on the composing endpoint.
 
 ## Conformance errors keep a live endpoint
 
@@ -110,15 +110,17 @@ The validator follows the literal Core § 9.2.3 (Composed Device Types) sentence
 
 In the audited snapshot this crashed `matterbridgePlatform.test.ts` (non-conformant fixtures added through `registerDevice()` and the test-utils `addBridgedEndpoint()`, which rethrows), `bindingServer.test.ts` and `matterbridgeEndpoint-matterjs.test.ts` (fixtures added with a raw `aggregator.add()` / `server.add()`). In each file, replacing the rejection with a plain error turned the crash into ordinary test failures that named the violations.
 
-To be reported upstream: keep the endpoint as a non-enumerable property, or store only its path string (the message already uses `endpoint.toString()`), so an uncaught conformance error stays serializable.
+Reported upstream in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) (point 3), suggesting to keep the endpoint as a non-enumerable property, or store only its path string (the message already uses `endpoint.toString()`), so an uncaught conformance error stays serializable.
 
 ## Required source refactors
 
 Endpoint validation also reports violations that are Matterbridge gaps against Matter 1.6.1, not validator issues. They are reported in `warn` mode in production and rejected in `strict` mode in the tests:
 
-- Root Node conditions: Camera, Audio Doorbell, Intercom and Snapshot Camera require Root Node conditions for Time Synchronization, TLS Certificate Management, TLS Client Management and a Power Source; Electrical Utility Meter and Meter Reference Point require `TimeSyncCond` (§ 14.9.4). These apply to the node, also in bridge mode, so the Matterbridge server nodes must provide these clusters when such a device is present.
+- Root Node conditions: Camera, Audio Doorbell, Intercom and Snapshot Camera require Root Node conditions for Time Synchronization, TLS Certificate Management, TLS Client Management and a Power Source; Electrical Utility Meter and Meter Reference Point require `TimeSyncCond` (§ 14.9.4). These apply to the node, also in bridge mode, so the Matterbridge server nodes must provide these clusters when such a device is present. In the audited snapshot `TimeSynchronizationServer`, `TlsCertificateManagementServer` and `TlsClientManagementServer` are empty generated classes, so the tests of these device types (vitest and buntest) use `createTestEnvironment('warn')` until matter.js implements them. Reported upstream in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) (point 2), asking to relax only the Root Node conditions in `strict`. `PowerSourceCond` cannot be met either: Apple Home's energy monitoring disappears as soon as there is any Power Source on the Root Node.
 
 ## Door lock validation and events
+
+Door-lock tests now use a supported user type when schedule features are disabled, send null UserStatus and UserType when adding credentials to existing users (§5.2.10.20), and assert SetCredential response statuses. These test changes also pass with matter.js 0.17.9.
 
 The audited snapshot reports the user index in LockUserChange.DataIndex for user changes (§5.2.11.5.7), and reports UserIndex `0xFFFE` when clearing credentials for all users (§5.2.11.5.4). The corresponding event expectations are specific to 0.18; 0.17.9 reports null for these fields.
 
