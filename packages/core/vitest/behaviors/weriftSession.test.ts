@@ -340,15 +340,20 @@ describe('WeriftWebRtcSession', () => {
       }
     });
 
-    it('should keep the synthetic pattern fixed despite resolution and bitrate options', async () => {
-      options.videoResolution = '1920x1080';
-      options.videoBitrate = 2500;
+    it.each([
+      [undefined, undefined, 'testsrc=size=640x480:rate=10', '1000k'],
+      ['auto', undefined, 'testsrc=size=640x480:rate=10', '1000k'],
+      ['1280x720', 2000, 'testsrc=size=1280x720:rate=10', '2000k'],
+      ['1920x1080', 2500, 'testsrc=size=1920x1080:rate=10', '2500k'],
+    ])('should size the synthetic pattern from videoResolution=%s and videoBitrate=%s', async (resolution, bitrate, input, expectedBitrate) => {
+      options.videoResolution = resolution;
+      options.videoBitrate = bitrate;
       const session = new WeriftWebRtcSession(1, { ...options });
       try {
         await session.createOffer();
         const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
-        expect(args).toContain('testsrc=size=640x480:rate=10');
-        expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', '1000k']);
+        expect(args).toContain(input);
+        expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', expectedBitrate]);
       } finally {
         await session.close();
       }

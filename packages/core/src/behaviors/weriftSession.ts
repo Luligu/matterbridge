@@ -69,12 +69,12 @@ export interface WeriftOfferOptions {
   /**
    * Capture resolution for this session: 640x480, 1280x720, or 1920x1080. When unset, `auto`, or unsupported,
    * the resolution falls back to 640x480.
-   * Applies to webcam and RTSP sources; ignored for the synthetic test pattern.
+   * Applies to the synthetic test pattern, webcam and RTSP sources.
    */
   videoResolution?: string;
   /**
    * Target video encoder bitrate in kbps.
-   * Must be a finite positive number. The default and synthetic test pattern bitrate are 1000 kbps.
+   * Must be a finite positive number. The default is 1000 kbps.
    */
   videoBitrate?: number;
   /**
@@ -108,8 +108,8 @@ export type WeriftOfferOverrides = Partial<WeriftOfferOptions>;
  * `webcam`, a real RTSP camera stream when the source is `rtsp`, or no injected track when the source is unset or
  * `none`. options.videoSourceDevice identifies the webcam device (e.g. /dev/video0 on Linux, an
  * avfoundation index on macOS, or a dshow device name on Windows) for `webcam`, or the RTSP url (e.g.
- * rtsp://user:password@host:554/path) for `rtsp`. The webcam capture resolution defaults to 640x480 and can be set
- * to 1280x720 or 1920x1080 with options.videoResolution.
+ * rtsp://user:password@host:554/path) for `rtsp`. The video resolution of every source defaults to 640x480 and can be
+ * set to 1280x720 or 1920x1080 with options.videoResolution.
  *
  * Similarly, the audio track can inject a synthetic test tone (e.g. for an Intercom's "Listen" live view) when
  * `options.audioSource=test`, capture from a local microphone when the source is `microphone`, or pull
@@ -395,7 +395,7 @@ export class WeriftWebRtcSession {
   private static readonly SUPPORTED_VIDEO_RESOLUTIONS = ['640x480', '1280x720', '1920x1080'];
 
   /**
-   * Default target encoder bitrate (kbps), used for the test pattern and as the fallback when
+   * Default target encoder bitrate (kbps), used as the fallback when
    * options.videoBitrate is unset or invalid. Without an explicit -b:v, ffmpeg falls back to a generic
    * ~200kbps default that is far too low even at 640x480 and produces heavy blocking artifacts.
    */
@@ -469,23 +469,22 @@ export class WeriftWebRtcSession {
    * (the RTSP url for `rtsp`); yields no source (logging an error) if the device/url is missing or webcam capture
    * isn't supported on this platform, so a misconfigured camera is never silently replaced by the test pattern. The output resolution is resolved via
    * {@link getConfiguredVideoResolution}: a fixed options.videoResolution (640x480, 1280x720, or
-   * 1920x1080) is used, while `auto` (or unset) falls back to 640x480. For `webcam` this selects the capture resolution directly; for
+   * 1920x1080) is used, while `auto` (or unset) falls back to 640x480. For `test` this sets the size of the generated
+   * pattern; for `webcam` it selects the capture resolution directly; for
    * `rtsp` the camera streams at its own native resolution and is scaled to the resolved resolution with a `scale`
    * filter. The encoder bitrate defaults to {@link DEFAULT_BITRATE_KBPS} and can be overridden with
-   * options.videoBitrate, regardless of resolution.
+   * options.videoBitrate, regardless of resolution and source.
    *
    * @param {'test' | 'webcam' | 'rtsp'} videoSource - The configured video source after `none` has been handled by the caller.
    * @returns {{ args: string[]; description: string; bitrateKbps: number } | undefined} The ffmpeg input arguments, a description of the source for logging, and the target encoder bitrate; `undefined` when the configured source is unusable and no track should be injected.
    */
   private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number } | undefined {
     if (videoSource === 'test') {
-      const testPatternInput = {
-        args: ['-re', '-f', 'lavfi', '-i', 'testsrc=size=640x480:rate=10'],
-        description: 'synthetic moving test pattern',
-        bitrateKbps: WeriftWebRtcSession.DEFAULT_BITRATE_KBPS,
-      };
-      this.log.debug(`Test pattern params: resolution=640x480, description="${testPatternInput.description}", bitrateKbps=${testPatternInput.bitrateKbps}`);
-      return testPatternInput;
+      const resolution = this.getConfiguredVideoResolution();
+      const bitrateKbps = this.getConfiguredVideoBitrate();
+      const description = `synthetic moving test pattern (${resolution})`;
+      this.log.debug(`Test pattern params: resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
+      return { args: ['-re', '-f', 'lavfi', '-i', `testsrc=size=${resolution}:rate=10`], description, bitrateKbps };
     }
 
     const device = this.options.videoSourceDevice;

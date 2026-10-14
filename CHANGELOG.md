@@ -59,6 +59,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
 - [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
+- [docs]: Add [Werift.md](./Werift.md) about WebRTC streaming from a container to a browser: mDNS ICE candidates, the `MATTERBRIDGE_ICE_PORT_RANGE` and `MATTERBRIDGE_ICE_HOST_ADDRESSES` overrides, Docker Desktop UDP networking, the stream resolution and the `MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT` and `MATTERBRIDGE_STRICT_WEBRTCTRANSPORT` variables.
 
 ### Changed
 
@@ -71,6 +72,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Bind plugin endpoint callbacks to their MatterNode instance.
 - [core]: Catch and log MatterNode broadcast message handler rejections with `fireAndForget`.
 - [core]: Skip unchanged values when initializing MatterNode storage contexts.
+- [webrtc]: The `test` video source follows `videoResolution` and `videoBitrate` like the `webcam` and `rtsp` sources (was fixed at 640x480 and 1000 kbps).
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.
 - [matterbridge]: Bump `marked` to v.18.1.0.
 - [matterbridge]: Bump `oxfmt` to v.0.72.0.
