@@ -298,6 +298,12 @@ invalid value is ignored with a warning). The encoder sends a keyframe every 2 s
 starts and recovers from packet loss at the same pace at any frame rate. The `webcam` source captures at 30 fps and the
 `rtsp` source keeps the camera frame rate; both send a keyframe every 20 frames.
 
+The `webcam` source also forces a constant 30 fps output (`-fps_mode cfr -r 30`) on every platform. macOS avfoundation
+reports no usable frame rate (only its 1/1000000 time base), so without it ffmpeg treats the output as 1,000,000 fps,
+logs `frame duplication too large, skipping`, and the encoder ignores the bitrate cap: a 1000 kbps webcam was measured at
+about 7 Mbps and the browser showed a gray picture. Windows dshow and Linux v4l2 report 30 fps and stay at the configured
+bitrate either way; the option keeps them safe from drivers that do not.
+
 The debug log shows the values in use:
 
 ```

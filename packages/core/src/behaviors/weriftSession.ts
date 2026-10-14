@@ -535,11 +535,26 @@ export class WeriftWebRtcSession {
     this.log.debug(`Webcam capture params: device=${device}, resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
     switch (process.platform) {
       case 'linux':
-        return { args: ['-f', 'v4l2', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps, keyFrameInterval: 20 };
+        return {
+          args: ['-f', 'v4l2', '-video_size', resolution, '-framerate', '30', '-i', device, '-fps_mode', 'cfr', '-r', '30'],
+          description,
+          bitrateKbps,
+          keyFrameInterval: 20,
+        };
       case 'darwin':
-        return { args: ['-f', 'avfoundation', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps, keyFrameInterval: 20 };
+        return {
+          args: ['-f', 'avfoundation', '-video_size', resolution, '-framerate', '30', '-i', device, '-fps_mode', 'cfr', '-r', '30'],
+          description,
+          bitrateKbps,
+          keyFrameInterval: 20,
+        };
       case 'win32':
-        return { args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`], description, bitrateKbps, keyFrameInterval: 20 };
+        return {
+          args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`, '-fps_mode', 'cfr', '-r', '30'],
+          description,
+          bitrateKbps,
+          keyFrameInterval: 20,
+        };
       default:
         this.log.error(`Webcam capture via ffmpeg is not supported on platform "${process.platform}"; not injecting a video track`);
         return undefined;

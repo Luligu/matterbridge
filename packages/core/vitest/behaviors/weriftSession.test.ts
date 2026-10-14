@@ -602,10 +602,10 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it.each([
-      ['linux', '/dev/video0'],
-      ['darwin', '0'],
-      ['win32', 'Integrated Camera'],
-    ])('should attach a video track from the configured webcam device on platform %s', async (platform, device) => {
+      ['linux', '/dev/video0', 'v4l2', '/dev/video0'],
+      ['darwin', '0', 'avfoundation', '0'],
+      ['win32', 'Integrated Camera', 'dshow', 'video=Integrated Camera'],
+    ])('should attach a video track from the configured webcam device on platform %s with a constant 30 fps output', async (platform, device, format, input) => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = device;
       Object.defineProperty(process, 'platform', { value: platform });
@@ -614,6 +614,10 @@ describe('WeriftWebRtcSession', () => {
       const sdp = await session.createOffer();
 
       expect(sdp).toContain('m=video');
+      const args = vi.mocked(runFfmpeg).mock.calls.at(-1)?.[0] ?? [];
+      expect(args.slice(args.indexOf('-f'), args.indexOf('-f') + 2)).toEqual(['-f', format]);
+      const inputIndex = args.indexOf('-i');
+      expect(args.slice(inputIndex, inputIndex + 6)).toEqual(['-i', input, '-fps_mode', 'cfr', '-r', '30']);
 
       await session.close();
     });

@@ -196,6 +196,7 @@
 <li>[core]: Skip unchanged values when initializing MatterNode storage contexts.</li>
 <li>[webrtc]: The <code>test</code> video source follows <code>videoResolution</code> and <code>videoBitrate</code> like the <code>webcam</code> and <code>rtsp</code> sources (was fixed at 640x480 and 1000 kbps).</li>
 <li>[webrtc]: Add <code>MATTERBRIDGE_TEST_VIDEO_FPS</code> to set the <code>test</code> video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.</li>
+<li>[webrtc]: The <code>webcam</code> video source forces a constant 30 fps output (<code>-fps_mode cfr -r 30</code>), so the bitrate cap holds on macOS avfoundation (was about 7x the configured bitrate with a gray picture).</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.14.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.1.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.72.0.</li>
