@@ -182,6 +182,7 @@
 <li>[powerSource]: Add optional <code>batCapacity</code>, <code>batTimeToFullCharge</code>, <code>batChargingCurrent</code> and <code>activeBatChargeFaults</code> parameters to <code>createDefaultPowerSourceRechargeableBatteryClusterServer()</code>.</li>
 <li>[Intercom]: Add the <code>switchOptions</code> option and the <code>addSwitch()</code> method for the Generic Switch child endpoints.</li>
 <li>[docs]: Extend <a href="https://matterbridge.io/Camera.html">Camera</a> with browser peers hiding their address behind mDNS <code>.local</code> candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.</li>
+<li>[utils]: Add <code>isDocker()</code> in <code>runtimeDocker.ts</code> to detect a Linux container (Docker, Podman, VS Code dev containers, Codespaces) without the <code>--docker</code> parameter.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -197,6 +198,8 @@
 <li>[webrtc]: The <code>test</code> video source follows <code>videoResolution</code> and <code>videoBitrate</code> like the <code>webcam</code> and <code>rtsp</code> sources (was fixed at 640x480 and 1000 kbps).</li>
 <li>[webrtc]: Add <code>MATTERBRIDGE_TEST_VIDEO_FPS</code> to set the <code>test</code> video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.</li>
 <li>[webrtc]: The <code>webcam</code> video source forces a constant 30 fps output (<code>-fps_mode cfr -r 30</code>), so the bitrate cap holds on macOS avfoundation (was about 7x the configured bitrate with a gray picture).</li>
+<li>[ffmpeg]: <code>installFfmpeg()</code> also works without root through passwordless sudo (<code>sudo -n</code>), as in a dev container.</li>
+<li>[ffmpeg]: Resolve the Homebrew ffmpeg on Apple Silicon (<code>/opt/homebrew/bin/ffmpeg</code>), which is not on the <code>PATH</code> of a launchd service.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.14.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.1.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.72.0.</li>
