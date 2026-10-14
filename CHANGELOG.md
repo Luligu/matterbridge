@@ -61,6 +61,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
 - [docs]: Extend [Camera](https://matterbridge.io/Camera.html) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
 - [utils]: Add `isDocker()` in `runtimeDocker.ts` to detect a Linux container (Docker, Podman, VS Code dev containers, Codespaces) without the `--docker` parameter.
+- [utils]: Add `getDockerRuntimeInfo()` (container kind, `--docker`, official image build config, bridge network) and `isDockerBridgeNetwork()` in `runtimeDocker.ts`, and `isRoot()` and `hasPasswordlessSudo()` in `runtime.ts`.
 
 ### Changed
 
