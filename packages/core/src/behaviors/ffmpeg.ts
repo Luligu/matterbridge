@@ -33,7 +33,7 @@ import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger
 /** Module logger for ffmpeg binary resolution and process spawning. */
 const log = new AnsiLogger({
   logName: 'Ffmpeg',
-  logLevel: hasAnyParameter('debug', 'verbose') ? LogLevel.DEBUG : LogLevel.INFO,
+  logLevel: hasAnyParameter('debug', 'verbose', 'debug-ffmpeg', 'verbose-ffmpeg') ? LogLevel.DEBUG : LogLevel.INFO,
   logNameColor: MAGENTA,
   logTimestampFormat: TimestampFormat.TIME_MILLIS,
 });
