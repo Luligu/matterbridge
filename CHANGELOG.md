@@ -59,7 +59,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
 - [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
-- [docs]: Extend [werift.md](./packages/core/src/behaviors/werift.md) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
+- [docs]: Extend [werift](https://matterbridge.io/werift.html) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
 
 ### Changed
 

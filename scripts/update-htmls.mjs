@@ -88,7 +88,7 @@ const FILES_TO_RENDER = [
   { source: 'Matter-1.5.1.md', target: 'Matter-1.5.1.html' },
   { source: 'Matter-1.6.0.md', target: 'Matter-1.6.0.html' },
   { source: 'Matter.js-0.17.md', target: 'Matter.js-0.17.html' },
-  { source: 'packages/core/src/behaviors/werift.md', target: 'packages/core/src/behaviors/werift.html' },
+  { source: 'packages/core/src/behaviors/werift.md', target: 'werift.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },
 ];
