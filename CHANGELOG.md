@@ -60,6 +60,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
 - [docs]: Extend [Camera](https://matterbridge.io/Camera.html) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
+- [utils]: Add `isDocker()` in `runtimeDocker.ts` to detect a Linux container (Docker, Podman, VS Code dev containers, Codespaces) without the `--docker` parameter.
 
 ### Changed
 
@@ -75,6 +76,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [webrtc]: The `test` video source follows `videoResolution` and `videoBitrate` like the `webcam` and `rtsp` sources (was fixed at 640x480 and 1000 kbps).
 - [webrtc]: Add `MATTERBRIDGE_TEST_VIDEO_FPS` to set the `test` video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.
 - [webrtc]: The `webcam` video source forces a constant 30 fps output (`-fps_mode cfr -r 30`), so the bitrate cap holds on macOS avfoundation (was about 7x the configured bitrate with a gray picture).
+- [ffmpeg]: `installFfmpeg()` also works without root through passwordless sudo (`sudo -n`), as in a dev container.
+- [ffmpeg]: Resolve the Homebrew ffmpeg on Apple Silicon (`/opt/homebrew/bin/ffmpeg`), which is not on the `PATH` of a launchd service.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.
 - [matterbridge]: Bump `marked` to v.18.1.0.
 - [matterbridge]: Bump `oxfmt` to v.0.72.0.

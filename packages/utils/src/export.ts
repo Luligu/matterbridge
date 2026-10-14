@@ -40,6 +40,7 @@ export * from './network.js';
 export * from './npmPrefix.js';
 export * from './npmVersion.js';
 export * from './runtimeBun.js';
+export * from './runtimeDocker.js';
 export * from './tracker.js';
 export * from './validate.js';
 export * from './wait.js';
