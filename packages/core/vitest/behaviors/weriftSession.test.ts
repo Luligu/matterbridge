@@ -341,10 +341,10 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it.each([
-      [undefined, undefined, 'testsrc=size=640x480:rate=10', '1000k'],
-      ['auto', undefined, 'testsrc=size=640x480:rate=10', '1000k'],
-      ['1280x720', 2000, 'testsrc=size=1280x720:rate=10', '2000k'],
-      ['1920x1080', 2500, 'testsrc=size=1920x1080:rate=10', '2500k'],
+      [undefined, undefined, 'testsrc=size=640x480:rate=30', '1000k'],
+      ['auto', undefined, 'testsrc=size=640x480:rate=30', '1000k'],
+      ['1280x720', 2000, 'testsrc=size=1280x720:rate=30', '2000k'],
+      ['1920x1080', 2500, 'testsrc=size=1920x1080:rate=30', '2500k'],
     ])('should size the synthetic pattern from videoResolution=%s and videoBitrate=%s', async (resolution, bitrate, input, expectedBitrate) => {
       options.videoResolution = resolution;
       options.videoBitrate = bitrate;
@@ -356,6 +356,42 @@ describe('WeriftWebRtcSession', () => {
         expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', expectedBitrate]);
       } finally {
         await session.close();
+      }
+    });
+
+    it.each([
+      [undefined, 'testsrc=size=640x480:rate=30', '60'],
+      ['10', 'testsrc=size=640x480:rate=10', '20'],
+      [' 60 ', 'testsrc=size=640x480:rate=60', '120'],
+      ['0', 'testsrc=size=640x480:rate=30', '60'],
+      ['61', 'testsrc=size=640x480:rate=30', '60'],
+      ['12.5', 'testsrc=size=640x480:rate=30', '60'],
+      ['abc', 'testsrc=size=640x480:rate=30', '60'],
+    ])('should set the synthetic pattern frame rate and keyframe interval from MATTERBRIDGE_TEST_VIDEO_FPS=%s', async (fps, input, keyFrameInterval) => {
+      if (fps !== undefined) vi.stubEnv('MATTERBRIDGE_TEST_VIDEO_FPS', fps);
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        await session.createOffer();
+        const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
+        expect(args).toContain(input);
+        expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', keyFrameInterval]);
+      } finally {
+        await session.close();
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('should keep a keyframe every 20 frames for the RTSP source regardless of MATTERBRIDGE_TEST_VIDEO_FPS', async () => {
+      vi.stubEnv('MATTERBRIDGE_TEST_VIDEO_FPS', '10');
+      const session = new WeriftWebRtcSession(1, { ...options, videoSource: 'rtsp', videoSourceDevice: 'rtsp://camera.local/live' });
+      try {
+        await session.createOffer();
+        const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
+        expect(args).not.toContain('testsrc=size=640x480:rate=10');
+        expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', '20']);
+      } finally {
+        await session.close();
+        vi.unstubAllEnvs();
       }
     });
 

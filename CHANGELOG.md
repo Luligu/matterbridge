@@ -59,7 +59,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
 - [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
-- [docs]: Add [Werift.md](./Werift.md) about WebRTC streaming from a container to a browser: mDNS ICE candidates, the `MATTERBRIDGE_ICE_PORT_RANGE` and `MATTERBRIDGE_ICE_HOST_ADDRESSES` overrides, Docker Desktop UDP networking, the stream resolution and the `MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT` and `MATTERBRIDGE_STRICT_WEBRTCTRANSPORT` variables.
+- [docs]: Extend [werift.md](./packages/core/src/behaviors/werift.md) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
 
 ### Changed
 
@@ -73,6 +73,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Catch and log MatterNode broadcast message handler rejections with `fireAndForget`.
 - [core]: Skip unchanged values when initializing MatterNode storage contexts.
 - [webrtc]: The `test` video source follows `videoResolution` and `videoBitrate` like the `webcam` and `rtsp` sources (was fixed at 640x480 and 1000 kbps).
+- [webrtc]: Add `MATTERBRIDGE_TEST_VIDEO_FPS` to set the `test` video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.
 - [matterbridge]: Bump `marked` to v.18.1.0.
 - [matterbridge]: Bump `oxfmt` to v.0.72.0.

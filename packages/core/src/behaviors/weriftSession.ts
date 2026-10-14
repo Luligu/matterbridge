@@ -401,6 +401,32 @@ export class WeriftWebRtcSession {
    */
   private static readonly DEFAULT_BITRATE_KBPS = 1000;
 
+  /** Default frame rate of the synthetic test pattern, overridable with `MATTERBRIDGE_TEST_VIDEO_FPS`. */
+  private static readonly DEFAULT_TEST_VIDEO_FPS = 30;
+
+  /** Highest frame rate accepted from `MATTERBRIDGE_TEST_VIDEO_FPS`. */
+  private static readonly MAX_TEST_VIDEO_FPS = 60;
+
+  /**
+   * Resolves the frame rate of the synthetic test pattern from the `MATTERBRIDGE_TEST_VIDEO_FPS` environment
+   * variable, an integer from 1 to {@link MAX_TEST_VIDEO_FPS}. Falls back to {@link DEFAULT_TEST_VIDEO_FPS} when
+   * unset, and with a warning when the value is not a valid integer in range.
+   *
+   * @returns {number} The test pattern frame rate in frames per second.
+   */
+  private getTestVideoFps(): number {
+    const raw = process.env.MATTERBRIDGE_TEST_VIDEO_FPS?.trim();
+    if (!raw) return WeriftWebRtcSession.DEFAULT_TEST_VIDEO_FPS;
+    const fps = Number(raw);
+    if (!/^\d+$/.test(raw) || fps < 1 || fps > WeriftWebRtcSession.MAX_TEST_VIDEO_FPS) {
+      this.log.warn(
+        `Invalid MATTERBRIDGE_TEST_VIDEO_FPS "${raw}" (supported: 1-${WeriftWebRtcSession.MAX_TEST_VIDEO_FPS}); falling back to ${WeriftWebRtcSession.DEFAULT_TEST_VIDEO_FPS}`,
+      );
+      return WeriftWebRtcSession.DEFAULT_TEST_VIDEO_FPS;
+    }
+    return fps;
+  }
+
   /**
    * Resolves the configured encoder bitrate (kbps) from options.videoBitrate, applied regardless of the
    * capture resolution; falls back to {@link DEFAULT_BITRATE_KBPS} (with a warning) if unset or not a positive
@@ -473,18 +499,21 @@ export class WeriftWebRtcSession {
    * pattern; for `webcam` it selects the capture resolution directly; for
    * `rtsp` the camera streams at its own native resolution and is scaled to the resolved resolution with a `scale`
    * filter. The encoder bitrate defaults to {@link DEFAULT_BITRATE_KBPS} and can be overridden with
-   * options.videoBitrate, regardless of resolution and source.
+   * options.videoBitrate, regardless of resolution and source. The test pattern frame rate comes from
+   * {@link getTestVideoFps}, with a keyframe every 2 seconds (`-g` = 2 × fps); the other sources keep a keyframe
+   * every 20 frames.
    *
    * @param {'test' | 'webcam' | 'rtsp'} videoSource - The configured video source after `none` has been handled by the caller.
-   * @returns {{ args: string[]; description: string; bitrateKbps: number } | undefined} The ffmpeg input arguments, a description of the source for logging, and the target encoder bitrate; `undefined` when the configured source is unusable and no track should be injected.
+   * @returns {{ args: string[]; description: string; bitrateKbps: number; keyFrameInterval: number } | undefined} The ffmpeg input arguments, a description of the source for logging, the target encoder bitrate and the keyframe interval in frames; `undefined` when the configured source is unusable and no track should be injected.
    */
-  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number } | undefined {
+  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number; keyFrameInterval: number } | undefined {
     if (videoSource === 'test') {
       const resolution = this.getConfiguredVideoResolution();
       const bitrateKbps = this.getConfiguredVideoBitrate();
-      const description = `synthetic moving test pattern (${resolution})`;
-      this.log.debug(`Test pattern params: resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
-      return { args: ['-re', '-f', 'lavfi', '-i', `testsrc=size=${resolution}:rate=10`], description, bitrateKbps };
+      const fps = this.getTestVideoFps();
+      const description = `synthetic moving test pattern (${resolution}, ${fps}fps)`;
+      this.log.debug(`Test pattern params: resolution=${resolution}, fps=${fps}, description="${description}", bitrateKbps=${bitrateKbps}`);
+      return { args: ['-re', '-f', 'lavfi', '-i', `testsrc=size=${resolution}:rate=${fps}`], description, bitrateKbps, keyFrameInterval: fps * 2 };
     }
 
     const device = this.options.videoSourceDevice;
@@ -499,18 +528,18 @@ export class WeriftWebRtcSession {
     if (videoSource === 'rtsp') {
       const description = `RTSP camera (${device}, ${resolution})`;
       this.log.debug(`RTSP capture params: url=${device}, resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
-      return { args: ['-rtsp_transport', 'tcp', '-i', device, '-vf', `scale=${resolution.replace('x', ':')}`], description, bitrateKbps };
+      return { args: ['-rtsp_transport', 'tcp', '-i', device, '-vf', `scale=${resolution.replace('x', ':')}`], description, bitrateKbps, keyFrameInterval: 20 };
     }
 
     const description = `local webcam (${device}, ${resolution})`;
     this.log.debug(`Webcam capture params: device=${device}, resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
     switch (process.platform) {
       case 'linux':
-        return { args: ['-f', 'v4l2', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps };
+        return { args: ['-f', 'v4l2', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps, keyFrameInterval: 20 };
       case 'darwin':
-        return { args: ['-f', 'avfoundation', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps };
+        return { args: ['-f', 'avfoundation', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps, keyFrameInterval: 20 };
       case 'win32':
-        return { args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`], description, bitrateKbps };
+        return { args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`], description, bitrateKbps, keyFrameInterval: 20 };
       default:
         this.log.error(`Webcam capture via ffmpeg is not supported on platform "${process.platform}"; not injecting a video track`);
         return undefined;
@@ -574,10 +603,28 @@ export class WeriftWebRtcSession {
       this.peerConnection.addTrack(track);
 
       const bitrate = `${videoInput.bitrateKbps}k`;
+      const keyFrameInterval = String(videoInput.keyFrameInterval);
       const encoderArgs =
         selectedMimeType === 'video/h264'
-          ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-pix_fmt', 'yuv420p', '-g', '20', '-b:v', bitrate, '-maxrate', bitrate, '-bufsize', bitrate]
-          : ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '4', '-pix_fmt', 'yuv420p', '-g', '20', '-b:v', bitrate, '-maxrate', bitrate, '-bufsize', bitrate];
+          ? [
+              '-c:v',
+              'libx264',
+              '-preset',
+              'ultrafast',
+              '-tune',
+              'zerolatency',
+              '-pix_fmt',
+              'yuv420p',
+              '-g',
+              keyFrameInterval,
+              '-b:v',
+              bitrate,
+              '-maxrate',
+              bitrate,
+              '-bufsize',
+              bitrate,
+            ]
+          : ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '4', '-pix_fmt', 'yuv420p', '-g', keyFrameInterval, '-b:v', bitrate, '-maxrate', bitrate, '-bufsize', bitrate];
 
       const ffmpegArgs = [
         '-hide_banner',

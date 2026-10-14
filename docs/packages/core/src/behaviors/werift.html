@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 id="webrtc-media-with-werift">WebRTC media with werift</h1>
+<p>The camera device types (Camera, Floodlight Camera, Video Doorbell, Intercom, Audio Doorbell) stream their media over
+WebRTC. Matterbridge uses <a href="https://github.com/shinyoshiaki/werift-webrtc">werift</a> as the WebRTC stack and <code>ffmpeg</code> to
+produce the media itself. This page explains how a session is established and what has to be true on your network for
+it to work.</p>
+<h2 id="signalling-and-media-take-different-paths">Signalling and media take different paths</h2>
+<p>This is the single most important thing to understand, and the reason a camera can be perfectly commissioned and still
+show no picture.</p>
+<pre><code>  SIGNALLING (Matter, TCP)                       MEDIA (WebRTC, UDP)
+
+  Controller                                     Controller
+      |  SDP offer                                   ^
+      v                                              |
+  WebRtcTransportProvider.ProvideOffer               |  ICE / DTLS / RTP
+      |                                              |  flows DIRECTLY
+      v                                              |
+  Matterbridge (werift)  -- SDP answer --&gt;       Matterbridge (werift)
+</code></pre>
+<ul>
+<li>The <strong>controller</strong> creates the <code>RTCPeerConnection</code> and the SDP offer. Matterbridge has no control over it.</li>
+<li><strong>Matter carries only the signalling</strong> — the offer and the answer. It is a courier and nothing more.</li>
+<li>The <strong>media never travels over Matter.</strong> Once the SDP exchange is done, the controller and werift talk to each other
+directly over UDP.</li>
+</ul>
+<p>So Matter working proves nothing about whether media will work. They are separate network problems.</p>
+<h3 id="what-is-at-the-other-end">What is at the other end</h3>
+<p>The remote WebRTC peer is whatever the controller runs on, and that is usually <strong>not</strong> a browser:</p>
+<ul>
+<li><strong>Apple Home, Google Home, Alexa, SmartThings, Home Assistant</strong> — the peer is the hub, phone or app itself. There is
+no browser anywhere in the picture.</li>
+<li><strong>The matter.js server</strong> (OHF Matter Server) is the exception: it ships a <strong>browser UI</strong>, so there the peer is the
+browser (Edge, Chrome, Firefox, Safari) on whatever machine has the page open — which may be a completely different
+machine from the matter.js server.</li>
+</ul>
+<p>This matters when you are working out what has to reach what. With a hub controller you need Matterbridge reachable
+from the hub; with the matter.js browser UI you need it reachable from the machine running the browser, and the
+matter.js server&#39;s own address is irrelevant to the media path.</p>
+<h2 id="what-has-to-be-true">What has to be true</h2>
+<p>ICE has to find one candidate pair where each side can reach the other. Each side offers the addresses it knows about,
+and they probe every combination. If no pair is mutually routable, the connection stalls forever in <code>checking</code>.</p>
+<p>On a flat home network this is invisible, because it always succeeds. Matterbridge is on the LAN, the controller is on
+the same LAN, and the pair <code>192.168.1.x &lt;-&gt; 192.168.1.y</code> works on the first try.</p>
+<p>It stops being invisible when Matterbridge runs somewhere the peer cannot reach directly:</p>
+<ul>
+<li>Matterbridge in a <strong>Docker bridge network</strong>, peer on the host or elsewhere on the LAN. Matterbridge only knows its
+private address (e.g. <code>172.18.0.5</code>), which nothing outside the bridge can route to.</li>
+<li>Matterbridge in a <strong>dev container or VM</strong>, peer on the host OS.</li>
+<li>Peer and Matterbridge on <strong>different subnets</strong>, or separated by client isolation on a guest/managed Wi-Fi.</li>
+</ul>
+<p>In all of these the SDP exchange succeeds, both sides think a session started, and no packet ever arrives.</p>
+<h2 id="browser-peers-hide-their-address">Browser peers hide their address</h2>
+<p>To protect privacy, browsers replace their real LAN address in ICE host candidates with a random <code>&lt;uuid&gt;.local</code> mDNS
+name, for example:</p>
+<pre><code>candidate:2844074272 1 udp 2113937151 dacfb37f-7d92-4462-9c7c-3d430ca8ca94.local 62365 typ host
+</code></pre>
+<p>werift resolves that name with a real multicast DNS query. Docker Desktop (macOS and Windows) runs containers inside a
+VM and does not forward multicast between the container network and the host, so the query never reaches the browser
+and each candidate times out after 5 seconds (<code>ICE_CANDIDATE_APPLY_TIMEOUT_MS</code> in <code>webRtcTransportProviderServer.ts</code>):</p>
+<pre><code>failed ICE candidate 1/8 for session 0 after 5002ms with Error: ... timed out applying an ICE candidate after 5000ms
+</code></pre>
+<p>Candidates are applied concurrently and <code>provideIceCandidates</code> answers the controller without waiting for them, so these
+timeouts only add log noise. What matters is which direction can still work:</p>
+<ul>
+<li><strong>The browser sends its real address</strong>: Matterbridge reaches the browser through the Docker outbound NAT, the replies
+come back the same way, and the session connects without any configuration. Tested with Firefox and Docker Desktop on
+macOS: <code>Selected ICE candidate pair: local=172.30.1.5:41366 (host/udp) remote=192.168.1.141:56668 (host/UDP)</code>.</li>
+<li><strong>The browser hides its address</strong>: only the browser-to-Matterbridge direction is left, so Matterbridge has to
+advertise a candidate the browser can reach — see <a href="#making-matterbridge-reachable">Making Matterbridge reachable</a>.
+werift then learns the browser&#39;s real address from its incoming connectivity checks (peer-reflexive candidate).</li>
+</ul>
+<p>The obfuscation can be turned off in some browsers only:</p>
+<table>
+<thead>
+<tr>
+<th>Browser</th>
+<th>Hides the address by default</th>
+<th>How to disable it</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Chrome (macOS, Windows)</td>
+<td>Yes</td>
+<td><code>chrome://flags/#enable-webrtc-hide-local-ips-with-mdns</code> → <strong>Anonymize local IPs exposed by WebRTC</strong> = <strong>Disabled</strong>, then relaunch</td>
+</tr>
+<tr>
+<td>Edge (macOS, Windows)</td>
+<td>Yes</td>
+<td><code>edge://flags/#enable-webrtc-hide-local-ips-with-mdns</code> → <strong>Anonymize local IPs exposed by WebRTC</strong> = <strong>Disabled</strong>, then relaunch</td>
+</tr>
+<tr>
+<td>Firefox (macOS, Windows)</td>
+<td>Yes (since Firefox 74)</td>
+<td><code>about:config</code> → <code>media.peerconnection.ice.obfuscate_host_addresses</code> = <code>false</code>, or add the site to <code>media.peerconnection.ice.obfuscate_host_addresses.blocklist</code></td>
+</tr>
+<tr>
+<td>Safari (macOS)</td>
+<td>Yes</td>
+<td>No setting in current Safari: the old Develop → WebRTC → <strong>Disable ICE Candidate Restrictions</strong> item and the mDNS feature flag have been removed</td>
+</tr>
+</tbody></table>
+<p>Notes:</p>
+<ul>
+<li>The browsers keep the real address for a page that was granted camera or microphone access with <code>getUserMedia()</code>. A
+camera viewer only receives media and never asks for the camera, so allowing camera/microphone for the site in the
+browser settings does not help.</li>
+<li>Firefox can also advertise only an IPv6 link-local address (<code>fe80::…</code>) when the page is not a secure context (plain
+<code>http://</code> from a host other than <code>localhost</code>), even with the obfuscation disabled. Serve the page over HTTPS or open
+it via <code>localhost</code>. Check <code>window.isSecureContext</code> in the devtools, or the gathered candidates in <code>about:webrtc</code>.
+Chrome and Edge were not affected under the same conditions.</li>
+</ul>
+<p>The ICE variables below work with every browser and its default settings, so they are the recommended setup for a
+container; disabling the obfuscation only removes the timeout warnings.</p>
+<h2 id="reading-the-log">Reading the log</h2>
+<p>Set the log level to debug. Every session logs a diagnostics snapshot every 10 seconds.</p>
+<p>Working:</p>
+<pre><code>Selected ICE candidate pair: local=... remote=...
+- iceConnectionState=connected
+- dtlsTransportStates=[connected]
+- outboundRtp[video:packetsSent=620, audio:packetsSent=970] (totalPacketsSent Δ+823)
+</code></pre>
+<p>No routable candidate pair — the network problem described above:</p>
+<pre><code>- iceConnectionState=checking          &lt;- never leaves &quot;checking&quot;
+- dtlsTransportStates=[new]            &lt;- DTLS never starts
+- nominatedPair(packetsSent=0, packetsReceived=0)
+- outboundRtp[video:packetsSent=0, audio:packetsSent=0]
+</code></pre>
+<p>Connected, but no media — this is not a network problem, it is a missing encoder:</p>
+<pre><code>Cannot inject video stream: missing dependency ffmpeg
+- iceConnectionState=connected
+- outboundRtp[video:packetsSent=0, audio:packetsSent=0]
+</code></pre>
+<p>Also worth checking the gathered candidates. If every <code>Gathered local ICE candidate</code> line shows an address the peer
+cannot reach, that is the whole problem:</p>
+<pre><code>Gathered local ICE candidate: candidate:... 172.18.0.5 51001 typ host
+</code></pre>
+<h2 id="making-matterbridge-reachable">Making Matterbridge reachable</h2>
+<p>Two environment variables let a session advertise a candidate a remote peer can actually route to. Both are optional
+and both fall back to werift&#39;s defaults, so a flat home network needs neither.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Example</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MATTERBRIDGE_ICE_PORT_RANGE</code></td>
+<td><code>51000-51010</code></td>
+<td>Pins ICE to a fixed local UDP range instead of an ephemeral port, so a container runtime can publish it. Ignored if malformed, out of range, or if min is not lower than max.</td>
+</tr>
+<tr>
+<td><code>MATTERBRIDGE_ICE_HOST_ADDRESSES</code></td>
+<td><code>172.27.167.141</code></td>
+<td>Comma-separated extra addresses advertised as ICE host candidates. Use the address the peer reaches your host on. Advertised only, never bound, so an address that does not exist locally is fine.</td>
+</tr>
+</tbody></table>
+<p>For Docker, pin the range, publish it as UDP, and advertise the host address:</p>
+<pre><code class="language-yaml">environment:
+  MATTERBRIDGE_ICE_PORT_RANGE: &#39;51000-51010&#39;
+  MATTERBRIDGE_ICE_HOST_ADDRESSES: &#39;192.168.1.50&#39; # the Docker host, as the peer sees it
+ports:
+  - &#39;51000-51010:51000-51010/udp&#39;
+</code></pre>
+<p>The published port range and <code>MATTERBRIDGE_ICE_PORT_RANGE</code> must always match. Each session opens one UDP socket per
+gathered address (every local interface plus each advertised address) and each takes its own port of the range, e.g.
+<code>192.168.1.50:51000</code>, <code>172.30.1.2:51001</code> and an IPv6 address on <code>51002</code>. Size the range for that many ports per
+concurrent stream. If the Docker host gets a new LAN address, update
+<code>MATTERBRIDGE_ICE_HOST_ADDRESSES</code> and recreate the container.</p>
+<p>In a dev container (<code>.devcontainer/*/devcontainer.json</code>), add the two variables to <code>containerEnv</code> and
+<code>&quot;--publish&quot;, &quot;51000-51010:51000-51010/udp&quot;</code> to <code>runArgs</code>, then rebuild the container: published ports cannot be added
+to a running container. The address can default to the host and be overridden from the host environment with
+<code>&quot;${localEnv:MATTERBRIDGE_ICE_HOST_ADDRESSES:192.168.1.50}&quot;</code>.</p>
+<p>When the variables are active, every session logs them, and the advertised candidates include the host address on a
+port of the range:</p>
+<pre><code>ICE overrides: portRange=51000-51010 additionalHostAddresses=192.168.1.50
+Gathered local ICE candidate: candidate:... 192.168.1.50 51000 typ host
+</code></pre>
+<p>Do not be surprised if the selected pair shows a <code>prflx</code> (peer-reflexive) remote candidate on an address the peer
+never advertised. Docker&#39;s UDP proxy rewrites the source address, ICE discovers the rewritten one during its
+connectivity checks, and uses it. That is normal and the connection is fine.</p>
+<p>Running the container with <code>--network=host</code> also solves it, and needs no variables at all — but it drops the container
+off any user-defined Docker network, so containers that reached each other by name (Home Assistant, a matter.js server)
+no longer can. Prefer the variables when that matters.</p>
+<h3 id="docker-desktop-kernel-networking-for-udp">Docker Desktop: kernel networking for UDP</h3>
+<p>Docker Desktop on macOS has an option to use kernel networking for UDP (<code>KernelForUDP</code> in its settings). With it
+enabled, UDP packets arriving on a published port were seen inside the container with an unrelated public source
+address, so werift&#39;s replies never reached the peer and ICE stayed in <code>checking</code> even with the variables above.</p>
+<p>Disable it in Docker Desktop → <strong>Settings</strong> → <strong>Resources</strong> → <strong>Network</strong>, apply and restart Docker Desktop. Incoming
+packets then show the Docker network gateway as source (for example <code>172.30.1.1</code>) and the replies are delivered.</p>
+<p>To check the UDP path on its own, run a small UDP echo on a free port of the range inside the container, send a datagram
+from the host to <code>&lt;host address&gt;:&lt;port&gt;</code>, and verify that the reply comes back.</p>
+<h3 id="firewalls">Firewalls</h3>
+<p>The pinned UDP range has to be open inbound on the host. A blocked range looks exactly like having no routable
+candidate: connectivity checks leave, nothing comes back, and ICE sits in <code>checking</code>.</p>
+<p>Firewalls matter more here than they first appear, because ICE succeeds as soon as <strong>either</strong> side can reach the other.
+On a permissive network the Matterbridge-to-peer direction often works on its own, and no configuration is needed at
+all. Tighten the firewall and that direction disappears, leaving only peer-to-Matterbridge — which is precisely the
+direction that needs a reachable advertised candidate.</p>
+<p>That is why an unchanged setup can stream perfectly on one network and stall forever on another.</p>
+<p><strong>Do not rule out a firewall just because everything else works.</strong> A stateful firewall does not block &quot;UDP&quot; — it blocks
+traffic that arrives <em>unsolicited</em>, and permits anything that matches a flow the host itself opened. Almost everything
+Matterbridge does is outbound-initiated: STUN lookups, Matter commissioning, npm, the frontend on port 8283. All of
+them keep working perfectly while unsolicited inbound is blocked outright.</p>
+<p>A successful STUN lookup is the most misleading of these. It proves the host can reach the internet and receive the
+reply on the flow it just opened. It says nothing at all about whether the remote peer can reach the host. The same
+packet is treated differently depending on who is at the far end:</p>
+<pre><code>STUN request     host --&gt; [firewall routes it out] --&gt; STUN server     outbound, state created  -&gt; reply allowed
+ICE check in     peer --&gt; [firewall IS the destination] --&gt; local app  unsolicited inbound      -&gt; dropped
+</code></pre>
+<p>So if media stalls in <code>checking</code> while every other feature is healthy, that pattern is evidence <em>for</em> a firewall, not
+against one.</p>
+<h3 id="windows-network-profile">Windows network profile</h3>
+<p>On Windows this is usually the <strong>network profile</strong>. A <strong>Private</strong> network allows inbound connections from local
+subnets; a <strong>Public</strong> one blocks them. Open and guest Wi-Fi — hotels, cafés, offices, managed or shared-building
+networks — is classified Public. Recent WSL releases also apply Windows Firewall policy to WSL traffic, so this reaches
+containers running inside WSL, not just processes on Windows itself.</p>
+<pre><code class="language-powershell">Get-NetConnectionProfile | Select-Object InterfaceAlias, NetworkCategory
+</code></pre>
+<p>Do <strong>not</strong> reclassify an untrusted network as Private to work around this. That exposes the machine&#39;s inbound services
+to everyone else on the network, which on shared or open Wi-Fi is a genuine risk. Set the two ICE variables instead:
+they rely only on the outbound direction, which stays allowed under Public.</p>
+<h2 id="stream-resolution-and-stream-allocation">Stream resolution and stream allocation</h2>
+<p>In Matter a controller chooses the stream resolution and bitrate when it allocates a video stream with
+<code>CameraAvStreamManagement.VideoStreamAllocate</code> (<code>MinResolution</code>/<code>MaxResolution</code>, <code>MinBitRate</code>/<code>MaxBitRate</code>).
+<code>SolicitOffer</code>/<code>ProvideOffer</code> carry no resolution: they only reference allocated streams (<code>VideoStreams</code>). A snapshot is
+different: <code>CaptureSnapshot</code> carries its own <code>RequestedResolution</code>.</p>
+<p>For each WebRTC session, Matterbridge resolves the video resolution in this order:</p>
+<ol>
+<li>A fixed <code>weriftOfferOptions.videoResolution</code> set by the plugin (<code>640x480</code>, <code>1280x720</code> or <code>1920x1080</code>).</li>
+<li>When the plugin leaves it unset, the <code>MaxResolution</code> of the allocated video stream referenced by the offer. The
+matterbridge-camera and matterbridge-webcam plugins leave it unset for their <code>auto</code> setting; a literal <code>&#39;auto&#39;</code>
+value skips the allocated stream and falls to step 3.</li>
+<li>Otherwise <code>640x480</code>. A resolution other than the three supported ones also falls back to <code>640x480</code>, with a warning.</li>
+</ol>
+<p>It applies to every video source (<code>test</code>, <code>webcam</code> and <code>rtsp</code>). The encoder bitrate always comes from
+<code>weriftOfferOptions.videoBitrate</code> (the plugin <code>videoBitrate</code> setting, default 1000 kbps), not from the allocated stream.
+Snapshots use the <code>RequestedResolution</code> of <code>CaptureSnapshot</code>, downgraded if needed to keep the JPEG within 64000 bytes.</p>
+<p>At startup Matterbridge allocates a default video, audio and snapshot stream (id 0) for a camera that has none, at its
+largest supported resolution (for example 1920x1080), because some controllers never allocate streams. The allocated
+streams are persisted, so they are restored at the next start.</p>
+<p>Observed with the matter.js server (OHF Matter Server): it never sends <code>VideoStreamAllocate</code>, and every <code>ProvideOffer</code>
+references video stream 0, even when no stream 0 exists. Its quality selection (for example 1280) only reaches
+<code>CaptureSnapshot</code>. The stream therefore uses stream 0 (1920x1080 with the default stream, 640x480 without it), and a
+fixed <code>videoResolution</code> in the plugin config is the only way to choose the stream resolution with this controller.</p>
+<p>Two environment variables control this behavior, mainly for testing:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Value</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT</code></td>
+<td><code>1</code></td>
+<td>Skips the default stream allocation at startup. Streams already persisted are still restored, so to start without a video stream the persisted <code>allocatedVideoStreams</code> entry must be removed from the storage (or deallocated by the controller).</td>
+</tr>
+<tr>
+<td><code>MATTERBRIDGE_STRICT_WEBRTCTRANSPORT</code></td>
+<td><code>1</code></td>
+<td>Strict spec conformance for <code>SolicitOffer</code>/<code>ProvideOffer</code>, for the CHIP WebRTC Transport Provider tests (<code>TC_WEBRTCP_2_*</code>): a request without stream fields is rejected with <code>InvalidCommand</code>, and a stream id that is not allocated is rejected (<code>InvalidInState</code> when none is allocated, <code>DynamicConstraintError</code> for an unknown id). By default these requests are accepted with automatic stream selection, for compatibility with controllers that never allocate.</td>
+</tr>
+</tbody></table>
+<p>Do not set <code>MATTERBRIDGE_STRICT_WEBRTCTRANSPORT</code> with a controller like the matter.js server: its offers reference a
+stream it never allocated and would be rejected.</p>
+<h2 id="test-video-source">Test video source</h2>
+<p>The <code>test</code> video source streams an ffmpeg synthetic moving test pattern (<code>testsrc</code>), so a camera can be validated end to
+end without a real capture device; the <code>test</code> audio source (<code>audioSource: test</code>) adds a 440 Hz test tone. The video
+follows <code>videoResolution</code> and <code>videoBitrate</code> like the other sources.</p>
+<p>Its frame rate defaults to 30 fps and can be changed with <code>MATTERBRIDGE_TEST_VIDEO_FPS</code> (an integer from 1 to 60; an
+invalid value is ignored with a warning). The encoder sends a keyframe every 2 seconds (<code>-g</code> = 2 × fps), so the stream
+starts and recovers from packet loss at the same pace at any frame rate. The <code>webcam</code> source captures at 30 fps and the
+<code>rtsp</code> source keeps the camera frame rate; both send a keyframe every 20 frames.</p>
+<p>The debug log shows the values in use:</p>
+<pre><code>Test pattern params: resolution=1920x1080, fps=30, description=&quot;synthetic moving test pattern (1920x1080, 30fps)&quot;, bitrateKbps=1000
+</code></pre>
+<h2 id="ffmpeg">ffmpeg</h2>
+<p><code>ffmpeg</code> is searched on <code>PATH</code>, then in <code>/usr/bin</code>, <code>/bin</code> and <code>/usr/local/bin</code>, and on Windows in the winget
+(<code>%LOCALAPPDATA%\Microsoft\WinGet\Packages</code>) and <code>%ProgramFiles%</code> / <code>%ProgramFiles(x86)%</code> install folders. It is
+resolved <strong>once, on first use</strong>, and the result is kept for the life of the process: if you install it by hand while
+Matterbridge is running, restart Matterbridge before trying again. Installing it with the plugin&#39;s install action
+(<code>installFfmpeg()</code>) resolves it again without a restart. Without it a session negotiates and connects
+normally and then sends no RTP, logging <code>Cannot inject video stream: missing dependency ffmpeg</code>. A rebuilt container
+starts from its image, so an ffmpeg installed by hand in the previous container is gone.</p>
+<h2 id="environment-variables">Environment variables</h2>
+<p>All the environment variables of the Matterbridge camera and WebRTC implementation:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Default</th>
+<th>Section</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>MATTERBRIDGE_ICE_PORT_RANGE</code></td>
+<td>random port</td>
+<td><a href="#making-matterbridge-reachable">Making Matterbridge reachable</a></td>
+<td>Fixed UDP port range for ICE, e.g. <code>51000-51010</code>, to publish from a container.</td>
+</tr>
+<tr>
+<td><code>MATTERBRIDGE_ICE_HOST_ADDRESSES</code></td>
+<td>none</td>
+<td><a href="#making-matterbridge-reachable">Making Matterbridge reachable</a></td>
+<td>Extra ICE host candidate addresses, e.g. the Docker host address.</td>
+</tr>
+<tr>
+<td><code>MATTERBRIDGE_TEST_VIDEO_FPS</code></td>
+<td><code>30</code></td>
+<td><a href="#test-video-source">Test video source</a></td>
+<td>Frame rate of the <code>test</code> video source, 1 to 60.</td>
+</tr>
+<tr>
+<td><code>MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT</code></td>
+<td>unset (allocate)</td>
+<td><a href="#stream-resolution-and-stream-allocation">Stream resolution and stream allocation</a></td>
+<td><code>1</code> skips the default video, audio and snapshot stream allocation at startup.</td>
+</tr>
+<tr>
+<td><code>MATTERBRIDGE_STRICT_WEBRTCTRANSPORT</code></td>
+<td>unset (compatible)</td>
+<td><a href="#stream-resolution-and-stream-allocation">Stream resolution and stream allocation</a></td>
+<td><code>1</code> enables strict spec conformance for <code>SolicitOffer</code>/<code>ProvideOffer</code> (CHIP tests only).</td>
+</tr>
+</tbody></table>
+<h2 id="diagnosing-from-scratch">Diagnosing from scratch</h2>
+<ol>
+<li>Is <code>ffmpeg</code> on <code>PATH</code>? If not, install it and restart Matterbridge.</li>
+<li>Does the log reach <code>iceConnectionState=connected</code>? If not, it is a routing problem — go to step 3. If yes and
+<code>packetsSent</code> stays 0, it is ffmpeg.</li>
+<li>Look at the <code>Gathered local ICE candidate</code> lines. Can the peer&#39;s machine reach any of those addresses? Try to ping
+one from it. Remember the peer is the hub or app running the controller, or the machine with the matter.js browser
+UI open — not necessarily the matter.js server itself.</li>
+<li>If not, set <code>MATTERBRIDGE_ICE_PORT_RANGE</code> and <code>MATTERBRIDGE_ICE_HOST_ADDRESSES</code>, publish the range as UDP, and
+restart. Check that the log shows the <code>ICE overrides</code> line.</li>
+<li>Still stuck in <code>checking</code> with a correct-looking candidate? A firewall is dropping the range. On Windows, check the
+network profile first — Public blocks the inbound direction that a permissive network let through. On Docker Desktop
+for macOS, disable kernel networking for UDP.</li>
+<li>Every remote candidate fails with <code>timed out applying an ICE candidate</code>? The peer is a browser hiding its address
+behind <code>.local</code> names: harmless once step 4 is done, or disable the obfuscation in the browser.</li>
+</ol>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

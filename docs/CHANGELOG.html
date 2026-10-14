@@ -181,6 +181,7 @@
 <li>[frontend]: Add the <code>Memory limit</code> (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.</li>
 <li>[powerSource]: Add optional <code>batCapacity</code>, <code>batTimeToFullCharge</code>, <code>batChargingCurrent</code> and <code>activeBatChargeFaults</code> parameters to <code>createDefaultPowerSourceRechargeableBatteryClusterServer()</code>.</li>
 <li>[Intercom]: Add the <code>switchOptions</code> option and the <code>addSwitch()</code> method for the Generic Switch child endpoints.</li>
+<li>[docs]: Extend <a href="./packages/core/src/behaviors/werift.html">werift.html</a> with browser peers hiding their address behind mDNS <code>.local</code> candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -193,6 +194,8 @@
 <li>[core]: Bind plugin endpoint callbacks to their MatterNode instance.</li>
 <li>[core]: Catch and log MatterNode broadcast message handler rejections with <code>fireAndForget</code>.</li>
 <li>[core]: Skip unchanged values when initializing MatterNode storage contexts.</li>
+<li>[webrtc]: The <code>test</code> video source follows <code>videoResolution</code> and <code>videoBitrate</code> like the <code>webcam</code> and <code>rtsp</code> sources (was fixed at 640x480 and 1000 kbps).</li>
+<li>[webrtc]: Add <code>MATTERBRIDGE_TEST_VIDEO_FPS</code> to set the <code>test</code> video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.14.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.1.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.72.0.</li>
