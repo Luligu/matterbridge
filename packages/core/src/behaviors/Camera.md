@@ -1,4 +1,4 @@
-# WebRTC media with werift
+# Matterbridge cameras
 
 The camera device types (Camera, Floodlight Camera, Video Doorbell, Intercom, Audio Doorbell) stream their media over
 WebRTC. Matterbridge uses [werift](https://github.com/shinyoshiaki/werift-webrtc) as the WebRTC stack and `ffmpeg` to
@@ -272,10 +272,37 @@ At startup Matterbridge allocates a default video, audio and snapshot stream (id
 largest supported resolution (for example 1920x1080), because some controllers never allocate streams. The allocated
 streams are persisted, so they are restored at the next start.
 
-Observed with the matter.js server (OHF Matter Server): it never sends `VideoStreamAllocate`, and every `ProvideOffer`
-references video stream 0, even when no stream 0 exists. Its quality selection (for example 1280) only reaches
-`CaptureSnapshot`. The stream therefore uses stream 0 (1920x1080 with the default stream, 640x480 without it), and a
-fixed `videoResolution` in the plugin config is the only way to choose the stream resolution with this controller.
+A controller that does not allocate its own stream ends up on the default stream 0 in one of two ways:
+
+- It references stream 0 in `ProvideOffer`/`SolicitOffer` (the matter.js server does, see below).
+- It sends no stream fields at all (Home Assistant, SmartThings). Unless `MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1`,
+  Matterbridge then reuses an allocated stream with the same stream usage, or the first allocated one. It allocates a new
+  one, at the largest supported resolution, only when none exists.
+
+The plugin `videoResolution` setting decides what happens next:
+
+| Plugin `videoResolution` | Default stream 0 present (normal)       | No allocated stream (`MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT=1` and nothing persisted)                              |
+| ------------------------ | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `auto`                   | `MaxResolution` of stream 0 (1920x1080) | Stream 0 referenced but missing: `640x480`. No stream fields: a new stream is allocated at the largest supported resolution (1920x1080). |
+| `640x480`                | `640x480`                               | `640x480`                                                                                                                                |
+| `1280x720`               | `1280x720`                              | `1280x720`                                                                                                                               |
+| `1920x1080`              | `1920x1080`                             | `1920x1080`                                                                                                                              |
+
+A fixed resolution always overrides the stream, whatever the controller asks for. With `auto` the stream follows the
+allocated stream, which is the controller's own stream only if the controller really allocated one and references it.
+The bitrate is the plugin `videoBitrate` in every case.
+
+The three resolutions come from Home Assistant: the matter.js server dashboard uses the same list
+(`HA_DEFAULT_RESOLUTIONS`) when a camera advertises no `RateDistortionTradeOffPoints`. Matter itself does not require
+any specific resolution; a camera advertises its own. Note that `640x480` is 4:3 while the other two are 16:9.
+
+Observed with the matter.js server dashboard (OHF Matter Server 1.4.0): before allocating, the live view looks in
+`AllocatedVideoStreams` for a stream that covers the request (existing `MinResolution` ≤ wanted minimum and existing
+`MaxResolution` ≥ wanted maximum) and reuses it. Stream 0 spans from the minimum viewport resolution to 1920x1080, so it
+covers every quality choice. Picking 1280x720 therefore reuses stream 0 without sending `VideoStreamAllocate`, and with
+`auto` the stream is 1920x1080. A fixed `videoResolution` in the plugin config is the reliable way to choose the stream
+resolution with this controller. Its snapshot quality choice is separate: it goes in the `RequestedResolution` of
+`CaptureSnapshot`.
 
 Two environment variables control this behavior, mainly for testing:
 

@@ -370,10 +370,56 @@ Snapshots use the <code>RequestedResolution</code> of <code>CaptureSnapshot</cod
 <p>At startup Matterbridge allocates a default video, audio and snapshot stream (id 0) for a camera that has none, at its
 largest supported resolution (for example 1920x1080), because some controllers never allocate streams. The allocated
 streams are persisted, so they are restored at the next start.</p>
-<p>Observed with the matter.js server (OHF Matter Server): it never sends <code>VideoStreamAllocate</code>, and every <code>ProvideOffer</code>
-references video stream 0, even when no stream 0 exists. Its quality selection (for example 1280) only reaches
-<code>CaptureSnapshot</code>. The stream therefore uses stream 0 (1920x1080 with the default stream, 640x480 without it), and a
-fixed <code>videoResolution</code> in the plugin config is the only way to choose the stream resolution with this controller.</p>
+<p>A controller that does not allocate its own stream ends up on the default stream 0 in one of two ways:</p>
+<ul>
+<li>It references stream 0 in <code>ProvideOffer</code>/<code>SolicitOffer</code> (the matter.js server does, see below).</li>
+<li>It sends no stream fields at all (Home Assistant, SmartThings). Unless <code>MATTERBRIDGE_STRICT_WEBRTCTRANSPORT=1</code>,
+Matterbridge then reuses an allocated stream with the same stream usage, or the first allocated one. It allocates a new
+one, at the largest supported resolution, only when none exists.</li>
+</ul>
+<p>The plugin <code>videoResolution</code> setting decides what happens next:</p>
+<table>
+<thead>
+<tr>
+<th>Plugin <code>videoResolution</code></th>
+<th>Default stream 0 present (normal)</th>
+<th>No allocated stream (<code>MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT=1</code> and nothing persisted)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>auto</code></td>
+<td><code>MaxResolution</code> of stream 0 (1920x1080)</td>
+<td>Stream 0 referenced but missing: <code>640x480</code>. No stream fields: a new stream is allocated at the largest supported resolution (1920x1080).</td>
+</tr>
+<tr>
+<td><code>640x480</code></td>
+<td><code>640x480</code></td>
+<td><code>640x480</code></td>
+</tr>
+<tr>
+<td><code>1280x720</code></td>
+<td><code>1280x720</code></td>
+<td><code>1280x720</code></td>
+</tr>
+<tr>
+<td><code>1920x1080</code></td>
+<td><code>1920x1080</code></td>
+<td><code>1920x1080</code></td>
+</tr>
+</tbody></table>
+<p>A fixed resolution always overrides the stream, whatever the controller asks for. With <code>auto</code> the stream follows the
+allocated stream, which is the controller&#39;s own stream only if the controller really allocated one and references it.
+The bitrate is the plugin <code>videoBitrate</code> in every case.</p>
+<p>The three resolutions come from Home Assistant: the matter.js server dashboard uses the same list
+(<code>HA_DEFAULT_RESOLUTIONS</code>) when a camera advertises no <code>RateDistortionTradeOffPoints</code>. Matter itself does not require
+any specific resolution; a camera advertises its own. Note that <code>640x480</code> is 4:3 while the other two are 16:9.</p>
+<p>Observed with the matter.js server dashboard (OHF Matter Server 1.4.0): before allocating, the live view looks in
+<code>AllocatedVideoStreams</code> for a stream that covers the request (existing <code>MinResolution</code> ≤ wanted minimum and existing
+<code>MaxResolution</code> ≥ wanted maximum) and reuses it. Stream 0 spans from the minimum viewport resolution to 1920x1080, so it
+covers every quality choice. Picking 1280x720 therefore reuses stream 0 without sending <code>VideoStreamAllocate</code>, and with
+<code>auto</code> the stream is 1920x1080. A fixed <code>videoResolution</code> in the plugin config is the reliable way to choose the stream
+resolution with this controller. Its snapshot quality choice is separate: it goes in the <code>RequestedResolution</code> of
+<code>CaptureSnapshot</code>.</p>
 <p>Two environment variables control this behavior, mainly for testing:</p>
 <table>
 <thead>
