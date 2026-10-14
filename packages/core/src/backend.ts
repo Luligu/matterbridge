@@ -3,7 +3,7 @@
  * @description This file contains the class Backend.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -61,7 +61,6 @@
  * | /api/viewhistorypage /api/downloadhistorypage              | missing                                                    |
  * | /api/select/devices /api/select/entities                   | missing                                                    |
  * | /api/action /api/command /api/config                       | missing                                                    |
- * | /api/clusters                                              | getApiCluster() is a TODO stub and always returns undefined|
  * +------------------------------------------------------------+------------------------------------------------------------+
  */
 
@@ -549,18 +548,23 @@ export class Backend extends EventEmitter<BackendEvents> {
    * Response for /api/clusters
    *
    * @param {string} pluginName - The name of the plugin.
-   * @param {number} endpointNumber - The endpoint number.
-   * @param {string} [serialNumber] - The device serial number to filter by (optional).
-   * @param {string} [uniqueId] - The device unique ID to filter by (optional).
-   * @returns {Promise<ApiClusters | undefined>} A promise that resolves to the clusters or undefined if not found.
+   * @param {number} number - The endpoint number.
+   * @param {string} serialNumber - The device serial number.
+   * @param {string} uniqueId - The device unique ID.
+   * @returns {Promise<ApiClusters>} The clusters returned by the matching platform.
+   * @throws {Error} If the platform returns an error or the broadcast fetch fails or times out.
    */
-  // oxlint-disable-next-line typescript/require-await -- Preserve the async API until cluster retrieval is implemented.
-  async getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): Promise<ApiClusters | undefined> {
+  async getApiCluster(pluginName: string, number: number, serialNumber: string, uniqueId: string): Promise<ApiClusters> {
     const start = performance.now();
-    this.log.debug(`Retrieving API cluster for plugin: ${pluginName}, endpoint: ${endpointNumber}, serial: ${serialNumber}, uniqueId: ${uniqueId}`);
-    // TODO: Implement the call to retrieve the API cluster.
+    this.log.debug(`Retrieving API cluster for plugin: ${pluginName}, number: ${number}, serial: ${serialNumber}, uniqueId: ${uniqueId}`);
+    const response = await this.server.fetch({
+      type: 'platform_get_apiclusters',
+      src: 'frontend',
+      dst: 'platform',
+      params: { pluginName, number, serialNumber, uniqueId },
+    });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
-    return undefined;
+    return response.result.clusters;
   }
 
   /**

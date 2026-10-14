@@ -3,7 +3,7 @@
  * @description This file contains the class Frontend.
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.4
+ * @version 1.4.5
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -58,7 +58,6 @@ import type {
   ApiPlugin,
   ApiSettings,
   BridgeStatus,
-  Cluster,
   MatterbridgeInformation,
   PluginStatusUpdate,
   RefreshRequiredChanged,
@@ -87,14 +86,22 @@ import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidStri
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
-import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
 import type { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
-import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
-import { deleteAdvertisingNode, getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
+import {
+  deleteAdvertisingNode,
+  getBatteryLevel,
+  getClusterTextFromDevice,
+  getPowerSource,
+  getReachability,
+  getServerNodeData,
+  setAdvertisingNode,
+  toApiClusters,
+} from './matterNodeHelpers.js';
 import type { Plugin } from './pluginManager.js';
 
 logModuleLoaded('Frontend');
@@ -1407,91 +1414,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {string} pluginName - The name of the plugin.
    * @param {number} endpointNumber - The endpoint number.
-   * @param {string} [serialNumber] - The device serial number to filter by (optional).
-   * @param {string} [uniqueId] - The device unique ID to filter by (optional).
-   * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
+   * @param {string} serialNumber - The device serial number.
+   * @param {string} uniqueId - The device unique ID.
+   * @returns {ApiClusters | undefined} The clusters or undefined if not found.
    */
-  getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
+  getApiCluster(pluginName: string, endpointNumber: number, serialNumber: string, uniqueId: string): ApiClusters | undefined {
     if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices
       .array()
-      .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber) && (!uniqueId || d.uniqueId === uniqueId));
+      .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && d.serialNumber === serialNumber && d.uniqueId === uniqueId);
     if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber || !endpoint.uniqueId) {
-      this.log.error(
-        `getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
-      );
+      this.log.error(`getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber}, uniqueId: ${uniqueId})`);
       return;
     }
 
-    // Get the device types from the main endpoint
-    const deviceTypes: number[] = [];
-    endpoint.state.descriptor.deviceTypeList.forEach((d) => {
-      deviceTypes.push(d.deviceType);
-    });
-
-    // Get the clusters from the main endpoint
-    const clusters: Cluster[] = [];
-    endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-      if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-      // oxfmt-ignore
-      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
-      clusters.push({
-        endpoint: endpoint.number.toString(),
-        number: endpoint.number,
-        id: 'main',
-        deviceTypes,
-        clusterName: capitalizeFirstLetter(clusterName),
-        clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
-        attributeName,
-        attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
-        attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
-        attributeLocalValue: attributeValue,
-      });
-    });
-
-    // Get the child endpoints
-    const childEndpoints = endpoint.getChildEndpoints();
-    childEndpoints.forEach((childEndpoint) => {
-      /* v8 ignore next cause is not reachable: should never happen but ... */
-      if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
-        this.log.error(`getApiCluster: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
-        return;
-      }
-
-      // Get the device types of the child endpoint
-      const deviceTypes: number[] = [];
-      childEndpoint.state.descriptor.deviceTypeList.forEach((d) => {
-        deviceTypes.push(d.deviceType);
-      });
-
-      childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-        if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-        // oxfmt-ignore
-        if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
-        clusters.push({
-          endpoint: childEndpoint.number.toString(),
-          number: childEndpoint.number,
-          id: childEndpoint.id,
-          deviceTypes,
-          clusterName: capitalizeFirstLetter(clusterName),
-          clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
-          attributeName,
-          attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
-          attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
-          attributeLocalValue: attributeValue,
-        });
-      });
-    });
-    return {
-      plugin: endpoint.plugin,
-      deviceName: endpoint.deviceName,
-      serialNumber: endpoint.serialNumber,
-      uniqueId: endpoint.uniqueId,
-      number: endpoint.number,
-      id: endpoint.id,
-      deviceTypes,
-      clusters,
-    };
+    return toApiClusters(endpoint, this.log);
   }
 
   /**
@@ -1906,21 +1843,29 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
-        if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' });
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
           return;
         }
-        if (!isValidNumber(data.params.endpoint, 1)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
+        if (!isValidNumber(data.params.number, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter number in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter serialNumber in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.uniqueId, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter uniqueId in /api/clusters' });
           return;
         }
         const start = performance.now();
-        const clusters = this.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        const clusters = this.getApiCluster(data.params.pluginName, data.params.number, data.params.serialNumber, data.params.uniqueId);
         /* v8 ignore next */
         if (this.diagnostic)
           writeDiagnostic(
             `Frontend:${data.sender}`,
-            `getApiCluster(${data.params.plugin}, ${data.params.endpoint}, ${data.params.serialNumber}, ${data.params.uniqueId}) took ${(performance.now() - start).toFixed(2)} ms`,
+            `getApiCluster(${data.params.pluginName}, ${data.params.number}, ${data.params.serialNumber}, ${data.params.uniqueId}) took ${(performance.now() - start).toFixed(2)} ms`,
           );
         if (clusters) {
           sendResponse({

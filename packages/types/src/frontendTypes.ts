@@ -3,7 +3,7 @@
  * @description This file contains the types for WebSocket messages.
  * @author Luca Liguori
  * @created 2025-09-17
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -465,10 +465,10 @@ export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse
 export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   method: '/api/clusters';
   params: {
-    plugin: string;
-    endpoint: number;
-    serialNumber?: string;
-    uniqueId?: string;
+    pluginName: string;
+    number: number;
+    serialNumber: string;
+    uniqueId: string;
   };
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {

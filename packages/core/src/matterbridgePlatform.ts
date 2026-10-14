@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.6
+ * @version 1.6.7
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -44,7 +44,7 @@ import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { assertMatterbridgeEndpoint, type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
-import { toApiDevice } from './matterNodeHelpers.js';
+import { toApiClusters, toApiDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('MatterbridgePlatform');
 
@@ -266,7 +266,7 @@ export class MatterbridgePlatform {
 
   /**
    * Handles broadcast requests sent to the platform.
-   * Device and select requests are answered only when params.plugin matches this platform's name.
+   * Device, cluster and select requests are answered only when params.pluginName matches this platform's name.
    *
    * @param {WorkerMessage} msg - The broadcast message.
    * @returns {void}
@@ -278,7 +278,7 @@ export class MatterbridgePlatform {
     if (this.#verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
     switch (msg.type) {
       case 'platform_get_apidevices':
-        if (msg.params.plugin !== this.name) return;
+        if (msg.params.pluginName !== this.name) return;
         this.#server.respond({
           ...msg,
           result: {
@@ -288,12 +288,26 @@ export class MatterbridgePlatform {
           },
         });
         break;
+      case 'platform_get_apiclusters': {
+        if (msg.params.pluginName !== this.name) return;
+        const { number, serialNumber, uniqueId } = msg.params;
+        const endpoint = this.getDevices().find((device) => device.maybeNumber === number && device.serialNumber === serialNumber && device.uniqueId === uniqueId);
+        const clusters = endpoint ? toApiClusters(endpoint, this.log) : undefined;
+        if (!clusters) {
+          const error = `getApiCluster: no device found for plugin ${this.name} and endpoint number ${number} (serial: ${serialNumber}, uniqueId: ${uniqueId})`;
+          this.log.error(error);
+          this.#server.respond({ ...msg, error });
+          break;
+        }
+        this.#server.respond({ ...msg, result: { clusters } });
+        break;
+      }
       case 'platform_get_apiselectdevices':
-        if (msg.params.plugin !== this.name) return;
+        if (msg.params.pluginName !== this.name) return;
         this.#server.respond({ ...msg, result: { devices: this.getSelectDevices().toSorted((keyA, keyB) => keyA.deviceName.localeCompare(keyB.deviceName)) } });
         break;
       case 'platform_get_apiselectentities':
-        if (msg.params.plugin !== this.name) return;
+        if (msg.params.pluginName !== this.name) return;
         this.#server.respond({ ...msg, result: { entities: this.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name)) } });
         break;
       default:

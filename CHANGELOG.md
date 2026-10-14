@@ -37,7 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development Breaking changes
 
-- [types]: Rename the `ApiDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, the `ApiSelectDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, and the `ApiSelectEntity` field `pluginName` to `plugin`, to be in sync with `BaseDevice`. `ApiDevice.endpoint` is renamed to `number` and `ApiDevice` gets the endpoint `id`. These types are for the Matterbridge frontend only and should not be used by plugins: `platform.getSelectDevices()` and `platform.getSelectEntities()` return the renamed fields.
+- [types]: `/api/clusters` uses `pluginName` and `number`; both WebSocket and platform cluster requests require `serialNumber` and `uniqueId`.
 - [test-utils]: `addDevice()` and `deleteDevice()` (vitest, jest and bun) take `ticks` and `microTurns` (default 1) after `rounds`, so `pause` moves from the 4th to the 6th parameter; `rounds` now defaults to 1 (was 3).
 - [test-utils]: `flushServerNode()` (vitest, jest and bun) takes a first `rounds` parameter (default 3) and passes `rounds`, `ticks`, `microTurns` and `pause` to the endpoint number persistence flush, so it can run without timer pauses.
 
@@ -47,7 +47,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [core]: Add plugin-targeted `platform_get_apidevices`, `platform_get_apiselectdevices` and `platform_get_apiselectentities` broadcast requests.
+- [core]: Add `pluginName`-targeted `platform_get_apidevices`, `platform_get_apiselectdevices` and `platform_get_apiselectentities` broadcast requests.
+- [core]: Add `platform_get_apiclusters` with `pluginName` and `number` parameters to retrieve a device's cluster attributes and child endpoints in the frontend API format.
+- [backend]: Fetch `/api/clusters` data from the matching platform through `platform_get_apiclusters`.
 - [utils]: Add `constrainedMemory()` to `@matterbridge/utils/bun`: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.
 - [utils]: Add `constrainedMemory` and `peakConstrainedMemory` to the `Tracker` snapshot.
 - [types]: Add `constrainedMemory` to `SystemInformation`, `PlatformMatterbridge` and `SharedMatterbridge`.
@@ -81,6 +83,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils]: `Tracker` reads its flags with the `hasParameter` helpers; the verbose start log groups the CPUs by model and also logs the memory limit and the uptimes.
 - [frontend]: Rename system info labels to `Host memory`, `Process rss` and `Process heap`.
 - [frontend]: Show the full (not compact) system info table on mobile.
+- [frontend]: Remove `matterbridge-camera` and `matterbridge-webcam` from the plugin ignore list so they can be searched and installed.
 - [frontend]: Bump `frontend` version to v.3.6.5.
 - [frontend]: Bump `@mui/material` to v.9.5.0.
 - [frontend]: Bump `@mui/icons-material` to v.9.5.0.

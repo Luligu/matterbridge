@@ -3,7 +3,7 @@
  * @description This file contains the helper functions of the Matter nodes.
  * @author Luca Liguori
  * @created 2026-10-05
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -43,24 +43,71 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { SoilMeasurement } from '@matter/types/clusters/soil-measurement';
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import type { ClusterId } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 // @matterbridge
-import type { ApiDevice, ApiMatter, BaseDevice, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
+import type { ApiClusters, ApiDevice, ApiMatter, BaseDevice, Cluster, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 import { isValidArray, isValidNumber, isValidObject } from '@matterbridge/utils/validate';
 // Third-party modules
-import { stringify } from 'node-ansi-logger';
+import { type AnsiLogger, stringify } from 'node-ansi-logger';
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { featuresFor, getAttribute } from './matterbridgeEndpointHelpers.js';
+import { capitalizeFirstLetter, featuresFor, getAttribute, getSnapshot } from './matterbridgeEndpointHelpers.js';
 
 /** Advertising nodes map: time advertising started keyed by storeId */
 const advertisingNodes = new Map<string, number>();
+
+/**
+ * Converts an endpoint and its child attributes to the frontend API clusters format.
+ *
+ * @param {MatterbridgeEndpoint} endpoint The endpoint to convert.
+ * @param {AnsiLogger} log The logger for invalid child endpoints.
+ * @returns {ApiClusters | undefined} The API clusters, or undefined when required endpoint metadata is missing.
+ */
+export function toApiClusters(endpoint: MatterbridgeEndpoint, log: AnsiLogger): ApiClusters | undefined {
+  if (!endpoint.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber || !endpoint.uniqueId) return undefined;
+
+  const deviceTypes = getSnapshot(endpoint.state.descriptor.deviceTypeList).map((deviceType) => deviceType.deviceType);
+  const clusters: Cluster[] = [];
+  for (const current of [endpoint, ...endpoint.getChildEndpoints()]) {
+    if (!current.maybeId || !current.maybeNumber) {
+      log.error(`getApiCluster: no child endpoint found for plugin ${endpoint.plugin} and endpoint number ${endpoint.number}`);
+      continue;
+    }
+    const currentDeviceTypes = current === endpoint ? deviceTypes : getSnapshot(current.state.descriptor.deviceTypeList).map((deviceType) => deviceType.deviceType);
+    current.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // oxfmt-ignore
+      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
+      clusters.push({
+        endpoint: current.number.toString(),
+        number: current.number,
+        id: current === endpoint ? 'main' : current.id,
+        deviceTypes: currentDeviceTypes,
+        clusterName: capitalizeFirstLetter(clusterName),
+        clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
+        attributeName,
+        attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
+        attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
+        attributeLocalValue: getSnapshot(attributeValue),
+      });
+    });
+  }
+  return {
+    plugin: endpoint.plugin,
+    deviceName: endpoint.deviceName,
+    serialNumber: endpoint.serialNumber,
+    uniqueId: endpoint.uniqueId,
+    number: endpoint.number,
+    id: endpoint.id,
+    deviceTypes,
+    clusters,
+  };
+}
 
 /**
  * Converts a MatterbridgeEndpoint to a BaseDevice.
@@ -365,7 +412,7 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (clusterName === 'relativeHumidityMeasurement' && attributeName === 'measuredValue') appendMeasurement('Humidity', getMeasurementText(attributeValue, 100, '%'));
     if (clusterName === 'pressureMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pressure', getMeasurementText(attributeValue, 1, ' hPa'));
     if (clusterName === 'flowMeasurement' && attributeName === 'measuredValue') appendMeasurement('Flow', getMeasurementText(attributeValue, 10, ' m³/h'));
-    if (clusterId === SoilMeasurement.id && attributeName === 'soilMoistureMeasuredValue') appendMeasurement('Soil moisture', getMeasurementText(attributeValue, 1, '%'));
+    if (clusterName === 'soilMeasurement' && attributeName === 'soilMoistureMeasuredValue') appendMeasurement('Soil moisture', getMeasurementText(attributeValue, 1, '%'));
     if (clusterName === 'electricalPowerMeasurement' && attributeName === 'voltage') appendMeasurement('Voltage', getMeasurementText(attributeValue, 1_000, 'V'));
     if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activeCurrent') appendMeasurement('Current', getMeasurementText(attributeValue, 1_000, 'A'));
     if (clusterName === 'electricalPowerMeasurement' && attributeName === 'activePower') appendMeasurement('Power', getMeasurementText(attributeValue, 1_000_000, 'kW'));

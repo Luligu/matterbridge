@@ -159,7 +159,7 @@
 </ul>
 <h3 id="development-breaking-changes">Development Breaking changes</h3>
 <ul>
-<li>[types]: Rename the <code>ApiDevice</code> fields <code>pluginName</code>, <code>name</code> and <code>serial</code> to <code>plugin</code>, <code>deviceName</code> and <code>serialNumber</code>, the <code>ApiSelectDevice</code> fields <code>pluginName</code>, <code>name</code> and <code>serial</code> to <code>plugin</code>, <code>deviceName</code> and <code>serialNumber</code>, and the <code>ApiSelectEntity</code> field <code>pluginName</code> to <code>plugin</code>, to be in sync with <code>BaseDevice</code>. <code>ApiDevice.endpoint</code> is renamed to <code>number</code> and <code>ApiDevice</code> gets the endpoint <code>id</code>. These types are for the Matterbridge frontend only and should not be used by plugins: <code>platform.getSelectDevices()</code> and <code>platform.getSelectEntities()</code> return the renamed fields.</li>
+<li>[types]: <code>/api/clusters</code> uses <code>pluginName</code> and <code>number</code>; both WebSocket and platform cluster requests require <code>serialNumber</code> and <code>uniqueId</code>.</li>
 <li>[test-utils]: <code>addDevice()</code> and <code>deleteDevice()</code> (vitest, jest and bun) take <code>ticks</code> and <code>microTurns</code> (default 1) after <code>rounds</code>, so <code>pause</code> moves from the 4th to the 6th parameter; <code>rounds</code> now defaults to 1 (was 3).</li>
 <li>[test-utils]: <code>flushServerNode()</code> (vitest, jest and bun) takes a first <code>rounds</code> parameter (default 3) and passes <code>rounds</code>, <code>ticks</code>, <code>microTurns</code> and <code>pause</code> to the endpoint number persistence flush, so it can run without timer pauses.</li>
 </ul>
@@ -169,7 +169,9 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
-<li>[core]: Add plugin-targeted <code>platform_get_apidevices</code>, <code>platform_get_apiselectdevices</code> and <code>platform_get_apiselectentities</code> broadcast requests.</li>
+<li>[core]: Add <code>pluginName</code>-targeted <code>platform_get_apidevices</code>, <code>platform_get_apiselectdevices</code> and <code>platform_get_apiselectentities</code> broadcast requests.</li>
+<li>[core]: Add <code>platform_get_apiclusters</code> with <code>pluginName</code> and <code>number</code> parameters to retrieve a device&#39;s cluster attributes and child endpoints in the frontend API format.</li>
+<li>[backend]: Fetch <code>/api/clusters</code> data from the matching platform through <code>platform_get_apiclusters</code>.</li>
 <li>[utils]: Add <code>constrainedMemory()</code> to <code>@matterbridge/utils/bun</code>: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.</li>
 <li>[utils]: Add <code>constrainedMemory</code> and <code>peakConstrainedMemory</code> to the <code>Tracker</code> snapshot.</li>
 <li>[types]: Add <code>constrainedMemory</code> to <code>SystemInformation</code>, <code>PlatformMatterbridge</code> and <code>SharedMatterbridge</code>.</li>
@@ -203,6 +205,7 @@
 <li>[utils]: <code>Tracker</code> reads its flags with the <code>hasParameter</code> helpers; the verbose start log groups the CPUs by model and also logs the memory limit and the uptimes.</li>
 <li>[frontend]: Rename system info labels to <code>Host memory</code>, <code>Process rss</code> and <code>Process heap</code>.</li>
 <li>[frontend]: Show the full (not compact) system info table on mobile.</li>
+<li>[frontend]: Remove <code>matterbridge-camera</code> and <code>matterbridge-webcam</code> from the plugin ignore list so they can be searched and installed.</li>
 <li>[frontend]: Bump <code>frontend</code> version to v.3.6.5.</li>
 <li>[frontend]: Bump <code>@mui/material</code> to v.9.5.0.</li>
 <li>[frontend]: Bump <code>@mui/icons-material</code> to v.9.5.0.</li>

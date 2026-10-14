@@ -303,9 +303,9 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend getApiCluster', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(frontend.getApiCluster('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(frontend.getApiCluster('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();
   });
 
   test('Frontend wssSendLogMessage', async () => {

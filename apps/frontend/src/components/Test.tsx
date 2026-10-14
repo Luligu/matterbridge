@@ -57,7 +57,7 @@ function Test() {
             sender: 'Test',
             src: 'Frontend',
             dst: 'Matterbridge',
-            params: { plugin: device.plugin, endpoint: device.number || 0 },
+            params: { pluginName: device.plugin, number: device.number || 0, serialNumber: device.serialNumber, uniqueId: device.uniqueId },
           });
         }
       }

@@ -133,6 +133,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const [endpoint, setEndpoint] = useState<string | null>(null);
   const [deviceName, setDeviceName] = useState<string | null>(null);
   const [selectedDeviceUniqueId, setSelectedDeviceUniqueId] = useState<string | null>(null);
+  const [selectedDeviceSerialNumber, setSelectedDeviceSerialNumber] = useState<string | null>(null);
 
   // Devices matching the current plugin and text filters. Derived during render: it is a pure
   // function of the devices and of the two filter props.
@@ -247,7 +248,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   // Send /api/clusters request when a device row is clicked
   useEffect(() => {
-    if (pluginName && endpoint && selectedDeviceUniqueId) {
+    if (pluginName && endpoint && selectedDeviceSerialNumber && selectedDeviceUniqueId) {
       if (debug || localDebug) console.log('DevicesTable sending /api/clusters');
       sendMessage({
         id: uniqueId.current,
@@ -255,11 +256,11 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
         method: '/api/clusters',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { plugin: pluginName, endpoint: Number(endpoint), uniqueId: selectedDeviceUniqueId },
+        params: { pluginName, number: Number(endpoint), serialNumber: selectedDeviceSerialNumber, uniqueId: selectedDeviceUniqueId },
       });
       // console.log(`DevicesTable useEffect: selected device "${deviceName}" with uniqueId "${selectedDeviceUniqueId}", plugin "${pluginName}", endpoint "${endpoint}"`);
     }
-  }, [pluginName, endpoint, selectedDeviceUniqueId, sendMessage]);
+  }, [pluginName, endpoint, selectedDeviceSerialNumber, selectedDeviceUniqueId, sendMessage]);
 
   useEffect(() => {
     filteredDevicesRef.current = filteredDevices;
@@ -268,6 +269,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const handleDeviceClick = (row: ApiDevice) => {
     if (row.uniqueId === selectedDeviceUniqueId) {
       setSelectedDeviceUniqueId(null);
+      setSelectedDeviceSerialNumber(null);
       setPluginName(null);
       setEndpoint(null);
       setDeviceName(null);
@@ -277,6 +279,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     if (debug || localDebug)
       console.log(`DevicesTable handleDeviceClick: selected device "${row.deviceName}" with uniqueId "${row.uniqueId}", plugin "${row.plugin}", endpoint "${row.number}"`);
     setSelectedDeviceUniqueId(row.uniqueId);
+    setSelectedDeviceSerialNumber(row.serialNumber);
     setPluginName(row.plugin);
     setEndpoint(row.number ? row.number.toString() : null);
     setDeviceName(row.deviceName);

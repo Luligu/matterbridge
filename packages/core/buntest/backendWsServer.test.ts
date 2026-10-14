@@ -327,17 +327,27 @@ describe('BackendWsServer', () => {
       expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', extended);
     }
 
-    expect(await request('/api/clusters', { plugin: 'short', endpoint: 1 })).toMatchObject({ error: 'Wrong parameter plugin in /api/clusters' });
-    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 0 })).toMatchObject({ error: 'Wrong parameter endpoint in /api/clusters' });
+    expect(await request('/api/clusters', { pluginName: 'short', number: 1 })).toMatchObject({ error: 'Wrong parameter pluginName in /api/clusters' });
+    expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 0 })).toMatchObject({ error: 'Wrong parameter number in /api/clusters' });
+    for (const invalid of [undefined, '', 1]) {
+      expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: invalid, uniqueId: 'UID1' })).toMatchObject({
+        error: 'Wrong parameter serialNumber in /api/clusters',
+      });
+      expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: invalid })).toMatchObject({
+        error: 'Wrong parameter uniqueId in /api/clusters',
+      });
+    }
     expect(mockedBackend.getApiCluster).not.toHaveBeenCalled();
 
-    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1 })).toMatchObject({ error: 'Endpoint not found in /api/clusters' });
-    expect((mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mock.lastCall).toEqual(['matterbridge-test', 1, undefined, undefined]);
+    expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
+      error: 'Endpoint not found in /api/clusters',
+    });
+    expect((mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mock.lastCall).toEqual(['matterbridge-test', 1, 'SN1', 'UID1']);
 
-    (mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mockResolvedValueOnce({ plugin: 'matterbridge-test', endpoint: 1 });
-    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
+    (mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mockResolvedValueOnce({ plugin: 'matterbridge-test', number: 1 });
+    expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
       success: true,
-      response: { plugin: 'matterbridge-test', endpoint: 1 },
+      response: { plugin: 'matterbridge-test', number: 1 },
     });
     expect(mockedBackend.getApiCluster).toHaveBeenLastCalledWith('matterbridge-test', 1, 'SN1', 'UID1');
     expect(loggerErrorSpy).not.toHaveBeenCalled();
@@ -371,7 +381,16 @@ describe('BackendWsServer', () => {
       for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/clusters']) {
         await (wsServer as any).wsMessageHandler(
           client,
-          Buffer.from(JSON.stringify({ id: 11, src: 'Frontend', dst: 'Matterbridge', sender: 'Test', method, params: { plugin: 'matterbridge-test', endpoint: 1 } })),
+          Buffer.from(
+            JSON.stringify({
+              id: 11,
+              src: 'Frontend',
+              dst: 'Matterbridge',
+              sender: 'Test',
+              method,
+              params: { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' },
+            }),
+          ),
         );
       }
       for (const name of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster']) {

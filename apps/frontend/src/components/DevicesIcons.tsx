@@ -806,7 +806,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
             method: '/api/clusters',
             src: 'Frontend',
             dst: 'Matterbridge',
-            params: { plugin: device.plugin, endpoint: device.number || 0, serialNumber: device.serialNumber },
+            params: { pluginName: device.plugin, number: device.number || 0, serialNumber: device.serialNumber, uniqueId: device.uniqueId },
           });
         }
       } else if (msg.method === '/api/clusters' && msg.response) {

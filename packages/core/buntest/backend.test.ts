@@ -18,7 +18,7 @@ import tls from 'node:tls';
 import { getFreePort } from '@matterbridge/test-utils';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import { type ApiMatter, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
+import { type ApiClusters, type ApiMatter, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
@@ -284,6 +284,39 @@ describe('Backend', () => {
       }
     });
 
+    const clusters: ApiClusters = {
+      plugin: 'plugin1',
+      deviceName: 'Contact',
+      serialNumber: 'SN1',
+      uniqueId: 'UID1',
+      number: 1,
+      id: 'contact',
+      deviceTypes: [0x15],
+      clusters: [
+        {
+          endpoint: '1',
+          number: 1,
+          id: 'main',
+          deviceTypes: [0x15],
+          clusterName: 'BooleanState',
+          clusterId: '0x45',
+          attributeName: 'stateValue',
+          attributeId: '0x00',
+          attributeValue: 'false',
+          attributeLocalValue: false,
+        },
+      ],
+    };
+    const clusterRequestSpy = vi.fn();
+    const platformServer = new BroadcastServer('platform', log);
+    platformServer.on('broadcast_message', (msg: WorkerMessage) => {
+      if (platformServer.isWorkerRequestOfType(msg, 'platform_get_apiclusters')) {
+        clusterRequestSpy(msg);
+        if (msg.params.pluginName === 'plugin1') platformServer.respond({ ...msg, result: { clusters } });
+        else platformServer.respond({ ...msg, error: 'Endpoint not found' });
+      }
+    });
+
     expect(await backend.getApiMatter('Matterbridge')).toMatchObject({ id: 'Matterbridge' });
     expect(await backend.getApiSettings()).toMatchObject({ test: 'settings' });
     expect(await backend.getApiPlugins()).toMatchObject([{ name: 'plugin1' }]);
@@ -295,8 +328,16 @@ describe('Backend', () => {
     }
     expect(await backend.getApiDevices()).toEqual([]);
     expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: undefined, extended: false });
-    expect(backend.getApiCluster('plugin1', 1)).resolves.toBeUndefined();
-    expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).resolves.toBeUndefined();
+    expect(await backend.getApiCluster('plugin1', 1, 'SN1', 'UID1')).toEqual(clusters);
+    expect(clusterRequestSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'platform_get_apiclusters',
+        src: 'frontend',
+        dst: 'platform',
+        params: { pluginName: 'plugin1', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' },
+      }),
+    );
+    expect(backend.getApiCluster('missing-plugin', 1, 'SN1', 'UID1')).rejects.toThrow('Endpoint not found');
     expect(backend.generateDiagnostic()).resolves.toBeUndefined();
 
     for (const method of ['getApiMatter', 'getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
@@ -308,6 +349,7 @@ describe('Backend', () => {
     matterbridgeServer.close();
     pluginsServer.close();
     devicesServer.close();
+    platformServer.close();
   });
 
   test('should serve http and ws when started without ssl', async () => {

@@ -619,7 +619,7 @@ describe('Matterbridge frontend', () => {
 
   test('Websocket API send /api/clusters without params', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/clusters', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/clusters', params: {} });
-    expect(msg.error).toBe('Wrong parameter plugin in /api/clusters');
+    expect(msg.error).toBe('Wrong parameter pluginName in /api/clusters');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
@@ -629,10 +629,23 @@ describe('Matterbridge frontend', () => {
       dst: 'Matterbridge',
       src: 'Jest test',
       method: '/api/clusters',
-      params: { plugin: 'matterbridge-mock1' },
+      params: { pluginName: 'matterbridge-mock1' },
     });
-    expect(msg.error).toBe('Wrong parameter endpoint in /api/clusters');
+    expect(msg.error).toBe('Wrong parameter number in /api/clusters');
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
+    for (const invalid of [undefined, '', 1]) {
+      for (const parameter of ['serialNumber', 'uniqueId']) {
+        const response = await waitMessageId(++WS_ID, '/api/clusters', {
+          id: WS_ID,
+          dst: 'Matterbridge',
+          src: 'Jest test',
+          method: '/api/clusters',
+          params: { pluginName: 'matterbridge-mock1', number: 7, serialNumber: 'SN1', uniqueId: 'UID1', [parameter]: invalid },
+        });
+        expect(response.error).toBe(`Wrong parameter ${parameter} in /api/clusters`);
+        expect(response.response).toBeUndefined();
+      }
+    }
   });
 
   test('Websocket API send /api/clusters with wrong endpoint', async () => {
@@ -641,7 +654,7 @@ describe('Matterbridge frontend', () => {
       dst: 'Matterbridge',
       src: 'Jest test',
       method: '/api/clusters',
-      params: { plugin: 'matterbridge-mock1', endpoint: 15 },
+      params: { pluginName: 'matterbridge-mock1', number: 15, serialNumber: 'missing-serial', uniqueId: 'missing-unique-id' },
     });
     expect(msg.error).toBe('Endpoint not found in /api/clusters');
     expect(msg.response).toBeUndefined();
@@ -649,12 +662,14 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API send /api/clusters', async () => {
+    const device = frontend.getApiDevices('matterbridge-mock1').find((device) => device.number === 7);
+    if (!device) throw new Error('Cluster test device not found');
     const msg = await waitMessageId(++WS_ID, '/api/clusters', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
       method: '/api/clusters',
-      params: { plugin: 'matterbridge-mock1', endpoint: 7 },
+      params: { pluginName: device.plugin, number: device.number, serialNumber: device.serialNumber, uniqueId: device.uniqueId },
     });
     expect(msg.error).toBeUndefined();
     expect(msg.response).toBeDefined();
