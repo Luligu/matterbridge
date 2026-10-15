@@ -106,6 +106,9 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `oxfmt` to v.0.72.0.
 - [frontend]: Bump `oxlint` to v.1.87.0.
 - [tests]: Use `getSharedMatterbridge()` in the matterNode tests, add the `cliHistory` bun test and include `cliHistory` in the bun coverage.
+- [tests]: Remove the Root-condition warning-mode workarounds and restore strict endpoint validation in all device and behavior test setups.
+- [tests]: Update bridged-device snapshots and isolated WebRTC/Intercom behavior fixtures for strict validation.
+- [camera]: Comment out unused Watermark/OnScreenDisplay default-stream initialization and test the supported production features instead.
 - [tests]: Consolidate CLI error tests and speed up the suite by mocking Matterbridge imports and replacing fixed delays.
 - [tests]: Use fake timers in the windowCovering movement and doorLock relock tests, and drop the duplicated timed windowCovering tests from `matterbridgeEndpoint-matterjs`.
 - [tests]: Add the bun tests of all the device classes (`packages/core/buntest/devices`), with zero-pause test helpers.

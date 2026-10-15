@@ -24,7 +24,7 @@ import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matte
 
 import { createDefaultWebRtcTransportRequestorClusterServer, MatterbridgeWebRtcTransportRequestorServer } from '../../src/behaviors/webRtcTransportRequestorServer.js';
 import { Intercom } from '../../src/devices/intercom.js';
-import { intercom } from '../../src/matterbridgeDeviceTypes.js';
+import { bridgedNode } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -38,8 +38,7 @@ describe('MatterbridgeWebRtcTransportRequestorServer', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
-    await createTestEnvironment('warn');
+    await createTestEnvironment();
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT);
@@ -79,7 +78,7 @@ describe('MatterbridgeWebRtcTransportRequestorServer', () => {
   });
 
   it('should create the cluster server with no tracked sessions on a plain endpoint', async () => {
-    const endpoint = new MatterbridgeEndpoint(intercom, { id: 'WebRtcRequestorClusterServer' });
+    const endpoint = new MatterbridgeEndpoint(bridgedNode, { id: 'WebRtcRequestorClusterServer' });
     expect(createDefaultWebRtcTransportRequestorClusterServer(endpoint)).toBe(endpoint);
     expect(endpoint.behaviors.has(MatterbridgeWebRtcTransportRequestorServer)).toBeTruthy();
 

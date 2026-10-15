@@ -37,7 +37,7 @@ import {
   MatterbridgeWebRtcTransportProviderServer,
 } from '../../src/behaviors/webRtcTransportProviderServer.js';
 import { Camera } from '../../src/devices/camera.js';
-import { camera } from '../../src/matterbridgeDeviceTypes.js';
+import { bridgedNode } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
 
@@ -60,8 +60,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
-    await createTestEnvironment('warn');
+    await createTestEnvironment();
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT);
@@ -648,9 +647,9 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should not solicit an offer when no WebRtcTransportRequestor client is registered at all', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcNoClientCluster' });
+    // Isolated behavior fixtures use Bridged Node so omitted camera clusters do not invalidate their device type.
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcNoClientCluster' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(
@@ -668,9 +667,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should not provide an offer when no WebRtcTransportRequestor client is registered at all', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcProvideOfferNoClientCluster' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcProvideOfferNoClientCluster' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(
@@ -687,9 +685,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should evict the newest session with OutOfResources when solicitOffer exceeds MAX_CONCURRENT_SESSIONS', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcCapacitySolicit' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcCapacitySolicit' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     for (let i = 0; i < 5; i++) {
@@ -710,9 +707,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should reject provideOffer with ResourceExhausted when it exceeds MAX_CONCURRENT_SESSIONS', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcCapacityProvide' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcCapacityProvide' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     for (let i = 0; i < 5; i++) {
@@ -733,9 +729,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should reject solicitOffer without videoStreams or audioStreams when the endpoint has no CameraAvStreamManagement cluster', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcNoCameraAvStreamManagement' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcNoCameraAvStreamManagement' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(
@@ -744,9 +739,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should reject provideOffer without videoStreams or audioStreams when the endpoint has no CameraAvStreamManagement cluster', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcProvideOfferNoCameraAvStreamManagement' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcProvideOfferNoCameraAvStreamManagement' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: null, sdp: 'v=0 o=- offer' })).rejects.toThrow(
@@ -755,9 +749,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should reject solicitOffer with both videoStreamId and videoStreams present', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcConflictingVideoFields' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcConflictingVideoFields' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(
@@ -771,9 +764,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should reject provideOffer with both audioStreamId and audioStreams present', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcConflictingAudioFields' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcConflictingAudioFields' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(
@@ -802,7 +794,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   });
 
   it('should reject solicitOffer without videoStreams or audioStreams when the camera has no assignable video or audio capability', async () => {
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcNoAssignableCapability' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcNoAssignableCapability' });
     endpoint.behaviors.require(
       MatterbridgeCameraAvStreamManagementServer.with(
         CameraAvStreamManagement.Feature.Video,
@@ -833,7 +825,6 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       },
     );
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await expect(
@@ -1175,9 +1166,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     const originalStrict = process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT;
     process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT = '1';
     try {
-      const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcStrictNoAvsmVideo' });
+      const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcStrictNoAvsmVideo' });
       createDefaultWebRtcTransportProviderClusterServer(endpoint);
-      endpoint.addRequiredClusterServers();
       expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
       // With no CameraAvStreamManagement cluster bound, streamUsagePriorities defaults to empty, so the
@@ -1199,9 +1189,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     const originalStrict = process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT;
     process.env.MATTERBRIDGE_STRICT_WEBRTCTRANSPORT = '1';
     try {
-      const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcStrictNoAvsmAudio' });
+      const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcStrictNoAvsmAudio' });
       createDefaultWebRtcTransportProviderClusterServer(endpoint);
-      endpoint.addRequiredClusterServers();
       expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
       // See the equivalent comment in the videoStreamId variant above.
@@ -1332,9 +1321,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
   it('should not touch a real peer connection for a session restored from persisted state without one', async () => {
     // currentSessions is a replicated attribute (persisted across restarts); the werift peer connection in `internal`
     // is not. Seed a session directly, bypassing solicitOffer/provideOffer, to simulate that post-restart state.
-    const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcOrphanSession' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'WebRtcOrphanSession' });
     createDefaultWebRtcTransportProviderClusterServer(endpoint);
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     await endpoint.setAttribute(WebRtcTransportProvider, 'currentSessions', [

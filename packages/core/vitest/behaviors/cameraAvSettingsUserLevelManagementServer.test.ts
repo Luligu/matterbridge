@@ -38,8 +38,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
-    await createTestEnvironment('warn');
+    await createTestEnvironment();
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT);

@@ -9,7 +9,7 @@ const MATTER_PORT = 6003;
 const MATTER_CREATE_ONLY = true;
 
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
-import { Status, StreamUsage, ThreeLevelAuto } from '@matter/types/globals';
+import { Status, StreamUsage } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -35,7 +35,7 @@ import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { AudioDoorbell } from '../../src/devices/audioDoorbell.js';
 import { Camera } from '../../src/devices/camera.js';
 import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
-import { camera as cameraDeviceType, intercom as intercomDeviceType } from '../../src/matterbridgeDeviceTypes.js';
+import { bridgedNode } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -53,8 +53,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   beforeAll(async () => {
     // Setup the Matter test environment
-    // Warn instead of strict: the Root Node conditions these device types assert (TimeSynchronization, TLS Certificate and Client Management) have no matter.js implementation yet
-    await createTestEnvironment('warn');
+    await createTestEnvironment();
 
     // Create the server node and aggregator
     await createServerNode(MATTER_PORT);
@@ -782,46 +781,36 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
     ).rejects.toThrow('setStreamPriorities cannot be invoked while snapshot, video or audio streams are allocated');
   });
 
-  it('should include watermarkEnabled/osdEnabled in the self-allocated default video and snapshot streams when Watermark/OnScreenDisplay are supported', async () => {
-    const endpoint = new MatterbridgeEndpoint([cameraDeviceType], { id: 'WatermarkOsdDefaultStream' });
-    endpoint.behaviors.require(
-      MatterbridgeCameraAvStreamManagementServer.with(
-        CameraAvStreamManagement.Feature.Video,
-        CameraAvStreamManagement.Feature.Snapshot,
-        CameraAvStreamManagement.Feature.Watermark,
-        CameraAvStreamManagement.Feature.OnScreenDisplay,
-      ),
-      {
-        maxContentBufferSize: 4_194_304,
-        maxNetworkBandwidth: 10_000_000,
-        supportedStreamUsages: [StreamUsage.LiveView],
-        streamUsagePriorities: [StreamUsage.LiveView],
-        maxConcurrentEncoders: 1,
-        maxEncodedPixelRate: 1920 * 1080 * 30,
-        videoSensorParams: { sensorWidth: 1920, sensorHeight: 1080, maxFps: 30 },
-        minViewportResolution: { width: 640, height: 360 },
-        rateDistortionTradeOffPoints: [{ codec: CameraAvStreamManagement.VideoCodec.H264, resolution: { width: 1920, height: 1080 }, minBitRate: 1_000_000 }],
-        currentFrameRate: 30,
-        viewport: { x1: 0, y1: 0, x2: 1920, y2: 1080 },
-        allocatedVideoStreams: [],
-        snapshotCapabilities: [
-          { resolution: { width: 1920, height: 1080 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
-          { resolution: { width: 640, height: 480 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
-        ],
-        allocatedSnapshotStreams: [],
-        hardPrivacyModeOn: false,
-        statusLightEnabled: false,
-        statusLightBrightness: ThreeLevelAuto.Auto,
-      },
-    );
-    endpoint.addRequiredClusterServers();
+  it('should leave watermark and OSD unset and unadvertised when the production camera features are used', async () => {
+    const endpoint = new Camera('Camera Default Stream Features', 'CAMERA-DEFAULT-STREAM-FEATURES');
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
-    expect(endpoint.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')).toEqual([
-      expect.objectContaining({ videoStreamId: 0, streamUsage: StreamUsage.LiveView, watermarkEnabled: false, osdEnabled: false }),
-    ]);
+    expect(endpoint.getAttribute(CameraAvStreamManagement.id, 'featureMap')).toMatchObject({ watermark: false, onScreenDisplay: false });
+
+    const videoStreams = endpoint.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams');
+    const snapshotStreams = endpoint.getAttribute(CameraAvStreamManagement, 'allocatedSnapshotStreams');
+    expect(videoStreams).toEqual([expect.objectContaining({ videoStreamId: 0, streamUsage: StreamUsage.LiveView })]);
+    expect(snapshotStreams).toEqual([expect.objectContaining({ snapshotStreamId: 0 })]);
+    expect(videoStreams?.[0].watermarkEnabled).toBeUndefined();
+    expect(videoStreams?.[0].osdEnabled).toBeUndefined();
+    expect(snapshotStreams?.[0].watermarkEnabled).toBeUndefined();
+    expect(snapshotStreams?.[0].osdEnabled).toBeUndefined();
+
+    expect(endpoint.getAttribute(CameraAvStreamManagement.id, 'acceptedCommandList')).not.toContain(0x05);
+    expect(endpoint.getAttribute(CameraAvStreamManagement.id, 'acceptedCommandList')).not.toContain(0x09);
+  });
+
+  it('should span the full resolution range when snapshot capabilities are not sorted', async () => {
+    const endpoint = new Camera('Camera Unsorted Snapshots', 'CAMERA-UNSORTED-SNAPSHOTS', {
+      snapshotCapabilities: [
+        { resolution: { width: 1280, height: 720 }, maxFrameRate: 5, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
+        { resolution: { width: 640, height: 480 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
+        { resolution: { width: 1920, height: 1080 }, maxFrameRate: 15, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
+      ],
+    });
+    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
     expect(endpoint.getAttribute(CameraAvStreamManagement, 'allocatedSnapshotStreams')).toEqual([
-      expect.objectContaining({ snapshotStreamId: 0, watermarkEnabled: false, osdEnabled: false }),
+      expect.objectContaining({ snapshotStreamId: 0, minResolution: { width: 640, height: 480 }, maxResolution: { width: 1920, height: 1080 }, frameRate: 15 }),
     ]);
   });
 
@@ -1007,7 +996,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   it('should add createDefaultIntercomCameraAvStreamManagementClusterServer to an endpoint', async () => {
     const audioCapabilities = { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] };
-    const endpoint = new MatterbridgeEndpoint([intercomDeviceType], { id: 'IntercomHelper' });
+    const endpoint = new MatterbridgeEndpoint([bridgedNode], { id: 'IntercomHelper' });
 
     expect(
       createDefaultIntercomCameraAvStreamManagementClusterServer(endpoint, {
@@ -1021,11 +1010,6 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       }),
     ).toBe(endpoint);
 
-    // TODO: use addRequiredClusters() here once the Intercom device type's required WebRtcTransportProvider/WebRtcTransportRequestor
-    // client clusters have a registered client behavior: today it logs "addClusterClients: no client behavior found" warnings, which
-    // this suite's afterEach rejects. The Intercom device wires those clients itself via addWebRtcTransportProviderClient()/
-    // addWebRtcTransportRequestorClient(), so they are not part of this helper's contract.
-    endpoint.addRequiredClusterServers();
     expect(await addDevice(aggregator, endpoint)).toBeTruthy();
 
     // The Audio and Speaker features are enabled, the Video, Snapshot and ImageControl features are not.

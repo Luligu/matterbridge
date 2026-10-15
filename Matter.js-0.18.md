@@ -6,14 +6,22 @@ Audited dev version: `0.18.0-alpha.0-20261015-9c1725759` (npm `dev` verified on 
 
 ## Validation results
 
-Verified on October 15, 2026, on branch `matter018` with matter.js `0.18.0-alpha.0-20261015-9c1725759`.
+Verified on October 15, 2026, on branch `matter018` with matter.js `0.18.0-alpha.0-20261015-9c1725759`. Root results below are from the rerun after removing the warning-mode workarounds and updating the test fixtures and snapshots; frontend results are from the unchanged frontend's earlier run.
 
-| Validation               | Result                              |
-| ------------------------ | ----------------------------------- |
-| Lint, format, type-check | Passed - root and frontend          |
-| Full root Vitest         | 3,796 tests passed across 174 files |
-| Full frontend Vitest     | 608 tests passed across 41 files    |
-| Full Bun suite           | 1,958 tests passed across 113 files |
+| Validation                           | Result                                                                     |
+| ------------------------------------ | -------------------------------------------------------------------------- |
+| Lint, format, type-check             | Passed - root and frontend                                                 |
+| Full root Vitest with coverage       | 3,797 tests passed across 174 files; configured coverage thresholds passed |
+| Full frontend Vitest                 | 608 tests passed across 41 files                                           |
+| Full Bun suite                       | 1,958 tests passed across 113 files                                        |
+| Camera AV Stream Management coverage | 100% statements, branches, functions and lines                             |
+
+Strict-mode follow-up:
+
+- Updated six device attribute snapshots in each runner with the Bridged Node attributes added by the strict-mode test helpers.
+- Updated fourteen isolated Vitest behavior fixtures to use Bridged Node rather than advertise incomplete Camera or Intercom device types, preserving their negative-path assertions.
+- Replaced the unsupported Watermark/OnScreenDisplay feature test with a production-camera test that verifies both features are disabled, their stream fields are unset and their modify commands are not advertised. The four conditional default-stream initialization branches are commented out until those features and commands are implemented; allocation-command handlers are unchanged.
+- Added a supported-camera test for default snapshot allocation with unsorted resolution capabilities.
 
 ## Renamed commodity fields
 
@@ -103,7 +111,7 @@ All three points reported in [matter-js/matter.js#4744](https://github.com/matte
 | 2. Root Node conditions blocking strict validation | Violations caused only by Root assertions are flagged `assertedAtRoot`, log at debug level and never refuse endpoints. This covers the camera-family, Intercom, meter and Groupcast conditions without weakening other strict checks. | [matter-js/matter.js#4746](https://github.com/matter-js/matter.js/pull/4746) |
 | 3. Non-serializable conformance errors             | `DeviceTypeViolationError.endpoint` is now a getter backed by a private field, not an own enumerable property, so error serializers no longer traverse the node graph.                                                                | [matter-js/matter.js#4745](https://github.com/matter-js/matter.js/pull/4745) |
 
-The Root-assertion fix removes the validation blocker; it does not implement Time Synchronization, TLS Certificate Management or TLS Client Management. Using `warn` solely to work around these Root assertions is no longer necessary.
+The Root-assertion fix removes the validation blocker; it does not implement Time Synchronization, TLS Certificate Management or TLS Client Management. All 18 warning-mode workarounds have been removed from the Vitest and Bun device and behavior test setups, which now use the default strict validation. Tests of the validation-mode option still exercise `off` and `warn`, then restore `strict` before creating the server.
 
 ## Door lock validation and events
 

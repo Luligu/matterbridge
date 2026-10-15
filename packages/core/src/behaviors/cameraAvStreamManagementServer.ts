@@ -152,10 +152,9 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
           // camera streams; MaxBitRate === MinBitRate would leave the stream no room to vary at all.
           maxBitRate: minBitRate * 4,
           keyFrameInterval: 4000,
-          // watermarkEnabled/osdEnabled are conformance-gated by the Watermark/OnScreenDisplay features (Matter 1.6 §11.2.9.1.9/.10)
-          // and rejected outright when present but unsupported, so they're only included when actually enabled.
-          ...(this.features.watermark ? { watermarkEnabled: false } : {}),
-          ...(this.features.onScreenDisplay ? { osdEnabled: false } : {}),
+          // Disabled until Watermark/OnScreenDisplay and their modify commands are supported.
+          // ...(this.features.watermark ? { watermarkEnabled: false } : {}),
+          // ...(this.features.onScreenDisplay ? { osdEnabled: false } : {}),
           referenceCount: 0,
         },
       ];
@@ -208,8 +207,8 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
           encodedPixels: false,
           hardwareEncoder: false,
           // See the equivalent comment above for allocatedVideoStreams.
-          ...(this.features.watermark ? { watermarkEnabled: false } : {}),
-          ...(this.features.onScreenDisplay ? { osdEnabled: false } : {}),
+          // ...(this.features.watermark ? { watermarkEnabled: false } : {}),
+          // ...(this.features.onScreenDisplay ? { osdEnabled: false } : {}),
         },
       ];
     }
