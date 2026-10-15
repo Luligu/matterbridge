@@ -60,6 +60,13 @@ describe('Matterbridge ' + NAME, () => {
     vi.restoreAllMocks();
   });
 
+  test('should set the requested validation mode and restore strict when no mode is provided', async () => {
+    expect((await createTestEnvironment('off')).vars.string('endpoint.validation')).toBe('off');
+    expect((await createTestEnvironment('warn')).vars.string('endpoint.validation')).toBe('warn');
+    expect((await createTestEnvironment('strict')).vars.string('endpoint.validation')).toBe('strict');
+    expect((await createTestEnvironment()).vars.string('endpoint.validation')).toBe('strict');
+  });
+
   test('create the server node', async () => {
     await createServerNode(MATTER_PORT, bridge.code);
     expect(server).toBeDefined();

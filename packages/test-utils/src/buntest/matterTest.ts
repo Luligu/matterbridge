@@ -57,7 +57,9 @@ const noop = (): void => undefined;
  * Create a matter test environment for testing:
  * - it will remove any existing home directory
  * - setup the matter environment with name, debug logging and ANSI format
+ * - set the endpoint device type validation mode (default 'strict')
  *
+ * @param {'off' | 'warn' | 'strict'} [validation] - The matter.js endpoint device type validation mode (`endpoint.validation`). Default is 'strict'.
  * @returns {Environment} - The default matter environment.
  * @example
  * ```typescript
@@ -86,7 +88,7 @@ const noop = (): void => undefined;
  * ```
  */
 // oxlint-disable-next-line typescript/require-await
-export async function createTestEnvironment(): Promise<Environment> {
+export async function createTestEnvironment(validation: 'off' | 'warn' | 'strict' = 'strict'): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
   expect(NAME.length).toBeGreaterThanOrEqual(4); // avoid accidental deletion of short paths like "/" or "C:\"
@@ -98,7 +100,7 @@ export async function createTestEnvironment(): Promise<Environment> {
   environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
-  environment.vars.set('endpoint.validation', 'strict');
+  environment.vars.set('endpoint.validation', validation);
   return environment;
 }
 

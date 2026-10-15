@@ -56,6 +56,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [types]: Add the `ApiSystemUpdate` type and the `system_update` WebSocket message.
 - [core]: The cli broadcasts a single `system_update` WebSocket message (uptime, memory, memory limit and cpu) on each tracker snapshot.
 - [test-utils]: Add `getSharedMatterbridge()`, a mocked `SharedMatterbridge` for vitest, jest and bun.
+- [test-utils]: Add the `validation` parameter (`'off'`, `'warn'` or `'strict'`, default `'strict'`) to `createTestEnvironment()` in the vitest, jest and bun helpers.
 - [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
 - [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
