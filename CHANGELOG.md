@@ -31,6 +31,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.14] - Dev branch
 
+### Breaking news
+
+Two new production plugins bring Matter cameras to Matterbridge. Both require Matterbridge 3.10.14 or newer and ffmpeg. In Docker, ffmpeg is installed automatically at start if it is not found (`autoInstallFfmpeg`, enabled by default).
+
+- [matterbridge-camera](https://github.com/Luligu/matterbridge-camera): for network cameras that provide an RTSP stream (IP cameras, NVRs, doorbells). Cameras are configured manually with a video URL, an optional audio URL, resolution and bitrate; no discovery is performed.
+
+- [matterbridge-webcam](https://github.com/Luligu/matterbridge-webcam): for local cameras connected to the Matterbridge host (USB webcams, built-in laptop cameras). Webcams and microphones are discovered with a single button in the frontend on Linux (v4l2), macOS (avfoundation) and Windows (dshow).
+
 ### Breaking changes
 
 - [matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.

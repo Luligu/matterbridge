@@ -153,6 +153,14 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="31014-dev-branch">[3.10.14] - Dev branch</h2>
+<h3 id="breaking-news">Breaking news</h3>
+<p>Two new production plugins bring Matter cameras to Matterbridge. Both require Matterbridge 3.10.14 or newer and ffmpeg. In Docker, ffmpeg is installed automatically at start if it is not found (<code>autoInstallFfmpeg</code>, enabled by default).</p>
+<ul>
+<li><p><a href="https://github.com/Luligu/matterbridge-camera">matterbridge-camera</a>: for network cameras that provide an RTSP stream (IP cameras, NVRs, doorbells). Cameras are configured manually with a video URL, an optional audio URL, resolution and bitrate; no discovery is performed.</p>
+</li>
+<li><p><a href="https://github.com/Luligu/matterbridge-webcam">matterbridge-webcam</a>: for local cameras connected to the Matterbridge host (USB webcams, built-in laptop cameras). Webcams and microphones are discovered with a single button in the frontend on Linux (v4l2), macOS (avfoundation) and Windows (dshow).</p>
+</li>
+</ul>
 <h3 id="breaking-changes">Breaking changes</h3>
 <ul>
 <li>[matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.</li>
@@ -178,6 +186,7 @@
 <li>[types]: Add the <code>ApiSystemUpdate</code> type and the <code>system_update</code> WebSocket message.</li>
 <li>[core]: The cli broadcasts a single <code>system_update</code> WebSocket message (uptime, memory, memory limit and cpu) on each tracker snapshot.</li>
 <li>[test-utils]: Add <code>getSharedMatterbridge()</code>, a mocked <code>SharedMatterbridge</code> for vitest, jest and bun.</li>
+<li>[test-utils]: Add the <code>validation</code> parameter (<code>&#39;off&#39;</code>, <code>&#39;warn&#39;</code> or <code>&#39;strict&#39;</code>, default <code>&#39;strict&#39;</code>) to <code>createTestEnvironment()</code> in the vitest, jest and bun helpers.</li>
 <li>[frontend]: Add the <code>Memory limit</code> (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.</li>
 <li>[powerSource]: Add optional <code>batCapacity</code>, <code>batTimeToFullCharge</code>, <code>batChargingCurrent</code> and <code>activeBatChargeFaults</code> parameters to <code>createDefaultPowerSourceRechargeableBatteryClusterServer()</code>.</li>
 <li>[Intercom]: Add the <code>switchOptions</code> option and the <code>addSwitch()</code> method for the Generic Switch child endpoints.</li>
