@@ -79,7 +79,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.18.0-alpha.0-20261013-2e5a97ca3",
+    "@matter/main": "0.18.0-alpha.0-20261015-9c1725759",
     "@matterbridge/types": "3.10.14",
     "@matterbridge/utils": "3.10.14",
     "@zip.js/zip.js": "2.23.0",

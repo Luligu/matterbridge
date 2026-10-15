@@ -84,19 +84,19 @@ export class IrrigationSystem extends MatterbridgeEndpoint {
     if (options.autoOpenClose !== true) return;
     this.subscribeAttribute(OperationalState, 'operationalState', (value) => {
       switch (value) {
-        case (OperationalState.OperationalStateEnum.Stopped as number):
+        case OperationalState.OperationalStateEnum.Stopped as number:
           this.log.info('IrrigationSystem operationalState changed to: Stopped');
           fireAndForget(this.closeAllZones(), this.log, 'IrrigationSystem closeAllZones');
           break;
-        case (OperationalState.OperationalStateEnum.Running as number):
+        case OperationalState.OperationalStateEnum.Running as number:
           this.log.info('IrrigationSystem operationalState changed to: Running');
           fireAndForget(this.openAllZones(), this.log, 'IrrigationSystem openAllZones');
           break;
-        case (OperationalState.OperationalStateEnum.Paused as number):
+        case OperationalState.OperationalStateEnum.Paused as number:
           this.log.info('IrrigationSystem operationalState changed to: Paused');
           fireAndForget(this.closeAllZones(), this.log, 'IrrigationSystem closeAllZones');
           break;
-        case (OperationalState.OperationalStateEnum.Error as number):
+        case OperationalState.OperationalStateEnum.Error as number:
           this.log.info('IrrigationSystem operationalState changed to: Error');
           break;
         // No default

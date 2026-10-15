@@ -332,7 +332,9 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    const currentIsIdle = this.state.supportedModes.some((mode) => mode.mode === this.state.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)));
+    const currentIsIdle = this.state.supportedModes.some(
+      (mode) => mode.mode === this.state.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)),
+    );
     const requestedIsIdle = supported.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number));
     // Matter 1.6.0 § 7.2.4.1: Without DirectModeChange, respond with InvalidInMode to a change from a non-Idle mode to another non-Idle mode.
     if (request.newMode !== this.state.currentMode && !this.features.directModeChange && !currentIsIdle && !requestedIsIdle) {
@@ -418,7 +420,9 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Already in requested mode' };
     }
     const runModeState = this.agent.get(MatterbridgeRvcRunModeServer).state;
-    const runModeIsIdle = runModeState.supportedModes.some((mode) => mode.mode === runModeState.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)));
+    const runModeIsIdle = runModeState.supportedModes.some(
+      (mode) => mode.mode === runModeState.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)),
+    );
     // Matter 1.6.0 § 7.3.4.1: Without DirectModeChange, respond with InvalidInMode to a clean mode change while the RVC Run Mode CurrentMode is not Idle.
     if (!this.features.directModeChange && !runModeIsIdle) {
       device.log.debug(
@@ -499,7 +503,10 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already paused' } };
     }
     // Matter 1.6.0 § 1.14.6.1 and § 7.4.4.1: Respond with CommandInvalidInState when the current state is not Pause-compatible (only Running and SeekingCharger are).
-    if (this.state.operationalState !== (RvcOperationalState.OperationalState.Running as number) && this.state.operationalState !== (RvcOperationalState.OperationalState.SeekingCharger as number)) {
+    if (
+      this.state.operationalState !== (RvcOperationalState.OperationalState.Running as number) &&
+      this.state.operationalState !== (RvcOperationalState.OperationalState.SeekingCharger as number)
+    ) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Pause-compatible in the current operational state' },
       };
