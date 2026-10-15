@@ -4,6 +4,17 @@ This file tracks the matter.js 0.18.x deltas compared with matter.js 0.17.9 that
 
 Audited dev version: `0.18.0-alpha.0-20261015-9c1725759` (npm `dev` verified on October 15, 2026). The findings were first audited on `0.18.0-alpha.0-20261008-6066b7499` and rechecked on `0.18.0-alpha.0-20261013-2e5a97ca3`, with the full test suite giving the same results on both historical snapshots. The three upstream validation issues reported on that October 13 snapshot are now resolved as recorded below. These findings describe this dev snapshot, not a final 0.18 release. Add newly discovered drifts here as the migration progresses.
 
+## Validation results
+
+Verified on October 15, 2026, on branch `matter018` with matter.js `0.18.0-alpha.0-20261015-9c1725759`.
+
+| Validation               | Result                              |
+| ------------------------ | ----------------------------------- |
+| Lint, format, type-check | Passed - root and frontend          |
+| Full root Vitest         | 3,796 tests passed across 174 files |
+| Full frontend Vitest     | 608 tests passed across 41 files    |
+| Full Bun suite           | 1,958 tests passed across 113 files |
+
 ## Renamed commodity fields
 
 The generated CommodityMetering and CommodityTariff types now use `Ids` instead of `IDs` in property names.
