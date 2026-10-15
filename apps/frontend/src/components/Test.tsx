@@ -36,7 +36,7 @@ function Test() {
         showSnackbarMessage('Refresh required', 0);
         sendMessage({ id: uniqueId.current, method: '/api/settings', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
         sendMessage({ id: uniqueId.current, method: '/api/plugins', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
-        sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
       } else if (msg.method === '/api/settings' && msg.response) {
         if (debug || localDebug) console.log('Test received /api/settings:', msg.response);
         showSnackbarMessage('Test received /api/settings', 0);
@@ -57,7 +57,7 @@ function Test() {
             sender: 'Test',
             src: 'Frontend',
             dst: 'Matterbridge',
-            params: { plugin: device.plugin, endpoint: device.number || 0 },
+            params: { pluginName: device.plugin, number: device.number || 0, serialNumber: device.serialNumber, uniqueId: device.uniqueId },
           });
         }
       }
@@ -79,7 +79,7 @@ function Test() {
       if (debug || localDebug) console.log('Test useEffect online received online');
       sendMessage({ id: uniqueId.current, method: '/api/settings', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
       sendMessage({ id: uniqueId.current, method: '/api/plugins', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
-      sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
     }
     if (debug || localDebug) console.log('Test useEffect online mounted');
 

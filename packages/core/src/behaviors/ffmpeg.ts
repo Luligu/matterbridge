@@ -33,7 +33,7 @@ import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger
 /** Module logger for ffmpeg binary resolution and process spawning. */
 const log = new AnsiLogger({
   logName: 'Ffmpeg',
-  logLevel: hasAnyParameter('debug', 'verbose') ? LogLevel.DEBUG : LogLevel.INFO,
+  logLevel: hasAnyParameter('debug', 'verbose', 'debug-ffmpeg', 'verbose-ffmpeg') ? LogLevel.DEBUG : LogLevel.INFO,
   logNameColor: MAGENTA,
   logTimestampFormat: TimestampFormat.TIME_MILLIS,
 });
@@ -146,7 +146,7 @@ function getWindowsCommandCandidates(): string[] {
  * @returns {string | undefined} The first candidate that runs successfully, or `undefined` if none do.
  */
 function resolveFfmpeg(): string | undefined {
-  const candidates = ['ffmpeg', '/usr/bin/ffmpeg', '/bin/ffmpeg', '/usr/local/bin/ffmpeg', ...getWindowsCommandCandidates()];
+  const candidates = ['ffmpeg', '/usr/bin/ffmpeg', '/bin/ffmpeg', '/usr/local/bin/ffmpeg', '/opt/homebrew/bin/ffmpeg', ...getWindowsCommandCandidates()];
   log.debug(`Resolving ffmpeg: trying ${candidates.length} candidate(s)`);
   for (const candidate of candidates) {
     // Path-like candidates (vs the bare `ffmpeg` looked up on PATH) get a cheap existence pre-check before spawning.
@@ -344,8 +344,22 @@ export function playWebcam(videoSource: string, audioSource?: string): ChildProc
 }
 
 /**
+ * Runs a package manager command directly when running as root, or through non-interactive sudo (`sudo -n`) otherwise.
+ *
+ * @param {boolean} asRoot - Whether the process runs as root.
+ * @param {string} command - The command to run.
+ * @param {string[]} args - The arguments to pass to the command.
+ * @returns {Promise<void>} Resolves when the command exits with code 0; rejects otherwise.
+ */
+async function runPrivileged(asRoot: boolean, command: string, args: string[]): Promise<void> {
+  await (asRoot ? runCommand(command, args) : runCommand('sudo', ['-n', command, ...args]));
+}
+
+/**
  * Installs the full ffmpeg package with the system package manager (`apk` on Alpine, `apt-get` on Debian and Ubuntu) and resolves it again.
- * It requires Linux and root privileges, as in the Matterbridge docker images: the caller decides whether installing is allowed (i.e. only in docker).
+ * It requires Linux and either root privileges, as in the Matterbridge docker images, or passwordless sudo, as in a dev container:
+ * without root the package manager runs through `sudo -n`, which fails instead of prompting for a password.
+ * The caller decides whether installing is allowed (i.e. only in docker).
  *
  * @returns {Promise<boolean>} `true` if ffmpeg is available after the installation, `false` if the installation is not supported here or failed.
  */
@@ -354,16 +368,21 @@ export async function installFfmpeg(): Promise<boolean> {
     log.warn(`Cannot install ffmpeg: unsupported platform ${process.platform}`);
     return false;
   }
-  if (process.getuid?.() !== 0) {
-    log.warn('Cannot install ffmpeg: root privileges are required');
-    return false;
+  const isRoot = process.getuid?.() === 0;
+  if (!isRoot) {
+    try {
+      runProbe('sudo', ['-n', 'true']);
+    } catch {
+      log.warn('Cannot install ffmpeg: root privileges or passwordless sudo are required');
+      return false;
+    }
   }
   try {
     if (isRunnable('apk')) {
-      await runCommand('apk', ['add', '--no-cache', 'ffmpeg']);
+      await runPrivileged(isRoot, 'apk', ['add', '--no-cache', 'ffmpeg']);
     } else if (isRunnable('apt-get')) {
-      await runCommand('apt-get', ['update']);
-      await runCommand('env', ['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', '--no-install-recommends', 'ffmpeg']);
+      await runPrivileged(isRoot, 'apt-get', ['update']);
+      await runPrivileged(isRoot, 'env', ['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', '--no-install-recommends', 'ffmpeg']);
     } else {
       log.warn('Cannot install ffmpeg: no supported package manager found (apk, apt-get)');
       return false;

@@ -17,7 +17,7 @@ import tls from 'node:tls';
 import { getFreePort } from '@matterbridge/test-utils';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import { type ApiMatter, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
+import { type ApiClusters, type ApiMatter, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
@@ -271,10 +271,45 @@ describe('Backend', () => {
         pluginsServer.respond({ ...msg, result: { plugins: [{ name: 'plugin1' }] as any } });
       }
     });
+    const deviceParamsSpy = vi.fn();
     const devicesServer = new BroadcastServer('devices', log);
     devicesServer.on('broadcast_message', (msg: WorkerMessage) => {
       if (devicesServer.isWorkerRequestOfType(msg, 'devices_apidevicearray')) {
+        deviceParamsSpy(msg.params);
         devicesServer.respond({ ...msg, result: { devices: msg.params.pluginName === 'plugin1' ? [{ plugin: 'plugin1' } as any] : [] } });
+      }
+    });
+
+    const clusters: ApiClusters = {
+      plugin: 'plugin1',
+      deviceName: 'Contact',
+      serialNumber: 'SN1',
+      uniqueId: 'UID1',
+      number: 1,
+      id: 'contact',
+      deviceTypes: [0x15],
+      clusters: [
+        {
+          endpoint: '1',
+          number: 1,
+          id: 'main',
+          deviceTypes: [0x15],
+          clusterName: 'BooleanState',
+          clusterId: '0x45',
+          attributeName: 'stateValue',
+          attributeId: '0x00',
+          attributeValue: 'false',
+          attributeLocalValue: false,
+        },
+      ],
+    };
+    const clusterRequestSpy = vi.fn();
+    const platformServer = new BroadcastServer('platform', log);
+    platformServer.on('broadcast_message', (msg: WorkerMessage) => {
+      if (platformServer.isWorkerRequestOfType(msg, 'platform_get_apiclusters')) {
+        clusterRequestSpy(msg);
+        if (msg.params.pluginName === 'plugin1') platformServer.respond({ ...msg, result: { clusters } });
+        else platformServer.respond({ ...msg, error: 'Endpoint not found' });
       }
     });
 
@@ -282,9 +317,23 @@ describe('Backend', () => {
     expect(await backend.getApiSettings()).toEqual({ test: 'settings' });
     expect(await backend.getApiPlugins()).toEqual([{ name: 'plugin1' }]);
     expect(await backend.getApiDevices('plugin1')).toEqual([{ plugin: 'plugin1' }]);
+    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1', extended: false });
+    for (const extended of [false, true]) {
+      expect(await backend.getApiDevices('plugin1', extended)).toEqual([{ plugin: 'plugin1' }]);
+      expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1', extended });
+    }
     expect(await backend.getApiDevices()).toEqual([]);
-    await expect(backend.getApiCluster('plugin1', 1)).resolves.toBeUndefined();
-    await expect(backend.getApiCluster('plugin1', 2, 'SN1', 'UID1')).resolves.toBeUndefined();
+    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: undefined, extended: false });
+    expect(await backend.getApiCluster('plugin1', 1, 'SN1', 'UID1')).toEqual(clusters);
+    expect(clusterRequestSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        type: 'platform_get_apiclusters',
+        src: 'frontend',
+        dst: 'platform',
+        params: { pluginName: 'plugin1', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' },
+      }),
+    );
+    await expect(backend.getApiCluster('missing-plugin', 1, 'SN1', 'UID1')).rejects.toThrow('Endpoint not found');
     await expect(backend.generateDiagnostic()).resolves.toBeUndefined();
 
     for (const method of ['getApiMatter', 'getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
@@ -296,6 +345,7 @@ describe('Backend', () => {
     matterbridgeServer.close();
     pluginsServer.close();
     devicesServer.close();
+    platformServer.close();
   });
 
   test('should serve http and ws when started without ssl', async () => {

@@ -44,7 +44,7 @@ describe('DevicesTable', () => {
 
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/settings' }));
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/plugins' }));
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
 
     socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [firstDevice, secondDevice] });
     expect(await screen.findByText('Kitchen Light')).toBeInTheDocument();
@@ -71,6 +71,7 @@ describe('DevicesTable', () => {
   it('should open clusters for a selected device, update cluster values, and toggle the cluster table', async () => {
     const socket = createSocket();
     const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
+    const otherDevice = createDevice({ deviceName: 'Bedroom Light', serialNumber: 'LIGHT-002', uniqueId: 'light-002', number: endpointNumber(1) });
     const clusters = [
       createCluster('1', 'Light', [0x0100], 'Descriptor', 'serverList', '[6]', [6]),
       createCluster('1', 'Light', [0x0100], 'OnOff', 'onOff', 'false', false),
@@ -83,13 +84,13 @@ describe('DevicesTable', () => {
       </WebSocketContext.Provider>,
     );
     await socket.ready();
-    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device, otherDevice] });
     fireEvent.click((await screen.findAllByText('Kitchen Light'))[0]);
 
     expect(socket.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         method: '/api/clusters',
-        params: { plugin: 'matterbridge-test', endpoint: 1, uniqueId: 'light-001' },
+        params: { pluginName: 'matterbridge-test', number: 1, serialNumber: 'LIGHT-001', uniqueId: 'light-001' },
       }),
     );
 
@@ -103,6 +104,7 @@ describe('DevicesTable', () => {
         plugin: device.plugin,
         deviceName: device.deviceName,
         serialNumber: device.serialNumber,
+        uniqueId: device.uniqueId,
         number: endpointNumber(1),
         id: 'Light',
         deviceTypes: [0x0100],
@@ -128,6 +130,20 @@ describe('DevicesTable', () => {
 
     fireEvent.click(screen.getAllByText('Kitchen Light')[0]);
     await waitFor(() => expect(screen.queryByText('Clusters')).toBeNull());
+    fireEvent.click(screen.getAllByText('Bedroom Light')[0]);
+    expect(socket.sendMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        method: '/api/clusters',
+        params: { pluginName: 'matterbridge-test', number: 1, serialNumber: 'LIGHT-002', uniqueId: 'light-002' },
+      }),
+    );
+    fireEvent.click(screen.getAllByText('Kitchen Light')[0]);
+    expect(socket.sendMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        method: '/api/clusters',
+        params: { pluginName: 'matterbridge-test', number: 1, serialNumber: 'LIGHT-001', uniqueId: 'light-001' },
+      }),
+    );
   });
 
   it('should request devices on device refresh messages only', async () => {
@@ -145,7 +161,7 @@ describe('DevicesTable', () => {
 
     socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'devices' } });
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
   });
 
   it('should ignore state updates for devices outside the filtered list', async () => {

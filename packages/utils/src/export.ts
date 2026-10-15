@@ -21,6 +21,8 @@
  * limitations under the License.
  */
 
+/* oxlint-disable oxc/no-barrel-file */
+
 export * from './colorUtils.js';
 export * from './commandLine.js';
 export * from './copyDirectory.js';
@@ -39,7 +41,9 @@ export * from './measurementUtils.js';
 export * from './network.js';
 export * from './npmPrefix.js';
 export * from './npmVersion.js';
+export * from './runtime.js';
 export * from './runtimeBun.js';
+export * from './runtimeDocker.js';
 export * from './tracker.js';
 export * from './validate.js';
 export * from './wait.js';

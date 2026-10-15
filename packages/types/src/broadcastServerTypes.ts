@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer types.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.2
+ * @version 2.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -27,7 +27,7 @@ import type { LogLevel } from 'node-ansi-logger';
 // matterbridge
 import type { ApiSelectDevice, ApiSelectEntity, ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
@@ -146,17 +146,21 @@ export type WorkerMessageTypes = {
     response: { result: { logLevel: LogLevel } };
   };
 
-  // Platform methods: only the platform matching params.plugin responds.
+  // Platform methods: only the platform matching params.pluginName responds.
   platform_get_apidevices: {
-    request: { params: { plugin: string } };
+    request: { params: { pluginName: string; extended: boolean } };
     response: { result: { devices: ApiDevice[] } };
   };
+  platform_get_apiclusters: {
+    request: { params: { pluginName: string; number: number; serialNumber: string; uniqueId: string } };
+    response: { result: { clusters: ApiClusters } };
+  };
   platform_get_apiselectdevices: {
-    request: { params: { plugin: string } };
+    request: { params: { pluginName: string } };
     response: { result: { devices: ApiSelectDevice[] } };
   };
   platform_get_apiselectentities: {
-    request: { params: { plugin: string } };
+    request: { params: { pluginName: string } };
     response: { result: { entities: ApiSelectEntity[] } };
   };
 
@@ -497,7 +501,7 @@ export type WorkerMessageTypes = {
     response: { result: { devices: BaseDevice[] } };
   };
   devices_apidevicearray: {
-    request: { params: { pluginName?: string } };
+    request: { params: { pluginName?: string; extended?: boolean } };
     response: { result: { devices: ApiDevice[] } };
   };
 };

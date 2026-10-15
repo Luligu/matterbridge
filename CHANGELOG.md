@@ -37,7 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Development Breaking changes
 
-- [types]: Rename the `ApiDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, the `ApiSelectDevice` fields `pluginName`, `name` and `serial` to `plugin`, `deviceName` and `serialNumber`, and the `ApiSelectEntity` field `pluginName` to `plugin`, to be in sync with `BaseDevice`. `ApiDevice.endpoint` is renamed to `number` and `ApiDevice` gets the endpoint `id`. These types are for the Matterbridge frontend only and should not be used by plugins: `platform.getSelectDevices()` and `platform.getSelectEntities()` return the renamed fields.
+- [types]: `/api/clusters` uses `pluginName` and `number`; both WebSocket and platform cluster requests require `serialNumber` and `uniqueId`.
 - [test-utils]: `addDevice()` and `deleteDevice()` (vitest, jest and bun) take `ticks` and `microTurns` (default 1) after `rounds`, so `pause` moves from the 4th to the 6th parameter; `rounds` now defaults to 1 (was 3).
 - [test-utils]: `flushServerNode()` (vitest, jest and bun) takes a first `rounds` parameter (default 3) and passes `rounds`, `ticks`, `microTurns` and `pause` to the endpoint number persistence flush, so it can run without timer pauses.
 
@@ -47,7 +47,9 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
-- [core]: Add plugin-targeted `platform_get_apidevices`, `platform_get_apiselectdevices` and `platform_get_apiselectentities` broadcast requests.
+- [core]: Add `pluginName`-targeted `platform_get_apidevices`, `platform_get_apiselectdevices` and `platform_get_apiselectentities` broadcast requests.
+- [core]: Add `platform_get_apiclusters` with `pluginName` and `number` parameters to retrieve a device's cluster attributes and child endpoints in the frontend API format.
+- [backend]: Fetch `/api/clusters` data from the matching platform through `platform_get_apiclusters`.
 - [utils]: Add `constrainedMemory()` to `@matterbridge/utils/bun`: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.
 - [utils]: Add `constrainedMemory` and `peakConstrainedMemory` to the `Tracker` snapshot.
 - [types]: Add `constrainedMemory` to `SystemInformation`, `PlatformMatterbridge` and `SharedMatterbridge`.
@@ -59,9 +61,14 @@ If you like this project and find it useful, please consider giving it a star on
 - [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
 - [test-utils]: Add the `validation` parameter (`'off'`, `'warn'` or `'strict'`, default `'strict'`) to `createTestEnvironment()` in the vitest, jest and bun helpers.
 - [test-utils]: Add `addBridgedNode()` to the vitest, jest and bun helpers; in strict validation mode, `addDevice()` uses it to bridge a `MatterbridgeEndpoint` added to an aggregator, like `registerDevice()` does in bridge mode.
+- [docs]: Extend [Camera](https://matterbridge.io/Camera.html) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
+- [utils]: Add `isDocker()` in `runtimeDocker.ts` to detect a Linux container (Docker, Podman, VS Code dev containers, Codespaces) without the `--docker` parameter.
+- [utils]: Add `getDockerRuntimeInfo()` (container kind, `--docker`, official image build config, bridge network) and `isDockerBridgeNetwork()` in `runtimeDocker.ts`, and `isRoot()` and `hasPasswordlessSudo()` in `runtime.ts`.
 
 ### Changed
 
+- [core]: Honor the `extended` flag in local frontend, backend and platform device API requests.
+- [frontend]: Request extended device data in HomeDevices and DevicesTable.
 - [test-utils]: Set strict endpoint validation in all Matter test environment helpers.
 - [core]: Set warn endpoint validation in the Matterbridge and MatterNode environments.
 - [core]: Include the required Binding cluster in device type definitions.
@@ -72,6 +79,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Bind plugin endpoint callbacks to their MatterNode instance.
 - [core]: Catch and log MatterNode broadcast message handler rejections with `fireAndForget`.
 - [core]: Skip unchanged values when initializing MatterNode storage contexts.
+- [webrtc]: The `test` video source follows `videoResolution` and `videoBitrate` like the `webcam` and `rtsp` sources (was fixed at 640x480 and 1000 kbps).
+- [webrtc]: Add `MATTERBRIDGE_TEST_VIDEO_FPS` to set the `test` video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.
+- [webrtc]: The `webcam` video source forces a constant 30 fps output (`-fps_mode cfr -r 30`), so the bitrate cap holds on macOS avfoundation (was about 7x the configured bitrate with a gray picture).
+- [ffmpeg]: `installFfmpeg()` also works without root through passwordless sudo (`sudo -n`), as in a dev container.
+- [ffmpeg]: Resolve the Homebrew ffmpeg on Apple Silicon (`/opt/homebrew/bin/ffmpeg`), which is not on the `PATH` of a launchd service.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.14.
 - [matterbridge]: Bump `marked` to v.18.1.0.
 - [matterbridge]: Bump `oxfmt` to v.0.72.0.
@@ -84,6 +96,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [utils]: `Tracker` reads its flags with the `hasParameter` helpers; the verbose start log groups the CPUs by model and also logs the memory limit and the uptimes.
 - [frontend]: Rename system info labels to `Host memory`, `Process rss` and `Process heap`.
 - [frontend]: Show the full (not compact) system info table on mobile.
+- [frontend]: Remove `matterbridge-camera` and `matterbridge-webcam` from the plugin ignore list so they can be searched and installed.
 - [frontend]: Bump `frontend` version to v.3.6.5.
 - [frontend]: Bump `@mui/material` to v.9.5.0.
 - [frontend]: Bump `@mui/icons-material` to v.9.5.0.

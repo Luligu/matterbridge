@@ -159,7 +159,7 @@
 </ul>
 <h3 id="development-breaking-changes">Development Breaking changes</h3>
 <ul>
-<li>[types]: Rename the <code>ApiDevice</code> fields <code>pluginName</code>, <code>name</code> and <code>serial</code> to <code>plugin</code>, <code>deviceName</code> and <code>serialNumber</code>, the <code>ApiSelectDevice</code> fields <code>pluginName</code>, <code>name</code> and <code>serial</code> to <code>plugin</code>, <code>deviceName</code> and <code>serialNumber</code>, and the <code>ApiSelectEntity</code> field <code>pluginName</code> to <code>plugin</code>, to be in sync with <code>BaseDevice</code>. <code>ApiDevice.endpoint</code> is renamed to <code>number</code> and <code>ApiDevice</code> gets the endpoint <code>id</code>. These types are for the Matterbridge frontend only and should not be used by plugins: <code>platform.getSelectDevices()</code> and <code>platform.getSelectEntities()</code> return the renamed fields.</li>
+<li>[types]: <code>/api/clusters</code> uses <code>pluginName</code> and <code>number</code>; both WebSocket and platform cluster requests require <code>serialNumber</code> and <code>uniqueId</code>.</li>
 <li>[test-utils]: <code>addDevice()</code> and <code>deleteDevice()</code> (vitest, jest and bun) take <code>ticks</code> and <code>microTurns</code> (default 1) after <code>rounds</code>, so <code>pause</code> moves from the 4th to the 6th parameter; <code>rounds</code> now defaults to 1 (was 3).</li>
 <li>[test-utils]: <code>flushServerNode()</code> (vitest, jest and bun) takes a first <code>rounds</code> parameter (default 3) and passes <code>rounds</code>, <code>ticks</code>, <code>microTurns</code> and <code>pause</code> to the endpoint number persistence flush, so it can run without timer pauses.</li>
 </ul>
@@ -169,7 +169,9 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
-<li>[core]: Add plugin-targeted <code>platform_get_apidevices</code>, <code>platform_get_apiselectdevices</code> and <code>platform_get_apiselectentities</code> broadcast requests.</li>
+<li>[core]: Add <code>pluginName</code>-targeted <code>platform_get_apidevices</code>, <code>platform_get_apiselectdevices</code> and <code>platform_get_apiselectentities</code> broadcast requests.</li>
+<li>[core]: Add <code>platform_get_apiclusters</code> with <code>pluginName</code> and <code>number</code> parameters to retrieve a device&#39;s cluster attributes and child endpoints in the frontend API format.</li>
+<li>[backend]: Fetch <code>/api/clusters</code> data from the matching platform through <code>platform_get_apiclusters</code>.</li>
 <li>[utils]: Add <code>constrainedMemory()</code> to <code>@matterbridge/utils/bun</code>: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.</li>
 <li>[utils]: Add <code>constrainedMemory</code> and <code>peakConstrainedMemory</code> to the <code>Tracker</code> snapshot.</li>
 <li>[types]: Add <code>constrainedMemory</code> to <code>SystemInformation</code>, <code>PlatformMatterbridge</code> and <code>SharedMatterbridge</code>.</li>
@@ -177,14 +179,28 @@
 <li>[core]: The cli broadcasts a single <code>system_update</code> WebSocket message (uptime, memory, memory limit and cpu) on each tracker snapshot.</li>
 <li>[test-utils]: Add <code>getSharedMatterbridge()</code>, a mocked <code>SharedMatterbridge</code> for vitest, jest and bun.</li>
 <li>[frontend]: Add the <code>Memory limit</code> (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.</li>
+<li>[powerSource]: Add optional <code>batCapacity</code>, <code>batTimeToFullCharge</code>, <code>batChargingCurrent</code> and <code>activeBatChargeFaults</code> parameters to <code>createDefaultPowerSourceRechargeableBatteryClusterServer()</code>.</li>
+<li>[Intercom]: Add the <code>switchOptions</code> option and the <code>addSwitch()</code> method for the Generic Switch child endpoints.</li>
+<li>[docs]: Extend <a href="https://matterbridge.io/Camera.html">Camera</a> with browser peers hiding their address behind mDNS <code>.local</code> candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.</li>
+<li>[utils]: Add <code>isDocker()</code> in <code>runtimeDocker.ts</code> to detect a Linux container (Docker, Podman, VS Code dev containers, Codespaces) without the <code>--docker</code> parameter.</li>
+<li>[utils]: Add <code>getDockerRuntimeInfo()</code> (container kind, <code>--docker</code>, official image build config, bridge network) and <code>isDockerBridgeNetwork()</code> in <code>runtimeDocker.ts</code>, and <code>isRoot()</code> and <code>hasPasswordlessSudo()</code> in <code>runtime.ts</code>.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[core]: Honor the <code>extended</code> flag in local frontend, backend and platform device API requests.</li>
+<li>[frontend]: Request extended device data in HomeDevices and DevicesTable.</li>
+<li>[test-utils]: Set strict endpoint validation in all Matter test environment helpers.</li>
+<li>[core]: Set warn endpoint validation in the Matterbridge and MatterNode environments.</li>
 <li>[core]: Fetch platform and shared Matterbridge data after MatterNode construction.</li>
 <li>[core]: Return the MatterNode shared Matterbridge instance to plugin platforms.</li>
 <li>[core]: Bind plugin endpoint callbacks to their MatterNode instance.</li>
 <li>[core]: Catch and log MatterNode broadcast message handler rejections with <code>fireAndForget</code>.</li>
 <li>[core]: Skip unchanged values when initializing MatterNode storage contexts.</li>
+<li>[webrtc]: The <code>test</code> video source follows <code>videoResolution</code> and <code>videoBitrate</code> like the <code>webcam</code> and <code>rtsp</code> sources (was fixed at 640x480 and 1000 kbps).</li>
+<li>[webrtc]: Add <code>MATTERBRIDGE_TEST_VIDEO_FPS</code> to set the <code>test</code> video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.</li>
+<li>[webrtc]: The <code>webcam</code> video source forces a constant 30 fps output (<code>-fps_mode cfr -r 30</code>), so the bitrate cap holds on macOS avfoundation (was about 7x the configured bitrate with a gray picture).</li>
+<li>[ffmpeg]: <code>installFfmpeg()</code> also works without root through passwordless sudo (<code>sudo -n</code>), as in a dev container.</li>
+<li>[ffmpeg]: Resolve the Homebrew ffmpeg on Apple Silicon (<code>/opt/homebrew/bin/ffmpeg</code>), which is not on the <code>PATH</code> of a launchd service.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.10.14.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.1.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.72.0.</li>
@@ -197,6 +213,7 @@
 <li>[utils]: <code>Tracker</code> reads its flags with the <code>hasParameter</code> helpers; the verbose start log groups the CPUs by model and also logs the memory limit and the uptimes.</li>
 <li>[frontend]: Rename system info labels to <code>Host memory</code>, <code>Process rss</code> and <code>Process heap</code>.</li>
 <li>[frontend]: Show the full (not compact) system info table on mobile.</li>
+<li>[frontend]: Remove <code>matterbridge-camera</code> and <code>matterbridge-webcam</code> from the plugin ignore list so they can be searched and installed.</li>
 <li>[frontend]: Bump <code>frontend</code> version to v.3.6.5.</li>
 <li>[frontend]: Bump <code>@mui/material</code> to v.9.5.0.</li>
 <li>[frontend]: Bump <code>@mui/icons-material</code> to v.9.5.0.</li>
@@ -222,6 +239,8 @@
 <li>[core]: Don&#39;t answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught <code>ERR_HTTP_HEADERS_SENT</code> (oven-sh/bun#44925).</li>
 <li>[test-utils]: <code>addDevice()</code> and <code>deleteDevice()</code> passed <code>pause</code> as the <code>ticks</code> argument of <code>flushAllEndpointNumberPersistence()</code>, adding ~60ms to every call.</li>
 <li>[core]: <code>setWindowCoveringCurrentTargetStatus()</code> threw a conformance error on a tilt only window covering: it now sets the tilt positions when the server has no Lift feature.</li>
+<li>[BatteryStorage]: Set the mandatory <code>BatCapacity</code>, <code>BatTimeToFullCharge</code>, <code>BatChargingCurrent</code> and <code>ActiveBatChargeFaults</code> on the battery Power Source (Matter 1.6.1 Device Library § 14.4.6.2), with the new <code>batCapacity</code> option.</li>
+<li>[Intercom]: Add the mandatory Generic Switch child endpoint with a momentary switch (Matter 1.5.1 Intercom revision 2, Device Library § 16.4.4 and § 16.4.8).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31013-2026-10-09">[3.10.13] - 2026-10-09</h2>

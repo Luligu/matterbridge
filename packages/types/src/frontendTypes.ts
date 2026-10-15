@@ -3,7 +3,7 @@
  * @description This file contains the types for WebSocket messages.
  * @author Luca Liguori
  * @created 2025-09-17
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -19,6 +19,83 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ */
+
+/*
+ *   WebSocket message types for frontend components.
+ * | ---------------------------- | ----------------------------------------------------------- |
+ * | component                    | api                                                         |
+ * | ---------------------------- | ----------------------------------------------------------- |
+ * | App                          | /api/login (fetch)                                                 |
+ * | ConfigPluginDialog           | /api/action                                                 |
+ * |                              | /api/savepluginconfig                                       |
+ * |                              | /api/select/devices                                         |
+ * |                              | /api/select/entities                                        |
+ * | Devices                      | /api/plugins                                                |
+ * | DevicesIcons                 | /api/clusters                                               |
+ * |                              | /api/devices                                                |
+ * | DevicesTable                 | /api/clusters                                               |
+ * |                              | /api/devices (cluster)                                               |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/settings                                               |
+ * | Header                       | /api/checkupdates                                           |
+ * |                              | /api/create-backup                                          |
+ * |                              | /api/create-config-backup                                   |
+ * |                              | /api/create-matter-storage-backup                           |
+ * |                              | /api/create-matterbridge-storage-backup                     |
+ * |                              | /api/create-plugin-backup                                   |
+ * |                              | /api/download-backup                                        |
+ * |                              | /api/download-diagnostic                                    |
+ * |                              | /api/download-mblog                                         |
+ * |                              | /api/download-mbstorage                                     |
+ * |                              | /api/download-mjlog                                         |
+ * |                              | /api/download-mjstorage                                     |
+ * |                              | /api/download-pluginconfig                                  |
+ * |                              | /api/download-pluginstorage                                 |
+ * |                              | /api/downloadhistory                                        |
+ * |                              | /api/downloadhistorypage                                    |
+ * |                              | /api/factoryreset                                           |
+ * |                              | /api/install                                                |
+ * |                              | /api/reset                                                  |
+ * |                              | /api/restart                                                |
+ * |                              | /api/settings                                               |
+ * |                              | /api/shutdown                                               |
+ * |                              | /api/unregister                                             |
+ * |                              | /api/view-diagnostic                                        |
+ * |                              | /api/view-mblog                                             |
+ * |                              | /api/view-mjlog                                             |
+ * |                              | /api/viewhistory                                            |
+ * |                              | /api/viewhistorypage                                        |
+ * | Home                         | /api/plugins                                                |
+ * |                              | /api/settings                                               |
+ * | HomeDevices                  | /api/command                                                |
+ * |                              | /api/devices (reachable, powerSource, batteryLevel, matter) |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/select/devices                                         |
+ * |                              | /api/settings                                               |
+ * | HomeInstallAddPlugins        | /api/addplugin                                              |
+ * |                              | /api/install                                                |
+ * |                              | /api/uninstall                                              |
+ * |                              | /api/uploadpackage                                          |
+ * | HomePlugins                  | /api/disableplugin                                          |
+ * |                              | /api/enableplugin                                           |
+ * |                              | /api/install                                                |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/removeplugin                                           |
+ * |                              | /api/restartplugin                                          |
+ * |                              | /api/select/devices                                         |
+ * |                              | /api/select/entities                                        |
+ * |                              | /api/settings                                               |
+ * | QRDiv                        | /api/matter                                                 |
+ * | Settings                     | /api/config                                                 |
+ * |                              | /api/settings                                               |
+ * | SystemInfoTable              | /api/viewhistory                                            |
+ * |                              | /api/viewhistorypage                                        |
+ * | Test                         | /api/clusters                                               |
+ * |                              | /api/devices                                                |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/settings                                               |
+ * | WebSocketProvider            | ping                                                        |
  */
 
 // matterbridge
@@ -144,7 +221,6 @@ export interface WsMessagePingRequest extends WsMessageBaseApiRequest {
 export interface WsMessagePingResponse extends WsMessageSuccessApiResponse {
   method: 'pong';
   response: 'pong';
-  success: true;
 }
 
 export interface WsMessageApiLoginRequest extends WsMessageBaseApiRequest {
@@ -378,6 +454,7 @@ export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
   method: '/api/devices';
   params: {
     pluginName?: string;
+    extended: boolean;
   };
 }
 export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse {
@@ -388,10 +465,10 @@ export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse
 export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   method: '/api/clusters';
   params: {
-    plugin: string;
-    endpoint: number;
-    serialNumber?: string;
-    uniqueId?: string;
+    pluginName: string;
+    number: number;
+    serialNumber: string;
+    uniqueId: string;
   };
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {

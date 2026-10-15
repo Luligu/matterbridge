@@ -319,20 +319,28 @@ export class BackendWsServer {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
-        if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' });
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
           return;
         }
-        if (!isValidNumber(data.params.endpoint, 1)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
+        if (!isValidNumber(data.params.number, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter number in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter serialNumber in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.uniqueId, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter uniqueId in /api/clusters' });
           return;
         }
         const start = performance.now();
-        const clusters = await this.backend.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        const clusters = await this.backend.getApiCluster(data.params.pluginName, data.params.number, data.params.serialNumber, data.params.uniqueId);
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
         if (clusters) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: clusters });

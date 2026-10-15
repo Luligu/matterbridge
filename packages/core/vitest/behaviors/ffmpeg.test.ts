@@ -12,7 +12,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { loggerDebugSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -166,6 +166,19 @@ describe('ffmpeg resolution', () => {
     } finally {
       process.argv.pop();
     }
+  });
+
+  it('should probe the Homebrew ffmpeg on Apple Silicon, which is not on the PATH of a launchd service', async () => {
+    process.env.PATH = '';
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
+
+    vi.resetModules();
+    const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    expect(hasFfmpeg()).toBe(false);
+    // Whether the file exists depends on the host: it is either skipped as not accessible or probed and rejected.
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Candidate \/opt\/homebrew\/bin\/ffmpeg (is not accessible|did not run successfully)$/));
   });
 
   it('should include the winget Gyan.FFmpeg package bin path on Windows', async () => {
@@ -429,7 +442,8 @@ describe('playWebcam', () => {
     delete process.env.LOCALAPPDATA;
     process.env.ProgramFiles = dir;
     Object.defineProperty(process, 'platform', { value: 'win32' });
-    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'ffmpeg' ? new Error('spawn ENOENT') : 0));
+    // Only the fake install runs, so a real ffmpeg of the host (e.g. /opt/homebrew/bin/ffmpeg) is never picked.
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === ffmpegPath ? 0 : new Error('spawn ENOENT')));
     spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
 
     try {
@@ -504,11 +518,46 @@ describe('installFfmpeg', () => {
     expect(spawnSyncMock).not.toHaveBeenCalled();
   });
 
-  it('should not install without root privileges', async () => {
+  it('should not install without root privileges and without passwordless sudo', async () => {
     const { installFfmpeg } = await load('linux', 1000);
 
     expect(await installFfmpeg()).toBe(false);
-    expect(spawnSyncMock).not.toHaveBeenCalled();
+    expect(spawnSyncMock).toHaveBeenCalledWith('sudo', ['-n', 'true'], expect.anything());
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  it('should install ffmpeg with apk through passwordless sudo when not root', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 1000);
+    let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'sudo' || command === 'apk' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command, args) => {
+      if (command === 'sudo' && (args as string[]).includes('add')) installed = true;
+      return fakeChild(command === 'sudo' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+    });
+
+    expect(await installFfmpeg()).toBe(true);
+    expect(hasFfmpeg()).toBe(true);
+    expect(spawnMock).toHaveBeenCalledWith('sudo', ['-n', 'apk', 'add', '--no-cache', 'ffmpeg'], expect.anything());
+    expect(spawnMock).not.toHaveBeenCalledWith('apk', expect.anything(), expect.anything());
+  });
+
+  it('should install ffmpeg with apt-get through passwordless sudo when not root', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 1000);
+    let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'sudo' || command === 'apt-get' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command, args) => {
+      if (command === 'sudo' && (args as string[]).includes('install')) installed = true;
+      return fakeChild(command === 'sudo' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+    });
+
+    expect(await installFfmpeg()).toBe(true);
+    expect(hasFfmpeg()).toBe(true);
+    expect(spawnMock).toHaveBeenCalledWith('sudo', ['-n', 'apt-get', 'update'], expect.anything());
+    expect(spawnMock).toHaveBeenCalledWith(
+      'sudo',
+      ['-n', 'env', 'DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', '--no-install-recommends', 'ffmpeg'],
+      expect.anything(),
+    );
   });
 
   it('should not install when no package manager is found', async () => {

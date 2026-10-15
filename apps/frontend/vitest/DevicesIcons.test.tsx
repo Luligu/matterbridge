@@ -92,8 +92,13 @@ describe('DevicesIcons', () => {
     expectText('Battery');
     expect(screen.getAllByText('---').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('Controller On')).toBeNull();
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/clusters' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: '/api/clusters',
+        params: expect.objectContaining({ pluginName: expect.any(String), number: expect.any(Number), serialNumber: expect.any(String), uniqueId: expect.any(String) }),
+      }),
+    );
   });
 
   it('should not lose any device when multiple /api/clusters responses arrive in the same render batch', async () => {
@@ -106,7 +111,9 @@ describe('DevicesIcons', () => {
     // but the last commit in the batch were silently discarded - devices vanished at random.
     const socket = createSocket();
     const deviceCount = 5;
-    const devices = Array.from({ length: deviceCount }, (_, i) => createDevice({ serialNumber: `FAN-${i}`, uniqueId: `fan-${i}`, deviceName: `Fan ${i}` }));
+    const devices = Array.from({ length: deviceCount }, (_, i) =>
+      createDevice({ serialNumber: `FAN-${i}`, uniqueId: `fan-${i}`, deviceName: `Fan ${i}`, number: endpointNumber(1) }),
+    );
     const clustersFor = (i: number) => [
       createCluster('1', 'main', 0x002b, 'FanControl', 'fanMode', String(i), i),
       createCluster('1', 'main', 0x002b, 'FanControl', 'percentCurrent', String(i * 10), i * 10),
@@ -130,6 +137,7 @@ describe('DevicesIcons', () => {
         plugin: device.plugin,
         deviceName: device.deviceName,
         serialNumber: device.serialNumber,
+        uniqueId: device.uniqueId,
         number: endpointNumber(1),
         id: 'main',
         deviceTypes: [0x002b],
@@ -146,6 +154,12 @@ describe('DevicesIcons', () => {
     });
     const fanModeLookup = ['Off', 'Low', 'Medium', 'High', 'On'];
     for (let i = 0; i < deviceCount; i++) {
+      expect(socket.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: '/api/clusters',
+          params: { pluginName: devices[i].plugin, number: devices[i].number, serialNumber: devices[i].serialNumber, uniqueId: devices[i].uniqueId },
+        }),
+      );
       expectText(fanModeLookup[i]);
       expectText(`Speed ${i * 10}%`);
     }
@@ -224,11 +238,20 @@ describe('DevicesIcons', () => {
       dst: 'Frontend',
       method: '/api/clusters',
       success: true,
-      response: { plugin: 'matterbridge-test', deviceName: 'Empty', serialNumber: 'EMPTY-001', number: endpointNumber(1), id: 'main', deviceTypes: [], clusters: [] },
+      response: {
+        plugin: 'matterbridge-test',
+        deviceName: 'Empty',
+        serialNumber: 'EMPTY-001',
+        uniqueId: 'empty-test',
+        number: endpointNumber(1),
+        id: 'main',
+        deviceTypes: [],
+        clusters: [],
+      },
     });
 
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
     expect(screen.queryByText('Empty')).toBeNull();
   });
 
@@ -556,6 +579,7 @@ function loadDevice(socket: TestSocket, device: ApiDevice, clusters: Cluster[]):
       plugin: device.plugin,
       deviceName: device.deviceName,
       serialNumber: device.serialNumber,
+      uniqueId: device.uniqueId,
       number: endpointNumber(1),
       id: 'main',
       deviceTypes: [...new Set(clusters.flatMap((cluster) => cluster.deviceTypes))],

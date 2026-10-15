@@ -379,14 +379,21 @@ export interface ApiMatter {
 
 /** Define an interface for API clusters information */
 export interface ApiClusters {
+  /** The plugin name */
   plugin: string;
+  /** The device name */
   deviceName: string;
+  /** The device serial number */
   serialNumber: string;
+  /** The device unique id */
+  uniqueId: string;
   /** Endpoint number */
   number: number;
   /** Endpoint id */
   id: string;
+  /** The device type codes of the device root endpoint */
   deviceTypes: number[];
+  /** The cluster attributes of the device root endpoint and its child endpoints */
   clusters: Cluster[];
 }
 

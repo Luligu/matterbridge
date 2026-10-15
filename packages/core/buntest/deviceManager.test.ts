@@ -398,20 +398,36 @@ describe('DeviceManager', () => {
       productUrl: 'https://product',
       configUrl: 'https://config',
       uniqueId: 'unique',
-      reachable: false,
+      reachable: true,
       powerSource: undefined,
       batteryLevel: undefined,
       matter: undefined,
       cluster: '',
     });
     expect(all[2].reachable).toBe(true);
-    expect(all[2].matter).toMatchObject({ id: 'server-store', online: true, commissioned: false, qrPairingCode: 'QR', manualPairingCode: 'MAN', serialNumber: 'SN' });
+    expect(all[2].matter).toBeUndefined();
+    expect(devices.apiDeviceArray(undefined, false)).toEqual(all);
+    const extended = devices.apiDeviceArray(undefined, true);
+    expect(extended.map((d) => d.uniqueId)).toEqual(['unique', 'other', 'server']);
+    expect(extended[0].reachable).toBe(false);
+    expect(extended[2].reachable).toBe(true);
+    expect(extended[2].matter).toMatchObject({ id: 'server-store', online: true, commissioned: false, qrPairingCode: 'QR', manualPairingCode: 'MAN', serialNumber: 'SN' });
 
     expect(devices.apiDeviceArray('plugin2').map((d) => d.uniqueId)).toEqual(['other']);
     expect(devices.apiDeviceArray('missing')).toEqual([]);
 
-    expect((await testServer.fetch({ type: 'devices_apidevicearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toHaveLength(3);
-    expect((await testServer.fetch({ type: 'devices_apidevicearray', src: testServer.name, dst: 'devices', params: { pluginName: 'plugin1' } })).result.devices).toHaveLength(2);
+    expect((await testServer.fetch({ type: 'devices_apidevicearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toEqual(all);
+    for (const extended of [false, true]) {
+      for (const pluginName of [undefined, 'plugin1', 'plugin2', 'missing']) {
+        const response = await testServer.fetch({
+          type: 'devices_apidevicearray',
+          src: testServer.name,
+          dst: 'devices',
+          params: { pluginName, extended },
+        });
+        expect(response.result.devices).toEqual(devices.apiDeviceArray(pluginName, extended));
+      }
+    }
     devices.clear();
   });
 
