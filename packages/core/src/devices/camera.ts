@@ -22,17 +22,18 @@
  * limitations under the License.
  */
 
+// @matter
 import type { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import { StreamUsage, type Viewport } from '@matter/types/globals';
 
+// Matterbridge
 import { createDefaultCameraAvSettingsUserLevelManagementClusterServer } from '../behaviors/cameraAvSettingsUserLevelManagementServer.js';
 import { createDefaultCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
 import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
-// Matterbridge
 import { camera, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';

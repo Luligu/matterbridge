@@ -1140,7 +1140,7 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
     id: 'IntercomII',
     number: EndpointNumber(16_04_1),
     identifyType: Identify.IdentifyType.VisibleIndicator,
-    switchOptions: { number: EndpointNumber(16_04_1_2) },
+    switchOptions: { number: EndpointNumber(16_04_3) },
     weriftOfferOptions: { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' },
   });
   await registerDevice(ep, 'Intercom II', 'CAMERA-16-04-1');

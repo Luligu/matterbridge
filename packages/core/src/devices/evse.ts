@@ -40,6 +40,7 @@ import { StatusResponse } from '@matter/types/common';
 import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 import { MATTER_EPOCH_OFFSET_S } from '@matter/types/tlv';
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 import { debugStringify, type AnsiLogger } from 'node-ansi-logger';
 

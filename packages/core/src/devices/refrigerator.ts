@@ -31,6 +31,7 @@ import type { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alar
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
 import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge

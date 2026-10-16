@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Claude Fable 5
  * @created 2026-07-30
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.

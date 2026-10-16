@@ -38,6 +38,7 @@ import type { MeterIdentification } from '@matter/types/clusters/meter-identific
 import { StatusResponse } from '@matter/types/common';
 import type { EndpointNumber } from '@matter/types/datatype';
 import { type Currency, type Semtag, TariffUnit } from '@matter/types/globals';
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge

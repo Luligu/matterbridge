@@ -22,17 +22,18 @@
  * limitations under the License.
  */
 
+// @matter
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import type { EndpointNumber } from '@matter/types/datatype';
 import { type Semtag, StreamUsage } from '@matter/types/globals';
 
+// Matterbridge
 import { createDefaultIntercomCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addChimeClient, addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
 import { createDefaultWebRtcTransportRequestorClusterServer } from '../behaviors/webRtcTransportRequestorServer.js';
 import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
-// Matterbridge
 import { genericSwitch, intercom, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';

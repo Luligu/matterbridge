@@ -22,13 +22,14 @@
  * limitations under the License.
  */
 
+// @matter
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
 import { StreamUsage } from '@matter/types/globals';
 
+// Matterbridge
 import { createDefaultSnapshotCameraAvStreamManagementClusterServer, type SnapshotSource } from '../behaviors/cameraAvStreamManagementServer.js';
 import { powerSource, snapshotCamera } from '../matterbridgeDeviceTypes.js';
-// Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 

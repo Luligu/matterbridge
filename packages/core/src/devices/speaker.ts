@@ -28,7 +28,7 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { EndpointNumber } from '@matter/types/datatype';
 
-// matterbridge
+// Matterbridge
 import { powerSource, speaker } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { createDefaultMediaPowerSourceClusterServer, type MediaPowerSourceType } from './mediaHelpers.js';

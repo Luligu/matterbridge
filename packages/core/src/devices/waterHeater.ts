@@ -33,7 +33,7 @@ import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-manag
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
-// Utils
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge

@@ -21,9 +21,9 @@
  * limitations under the License.
  */
 
+// Matterbridge
 import { addWebRtcTransportProviderClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportRequestorClusterServer } from '../behaviors/webRtcTransportRequestorServer.js';
-// Matterbridge
 import { cameraController, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';

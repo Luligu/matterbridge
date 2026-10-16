@@ -21,8 +21,8 @@
  * limitations under the License.
  */
 
-import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 // @matter
+import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 // @matterbridge
