@@ -29,6 +29,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [Unreleased] - Dev branch
+
+### Fixed
+
+- [s6-rc]: Configure npm to use the persistent app data cache for startup and plugin installations.
+
 ## [3.10.14] - 2026-10-16
 
 ### Breaking news
