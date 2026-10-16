@@ -13,6 +13,7 @@ export type {
   ApiSelectDevice,
   ApiSelectDeviceEntity,
   ApiSelectEntity,
+  ApiSystemUpdate,
   WsMessage,
 } from '../../../../packages/types/src/frontendTypes';
 export type {

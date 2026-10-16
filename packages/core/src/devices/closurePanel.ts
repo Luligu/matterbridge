@@ -30,9 +30,9 @@
 import { Millis, Time, type MaybePromise, type Timer } from '@matter/general';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
-import { StatusResponse } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { ClosureDimension } from '@matter/types/clusters/closure-dimension';
+import { StatusResponse } from '@matter/types/common';
 import type { EndpointNumber } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 

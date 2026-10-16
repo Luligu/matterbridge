@@ -8,8 +8,8 @@ const NAME = 'ValveConfigurationAndControlServer';
 const MATTER_PORT = 12200;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

@@ -163,3 +163,19 @@ built and served. See the TODO list below for the known limitations.
       "WebSocket npm fails TLS handshake with self signed certificates"), with a fix proposed in
       [oven-sh/bun#31397](https://github.com/oven-sh/bun/pull/31397) (open, not yet merged) —
       revisit dropping the workaround once that lands in a release.
+
+- [ ] **`bun test --coverage` never counts implicit class constructors as called.** A derived class
+      without its own constructor gets the default `constructor(...args) { super(...args); }` from
+      the language, and it runs on every `new`. JavaScriptCore records that synthesized constructor
+      as a function that never executed, so `% Funcs` drops below 100% while `% Lines` stays at 100%.
+      In `packages/core/src/devices` this hits every file that defines a `Matterbridge…Server`
+      behavior class (for example `MatterbridgeLaundryDryerControlsServer` in
+      [laundryDryer.ts](./packages/core/src/devices/laundryDryer.ts)): vitest reports 100% functions
+      on the same tests. Present in Bun 1.4.2 and 1.4.3.
+      Do not add `constructor(...args) { super(...args); }` only to satisfy the report: it is
+      useless code and the implicit constructor is the correct form.
+      Reported upstream: [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730) (open,
+      "test --coverage: implicit constructor invocations never counted in %Funcs"), with fixes
+      proposed in [oven-sh/bun#38282](https://github.com/oven-sh/bun/pull/38282) and
+      [oven-sh/bun#38518](https://github.com/oven-sh/bun/pull/38518) (open, not yet merged) —
+      recheck the device function coverage once either lands in a release.

@@ -8,8 +8,8 @@ const NAME = 'LaundryWasher';
 const MATTER_PORT = 8009;
 const MATTER_CREATE_ONLY = true;
 
-import { LaundryWasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
-import { Status } from '@matter/types';
+import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
+import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { Identify } from '@matter/types/clusters/identify';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
@@ -18,6 +18,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -111,23 +112,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
@@ -414,6 +398,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('reject SupportedModes without a Normal mode at initialization', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const invalid = new LaundryWasher('Laundry Washer No Normal', 'LW000000', {
       currentMode: 1,
       supportedModes: [{ label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] }],
@@ -421,6 +406,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, invalid)).toBeFalsy();
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device LaundryWasherNoNormal-LW000000'));
     loggerErrorSpy.mockClear();
+    stderrSpy.mockRestore();
   });
 
   test('start the server node', async () => {

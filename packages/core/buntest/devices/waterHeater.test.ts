@@ -1,0 +1,578 @@
+/**
+ * @file packages/core/buntest/devices/waterHeater.test.ts
+ * @description This file contains the tests for the WaterHeater device.
+ * @author Luca Liguori
+ */
+
+const NAME = 'WaterHeater';
+const MATTER_PORT = 8016;
+const MATTER_CREATE_ONLY = true;
+
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
+
+import { ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
+import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
+import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
+import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
+import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
+import { Identify } from '@matter/types/clusters/identify';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import { EndpointNumber } from '@matter/types/datatype';
+import {
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/buntest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { LogLevel, stringify } from 'node-ansi-logger';
+
+import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';
+import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from '../../src/devices/waterHeater.js';
+import { waterHeater } from '../../src/matterbridgeDeviceTypes.js';
+
+// Setup the test environment
+await setupTest(NAME, false);
+
+describe('Matterbridge Water Heater', () => {
+  let device: WaterHeater;
+
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    await createTestEnvironment();
+  });
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
+
+  afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
+    vi.restoreAllMocks();
+  });
+
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, waterHeater.code, 0, 0, 0);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('create a water heater device with all parameters', () => {
+    device = new WaterHeater('Water Heater Test Device', 'WH123456', {
+      waterTemperature: 50,
+      targetWaterTemperature: 55,
+      minHeatSetpointLimit: 20,
+      maxHeatSetpointLimit: 80,
+      heaterTypes: { immersionElement1: true, immersionElement2: true, heatPump: true, boiler: true, other: true },
+      tankPercentage: 90,
+    });
+    expect(device).toBeDefined();
+    expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
+    expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
+    expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
+    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
+  });
+
+  test('create a water heater device with no parameter', () => {
+    device = new WaterHeater('Water Heater Test Device', 'WH123456');
+    expect(device).toBeDefined();
+    expect(device.id).toBe('WaterHeaterTestDevice-WH123456');
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(WaterHeaterManagementServer)).toBeTruthy();
+    expect(device.hasClusterServer(WaterHeaterModeServer)).toBeTruthy();
+    expect(device.hasClusterServer(ThermostatServer)).toBeTruthy();
+    expect(device.getChildEndpointById('PowerSource')?.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalEnergyMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('ElectricalSensor')?.hasClusterServer(ElectricalPowerMeasurement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagement.id)).toBeTruthy();
+    expect(device.getChildEndpointById('DeviceEnergyManagement')?.hasClusterServer(DeviceEnergyManagementMode.id)).toBeTruthy();
+  });
+
+  test('create a water heater with explicit endpoint and measurement options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: 1, tag: 1, label: 'One' }];
+    const optionsDevice = new WaterHeater('Water Heater', 'WH-OPTIONS', {
+      id: 'WaterHeaterOptions',
+      number: EndpointNumber(14_02),
+      tagList,
+      waterTemperature: 48,
+      targetWaterTemperature: 52,
+      minHeatSetpointLimit: 15,
+      maxHeatSetpointLimit: 75,
+      heaterTypes: { heatPump: true },
+      tankPercentage: 80,
+      voltage: 230_000,
+      current: 8_000,
+      power: 1_840_000,
+      energy: 4_000,
+      absMinPower: 500,
+      absMaxPower: 2_000_000,
+    });
+    expect(optionsDevice.id).toBe('WaterHeaterOptions');
+    expect(optionsDevice.number).toBe(EndpointNumber(14_02));
+    expect(optionsDevice.tagList).toEqual(tagList);
+  });
+
+  test('create a water heater with an empty options object', () => {
+    expect(new WaterHeater('Water Heater Defaults', 'WH-DEFAULTS', {})).toBeDefined();
+  });
+
+  test('createDefaultWaterHeaterManagementClusterServer argument normalization and chaining', () => {
+    const requireSpy = vi.spyOn(device.behaviors, 'require').mockImplementation(() => {});
+    // Call with all parameters
+    device.createDefaultWaterHeaterManagementClusterServer(
+      { immersionElement1: true, immersionElement2: true },
+      { immersionElement1: false, immersionElement2: true },
+      77,
+      WaterHeaterManagement.BoostState.Active,
+    );
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        heaterTypes: { immersionElement1: true, immersionElement2: true },
+        heatDemand: { immersionElement1: false, immersionElement2: true },
+        tankPercentage: 77,
+        boostState: WaterHeaterManagement.BoostState.Active,
+      }),
+    );
+    // Call with defaults
+    device.createDefaultWaterHeaterManagementClusterServer();
+    expect(requireSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        heaterTypes: { immersionElement1: true },
+        heatDemand: {},
+        tankPercentage: 100,
+        boostState: WaterHeaterManagement.BoostState.Inactive,
+      }),
+    );
+    // Chaining
+    expect(device.createDefaultWaterHeaterManagementClusterServer()).toBe(device);
+    requireSpy.mockRestore();
+  });
+
+  test('add a water heater device', async () => {
+    expect(await addDevice(server, device, 0, 0, 0, 0)).toBeTruthy();
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1295, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 64, 148, 158, 513 ]',
+        'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
+        'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'fixedLabel(0x40).clusterRevision(0xfffd)=1',
+        'fixedLabel(0x40).featureMap(0xfffc)={  }',
+        'fixedLabel(0x40).generatedCommandList(0xfff8)=[  ]',
+        "fixedLabel(0x40).labelList(0x0)=[ { label: 'composed', value: 'Water Heater' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=8000',
+        'thermostat(0x201).absMinHeatSetpointLimit(0x3)=2000',
+        'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
+        'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 18, 21, 22, 27, 28, 41, 65528, 65529, 65531, 65532, 65533 ]',
+        'thermostat(0x201).clusterRevision(0xfffd)=11',
+        'thermostat(0x201).controlSequenceOfOperation(0x1b)=2',
+        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: false, occupancy: false, setback: false, autoMode: false, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false, events: false, thermostatSuggestions: false }',
+        'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
+        'thermostat(0x201).localTemperature(0x0)=5000',
+        'thermostat(0x201).maxHeatSetpointLimit(0x16)=8000',
+        'thermostat(0x201).minHeatSetpointLimit(0x15)=2000',
+        'thermostat(0x201).occupiedHeatingSetpoint(0x12)=5500',
+        'thermostat(0x201).systemMode(0x1c)=4',
+        'thermostat(0x201).thermostatRunningState(0x29)={ heat: false, cool: false, fan: false, heatStage2: false, coolStage2: false, fanStage2: false, fanStage3: false }',
+        'waterHeaterManagement(0x94).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'waterHeaterManagement(0x94).attributeList(0xfffb)=[ 0, 1, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'waterHeaterManagement(0x94).boostState(0x5)=0',
+        'waterHeaterManagement(0x94).clusterRevision(0xfffd)=2',
+        'waterHeaterManagement(0x94).featureMap(0xfffc)={ energyManagement: false, tankPercent: true }',
+        'waterHeaterManagement(0x94).generatedCommandList(0xfff8)=[  ]',
+        'waterHeaterManagement(0x94).heatDemand(0x1)={ immersionElement1: false, immersionElement2: false, heatPump: false, boiler: false, other: false }',
+        'waterHeaterManagement(0x94).heaterTypes(0x0)={ immersionElement1: true, immersionElement2: false, heatPump: false, boiler: false, other: false }',
+        'waterHeaterManagement(0x94).tankPercentage(0x4)=90',
+        'waterHeaterMode(0x9e).acceptedCommandList(0xfff9)=[ 0 ]',
+        'waterHeaterMode(0x9e).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'waterHeaterMode(0x9e).clusterRevision(0xfffd)=1',
+        'waterHeaterMode(0x9e).currentMode(0x1)=1',
+        'waterHeaterMode(0x9e).featureMap(0xfffc)={ onOff: false }',
+        'waterHeaterMode(0x9e).generatedCommandList(0xfff8)=[ 1 ]',
+        "waterHeaterMode(0x9e).supportedModes(0x0)=[ { label: 'Auto', mode: 1, modeTags: [ { mfgCode: undefined, value: 0 } ] }, { label: 'Quick', mode: 2, modeTags: [ { mfgCode: undefined, value: 1 } ] }, { label: 'Quiet', mode: 3, modeTags: [ { mfgCode: undefined, value: 2 } ] }, { label: 'LowNoise', mode: 4, modeTags: [ { mfgCode: undefined, value: 3 } ] }, { label: 'LowEnergy', mode: 5, modeTags: [ { mfgCode: undefined, value: 4 } ] }, { label: 'Vacation', mode: 6, modeTags: [ { mfgCode: undefined, value: 5 } ] }, { label: 'Min', mode: 7, modeTags: [ { mfgCode: undefined, value: 6 } ] }, { label: 'Max', mode: 8, modeTags: [ { mfgCode: undefined, value: 7 } ] }, { label: 'Night', mode: 9, modeTags: [ { mfgCode: undefined, value: 8 } ] }, { label: 'Day', mode: 10, modeTags: [ { mfgCode: undefined, value: 9 } ] }, { label: 'Off', mode: 11, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Manual', mode: 12, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Timed', mode: 13, modeTags: [ { mfgCode: undefined, value: 16386 } ] } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('PowerSource child forEachAttribute', () => {
+    const child = device.getChildEndpointById('PowerSource');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47 ]',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 3 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalSensor child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalSensor');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 144, 145, 156 ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: false, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('DeviceEnergyManagement child forEachAttribute', () => {
+    const child = device.getChildEndpointById('DeviceEnergyManagement');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1293, revision: 3 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 152, 159 ]',
+        'deviceEnergyManagement(0x98).absMaxPower(0x4)=0',
+        'deviceEnergyManagement(0x98).absMinPower(0x3)=0',
+        'deviceEnergyManagement(0x98).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'deviceEnergyManagement(0x98).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 65528, 65529, 65531, 65532, 65533 ]',
+        'deviceEnergyManagement(0x98).clusterRevision(0xfffd)=4',
+        'deviceEnergyManagement(0x98).esaCanGenerate(0x1)=false',
+        'deviceEnergyManagement(0x98).esaState(0x2)=1',
+        'deviceEnergyManagement(0x98).esaType(0x0)=2',
+        'deviceEnergyManagement(0x98).featureMap(0xfffc)={ powerAdjustment: true, powerForecastReporting: true, stateForecastReporting: false, startTimeAdjustment: false, pausable: false, forecastAdjustment: false, constraintBasedAdjustment: false }',
+        'deviceEnergyManagement(0x98).forecast(0x6)=null',
+        'deviceEnergyManagement(0x98).generatedCommandList(0xfff8)=[  ]',
+        'deviceEnergyManagement(0x98).optOutState(0x7)=0',
+        'deviceEnergyManagement(0x98).powerAdjustmentCapability(0x5)=null',
+        'deviceEnergyManagementMode(0x9f).acceptedCommandList(0xfff9)=[ 0 ]',
+        'deviceEnergyManagementMode(0x9f).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'deviceEnergyManagementMode(0x9f).clusterRevision(0xfffd)=2',
+        'deviceEnergyManagementMode(0x9f).currentMode(0x1)=1',
+        'deviceEnergyManagementMode(0x9f).featureMap(0xfffc)={ onOff: false }',
+        'deviceEnergyManagementMode(0x9f).generatedCommandList(0xfff8)=[ 1 ]',
+        "deviceEnergyManagementMode(0x9f).supportedModes(0x0)=[ { label: 'No Energy Management (Forecast reporting only)', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Device Energy Management', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 16386 } ] }, { label: 'Home Energy Management', mode: 3, modeTags: [ { mfgCode: undefined, value: 16387 }, { mfgCode: undefined, value: 16386 } ] }, { label: 'Grid Energy Management', mode: 4, modeTags: [ { mfgCode: undefined, value: 16387 } ] }, { label: 'Full Energy Management', mode: 5, modeTags: [ { mfgCode: undefined, value: 16385 }, { mfgCode: undefined, value: 16386 }, { mfgCode: undefined, value: 16387 } ] } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('invoke MatterbridgeThermostatServer commands', async () => {
+    // expect(device.behaviors.has(ThermostatServer.with(Thermostat.Feature.Heating))).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating))).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).commands.has('setpointRaiseLower')).toBeTruthy();
+    expect((device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)) as any).acceptedCommandList).toEqual([0]);
+    expect((device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)) as any).generatedCommandList).toEqual([]);
+
+    vi.clearAllMocks();
+    const occupiedHeatingSetpoint = device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint;
+    expect(occupiedHeatingSetpoint).toBeDefined();
+    if (!occupiedHeatingSetpoint) return;
+    await device.invokeBehaviorCommand('thermostat', 'setpointRaiseLower', { mode: Thermostat.SetpointRaiseLowerMode.Heat, amount: 5 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeThermostatServer: setting setpoint by 5 in mode ${Thermostat.SetpointRaiseLowerMode.Heat} (endpoint ${device.id}.${device.number})`,
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeThermostatServer: setpointRaiseLower called with mode: Heat amount: 0.5 (endpoint ${device.id}.${device.number})`,
+    );
+    expect(device.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating)).occupiedHeatingSetpoint).toBe(occupiedHeatingSetpoint + 50);
+  });
+
+  test('invoke MatterbridgeWaterHeaterManagementServer commands', async () => {
+    expect(device.behaviors.has(WaterHeaterManagementServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeWaterHeaterManagementServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(WaterHeaterManagementServer).commands.has('boost')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterManagementServer).commands.has('boost')).toBeTruthy();
+    expect(device.behaviors.elementsOf(WaterHeaterManagementServer).commands.has('cancelBoost')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterManagementServer).commands.has('cancelBoost')).toBeTruthy();
+    expect((device as any).state['waterHeaterManagement'].acceptedCommandList).toEqual([0, 1]);
+    expect((device as any).state['waterHeaterManagement'].generatedCommandList).toEqual([]);
+    expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).acceptedCommandList).toEqual([0, 1]);
+    expect((device.stateOf(MatterbridgeWaterHeaterManagementServer) as any).generatedCommandList).toEqual([]);
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('waterHeaterManagement', 'boost', { boostInfo: { duration: 60 } });
+    expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterManagementServer: boost (endpoint ${device.id}.${device.number})`);
+
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('waterHeaterManagement', 'cancelBoost', {});
+    expect(device.stateOf(WaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterManagementServer: cancel boost (endpoint ${device.id}.${device.number})`);
+  });
+
+  test('invoke MatterbridgeWaterHeaterModeServer commands', async () => {
+    expect(device.behaviors.has(WaterHeaterModeServer)).toBeTruthy();
+    expect(device.behaviors.has(MatterbridgeWaterHeaterModeServer)).toBeTruthy();
+    expect(device.behaviors.elementsOf(WaterHeaterModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect(device.behaviors.elementsOf(MatterbridgeWaterHeaterModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((device as any).state['waterHeaterMode'].acceptedCommandList).toEqual([0]);
+    expect((device as any).state['waterHeaterMode'].generatedCommandList).toEqual([1]);
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('waterHeaterMode', 'changeToMode', { newMode: 0 }); // 0 is not a valid mode
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.ERROR,
+      `MatterbridgeWaterHeaterModeServer: changeToMode called with unsupported newMode: 0 (endpoint ${device.id}.${device.number})`,
+    );
+    vi.clearAllMocks();
+    await device.invokeBehaviorCommand('waterHeaterMode', 'changeToMode', { newMode: 1 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeWaterHeaterModeServer: changing mode to 1 (endpoint ${device.id}.${device.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      `MatterbridgeWaterHeaterModeServer: changeToMode called with newMode 1 => Auto (endpoint ${device.id}.${device.number})`,
+    );
+  });
+
+  test('should emit completed water heater commands after awaited plugin forwarding', async () => {
+    const observed = new WaterHeater('Observed Heater', 'WH-OBS');
+    await addDevice(server, observed, 0, 0, 0, 0);
+    const order: string[] = [];
+    const request0 = { boostInfo: { duration: 60 } };
+    observed.addCommandHandler('WaterHeaterManagement.boost', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:boost');
+    });
+    observed.subscribeCommand(WaterHeaterManagement, 'boost', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request0);
+      order.push('emitted:boost');
+    });
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterManagementServer).boost(request0));
+    expect(observed.stateOf(MatterbridgeWaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Active);
+    const request1 = {};
+    observed.addCommandHandler('WaterHeaterManagement.cancelBoost', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:cancelBoost');
+    });
+    observed.subscribeCommand(WaterHeaterManagement, 'cancelBoost', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request as unknown).toEqual(request1);
+      order.push('emitted:cancelBoost');
+    });
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterManagementServer).cancelBoost());
+    expect(observed.stateOf(MatterbridgeWaterHeaterManagementServer).boostState).toBe(WaterHeaterManagement.BoostState.Inactive);
+    const request2 = { newMode: 2 };
+    observed.addCommandHandler('WaterHeaterMode.changeToMode', async (data) => {
+      expect(data.endpoint).toBe(observed);
+      expect(data.context).toBeDefined();
+      await Promise.resolve();
+      order.push('forwarded:changeToMode');
+    });
+    observed.subscribeCommand(WaterHeaterMode, 'changeToMode', (data) => {
+      expect(data.context).toBeDefined();
+      expect(data.request).toEqual(request2);
+      order.push('emitted:changeToMode');
+    });
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterModeServer).changeToMode(request2));
+    expect(observed.stateOf(MatterbridgeWaterHeaterModeServer).currentMode).toBe(2);
+    expect(order).toEqual(['forwarded:boost', 'emitted:boost', 'forwarded:cancelBoost', 'emitted:cancelBoost', 'forwarded:changeToMode', 'emitted:changeToMode']);
+    await observed.act(async (agent) => agent.get(MatterbridgeWaterHeaterModeServer).changeToMode({ newMode: 0 }));
+    expect(order.slice(6)).toEqual(['forwarded:changeToMode']);
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    loggerErrorSpy.mockClear();
+  });
+
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode(0, 0, 0, 0);
+    else await stopServerNode();
+  });
+});

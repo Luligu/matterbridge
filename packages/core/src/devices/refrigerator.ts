@@ -26,10 +26,12 @@ import type { MaybePromise } from '@matter/general';
 import { AttributeElement, EventElement, FieldElement } from '@matter/model';
 import { RefrigeratorAlarmServer } from '@matter/node/behaviors/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetModeServer } from '@matter/node/behaviors/refrigerator-and-temperature-controlled-cabinet-mode';
-import type { EndpointNumber, Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import type { RefrigeratorAlarm } from '@matter/types/clusters/refrigerator-alarm';
 import { RefrigeratorAndTemperatureControlledCabinetMode } from '@matter/types/clusters/refrigerator-and-temperature-controlled-cabinet-mode';
+import type { EndpointNumber } from '@matter/types/datatype';
+import type { Semtag } from '@matter/types/globals';
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge

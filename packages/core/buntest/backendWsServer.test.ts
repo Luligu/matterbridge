@@ -75,6 +75,11 @@ describe('BackendWsServer', () => {
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend' });
     await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } });
     expect((wsServer as any).log.logLevel).toBe(LogLevel.DEBUG);
+    const broadcastSpy = vi.spyOn(wsServer, 'wssBroadcastMessage');
+    const msg = { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'system_update', success: true, response: {} };
+    await (wsServer as any).broadcastMsgHandler({ id: 123456, type: 'frontend_broadcast_message', src: 'cli', dst: 'frontend', params: { msg } });
+    expect(broadcastSpy).toHaveBeenCalledWith(msg);
+    broadcastSpy.mockRestore();
   });
 
   test('should answer broadcast requests from another thread and ignore other messages', async () => {
@@ -314,21 +319,35 @@ describe('BackendWsServer', () => {
     expect(mockedBackend.getApiPlugins).toHaveBeenCalled();
 
     expect(await request('/api/devices')).toMatchObject({ success: true, response: [{ name: 'Device' }] });
-    expect((mockedBackend.getApiDevices as unknown as Mock<(...args: any[]) => any>).mock.lastCall).toEqual([undefined]);
+    expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual([undefined, undefined]);
     expect(await request('/api/devices', { pluginName: 'matterbridge-test' })).toMatchObject({ success: true });
-    expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test');
+    expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual(['matterbridge-test', undefined]);
+    for (const extended of [false, true]) {
+      expect(await request('/api/devices', { pluginName: 'matterbridge-test', extended })).toMatchObject({ success: true });
+      expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', extended);
+    }
 
-    expect(await request('/api/clusters', { plugin: 'short', endpoint: 1 })).toMatchObject({ error: 'Wrong parameter plugin in /api/clusters' });
-    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 0 })).toMatchObject({ error: 'Wrong parameter endpoint in /api/clusters' });
+    expect(await request('/api/clusters', { pluginName: 'short', number: 1 })).toMatchObject({ error: 'Wrong parameter pluginName in /api/clusters' });
+    expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 0 })).toMatchObject({ error: 'Wrong parameter number in /api/clusters' });
+    for (const invalid of [undefined, '', 1]) {
+      expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: invalid, uniqueId: 'UID1' })).toMatchObject({
+        error: 'Wrong parameter serialNumber in /api/clusters',
+      });
+      expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: invalid })).toMatchObject({
+        error: 'Wrong parameter uniqueId in /api/clusters',
+      });
+    }
     expect(mockedBackend.getApiCluster).not.toHaveBeenCalled();
 
-    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1 })).toMatchObject({ error: 'Endpoint not found in /api/clusters' });
-    expect((mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mock.lastCall).toEqual(['matterbridge-test', 1, undefined, undefined]);
+    expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
+      error: 'Endpoint not found in /api/clusters',
+    });
+    expect((mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mock.lastCall).toEqual(['matterbridge-test', 1, 'SN1', 'UID1']);
 
-    (mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mockResolvedValueOnce({ plugin: 'matterbridge-test', endpoint: 1 });
-    expect(await request('/api/clusters', { plugin: 'matterbridge-test', endpoint: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
+    (mockedBackend.getApiCluster as unknown as Mock<(...args: any[]) => any>).mockResolvedValueOnce({ plugin: 'matterbridge-test', number: 1 });
+    expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' })).toMatchObject({
       success: true,
-      response: { plugin: 'matterbridge-test', endpoint: 1 },
+      response: { plugin: 'matterbridge-test', number: 1 },
     });
     expect(mockedBackend.getApiCluster).toHaveBeenLastCalledWith('matterbridge-test', 1, 'SN1', 'UID1');
     expect(loggerErrorSpy).not.toHaveBeenCalled();
@@ -362,7 +381,16 @@ describe('BackendWsServer', () => {
       for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/clusters']) {
         await (wsServer as any).wsMessageHandler(
           client,
-          Buffer.from(JSON.stringify({ id: 11, src: 'Frontend', dst: 'Matterbridge', sender: 'Test', method, params: { plugin: 'matterbridge-test', endpoint: 1 } })),
+          Buffer.from(
+            JSON.stringify({
+              id: 11,
+              src: 'Frontend',
+              dst: 'Matterbridge',
+              sender: 'Test',
+              method,
+              params: { pluginName: 'matterbridge-test', number: 1, serialNumber: 'SN1', uniqueId: 'UID1' },
+            }),
+          ),
         );
       }
       for (const name of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster']) {
@@ -389,13 +417,10 @@ describe('BackendWsServer', () => {
     wsServer.wssSendUpdateRequired('3.0.0', true);
     wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0', false);
     wsServer.wssSendPluginUpdateRequired('plugin', '3.0.0', true);
-    wsServer.wssSendCpuUpdate(1, 2);
-    wsServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
-    wsServer.wssSendUptimeUpdate('sys', 'proc');
     wsServer.wssSendSnackbarMessage('hello');
     wsServer.wssSendSnackbarMessage('hello', 0, 'success');
     wsServer.wssSendCloseSnackbarMessage('hello');
-    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1, 'id', 'cluster', 'attr', true);
 
     // Attach a fake server + open client for active paths
     class FakeClient extends EventEmitter {
@@ -426,12 +451,9 @@ describe('BackendWsServer', () => {
     // expect((mockedBackend as any).updateRequired).toBe(true);
 
     wsServer.wssSendRefreshRequired('settings');
-    wsServer.wssSendCpuUpdate(12.3456, 23.4567);
-    wsServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
-    wsServer.wssSendUptimeUpdate('sys', 'proc');
     wsServer.wssSendSnackbarMessage('hello', 0, 'success');
     wsServer.wssSendCloseSnackbarMessage('hello');
-    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+    wsServer.wssSendAttributeChangedMessage('p', 's', 'u', 1, 'id', 'cluster', 'attr', true);
 
     wsServer.wssSendLogMessage('info', 't', 'n', `***hello\n\tworld ${'x'.repeat(150)}`);
     wsServer.wssSendLogMessage('spawn', 't', 'n', 'no-split');
@@ -547,12 +569,9 @@ describe('BackendWsServer', () => {
       quietServer.wssSendPluginUpdateRequired('plugin', '3.0.0');
       quietServer.wssSendPluginStatusUpdate('plugin', {});
       quietServer.wssSendMatterbridgeStatusUpdate({} as any);
-      quietServer.wssSendCpuUpdate(1, 2);
-      quietServer.wssSendMemoryUpdate('1', '2', '3', '4', '5', '6', '7');
-      quietServer.wssSendUptimeUpdate('sys', 'proc');
       quietServer.wssSendSnackbarMessage('hello');
       quietServer.wssSendCloseSnackbarMessage('hello');
-      quietServer.wssSendAttributeChangedMessage('p', 's', 'u', 1 as any, 'id', 'cluster', 'attr', true);
+      quietServer.wssSendAttributeChangedMessage('p', 's', 'u', 1, 'id', 'cluster', 'attr', true);
       expect(client.send).toHaveBeenCalled();
       expect(loggerDebugSpy).not.toHaveBeenCalledWith(expect.stringContaining('to all connected clients'));
 

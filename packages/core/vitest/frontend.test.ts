@@ -37,7 +37,6 @@ import { db, LogLevel, YELLOW } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 import { WebSocket } from 'ws';
 
-import { cliEmitter } from '../src/cliEmitter.js';
 import type { Frontend as FrontendType } from '../src/frontend.js';
 import type { Matterbridge as MatterbridgeType } from '../src/matterbridge.js';
 import { destroyInstance } from './vitestUtils.js';
@@ -136,6 +135,29 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
   }, 60000);
 
+  test.each([
+    { flag: '', debug: false, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--debug', debug: true, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--debug-frontend', debug: true, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--verbose', debug: true, verbose: true, diagnostic: false, readOnly: false },
+    { flag: '--verbose-frontend', debug: true, verbose: true, diagnostic: false, readOnly: false },
+    { flag: '--diagnostic', debug: false, verbose: false, diagnostic: true, readOnly: false },
+    { flag: '--diagnostic-frontend', debug: false, verbose: false, diagnostic: true, readOnly: false },
+    { flag: '--readonly', debug: false, verbose: false, diagnostic: false, readOnly: true },
+    { flag: '--shelly', debug: false, verbose: false, diagnostic: false, readOnly: false },
+  ])('should configure frontend flags for $flag', ({ flag, ...expected }) => {
+    const savedArgv = process.argv;
+    let instance: FrontendType | undefined;
+    try {
+      process.argv = [...originalProcessArgv.slice(0, 2), ...(flag ? [flag] : [])];
+      instance = new Frontend(matterbridge);
+      expect(instance).toMatchObject(expected);
+    } finally {
+      instance?.destroy();
+      process.argv = savedArgv;
+    }
+  });
+
   test('broadcast handler', async () => {
     startSpy.mockImplementationOnce(async () => Promise.resolve());
     stopSpy.mockImplementationOnce(async () => Promise.resolve());
@@ -207,7 +229,7 @@ describe('Matterbridge frontend', () => {
       type: 'frontend_broadcast_message',
       src: 'manager',
       dst: 'frontend',
-      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } },
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version: '1.0.0', devVersion: false } } },
     } as any);
     await (frontend as any).broadcastMsgHandler({
       id: 123456,
@@ -232,20 +254,6 @@ describe('Matterbridge frontend', () => {
 
       await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_archive_response', src: 'manager', dst: 'all', result: { success: true, command: 'zip', archivePath: 'test.zip', sourcePaths: ['file1', 'file2'], destinationPath: 'dest' } } as any);
     }
-  });
-
-  test('Frontend cliEmitter', () => {
-    // Test the cliEmitter functionality
-    expect(cliEmitter).toBeDefined();
-    expect(cliEmitter.on).toBeDefined();
-    expect(cliEmitter.emit).toBeDefined();
-    expect(cliEmitter.listeners('uptime')).toHaveLength(1);
-    expect(cliEmitter.listeners('memory')).toHaveLength(1);
-    expect(cliEmitter.listeners('cpu')).toHaveLength(1);
-
-    cliEmitter.emit('cpu', 12.34, 5.67);
-    cliEmitter.emit('uptime', '1 day, 10:00:00', '1 day, 10:00:00');
-    cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
   test('Frontend validateReq', async () => {
@@ -295,9 +303,9 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend getApiCluster', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(frontend.getApiCluster('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(frontend.getApiCluster('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();
   });
 
   test('Frontend wssSendLogMessage', async () => {
@@ -559,30 +567,6 @@ describe('Matterbridge frontend', () => {
       success: true,
       response: { status: 'started' },
     });
-
-    // Restore for next tests
-    (frontend as any).webSocketServer = savedWss;
-    (frontend as any).listening = false;
-    spy.mockRestore();
-  });
-
-  test('Frontend wssSendCpuUpdate wssSendMemoryUpdate wssSendUptimeUpdate', async () => {
-    // Mocks
-    const savedWss = (frontend as any).webSocketServer;
-    const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
-
-    (frontend as any).listening = false;
-    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
-    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
-    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(0);
-    vi.clearAllMocks();
-    (frontend as any).listening = true;
-    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
-    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
-    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
-    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(3);
 
     // Restore for next tests
     (frontend as any).webSocketServer = savedWss;

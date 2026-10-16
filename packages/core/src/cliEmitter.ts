@@ -3,7 +3,7 @@
  * @description This file contains the CLI emitter.
  * @author Luca Liguori
  * @created 2025-07-04
- * @version 1.0.2
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -29,9 +29,6 @@ logModuleLoaded('CliEmitter');
 
 interface CliEvents {
   shutdown: [];
-  cpu: [cpuUsage: number, processCpuUsage: number];
-  memory: [totalMememory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string];
-  uptime: [systemUptime: string, processUptime: string];
   ready: [];
 }
 

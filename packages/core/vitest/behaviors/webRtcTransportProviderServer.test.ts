@@ -13,10 +13,11 @@ const MATTER_PORT = 6005;
 const MATTER_CREATE_ONLY = true;
 
 import { Node } from '@matter/main';
-import { EndpointNumber, FabricIndex, NodeId, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
+import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
+import { StreamUsage, ThreeLevelAuto } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -596,7 +597,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       ).resolves.toBeUndefined();
 
       expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('local webcam (test-webcam-device, 1280x720)'));
-      clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
+      clearExpectedWarnings(
+        'No injectable video codec available on negotiated transceivers',
+        'Cannot inject video stream: missing dependency ffmpeg',
+        'ffmpeg could not be resolved on this host',
+      );
 
       const currentSessions = device.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
       const webRtcSessionId = currentSessions[currentSessions.length - 1].id;
@@ -1309,7 +1314,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
         }),
       ).resolves.toBeUndefined();
 
-      clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
+      clearExpectedWarnings(
+        'No injectable video codec available on negotiated transceivers',
+        'Cannot inject video stream: missing dependency ffmpeg',
+        'ffmpeg could not be resolved on this host',
+      );
       const currentSessions = endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
       expect(currentSessions[0].videoStreams).toEqual([videoStreamId]);
       expect(currentSessions[0].streamUsage).toBe(StreamUsage.LiveView);

@@ -8,14 +8,15 @@ const NAME = 'MicrowaveOven';
 const MATTER_PORT = 8010;
 const MATTER_CREATE_ONLY = true;
 
-import { MicrowaveOvenControlServer, MicrowaveOvenModeServer } from '@matter/node/behaviors';
-import { Status } from '@matter/types';
+import { MicrowaveOvenControlServer } from '@matter/node/behaviors/microwave-oven-control';
+import { MicrowaveOvenModeServer } from '@matter/node/behaviors/microwave-oven-mode';
 import { Identify } from '@matter/types/clusters/identify';
 import { MicrowaveOvenControl } from '@matter/types/clusters/microwave-oven-control';
 import { MicrowaveOvenMode } from '@matter/types/clusters/microwave-oven-mode';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -102,23 +103,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });

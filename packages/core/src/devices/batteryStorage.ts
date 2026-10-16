@@ -25,10 +25,10 @@
 // @matter
 import { PowerSourceTag } from '@matter/node';
 import { ElectricalPowerMeasurementServer } from '@matter/node/behaviors/electrical-power-measurement';
-import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-power-measurement';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
@@ -52,6 +52,8 @@ export interface BatteryStorageOptions {
   batPercentRemaining?: number;
   /** Battery charge level. */
   batChargeLevel?: PowerSource.BatChargeLevel;
+  /** Battery capacity in mAh. Defaults to `200_000` (24V, about 4.8kWh). */
+  batCapacity?: number;
   /** Voltage in millivolts. */
   voltage?: number | bigint | null;
   /** Current in milliamperes. */
@@ -151,7 +153,17 @@ export class BatteryStorage extends MatterbridgeEndpoint {
     const battery = this.addChildDeviceType('Battery', [powerSource, electricalSensor], {
       tagList: [getSemtag(PowerSourceTag.Battery)],
     })
-      .createDefaultPowerSourceRechargeableBatteryClusterServer(options.batPercentRemaining ?? 100, options.batChargeLevel ?? PowerSource.BatChargeLevel.Ok, 24_000) // Battery voltage in mV (24V).
+      // Battery voltage in mV (24V). BatCapacity, BatTimeToFullCharge, BatChargingCurrent and ActiveBatChargeFaults are mandatory on the 2nd Power Source (Matter 1.6.1 Device Library § 14.4.6.2)
+      .createDefaultPowerSourceRechargeableBatteryClusterServer(
+        options.batPercentRemaining ?? 100,
+        options.batChargeLevel ?? PowerSource.BatChargeLevel.Ok,
+        24_000,
+        PowerSource.BatReplaceability.Unspecified,
+        options.batCapacity ?? 200_000,
+        null,
+        null,
+        [],
+      )
       .createDefaultPowerTopologyClusterServer()
       // .createDefaultElectricalPowerMeasurementClusterServer(voltage, current, power)
       .createDefaultElectricalEnergyMeasurementClusterServer(options.energyImported ?? null, options.energyExported ?? null);

@@ -114,23 +114,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
@@ -219,6 +202,278 @@ describe('Matterbridge ' + NAME, () => {
         'powerTopology(0x9c).clusterRevision(0xfffd)=1',
         'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
         'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('FlowTemperature child forEachAttribute', () => {
+    const child = device.getChildEndpointById('FlowTemperature');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 770, revision: 3 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 1026 ]',
+        "descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 7, tag: 1, label: 'FlowTemperature' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
+        'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=6',
+        'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
+        'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
+        'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
+        'temperatureMeasurement(0x402).measuredValue(0x0)=4500',
+        'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
+        'temperatureMeasurement(0x402).tolerance(0x3)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('ReturnTemperature child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ReturnTemperature');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 770, revision: 3 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 1026 ]',
+        "descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 7, tag: 2, label: 'ReturnTemperature' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
+        'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=6',
+        'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
+        'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
+        'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
+        'temperatureMeasurement(0x402).measuredValue(0x0)=3500',
+        'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
+        'temperatureMeasurement(0x402).tolerance(0x3)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('LivingThermostat child forEachAttribute', () => {
+    const child = device.getChildEndpointById('LivingThermostat');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 769, revision: 6 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 65, 513 ]',
+        "descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 7, tag: 1, label: 'LivingThermostat' }, { mfgCode: null, namespaceId: 16, tag: 52, label: undefined } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'thermostat(0x201).absMaxCoolSetpointLimit(0x6)=5000',
+        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=5000',
+        'thermostat(0x201).absMinCoolSetpointLimit(0x5)=0',
+        'thermostat(0x201).absMinHeatSetpointLimit(0x3)=0',
+        'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
+        'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 5, 6, 17, 18, 21, 22, 23, 24, 25, 27, 28, 30, 41, 65528, 65529, 65531, 65532, 65533 ]',
+        'thermostat(0x201).clusterRevision(0xfffd)=11',
+        'thermostat(0x201).controlSequenceOfOperation(0x1b)=4',
+        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: true, occupancy: false, setback: false, autoMode: true, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false, events: false, thermostatSuggestions: false }',
+        'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
+        'thermostat(0x201).localTemperature(0x0)=2300',
+        'thermostat(0x201).maxCoolSetpointLimit(0x18)=5000',
+        'thermostat(0x201).maxHeatSetpointLimit(0x16)=5000',
+        'thermostat(0x201).minCoolSetpointLimit(0x17)=0',
+        'thermostat(0x201).minHeatSetpointLimit(0x15)=0',
+        'thermostat(0x201).minSetpointDeadBand(0x19)=0',
+        'thermostat(0x201).occupiedCoolingSetpoint(0x11)=2500',
+        'thermostat(0x201).occupiedHeatingSetpoint(0x12)=2100',
+        'thermostat(0x201).systemMode(0x1c)=1',
+        'thermostat(0x201).thermostatRunningMode(0x1e)=0',
+        'thermostat(0x201).thermostatRunningState(0x29)={ heat: false, cool: false, fan: false, heatStage2: false, coolStage2: false, fanStage2: false, fanStage3: false }',
+        'userLabel(0x41).acceptedCommandList(0xfff9)=[  ]',
+        'userLabel(0x41).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'userLabel(0x41).clusterRevision(0xfffd)=1',
+        'userLabel(0x41).featureMap(0xfffc)={  }',
+        'userLabel(0x41).generatedCommandList(0xfff8)=[  ]',
+        "userLabel(0x41).labelList(0x0)=[ { label: 'room', value: 'Living Room' } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('BedroomThermostat child forEachAttribute', () => {
+    const child = device.getChildEndpointById('BedroomThermostat');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 769, revision: 6 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 65, 513 ]',
+        "descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 7, tag: 2, label: 'BedroomThermostat' }, { mfgCode: null, namespaceId: 16, tag: 7, label: undefined } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'thermostat(0x201).absMaxCoolSetpointLimit(0x6)=5000',
+        'thermostat(0x201).absMaxHeatSetpointLimit(0x4)=5000',
+        'thermostat(0x201).absMinCoolSetpointLimit(0x5)=0',
+        'thermostat(0x201).absMinHeatSetpointLimit(0x3)=0',
+        'thermostat(0x201).acceptedCommandList(0xfff9)=[ 0 ]',
+        'thermostat(0x201).attributeList(0xfffb)=[ 0, 3, 4, 5, 6, 17, 18, 21, 22, 23, 24, 25, 27, 28, 30, 41, 65528, 65529, 65531, 65532, 65533 ]',
+        'thermostat(0x201).clusterRevision(0xfffd)=11',
+        'thermostat(0x201).controlSequenceOfOperation(0x1b)=4',
+        'thermostat(0x201).featureMap(0xfffc)={ heating: true, cooling: true, occupancy: false, setback: false, autoMode: true, localTemperatureNotExposed: false, matterScheduleConfiguration: false, presets: false, events: false, thermostatSuggestions: false }',
+        'thermostat(0x201).generatedCommandList(0xfff8)=[  ]',
+        'thermostat(0x201).localTemperature(0x0)=2300',
+        'thermostat(0x201).maxCoolSetpointLimit(0x18)=5000',
+        'thermostat(0x201).maxHeatSetpointLimit(0x16)=5000',
+        'thermostat(0x201).minCoolSetpointLimit(0x17)=0',
+        'thermostat(0x201).minHeatSetpointLimit(0x15)=0',
+        'thermostat(0x201).minSetpointDeadBand(0x19)=0',
+        'thermostat(0x201).occupiedCoolingSetpoint(0x11)=2500',
+        'thermostat(0x201).occupiedHeatingSetpoint(0x12)=2100',
+        'thermostat(0x201).systemMode(0x1c)=1',
+        'thermostat(0x201).thermostatRunningMode(0x1e)=0',
+        'thermostat(0x201).thermostatRunningState(0x29)={ heat: false, cool: false, fan: false, heatStage2: false, coolStage2: false, fanStage2: false, fanStage3: false }',
+        'userLabel(0x41).acceptedCommandList(0xfff9)=[  ]',
+        'userLabel(0x41).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'userLabel(0x41).clusterRevision(0xfffd)=1',
+        'userLabel(0x41).featureMap(0xfffc)={  }',
+        'userLabel(0x41).generatedCommandList(0xfff8)=[  ]',
+        "userLabel(0x41).labelList(0x0)=[ { label: 'room', value: 'Bedroom' } ]",
       ].toSorted(),
     );
   });

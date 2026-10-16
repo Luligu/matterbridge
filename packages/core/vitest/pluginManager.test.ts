@@ -549,8 +549,19 @@ describe('PluginManager', () => {
       homepage: 'https://example.com',
       private: true,
     };
-    expect((await testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: mockPlugin4 } })).result.plugin).toEqual(mockPlugin4);
-    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: mockPlugin4.name } })).result.plugin).toEqual(mockPlugin4);
+    await expect(testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: { name: mockPlugin4.name, started: true } } })).rejects.toThrow(
+      `Plugin ${mockPlugin4.name} not found`,
+    );
+    plugins.set(mockPlugin4);
+    const status = { name: mockPlugin4.name, loaded: true, started: true, configured: false, registeredDevices: 3 };
+    expect((await testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: status } })).result.plugin).toEqual({
+      ...mockPlugin4,
+      ...status,
+    });
+    expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: mockPlugin4.name } })).result.plugin).toEqual({
+      ...mockPlugin4,
+      ...status,
+    });
     // @ts-expect-error accessing private member
     plugins._plugins.delete('matterbridge-mock4');
   });

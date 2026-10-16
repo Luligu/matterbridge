@@ -22,6 +22,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { stringify } from 'node-ansi-logger';
 
 import { Chime } from '../../src/devices/chime.js';
 
@@ -29,6 +30,8 @@ import { Chime } from '../../src/devices/chime.js';
 await setupTest(NAME, false);
 
 describe('Chime', () => {
+  let defaultDevice: Chime;
+
   beforeAll(async () => {
     // Setup the Matter test environment
     await createTestEnvironment();
@@ -73,6 +76,69 @@ describe('Chime', () => {
     expect(device.getAttribute(ChimeCluster, 'installedChimeSounds')).toEqual([{ chimeId: 0, name: 'Default Chime' }]);
     expect(device.getAttribute(ChimeCluster, 'selectedChime')).toBe(0);
     expect(device.getAttribute(ChimeCluster, 'enabled')).toBe(true);
+  });
+
+  it('should create the default device for the attribute snapshot', async () => {
+    defaultDevice = new Chime('Chime Snapshot', 'CHIME-SNAPSHOT');
+    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+  });
+
+  it('should expose the expected attributes on the device', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    defaultDevice.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'chime(0x556).acceptedCommandList(0xfff9)=[ 0 ]',
+        'chime(0x556).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'chime(0x556).clusterRevision(0xfffd)=2',
+        'chime(0x556).enabled(0x2)=true',
+        'chime(0x556).featureMap(0xfffc)={  }',
+        'chime(0x556).generatedCommandList(0xfff8)=[  ]',
+        "chime(0x556).installedChimeSounds(0x0)=[ { chimeId: 0, name: 'Default Chime' } ]",
+        'chime(0x556).selectedChime(0x1)=0',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 326, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 1366 ]',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 3 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
   });
 
   it('should create a chime device with identify enabled', async () => {

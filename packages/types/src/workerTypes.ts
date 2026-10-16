@@ -169,6 +169,8 @@ export function isRootNodeWorkerData(data: unknown): data is RootNodeWorkerData 
 export type ParentPortMessage =
   // Worker -> manager: the worker started (sent by ThreadsWrapper when initialized)
   | { type: 'init'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean }
+  // Worker -> manager: the worker has started and is ready (sent by ThreadsWrapper when initialized)
+  | { type: 'ready'; threadName: ThreadNames; threadId: number; memoryUsage: NodeJS.MemoryUsage; success: boolean }
   // Manager -> worker: liveness check (sent by ThreadsManager on its interval)
   | { type: 'ping'; threadName: ThreadNames; threadId: number }
   // Worker -> manager: reply to a ping

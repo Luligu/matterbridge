@@ -22,6 +22,8 @@ const zeroEntry: TrackerSnapshot = {
   peakFreeMemory: 0,
   totalMemory: 0,
   peakTotalMemory: 0,
+  constrainedMemory: 0,
+  peakConstrainedMemory: 0,
   osCpu: 0,
   peakOsCpu: 0,
   processCpu: 0,

@@ -27,30 +27,53 @@ import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
+import type { MatterNode } from '../matterNode.js';
+
 logModuleLoaded('RootNode', '\u001B[35m');
 
-export default new ThreadsWrapper('RootNode', async (worker) => {
-  worker.logger(LogLevel.INFO, 'Creating root node...');
+export default new ThreadsWrapper('RootNode', entrypoint, startup, shutdown);
+
+let matterNode: MatterNode | undefined;
+
+async function entrypoint(worker: ThreadsWrapper): Promise<boolean> {
+  worker.logger(LogLevel.INFO, 'Creating MatterNode...');
   try {
     if (!isRootNodeWorkerData(worker.workerData)) {
-      worker.logger(LogLevel.ERROR, 'Invalid root node worker data');
+      worker.logger(LogLevel.ERROR, 'Invalid MatterNode worker data');
       return false;
     }
     const { sharedMatterbridge, pluginName } = worker.workerData;
-    const target = pluginName ? `plugin ${pluginName}` : 'bridge';
+    const target = pluginName ? `plugin ${pluginName}` : 'Matterbridge';
     worker.logger(LogLevel.DEBUG, `Importing MatterNode for ${target}...`);
     const { MatterNode } = await import('../matterNode.js');
-    worker.logger(LogLevel.DEBUG, 'MatterNode imported; creating instance...');
-    const matterNode = new MatterNode(sharedMatterbridge, pluginName);
-    await matterNode.create();
-    worker.logger(LogLevel.DEBUG, 'Starting MatterNode...');
-    // Start the matter node. It will keep running until explicitly stopped.
-    await matterNode.start();
-    worker.logger(LogLevel.DEBUG, `Root node for ${target} started`);
+    worker.logger(LogLevel.DEBUG, `Creating instance for ${target}...`);
+    matterNode = new MatterNode(sharedMatterbridge, pluginName);
+    worker.logger(LogLevel.DEBUG, `Instance for ${target} created.`);
     return true;
   } catch (error) {
-    const errorMessage = inspectError(worker.log, 'Failed to create root node', error);
+    const errorMessage = inspectError(worker.log, `Failed to create MatterNode`, error);
     worker.logger(LogLevel.ERROR, errorMessage);
     return false;
   }
-});
+}
+
+async function startup(worker: ThreadsWrapper): Promise<void> {
+  if (!matterNode) return;
+  worker.logger(LogLevel.INFO, `Starting up MatterNode for ${matterNode.storeId}...`);
+  worker.logger(LogLevel.DEBUG, `Creating MatterNode for ${matterNode.storeId}...`);
+  await matterNode.create();
+  worker.logger(LogLevel.DEBUG, `Starting MatterNode for ${matterNode.storeId}...`);
+  await matterNode.start();
+  worker.logger(LogLevel.DEBUG, `MatterNode for ${matterNode.storeId} started`);
+}
+
+async function shutdown(worker: ThreadsWrapper): Promise<void> {
+  if (!matterNode) return;
+  worker.logger(LogLevel.INFO, `Shutting down MatterNode for ${matterNode.storeId}...`);
+  worker.logger(LogLevel.DEBUG, `Stopping MatterNode for ${matterNode.storeId}...`);
+  await matterNode.stop();
+  worker.logger(LogLevel.DEBUG, `MatterNode for ${matterNode.storeId} stopped`);
+  await matterNode.destroy();
+  worker.logger(LogLevel.DEBUG, `MatterNode for ${matterNode.storeId} destroyed`);
+  matterNode = undefined;
+}

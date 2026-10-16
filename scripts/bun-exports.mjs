@@ -1,11 +1,11 @@
 /**
  * bun-exports.mjs
- * Version: 1.0.1
+ * Version: 1.0.2
  *
  * Adds or removes Bun export conditions from the root package and all workspace packages.
  *
  * Usage:
- *   node scripts/bun-exports.mjs [--remove] [--dry-run]
+ *   bun scripts/bun-exports.mjs [--remove] [--dry-run]
  */
 
 import fs from 'node:fs/promises';
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 function usage() {
   return [
-    'Usage: node scripts/bun-exports.mjs [--remove] [--dry-run]',
+    'Usage: bun scripts/bun-exports.mjs [--remove] [--dry-run]',
     '',
     'What it does:',
     '  1) Reads the root package.json and all workspace package.json files',

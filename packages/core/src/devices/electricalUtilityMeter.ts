@@ -30,14 +30,15 @@ import { CommodityPriceServer } from '@matter/node/behaviors/commodity-price';
 import { CommodityTariffServer } from '@matter/node/behaviors/commodity-tariff';
 import { ElectricalGridConditionsServer } from '@matter/node/behaviors/electrical-grid-conditions';
 import { MeterIdentificationServer } from '@matter/node/behaviors/meter-identification';
-import { StatusResponse } from '@matter/types';
-import type { EndpointNumber } from '@matter/types';
 import type { CommodityMetering } from '@matter/types/clusters/commodity-metering';
 import { CommodityPrice } from '@matter/types/clusters/commodity-price';
 import { CommodityTariff } from '@matter/types/clusters/commodity-tariff';
 import type { ElectricalGridConditions } from '@matter/types/clusters/electrical-grid-conditions';
 import type { MeterIdentification } from '@matter/types/clusters/meter-identification';
+import { StatusResponse } from '@matter/types/common';
+import type { EndpointNumber } from '@matter/types/datatype';
 import { type Currency, type Semtag, TariffUnit } from '@matter/types/globals';
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge

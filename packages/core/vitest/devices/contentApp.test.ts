@@ -30,7 +30,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
-import { LogLevel } from 'node-ansi-logger';
+import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { ContentApp } from '../../src/devices/contentApp.js';
 import { contentApp } from '../../src/matterbridgeDeviceTypes.js';
@@ -117,6 +117,77 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add a content app device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'applicationBasic(0x50d).acceptedCommandList(0xfff9)=[  ]',
+        'applicationBasic(0x50d).allowedVendorList(0x7)=[ 65521 ]',
+        "applicationBasic(0x50d).application(0x4)={ catalogVendorId: 65521, applicationId: 'matterbridge-content-app' }",
+        "applicationBasic(0x50d).applicationName(0x2)='ContentApp Test Device'",
+        "applicationBasic(0x50d).applicationVersion(0x6)='1.0.0'",
+        'applicationBasic(0x50d).attributeList(0xfffb)=[ 2, 4, 5, 6, 7, 65528, 65529, 65531, 65532, 65533 ]',
+        'applicationBasic(0x50d).clusterRevision(0xfffd)=1',
+        'applicationBasic(0x50d).featureMap(0xfffc)={  }',
+        'applicationBasic(0x50d).generatedCommandList(0xfff8)=[  ]',
+        'applicationBasic(0x50d).status(0x5)=1',
+        'applicationLauncher(0x50c).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'applicationLauncher(0x50c).attributeList(0xfffb)=[ 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'applicationLauncher(0x50c).clusterRevision(0xfffd)=2',
+        'applicationLauncher(0x50c).currentApp(0x1)=null',
+        'applicationLauncher(0x50c).featureMap(0xfffc)={ applicationPlatform: false }',
+        'applicationLauncher(0x50c).generatedCommandList(0xfff8)=[ 3 ]',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 36, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 1289, 1292, 1293 ]',
+        'keypadInput(0x509).acceptedCommandList(0xfff9)=[ 0 ]',
+        'keypadInput(0x509).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'keypadInput(0x509).clusterRevision(0xfffd)=1',
+        'keypadInput(0x509).featureMap(0xfffc)={ navigationKeyCodes: false, locationKeys: false, numberKeys: false }',
+        'keypadInput(0x509).generatedCommandList(0xfff8)=[ 1 ]',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
   });
 
   test('invoke commands', async () => {

@@ -3,7 +3,7 @@
  * @description This file contains the class BackendWsServer.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -27,7 +27,6 @@
 
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -119,6 +118,10 @@ export class BackendWsServer {
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
+          break;
+        case 'frontend_broadcast_message':
+          this.wssBroadcastMessage(msg.params.msg);
+          this.server.respond({ ...msg, result: { success: true } });
           break;
         // no default
       }
@@ -316,20 +319,28 @@ export class BackendWsServer {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
-        if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' });
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
           return;
         }
-        if (!isValidNumber(data.params.endpoint, 1)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
+        if (!isValidNumber(data.params.number, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter number in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter serialNumber in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.uniqueId, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter uniqueId in /api/clusters' });
           return;
         }
         const start = performance.now();
-        const clusters = await this.backend.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        const clusters = await this.backend.getApiCluster(data.params.pluginName, data.params.number, data.params.serialNumber, data.params.uniqueId);
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
         if (clusters) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: clusters });
@@ -526,61 +537,6 @@ export class BackendWsServer {
   }
 
   /**
-   * Sends a cpu update message to all connected clients.
-   *
-   * @param {number} cpuUsage - The CPU usage percentage to send.
-   * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
-   */
-  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
-    if (!this.hasActiveClients()) return;
-    if (this.verbose) this.log.debug('Sending a cpu update message to all connected clients');
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'cpu_update',
-      success: true,
-      response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 },
-    });
-  }
-
-  /**
-   * Sends a memory update message to all connected clients.
-   *
-   * @param {string} totalMemory - The total memory in bytes.
-   * @param {string} freeMemory - The free memory in bytes.
-   * @param {string} rss - The resident set size in bytes.
-   * @param {string} heapTotal - The total heap memory in bytes.
-   * @param {string} heapUsed - The used heap memory in bytes.
-   * @param {string} external - The external memory in bytes.
-   * @param {string} arrayBuffers - The array buffers memory in bytes.
-   */
-  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
-    if (!this.hasActiveClients()) return;
-    if (this.verbose) this.log.debug('Sending a memory update message to all connected clients');
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'memory_update',
-      success: true,
-      response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers },
-    });
-  }
-
-  /**
-   * Sends an uptime update message to all connected clients.
-   *
-   * @param {string} systemUptime - The system uptime in a human-readable format.
-   * @param {string} processUptime - The process uptime in a human-readable format.
-   */
-  wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
-    if (!this.hasActiveClients()) return;
-    if (this.verbose) this.log.debug('Sending a uptime update message to all connected clients');
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
-  }
-
-  /**
    * Sends an open snackbar message to all connected clients.
    *
    * @param {string} message - The message to send.
@@ -615,7 +571,7 @@ export class BackendWsServer {
    * @param {string | undefined} plugin - The name of the plugin.
    * @param {string | undefined} serialNumber - The serial number of the device.
    * @param {string | undefined} uniqueId - The unique identifier of the device.
-   * @param {EndpointNumber} number - The endpoint number where the attribute belongs.
+   * @param {number} number - The endpoint number where the attribute belongs.
    * @param {string} id - The endpoint id where the attribute belongs.
    * @param {string} cluster - The cluster name where the attribute belongs.
    * @param {string} attribute - The name of the attribute that changed.
@@ -625,7 +581,7 @@ export class BackendWsServer {
     plugin: string,
     serialNumber: string,
     uniqueId: string,
-    number: EndpointNumber,
+    number: number,
     id: string,
     cluster: string,
     attribute: string,

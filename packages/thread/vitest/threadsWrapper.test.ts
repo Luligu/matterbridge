@@ -224,7 +224,7 @@ describe('ThreadsWrapper', () => {
     try {
       await vi.dynamicImportSettled();
       expect(worker.useTracker).toBe(useTracker);
-      expect(Tracker).toHaveBeenCalledExactlyOnceWith('ThreadBackend', debugParam || useTracker, false, useTracker);
+      expect(Tracker).toHaveBeenCalledExactlyOnceWith('ThreadBackend', debugParam, false, useTracker);
       expect(worker.tracker).toBe(tracker);
       expect(start).toHaveBeenCalledOnce();
       expect(stop).not.toHaveBeenCalled();
@@ -485,6 +485,28 @@ describe('ThreadsWrapper', () => {
     await new Promise((resolve) => setImmediate(resolve));
     expect(onShutdown).toHaveBeenCalledTimes(1);
     expect(onStartup).toHaveBeenCalledTimes(1);
+  });
+
+  test('should run the startup and shutdown handlers and log their failures', async () => {
+    const { ThreadsWrapper, getOnMessageHandler } = await setup({ isMainThread: false, parentPortPresent: true, threadId: 10, threadName: 'ThreadHandlers' });
+
+    const startup = vi.fn<() => Promise<void>>().mockResolvedValueOnce().mockRejectedValueOnce(new Error('Startup handler failed'));
+    const shutdown = vi.fn<() => Promise<void>>().mockResolvedValueOnce().mockRejectedValueOnce(new Error('Shutdown handler failed'));
+    const worker = new ThreadsWrapper('Handlers' as unknown as ThreadNames, asyncTrue, startup, shutdown);
+    const errorSpy = vi.spyOn(worker.log, 'error').mockImplementation(() => {});
+
+    for (let i = 0; i < 2; i++) {
+      getOnMessageHandler()?.({ type: 'startup' });
+      getOnMessageHandler()?.({ type: 'shutdown' });
+      await new Promise((resolve) => setImmediate(resolve));
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+    expect(startup).toHaveBeenCalledTimes(2);
+    expect(startup).toHaveBeenCalledWith(worker);
+    expect(shutdown).toHaveBeenCalledTimes(2);
+    expect(shutdown).toHaveBeenCalledWith(worker);
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Worker Handlers startup failed'));
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Worker Handlers shutdown failed'));
   });
 
   test('worker thread (debug+verbose): warns on unknown message types, pong included', async () => {

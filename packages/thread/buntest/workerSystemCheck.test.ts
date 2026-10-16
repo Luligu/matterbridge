@@ -140,7 +140,7 @@ describe('workerSystemCheck', () => {
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting system check/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'You are running Node.js version: 20.18.0');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: NVM is a development tool/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 20\.19\.0 is not supported/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 22\.13\.0 is not supported/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Found network interface 'docker0'.*Matter mDNS/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Use --mdnsinterface parameter or set Mdns interface in Settings.*Matter mDNS/));
     expect(snackBarMock).toHaveBeenCalledWith(
@@ -180,8 +180,8 @@ describe('workerSystemCheck', () => {
     expect(loggerMock).not.toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/Found network interface 'docker0'/));
   });
 
-  test('should only suggest the LTS version when running Node.js 26', async () => {
-    const { success, loggerMock } = await runWorker({ nodeVersion: '26.0.0', mdnsInterface: 'eth0', networkInterfaces: fullInterfaces });
+  test.each(['22.13.0', '26.0.0'])('should only suggest the LTS version when running supported Node.js %s', async (nodeVersion) => {
+    const { success, loggerMock } = await runWorker({ nodeVersion, mdnsInterface: 'eth0', networkInterfaces: fullInterfaces });
 
     expect(success).toBe(true);
     expect(loggerMock.mock.calls.filter((call) => call[0] === LogLevel.ERROR)).toHaveLength(0);
@@ -198,6 +198,14 @@ describe('workerSystemCheck', () => {
     expect(getBunLatestVersion).not.toHaveBeenCalled();
     expect(loggerMock.mock.calls.filter((call) => call[0] === LogLevel.NOTICE)).toHaveLength(0);
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
+  });
+
+  test.each(['20.19.0', '20.20.0'])('should report Node.js %s as unsupported', async (nodeVersion) => {
+    const { loggerMock, snackBarMock } = await runWorker({ nodeVersion, mdnsInterface: 'eth0', networkInterfaces: fullInterfaces });
+
+    const message = 'System Check: Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).';
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, message);
+    expect(snackBarMock).toHaveBeenCalledWith(message, 0, 'error');
   });
 
   test.each(['20.18.0', '22.12.0', '21.0.0'])('should log the Bun version and skip the Node.js warnings when Bun reports Node.js %s', async (nodeVersion) => {

@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer class.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.1
+ * @version 2.0.2
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -33,7 +33,8 @@ import type {
   WorkerMessageTypes,
   WorkerSrcType,
 } from '@matterbridge/types';
-import { hasParameter } from '@matterbridge/utils/cli';
+import { hasAnyParameter } from '@matterbridge/utils/cli';
+import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { logError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { type AnsiLogger, CYAN, db, debugStringify, er } from 'node-ansi-logger';
@@ -58,9 +59,9 @@ type BroadcastChannelEvent = Parameters<NonNullable<BroadcastChannel['onmessage'
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   private readonly broadcastChannel: BroadcastChannel;
   private closed = false;
-  /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
-  private readonly debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-threads') || hasParameter('verbose-threads');
-  private readonly verbose = hasParameter('verbose') || hasParameter('verbose-threads');
+  private readonly debug = hasAnyParameter('debug', 'verbose', 'debug-broadcast', 'verbose-broadcast');
+  private readonly verbose = hasAnyParameter('verbose', 'verbose-broadcast');
+  private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-broadcast');
 
   /**
    * Creates an instance of BroadcastServer.
@@ -100,8 +101,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   private broadcastMessageHandler(event: BroadcastChannelEvent): void {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const msg = event.data as WorkerMessage;
+    const msg: WorkerMessage = event.data;
     if (msg.dst === this.name || msg.dst === 'all') {
       if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(msg)}`);
       this.emit('broadcast_message', msg);
@@ -117,8 +117,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @returns {void}
    */
   private broadcastMessageErrorHandler(event: BroadcastChannelEvent): void {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const msg = event.data as WorkerMessage;
+    const msg: WorkerMessage = event.data;
     this.log.error(`Server ${CYAN}${this.name}${db} received message error: ${debugStringify(msg)}`);
   }
 
@@ -313,6 +312,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
       return Promise.reject(new Error('Broadcast channel is closed'));
     }
     let timeoutId: NodeJS.Timeout;
+    const start = performance.now();
     const requestMessage = {
       ...message,
       id: message.id ?? this.getUniqueId(),
@@ -327,6 +327,11 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
           clearTimeout(timeoutId);
           this.off('broadcast_message', responseHandler);
           if (this.verbose) this.log.debug(`Fetch response: ${debugStringify(msg)}`);
+          if (this.diagnostic)
+            writeDiagnostic(
+              `Broadcast:${this.name}`,
+              `fetch ${requestMessage.type} from ${requestMessage.src} to ${requestMessage.dst} took ${(performance.now() - start).toFixed(2)} ms`,
+            );
           if ('error' in msg && typeof msg.error === 'string') {
             reject(
               new Error(

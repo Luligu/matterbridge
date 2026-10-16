@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.2
+ * @version 1.6.7
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -30,13 +30,13 @@ import { Descriptor } from '@matter/types/clusters/descriptor';
 import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
+import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget } from '@matterbridge/utils/wait';
 // Node AnsiLogger module
-import { type AnsiLogger, CYAN, db, er, type LogLevel, nf, wr } from 'node-ansi-logger';
+import { type AnsiLogger, CYAN, db, debugStringify, er, type LogLevel, nf, wr } from 'node-ansi-logger';
 // Node Storage module
 import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 
@@ -44,6 +44,7 @@ import { type NodeStorage, NodeStorageManager } from 'node-persist-manager';
 import { bridgedNode } from './matterbridgeDeviceTypes.js';
 import { assertMatterbridgeEndpoint, type MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { checkNotLatinCharacters } from './matterbridgeEndpointHelpers.js';
+import { toApiClusters, toApiDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('MatterbridgePlatform');
 
@@ -197,6 +198,7 @@ export class MatterbridgePlatform {
     this.config = config;
     this.name = config.name;
     this.#server = new BroadcastServer('platform', this.log);
+    this.#server.on('broadcast_message', this.#msgHandler.bind(this));
 
     // Set the brand
     Object.defineProperty(this, MATTERBRIDGE_PLATFORM_BRAND, {
@@ -260,6 +262,58 @@ export class MatterbridgePlatform {
       this.isReady = true;
       return;
     });
+  }
+
+  /**
+   * Handles broadcast requests sent to the platform.
+   * Device, cluster and select requests are answered only when params.pluginName matches this platform's name.
+   *
+   * @param {WorkerMessage} msg - The broadcast message.
+   * @returns {void}
+   */
+  #msgHandler(msg: WorkerMessage): void {
+    if (!this.#server.isWorkerRequest(msg)) return;
+
+    /* v8 ignore next Debug logs are not relevant for coverage */
+    if (this.#verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
+    switch (msg.type) {
+      case 'platform_get_apidevices':
+        if (msg.params.pluginName !== this.name) return;
+        this.#server.respond({
+          ...msg,
+          result: {
+            devices: this.getDevices()
+              .map((device) => toApiDevice(device, msg.params.extended))
+              .filter((device) => device !== undefined),
+          },
+        });
+        break;
+      case 'platform_get_apiclusters': {
+        if (msg.params.pluginName !== this.name) return;
+        const { number, serialNumber, uniqueId } = msg.params;
+        const endpoint = this.getDevices().find((device) => device.maybeNumber === number && device.serialNumber === serialNumber && device.uniqueId === uniqueId);
+        const clusters = endpoint ? toApiClusters(endpoint, this.log) : undefined;
+        if (!clusters) {
+          const error = `getApiCluster: no device found for plugin ${this.name} and endpoint number ${number} (serial: ${serialNumber}, uniqueId: ${uniqueId})`;
+          this.log.error(error);
+          this.#server.respond({ ...msg, error });
+          break;
+        }
+        this.#server.respond({ ...msg, result: { clusters } });
+        break;
+      }
+      case 'platform_get_apiselectdevices':
+        if (msg.params.pluginName !== this.name) return;
+        this.#server.respond({ ...msg, result: { devices: this.getSelectDevices().toSorted((keyA, keyB) => keyA.deviceName.localeCompare(keyB.deviceName)) } });
+        break;
+      case 'platform_get_apiselectentities':
+        if (msg.params.pluginName !== this.name) return;
+        this.#server.respond({ ...msg, result: { entities: this.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name)) } });
+        break;
+      default:
+        /* v8 ignore next Debug logs are not relevant for coverage */
+        if (this.#verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
+    }
   }
 
   /**
@@ -852,7 +906,8 @@ export class MatterbridgePlatform {
   getSelectDevices(): ApiSelectDevice[] {
     const selectDevices: ApiSelectDevice[] = [];
     for (const device of this.#selectDevices.values()) {
-      selectDevices.push({ pluginName: this.name, ...device });
+      const { serial, name, ...rest } = device;
+      selectDevices.push({ plugin: this.name, serialNumber: serial, deviceName: name, ...rest });
     }
     return selectDevices;
   }
@@ -907,7 +962,7 @@ export class MatterbridgePlatform {
   getSelectEntities(): ApiSelectEntity[] {
     const selectEntities: ApiSelectEntity[] = [];
     for (const entity of this.#selectEntities.values()) {
-      selectEntities.push({ pluginName: this.name, ...entity });
+      selectEntities.push({ plugin: this.name, ...entity });
     }
     return selectEntities;
   }

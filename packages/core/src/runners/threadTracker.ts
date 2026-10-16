@@ -24,26 +24,29 @@
 import { ThreadsWrapper } from '@matterbridge/thread/wrapper';
 import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { Tracker } from '@matterbridge/utils/tracker';
+import type { Tracker } from '@matterbridge/utils/tracker';
 import { LogLevel } from 'node-ansi-logger';
 
 logModuleLoaded('Tracker', '\u001B[35m');
 
-// oxlint-disable-next-line typescript/require-await -- The listeners must be registered before any await.
-export default new ThreadsWrapper('Tracker', async (worker) => {
+export default new ThreadsWrapper('Tracker', entrypoint, startup, shutdown);
+
+let tracker: Tracker | undefined;
+
+async function entrypoint(worker: ThreadsWrapper): Promise<boolean> {
   worker.logger(LogLevel.INFO, 'Creating tracker...');
   try {
-    const tracker = new Tracker('Tracker', true, false, true);
+    worker.logger(LogLevel.DEBUG, 'Importing Tracker...');
+    const { Tracker } = await import('@matterbridge/utils/tracker');
+    worker.logger(LogLevel.DEBUG, 'Tracker imported; creating instance...');
+    tracker = new Tracker('Tracker', false, false, true);
+    worker.logger(LogLevel.DEBUG, 'Tracker instance created');
     // Register the listeners before any await: the manager sends startup as soon as the thread is loaded.
     worker.on('startup', () => {
       worker.logger(LogLevel.NOTICE, 'Tracker received startup');
-      // Start the tracker. It will keep sampling until shutdown.
-      tracker.start();
     });
     worker.on('shutdown', () => {
       worker.logger(LogLevel.NOTICE, 'Tracker received shutdown');
-      // Stop the tracker. It will cease sampling after this call.
-      tracker.stop();
     });
     worker.logger(LogLevel.DEBUG, 'Tracker created');
     return true;
@@ -52,4 +55,20 @@ export default new ThreadsWrapper('Tracker', async (worker) => {
     worker.logger(LogLevel.ERROR, errorMessage);
     return false;
   }
-});
+}
+
+// oxlint-disable-next-line typescript/require-await
+async function startup(worker: ThreadsWrapper): Promise<void> {
+  if (!tracker) return;
+  worker.logger(LogLevel.DEBUG, 'Starting up tracker...');
+  tracker.start();
+  worker.logger(LogLevel.DEBUG, 'Tracker startup complete');
+}
+
+// oxlint-disable-next-line typescript/require-await
+async function shutdown(worker: ThreadsWrapper): Promise<void> {
+  if (!tracker) return;
+  worker.logger(LogLevel.DEBUG, 'Shutting down tracker...');
+  tracker.stop();
+  worker.logger(LogLevel.DEBUG, 'Tracker shutdown complete');
+}

@@ -3,7 +3,7 @@
  * @description Local shared Matterbridge test helper for the checkUpdates vitest suite.
  * @author Luca Liguori
  * @created 2026-06-12
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -51,6 +51,7 @@ export const matterbridge: Writable<SharedMatterbridge> = {
     osArch: 'arm64',
     totalMemory: '0 B',
     freeMemory: '0 B',
+    constrainedMemory: '0 B',
     systemUptime: '0s',
     processUptime: '0s',
     cpuUsage: '0%',

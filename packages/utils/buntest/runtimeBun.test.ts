@@ -11,6 +11,7 @@ import path from 'node:path';
 
 import {
   bunAvailable,
+  constrainedMemory,
   gc,
   getBun,
   getBunLatestVersion,
@@ -308,5 +309,21 @@ describe('getBunRuntimeInfo()', () => {
       arch: process.arch,
       platform: process.platform,
     });
+  });
+});
+
+describe('constrainedMemory()', () => {
+  it.each([
+    { name: 'a container limit', constrained: 512 * 1024 * 1024, expected: 512 * 1024 * 1024 },
+    { name: 'undefined (Node.js 20 without a limit)', constrained: undefined, expected: 8 * 1024 * 1024 * 1024 },
+    { name: 'zero (Node.js on macOS and Windows without a limit)', constrained: 0, expected: 8 * 1024 * 1024 * 1024 },
+    { name: 'UINT64_MAX (Node.js in a Linux container without a limit)', constrained: 18446744073709552000, expected: 8 * 1024 * 1024 * 1024 },
+    { name: 'the total memory (Bun without a limit)', constrained: 8 * 1024 * 1024 * 1024, expected: 8 * 1024 * 1024 * 1024 },
+    { name: 'a non-finite value', constrained: Number.NaN, expected: 8 * 1024 * 1024 * 1024 },
+  ])('should return $expected for $name', ({ constrained, expected }) => {
+    track(spyOn(process, 'constrainedMemory').mockReturnValue(constrained as unknown as number));
+    track(spyOn(os, 'totalmem').mockReturnValue(8 * 1024 * 1024 * 1024));
+
+    expect(constrainedMemory()).toBe(expected);
   });
 });

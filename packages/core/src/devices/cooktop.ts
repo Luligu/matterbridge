@@ -22,7 +22,8 @@
  */
 
 // @matter
-import type { EndpointNumber, Semtag } from '@matter/types';
+import type { EndpointNumber } from '@matter/types/datatype';
+import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 

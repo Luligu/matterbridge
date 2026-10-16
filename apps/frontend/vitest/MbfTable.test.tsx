@@ -197,6 +197,18 @@ describe('MbfTable', () => {
     expect(screen.getByText('No')).toBeInTheDocument();
   });
 
+  it('renders a disabled checkbox for boolean values without a render function', () => {
+    const booleanColumns: MbfTableColumn<RowType>[] = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'flag', label: 'Flag' },
+    ];
+    render(<MbfTable name="TestTableBoolean" columns={booleanColumns} rows={rows} getRowKey="id" />);
+    const checkboxes = screen.getAllByRole('checkbox');
+    expect(checkboxes).toHaveLength(3);
+    expect(checkboxes.map((checkbox) => (checkbox as HTMLInputElement).checked)).toEqual([true, false, true]);
+    checkboxes.forEach((checkbox) => expect(checkbox).toBeDisabled());
+  });
+
   it('renders footer text if provided', () => {
     render(<MbfTable name="TestTableFooter" columns={columns} rows={rows} getRowKey="id" footerLeft="Left" footerRight="Right" />);
     expect(screen.getByText('Left')).toBeInTheDocument();

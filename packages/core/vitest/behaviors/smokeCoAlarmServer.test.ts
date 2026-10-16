@@ -8,8 +8,8 @@ const NAME = 'SmokeCoAlarmServer';
 const MATTER_PORT = 13500;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

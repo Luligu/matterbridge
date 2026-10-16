@@ -1,0 +1,573 @@
+/**
+ * @file packages/core/buntest/devices/oven.test.ts
+ * @description This file contains the tests for the Oven device.
+ * @author Luca Liguori
+ */
+
+const NAME = 'Oven';
+const MATTER_PORT = 8011;
+const MATTER_CREATE_ONLY = true;
+
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
+
+import { CommonPositionTag } from '@matter/node';
+import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
+import { OvenModeServer } from '@matter/node/behaviors/oven-mode';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { Identify } from '@matter/types/clusters/identify';
+import { ModeBase } from '@matter/types/clusters/mode-base';
+import { OnOff } from '@matter/types/clusters/on-off';
+import { OperationalState } from '@matter/types/clusters/operational-state';
+import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
+import { OvenMode } from '@matter/types/clusters/oven-mode';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { EndpointNumber } from '@matter/types/datatype';
+import {
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/buntest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { LogLevel, stringify } from 'node-ansi-logger';
+
+import { MatterbridgeOvenCavityOperationalStateServer, MatterbridgeOvenModeServer, Oven } from '../../src/devices/oven.js';
+import { oven } from '../../src/matterbridgeDeviceTypes.js';
+import type { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
+import type { CommandHandlerData } from '../../src/matterbridgeEndpointCommandHandler.js';
+
+/**
+ * Bun has no vi.advanceTimersByTimeAsync: advance the fake clock 1ms at a time and drain the microtasks
+ * between steps, so promise chains started by a timer callback settle before the next timer fires.
+ *
+ * @param {number} ms The time in milliseconds to advance the fake clock.
+ */
+async function advanceTimersByTimeAsync(ms: number): Promise<void> {
+  for (let elapsed = 0; elapsed <= ms; elapsed++) {
+    vi.advanceTimersByTime(elapsed === 0 ? 0 : 1);
+    for (let j = 0; j < 10; j++) await Promise.resolve();
+  }
+}
+
+// Setup the test environment
+await setupTest(NAME, false);
+
+describe('Matterbridge ' + NAME, () => {
+  let device: Oven;
+  let cabinet1: MatterbridgeEndpoint;
+  let cabinet2: MatterbridgeEndpoint;
+
+  beforeAll(async () => {
+    // Setup the Matter test environment
+    await createTestEnvironment();
+  });
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
+
+  afterAll(async () => {
+    // Destroy the Matter test environment
+    await destroyTestEnvironment();
+    // Restore all mocks
+    vi.restoreAllMocks();
+  });
+
+  test('create the server node', async () => {
+    await createServerNode(MATTER_PORT, oven.code, 0, 0, 0);
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('create a oven device', () => {
+    device = new Oven('Oven Test Device', 'OV123456');
+    expect(device).toBeDefined();
+    expect(device.id).toBe('OvenTestDevice-OV123456');
+    expect(device.hasClusterServer(Identify.id)).toBeTruthy();
+    expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
+    expect(device.hasClusterServer(OnOff.id)).toBeFalsy();
+    expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'powerSource', 'fixedLabel']);
+
+    // oxlint-disable-next-line typescript/no-deprecated
+    cabinet1 = device.addCabinet('Oven Test Cabinet Top', [
+      { mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label },
+    ]);
+    expect(cabinet1).toBeDefined();
+    expect(cabinet1.id).toBe('OvenTestCabinetTop');
+    expect(cabinet1.hasClusterServer(OvenMode.id)).toBeTruthy();
+    expect(cabinet1.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
+    expect(cabinet1.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
+
+    // oxlint-disable-next-line typescript/no-deprecated
+    cabinet2 = device.addCabinet(
+      'Oven Test Cabinet Bottom',
+      [{ mfgCode: null, namespaceId: CommonPositionTag.Bottom.namespaceId, tag: CommonPositionTag.Bottom.tag, label: CommonPositionTag.Bottom.label }],
+      3,
+      [
+        { label: 'Bake', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Bake }] },
+        { label: 'Clean', mode: 2, modeTags: [{ value: OvenMode.ModeTag.Clean }] },
+        { label: 'Steam', mode: 3, modeTags: [{ value: OvenMode.ModeTag.Steam }] },
+      ],
+      180 * 100,
+      180 * 100,
+      300 * 100,
+      10 * 100,
+      20 * 100,
+      OperationalState.OperationalStateEnum.Running,
+      1,
+      ['pre-heating', 'pre-heated', 'cooling down'],
+    );
+    expect(cabinet2).toBeDefined();
+    expect(cabinet2.id).toBe('OvenTestCabinetBottom');
+    expect(cabinet2.hasClusterServer(OvenMode.id)).toBeTruthy();
+    expect(cabinet2.hasClusterServer(OvenCavityOperationalState.id)).toBeTruthy();
+    expect(cabinet2.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'temperatureControl', 'temperatureMeasurement', 'ovenMode', 'ovenCavityOperationalState']);
+  });
+
+  test('add an oven cabinet with endpoint options', () => {
+    const tagList = [{ mfgCode: null, namespaceId: CommonPositionTag.Top.namespaceId, tag: CommonPositionTag.Top.tag, label: CommonPositionTag.Top.label }];
+    const configuredDevice = new Oven('Configured Oven', 'OV654321');
+    const configuredCabinet = configuredDevice.addCabinet('Configured Cabinet', {
+      id: 'ConfiguredCabinet',
+      number: EndpointNumber(13_09_1),
+      tagList,
+      currentMode: 1,
+      supportedModes: [{ label: 'Bake', mode: 1, modeTags: [{ value: OvenMode.ModeTag.Bake }] }],
+      targetTemperature: 200 * 100,
+      minTemperature: 50 * 100,
+      maxTemperature: 250 * 100,
+      step: 5 * 100,
+      currentTemperature: 25 * 100,
+      operationalState: OperationalState.OperationalStateEnum.Running,
+      currentPhase: 0,
+      phaseList: ['pre-heating'],
+    });
+
+    expect(configuredCabinet.id).toBe('ConfiguredCabinet');
+    expect(configuredCabinet.number).toBe(EndpointNumber(13_09_1));
+    expect(configuredCabinet.tagList).toEqual(tagList);
+    expect(configuredCabinet.behaviors.optionsFor(TemperatureMeasurementServer)).toMatchObject({ measuredValue: 25 * 100 });
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenModeServer)).toMatchObject({ currentMode: 1 });
+    expect(configuredCabinet.behaviors.optionsFor(MatterbridgeOvenCavityOperationalStateServer)).toMatchObject({ operationalState: OperationalState.OperationalStateEnum.Running });
+  });
+
+  test('add a oven device', async () => {
+    expect(await addDevice(server, device, 0, 0, 0, 0)).toBeTruthy();
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: initialized (endpoint ${cabinet1.id}.${cabinet1.number})`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.INFO,
+      `MatterbridgeOvenCavityOperationalStateServer: initialized: setting operational state to Stopped and operational error to No error (endpoint ${cabinet1.id}.${cabinet1.number})`,
+    );
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 123, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 4 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 64 ]',
+        'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
+        'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'fixedLabel(0x40).clusterRevision(0xfffd)=1',
+        'fixedLabel(0x40).featureMap(0xfffc)={  }',
+        'fixedLabel(0x40).generatedCommandList(0xfff8)=[  ]',
+        "fixedLabel(0x40).labelList(0x0)=[ { label: 'composed', value: 'Oven' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2, 3, 4 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('cabinet1 forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    cabinet1.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 113, revision: 6 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 72, 73, 86, 1026 ]',
+        "descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 8, tag: 2, label: 'Top' } ]",
+        'ovenCavityOperationalState(0x48).acceptedCommandList(0xfff9)=[ 1, 2 ]',
+        'ovenCavityOperationalState(0x48).attributeList(0xfffb)=[ 0, 1, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'ovenCavityOperationalState(0x48).clusterRevision(0xfffd)=2',
+        'ovenCavityOperationalState(0x48).currentPhase(0x1)=null',
+        'ovenCavityOperationalState(0x48).featureMap(0xfffc)={  }',
+        'ovenCavityOperationalState(0x48).generatedCommandList(0xfff8)=[ 4 ]',
+        "ovenCavityOperationalState(0x48).operationalError(0x5)={ errorStateId: 0, errorStateLabel: undefined, errorStateDetails: 'Fully operational' }",
+        'ovenCavityOperationalState(0x48).operationalState(0x4)=0',
+        'ovenCavityOperationalState(0x48).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 2, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined } ]',
+        'ovenCavityOperationalState(0x48).phaseList(0x0)=null',
+        'ovenMode(0x49).acceptedCommandList(0xfff9)=[ 0 ]',
+        'ovenMode(0x49).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'ovenMode(0x49).clusterRevision(0xfffd)=2',
+        'ovenMode(0x49).currentMode(0x1)=2',
+        'ovenMode(0x49).featureMap(0xfffc)={ onOff: false }',
+        'ovenMode(0x49).generatedCommandList(0xfff8)=[ 1 ]',
+        "ovenMode(0x49).supportedModes(0x0)=[ { label: 'Bake', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Convection', mode: 2, modeTags: [ { mfgCode: undefined, value: 16385 } ] }, { label: 'Grill', mode: 3, modeTags: [ { mfgCode: undefined, value: 16386 } ] }, { label: 'Roast', mode: 4, modeTags: [ { mfgCode: undefined, value: 16387 } ] }, { label: 'Clean', mode: 5, modeTags: [ { mfgCode: undefined, value: 16388 } ] }, { label: 'Convection Bake', mode: 6, modeTags: [ { mfgCode: undefined, value: 16389 } ] }, { label: 'Convection Roast', mode: 7, modeTags: [ { mfgCode: undefined, value: 16390 } ] }, { label: 'Warming', mode: 8, modeTags: [ { mfgCode: undefined, value: 16391 } ] }, { label: 'Proofing', mode: 9, modeTags: [ { mfgCode: undefined, value: 16392 } ] }, { label: 'Steam', mode: 10, modeTags: [ { mfgCode: undefined, value: 16393 } ] } ]",
+        'temperatureControl(0x56).acceptedCommandList(0xfff9)=[ 0 ]',
+        'temperatureControl(0x56).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureControl(0x56).clusterRevision(0xfffd)=1',
+        'temperatureControl(0x56).featureMap(0xfffc)={ temperatureNumber: true, temperatureLevel: false, temperatureStep: true }',
+        'temperatureControl(0x56).generatedCommandList(0xfff8)=[  ]',
+        'temperatureControl(0x56).maxTemperature(0x2)=30000',
+        'temperatureControl(0x56).minTemperature(0x1)=3000',
+        'temperatureControl(0x56).step(0x3)=1000',
+        'temperatureControl(0x56).temperatureSetpoint(0x0)=18000',
+        'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
+        'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=6',
+        'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
+        'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
+        'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
+        'temperatureMeasurement(0x402).measuredValue(0x0)=2000',
+        'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
+        'temperatureMeasurement(0x402).tolerance(0x3)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('cabinet2 forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    cabinet2.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 113, revision: 6 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 72, 73, 86, 1026 ]',
+        "descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 8, tag: 3, label: 'Bottom' } ]",
+        'ovenCavityOperationalState(0x48).acceptedCommandList(0xfff9)=[ 1, 2 ]',
+        'ovenCavityOperationalState(0x48).attributeList(0xfffb)=[ 0, 1, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'ovenCavityOperationalState(0x48).clusterRevision(0xfffd)=2',
+        'ovenCavityOperationalState(0x48).currentPhase(0x1)=1',
+        'ovenCavityOperationalState(0x48).featureMap(0xfffc)={  }',
+        'ovenCavityOperationalState(0x48).generatedCommandList(0xfff8)=[ 4 ]',
+        "ovenCavityOperationalState(0x48).operationalError(0x5)={ errorStateId: 0, errorStateLabel: undefined, errorStateDetails: 'Fully operational' }",
+        'ovenCavityOperationalState(0x48).operationalState(0x4)=0',
+        'ovenCavityOperationalState(0x48).operationalStateList(0x3)=[ { operationalStateId: 0, operationalStateLabel: undefined }, { operationalStateId: 1, operationalStateLabel: undefined }, { operationalStateId: 2, operationalStateLabel: undefined }, { operationalStateId: 3, operationalStateLabel: undefined } ]',
+        "ovenCavityOperationalState(0x48).phaseList(0x0)=[ 'pre-heating', 'pre-heated', 'cooling down' ]",
+        'ovenMode(0x49).acceptedCommandList(0xfff9)=[ 0 ]',
+        'ovenMode(0x49).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'ovenMode(0x49).clusterRevision(0xfffd)=2',
+        'ovenMode(0x49).currentMode(0x1)=3',
+        'ovenMode(0x49).featureMap(0xfffc)={ onOff: false }',
+        'ovenMode(0x49).generatedCommandList(0xfff8)=[ 1 ]',
+        "ovenMode(0x49).supportedModes(0x0)=[ { label: 'Bake', mode: 1, modeTags: [ { mfgCode: undefined, value: 16384 } ] }, { label: 'Clean', mode: 2, modeTags: [ { mfgCode: undefined, value: 16388 } ] }, { label: 'Steam', mode: 3, modeTags: [ { mfgCode: undefined, value: 16393 } ] } ]",
+        'temperatureControl(0x56).acceptedCommandList(0xfff9)=[ 0 ]',
+        'temperatureControl(0x56).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureControl(0x56).clusterRevision(0xfffd)=1',
+        'temperatureControl(0x56).featureMap(0xfffc)={ temperatureNumber: true, temperatureLevel: false, temperatureStep: true }',
+        'temperatureControl(0x56).generatedCommandList(0xfff8)=[  ]',
+        'temperatureControl(0x56).maxTemperature(0x2)=30000',
+        'temperatureControl(0x56).minTemperature(0x1)=18000',
+        'temperatureControl(0x56).step(0x3)=1000',
+        'temperatureControl(0x56).temperatureSetpoint(0x0)=18000',
+        'temperatureMeasurement(0x402).acceptedCommandList(0xfff9)=[  ]',
+        'temperatureMeasurement(0x402).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'temperatureMeasurement(0x402).clusterRevision(0xfffd)=6',
+        'temperatureMeasurement(0x402).featureMap(0xfffc)={  }',
+        'temperatureMeasurement(0x402).generatedCommandList(0xfff8)=[  ]',
+        'temperatureMeasurement(0x402).maxMeasuredValue(0x2)=null',
+        'temperatureMeasurement(0x402).measuredValue(0x0)=2000',
+        'temperatureMeasurement(0x402).minMeasuredValue(0x1)=null',
+        'temperatureMeasurement(0x402).tolerance(0x3)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('createDefaultOvenCavityOperationalStateClusterServer normalizes different parameters', () => {
+    const requireSpy = vi.spyOn(cabinet1.behaviors as any, 'require').mockImplementation(() => {});
+
+    expect(device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1)).toBe(cabinet1);
+    expect(requireSpy).toHaveBeenNthCalledWith(1, MatterbridgeOvenCavityOperationalStateServer, {
+      phaseList: null,
+      currentPhase: null,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
+      operationalState: OperationalState.OperationalStateEnum.Stopped,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    expect(
+      device.createDefaultOvenCavityOperationalStateClusterServer(cabinet1, OperationalState.OperationalStateEnum.Running, 1, ['pre-heating', 'pre-heated', 'cooling down']),
+    ).toBe(cabinet1);
+    expect(requireSpy).toHaveBeenNthCalledWith(2, MatterbridgeOvenCavityOperationalStateServer, {
+      phaseList: ['pre-heating', 'pre-heated', 'cooling down'],
+      currentPhase: 1,
+      operationalStateList: [
+        { operationalStateId: OperationalState.OperationalStateEnum.Stopped },
+        { operationalStateId: OperationalState.OperationalStateEnum.Running },
+        { operationalStateId: OperationalState.OperationalStateEnum.Paused },
+        { operationalStateId: OperationalState.OperationalStateEnum.Error },
+      ],
+      operationalState: OperationalState.OperationalStateEnum.Running,
+      operationalError: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' },
+    });
+
+    requireSpy.mockRestore();
+  });
+
+  test('invoke MatterbridgeOvenModeServer commands', async () => {
+    expect(cabinet1.behaviors.has(OvenModeServer)).toBeTruthy();
+    expect(cabinet1.behaviors.has(MatterbridgeOvenModeServer)).toBeTruthy();
+    expect(cabinet1.behaviors.elementsOf(OvenModeServer).commands.has('changeToMode')).toBeTruthy();
+    expect((cabinet1 as any).state['ovenMode'].acceptedCommandList).toEqual([0]);
+    expect((cabinet1 as any).state['ovenMode'].generatedCommandList).toEqual([1]);
+
+    const EP = `(endpoint ${cabinet1.id}.${cabinet1.number})`;
+    const order: string[] = [];
+    const pluginHandler = vi.fn(async (data: CommandHandlerData<'OvenMode.changeToMode'>) => {
+      expect(data.endpoint).toBe(cabinet1);
+      expect(data).toHaveProperty('context');
+      await Promise.resolve();
+      order.push('forwarded');
+    });
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: unknown[] = [];
+    cabinet1.addCommandHandler('OvenMode.changeToMode', pluginHandler);
+    cabinet1.subscribeCommand(OvenMode, 'changeToMode', (data) => {
+      order.push('emitted');
+      emitted.push(data.request);
+    });
+
+    // Change to mode 2: forwarded to the plugin, then CurrentMode updated and the command emitted
+    vi.clearAllMocks();
+    await cabinet1.invokeBehaviorCommand('ovenMode', 'changeToMode', { newMode: 2 });
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenModeServer: changing mode to 2 ${EP}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeOvenModeServer: changeToMode called with mode 2 = Convection ${EP}`);
+    expect(pluginHandler).toHaveBeenCalledTimes(1);
+    expect(order).toEqual(['forwarded', 'emitted']);
+    expect((cabinet1 as any).state['ovenMode'].currentMode).toBe(2);
+
+    // Change to mode 15: forwarded to the plugin but rejected with UnsupportedMode and not emitted
+    vi.clearAllMocks();
+    const unsupportedResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenModeServer).changeToMode({ newMode: 15 }));
+    expect(unsupportedResponse).toEqual({ status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' });
+    expect(pluginHandler).toHaveBeenCalledTimes(1);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `MatterbridgeOvenModeServer: changeToMode called with unsupported mode 15 ${EP}`);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`MatterbridgeOvenModeServer: changeToMode called with unsupported mode 15 ${EP}`);
+    expect((cabinet1 as any).state['ovenMode'].currentMode).toBe(2);
+    expect(emitted).toEqual([{ newMode: 2 }]);
+    cabinet1.commandHandler.removeHandler('OvenMode.changeToMode', pluginHandler);
+    loggerErrorSpy.mockClear();
+  });
+
+  test('invoke MatterbridgeOvenCavityOperationalStateServer commands', async () => {
+    expect(cabinet1.behaviors.has(OvenCavityOperationalStateServer)).toBeTruthy();
+    expect(cabinet1.behaviors.has(MatterbridgeOvenCavityOperationalStateServer)).toBeTruthy();
+    expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('stop')).toBeTruthy();
+    expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('start')).toBeTruthy();
+    expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('pause')).toBeFalsy();
+    expect(cabinet1.behaviors.elementsOf(OvenCavityOperationalStateServer).commands.has('resume')).toBeFalsy();
+    expect(cabinet1.behaviors.elementsOf(MatterbridgeOvenCavityOperationalStateServer).events.has('operationCompletion')).toBeTruthy();
+    expect((cabinet1 as any).state['ovenCavityOperationalState'].acceptedCommandList).toEqual([1, 2]);
+    expect((cabinet1 as any).state['ovenCavityOperationalState'].generatedCommandList).toEqual([4]);
+
+    const EP = `(endpoint ${cabinet1.id}.${cabinet1.number})`;
+    const operationCompletion = vi.fn();
+    cabinet1.eventsOf(MatterbridgeOvenCavityOperationalStateServer).operationCompletion.on(operationCompletion);
+    const startHandler = vi.fn();
+    const stopHandler = vi.fn();
+    cabinet1.addCommandHandler('OvenCavityOperationalState.start', startHandler);
+    cabinet1.addCommandHandler('OvenCavityOperationalState.stop', stopHandler);
+    // Collect the emitted commands in an array: vi.clearAllMocks() below would reset a vi.fn() listener
+    const emitted: string[] = [];
+    cabinet1.subscribeCommand(OvenCavityOperationalState, 'start', () => emitted.push('start'));
+    cabinet1.subscribeCommand(OvenCavityOperationalState, 'stop', () => emitted.push('stop'));
+    vi.useFakeTimers();
+
+    try {
+      // Stop while already Stopped: forwarded, NoError response, no further action and no emission
+      vi.clearAllMocks();
+      const stoppedResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenCavityOperationalStateServer).stop());
+      expect(stoppedResponse).toEqual({ commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already stopped' } });
+      expect(stopHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: stop received while already Stopped, taking no further action ${EP}`,
+      );
+
+      vi.clearAllMocks();
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'start', {});
+      expect(startHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: start ${EP}`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: start called setting operational state to Running and operational error to No error ${EP}`,
+      );
+      expect((cabinet1 as any).state['ovenCavityOperationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Running);
+
+      // Start while already Running: forwarded, NoError response, no further action and no emission
+      await advanceTimersByTimeAsync(1000);
+      vi.clearAllMocks();
+      const runningResponse = await cabinet1.act(async (agent) => await agent.get(MatterbridgeOvenCavityOperationalStateServer).start());
+      expect(runningResponse).toEqual({ commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already running' } });
+      expect(startHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: start received while already Running, taking no further action ${EP}`,
+      );
+
+      await advanceTimersByTimeAsync(1000);
+      vi.clearAllMocks();
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', {});
+      expect(stopHandler).toHaveBeenCalledTimes(1);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `MatterbridgeOvenCavityOperationalStateServer: stop ${EP}`);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.DEBUG,
+        `MatterbridgeOvenCavityOperationalStateServer: stop called setting operational state to Stopped and operational error to No error ${EP}`,
+      );
+      expect((cabinet1 as any).state['ovenCavityOperationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
+
+      // A repeated Stop does not complete the same operation again.
+      await cabinet1.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', {});
+    } finally {
+      vi.useRealTimers();
+      cabinet1.commandHandler.removeHandler('OvenCavityOperationalState.start', startHandler);
+      cabinet1.commandHandler.removeHandler('OvenCavityOperationalState.stop', stopHandler);
+    }
+
+    // The repeated Start keeps the original start time, so TotalOperationalTime covers both seconds
+    expect(operationCompletion).toHaveBeenCalledTimes(1);
+    expect(operationCompletion.mock.calls[0][0]).toEqual({ completionErrorCode: OperationalState.ErrorState.NoError, totalOperationalTime: 2, pausedTime: 0 });
+    expect(emitted).toEqual(['start', 'stop']);
+  });
+
+  test('stop an operation that was not started with the Start command', async () => {
+    const operationCompletion = vi.fn();
+    cabinet2.eventsOf(MatterbridgeOvenCavityOperationalStateServer).operationCompletion.on(operationCompletion);
+    // Running set out of band, e.g. by the plugin after a manual start on the appliance
+    await cabinet2.setAttribute('ovenCavityOperationalState', 'operationalState', OperationalState.OperationalStateEnum.Running);
+    await cabinet2.invokeBehaviorCommand('ovenCavityOperationalState', 'stop', {});
+    expect((cabinet2 as any).state['ovenCavityOperationalState'].operationalState).toBe(OperationalState.OperationalStateEnum.Stopped);
+    // No start time was recorded, so there is no TotalOperationalTime to report
+    expect(operationCompletion).not.toHaveBeenCalled();
+  });
+
+  test('start the server node', async () => {
+    if (!MATTER_CREATE_ONLY) await startServerNode();
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+  });
+
+  test('stop the server node', async () => {
+    expect(server).toBeDefined();
+    expect(aggregator).toBeDefined();
+    if (MATTER_CREATE_ONLY) await flushServerNode(0, 0, 0, 0);
+    else await stopServerNode();
+  });
+});

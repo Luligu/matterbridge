@@ -3,7 +3,7 @@
  * @description This file contains the CLI entry point of Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 3.0.0
+ * @version 3.1.0
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -25,11 +25,15 @@
 /* oxlint-disable n/no-process-exit */
 
 // Node.js modules
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // @matterbridge
 import { ThreadsManager } from '@matterbridge/thread/manager';
+import { BroadcastServer } from '@matterbridge/thread/server';
+import type { ApiSystemUpdate } from '@matterbridge/types';
+import { constrainedMemory, memoryFootprint } from '@matterbridge/utils/bun';
 import { hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { inspectError } from '@matterbridge/utils/error';
 import { formatBytes, formatUptime } from '@matterbridge/utils/format';
@@ -49,37 +53,52 @@ logModuleLoaded('Cli');
 export let instance: Matterbridge | undefined;
 export const tracker = new Tracker('Cli', false, false);
 export const inspector = new Inspector('Cli', false, false);
+const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasAnyParameter('debug', 'verbose') ? LogLevel.DEBUG : LogLevel.INFO });
 const manager = new ThreadsManager(path.dirname(fileURLToPath(import.meta.url)));
-
-/** Minimal ANSI styling */
-/* v8 ignore next cause colorEnabled is not relevant for coverage */
-const colorEnabled = !process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi');
-/* v8 ignore next */
-if (!colorEnabled) process.env.NO_COLOR = '1';
-
-const log = new AnsiLogger({ logName: 'Cli', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+const server = new BroadcastServer('cli', log);
 
 /**
  * Starts the CPU and memory tracker.
  */
 function startCpuMemoryCheck(): void {
+  const memoryUsage = process.memoryUsage();
+  const systemUpdate: ApiSystemUpdate = {
+    systemUptime: formatUptime(Math.floor(os.uptime())),
+    processUptime: formatUptime(Math.floor(process.uptime())),
+    totalMemory: formatBytes(os.totalmem()),
+    freeMemory: formatBytes(os.freemem()),
+    constrainedMemory: formatBytes(constrainedMemory()),
+    rss: formatBytes(memoryFootprint()),
+    heapTotal: formatBytes(memoryUsage.heapTotal),
+    heapUsed: formatBytes(memoryUsage.heapUsed),
+    external: formatBytes(memoryUsage.external),
+    arrayBuffers: formatBytes(memoryUsage.arrayBuffers),
+    cpuUsage: 0,
+    processCpuUsage: 0,
+  };
   log.debug(`Cpu memory check starting...`);
   tracker.start();
-  tracker.on('uptime', (os: number, process: number) => {
-    cliEmitter.emit('uptime', formatUptime(Math.floor(os)), formatUptime(Math.floor(process)));
+  tracker.on('uptime', (systemUptime: number, processUptime: number) => {
+    systemUpdate.systemUptime = formatUptime(Math.floor(systemUptime));
+    systemUpdate.processUptime = formatUptime(Math.floor(processUptime));
   });
   tracker.on('snapshot', (snapshot: TrackerSnapshot) => {
-    cliEmitter.emit(
-      'memory',
-      formatBytes(snapshot.totalMemory),
-      formatBytes(snapshot.freeMemory),
-      formatBytes(snapshot.rss),
-      formatBytes(snapshot.heapTotal),
-      formatBytes(snapshot.heapUsed),
-      formatBytes(snapshot.external),
-      formatBytes(snapshot.arrayBuffers),
-    );
-    cliEmitter.emit('cpu', snapshot.osCpu, snapshot.processCpu);
+    systemUpdate.totalMemory = formatBytes(snapshot.totalMemory);
+    systemUpdate.freeMemory = formatBytes(snapshot.freeMemory);
+    systemUpdate.constrainedMemory = formatBytes(snapshot.constrainedMemory);
+    systemUpdate.rss = formatBytes(snapshot.rss);
+    systemUpdate.heapTotal = formatBytes(snapshot.heapTotal);
+    systemUpdate.heapUsed = formatBytes(snapshot.heapUsed);
+    systemUpdate.external = formatBytes(snapshot.external);
+    systemUpdate.arrayBuffers = formatBytes(snapshot.arrayBuffers);
+    systemUpdate.cpuUsage = Math.round(snapshot.osCpu * 100) / 100;
+    systemUpdate.processCpuUsage = Math.round(snapshot.processCpu * 100) / 100;
+    server.request({
+      type: 'frontend_broadcast_message',
+      src: 'cli',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'system_update', success: true, response: systemUpdate } },
+    });
   });
   log.debug(`Cpu memory check started`);
 }
@@ -137,8 +156,8 @@ function registerHandlers(): void {
   instance.on('shutdown', () => void shutdown().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to shutdown', error)));
   instance.on('restart', () => void restart().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to restart', error)));
   instance.on('update', () => void update().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to update', error)));
-  instance.on('startmemorycheck', () => start());
-  instance.on('stopmemorycheck', () => stop());
+  instance.on('startmemorycheck', () => startCpuMemoryCheck());
+  instance.on('stopmemorycheck', () => stopCpuMemoryCheck());
   instance.on('startinspector', () => void startInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to start inspector', error)));
   instance.on('stopinspector', () => void stopInspector().catch(/* v8 ignore next -- @preserve */ (error: unknown) => inspectError(log, 'Failed to stop inspector', error)));
   instance.on(
@@ -158,6 +177,8 @@ async function shutdown(): Promise<void> {
   if (hasParameter('inspect')) await stopInspector();
 
   stopCpuMemoryCheck();
+
+  server.close();
 
   manager.destroy();
 
@@ -194,22 +215,6 @@ async function update(): Promise<void> {
 }
 
 /**
- * Starts the CPU and memory check when the -startmemorycheck parameter is passed.
- */
-function start(): void {
-  log.debug('Received start memory check event');
-  startCpuMemoryCheck();
-}
-
-/**
- * Stops the CPU and memory check when the -stopmemorycheck parameter is passed.
- */
-function stop(): void {
-  log.debug('Received stop memory check event');
-  stopCpuMemoryCheck();
-}
-
-/**
  * Main function that initializes the Matterbridge instance and starts the CLI.
  *
  * @remarks
@@ -226,8 +231,11 @@ function stop(): void {
  *
  * --snapshotinterval <milliseconds> can be used to set the heap snapshot interval. Default is undefined. Minimum is 30000 ms.
  */
-async function main(): Promise<void> {
+export async function main(): Promise<void> {
   log.debug(`Cli main() started`);
+
+  /** Minimal ANSI styling */
+  if (!(!process.env.NO_COLOR && process.env.TERM !== 'dumb' && process.env.FORCE_COLOR !== '0' && !hasParameter('no-ansi'))) process.env.NO_COLOR = '1';
 
   startCpuMemoryCheck();
 
@@ -270,7 +278,7 @@ main().catch((error: unknown) => {
  * Displays the version and exits.
  */
 async function version(): Promise<void> {
-  // Dynamic JSON import (Node >= 20) with import attributes
+  // Dynamic JSON import with import attributes
   const { default: pkg } = await import('../package.json', { with: { type: 'json' } });
   console.log(`Matterbridge version ${pkg.version}`);
   process.exit(0);
@@ -325,6 +333,7 @@ function help(): void {
       --novirtual:             disable the creation of the virtual devices Restart, Update and Reboot Matterbridge
       --root-power-source:     add a Power Source cluster for the mains power feed on the Root endpoint
       --ssl:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
+      --tls:                   enable SSL for the frontend and the WebSocketServer (the server will use the certificates and switch to https)
       --mtls:                  enable mTLS for the frontend and the WebSocketServer (both server and client will use and require the certificates and switch to https); it also enables https, so --ssl --tls is not needed
       --vendorId:              override the default vendorId 0xfff1
       --vendorName:            override the default vendorName "Matterbridge"

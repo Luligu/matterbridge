@@ -7,9 +7,7 @@ import DevicesIcons from '../src/components/DevicesIcons';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
 
-// Endpoint numbers are a branded type in the shared API types; this test-only cast avoids
-// depending on the underlying branding package directly from this frontend package.
-const endpointNumber = (value: number): Cluster['number'] => value as Cluster['number'];
+const endpointNumber = (value: number): Cluster['number'] => value;
 
 describe('DevicesIcons', () => {
   afterEach(() => {
@@ -94,8 +92,13 @@ describe('DevicesIcons', () => {
     expectText('Battery');
     expect(screen.getAllByText('---').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('Controller On')).toBeNull();
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/clusters' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: '/api/clusters',
+        params: expect.objectContaining({ pluginName: expect.any(String), number: expect.any(Number), serialNumber: expect.any(String), uniqueId: expect.any(String) }),
+      }),
+    );
   });
 
   it('should not lose any device when multiple /api/clusters responses arrive in the same render batch', async () => {
@@ -108,7 +111,9 @@ describe('DevicesIcons', () => {
     // but the last commit in the batch were silently discarded - devices vanished at random.
     const socket = createSocket();
     const deviceCount = 5;
-    const devices = Array.from({ length: deviceCount }, (_, i) => createDevice({ serial: `FAN-${i}`, uniqueId: `fan-${i}`, name: `Fan ${i}` }));
+    const devices = Array.from({ length: deviceCount }, (_, i) =>
+      createDevice({ serialNumber: `FAN-${i}`, uniqueId: `fan-${i}`, deviceName: `Fan ${i}`, number: endpointNumber(1) }),
+    );
     const clustersFor = (i: number) => [
       createCluster('1', 'main', 0x002b, 'FanControl', 'fanMode', String(i), i),
       createCluster('1', 'main', 0x002b, 'FanControl', 'percentCurrent', String(i * 10), i * 10),
@@ -129,9 +134,10 @@ describe('DevicesIcons', () => {
       method: '/api/clusters',
       success: true,
       response: {
-        plugin: device.pluginName,
-        deviceName: device.name,
-        serialNumber: device.serial,
+        plugin: device.plugin,
+        deviceName: device.deviceName,
+        serialNumber: device.serialNumber,
+        uniqueId: device.uniqueId,
         number: endpointNumber(1),
         id: 'main',
         deviceTypes: [0x002b],
@@ -148,6 +154,12 @@ describe('DevicesIcons', () => {
     });
     const fanModeLookup = ['Off', 'Low', 'Medium', 'High', 'On'];
     for (let i = 0; i < deviceCount; i++) {
+      expect(socket.sendMessage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          method: '/api/clusters',
+          params: { pluginName: devices[i].plugin, number: devices[i].number, serialNumber: devices[i].serialNumber, uniqueId: devices[i].uniqueId },
+        }),
+      );
       expectText(fanModeLookup[i]);
       expectText(`Speed ${i * 10}%`);
     }
@@ -181,7 +193,7 @@ describe('DevicesIcons', () => {
 
   it('should render Closure, ClosurePanel, and WindowCovering position names with N/A for invalid values', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Position Test', serial: 'POSITION-001', uniqueId: 'position-test' });
+    const device = createDevice({ deviceName: 'Position Test', serialNumber: 'POSITION-001', uniqueId: 'position-test' });
     const clusters = [
       createCluster('1', 'ClosureClosed', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 0 }', { position: 0 }),
       createCluster('2', 'ClosureOpen', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 1 }', { position: 1 }),
@@ -226,17 +238,26 @@ describe('DevicesIcons', () => {
       dst: 'Frontend',
       method: '/api/clusters',
       success: true,
-      response: { plugin: 'matterbridge-test', deviceName: 'Empty', serialNumber: 'EMPTY-001', number: endpointNumber(1), id: 'main', deviceTypes: [], clusters: [] },
+      response: {
+        plugin: 'matterbridge-test',
+        deviceName: 'Empty',
+        serialNumber: 'EMPTY-001',
+        uniqueId: 'empty-test',
+        number: endpointNumber(1),
+        id: 'main',
+        deviceTypes: [],
+        clusters: [],
+      },
     });
 
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices' }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
     expect(screen.queryByText('Empty')).toBeNull();
   });
 
   it('should update rendered cluster values when state updates arrive', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'State Update Device', serial: 'STATE-001' });
+    const device = createDevice({ deviceName: 'State Update Device', serialNumber: 'STATE-001' });
     const clusters = [createCluster('1', 'Light', 0x0100, 'OnOff', 'onOff', 'false', false)];
 
     render(
@@ -255,8 +276,8 @@ describe('DevicesIcons', () => {
       method: 'state_update',
       success: true,
       response: {
-        plugin: device.pluginName,
-        serialNumber: device.serial,
+        plugin: device.plugin,
+        serialNumber: device.serialNumber,
         uniqueId: device.uniqueId,
         number: endpointNumber(1),
         id: 'Light',
@@ -272,7 +293,7 @@ describe('DevicesIcons', () => {
 
   it('should ignore state updates for unknown devices and clusters', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Ignored State Device', serial: 'IGNORED-001' });
+    const device = createDevice({ deviceName: 'Ignored State Device', serialNumber: 'IGNORED-001' });
     const clusters = [createCluster('1', 'Light', 0x0100, 'OnOff', 'onOff', 'false', false)];
 
     render(
@@ -285,7 +306,7 @@ describe('DevicesIcons', () => {
     loadDevice(socket, device, clusters);
     expect(await screen.findByText('Off')).toBeInTheDocument();
 
-    socket.emit(createStateUpdate({ serialNumber: device.serial, attribute: 'missingAttribute', value: true }));
+    socket.emit(createStateUpdate({ serialNumber: device.serialNumber, attribute: 'missingAttribute', value: true }));
 
     expect(screen.getByText('Off')).toBeInTheDocument();
     expect(screen.queryByText('On')).toBeNull();
@@ -293,7 +314,7 @@ describe('DevicesIcons', () => {
 
   it('should filter devices by plugin, device name, and serial number', async () => {
     const socket = createSocket();
-    const device = createDevice({ name: 'Visible Controller', serial: 'VISIBLE-001', pluginName: 'matterbridge-visible' });
+    const device = createDevice({ deviceName: 'Visible Controller', serialNumber: 'VISIBLE-001', plugin: 'matterbridge-visible' });
     const clusters = [createCluster('1', 'Visible', 0x0840, 'Descriptor', 'clusterRevision', '1', 1)];
 
     const { rerender } = render(
@@ -354,7 +375,7 @@ describe('DevicesIcons', () => {
     // a new identity, which re-ran the listener useEffect (removeListener + addListener) on every
     // single message instead of once for the component's lifetime.
     const socket = createSocket();
-    const device = createDevice({ name: 'Churn Device', serial: 'CHURN-001' });
+    const device = createDevice({ deviceName: 'Churn Device', serialNumber: 'CHURN-001' });
     const clusters = [createCluster('1', 'Light', 0x0100, 'OnOff', 'onOff', 'false', false)];
 
     const rendered = render(
@@ -367,11 +388,11 @@ describe('DevicesIcons', () => {
     expect(await screen.findByText('Off')).toBeInTheDocument();
 
     socket.emit(
-      createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'Light', cluster: 'OnOff', attribute: 'onOff', value: true }),
+      createStateUpdate({ plugin: device.plugin, serialNumber: device.serialNumber, uniqueId: device.uniqueId, id: 'Light', cluster: 'OnOff', attribute: 'onOff', value: true }),
     );
     expect(await screen.findByText('On')).toBeInTheDocument();
     socket.emit(
-      createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'Light', cluster: 'OnOff', attribute: 'onOff', value: false }),
+      createStateUpdate({ plugin: device.plugin, serialNumber: device.serialNumber, uniqueId: device.uniqueId, id: 'Light', cluster: 'OnOff', attribute: 'onOff', value: false }),
     );
     expect(await screen.findByText('Off')).toBeInTheDocument();
 
@@ -388,7 +409,7 @@ describe('DevicesIcons', () => {
   ])('FanControl rendering for $name', ({ deviceType, name }) => {
     it('renders fanMode 0 as "Off", not the "---" empty placeholder', async () => {
       const socket = createSocket();
-      const device = createDevice({ name: `${name} Off`, serial: `${name}-OFF`, uniqueId: `${name}-off` });
+      const device = createDevice({ deviceName: `${name} Off`, serialNumber: `${name}-OFF`, uniqueId: `${name}-off` });
       const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'fanMode', '0', 0), createCluster('1', 'main', deviceType, 'FanControl', 'percentCurrent', '0', 0)];
 
       render(
@@ -406,7 +427,7 @@ describe('DevicesIcons', () => {
 
     it('falls back to "Unknown" for a fanMode value outside FanModeLookup', async () => {
       const socket = createSocket();
-      const device = createDevice({ name: `${name} Weird`, serial: `${name}-WEIRD`, uniqueId: `${name}-weird` });
+      const device = createDevice({ deviceName: `${name} Weird`, serialNumber: `${name}-WEIRD`, uniqueId: `${name}-weird` });
       const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'fanMode', '99', 99)];
 
       render(
@@ -422,7 +443,7 @@ describe('DevicesIcons', () => {
 
     it('renders only "Speed X%" details, with no fan mode icon, when fanMode is absent', async () => {
       const socket = createSocket();
-      const device = createDevice({ name: `${name} NoMode`, serial: `${name}-NOMODE`, uniqueId: `${name}-nomode` });
+      const device = createDevice({ deviceName: `${name} NoMode`, serialNumber: `${name}-NOMODE`, uniqueId: `${name}-nomode` });
       const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'percentCurrent', '77', 77)];
 
       render(
@@ -439,7 +460,7 @@ describe('DevicesIcons', () => {
 
     it('live-updates both the fanMode icon text and the percent details on state_update', async () => {
       const socket = createSocket();
-      const device = createDevice({ name: `${name} Live`, serial: `${name}-LIVE`, uniqueId: `${name}-live` });
+      const device = createDevice({ deviceName: `${name} Live`, serialNumber: `${name}-LIVE`, uniqueId: `${name}-live` });
       const clusters = [createCluster('1', 'main', deviceType, 'FanControl', 'fanMode', '1', 1), createCluster('1', 'main', deviceType, 'FanControl', 'percentCurrent', '10', 10)];
 
       render(
@@ -453,12 +474,20 @@ describe('DevicesIcons', () => {
       expect(screen.getByText('Speed 10%')).toBeInTheDocument();
 
       socket.emit(
-        createStateUpdate({ plugin: device.pluginName, serialNumber: device.serial, uniqueId: device.uniqueId, id: 'main', cluster: 'FanControl', attribute: 'fanMode', value: 3 }),
+        createStateUpdate({
+          plugin: device.plugin,
+          serialNumber: device.serialNumber,
+          uniqueId: device.uniqueId,
+          id: 'main',
+          cluster: 'FanControl',
+          attribute: 'fanMode',
+          value: 3,
+        }),
       );
       socket.emit(
         createStateUpdate({
-          plugin: device.pluginName,
-          serialNumber: device.serial,
+          plugin: device.plugin,
+          serialNumber: device.serialNumber,
           uniqueId: device.uniqueId,
           id: 'main',
           cluster: 'FanControl',
@@ -547,9 +576,10 @@ function loadDevice(socket: TestSocket, device: ApiDevice, clusters: Cluster[]):
     method: '/api/clusters',
     success: true,
     response: {
-      plugin: device.pluginName,
-      deviceName: device.name,
-      serialNumber: device.serial,
+      plugin: device.plugin,
+      deviceName: device.deviceName,
+      serialNumber: device.serialNumber,
+      uniqueId: device.uniqueId,
       number: endpointNumber(1),
       id: 'main',
       deviceTypes: [...new Set(clusters.flatMap((cluster) => cluster.deviceTypes))],
@@ -583,11 +613,12 @@ function createStateUpdate(
 
 function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
   return {
-    pluginName: 'matterbridge-test',
+    plugin: 'matterbridge-test',
     type: 'DynamicPlatform',
-    endpoint: undefined,
-    name: 'Controller Test',
-    serial: 'CONTROLLER-001',
+    number: undefined,
+    id: undefined,
+    deviceName: 'Controller Test',
+    serialNumber: 'CONTROLLER-001',
     productUrl: '',
     uniqueId: 'controller-test',
     reachable: true,

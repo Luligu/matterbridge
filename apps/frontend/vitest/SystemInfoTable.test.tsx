@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import SystemInfoTable from '../src/components/SystemInfoTable';
 import { UiContext, type UiContextType } from '../src/components/UiContext';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
-import { type SystemInformation } from '../src/utils/backendShared';
+import { type ApiSystemUpdate, type SystemInformation } from '../src/utils/backendShared';
 
 const settings = vi.hoisted(() => ({ debug: false, enableMobile: true }));
 vi.mock('../src/appState', () => settings);
@@ -50,6 +50,7 @@ function createSystemInfo(overrides: Partial<SystemInformation> = {}): SystemInf
     osArch: 'arm64',
     totalMemory: '8 GB',
     freeMemory: '4 GB',
+    constrainedMemory: '6 GB',
     systemUptime: '2 days',
     processUptime: '1 hour',
     cpuUsage: '12 %',
@@ -57,6 +58,24 @@ function createSystemInfo(overrides: Partial<SystemInformation> = {}): SystemInf
     rss: '100 MB',
     heapTotal: '80 MB',
     heapUsed: '40 MB',
+    ...overrides,
+  };
+}
+
+function createSystemUpdate(overrides: Partial<ApiSystemUpdate> = {}): ApiSystemUpdate {
+  return {
+    systemUptime: '3 days',
+    processUptime: '2 hours',
+    totalMemory: '16 GB',
+    freeMemory: '12 GB',
+    constrainedMemory: '10 GB',
+    rss: '300 MB',
+    heapTotal: '200 MB',
+    heapUsed: '90 MB',
+    external: '10 MB',
+    arrayBuffers: '5 MB',
+    cpuUsage: 12.345,
+    processCpuUsage: 0,
     ...overrides,
   };
 }
@@ -109,7 +128,7 @@ afterEach(() => {
 
 describe('SystemInfoTable rendering', () => {
   test('should render mapped labels, fallback keys, and alternating rows when not compact', () => {
-    renderTable();
+    renderTable({ systemInfo: { ...createSystemInfo(), customKey: 'custom' } as SystemInformation });
     const expected = {
       'Interface name': 'eth0',
       'Mac address': '00:11:22:33:44:55',
@@ -119,18 +138,20 @@ describe('SystemInfoTable rendering', () => {
       'Hostname': 'bridge',
       'User': 'tester',
       'Os': 'Linux',
-      'osRelease': '6.8',
+      'Os release': '6.8',
       'Platform': 'linux',
-      'osArch': 'arm64',
-      'totalMemory': '8 GB',
-      'Memory': '4 GB',
+      'Architecture': 'arm64',
+      'Total memory': '8 GB',
+      'Free memory': '4 GB',
+      'Memory limit': '6 GB',
       'System uptime': '2 days',
       'Process uptime': '1 hour',
       'Host CPU': '12 %',
       'Process CPU': '3 %',
-      'Rss': '100 MB',
-      'heapTotal': '80 MB',
-      'Heap': '40 MB',
+      'Process memory': '100 MB',
+      'Total heap': '80 MB',
+      'Used heap': '40 MB',
+      'customKey': 'custom',
     };
     for (const [label, value] of Object.entries(expected)) expect(valueCell(label)).toHaveTextContent(value);
     const rows = screen.getAllByRole('row');
@@ -139,35 +160,44 @@ describe('SystemInfoTable rendering', () => {
     expect(screen.getByRole('heading', { name: 'System info' })).toBeInTheDocument();
   });
 
+  test.each([false, true])('should omit the constrained memory when it equals the total memory (compact %s)', (compact) => {
+    const { update } = renderTable({ systemInfo: createSystemInfo({ constrainedMemory: '8 GB' }), compact });
+    expect(screen.queryByText('Memory limit')).not.toBeInTheDocument();
+    update({ method: 'system_update', response: createSystemUpdate({ constrainedMemory: '12 GB' }) });
+    expect(valueCell('Memory limit')).toHaveTextContent('12 GB');
+    update({ method: 'system_update', response: createSystemUpdate({ constrainedMemory: '16 GB' }) });
+    expect(screen.queryByText('Memory limit')).not.toBeInTheDocument();
+  });
+
   test('should combine paired fields without mutating input when compact and restore separate fields when expanded', () => {
     const systemInfo = Object.freeze(createSystemInfo());
     const { rerenderTable } = renderTable({ systemInfo, compact: true });
-    expect(valueCell('Memory')).toHaveTextContent('4 GB / 8 GB');
-    expect(valueCell('Heap')).toHaveTextContent('40 MB / 80 MB');
+    expect(valueCell('Host memory')).toHaveTextContent('4 GB / 8 GB');
+    expect(valueCell('Process heap')).toHaveTextContent('40 MB / 80 MB');
     expect(valueCell('Os')).toHaveTextContent('Linux (6.8)');
     expect(valueCell('Platform')).toHaveTextContent('linux (arm64)');
-    for (const key of ['totalMemory', 'heapTotal', 'osRelease', 'osArch']) expect(screen.queryByText(key)).not.toBeInTheDocument();
+    for (const label of ['Total memory', 'Total heap', 'Os release', 'Architecture']) expect(screen.queryByText(label)).not.toBeInTheDocument();
     expect(systemInfo).toEqual(createSystemInfo());
     rerenderTable(false);
-    expect(valueCell('Memory')).toHaveTextContent(/^4 GB$/);
-    expect(valueCell('totalMemory')).toHaveTextContent('8 GB');
-    expect(valueCell('Heap')).toHaveTextContent(/^40 MB$/);
-    expect(valueCell('heapTotal')).toHaveTextContent('80 MB');
+    expect(valueCell('Free memory')).toHaveTextContent(/^4 GB$/);
+    expect(valueCell('Total memory')).toHaveTextContent('8 GB');
+    expect(valueCell('Used heap')).toHaveTextContent(/^40 MB$/);
+    expect(valueCell('Total heap')).toHaveTextContent('80 MB');
     expect(valueCell('Os')).toHaveTextContent(/^Linux$/);
-    expect(valueCell('osRelease')).toHaveTextContent('6.8');
+    expect(valueCell('Os release')).toHaveTextContent('6.8');
     expect(valueCell('Platform')).toHaveTextContent(/^linux$/);
-    expect(valueCell('osArch')).toHaveTextContent('arm64');
+    expect(valueCell('Architecture')).toHaveTextContent('arm64');
   });
 
   test.each([
-    ['totalMemory', 'Memory', '4 GB'],
-    ['freeMemory', 'totalMemory', '8 GB'],
-    ['heapTotal', 'Heap', '40 MB'],
-    ['heapUsed', 'heapTotal', '80 MB'],
+    ['totalMemory', 'Host memory', '4 GB'],
+    ['freeMemory', 'Total memory', '8 GB'],
+    ['heapTotal', 'Process heap', '40 MB'],
+    ['heapUsed', 'Total heap', '80 MB'],
     ['osRelease', 'Os', 'Linux'],
-    ['osType', 'osRelease', '6.8'],
+    ['osType', 'Os release', '6.8'],
     ['osArch', 'Platform', 'linux'],
-    ['osPlatform', 'osArch', 'arm64'],
+    ['osPlatform', 'Architecture', 'arm64'],
   ])('should preserve the other field when compact and %s is empty', (key, label, value) => {
     renderTable({ systemInfo: createSystemInfo({ [key]: '' }), compact: true });
     expect(valueCell(label)).toHaveTextContent(value);
@@ -206,7 +236,7 @@ describe('SystemInfoTable rendering', () => {
     const { update, container, unmount, removeListener, listener } = renderTable();
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(container).toBeEmptyDOMElement();
-    update({ method: 'uptime_update', response: { systemUptime: '3 days', processUptime: '2 hours' } });
+    update({ method: 'system_update', response: createSystemUpdate() });
     expect(container).toBeEmptyDOMElement();
     unmount();
     expect(removeListener).toHaveBeenCalledExactlyOnceWith(listener);
@@ -219,17 +249,16 @@ describe('SystemInfoTable WebSocket messages', () => {
     const systemInfo = Object.freeze(createSystemInfo());
     const { update, sendMessage, getUniqueId, rerenderTable, addListener, removeListener, listener, unmount } = renderTable({ systemInfo, compact: true });
     expect(addListener).toHaveBeenCalledExactlyOnceWith(listener, 42);
-    update({ method: 'memory_update', response: { totalMemory: '16 GB', freeMemory: '12 GB', heapTotal: '200 MB', heapUsed: '90 MB', rss: '300 MB' } });
-    expect(valueCell('Memory')).toHaveTextContent('12 GB / 16 GB');
-    expect(valueCell('Heap')).toHaveTextContent('90 MB / 200 MB');
-    expect(valueCell('Rss')).toHaveTextContent('300 MB');
-    update({ method: 'cpu_update', response: { cpuUsage: 12.345, processCpuUsage: 0 } });
+    update({ method: 'system_update', response: createSystemUpdate() });
+    expect(valueCell('Host memory')).toHaveTextContent('12 GB / 16 GB');
+    expect(valueCell('Process heap')).toHaveTextContent('90 MB / 200 MB');
+    expect(valueCell('Process memory')).toHaveTextContent('300 MB');
+    expect(valueCell('Memory limit')).toHaveTextContent('10 GB');
     expect(valueCell('Host CPU')).toHaveTextContent('12.35 %');
     expect(valueCell('Process CPU')).toHaveTextContent('0.00 %');
-    update({ method: 'cpu_update', response: { cpuUsage: 9, processCpuUsage: 1.234 } });
+    update({ method: 'system_update', response: createSystemUpdate({ cpuUsage: 9, processCpuUsage: 1.234 }) });
     expect(valueCell('Host CPU')).toHaveTextContent('9.00 %');
     expect(valueCell('Process CPU')).toHaveTextContent('1.23 %');
-    update({ method: 'uptime_update', response: { systemUptime: '3 days', processUptime: '2 hours' } });
     expect(valueCell('System uptime')).toHaveTextContent('3 days');
     expect(valueCell('Process uptime')).toHaveTextContent('2 hours');
     expect(valueCell('Hostname')).toHaveTextContent('bridge');
@@ -237,7 +266,7 @@ describe('SystemInfoTable WebSocket messages', () => {
 
     getUniqueId.mockReturnValue(99);
     rerenderTable(false);
-    expect(valueCell('totalMemory')).toHaveTextContent('16 GB');
+    expect(valueCell('Total memory')).toHaveTextContent('16 GB');
     expect(addListener).toHaveBeenCalledTimes(1);
     fireEvent.click(within(screen.getByTestId('controls')).getAllByRole('button')[0]);
     expect(sendMessage).toHaveBeenCalledExactlyOnceWith({ id: 42, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -250,26 +279,9 @@ describe('SystemInfoTable WebSocket messages', () => {
     expect(vi.mocked(console.log).mock.calls.length > 0).toBe(debug);
   });
 
-  test.each(['totalMemory', 'freeMemory', 'heapTotal', 'heapUsed', 'rss'])('should ignore a memory update when %s is missing', (key) => {
-    const { update } = renderTable();
-    const response: Record<string, string> = { totalMemory: '16 GB', freeMemory: '12 GB', heapTotal: '200 MB', heapUsed: '90 MB', rss: '300 MB' };
-    const { [key]: _missing, ...incompleteResponse } = response;
-    update({ method: 'memory_update', response: incompleteResponse });
-    expect(valueCell('totalMemory')).toHaveTextContent('8 GB');
-    expect(valueCell('Memory')).toHaveTextContent('4 GB');
-    expect(valueCell('heapTotal')).toHaveTextContent('80 MB');
-    expect(valueCell('Heap')).toHaveTextContent('40 MB');
-    expect(valueCell('Rss')).toHaveTextContent('100 MB');
-  });
-
   test.each([
     { method: 'unknown', response: {} },
-    { method: 'memory_update' },
-    { method: 'cpu_update' },
-    { method: 'uptime_update' },
-    { method: 'cpu_update', response: {} },
-    { method: 'uptime_update', response: { processUptime: '2 hours' } },
-    { method: 'uptime_update', response: { systemUptime: '3 days' } },
+    { method: 'system_update' },
     { method: '/api/viewhistorypage', id: 99, success: true },
     { method: '/api/viewhistorypage', id: 42, success: false },
     { method: '/api/viewhistorypage', id: 42 },
@@ -281,11 +293,11 @@ describe('SystemInfoTable WebSocket messages', () => {
     expect(window.open).not.toHaveBeenCalled();
   });
 
-  test('should retain the previous CPU values when the current guard receives zero host usage', () => {
+  test('should show zero CPU usage from a system update', () => {
     const { update } = renderTable();
-    update({ method: 'cpu_update', response: { cpuUsage: 0, processCpuUsage: 0 } });
-    expect(valueCell('Host CPU')).toHaveTextContent('12 %');
-    expect(valueCell('Process CPU')).toHaveTextContent('3 %');
+    update({ method: 'system_update', response: createSystemUpdate({ cpuUsage: 0, processCpuUsage: 0 }) });
+    expect(valueCell('Host CPU')).toHaveTextContent('0.00 %');
+    expect(valueCell('Process CPU')).toHaveTextContent('0.00 %');
   });
 
   test('should replace the listener when its context callbacks change and clean up on unmount', () => {

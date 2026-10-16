@@ -16,7 +16,10 @@ import path from 'node:path';
 import url from 'node:url';
 
 import type { Endpoint } from '@matter/node';
-import { BindingServer, BridgedDeviceBasicInformationServer, DescriptorServer, OnOffServer } from '@matter/node/behaviors';
+import { BindingServer } from '@matter/node/behaviors/binding';
+import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import {

@@ -24,7 +24,7 @@ function Home(): React.JSX.Element {
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
   const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
-  const [homePageMode, setHomePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
+  const [homePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
   const [changelog, _setChangelog] = useState('https://matterbridge.io/CHANGELOG.html');
   const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
@@ -71,13 +71,6 @@ function Home(): React.JSX.Element {
         } else if (msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem(MbfLsk.matterbridgeVersion)) {
           localStorage.setItem(MbfLsk.matterbridgeVersion, msg.response.matterbridgeInformation.matterbridgeVersion);
           setShowChangelog(true);
-        }
-
-        if (msg.response.matterbridgeInformation.shellyBoard) {
-          if (!localStorage.getItem(MbfLsk.homePageMode)) {
-            localStorage.setItem(MbfLsk.homePageMode, 'devices');
-            setHomePageMode('devices');
-          }
         }
       } else if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {
         if (debug) console.log(`Home received plugins:`, msg.response);
@@ -137,7 +130,7 @@ function Home(): React.JSX.Element {
         {enableMobile && mobile && (
           <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: '10px' }}>
             <QRDiv id={storeId} />
-            <SystemInfoTable systemInfo={systemInfo} compact={true} />
+            <SystemInfoTable systemInfo={systemInfo} compact={false} />
             <MatterbridgeInfoTable matterbridgeInfo={matterbridgeInfo} />
           </div>
         )}

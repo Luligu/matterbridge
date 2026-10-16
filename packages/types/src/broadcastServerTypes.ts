@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer types.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.0
+ * @version 2.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,22 +21,20 @@
  * limitations under the License.
  */
 
-// @matter
-import type { EndpointNumber } from '@matter/types/datatype';
 // AnsiLogger
 import type { LogLevel } from 'node-ansi-logger';
 
 // matterbridge
-import type { ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { ApiSelectDevice, ApiSelectEntity, ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
-export type WorkerSrcType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
+export type WorkerSrcType = 'cli' | 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
 
 /** Types of worker destination */
-export type WorkerDstType = 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
+export type WorkerDstType = 'cli' | 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates' | 'all';
 
 /** Normalized message request structure */
 // oxlint-disable-next-line typescript/no-generated-empty-object-type
@@ -148,6 +146,24 @@ export type WorkerMessageTypes = {
     response: { result: { logLevel: LogLevel } };
   };
 
+  // Platform methods: only the platform matching params.pluginName responds.
+  platform_get_apidevices: {
+    request: { params: { pluginName: string; extended: boolean } };
+    response: { result: { devices: ApiDevice[] } };
+  };
+  platform_get_apiclusters: {
+    request: { params: { pluginName: string; number: number; serialNumber: string; uniqueId: string } };
+    response: { result: { clusters: ApiClusters } };
+  };
+  platform_get_apiselectdevices: {
+    request: { params: { pluginName: string } };
+    response: { result: { devices: ApiSelectDevice[] } };
+  };
+  platform_get_apiselectentities: {
+    request: { params: { pluginName: string } };
+    response: { result: { entities: ApiSelectEntity[] } };
+  };
+
   // ThreadsManager methods
   manager_run: {
     request: {
@@ -209,14 +225,6 @@ export type WorkerMessageTypes = {
     request: { params: { prefix: string } };
     response: { result: { success: true } };
   };
-  matterbridge_shelly_sys_update: {
-    request: { params: { available: boolean } };
-    response: { result: { success: true } };
-  };
-  matterbridge_shelly_main_update: {
-    request: { params: { available: boolean } };
-    response: { result: { success: true } };
-  };
   matterbridge_platform: {
     request: { params: undefined };
     response: { result: { data: PlatformMatterbridge; success: true } };
@@ -236,10 +244,6 @@ export type WorkerMessageTypes = {
   matterbridge_shutdown: {
     request: { params: undefined };
     response: { result: { success: true } };
-  };
-  matterbridge_apimatter: {
-    request: { params: { id: string } };
-    response: { result: { matter: ApiMatter | undefined } };
   };
   matterbridge_apisettings: {
     request: { params: undefined };
@@ -327,7 +331,7 @@ export type WorkerMessageTypes = {
         plugin: string;
         serialNumber: string;
         uniqueId: string;
-        number: EndpointNumber;
+        number: number;
         id: string;
         cluster: string;
         attribute: string;
@@ -363,7 +367,7 @@ export type WorkerMessageTypes = {
     response: { result: { plugin: ApiPlugin | undefined } };
   };
   plugins_set: {
-    request: { params: { plugin: ApiPlugin } };
+    request: { params: { plugin: Partial<ApiPlugin> & { name: string } } };
     response: { result: { plugin: ApiPlugin } };
   };
   plugins_clear: {
@@ -497,7 +501,7 @@ export type WorkerMessageTypes = {
     response: { result: { devices: BaseDevice[] } };
   };
   devices_apidevicearray: {
-    request: { params: { pluginName?: string } };
+    request: { params: { pluginName?: string; extended?: boolean } };
     response: { result: { devices: ApiDevice[] } };
   };
 };

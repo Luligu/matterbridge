@@ -27,6 +27,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { dev, MATTER_STORAGE_DIR, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
@@ -71,6 +72,9 @@ await setupTest(
   { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' },
 );
 process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
@@ -140,7 +144,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).serverNode).toBeUndefined();
     expect((matterbridge as any).aggregatorNode).toBeUndefined();
 
-    expect((matterbridge as any).mdnsInterface).toBe(undefined);
+    expect((matterbridge as any).mdnsInterface).toBe(mdnsInterface);
     expect((matterbridge as any).port).toBe(MATTER_PORT);
     expect((matterbridge as any).passcode).toBe(PASSCODE);
     expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR);
