@@ -19,8 +19,8 @@ MATTERBRIDGE_PLUGINS=$HOME_DIR/Matterbridge   # For matterbridge plugins
 MATTERBRIDGE_STORAGE=$HOME_DIR/.matterbridge  # For matterbridge storage
 MATTERBRIDGE_CERT=$HOME_DIR/.mattercert       # For matterbridge certification
 
-# Define npm cache directory
-NPM_CACHE=/data/.npm-cache                    # Persistent npm cache directory
+# Persist npm's cache across container recreation, including plugin installations.
+export npm_config_cache=/data/.npm-cache
 
 # Welcome message
 echo " "
