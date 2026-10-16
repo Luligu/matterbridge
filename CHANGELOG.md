@@ -29,6 +29,29 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.15] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.10.15.
+- [matterbridge]: Bump `@types/bun` to v.1.4.3.
+- [matterbridge]: Bump `@types/node` to v.26.6.5.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.5.
+- [matterbridge]: Bump `jsdom` to v.30.1.3.
+- [matterbridge]: Bump `marked` to v.18.1.1.
+- [matterbridge]: Bump `oxfmt` to v.0.73.0.
+- [matterbridge]: Bump `oxlint` to v.1.88.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2004.
+- [matterbridge]: Bump `vitest` to v.5.0.5.
+- [core]: Bump `express` to v.5.3.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.24.0.
+- [frontend]: Bump `frontend` version to v.3.6.6.
+- [frontend]: Bump `react` to v.19.3.1.
+- [frontend]: Bump `react-dom` to v.19.3.1.
+- [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.14] - 2026-10-16
 
 ### Breaking news
@@ -130,6 +153,8 @@ Two new production plugins bring Matter cameras to Matterbridge. Both require Ma
 - [Intercom]: Add the mandatory Generic Switch child endpoint with a momentary switch (Matter 1.5.1 Intercom revision 2, Device Library § 16.4.4 and § 16.4.8).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.10.14] - Dev branch
 
 ## [3.10.13] - 2026-10-09
 
