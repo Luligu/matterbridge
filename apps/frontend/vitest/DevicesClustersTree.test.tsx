@@ -8,7 +8,7 @@ import type { Cluster } from '../src/utils/backendShared';
 
 const endpointNumber = (value: number): Cluster['number'] => value;
 
-function createCluster(endpoint: string, clusterName: string, attributeName: string, attributeValue: string, attributeLocalValue: unknown): Cluster {
+function createCluster(endpoint: string, clusterName: string, attributeName: string, attributeValue: string, attributeLocalValue?: unknown): Cluster {
   return {
     endpoint,
     number: endpointNumber(Number(endpoint)),
@@ -91,9 +91,25 @@ describe('DevicesClustersTree', () => {
   });
 
   it('should show undefined when the raw value of an attribute is undefined', () => {
-    render(<DevicesClustersTree clusters={[createCluster('1', 'OnOff', 'onOff', 'n/a', undefined)]} />);
+    render(<DevicesClustersTree clusters={[createCluster('1', 'OnOff', 'onOff', 'n/a')]} />);
     fireEvent.click(screen.getByText('OnOff'));
     fireEvent.click(screen.getByRole('treeitem', { name: 'onOff' }));
     expect(screen.getByText('undefined', { selector: 'pre' })).toBeInTheDocument();
+  });
+
+  it('should select and toggle a node with the Enter and Space keys and ignore other keys', () => {
+    render(<DevicesClustersTree clusters={[createCluster('1', 'OnOff', 'onOff', 'false', false)]} />);
+    const cluster = screen.getByRole('treeitem', { name: /OnOff$/ });
+    expect(cluster).toHaveAttribute('tabindex', '0');
+
+    fireEvent.keyDown(cluster, { key: 'a' });
+    expect(screen.queryByText('Cluster OnOff')).toBeNull();
+
+    fireEvent.keyDown(cluster, { key: 'Enter' });
+    expect(screen.getByText('Cluster OnOff')).toBeInTheDocument();
+    expect(screen.getByRole('treeitem', { name: 'onOff' })).toBeInTheDocument();
+
+    fireEvent.keyDown(screen.getByRole('treeitem', { name: /OnOff$/ }), { key: ' ' });
+    expect(screen.queryByRole('treeitem', { name: 'onOff' })).toBeNull();
   });
 });

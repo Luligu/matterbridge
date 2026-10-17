@@ -195,7 +195,14 @@ function DevicesClustersTree({ clusters }: DevicesClustersTreeProps): React.JSX.
       aria-selected={selectedKey === key}
       aria-expanded={expandable ? isExpanded(key) : undefined}
       style={rowStyle(selectedKey === key, depth)}
+      tabIndex={0}
       onClick={() => select(key)}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          select(key);
+        }
+      }}
     >
       <span style={{ width: '12px' }}>{expandable ? (isExpanded(key) ? '▾' : '▸') : ''}</span>
       {label}
