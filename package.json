@@ -57,6 +57,7 @@
     "node": ">=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
   },
   "workspaces": [
+    "apps/frontend",
     "packages/types",
     "packages/jest-utils",
     "packages/vitest-utils",
@@ -292,48 +293,58 @@
         "packages/core/src/backend*.ts"
       ]
     },
-    "entryPoints": [
-      {
-        "in": "packages/thread/src/threadBackend.ts",
-        "out": "workers/threadBackend"
-      },
-      {
-        "in": "packages/thread/src/workerArchiveCommand.ts",
-        "out": "workers/workerArchiveCommand"
-      },
-      {
-        "in": "packages/thread/src/workerCheckUpdates.ts",
-        "out": "workers/workerCheckUpdates"
-      },
-      {
-        "in": "packages/thread/src/workerDockerVersion.ts",
-        "out": "workers/workerDockerVersion"
-      },
-      {
-        "in": "packages/thread/src/workerGlobalPrefix.ts",
-        "out": "workers/workerGlobalPrefix"
-      },
-      {
-        "in": "packages/thread/src/workerSpawnCommand.ts",
-        "out": "workers/workerSpawnCommand"
-      },
-      {
-        "in": "packages/thread/src/workerSystemCheck.ts",
-        "out": "workers/workerSystemCheck"
-      }
-    ],
-    "external": [
-      "@jest/globals"
-    ],
-    "copyEntries": [
-      {
-        "from": "packages/core/dist/matter",
-        "to": "matter",
-        "include": [
-          "**/*.js"
-        ]
-      }
-    ]
+    "esbuild": {
+      "entryPoints": [
+        {
+          "in": "packages/thread/src/workerArchiveCommand.ts",
+          "out": "workers/workerArchiveCommand"
+        },
+        {
+          "in": "packages/thread/src/workerCheckUpdates.ts",
+          "out": "workers/workerCheckUpdates"
+        },
+        {
+          "in": "packages/thread/src/workerDockerVersion.ts",
+          "out": "workers/workerDockerVersion"
+        },
+        {
+          "in": "packages/thread/src/workerGlobalPrefix.ts",
+          "out": "workers/workerGlobalPrefix"
+        },
+        {
+          "in": "packages/thread/src/workerSpawnCommand.ts",
+          "out": "workers/workerSpawnCommand"
+        },
+        {
+          "in": "packages/thread/src/workerSystemCheck.ts",
+          "out": "workers/workerSystemCheck"
+        },
+        {
+          "in": "packages/core/src/runners/threadBackend.ts",
+          "out": "runners/threadBackend"
+        },
+        {
+          "in": "packages/core/src/runners/threadRootNode.ts",
+          "out": "runners/threadRootNode"
+        },
+        {
+          "in": "packages/core/src/runners/threadTracker.ts",
+          "out": "runners/threadTracker"
+        }
+      ],
+      "external": [
+        "@jest/globals"
+      ],
+      "copyEntries": [
+        {
+          "from": "packages/core/dist/matter",
+          "to": "matter",
+          "include": [
+            "**/*.js"
+          ]
+        }
+      ]
+    }
   },
   "scripts": {
     "start": "node ./bin/matterbridge.js",
@@ -355,15 +366,17 @@
     "start:bun:experimental": "bun --bun ./bin/matterbridge.js --profile Bun --experimental-backend --experimental-node --force-gc --verbose-node --tracker --loader --verbose",
     "build": "tsc --build tsconfig.build.json",
     "buildProduction": "tsc --build tsconfig.build.production.json",
+    "buildFrontend": "npm run build -w @matterbridge/frontend",
     "watch": "tsc --build tsconfig.build.json --watch",
     "typecheck": "tsc --build tsconfig.json --noEmit",
-    "cleanBuild": "npm run clean && npm run build",
-    "cleanBuildProduction": "npm run clean && npm run buildProduction",
-    "cleanWatch": "npm run clean && npm run watch",
+    "cleanBuild": "npm run clean && npm run build && npm run buildFrontend",
+    "cleanBuildProduction": "npm run clean && npm run buildProduction && npm run buildFrontend",
+    "cleanWatch": "npm run cleanBuild && npm run watch",
     "clean": "node scripts/clean.mjs --workspaces",
     "deepClean": "node scripts/deep-clean.mjs --workspaces",
     "test": "vitest run",
-    "test:watch": "vitest",
+    "test:watch": "vitest watch",
+    "test:verbose": "vitest run --reporter verbose",
     "test:coverage": "vitest run --coverage",
     "test:bun": "bun test --parallel",
     "test:bun:watch": "bun test --parallel --watch ",
@@ -384,17 +397,14 @@
     "git:hardreset:dev": "git fetch origin && git checkout dev && git reset --hard origin/dev",
     "git:hardreset:edge": "git fetch origin && git checkout edge && git reset --hard origin/edge",
     "reset": "npm run deepClean && npm run softReset",
-    "reset:all": "npm run reset && npm --prefix apps/frontend run reset",
-    "softReset": "npm install --workspaces --include-workspace-root --no-fund --no-audit && npm prune --no-fund --no-audit --workspaces --include-workspace-root && npm run build && npm run typecheck && node scripts/npm-link.mjs",
-    "softReset:bun": "bun install && bun prune && bun run build && bun run typecheck && bun run scripts/npm-link.mjs",
-    "softReset:all": "npm run softReset && npm --prefix apps/frontend run softReset",
-    "softReset:bun:all": "bun run softReset:bun && bun --cwd=apps/frontend run softReset:bun",
+    "reset:bun": "bun run deepClean && bun run softReset:bun",
+    "softReset": "npm install --workspaces --include-workspace-root --no-fund --no-audit && npm prune --no-fund --no-audit --workspaces --include-workspace-root && npm run build && npm run buildFrontend && npm run typecheck && node scripts/npm-link.mjs",
+    "softReset:bun": "bun install && bun prune && bun run build && bun run --cwd apps/frontend build && bun run typecheck && bun run scripts/npm-link.mjs",
     "data-model": "node ./scripts/data-model.mjs",
     "update-htmls": "node ./scripts/update-htmls.mjs",
     "scan-deps": "node ./scripts/scan-deps.mjs",
     "sync-workspaces": "node scripts/sync-workspaces.mjs --scope \"@matterbridge\" && npm run softReset",
-    "runMeBeforePublish": "npm run cleanBuild && npm run typecheck && npm run format && npm run lint && npm run update-htmls && npm run test:coverage",
-    "runMeBeforePublish:all": "npm run runMeBeforePublish && npm --prefix apps/frontend run runMeBeforePublish",
+    "runMeBeforePublish": "npm run cleanBuild && npm run typecheck && npm run format && npm run lint && npm run update-htmls && npm run test:coverage && npm run test:coverage -w @matterbridge/frontend",
     "prepublishOnly": "npm run cleanBuildProduction && npm --workspaces pkg delete devDependencies scripts && npm pkg delete devDependencies scripts workspaces && node scripts/prepublish-clean.mjs --workspaces && npm install --no-fund --no-audit --omit=dev && npm shrinkwrap --omit=dev",
     "checkDependencies": "npx --yes --package npm-check-updates --workspaces --include-workspace-root ncu",
     "updateDependencies": "npx --yes --package npm-check-updates --workspaces --include-workspace-root ncu -u && npm run softReset",

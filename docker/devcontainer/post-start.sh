@@ -129,7 +129,10 @@ if [ "$PLUGIN" = true ] || [ "$MATTERBRIDGE" = true ]; then
   if [ -f apps/frontend/package.json ]; then
     step "Building the ${TARGET} frontend..."
     cd apps/frontend
-    if [ "$MODE" = "bun" ]; then
+    # When apps/frontend is a workspace (matterbridge), its dependencies are already installed by the root install.
+    if node -e "process.exit(require('../../package.json').workspaces?.includes('apps/frontend') ? 0 : 1)"; then
+      if [ "$MODE" = "bun" ]; then bun run build; else npm run build; fi
+    elif [ "$MODE" = "bun" ]; then
       [ -f package-lock.json ] && mv package-lock.json package-lock.json.bak || true
       bun install && bun run build
       [ -f package-lock.json.bak ] && mv package-lock.json.bak package-lock.json || true

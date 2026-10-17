@@ -45,10 +45,15 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `vitest` to v.5.0.5.
 - [core]: Bump `express` to v.5.3.0.
 - [thread]: Bump `@zip.js/zip.js` to v.2.24.0.
-- [frontend]: Bump `frontend` version to v.3.6.6.
+- [frontend]: Add `apps/frontend` to the npm workspaces: it is now versioned with matterbridge (v.3.10.15) and published by `publish-workspaces`.
+- [frontend]: Move all dependencies to devDependencies, since they are bundled by vite into `build`.
+- [scripts]: Fix `pack-workspaces --dry-run` creating a tarball instead of previewing its contents.
+- [scripts]: Add `buildFrontend` and run it after the clean build in `publish-workspaces`, `pack-workspaces`, `pack-monorepo`, `runMeBeforePublish`, `prepublishOnly` and `softReset`; remove `reset:all`, `softReset:all`, `softReset:bun:all` and `runMeBeforePublish:all` (the frontend coverage now runs in `runMeBeforePublish`).
 - [frontend]: Bump `react` to v.19.3.1.
 - [frontend]: Bump `react-dom` to v.19.3.1.
 - [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
+- [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
+- [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
@@ -153,8 +158,6 @@ Two new production plugins bring Matter cameras to Matterbridge. Both require Ma
 - [Intercom]: Add the mandatory Generic Switch child endpoint with a momentary switch (Matter 1.5.1 Intercom revision 2, Device Library § 16.4.4 and § 16.4.8).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
-
-## [3.10.14] - Dev branch
 
 ## [3.10.13] - 2026-10-09
 

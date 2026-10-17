@@ -16,3 +16,9 @@
 !.dockerbuild.json
 !docker/chip-test
 !docker/entrypoint.chip-test.sh
+
+# OS metadata (macOS Finder, Windows Explorer)
+**/.DS_Store
+**/Thumbs.db
+**/ehthumbs.db
+**/desktop.ini

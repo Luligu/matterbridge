@@ -14,7 +14,8 @@ RUN \
   bun --bun scripts/version.mjs git && \
   bun --bun scripts/sync-workspaces.mjs --scope @matterbridge && \
   bun run buildProduction && \
-  cd apps/frontend && bun install && bun run build && rm -rf node_modules public src vitest package-lock.json && cd ../.. && \
+  cd apps/frontend && bun run build && cd ../.. && \
+  find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
   bun link && \
   bun --workspaces --include-workspace-root pm pkg delete devDependencies scripts && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
@@ -86,6 +87,24 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
 WORKDIR /matterbridge-mqtt
 # ADD https://api.github.com/repos/Luligu/matterbridge-mqtt/commits/dev /tmp/matterbridge-mqtt-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-mqtt.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
+  bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
+
+WORKDIR /matterbridge-camera
+# ADD https://api.github.com/repos/Luligu/matterbridge-camera/commits/dev /tmp/matterbridge-camera-dev-head.json
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-camera.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
+  bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
+
+WORKDIR /matterbridge-webcam
+# ADD https://api.github.com/repos/Luligu/matterbridge-webcam/commits/dev /tmp/matterbridge-webcam-dev-head.json
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webcam.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
@@ -209,6 +228,8 @@ COPY --from=builder /matterbridge-webhooks/ ./matterbridge-webhooks/
 COPY --from=builder /matterbridge-security/ ./matterbridge-security/
 COPY --from=builder /matterbridge-irobot/ ./matterbridge-irobot/
 COPY --from=builder /matterbridge-mqtt/ ./matterbridge-mqtt/
+COPY --from=builder /matterbridge-camera/ ./matterbridge-camera/
+COPY --from=builder /matterbridge-webcam/ ./matterbridge-webcam/
 COPY --from=builder /matterbridge-test/ ./matterbridge-test/
 COPY --from=builder /matterbridge-example-accessory-platform/ ./matterbridge-example-accessory-platform/
 COPY --from=builder /matterbridge-example-dynamic-platform/ ./matterbridge-example-dynamic-platform/
