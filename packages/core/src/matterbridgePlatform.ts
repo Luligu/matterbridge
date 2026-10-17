@@ -436,6 +436,21 @@ export class MatterbridgePlatform {
   }
 
   /**
+   * Called when the user sends a command from the terminal of the plugin in the Matterbridge frontend.
+   *
+   * @param {string} command The command line typed by the user (i.e. `--command custom --duid 123 --method get_consumable`).
+   * @returns {Promise<string>} The text to show in the terminal. Throw an error to show it as a failed command.
+   *
+   * @remarks
+   * This method can be overridden in the extended class. The command is never executed by a shell: the plugin decides what it accepts.
+   */
+  // oxlint-disable-next-line typescript/require-await
+  async onCommand(command: string): Promise<string> {
+    this.log.debug(`The plugin ${CYAN}${this.name}${db} doesn't override onCommand. Received command ${CYAN}${command}${db}`);
+    return `The plugin ${this.name} doesn't support commands.`;
+  }
+
+  /**
    * Called by the Matterbridge frontend for plugin API requests.
    * Override this method in your plugin platform to handle frontend interactions.
    *

@@ -30,6 +30,8 @@ import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { Connecting } from './Connecting';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
+import { PluginTerminalButton } from './PluginTerminalButton';
+import { PluginTerminalDialog } from './PluginTerminalDialog';
 import { StatusIndicator } from './StatusIndicator';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
@@ -50,6 +52,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
   const [_systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
+  const [terminalPluginName, setTerminalPluginName] = useState<string | null>(null);
   const [selectedPluginFrontend, setSelectedPluginFrontend] = useState<{ name: string; path: string } | null>(null);
   const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
@@ -143,6 +146,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
               </IconButton>
             </Tooltip>
           )}
+          {!plugin.error && plugin.enabled && plugin.loaded && <PluginTerminalButton onClick={() => setTerminalPluginName(plugin.name)} />}
           {matterbridgeInfo && matterbridgeInfo.bridgeMode === 'childbridge' && !plugin.error && plugin.enabled && (
             <Tooltip title="Restart the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px' }} onClick={() => handleRestartPlugin(plugin)} size="small">
@@ -539,6 +543,9 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
       <MbfWindow>
         {/* Config plugin dialog */}
         {selectedPlugin && <ConfigPluginDialog open={openConfigPluginDialog} onClose={handleCloseConfig} onSave={handleSaveConfig} plugin={selectedPlugin} />}
+
+        {/* Plugin terminal dialog */}
+        {terminalPluginName && <PluginTerminalDialog open onClose={() => setTerminalPluginName(null)} pluginName={terminalPluginName} />}
 
         <MbfTable<ApiPlugin> name="Plugins" columns={pluginsColumns} rows={plugins} footerRight="" footerLeft="" />
       </MbfWindow>

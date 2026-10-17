@@ -1939,6 +1939,46 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               error: `Error in plugin ${plugin.name} action ${localData.params.action}: ${error}`,
             });
           });
+      } else if (data.method === '/api/plugin-command') {
+        const localData = data;
+        if (!isValidString(data.params.plugin, 5) || !isValidString(data.params.command, 1, 1000)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/plugin-command' });
+          return;
+        }
+        const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        if (!plugin) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/plugin-command' });
+          return;
+        }
+        if (!plugin.platform) {
+          sendResponse({
+            id: data.id,
+            method: data.method,
+            src: 'Matterbridge',
+            dst: data.src,
+            response: { output: `The plugin ${plugin.name} is not running.`, error: true },
+            success: true,
+          });
+          return;
+        }
+        this.log.notice(`Command ${CYAN}${data.params.command}${nt} for plugin ${CYAN}${plugin.name}${nt}`);
+        plugin.platform
+          .onCommand(data.params.command)
+          .then((output) => {
+            sendResponse({ id: localData.id, method: localData.method, src: 'Matterbridge', dst: localData.src, response: { output }, success: true });
+            return;
+          })
+          .catch((error: unknown) => {
+            this.log.error(`Error in plugin ${plugin.name} command ${localData.params.command}: ${error}`);
+            sendResponse({
+              id: localData.id,
+              method: localData.method,
+              src: 'Matterbridge',
+              dst: localData.src,
+              response: { output: `Error in plugin ${plugin.name} command: ${getErrorMessage(error)}`, error: true },
+              success: true,
+            });
+          });
       } else if (data.method === '/api/config') {
         if (!isValidString(data.params.name, 5) || data.params.value === undefined) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter in /api/config' });
