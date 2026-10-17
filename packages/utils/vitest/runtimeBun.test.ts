@@ -83,7 +83,7 @@ describe('getBunLatestVersion()', () => {
 
     await expect(getBunLatestVersion()).resolves.toBe('1.4.0');
     expect(fetchMock).toHaveBeenCalledWith('https://api.github.com/repos/oven-sh/bun/releases/latest', {
-      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'matterbridge' },
+      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'matterbridge', 'X-GitHub-Api-Version': '2026-03-10' },
       signal: expect.any(AbortSignal),
     });
   });

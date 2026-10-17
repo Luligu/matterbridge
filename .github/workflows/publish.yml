@@ -97,6 +97,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-latest.yml',
@@ -109,6 +110,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-dev.yml',
@@ -121,6 +123,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bundev.yml',
@@ -133,6 +136,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-node-ubuntu-slim.yml',
@@ -145,6 +149,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bun-ubuntu-slim.yml',
@@ -157,6 +162,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-alpine.yml',
@@ -169,6 +175,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bun.yml',
@@ -181,6 +188,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-s6-rc.yml',
@@ -193,6 +201,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-s6-rc-legacy.yml',
@@ -205,6 +214,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bun-dev-container.yml',
@@ -217,6 +227,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-node-dev-container.yml',
@@ -229,6 +240,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-chip-test.yml',
@@ -348,6 +360,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-dev.yml',
@@ -361,6 +374,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bundev.yml',

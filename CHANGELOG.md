@@ -33,6 +33,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [workflows]: Pin GitHub workflow dispatch requests to REST API version `2026-03-10` to avoid API retirement warnings.
+- [utils/scripts]: Pin GitHub data-model and Bun release requests to REST API version `2026-03-10`.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.15.
 - [matterbridge]: Bump `@types/bun` to v.1.4.3.
 - [matterbridge]: Bump `@types/node` to v.26.6.5.
