@@ -179,6 +179,69 @@ describe('DevicesTable', () => {
 
     expect(await screen.findByText('Filtered Light')).toBeInTheDocument();
   });
+
+  it('should switch the clusters view to the tree, persist the choice, and switch back to the grid', async () => {
+    const socket = createSocket();
+    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
+    const clusters = [createCluster('1', 'Light', [0x0100], 'OnOff', 'onOff', 'false', false)];
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesTable filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+    fireEvent.click(await screen.findByText('Kitchen Light'));
+    socket.emit({
+      id: 2,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/clusters',
+      success: true,
+      response: {
+        plugin: 'matterbridge-test',
+        deviceName: 'Kitchen Light',
+        serialNumber: 'LIGHT-001',
+        uniqueId: 'light-001',
+        number: endpointNumber(1),
+        id: 'Light',
+        deviceTypes: [0x0100],
+        clusters,
+      },
+    });
+    expect(await screen.findByText('Clusters')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Tree' }));
+    expect(await screen.findByRole('tree')).toBeInTheDocument();
+    expect(localStorage.getItem('DevicesTable_clusters_view')).toBe('tree');
+    expect(screen.getByText('Total child endpoints: 0')).toBeInTheDocument();
+
+    // Clicking the selected toggle keeps the current view
+    fireEvent.click(screen.getByRole('button', { name: 'Tree' }));
+    expect(screen.getByRole('tree')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Grid' }));
+    await waitFor(() => expect(screen.queryByRole('tree')).toBeNull());
+    expect(localStorage.getItem('DevicesTable_clusters_view')).toBe('grid');
+  });
+
+  it('should open the clusters in the tree view when the saved choice is the tree', async () => {
+    localStorage.setItem('DevicesTable_clusters_view', 'tree');
+    const socket = createSocket();
+    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesTable filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+    fireEvent.click(await screen.findByText('Kitchen Light'));
+
+    expect(await screen.findByRole('tree')).toBeInTheDocument();
+  });
 });
 
 interface TestSocket {
