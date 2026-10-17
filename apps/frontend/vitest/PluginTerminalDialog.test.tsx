@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PluginTerminalDialog } from '../src/components/PluginTerminalDialog';
@@ -117,5 +117,10 @@ describe('PluginTerminalDialog', () => {
 
     unmount();
     expect(removeListener).toHaveBeenCalled();
+  });
+
+  it('should focus the command input when the dialog has finished opening', async () => {
+    const { input } = renderDialog();
+    await waitFor(() => expect(input()).toHaveFocus());
   });
 });
