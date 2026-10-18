@@ -351,12 +351,13 @@ starts from its image, so an ffmpeg installed by hand in the previous container 
 
 Each camera endpoint owns its WebRTC sessions. A session stays open, with its peer connection and its ffmpeg processes,
 until the controller ends it. Matterbridge does not close them when a plugin shuts down or restarts, so a plugin closes
-its own sessions in `onShutdown` with `closeWebRtcSessions` from `matterbridge/devices/camera`:
+its own sessions in `onShutdown` with `closeWebRtcSessions` from `matterbridge/devices/camera`. Call it before
+`super.onShutdown()`, which clears the registered devices, so `getDevices()` would return nothing after it:
 
 ```typescript
 override async onShutdown(reason?: string): Promise<void> {
-  await super.onShutdown(reason);
   for (const device of this.getDevices()) await closeWebRtcSessions(device);
+  await super.onShutdown(reason);
 }
 ```
 

@@ -1164,10 +1164,11 @@ export function createDefaultWebRtcTransportProviderClusterServer(
  * Camera or a Video Doorbell has its WebRtcTransportProvider cluster on the camera child). Each endpoint closes only
  * its own sessions (see {@link MatterbridgeWebRtcTransportProviderServer.closeAllSessions}), so a plugin closes its
  * own sessions without affecting other plugins. A device without the cluster is skipped, so a plugin can call this
- * for all its devices in onShutdown:
+ * for all its devices in onShutdown, before super.onShutdown() which clears the registered devices:
  *
  * ```typescript
  * for (const device of this.getDevices()) await closeWebRtcSessions(device);
+ * await super.onShutdown(reason);
  * ```
  *
  * @param {MatterbridgeEndpoint} device - The device whose WebRTC sessions to close.
