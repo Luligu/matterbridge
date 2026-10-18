@@ -1047,7 +1047,7 @@ export class WeriftWebRtcSession {
    * - a concurrent/duplicate call to {@link close} (e.g. from {@link logDtlsTransportStateChanges}'s own auto-close,
    *   or a second DTLS transport reaching `closed`/`failed`) is a no-op instead of doing the cleanup work twice.
    * - {@link logDtlsTransportStateChanges} can tell a DTLS transport reaching `closed` as a *side effect of our own*
-   *   close() (every close — EndSession, closeAll(), this same auto-close — stops the DTLS transports, which
+   *   close() (every close — EndSession, this same auto-close — stops the DTLS transports, which
    *   triggers this same onStateChange) apart from one reaching `closed` on its own, unprompted, which is the real
    *   orphaned-session signal that should trigger an auto-close.
    */
@@ -1156,17 +1156,5 @@ export class WeriftWebRtcSession {
     this.cleanupTestAudioArtifacts();
     WeriftWebRtcSession.activeSessions.delete(this);
     this.log.info(`RTCPeerConnection closed (connectionState=${this.peerConnection.connectionState})`);
-  }
-
-  /**
-   * Closes every currently active session, e.g. during a graceful platform shutdown.
-   *
-   * @returns {Promise<void>} Resolves once every active session has been closed.
-   */
-  static async closeAll(): Promise<void> {
-    for (const session of WeriftWebRtcSession.activeSessions) {
-      session.log.info(`Closing session ${session.webRtcSessionId} as part of closeAll()`);
-      await session.close();
-    }
   }
 }
