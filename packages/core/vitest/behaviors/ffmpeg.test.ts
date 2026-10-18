@@ -81,8 +81,24 @@ describe('ffmpeg resolution', () => {
 
     expect(hasFfmpeg()).toBe(true);
     spawnMock.mockClear();
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
     runFfmpeg(['-version']);
     expect(spawnMock).toHaveBeenCalledWith('ffmpeg', ['-version']);
+    // The exit of the spawned process is logged
+    await vi.waitFor(() => expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('exited with code 0')));
+  });
+
+  it('should log the signal that ended an ffmpeg process spawned by runFfmpeg', async () => {
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
+
+    vi.resetModules();
+    const { runFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    const child = Object.assign(new EventEmitter(), { pid: 4321 });
+    spawnMock.mockImplementation(() => child as unknown as ReturnType<typeof realSpawn>);
+    runFfmpeg(['-version']);
+    child.emit('exit', null, 'SIGTERM');
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('ffmpeg process 4321 exited with signal SIGTERM'));
   });
 
   it('should not resolve ffmpeg when no candidate runs successfully, and runFfmpeg should throw', async () => {

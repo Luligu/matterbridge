@@ -67,6 +67,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
 - [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
 - [camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.
+- [ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
