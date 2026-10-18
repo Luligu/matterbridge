@@ -57,6 +57,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
 
+### Fixed
+
+- [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
+- [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.14] - 2026-10-16
