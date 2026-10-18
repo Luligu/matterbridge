@@ -1,6 +1,6 @@
 /**
  * publish-workspaces.mjs
- * Version: 1.2.1
+ * Version: 1.3.0
  *
  * Publishes all workspace packages to npm.
  *
@@ -38,7 +38,7 @@ function usage() {
     '  0) Backs up root + workspaces package.json files in-memory',
     '  1) Runs scripts/version.mjs <tag> (sets a publish version suffix; skipped when tag=latest)',
     '  2) Runs scripts/sync-workspaces.mjs (sync workspace versions + scoped deps)',
-    '  3) Runs npm run buildProduction',
+    '  3) Runs npm run cleanBuildProduction',
     '  4) Temporarily removes devDependencies, scripts, workspaces, and bundledDependencies from all package.json files',
     '  5) Publishes each workspace with npm publish (or --dry-run publish), skipping versions already on the registry',
     '     A failed publish is retried (unless --dry-run), but only after confirming the version did not land',

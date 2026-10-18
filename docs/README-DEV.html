@@ -566,10 +566,7 @@ path to keep the WebRTC stack (werift) off the import path of &quot;matterbridge
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
-cd apps/frontend
-npm install --no-fund --no-audit
-npm run build
-cd ../..
+npm run buildFrontend
 npm link --no-fund --no-audit
 </code></pre>
 <p>If you want to develop a plugin using the dev branch of matterbridge (I suggest you do it).</p>
@@ -577,10 +574,7 @@ npm link --no-fund --no-audit
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
-cd apps/frontend
-npm install --no-fund --no-audit
-npm run build
-cd ../..
+npm run buildFrontend
 npm link --no-fund --no-audit
 </code></pre>
 <p>Always keep your local instance of matterbridge up to date.</p>
