@@ -1,4 +1,4 @@
-// VS Code settings native v.1.0.14
+// VS Code settings native v.1.0.16
 {
   "npm.packageManager": "npm",
   // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
@@ -57,6 +57,7 @@
     "oxlint": false,
     "oxfmt": false,
     "vitest": false,
+    "bun test": false,
     // Denied: git mutations and history rewrites must be run manually outside the agent.
     "git pull": false,
     "git merge": false,
@@ -102,7 +103,6 @@
     "npm run test:verbose": true,
     "npm run test:coverage": true,
     "npm run update-htmls": true,
-    "bun test": true,
     // Approved: read-only shell utilities.
     "cat": true,
     "ls": true,
