@@ -169,6 +169,16 @@ describe('WeriftWebRtcSession', () => {
     await session.close();
   });
 
+  it('should not let the diagnostics timer keep the process alive', async () => {
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: false, offerAudio: false });
+
+    const { diagnosticsInterval } = session as unknown as { diagnosticsInterval: NodeJS.Timeout };
+    expect(diagnosticsInterval.hasRef()).toBe(false);
+
+    await session.close();
+    expect((session as unknown as { diagnosticsInterval?: NodeJS.Timeout }).diagnosticsInterval).toBeUndefined();
+  });
+
   it('should create a real SDP offer with a video transceiver when video is requested', async () => {
     const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
 

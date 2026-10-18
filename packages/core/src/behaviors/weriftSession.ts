@@ -290,7 +290,8 @@ export class WeriftWebRtcSession {
     });
     this.log.debug(`Created RTCPeerConnection with codecs: audio=[OPUS, PCMU], video=[H264, VP8] for session ${webRtcSessionId}`);
 
-    this.diagnosticsInterval = setInterval(() => void this.logDiagnosticsSnapshot(), WeriftWebRtcSession.DIAGNOSTICS_INTERVAL_MS);
+    // Unref'd: the diagnostics timer only logs and must not keep the process alive on its own.
+    this.diagnosticsInterval = setInterval(() => void this.logDiagnosticsSnapshot(), WeriftWebRtcSession.DIAGNOSTICS_INTERVAL_MS).unref();
 
     WeriftWebRtcSession.activeSessions.add(this);
     if (!WeriftWebRtcSession.exitHandlerRegistered) {
