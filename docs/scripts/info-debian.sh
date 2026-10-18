@@ -28,8 +28,34 @@ if command -v free >/dev/null 2>&1; then
 else
   echo "🧠 Memory: unavailable"
 fi
-echo "🌐 IPv4: $(ip -4 route get 1 2>/dev/null | awk '{print $7; exit}' || echo 'unavailable')"
-echo "🌐 IPv6: $(ip -6 addr show dev eth0 2>/dev/null | awk '/inet6/{gsub(/\/.*$/,"",$2); print $2}' | tr '\n' ' ' || echo 'none')"
+# Addresses come from the routing decision for a public address ("ip route get" sends no packet):
+# IPv4 is the source address, IPv6 lists the addresses of the outgoing interface. The "src" and
+# "dev" values are matched by keyword, because their position varies between setups (Docker
+# Desktop host networking adds "table 2", others add "uid", "mark" or "cache"), and the interface
+# is never assumed to be eth0 (wlan0, enp3s0 and end0 are common on real hosts).
+route_value() {
+  awk -v key="$1" '{ for (i = 1; i < NF; i++) if ($i == key) { print $(i + 1); exit } }'
+}
+IPV4=$(ip -4 route get 1.1.1.1 2>/dev/null | route_value src || true)
+[ -n "$IPV4" ] || IPV4=$(ip -4 addr show 2>/dev/null | awk '$1 == "inet" && substr($2, 1, 4) != "127." { split($2, a, "/"); print a[1]; exit }' || true)
+# Without the ip command, "hostname -I" (glibc) or "hostname -i" (BusyBox) lists the addresses in any
+# order, so each line keeps only the matching family.
+hostname_ips() {
+  { hostname -I 2>/dev/null || hostname -i 2>/dev/null; } | awk -v family="$1" '{ for (i = 1; i <= NF; i++)
+    if ((family == 4 && $i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) || (family == 6 && index($i, ":"))) printf "%s ", $i }' || true
+}
+[ -n "$IPV4" ] || IPV4=$(hostname_ips 4 | awk '{ print $1 }')
+echo "🌐 IPv4: ${IPV4:-unavailable}"
+
+IPV6_DEV=$(ip -6 route get 2001:4860:4860::8888 2>/dev/null | route_value dev || true)
+[ -n "$IPV6_DEV" ] || IPV6_DEV=$(ip -4 route get 1.1.1.1 2>/dev/null | route_value dev || true)
+if [ -n "$IPV6_DEV" ]; then
+  IPV6=$(ip -6 addr show dev "$IPV6_DEV" 2>/dev/null | awk '$1 == "inet6" { split($2, a, "/"); printf "%s ", a[1] }' || true)
+else
+  IPV6=$(ip -6 addr show 2>/dev/null | awk '$1 == "inet6" && / scope global/ { split($2, a, "/"); printf "%s ", a[1] }' || true)
+fi
+[ -n "$IPV6" ] || IPV6=$(hostname_ips 6)
+echo "🌐 IPv6: ${IPV6:-none}"
 
 # host.docker.internal and gateway.docker.internal are provided by Docker Desktop (or --add-host),
 # so each line is printed only when the name resolves. IPv4 is listed first on glibc and musl alike.

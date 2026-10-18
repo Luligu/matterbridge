@@ -30,9 +30,7 @@ echo "👤 User: $(whoami)"
 echo "🏷️ Hostname: $(hostname)"
 echo "📅 Date: $(date)"
 
-# Busybox has no "uptime -p" and no "free -h", so the Alpine banner reads /proc directly. The
-# addresses match the Debian banner (default route source, eth0 IPv6); without a usable
-# "ip route get" the IPv4 falls back to the first global address, then to hostname -i.
+# Busybox has no "uptime -p" and no "free -h", so the Alpine banner reads /proc directly.
 UPTIME=$(awk '{ t = int($1); d = int(t / 86400); h = int((t % 86400) / 3600); m = int((t % 3600) / 60);
   s = "up";
   if (d > 0) s = s sprintf(" %d day%s,", d, (d == 1 ? "" : "s"));
@@ -45,12 +43,33 @@ MEMORY=$(awk '/^MemTotal:/ { total = $2 } /^MemAvailable:/ { available = $2 }
   END { if (total > 0) print sprintf("%.1fGi / %.1fGi", (total - available) / 1048576, total / 1048576) }' /proc/meminfo 2>/dev/null || true)
 echo "🧠 Memory: ${MEMORY:-unavailable}"
 
-IPV4=$(ip -4 route get 1 2>/dev/null | awk '{ print $7; exit }' || true)
+# Addresses come from the routing decision for a public address ("ip route get" sends no packet):
+# IPv4 is the source address, IPv6 lists the addresses of the outgoing interface. The "src" and
+# "dev" values are matched by keyword, because their position varies between setups (Docker
+# Desktop host networking adds "table 2", others add "uid", "mark" or "cache"), and the interface
+# is never assumed to be eth0 (wlan0, enp3s0 and end0 are common on real hosts).
+route_value() {
+  awk -v key="$1" '{ for (i = 1; i < NF; i++) if ($i == key) { print $(i + 1); exit } }'
+}
+IPV4=$(ip -4 route get 1.1.1.1 2>/dev/null | route_value src || true)
 [ -n "$IPV4" ] || IPV4=$(ip -4 addr show 2>/dev/null | awk '$1 == "inet" && substr($2, 1, 4) != "127." { split($2, a, "/"); print a[1]; exit }' || true)
-[ -n "$IPV4" ] || IPV4=$(hostname -i 2>/dev/null | awk '{ print $1 }' || true)
+# Without the ip command, "hostname -I" (glibc) or "hostname -i" (BusyBox) lists the addresses in any
+# order, so each line keeps only the matching family.
+hostname_ips() {
+  { hostname -I 2>/dev/null || hostname -i 2>/dev/null; } | awk -v family="$1" '{ for (i = 1; i <= NF; i++)
+    if ((family == 4 && $i ~ /^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$/) || (family == 6 && index($i, ":"))) printf "%s ", $i }' || true
+}
+[ -n "$IPV4" ] || IPV4=$(hostname_ips 4 | awk '{ print $1 }')
 echo "🌐 IPv4: ${IPV4:-unavailable}"
 
-IPV6=$(ip -6 addr show dev eth0 2>/dev/null | awk '$1 == "inet6" { split($2, a, "/"); printf "%s ", a[1] }' || true)
+IPV6_DEV=$(ip -6 route get 2001:4860:4860::8888 2>/dev/null | route_value dev || true)
+[ -n "$IPV6_DEV" ] || IPV6_DEV=$(ip -4 route get 1.1.1.1 2>/dev/null | route_value dev || true)
+if [ -n "$IPV6_DEV" ]; then
+  IPV6=$(ip -6 addr show dev "$IPV6_DEV" 2>/dev/null | awk '$1 == "inet6" { split($2, a, "/"); printf "%s ", a[1] }' || true)
+else
+  IPV6=$(ip -6 addr show 2>/dev/null | awk '$1 == "inet6" && / scope global/ { split($2, a, "/"); printf "%s ", a[1] }' || true)
+fi
+[ -n "$IPV6" ] || IPV6=$(hostname_ips 6)
 echo "🌐 IPv6: ${IPV6:-none}"
 
 # host.docker.internal and gateway.docker.internal are provided by Docker Desktop (or --add-host),
