@@ -347,6 +347,22 @@ Matterbridge is running, restart Matterbridge before trying again. Installing it
 normally and then sends no RTP, logging `Cannot inject video stream: missing dependency ffmpeg`. A rebuilt container
 starts from its image, so an ffmpeg installed by hand in the previous container is gone.
 
+## Closing sessions on plugin shutdown
+
+Each camera endpoint owns its WebRTC sessions. A session stays open, with its peer connection and its ffmpeg processes,
+until the controller ends it. Matterbridge does not close them when a plugin shuts down or restarts, so a plugin closes
+its own sessions in `onShutdown` with `closeWebRtcSessions` from `matterbridge/devices/camera`:
+
+```typescript
+override async onShutdown(reason?: string): Promise<void> {
+  await super.onShutdown(reason);
+  for (const device of this.getDevices()) await closeWebRtcSessions(device);
+}
+```
+
+It closes the sessions of the device and of its child endpoints (the camera child of a Floodlight Camera or a Video
+Doorbell), and skips devices without the WebRtcTransportProvider cluster. Sessions of other plugins are not touched.
+
 ## Environment variables
 
 All the environment variables of the Matterbridge camera and WebRTC implementation:

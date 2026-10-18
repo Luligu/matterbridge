@@ -33,10 +33,12 @@ import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerNo
 import { MatterbridgeCameraAvStreamManagementServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
 import {
   allocateWebRtcSessionId,
+  closeWebRtcSessions,
   createDefaultWebRtcTransportProviderClusterServer,
   MatterbridgeWebRtcTransportProviderServer,
 } from '../../src/behaviors/webRtcTransportProviderServer.js';
 import { Camera } from '../../src/devices/camera.js';
+import { FloodlightCamera } from '../../src/devices/floodlightCamera.js';
 import { camera } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
@@ -1359,5 +1361,101 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     await expect(
       endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'endSession', { webRtcSessionId: 0, reason: WebRtcTransportDefinitions.WebRtcEndReason.UserHangup }),
     ).resolves.toBeUndefined();
+  });
+
+  describe('closeWebRtcSessions', () => {
+    async function solicitSession(endpoint: MatterbridgeEndpoint): Promise<void> {
+      await expect(
+        endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'solicitOffer', { streamUsage: StreamUsage.LiveView, originatingEndpointId: EndpointNumber(1) }),
+      ).resolves.toBeUndefined();
+      clearExpectedWarnings('No injectable video codec available on negotiated transceivers');
+    }
+
+    it('should close only the sessions of the given device and release its stream reference counts', async () => {
+      const first = new Camera('WebRtc Close First', 'WEBRTC-CLOSE-FIRST');
+      const second = new Camera('WebRtc Close Second', 'WEBRTC-CLOSE-SECOND');
+      expect(await addDevice(aggregator, first)).toBeTruthy();
+      expect(await addDevice(aggregator, second)).toBeTruthy();
+      await solicitSession(first);
+      await solicitSession(first);
+      await solicitSession(second);
+      expect(first.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')?.[0].referenceCount).toBe(2);
+
+      const firstInternal = await internalFor<MatterbridgeWebRtcTransportProviderServer.Internal>(first, 'webRtcTransportProvider');
+      const firstPeers = [...(firstInternal?.sessions.values() ?? [])];
+      expect(firstPeers).toHaveLength(2);
+      const closeSpies = firstPeers.map((webRtcPeer) => vi.spyOn(webRtcPeer, 'close'));
+
+      await closeWebRtcSessions(first);
+
+      for (const closeSpy of closeSpies) expect(closeSpy).toHaveBeenCalledTimes(1);
+      expect(firstInternal?.sessions.size).toBe(0);
+      expect(first.getAttribute(WebRtcTransportProvider, 'currentSessions')).toEqual([]);
+      expect(first.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')?.[0].referenceCount).toBe(0);
+      expect(first.getAttribute(CameraAvStreamManagement, 'allocatedAudioStreams')?.[0].referenceCount).toBe(0);
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeWebRtcTransportProviderServer.closeAllSessions: closed 2 webRTC session(s)'));
+
+      // The other device keeps its session.
+      const secondInternal = await internalFor<MatterbridgeWebRtcTransportProviderServer.Internal>(second, 'webRtcTransportProvider');
+      expect(secondInternal?.sessions.size).toBe(1);
+      expect(second.getAttribute(WebRtcTransportProvider, 'currentSessions')).toHaveLength(1);
+
+      await closeWebRtcSessions(second);
+      expect(secondInternal?.sessions.size).toBe(0);
+      expect(second.getAttribute(WebRtcTransportProvider, 'currentSessions')).toEqual([]);
+    });
+
+    it('should close the sessions on the camera child endpoint of a composed device', async () => {
+      const floodlight = new FloodlightCamera('WebRtc Close Floodlight', 'WEBRTC-CLOSE-FLOODLIGHT');
+      expect(await addDevice(aggregator, floodlight)).toBeTruthy();
+      const cameraChild = floodlight.getChildEndpoints().find((child) => child.behaviors.has(MatterbridgeWebRtcTransportProviderServer));
+      expect(cameraChild).toBeDefined();
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- checked just above.
+      await solicitSession(cameraChild!);
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- checked just above.
+      expect(cameraChild!.getAttribute(WebRtcTransportProvider, 'currentSessions')).toHaveLength(1);
+
+      await closeWebRtcSessions(floodlight);
+
+      // oxlint-disable-next-line typescript/no-non-null-assertion -- checked just above.
+      expect(cameraChild!.getAttribute(WebRtcTransportProvider, 'currentSessions')).toEqual([]);
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('MatterbridgeWebRtcTransportProviderServer.closeAllSessions: closed 1 webRTC session(s)'));
+    });
+
+    it('should skip a device without the WebRtcTransportProvider cluster', async () => {
+      const endpoint = new MatterbridgeEndpoint([camera], { id: 'WebRtcCloseNoProvider' });
+
+      await expect(closeWebRtcSessions(endpoint)).resolves.toBeUndefined();
+
+      expect(loggerInfoSpy).not.toHaveBeenCalledWith(expect.stringContaining('closeAllSessions'));
+    });
+
+    it('should log a session that fails to close and still close the others', async () => {
+      const endpoint = new Camera('WebRtc Close Failure', 'WEBRTC-CLOSE-FAILURE');
+      expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+      await solicitSession(endpoint);
+      await solicitSession(endpoint);
+      await solicitSession(endpoint);
+      const internal = await internalFor<MatterbridgeWebRtcTransportProviderServer.Internal>(endpoint, 'webRtcTransportProvider');
+      const [[errorId, errorPeer], [stringId, stringPeer], [, okPeer]] = [...(internal?.sessions.entries() ?? [])];
+      const errorSpy = vi.spyOn(errorPeer, 'close').mockRejectedValueOnce(new Error('close failed'));
+      const stringSpy = vi.spyOn(stringPeer, 'close').mockRejectedValueOnce('close rejected');
+      const okSpy = vi.spyOn(okPeer, 'close');
+
+      await closeWebRtcSessions(endpoint);
+
+      expect(okSpy).toHaveBeenCalledTimes(1);
+      expect(internal?.sessions.size).toBe(0);
+      expect(endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions')).toEqual([]);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`closeAllSessions: failed to close webRTC session ${errorId}: close failed`));
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`closeAllSessions: failed to close webRTC session ${stringId}: close rejected`));
+      loggerErrorSpy.mockClear();
+
+      // The mocked closes skipped the real cleanup: close the two peer connections for real so the test leaks nothing.
+      errorSpy.mockRestore();
+      stringSpy.mockRestore();
+      await errorPeer.close();
+      await stringPeer.close();
+    });
   });
 });

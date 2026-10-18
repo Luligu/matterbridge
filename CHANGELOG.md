@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.15] - Dev branch
 
+### Added
+
+- [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
+
 ### Changed
 
 - [workflows]: Pin GitHub workflow dispatch requests to REST API version `2026-03-10` to avoid API retirement warnings.
