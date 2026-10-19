@@ -23,6 +23,7 @@ import { UiProvider } from './components/UiProvider';
 import { WebSocketProvider } from './components/WebSocketProvider';
 import { MbfLsk } from './utils/localStorage';
 import { createMuiTheme, getCssVariable } from './utils/muiTheme';
+import { applyThemePreference } from './utils/theme';
 
 export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => void }): React.JSX.Element {
   const [password, setPassword] = useState('');
@@ -135,10 +136,10 @@ export function LoginForm({ setLoggedIn }: { setLoggedIn: (value: boolean) => vo
 function App(): React.JSX.Element {
   const [loggedIn, setLoggedIn] = useState(false);
 
-  // Set the theme based on saved preference or default to dark
+  // Set the theme based on saved preference or default to dark ('auto' follows the OS or browser color scheme)
   const savedTheme = localStorage.getItem(MbfLsk.frontendTheme) || 'dark';
-  if (debug) console.log(`Setting frontend theme "%s"`, savedTheme);
-  document.body.setAttribute('frontend-theme', savedTheme);
+  const appliedTheme = applyThemePreference(savedTheme);
+  if (debug) console.log(`Setting frontend theme "%s" (%s)`, savedTheme, appliedTheme);
   const primaryColor = getCssVariable('--primary-color', '#1976d2');
   if (debug) console.log(`Primary color from CSS "%s"`, primaryColor);
   const theme = createMuiTheme(primaryColor);

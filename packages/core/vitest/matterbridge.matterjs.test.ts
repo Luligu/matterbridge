@@ -190,6 +190,7 @@ describe('Matterbridge matterjs', () => {
   test('serverNode decommissioned', () => {
     matterbridge.serverNode?.lifecycle.decommissioned.emit(undefined as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge fully decommissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was reset to factory defaults: restart Matterbridge before pairing it again`);
   });
 
   test('serverNode fabricsChanged', () => {

@@ -1097,6 +1097,15 @@ describe('Matterbridge ' + NAME, () => {
     await addDevice(aggregator, device);
     await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.id, 'thermostatRunningState')).toEqual({
+      cool: false,
+      coolStage2: false,
+      fan: false,
+      fanStage2: false,
+      fanStage3: false,
+      heat: false,
+      heatStage2: false,
+    });
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 6, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
