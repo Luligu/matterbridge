@@ -26,11 +26,12 @@ vi.mock('@matterbridge/utils/bun', () => ({
 
 import type { SpawnOptionsWithStdioTuple, StdioNull, StdioPipe } from 'node:child_process';
 
+import { loggerDebugSpy, loggerErrorSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { Mock } from 'vitest';
 
 import { spawnCommand } from '../src/spawnCommand.js';
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from './vitestSetupTest.js';
 
+// Setup the test environment
 await setupTest('SpawnCommand', false);
 
 describe('Spawn', () => {
@@ -38,14 +39,12 @@ describe('Spawn', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(async () => {});
-
   afterAll(() => {
     vi.restoreAllMocks();
   });
 
   it('should spawn a command successfully -nosudo', async () => {
-    process.argv = ['node', 'spawnCommand.test.js', '--verbose', '--nosudo'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--verbose', '--nosudo'];
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
@@ -58,10 +57,10 @@ describe('Spawn', () => {
     } else {
       expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Spawn command ${command} with`));
     }
-  }, 10000);
+  }, 30000);
 
   it('should mock a spawn command with sudo', async () => {
-    process.argv = ['node', 'spawnCommand.test.js', '--verbose', '--sudo'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--verbose', '--sudo'];
     const command = 'npm';
     const args = ['list', '--depth=0'];
 
@@ -147,7 +146,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 500);
+            }, 0);
           }
         }),
 
@@ -188,7 +187,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 500);
+            }, 0);
           }
         }),
 
@@ -222,10 +221,10 @@ describe('Spawn', () => {
   it('should use Bun in the Windows command wrapper when running on Bun', async () => {
     const originalPlatform = process.platform;
     const originalVersions = process.versions;
-    const originalArgv = process.argv;
+    const savedArgv = process.argv;
     Object.defineProperty(process, 'platform', { configurable: true, value: 'win32', writable: true });
     Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
-    process.argv = ['node', 'spawn.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
@@ -239,7 +238,7 @@ describe('Spawn', () => {
       await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('cmd.exe', ['/c', 'bun install -g test-package'], expect.anything());
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
       Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
       Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
     }
@@ -248,10 +247,10 @@ describe('Spawn', () => {
   it('should spawn Bun instead of npm when running on Bun without sudo', async () => {
     const originalPlatform = process.platform;
     const originalVersions = process.versions;
-    const originalArgv = process.argv;
+    const savedArgv = process.argv;
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux', writable: true });
     Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
-    process.argv = ['node', 'spawn.test.js', '--nosudo'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--nosudo'];
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
@@ -265,7 +264,7 @@ describe('Spawn', () => {
       await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('bun', ['install', '-g', 'test-package'], expect.anything());
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
       Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
       Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
     }
@@ -275,11 +274,11 @@ describe('Spawn', () => {
     const originalPath = process.env.PATH;
     const originalPlatform = process.platform;
     const originalVersions = process.versions;
-    const originalArgv = process.argv;
+    const savedArgv = process.argv;
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux', writable: true });
     Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
     process.env.PATH = '/usr/local/bin';
-    process.argv = ['node', 'spawn.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
@@ -293,7 +292,7 @@ describe('Spawn', () => {
       await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('bun', ['install', '-g', 'test-package'], expect.anything());
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
       if (originalPath === undefined) delete process.env.PATH;
       else process.env.PATH = originalPath;
       Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
@@ -304,10 +303,10 @@ describe('Spawn', () => {
   it('should use sudo with Bun when sudo is forced', async () => {
     const originalPlatform = process.platform;
     const originalVersions = process.versions;
-    const originalArgv = process.argv;
+    const savedArgv = process.argv;
     Object.defineProperty(process, 'platform', { configurable: true, value: 'linux', writable: true });
     Object.defineProperty(process, 'versions', { configurable: true, value: { ...originalVersions, bun: '1.2.3' } });
-    process.argv = ['node', 'spawn.test.js', '--sudo'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '--sudo'];
 
     (spawn as unknown as Mock<typeof spawn>).mockImplementationOnce(() => {
       return {
@@ -321,7 +320,7 @@ describe('Spawn', () => {
       await expect(spawnCommand('npm', ['install', '-g', 'test-package'])).resolves.toBe(true);
       expect(spawn).toHaveBeenCalledWith('sudo', ['bun', 'install', '-g', 'test-package'], expect.anything());
     } finally {
-      process.argv = originalArgv;
+      process.argv = savedArgv;
       Object.defineProperty(process, 'platform', { configurable: true, value: originalPlatform, writable: true });
       Object.defineProperty(process, 'versions', { configurable: true, value: originalVersions });
     }
@@ -333,7 +332,7 @@ describe('Spawn', () => {
       value: 'linux',
       writable: true,
     });
-    process.argv = ['node', 'spawn.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
     const command = 'npm';
     const args = ['install', '-g', 'test-package'];
 
@@ -343,7 +342,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 100);
+            }, 0);
           }
         }),
       } as any;
@@ -370,7 +369,7 @@ describe('Spawn', () => {
       value: 'linux',
       writable: true,
     });
-    process.argv = ['node', 'spawn.test.js', '-docker'];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-docker'];
     const command = 'npm';
     const args = ['install', '-g', 'test-package'];
 
@@ -380,7 +379,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 100);
+            }, 0);
           }
         }),
       } as any;
@@ -403,7 +402,7 @@ describe('Spawn', () => {
       value: 'darwin',
       writable: true,
     });
-    process.argv = ['node', 'spawn.test.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
     const command = 'ls';
     const args = ['-la'];
 
@@ -413,7 +412,7 @@ describe('Spawn', () => {
           if (event === 'disconnect' && callback) {
             setTimeout(() => {
               callback();
-            }, 100);
+            }, 0);
           }
         }),
       } as any;

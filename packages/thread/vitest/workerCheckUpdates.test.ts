@@ -4,8 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
+
+// Setup the test environment
+await setupTest('WorkerCheckUpdates', false);
 
 type RunOptions = Readonly<{
   checkUpdatesThrows?: boolean;
@@ -44,12 +48,12 @@ async function runWorkerCheckUpdates(options: RunOptions): Promise<RunWorkerChec
 
   const inspectError = vi.fn<(...args: any[]) => any>(() => 'inspected error');
 
-  vi.doMock('../src/workerWrapper.js', () => ({
+  vi.doMock('../src/threadsWrapper.js', () => ({
     // oxlint-disable-next-line typescript/no-extraneous-class
-    WorkerWrapper: class {
-      constructor(name: string, callback: (w: any) => Promise<boolean>) {
+    ThreadsWrapper: class {
+      constructor(name: string, entrypoint: (w: any) => Promise<boolean>) {
         wrapperName = name;
-        runPromise = callback(worker);
+        runPromise = entrypoint(worker);
       }
     },
   }));
@@ -64,10 +68,6 @@ async function runWorkerCheckUpdates(options: RunOptions): Promise<RunWorkerChec
 }
 
 describe('workerCheckUpdates', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   test('success: runs fetch + checkUpdates + logs success', async () => {
     const { wrapperName, success, loggerMock, fetchMock, checkUpdates } = await runWorkerCheckUpdates({});
 

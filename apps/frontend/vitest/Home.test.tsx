@@ -53,7 +53,6 @@ function renderHome(ui: UiContextType = uiContext) {
   const sendMessage = vi.fn();
   const removeListener = vi.fn();
   let listener: ((message: unknown) => void) | undefined;
-  // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
   const addListener = vi.fn((callback: (message: unknown) => void) => {
     listener = callback;
   });
@@ -82,7 +81,6 @@ describe('Home', () => {
     const sendMessage = vi.fn();
     const removeListener = vi.fn();
     let listener: ((message: unknown) => void) | undefined;
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
     const addListener = vi.fn((callback: (message: unknown) => void) => {
       listener = callback;
     });
@@ -187,13 +185,5 @@ describe('Home', () => {
     await waitFor(() => expect(screen.getByText('Changelog')).toBeInTheDocument());
     expect(screen.queryByText('Browser refresh')).not.toBeInTheDocument();
     expect(localStorage.getItem(MbfLsk.matterbridgeVersion)).toBe('3.9.2');
-  });
-
-  it('forces the devices page mode on a shelly board when no mode was stored', async () => {
-    const { emit } = renderHome();
-    emit({ method: '/api/settings', id: 17, response: withInfo({ shellyBoard: true }) });
-
-    await waitFor(() => expect(localStorage.getItem(MbfLsk.homePageMode)).toBe('devices'));
-    expect(screen.getByText('Devices: Matterbridge')).toBeInTheDocument();
   });
 });

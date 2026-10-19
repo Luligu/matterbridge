@@ -7,7 +7,7 @@
 const NAME = 'ClosureControlCluster';
 
 import { ThreeLevelAuto } from '@matter/types/globals';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { ClosureControl } from '../../src/clusters/closure-control.js';
 

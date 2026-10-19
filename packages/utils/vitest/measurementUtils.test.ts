@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { luxToMatter, matterToLux } from '../src/measurementUtils.js';
+
+// Setup the test environment
+await setupTest('MeasurementUtils', false);
 
 describe('measurementUtils', () => {
   describe('luxToMatter', () => {

@@ -58,11 +58,11 @@ import {
   flushServerNode,
   getMatterbridge,
   server,
-  setupTest,
-} from '@matterbridge/test-utils/buntest';
+} from '@matterbridge/test-utils/buntest/matter';
+import { setupTest } from '@matterbridge/test-utils/buntest/setup';
 
 const NAME = 'BunMatter';
-const MATTER_PORT = 6010;
+const MATTER_PORT = 15000;
 
 // Setup the test environment
 await setupTest(NAME, false);

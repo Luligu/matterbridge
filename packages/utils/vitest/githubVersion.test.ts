@@ -44,11 +44,12 @@ vi.doMock('node:https', () => {
   return { get: mockedGet };
 });
 
-import { setupTest } from './vitestSetupTest.js';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 const { getGitHubUpdate } = await import('../src/githubVersion.js');
 
-await setupTest('GitHubVersion');
+// Setup the test environment
+await setupTest('GitHubVersion', false);
 
 describe('getGitHubUpdate', () => {
   const mockUpdateJson = {

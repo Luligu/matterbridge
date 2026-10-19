@@ -21,12 +21,15 @@
  * limitations under the License.
  */
 
+// @matter
 import { CommonLocationTag } from '@matter/main/node';
-import type { EndpointNumber } from '@matter/types';
 import { OperationalState } from '@matter/types/clusters/operational-state';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils';
 
+// Matterbridge
 import { MatterbridgeValveConfigurationAndControlServer } from '../behaviors/valveConfigurationAndControlServer.js';
 import { irrigationSystem, powerSource, waterValve } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

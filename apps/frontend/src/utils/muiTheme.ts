@@ -51,8 +51,8 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiButton: {
         styleOverrides: {
           root: {
-            color: 'var(--main-button-color)',
-            backgroundColor: 'var(--main-button-bg-color)',
+            'color': 'var(--main-button-color)',
+            'backgroundColor': 'var(--main-button-bg-color)',
             '&:hover': {
               backgroundColor: 'var(--main-button-bg-color)',
             },
@@ -81,7 +81,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiIconButton: {
         styleOverrides: {
           root: {
-            color: 'var(--main-icon-color)',
+            'color': 'var(--main-icon-color)',
             '&:hover .MuiSvgIcon-root': {
               color: 'var(--primary-color)',
             },
@@ -91,7 +91,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiCheckbox: {
         styleOverrides: {
           root: {
-            color: 'var(--main-label-color)',
+            'color': 'var(--main-label-color)',
             '&.Mui-checked': {
               color: 'var(--primary-color)',
             },
@@ -108,7 +108,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiOutlinedInput: {
         styleOverrides: {
           root: {
-            backgroundColor: 'var(--div-bg-color)',
+            'backgroundColor': 'var(--div-bg-color)',
             '& .MuiOutlinedInput-notchedOutline': {
               borderColor: 'var(--main-label-color)',
             },
@@ -119,7 +119,7 @@ export function createMuiTheme(primaryColor: string): Theme {
               borderColor: 'var(--primary-color)',
             },
             // padding: '4px 8px',
-            padding: '0px',
+            'padding': '0px',
           },
           input: {
             color: 'var(--div-text-color)',
@@ -130,7 +130,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiInputLabel: {
         styleOverrides: {
           root: {
-            color: 'var(--main-label-color)',
+            'color': 'var(--main-label-color)',
             '&.Mui-focused': {
               color: 'var(--primary-color)',
             },
@@ -140,7 +140,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiFormLabel: {
         styleOverrides: {
           root: {
-            color: 'var(--main-label-color)',
+            'color': 'var(--main-label-color)',
             '&.Mui-focused': {
               color: 'var(--main-label-color)',
             },
@@ -157,7 +157,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiRadio: {
         styleOverrides: {
           root: {
-            color: 'var(--main-label-color)',
+            'color': 'var(--main-label-color)',
             '&.Mui-checked': {
               color: 'var(--primary-color)',
             },
@@ -167,9 +167,9 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiSelect: {
         styleOverrides: {
           root: {
-            backgroundColor: 'var(--div-bg-color)',
-            color: 'var(--div-text-color)',
-            height: '30px',
+            'backgroundColor': 'var(--div-bg-color)',
+            'color': 'var(--div-text-color)',
+            'height': '30px',
             '&:hover': {
               borderColor: 'var(--main-text-color)',
             },
@@ -199,8 +199,8 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiMenuItem: {
         styleOverrides: {
           root: {
-            color: 'var(--main-menu-color)',
-            backgroundColor: 'var(--main-menu-bg-color)',
+            'color': 'var(--main-menu-color)',
+            'backgroundColor': 'var(--main-menu-bg-color)',
             '&:hover': {
               backgroundColor: 'var(--main-menu-hover-color)',
             },
@@ -217,7 +217,7 @@ export function createMuiTheme(primaryColor: string): Theme {
       MuiListItemButton: {
         styleOverrides: {
           root: {
-            cursor: 'pointer',
+            'cursor': 'pointer',
             '&:hover': {
               backgroundColor: 'var(--main-bg-color)',
             },

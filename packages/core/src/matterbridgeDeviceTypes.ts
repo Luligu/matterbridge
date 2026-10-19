@@ -24,7 +24,7 @@
 /* oxlint-disable max-lines */
 
 // @matter clusters
-import type { ClusterType } from '@matter/types';
+import type { ClusterType } from '@matter/types/cluster';
 import { AccountLogin } from '@matter/types/clusters/account-login';
 import { Actions } from '@matter/types/clusters/actions';
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';

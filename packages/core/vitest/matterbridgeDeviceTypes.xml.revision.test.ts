@@ -10,7 +10,7 @@ const NAME = 'MatterbridgeDevicetypesXmlRevision';
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { setupTest } from '@matterbridge/vitest-utils';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // oxfmt-ignore
 import {
@@ -121,6 +121,7 @@ import {
 } from '../src/matterbridgeDeviceTypes.js';
 import type { DeviceTypeDefinition } from '../src/matterbridgeDeviceTypes.js';
 
+// Setup the test environment
 await setupTest(NAME, false);
 
 const XML_DEVICE_TYPES_DIR = path.join('chip', '1.6.0', 'xml', 'device_types');

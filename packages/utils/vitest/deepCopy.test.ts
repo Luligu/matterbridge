@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { deepCopy } from '../src/deepCopy.js';
+
+// Setup the test environment
+await setupTest('DeepCopy', false);
 
 describe('deepCopy', () => {
   // Primitives

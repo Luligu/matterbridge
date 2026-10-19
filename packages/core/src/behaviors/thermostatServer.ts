@@ -25,8 +25,9 @@
 
 import { Bytes } from '@matter/general';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
-import { Status, StatusResponseError } from '@matter/types';
 import { Thermostat } from '@matter/types/clusters/thermostat';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

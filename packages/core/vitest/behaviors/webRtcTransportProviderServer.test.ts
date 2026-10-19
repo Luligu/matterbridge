@@ -13,11 +13,11 @@ const MATTER_PORT = 6005;
 const MATTER_CREATE_ONLY = true;
 
 import { Node } from '@matter/main';
-import { EndpointNumber, FabricIndex, NodeId, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
-import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
+import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
+import { StreamUsage, ThreeLevelAuto } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -27,7 +27,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeCameraAvStreamManagementServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
 import {
@@ -40,7 +41,8 @@ import { camera } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { internalFor } from '../../src/matterbridgeEndpointHelpers.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 // Timeout raised for the STUN gathering stall described in the file header above: the WeriftWebRtcSession
 // instances these tests drive gather ICE the same way.
@@ -595,7 +597,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
       ).resolves.toBeUndefined();
 
       expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('local webcam (test-webcam-device, 1280x720)'));
-      clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
+      clearExpectedWarnings(
+        'No injectable video codec available on negotiated transceivers',
+        'Cannot inject video stream: missing dependency ffmpeg',
+        'ffmpeg could not be resolved on this host',
+      );
 
       const currentSessions = device.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
       const webRtcSessionId = currentSessions[currentSessions.length - 1].id;
@@ -1308,7 +1314,11 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
         }),
       ).resolves.toBeUndefined();
 
-      clearExpectedWarnings('No injectable video codec available on negotiated transceivers', 'Cannot inject video stream: missing dependency ffmpeg');
+      clearExpectedWarnings(
+        'No injectable video codec available on negotiated transceivers',
+        'Cannot inject video stream: missing dependency ffmpeg',
+        'ffmpeg could not be resolved on this host',
+      );
       const currentSessions = endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions') ?? [];
       expect(currentSessions[0].videoStreams).toEqual([videoStreamId]);
       expect(currentSessions[0].streamUsage).toBe(StreamUsage.LiveView);

@@ -1,7 +1,6 @@
 // TODO: verify each rule
 // oxlint-disable typescript/promise-function-async
 // oxlint-disable promise/always-return
-// oxlint-disable promise/prefer-await-to-callbacks
 // oxlint-disable typescript/use-unknown-in-catch-callback-variable
 
 // @mui/icons-material
@@ -120,7 +119,7 @@ function HomeInstallAddPlugins() {
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files && event.target.files[0];
+    const file = event.target.files?.[0];
     if (file) {
       logMessage('Plugins', `Uploading package ${file.name}`);
 

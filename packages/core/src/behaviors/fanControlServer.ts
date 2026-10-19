@@ -26,8 +26,9 @@
 
 import type { MaybePromise, Observable } from '@matter/general';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
-import { Status, StatusResponseError } from '@matter/types';
 import { FanControl } from '@matter/types/clusters/fan-control';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

@@ -11,9 +11,8 @@ const MATTER_PORT = 13400;
 const MATTER_CREATE_ONLY = true;
 
 import { Bytes } from '@matter/general';
-import { Status } from '@matter/types';
 import { Thermostat } from '@matter/types/clusters/thermostat';
-import { loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -23,7 +22,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';

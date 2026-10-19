@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { getOffWithEffectRequest, getOnWithTimedOffRequest } from '@matterbridge/test-utils/matter';
 import {
   addDevice,
   aggregator,
@@ -18,11 +18,10 @@ import {
   createTestEnvironment,
   destroyTestEnvironment,
   flushServerNode,
-  getOffWithEffectRequest,
-  getOnWithTimedOffRequest,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';

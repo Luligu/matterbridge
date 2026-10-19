@@ -23,10 +23,11 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import { MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_DIAGNOSTIC_FILE, MATTERBRIDGE_HISTORY_FILE, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils/wait';
-import { flushAsync, HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { response as expressResponse } from 'express';
 import { LogLevel, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
@@ -47,12 +48,7 @@ const broadcastServerFetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').moc
 });
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the frontend/matter args afterwards
-process.argv = [
-  'node',
-  'frontend.express.test.js',
+await setupTest(NAME, false, [
   '--logger',
   'debug',
   '--matterlogger',
@@ -60,15 +56,14 @@ process.argv = [
   '--bridge',
   '--frontend',
   FRONTEND_PORT.toString(),
-  '--homedir',
-  HOMEDIR,
   '--port',
   MATTER_PORT.toString(),
   '--passcode',
   '123456',
   '--discriminator',
   '3860',
-];
+]);
+process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge frontend express with http', () => {
   let matterbridge: Matterbridge;
@@ -512,6 +507,29 @@ describe('Matterbridge frontend express with http', () => {
 
       expect(response.status).toBe(500);
       expect(response.body).toBe('Error downloading the matterbridge log file');
+    } finally {
+      downloadSpy.mockRestore();
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE));
+    }
+  }, 30000);
+
+  test('GET /api/download-mblog aborted does not send a 500', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'Test aborted content', 'utf8');
+    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation(function (this: typeof expressResponse, ...args: unknown[]) {
+      const done = args[args.length - 1];
+      if (typeof done === 'function') {
+        const error = Object.assign(new Error('Request aborted'), { code: 'ECONNABORTED' });
+        (done as (error: Error) => void)(error);
+      }
+      // The client is still connected here, so end the response to complete the request
+      this.end();
+    });
+
+    try {
+      const response = await makeRequest('/api/download-mblog', 'GET');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toBe('');
     } finally {
       downloadSpy.mockRestore();
       await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE));

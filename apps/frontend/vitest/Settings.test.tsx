@@ -29,21 +29,6 @@ vi.mock('../src/components/ChangePasswordDialog', () => ({
       </div>
     ) : null,
 }));
-vi.mock('../src/components/NetworkConfigDialog', () => ({
-  NetworkConfigDialog: ({ open, ip, onClose, onSave }: { open: boolean; ip: string; onClose: () => void; onSave: (config: Record<string, string>) => void }) =>
-    open ? (
-      <div>
-        <span>net-dialog-ip:{ip}</span>
-        <button type="button" onClick={() => onSave({ type: 'dhcp', ip: '', subnet: '', gateway: '', dns: '' })}>
-          save-net
-        </button>
-        <button type="button" onClick={onClose}>
-          close-net
-        </button>
-      </div>
-    ) : null,
-}));
-
 import { setWssPassword } from '../src/appState';
 import Settings from '../src/components/Settings';
 import { UiContext, type UiContextType } from '../src/components/UiContext';
@@ -72,7 +57,6 @@ const settings = {
     matterPasscode: 20202021,
     virtualMode: 'disabled',
     readOnly: false,
-    shellyBoard: false,
   },
   systemInformation: {
     interfaceName: 'eth0',
@@ -106,7 +90,6 @@ const config = (name: string, value: unknown) => ({ id: 23, sender: 'Settings', 
 function renderSettings(ui: UiContextType = uiContext) {
   const sendMessage = vi.fn();
   let listener: ((message: unknown) => void) | undefined;
-  // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
   const addListener = vi.fn((callback: (message: unknown) => void) => {
     listener = callback;
   });
@@ -137,7 +120,6 @@ describe('Settings', () => {
     const sendMessage = vi.fn();
     const removeListener = vi.fn();
     let listener: ((message: unknown) => void) | undefined;
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
     const addListener = vi.fn((callback: (message: unknown) => void) => {
       listener = callback;
     });
@@ -314,35 +296,6 @@ describe('Settings', () => {
 
     fireEvent.click(screen.getByText('close-password'));
     expect(screen.queryByText('save-password')).not.toBeInTheDocument();
-  });
-
-  it('offers the network configuration only on a shelly board', () => {
-    const { emit } = renderSettings();
-    emit({ method: '/api/settings', id: 23, response: settings });
-
-    expect(screen.queryByRole('button', { name: 'Configure IP' })).not.toBeInTheDocument();
-  });
-
-  it('saves the network configuration on a shelly board', () => {
-    const { sendMessage, emit } = renderSettings();
-    emit({ method: '/api/settings', id: 23, response: withInfo({ shellyBoard: true }) });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Configure IP' }));
-    // The dialog is seeded with the address reported in the system information.
-    expect(screen.getByText(/net-dialog-ip:192.168.1.2/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('save-net'));
-    expect(sendMessage).toHaveBeenCalledWith({
-      id: 23,
-      sender: 'Settings',
-      method: '/api/shellynetconfig',
-      src: 'Frontend',
-      dst: 'Matterbridge',
-      params: { type: 'dhcp', ip: '', subnet: '', gateway: '', dns: '' },
-    });
-
-    fireEvent.click(screen.getByText('close-net'));
-    expect(screen.queryByText('save-net')).not.toBeInTheDocument();
   });
 
   it('stores the plugins panel preference in both directions', () => {

@@ -46,6 +46,7 @@ beforeEach(() => {
   scrollIntoView.mockClear();
   Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: scrollIntoView });
   Reflect.deleteProperty(window, 'ontouchstart');
+  // oxlint-disable-next-line unicorn/no-useless-undefined -- stubGlobal requires the value; undefined is the stubbed value.
   vi.stubGlobal('DocumentTouch', undefined);
   vi.spyOn(console, 'log').mockImplementation(() => {});
 });

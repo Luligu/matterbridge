@@ -3,7 +3,7 @@
  * @description This file contains the DeviceManager class.
  * @author Luca Liguori
  * @created 2024-07-26
- * @version 1.1.3
+ * @version 1.1.4
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -23,7 +23,7 @@
 
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { BaseDevice, WorkerMessage } from '@matterbridge/types';
+import type { ApiDevice, BaseDevice, WorkerMessage } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -32,49 +32,15 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampForm
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { toApiDevice, toBaseDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('Device Manager');
-
-/**
- * Converts a MatterbridgeEndpoint to a BaseDevice.
- *
- * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
- * @returns {BaseDevice} The converted BaseDevice.
- */
-export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDevice {
-  return {
-    // MatterbridgeEndpoint properties
-    mode: device.mode,
-    plugin: device.plugin,
-    configUrl: device.configUrl,
-    deviceName: device.deviceName,
-    serialNumber: device.serialNumber,
-    uniqueId: device.uniqueId,
-    vendorId: device.vendorId,
-    vendorName: device.vendorName,
-    productId: device.productId,
-    productName: device.productName,
-    productLabel: device.productLabel,
-    productUrl: device.productUrl,
-    configurationVersion: device.configurationVersion,
-    softwareVersion: device.softwareVersion,
-    softwareVersionString: device.softwareVersionString,
-    hardwareVersion: device.hardwareVersion,
-    hardwareVersionString: device.hardwareVersionString,
-    tagList: device.tagList,
-    originalId: device.originalId,
-    name: device.name,
-    deviceType: device.deviceType,
-    // Endpoint properties
-    number: device.number,
-    id: device.id,
-  };
-}
 
 /**
  * Manages Matterbridge devices.
  */
 export class DeviceManager {
+  /** A map of unique IDs to Matterbridge endpoints for quick lookup. Keyed by the unique ID of each device. */
   private readonly _devices = new Map<string, MatterbridgeEndpoint>();
   private readonly log: AnsiLogger;
   private readonly server: BroadcastServer;
@@ -85,8 +51,7 @@ export class DeviceManager {
    * Creates an instance of DeviceManager.
    */
   constructor() {
-    /* v8 ignore next cause debug logs are not relevant for coverage */
-    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: hasParameter('debug') ? LogLevel.DEBUG : LogLevel.INFO });
+    this.log = new AnsiLogger({ logName: 'DeviceManager', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.debug('Matterbridge device manager starting...');
     this.server = new BroadcastServer('devices', this.log);
     this.server.on('broadcast_message', this.msgHandler.bind(this));
@@ -100,10 +65,14 @@ export class DeviceManager {
     this.server.close();
   }
 
+  /**
+   * Handles the broadcast messages sent to the device manager.
+   * Only the request messages are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   */
   private msgHandler(msg: WorkerMessage): void {
-    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
-      /* v8 ignore next cause debug logs are not relevant for coverage */
       if (this.verbose) this.log.debug(`Received request message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -129,8 +98,18 @@ export class DeviceManager {
           }
           break;
         case 'devices_set':
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+          {
+            // Merge the properties into the existing device, so the fields not sent are preserved, otherwise add the device
+            const device = msg.params.device.uniqueId ? this._devices.get(msg.params.device.uniqueId) : undefined;
+            if (device) {
+              Object.assign(device, Object.fromEntries(Object.entries(toBaseDevice(msg.params.device)).filter(([, value]) => value !== undefined)));
+              // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+              this.server.respond({ ...msg, result: { device: device as unknown as BaseDevice } });
+            } else {
+              // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+              this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+            }
+          }
           break;
         case 'devices_remove':
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
@@ -143,8 +122,10 @@ export class DeviceManager {
         case 'devices_basearray':
           this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
           break;
+        case 'devices_apidevicearray':
+          this.server.respond({ ...msg, result: { devices: this.apiDeviceArray(msg.params.pluginName, msg.params.extended) } });
+          break;
         default:
-          /* v8 ignore next cause debug logs are not relevant for coverage */
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
       }
     }
@@ -259,6 +240,25 @@ export class DeviceManager {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
       devices.push(this.toBaseDevice(device));
+    }
+    return devices;
+  }
+
+  /**
+   * Gets an array of all devices in the ApiDevice format used by the frontend.
+   * Devices that are not ready or miss the required properties are skipped.
+   *
+   * @param {string} [pluginName] - Optional plugin name to filter devices.
+   * @param {boolean} [extended] - Whether to include extended information.
+   * @returns {ApiDevice[]} An array of ApiDevice.
+   */
+  apiDeviceArray(pluginName?: string, extended?: boolean): ApiDevice[] {
+    const devices: ApiDevice[] = [];
+    for (const device of this._devices.values()) {
+      // Filter by pluginName if provided
+      if (pluginName && pluginName !== device.plugin) continue;
+      const apiDevice = toApiDevice(device, extended);
+      if (apiDevice) devices.push(apiDevice);
     }
     return devices;
   }

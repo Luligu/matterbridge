@@ -8,9 +8,8 @@ const NAME = 'ValveConfigurationAndControlServer';
 const MATTER_PORT = 12200;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -20,7 +19,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeValveConfigurationAndControlServer } from '../../src/behaviors/valveConfigurationAndControlServer.js';

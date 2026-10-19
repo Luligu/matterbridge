@@ -1,12 +1,10 @@
-# .gitignore 1.0.3
+# .gitignore 1.0.5
 
 # This file specifies intentionally untracked directories and files that Git should ignore.
 
 # Specific directories that should be ignored
 .cache/
-artifacts/
 build/
-chip/
 coverage/
 dist/
 node_modules/
@@ -29,12 +27,6 @@ tmp/
 
 # Package specific directories and files that should be ignored (mb-run --upgrade merges the .localignore .gitlocalignore files from packages)
 chip/
-heap_profile
-heap_profiles
 heap_snapshots
+heap_profiles
 TODO.md
-
-# Allow dist folders inside vendor/
-!vendor/**/dist/
-!vendor/**/dist/**
-!*chipTestsSummary.log

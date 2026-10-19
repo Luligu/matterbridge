@@ -22,15 +22,16 @@
  * limitations under the License.
  */
 
-import { StreamUsage } from '@matter/types';
+// @matter
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import { StreamUsage } from '@matter/types/globals';
 
+// Matterbridge
 import { createDefaultAudioCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addChimeClient, addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
 import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
-// Matterbridge
 import { audioDoorbell, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';

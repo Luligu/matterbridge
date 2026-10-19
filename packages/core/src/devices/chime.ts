@@ -22,11 +22,12 @@
  * limitations under the License.
  */
 
+// @matter
 import type { Chime as ChimeCluster } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 
-import { type ChimeId, createDefaultChimeClusterServer } from '../behaviors/chimeServer.js';
 // Matterbridge
+import { type ChimeId, createDefaultChimeClusterServer } from '../behaviors/chimeServer.js';
 import { chime, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';

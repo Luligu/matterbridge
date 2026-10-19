@@ -67,9 +67,6 @@ const excludedKeys = [
   'matterIpv4Address',
   'matterIpv6Address',
   'readOnly',
-  'shellyBoard',
-  'shellySysUpdate',
-  'shellyMainUpdate',
   'matterPort',
   'matterDiscriminator',
   'matterPasscode',
@@ -98,7 +95,7 @@ function valueCell(label: string) {
 beforeEach(() => {
   settings.debug = false;
   settings.enableMobile = true;
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 afterEach(() => {

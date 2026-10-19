@@ -6,13 +6,12 @@
 
 /* oxlint-disable typescript/explicit-function-return-type */
 
-import { consoleLogSpy, setDebug, setupTest } from './vitestSetupTest.js';
+import { consoleLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 // Setup the test environment
 await setupTest('Inspector', false);
 
 describe('Inspector', () => {
-  const originalArgv = [...process.argv];
   const originalGc = global.gc;
 
   beforeEach(async () => {
@@ -25,7 +24,7 @@ describe('Inspector', () => {
   });
 
   afterEach(() => {
-    process.argv = [...originalArgv];
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     vi.useRealTimers();
     // Restore all mocks
@@ -33,7 +32,7 @@ describe('Inspector', () => {
   });
 
   afterAll(() => {
-    process.argv = originalArgv;
+    process.argv = [...originalProcessArgv];
     global.gc = originalGc;
     // Restore all mocks
     vi.restoreAllMocks();
@@ -637,8 +636,11 @@ describe('Inspector', () => {
     // @ts-expect-error accessing private member for test
     expect(inspector.session).toBeUndefined();
     await inspector.start();
+    const startSpy = vi.spyOn(inspector, 'start');
     inspector.emit('start');
-    await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
+    // Await the fire-and-forget start so its log lands inside this test, where the console is mocked
+    expect(startSpy).toHaveBeenCalledTimes(1);
+    await startSpy.mock.results[0].value;
     await inspector.stop();
   });
 
@@ -649,7 +651,10 @@ describe('Inspector', () => {
     expect(inspector.session).toBeUndefined();
     await inspector.start();
     await inspector.stop();
+    const stopSpy = vi.spyOn(inspector, 'stop');
     inspector.emit('stop');
-    await new Promise((resolve) => setTimeout(resolve, 500)); // allow any async handlers to run
+    // Await the fire-and-forget stop so its log lands inside this test, where the console is mocked
+    expect(stopSpy).toHaveBeenCalledTimes(1);
+    await stopSpy.mock.results[0].value;
   });
 });

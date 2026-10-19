@@ -1,5 +1,5 @@
 ---
-name: 'Testing Standards v.1.0.5'
+name: 'Testing Standards v.1.0.6'
 description: 'Testing standards for unit tests in the project'
 applyTo: '**/*.test.ts, **/*.spec.ts, **/test/**/*.ts, **/vitest/**/*.ts, **/buntest/**/*.ts'
 ---

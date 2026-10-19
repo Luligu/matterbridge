@@ -113,8 +113,8 @@ function Devices(): React.JSX.Element {
                 value={filterPlugins}
                 onChange={handleFilterPluginsChange}
                 sx={{
-                  width: '260px',
-                  backgroundColor: 'var(--main-bg-color)',
+                  'width': '260px',
+                  'backgroundColor': 'var(--main-bg-color)',
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: 'var(--main-bg-color)',
                   },
@@ -141,7 +141,7 @@ function Devices(): React.JSX.Element {
                 onChange={handleFilterDevicesChange}
                 placeholder="Enter the device name or serial"
                 sx={{
-                  width: '260px',
+                  'width': '260px',
                   '& .MuiOutlinedInput-root': {
                     backgroundColor: 'var(--main-bg-color)',
                   },

@@ -3,7 +3,7 @@
  * @description This file contains the types for WebSocket messages.
  * @author Luca Liguori
  * @created 2025-09-17
- * @version 1.0.0
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -21,8 +21,84 @@
  * limitations under the License.
  */
 
-import type { EndpointNumber } from '@matter/types';
+/*
+ *   WebSocket message types for frontend components.
+ * | ---------------------------- | ----------------------------------------------------------- |
+ * | component                    | api                                                         |
+ * | ---------------------------- | ----------------------------------------------------------- |
+ * | App                          | /api/login (fetch)                                                 |
+ * | ConfigPluginDialog           | /api/action                                                 |
+ * |                              | /api/savepluginconfig                                       |
+ * |                              | /api/select/devices                                         |
+ * |                              | /api/select/entities                                        |
+ * | Devices                      | /api/plugins                                                |
+ * | DevicesIcons                 | /api/clusters                                               |
+ * |                              | /api/devices                                                |
+ * | DevicesTable                 | /api/clusters                                               |
+ * |                              | /api/devices (cluster)                                               |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/settings                                               |
+ * | Header                       | /api/checkupdates                                           |
+ * |                              | /api/create-backup                                          |
+ * |                              | /api/create-config-backup                                   |
+ * |                              | /api/create-matter-storage-backup                           |
+ * |                              | /api/create-matterbridge-storage-backup                     |
+ * |                              | /api/create-plugin-backup                                   |
+ * |                              | /api/download-backup                                        |
+ * |                              | /api/download-diagnostic                                    |
+ * |                              | /api/download-mblog                                         |
+ * |                              | /api/download-mbstorage                                     |
+ * |                              | /api/download-mjlog                                         |
+ * |                              | /api/download-mjstorage                                     |
+ * |                              | /api/download-pluginconfig                                  |
+ * |                              | /api/download-pluginstorage                                 |
+ * |                              | /api/downloadhistory                                        |
+ * |                              | /api/downloadhistorypage                                    |
+ * |                              | /api/factoryreset                                           |
+ * |                              | /api/install                                                |
+ * |                              | /api/reset                                                  |
+ * |                              | /api/restart                                                |
+ * |                              | /api/settings                                               |
+ * |                              | /api/shutdown                                               |
+ * |                              | /api/unregister                                             |
+ * |                              | /api/view-diagnostic                                        |
+ * |                              | /api/view-mblog                                             |
+ * |                              | /api/view-mjlog                                             |
+ * |                              | /api/viewhistory                                            |
+ * |                              | /api/viewhistorypage                                        |
+ * | Home                         | /api/plugins                                                |
+ * |                              | /api/settings                                               |
+ * | HomeDevices                  | /api/command                                                |
+ * |                              | /api/devices (reachable, powerSource, batteryLevel, matter) |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/select/devices                                         |
+ * |                              | /api/settings                                               |
+ * | HomeInstallAddPlugins        | /api/addplugin                                              |
+ * |                              | /api/install                                                |
+ * |                              | /api/uninstall                                              |
+ * |                              | /api/uploadpackage                                          |
+ * | HomePlugins                  | /api/disableplugin                                          |
+ * |                              | /api/enableplugin                                           |
+ * |                              | /api/install                                                |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/removeplugin                                           |
+ * |                              | /api/restartplugin                                          |
+ * |                              | /api/select/devices                                         |
+ * |                              | /api/select/entities                                        |
+ * |                              | /api/settings                                               |
+ * | QRDiv                        | /api/matter                                                 |
+ * | Settings                     | /api/config                                                 |
+ * |                              | /api/settings                                               |
+ * | SystemInfoTable              | /api/viewhistory                                            |
+ * |                              | /api/viewhistorypage                                        |
+ * | Test                         | /api/clusters                                               |
+ * |                              | /api/devices                                                |
+ * |                              | /api/plugins                                                |
+ * |                              | /api/settings                                               |
+ * | WebSocketProvider            | ping                                                        |
+ */
 
+// matterbridge
 import type { PlatformConfig } from './matterbridgePlatformTypes.js';
 import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BridgeStatus, MatterbridgeInformation, SystemInformation } from './matterbridgeTypes.js';
 
@@ -33,26 +109,64 @@ export interface ApiSettings {
   systemInformation: SystemInformation;
 }
 
+/**
+ * A device the plugin offers for selection in the config editor (whiteList/blackList with selectFrom: 'serial' or 'name').
+ * Set by the plugin with platform.setSelectDevice(), returned by platform.getSelectDevices() for /api/select/devices.
+ */
 export interface ApiSelectDevice {
-  pluginName: string;
-  serial: string;
-  name: string;
+  /** The plugin name to be in sync with ApiDevice and BaseDevice */
+  plugin: string;
+  /** The device serial number (serial in setSelectDevice) */
+  serialNumber: string;
+  /** The device name (name in setSelectDevice) */
+  deviceName: string;
+  /** The device configuration url */
   configUrl?: string;
+  /** The device icon: 'wifi', 'ble', 'hub' */
   icon?: string;
+  /** The entities of this device */
   entities?: ApiSelectDeviceEntity[];
 }
 
+/** An entity of a select device (ApiSelectDevice.entities). */
 export interface ApiSelectDeviceEntity {
+  /** The entity name */
   name: string;
+  /** The entity description */
   description: string;
+  /** The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter' */
   icon?: string;
 }
 
+/**
+ * An entity the plugin offers for selection in the config editor (e.g. entityBlackList with selectEntityFrom: 'name' or 'description').
+ * Entities are the components a device is made of (e.g. the switches or sensors of a device), not devices themselves.
+ * Set by the plugin with platform.setSelectEntity(), returned by platform.getSelectEntities() for /api/select/entities.
+ */
 export interface ApiSelectEntity {
-  pluginName: string;
+  /** The plugin name to be in sync with ApiDevice and BaseDevice */
+  plugin: string;
+  /** The entity name */
   name: string;
+  /** The entity description */
   description: string;
+  /** The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter' */
   icon?: string;
+}
+
+export interface ApiSystemUpdate {
+  systemUptime: string;
+  processUptime: string;
+  totalMemory: string;
+  freeMemory: string;
+  constrainedMemory: string;
+  rss: string;
+  heapTotal: string;
+  heapUsed: string;
+  external: string;
+  arrayBuffers: string;
+  cpuUsage: number;
+  processCpuUsage: number;
 }
 
 /**
@@ -107,7 +221,6 @@ export interface WsMessagePingRequest extends WsMessageBaseApiRequest {
 export interface WsMessagePingResponse extends WsMessageSuccessApiResponse {
   method: 'pong';
   response: 'pong';
-  success: true;
 }
 
 export interface WsMessageApiLoginRequest extends WsMessageBaseApiRequest {
@@ -209,56 +322,6 @@ export interface WsMessageApiCheckUpdatesResponse extends WsMessageSuccessApiRes
   method: '/api/checkupdates';
 }
 
-export interface WsMessageApiShellySysUpdateRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellysysupdate';
-}
-export interface WsMessageApiShellySysUpdateResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellysysupdate';
-}
-
-export interface WsMessageApiShellyMainUpdateRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellymainupdate';
-}
-export interface WsMessageApiShellyMainUpdateResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellymainupdate';
-}
-
-export interface WsMessageApiShellyCreateSystemLogRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellycreatesystemlog';
-}
-export interface WsMessageApiShellyCreateSystemLogResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellycreatesystemlog';
-}
-
-export interface WsMessageApiShellyNetConfigRequest extends WsMessageBaseApiRequest {
-  method: '/api/shellynetconfig';
-  params: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string };
-}
-export interface WsMessageApiShellyNetConfigResponse extends WsMessageSuccessApiResponse {
-  method: '/api/shellynetconfig';
-}
-
-export interface WsMessageApiSoftResetRequest extends WsMessageBaseApiRequest {
-  method: '/api/softreset';
-}
-export interface WsMessageApiSoftResetResponse extends WsMessageSuccessApiResponse {
-  method: '/api/softreset';
-}
-
-export interface WsMessageApiHardResetRequest extends WsMessageBaseApiRequest {
-  method: '/api/hardreset';
-}
-export interface WsMessageApiHardResetResponse extends WsMessageSuccessApiResponse {
-  method: '/api/hardreset';
-}
-
-export interface WsMessageApiRebootRequest extends WsMessageBaseApiRequest {
-  method: '/api/reboot';
-}
-export interface WsMessageApiRebootResponse extends WsMessageSuccessApiResponse {
-  method: '/api/reboot';
-}
-
 export interface WsMessageApiRestartRequest extends WsMessageBaseApiRequest {
   method: '/api/restart';
 }
@@ -346,18 +409,28 @@ export interface WsMessageApiDownloadHistoryPageResponse extends WsMessageSucces
 }
 
 export interface WsMessageApiMatterRequest extends WsMessageBaseApiRequest {
+  /** WebSocket API route for Matter server node data and actions. */
   method: '/api/matter';
+  /** Identifies the server node and optionally requests an action. */
   params: {
+    /** Server node ID: 'Matterbridge' for the bridge, or a plugin or device server node ID. */
     id: string;
+    /** Broadcast the node data in a 'matter' refresh notification, used when QRDiv selects a node. */
     server?: boolean;
+    /** Open basic commissioning and broadcast a refresh with advertising enabled and its start time. */
     startCommission?: boolean;
+    /** End commissioning and broadcast a refresh with advertising disabled and its start time cleared. */
     stopCommission?: boolean;
+    /** Restart the node advertisement and broadcast a refresh with advertising enabled. */
     advertise?: boolean;
+    /** Fabric index to remove from the node, if present; broadcast a Matter refresh afterward. */
     removeFabric?: number;
   };
 }
 export interface WsMessageApiMatterResponse extends WsMessageSuccessApiResponse {
+  /** WebSocket API route matching the Matter request. */
   method: '/api/matter';
+  /** Sanitized server node data captured before any requested actions are performed. */
   response: ApiMatter;
 }
 
@@ -381,6 +454,7 @@ export interface WsMessageApiDevicesRequest extends WsMessageBaseApiRequest {
   method: '/api/devices';
   params: {
     pluginName?: string;
+    extended: boolean;
   };
 }
 export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse {
@@ -391,10 +465,10 @@ export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse
 export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   method: '/api/clusters';
   params: {
-    plugin: string;
-    endpoint: number;
-    serialNumber?: string;
-    uniqueId?: string;
+    pluginName: string;
+    number: number;
+    serialNumber: string;
+    uniqueId: string;
   };
 }
 export interface WsMessageApiClustersResponse extends WsMessageSuccessApiResponse {
@@ -499,36 +573,10 @@ export interface WsMessageApiRestartNotRequired extends WsMessageSuccessApiRespo
   method: 'restart_not_required';
 }
 
-export interface WsMessageApiCpuUpdate extends WsMessageSuccessApiResponse {
+export interface WsMessageApiSystemUpdate extends WsMessageSuccessApiResponse {
   id: 0;
-  method: 'cpu_update';
-  response: {
-    cpuUsage: number;
-    processCpuUsage: number;
-  };
-}
-
-export interface WsMessageApiMemoryUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'memory_update';
-  response: {
-    totalMemory: string;
-    freeMemory: string;
-    heapTotal: string;
-    heapUsed: string;
-    external: string;
-    arrayBuffers: string;
-    rss: string;
-  };
-}
-
-export interface WsMessageApiUptimeUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'uptime_update';
-  response: {
-    systemUptime: string;
-    processUptime: string;
-  };
+  method: 'system_update';
+  response: ApiSystemUpdate;
 }
 
 export interface WsMessageApiSnackbar extends WsMessageSuccessApiResponse {
@@ -569,6 +617,7 @@ export interface WsMessageApiPluginUpdateRequired extends WsMessageSuccessApiRes
 }
 
 export interface PluginStatusUpdate {
+  /** Signal that the dedicated Matter server node of the plugin has been created (childbridge mode only). See ApiPlugin.locked. */
   locked?: boolean;
   error?: boolean;
   enabled?: boolean;
@@ -602,24 +651,12 @@ export interface WsMessageApiStateUpdate extends WsMessageSuccessApiResponse {
     plugin: string;
     serialNumber: string;
     uniqueId: string;
-    number: EndpointNumber;
+    number: number;
     id: string;
     cluster: string;
     attribute: string;
     value: number | string | boolean | null | undefined;
   };
-}
-
-export interface WsMessageApiShellySysUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'shelly_sys_update';
-  response: { available: boolean };
-}
-
-export interface WsMessageApiShellyMainUpdate extends WsMessageSuccessApiResponse {
-  id: 0;
-  method: 'shelly_main_update';
-  response: { available: boolean };
 }
 
 export interface WsMessageApiArchive extends WsMessageSuccessApiResponse {
@@ -646,13 +683,6 @@ export type WsMessageApiRequest =
   | WsMessageApiRestartPluginRequest
   | WsMessageApiSavePluginConfigRequest
   | WsMessageApiCheckUpdatesRequest
-  | WsMessageApiShellySysUpdateRequest
-  | WsMessageApiShellyMainUpdateRequest
-  | WsMessageApiShellyCreateSystemLogRequest
-  | WsMessageApiShellyNetConfigRequest
-  | WsMessageApiSoftResetRequest
-  | WsMessageApiHardResetRequest
-  | WsMessageApiRebootRequest
   | WsMessageApiRestartRequest
   | WsMessageApiShutdownRequest
   | WsMessageApiCreateBackupRequest
@@ -689,13 +719,6 @@ export type WsMessageApiResponse =
   | WsMessageApiRestartPluginResponse
   | WsMessageApiSavePluginConfigResponse
   | WsMessageApiCheckUpdatesResponse
-  | WsMessageApiShellySysUpdateResponse
-  | WsMessageApiShellyMainUpdateResponse
-  | WsMessageApiShellyCreateSystemLogResponse
-  | WsMessageApiShellyNetConfigResponse
-  | WsMessageApiSoftResetResponse
-  | WsMessageApiHardResetResponse
-  | WsMessageApiRebootResponse
   | WsMessageApiRestartResponse
   | WsMessageApiShutdownResponse
   | WsMessageApiCreateBackupResponse
@@ -726,14 +749,10 @@ export type WsMessageApiResponse =
   | WsMessageApiPluginUpdateRequired
   | WsMessageApiPluginStatusUpdate
   | WsMessageApiMatterbridgeStatusUpdate
-  | WsMessageApiCpuUpdate
-  | WsMessageApiMemoryUpdate
-  | WsMessageApiUptimeUpdate
+  | WsMessageApiSystemUpdate
   | WsMessageApiStateUpdate
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
-  | WsMessageApiShellySysUpdate
-  | WsMessageApiShellyMainUpdate
   | WsMessageApiArchive;
 
 // Union type for all specific WebSocket broadcast message types
@@ -746,14 +765,10 @@ export type WsMessageBroadcast =
   | WsMessageApiPluginUpdateRequired
   | WsMessageApiPluginStatusUpdate
   | WsMessageApiMatterbridgeStatusUpdate
-  | WsMessageApiCpuUpdate
-  | WsMessageApiMemoryUpdate
-  | WsMessageApiUptimeUpdate
+  | WsMessageApiSystemUpdate
   | WsMessageApiStateUpdate
   | WsMessageApiSnackbar
   | WsMessageApiCloseSnackbar
-  | WsMessageApiShellySysUpdate
-  | WsMessageApiShellyMainUpdate
   | WsMessageApiArchive;
 
 /**

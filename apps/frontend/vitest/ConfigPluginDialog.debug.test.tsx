@@ -24,7 +24,7 @@ import { ConfigPluginDialog } from '../src/components/ConfigPluginDialog';
 describe('ConfigPluginDialog debug paths', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   const createPlugin = (): ApiPlugin => ({
@@ -38,21 +38,21 @@ describe('ConfigPluginDialog debug paths', () => {
     enabled: true,
     private: false,
     configJson: {
-      name: 'matterbridge-debug-test',
-      type: 'DynamicPlatform',
-      version: '1.0.0',
-      deviceNames: [],
-      entityNames: [],
+      'name': 'matterbridge-debug-test',
+      'type': 'DynamicPlatform',
+      'version': '1.0.0',
+      'deviceNames': [],
+      'entityNames': [],
       'Kitchen Sensor': [],
-      serialMappings: {},
-      debugAction: false,
-      debug: false,
-      unregisterOnShutdown: false,
+      'serialMappings': {},
+      'debugAction': false,
+      'debug': false,
+      'unregisterOnShutdown': false,
     },
     schemaJson: {
       type: 'object',
       properties: {
-        deviceNames: {
+        'deviceNames': {
           type: 'array',
           title: 'Device Names',
           items: {
@@ -61,7 +61,7 @@ describe('ConfigPluginDialog debug paths', () => {
           },
           selectFrom: 'name',
         },
-        entityNames: {
+        'entityNames': {
           type: 'array',
           title: 'Entity Names',
           items: {
@@ -79,7 +79,7 @@ describe('ConfigPluginDialog debug paths', () => {
           },
           selectDeviceEntityFrom: 'name',
         },
-        serialMappings: {
+        'serialMappings': {
           type: 'object',
           title: 'Serial Mappings',
           selectFrom: 'serial',
@@ -88,7 +88,7 @@ describe('ConfigPluginDialog debug paths', () => {
             default: '',
           },
         },
-        debugAction: {
+        'debugAction': {
           type: 'boolean',
           title: 'Debug Action',
           description: 'Execute a debug action',
@@ -139,15 +139,15 @@ describe('ConfigPluginDialog debug paths', () => {
       method: '/api/select/devices',
       response: [
         {
-          serial: 'serial-001',
-          name: 'Kitchen Sensor',
+          serialNumber: 'serial-001',
+          deviceName: 'Kitchen Sensor',
           icon: 'wifi',
           entities: [
             { name: 'Kitchen Light', description: 'Kitchen Light Desc', icon: 'component' },
             { name: 'Kitchen Matter', description: 'Kitchen Matter Desc', icon: 'matter' },
           ],
         },
-        { serial: 'serial-002', name: 'Hall Sensor', icon: 'ble' },
+        { serialNumber: 'serial-002', deviceName: 'Hall Sensor', icon: 'ble' },
       ],
     });
     listener({

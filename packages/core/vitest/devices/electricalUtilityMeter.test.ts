@@ -22,7 +22,6 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { PowerTopology } from '@matter/types/clusters/power-topology';
 import { EndpointNumber } from '@matter/types/datatype';
 import { TariffPriceType, TariffUnit } from '@matter/types/globals';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -33,7 +32,9 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { stringify } from 'node-ansi-logger';
 
 import { ElectricalUtilityMeter, MatterbridgeCommodityPriceServer, MatterbridgeCommodityTariffServer } from '../../src/devices/electricalUtilityMeter.js';
 import { electricalEnergyTariff, electricalMeter, electricalSensor, electricalUtilityMeter } from '../../src/matterbridgeDeviceTypes.js';
@@ -350,6 +351,830 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add an electrical utility meter device', async () => {
     expect(await addDevice(server, device)).toBeTruthy();
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1297, revision: 1 }, { deviceType: 1298, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5, 6, 7, 8, 9, 14091, 14092 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 64, 2822 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 1, label: undefined } ]',
+        'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
+        'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'fixedLabel(0x40).clusterRevision(0xfffd)=1',
+        'fixedLabel(0x40).featureMap(0xfffc)={  }',
+        'fixedLabel(0x40).generatedCommandList(0xfff8)=[  ]',
+        "fixedLabel(0x40).labelList(0x0)=[ { label: 'composed', value: 'UtilityMeter' } ]",
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'meterIdentification(0xb06).acceptedCommandList(0xfff9)=[  ]',
+        'meterIdentification(0xb06).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'meterIdentification(0xb06).clusterRevision(0xfffd)=1',
+        'meterIdentification(0xb06).featureMap(0xfffc)={ powerThreshold: false }',
+        'meterIdentification(0xb06).generatedCommandList(0xfff8)=[  ]',
+        'meterIdentification(0xb06).meterSerialNumber(0x2)=null',
+        'meterIdentification(0xb06).meterType(0x0)=null',
+        'meterIdentification(0xb06).pointOfDelivery(0x1)=null',
+        'meterIdentification(0xb06).protocolVersion(0x3)=null',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2, 3, 14091, 4, 5, 6, 14092, 7, 8, 9 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalMeter child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalMeter');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityMetering(0xb07).acceptedCommandList(0xfff9)=[  ]',
+        'commodityMetering(0xb07).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityMetering(0xb07).clusterRevision(0xfffd)=1',
+        'commodityMetering(0xb07).featureMap(0xfffc)={  }',
+        'commodityMetering(0xb07).generatedCommandList(0xfff8)=[  ]',
+        'commodityMetering(0xb07).maximumMeteredQuantities(0x3)=null',
+        'commodityMetering(0xb07).meteredQuantity(0x0)=null',
+        'commodityMetering(0xb07).meteredQuantityTimestamp(0x1)=null',
+        'commodityMetering(0xb07).tariffUnit(0x2)=null',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1300, revision: 1 }, { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 144, 145, 156, 2823 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 10, tag: 1, label: undefined }, { mfgCode: null, namespaceId: 15, tag: 1, label: undefined }, { mfgCode: null, namespaceId: 19, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 11, tag: 0, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalMeterExplicit child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalMeterExplicit');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityMetering(0xb07).acceptedCommandList(0xfff9)=[  ]',
+        'commodityMetering(0xb07).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityMetering(0xb07).clusterRevision(0xfffd)=1',
+        'commodityMetering(0xb07).featureMap(0xfffc)={  }',
+        'commodityMetering(0xb07).generatedCommandList(0xfff8)=[  ]',
+        'commodityMetering(0xb07).maximumMeteredQuantities(0x3)=1',
+        'commodityMetering(0xb07).meteredQuantity(0x0)=[ { tariffComponentIDs: [ 1 ], quantity: 12.5 } ]',
+        'commodityMetering(0xb07).meteredQuantityTimestamp(0x1)=1700000000',
+        'commodityMetering(0xb07).tariffUnit(0x2)=0',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1300, revision: 1 }, { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 144, 145, 156, 2823 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 7, tag: 1, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)={ energy: 0, startTimestamp: undefined, endTimestamp: undefined, startSystime: undefined, endSystime: undefined, apparentEnergy: undefined, reactiveEnergy: undefined }',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)={ energy: 1000000, startTimestamp: undefined, endTimestamp: undefined, startSystime: undefined, endSystime: undefined, apparentEnergy: undefined, reactiveEnergy: undefined }',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=2000',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=460000',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=230000',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalMeterWithTariff child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalMeterWithTariff');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityMetering(0xb07).acceptedCommandList(0xfff9)=[  ]',
+        'commodityMetering(0xb07).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityMetering(0xb07).clusterRevision(0xfffd)=1',
+        'commodityMetering(0xb07).featureMap(0xfffc)={  }',
+        'commodityMetering(0xb07).generatedCommandList(0xfff8)=[  ]',
+        'commodityMetering(0xb07).maximumMeteredQuantities(0x3)=null',
+        'commodityMetering(0xb07).meteredQuantity(0x0)=null',
+        'commodityMetering(0xb07).meteredQuantityTimestamp(0x1)=null',
+        'commodityMetering(0xb07).tariffUnit(0x2)=null',
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)={ currency: 978, decimalPoints: 4 }',
+        'commodityPrice(0x95).currentPrice(0x2)={ periodStart: 1700000000, periodEnd: null, price: 2000, priceLevel: undefined, description: undefined, components: undefined }',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=0',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=null',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)=null',
+        'commodityTariff(0x700).currentDayEntry(0x9)=null',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=null',
+        'commodityTariff(0x700).currentTariffComponents(0xf)=null',
+        'commodityTariff(0x700).dayEntries(0x3)=null',
+        'commodityTariff(0x700).dayPatterns(0x4)=null',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=null',
+        'commodityTariff(0x700).nextDay(0x8)=null',
+        'commodityTariff(0x700).nextDayEntry(0xb)=null',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=null',
+        'commodityTariff(0x700).nextTariffComponents(0x10)=null',
+        'commodityTariff(0x700).startDate(0x2)=null',
+        'commodityTariff(0x700).tariffComponents(0xd)=null',
+        "commodityTariff(0x700).tariffInfo(0x0)={ tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: 0 }",
+        'commodityTariff(0x700).tariffPeriods(0xe)=null',
+        'commodityTariff(0x700).tariffUnit(0x1)=0',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1300, revision: 1 }, { deviceType: 1299, revision: 1 }, { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 144, 145, 149, 156, 160, 1792, 2823 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 10, tag: 1, label: undefined }, { mfgCode: null, namespaceId: 15, tag: 1, label: undefined }, { mfgCode: null, namespaceId: 19, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 11, tag: 0, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)={ periodStart: 1700000000, periodEnd: null, gridCarbonIntensity: 100, gridCarbonLevel: 1, localCarbonIntensity: 50, localCarbonLevel: 1 }',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=true',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalEnergyTariff child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalEnergyTariff');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)=null',
+        'commodityPrice(0x95).currentPrice(0x2)=null',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=0',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=null',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)=null',
+        'commodityTariff(0x700).currentDayEntry(0x9)=null',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=null',
+        'commodityTariff(0x700).currentTariffComponents(0xf)=null',
+        'commodityTariff(0x700).dayEntries(0x3)=null',
+        'commodityTariff(0x700).dayPatterns(0x4)=null',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=null',
+        'commodityTariff(0x700).nextDay(0x8)=null',
+        'commodityTariff(0x700).nextDayEntry(0xb)=null',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=null',
+        'commodityTariff(0x700).nextTariffComponents(0x10)=null',
+        'commodityTariff(0x700).startDate(0x2)=null',
+        'commodityTariff(0x700).tariffComponents(0xd)=null',
+        'commodityTariff(0x700).tariffInfo(0x0)=null',
+        'commodityTariff(0x700).tariffPeriods(0xe)=null',
+        'commodityTariff(0x700).tariffUnit(0x1)=null',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1299, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 149, 160, 1792 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 11, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 13, tag: 0, label: undefined } ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)=null',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=null',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalEnergyTariffPartial child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalEnergyTariffPartial');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)=null',
+        'commodityPrice(0x95).currentPrice(0x2)=null',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=1',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=null',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)=null',
+        'commodityTariff(0x700).currentDayEntry(0x9)=null',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=null',
+        'commodityTariff(0x700).currentTariffComponents(0xf)=null',
+        'commodityTariff(0x700).dayEntries(0x3)=null',
+        'commodityTariff(0x700).dayPatterns(0x4)=null',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=null',
+        'commodityTariff(0x700).nextDay(0x8)=null',
+        'commodityTariff(0x700).nextDayEntry(0xb)=null',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=null',
+        'commodityTariff(0x700).nextTariffComponents(0x10)=null',
+        'commodityTariff(0x700).startDate(0x2)=null',
+        'commodityTariff(0x700).tariffComponents(0xd)=null',
+        'commodityTariff(0x700).tariffInfo(0x0)=null',
+        'commodityTariff(0x700).tariffPeriods(0xe)=null',
+        'commodityTariff(0x700).tariffUnit(0x1)=null',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1299, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 149, 160, 1792 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 11, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 13, tag: 0, label: undefined } ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)=null',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=null',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalEnergyTariffExplicit child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalEnergyTariffExplicit');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)={ currency: 978, decimalPoints: 4 }',
+        'commodityPrice(0x95).currentPrice(0x2)={ periodStart: 1700000000, periodEnd: null, price: 2000, priceLevel: undefined, description: undefined, components: undefined }',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=0',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=null',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)=null',
+        'commodityTariff(0x700).currentDayEntry(0x9)=null',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=null',
+        'commodityTariff(0x700).currentTariffComponents(0xf)=null',
+        'commodityTariff(0x700).dayEntries(0x3)=null',
+        'commodityTariff(0x700).dayPatterns(0x4)=null',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=null',
+        'commodityTariff(0x700).nextDay(0x8)=null',
+        'commodityTariff(0x700).nextDayEntry(0xb)=null',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=null',
+        'commodityTariff(0x700).nextTariffComponents(0x10)=null',
+        'commodityTariff(0x700).startDate(0x2)=null',
+        'commodityTariff(0x700).tariffComponents(0xd)=null',
+        "commodityTariff(0x700).tariffInfo(0x0)={ tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: 0 }",
+        'commodityTariff(0x700).tariffPeriods(0xe)=null',
+        'commodityTariff(0x700).tariffUnit(0x1)=0',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1299, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 149, 160, 1792 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 11, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 13, tag: 0, label: undefined } ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)={ periodStart: 1700000000, periodEnd: null, gridCarbonIntensity: 100, gridCarbonLevel: 1, localCarbonIntensity: 50, localCarbonLevel: 1 }',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=true',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalEnergyTariffCommands child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalEnergyTariffCommands');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)={ currency: 978, decimalPoints: 4 }',
+        'commodityPrice(0x95).currentPrice(0x2)={ periodStart: 1700000000, periodEnd: null, price: 2000, priceLevel: undefined, description: undefined, components: undefined }',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=0',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=[ { startDate: null, dayPatternIDs: [ 1 ] } ]',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)={ date: 1700000000, dayType: 0, dayEntryIDs: [ 1 ] }',
+        'commodityTariff(0x700).currentDayEntry(0x9)={ dayEntryId: 1, startTime: 0, duration: undefined, randomizationOffset: undefined, randomizationType: undefined }',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=1700000000',
+        "commodityTariff(0x700).currentTariffComponents(0xf)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
+        'commodityTariff(0x700).dayEntries(0x3)=[ { dayEntryId: 1, startTime: 0, duration: undefined, randomizationOffset: undefined, randomizationType: undefined } ]',
+        'commodityTariff(0x700).dayPatterns(0x4)=[ { dayPatternId: 1, daysOfWeek: { sunday: true, monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true }, dayEntryIDs: [ 1 ] } ]',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=[ { date: 1700000000, dayType: 0, dayEntryIDs: [ 1 ] } ]',
+        'commodityTariff(0x700).nextDay(0x8)={ date: 1700000000, dayType: 0, dayEntryIDs: [ 1 ] }',
+        'commodityTariff(0x700).nextDayEntry(0xb)={ dayEntryId: 1, startTime: 0, duration: undefined, randomizationOffset: undefined, randomizationType: undefined }',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=1700086400',
+        "commodityTariff(0x700).nextTariffComponents(0x10)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
+        'commodityTariff(0x700).startDate(0x2)=1700000000',
+        "commodityTariff(0x700).tariffComponents(0xd)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
+        "commodityTariff(0x700).tariffInfo(0x0)={ tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: 0 }",
+        "commodityTariff(0x700).tariffPeriods(0xe)=[ { label: 'Standard', dayEntryIDs: [ 1 ], tariffComponentIDs: [ 1 ] } ]",
+        'commodityTariff(0x700).tariffUnit(0x1)=0',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1299, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 149, 160, 1792 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 11, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 13, tag: 0, label: undefined } ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)=null',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=null',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalEnergyTariffNoPeriods child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalEnergyTariffNoPeriods');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)={ currency: 978, decimalPoints: 4 }',
+        'commodityPrice(0x95).currentPrice(0x2)=null',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=0',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=null',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)=null',
+        'commodityTariff(0x700).currentDayEntry(0x9)=null',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=null',
+        'commodityTariff(0x700).currentTariffComponents(0xf)=null',
+        'commodityTariff(0x700).dayEntries(0x3)=null',
+        'commodityTariff(0x700).dayPatterns(0x4)=null',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=null',
+        'commodityTariff(0x700).nextDay(0x8)=null',
+        'commodityTariff(0x700).nextDayEntry(0xb)=null',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=null',
+        'commodityTariff(0x700).nextTariffComponents(0x10)=null',
+        'commodityTariff(0x700).startDate(0x2)=null',
+        "commodityTariff(0x700).tariffComponents(0xd)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
+        "commodityTariff(0x700).tariffInfo(0x0)={ tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: 0 }",
+        'commodityTariff(0x700).tariffPeriods(0xe)=null',
+        'commodityTariff(0x700).tariffUnit(0x1)=0',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1299, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 149, 160, 1792 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 11, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 13, tag: 0, label: undefined } ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)=null',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=null',
+      ].toSorted(),
+    );
+  });
+
+  test('ElectricalEnergyTariffPartialSchedule child forEachAttribute', () => {
+    const child = device.getChildEndpointById('ElectricalEnergyTariffPartialSchedule');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'commodityPrice(0x95).acceptedCommandList(0xfff9)=[ 0 ]',
+        'commodityPrice(0x95).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityPrice(0x95).clusterRevision(0xfffd)=4',
+        'commodityPrice(0x95).currency(0x1)=null',
+        'commodityPrice(0x95).currentPrice(0x2)=null',
+        'commodityPrice(0x95).featureMap(0xfffc)={ forecasting: false }',
+        'commodityPrice(0x95).generatedCommandList(0xfff8)=[ 1 ]',
+        'commodityPrice(0x95).tariffUnit(0x0)=0',
+        'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=null',
+        'commodityTariff(0x700).clusterRevision(0xfffd)=1',
+        'commodityTariff(0x700).currentDay(0x7)=null',
+        'commodityTariff(0x700).currentDayEntry(0x9)=null',
+        'commodityTariff(0x700).currentDayEntryDate(0xa)=null',
+        'commodityTariff(0x700).currentTariffComponents(0xf)=null',
+        'commodityTariff(0x700).dayEntries(0x3)=null',
+        'commodityTariff(0x700).dayPatterns(0x4)=null',
+        'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
+        'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
+        'commodityTariff(0x700).individualDays(0x6)=null',
+        'commodityTariff(0x700).nextDay(0x8)=null',
+        'commodityTariff(0x700).nextDayEntry(0xb)=null',
+        'commodityTariff(0x700).nextDayEntryDate(0xc)=null',
+        'commodityTariff(0x700).nextTariffComponents(0x10)=null',
+        'commodityTariff(0x700).startDate(0x2)=null',
+        'commodityTariff(0x700).tariffComponents(0xd)=null',
+        'commodityTariff(0x700).tariffInfo(0x0)=null',
+        'commodityTariff(0x700).tariffPeriods(0xe)=null',
+        'commodityTariff(0x700).tariffUnit(0x1)=null',
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1299, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 149, 160, 1792 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 11, tag: 0, label: undefined }, { mfgCode: null, namespaceId: 13, tag: 0, label: undefined } ]',
+        'electricalGridConditions(0xa0).acceptedCommandList(0xfff9)=[  ]',
+        'electricalGridConditions(0xa0).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalGridConditions(0xa0).clusterRevision(0xfffd)=1',
+        'electricalGridConditions(0xa0).currentConditions(0x1)=null',
+        'electricalGridConditions(0xa0).featureMap(0xfffc)={ forecasting: false }',
+        'electricalGridConditions(0xa0).generatedCommandList(0xfff8)=[  ]',
+        'electricalGridConditions(0xa0).localGenerationAvailable(0x0)=null',
+      ].toSorted(),
+    );
   });
 
   test('check attributes after adding device to server', () => {

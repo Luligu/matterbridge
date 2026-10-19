@@ -15,7 +15,6 @@ import { ElectricalPowerMeasurement } from '@matter/types/clusters/electrical-po
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { EndpointNumber } from '@matter/types/datatype';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -26,7 +25,8 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { stringify } from 'node-ansi-logger';
 
 import { BatteryStorage } from '../../src/devices/batteryStorage.js';
@@ -122,23 +122,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
@@ -229,6 +212,97 @@ describe('Matterbridge ' + NAME, () => {
         'powerSource(0x2f).order(0x1)=0',
         'powerSource(0x2f).status(0x0)=1',
         'powerSource(0x2f).wiredCurrentType(0x5)=0',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('Battery child forEachAttribute', () => {
+    const child = device.getChildEndpointById('Battery');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 17, revision: 1 }, { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 144, 145, 156 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 3, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 1, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyImported(0x1)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: true, alternatingCurrent: false, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).activeBatChargeFaults(0x1e)=[  ]',
+        'powerSource(0x2f).activeBatFaults(0x12)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 11, 12, 13, 14, 15, 16, 17, 18, 24, 26, 27, 28, 29, 30, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).batCapacity(0x18)=200000',
+        'powerSource(0x2f).batChargeLevel(0xe)=0',
+        'powerSource(0x2f).batChargeState(0x1a)=3',
+        'powerSource(0x2f).batChargingCurrent(0x1d)=null',
+        'powerSource(0x2f).batFunctionalWhileCharging(0x1c)=true',
+        'powerSource(0x2f).batPercentRemaining(0xc)=200',
+        'powerSource(0x2f).batPresent(0x11)=true',
+        'powerSource(0x2f).batReplaceability(0x10)=0',
+        'powerSource(0x2f).batReplacementNeeded(0xf)=false',
+        'powerSource(0x2f).batTimeRemaining(0xd)=null',
+        'powerSource(0x2f).batTimeToFullCharge(0x1b)=null',
+        'powerSource(0x2f).batVoltage(0xb)=24000',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='Primary battery'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 3 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: false, battery: true, rechargeable: true, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
         'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
         'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
         'powerTopology(0x9c).clusterRevision(0xfffd)=1',

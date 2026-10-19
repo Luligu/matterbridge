@@ -16,34 +16,23 @@ const NAME = 'MatterbridgeDeviceMatter';
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { dev, plg } from '@matterbridge/types';
-import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { db, er, LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
 // Setup the test environment
-await setupTest(NAME, false, [], { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' });
-
-// setupTest resets process.argv; set the matter args afterwards
-process.argv = [
-  'node',
-  'matterbridge.server.test.js',
-  '--novirtual',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--debug',
-  '--bridge',
-  '--frontend',
-  '0',
-  '--homedir',
-  HOMEDIR,
-  '--port',
-  MATTER_PORT.toString(),
-];
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
+process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
 
 describe('Matterbridge  Device serverMode=matter', () => {
   let matterbridge: Matterbridge;
@@ -105,7 +94,7 @@ describe('Matterbridge  Device serverMode=matter', () => {
     expect((matterbridge as any).serverNode).toBeDefined();
     expect((matterbridge as any).aggregatorNode).toBeDefined();
 
-    expect((matterbridge as any).mdnsInterface).toBe(undefined);
+    expect((matterbridge as any).mdnsInterface).toBe(mdnsInterface);
     expect((matterbridge as any).port).toBe(MATTER_PORT + 1);
     expect((matterbridge as any).passcode).toBeDefined();
     expect((matterbridge as any).discriminator).toBeDefined();

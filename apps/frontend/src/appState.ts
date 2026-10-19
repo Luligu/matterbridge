@@ -19,7 +19,7 @@ export const clearEnableMobile = () => {
   localStorage.setItem(MbfLsk.enableMobile, 'false');
 };
 
-export let wssPassword: string | undefined = undefined;
+export let wssPassword: string | undefined;
 export const setWssPassword = (password: string) => {
   wssPassword = password;
 };

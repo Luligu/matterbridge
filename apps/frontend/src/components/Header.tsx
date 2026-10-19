@@ -31,7 +31,9 @@ import { viewportHeight, viewportWidth } from '../viewport';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
 
-// oxlint-disable-next-line max-lines-per-function
+// oxlint-disable unicorn/no-negated-condition
+// oxlint-disable max-lines-per-function
+
 function Header() {
   // Contexts
   const { mobile, showSnackbarMessage, showConfirmCancelDialog } = useContext(UiContext);
@@ -105,30 +107,6 @@ function Header() {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/checkupdates', src: 'Frontend', dst: 'Matterbridge', params: {} });
   };
 
-  const handleShellySystemUpdateClick = () => {
-    if (debug) console.log('Header: handleShellySystemUpdateClick');
-    logMessage('Matterbridge', `Installing system updates...`);
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/shellysysupdate', src: 'Frontend', dst: 'Matterbridge', params: {} });
-  };
-
-  const handleShellyMainUpdateClick = () => {
-    if (debug) console.log('Header: handleShellyMainUpdateClick');
-    logMessage('Matterbridge', `Installing software updates...`);
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/shellymainupdate', src: 'Frontend', dst: 'Matterbridge', params: {} });
-  };
-
-  const handleShellyCreateSystemLog = () => {
-    if (debug) console.log('Header: handleShellyCreateSystemLog');
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/shellycreatesystemlog', src: 'Frontend', dst: 'Matterbridge', params: {} });
-  };
-
-  const handleShellyDownloadSystemLog = () => {
-    if (debug) console.log('Header: handleShellyDownloadSystemLog');
-    logMessage('Matterbridge', `Downloading Shelly system log...`);
-    showSnackbarMessage('Downloading Shelly system log...', 5);
-    window.location.href = './api/shellydownloadsystemlog';
-  };
-
   const handleRestartClick = () => {
     if (settings?.matterbridgeInformation.restartMode === 'none') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/restart', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -139,18 +117,6 @@ function Header() {
 
   const handleShutdownClick = () => {
     sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/shutdown', src: 'Frontend', dst: 'Matterbridge', params: {} });
-  };
-
-  const handleRebootClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/reboot', src: 'Frontend', dst: 'Matterbridge', params: {} });
-  };
-
-  const handleSoftResetClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/softreset', src: 'Frontend', dst: 'Matterbridge', params: {} });
-  };
-
-  const handleHardResetClick = () => {
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/hardreset', src: 'Frontend', dst: 'Matterbridge', params: {} });
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -195,10 +161,6 @@ function Header() {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'download-history') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/downloadhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
-    } else if (value === 'view-shellylog') {
-      logMessage('Matterbridge', `Loading shelly system log...`);
-      showSnackbarMessage('Loading shelly system log...', 5);
-      window.location.href = './api/shellyviewsystemlog';
     } else if (value === 'download-mbstorage') {
       logMessage('Matterbridge', `Downloading matterbridge storage...`);
       showSnackbarMessage('Downloading matterbridge storage...', 5);
@@ -225,24 +187,10 @@ function Header() {
       handleUpdateDevClick();
     } else if (value === 'updatecheck') {
       handleUpdateCheckClick();
-    } else if (value === 'shelly-sys-update') {
-      handleShellySystemUpdateClick();
-    } else if (value === 'shelly-main-update') {
-      handleShellyMainUpdateClick();
-    } else if (value === 'shelly-create-system-log') {
-      handleShellyCreateSystemLog();
-    } else if (value === 'shelly-download-system-log') {
-      handleShellyDownloadSystemLog();
-    } else if (value === 'softreset') {
-      handleSoftResetClick();
-    } else if (value === 'hardreset') {
-      handleHardResetClick();
     } else if (value === 'restart') {
       handleRestartClick();
     } else if (value === 'shutdown') {
       handleShutdownClick();
-    } else if (value === 'reboot') {
-      handleRebootClick();
     } else if (value === 'create-backup') {
       sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/create-backup', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'create-matterbridge-storage-backup') {
@@ -332,26 +280,6 @@ function Header() {
           );
           setUpdate(true);
         }
-      } else if (msg.method === 'shelly_sys_update') {
-        if (debug) console.log('Header received WS_ID_SHELLY_SYS_UPDATE:');
-        setSettings((prevSettings) =>
-          prevSettings
-            ? {
-                matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellySysUpdate: msg.response.available },
-                systemInformation: prevSettings.systemInformation,
-              }
-            : null,
-        );
-      } else if (msg.method === 'shelly_main_update') {
-        if (debug) console.log('Header received WS_ID_SHELLY_MAIN_UPDATE:');
-        setSettings((prevSettings) =>
-          prevSettings
-            ? {
-                matterbridgeInformation: { ...prevSettings.matterbridgeInformation, shellyMainUpdate: msg.response.available },
-                systemInformation: prevSettings.systemInformation,
-              }
-            : null,
-        );
       } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {
         if (debug) console.log('Header received /api/viewhistorypage success');
         window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
@@ -432,7 +360,6 @@ function Header() {
             </span>
           </Tooltip>
         )}
-        {settings.matterbridgeInformation.shellyBoard && <img src="Shelly.svg" alt="Shelly Icon" style={{ height: '30px', padding: '0px', margin: '0px', marginRight: '30px' }} />}
         {settings.matterbridgeInformation.bridgeMode !== 'none' && !settings.matterbridgeInformation.readOnly ? (
           <Tooltip title="Bridge mode">
             <span className="status-information" style={{ cursor: 'default', backgroundColor: status === 'started' ? 'green' : status === 'error' ? 'red' : undefined }}>
@@ -521,20 +448,6 @@ function Header() {
             </IconButton>
           </Tooltip>
         )}
-        {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate && (
-          <Tooltip title="Shelly system update">
-            <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShellySystemUpdateClick}>
-              <SystemUpdateAltIcon />
-            </IconButton>
-          </Tooltip>
-        )}
-        {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate && (
-          <Tooltip title="Shelly software update">
-            <IconButton style={{ color: 'var(--primary-color)', margin: '0', marginLeft: '5px', padding: '0px' }} onClick={handleShellyMainUpdateClick}>
-              <SystemUpdateAltIcon />
-            </IconButton>
-          </Tooltip>
-        )}
         <Tooltip title="Restart matterbridge">
           <IconButton
             style={{ color: restart || fixedRestart ? 'var(--primary-color)' : 'var(--main-icon-color)', margin: '0', marginLeft: '5px', padding: '0px' }}
@@ -616,22 +529,6 @@ function Header() {
               <ListItemText primary="Check for updates" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           )}
-          {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellySysUpdate && (
-            <MenuItem onClick={() => handleMenuCloseConfirm('shelly-sys-update')}>
-              <ListItemIcon>
-                <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
-              </ListItemIcon>
-              <ListItemText primary="Shelly system update" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-            </MenuItem>
-          )}
-          {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && settings.matterbridgeInformation.shellyMainUpdate && (
-            <MenuItem onClick={() => handleMenuCloseConfirm('shelly-main-update')}>
-              <ListItemIcon>
-                <SystemUpdateAltIcon style={{ color: 'var(--main-icon-color)' }} />
-              </ListItemIcon>
-              <ListItemText primary="Shelly software update" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-            </MenuItem>
-          )}
           <MenuItem onClick={() => handleMenuCloseConfirm('restart')}>
             <ListItemIcon>
               <RestartAltIcon style={{ color: 'var(--main-icon-color)' }} />
@@ -646,18 +543,6 @@ function Header() {
               <ListItemText primary="Shutdown" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
           ) : null}
-          {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
-            <MenuItem
-              onClick={() => {
-                showConfirmCancelDialog('Reboot', 'Are you sure you want to reboot the Shelly board?', 'reboot', handleMenuCloseConfirm, handleMenuCloseCancel);
-              }}
-            >
-              <ListItemIcon>
-                <RestartAltIcon style={{ color: 'var(--main-icon-color)' }} />
-              </ListItemIcon>
-              <ListItemText primary="Reboot..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-            </MenuItem>
-          )}
           <Divider />
 
           <MenuItem onClick={handleViewMenuOpen}>
@@ -744,19 +629,6 @@ function Header() {
               </ListItemIcon>
               <ListItemText primary="Matterbridge system history" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
-            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
-              <MenuItem
-                onClick={() => {
-                  handleMenuCloseConfirm('view-shellylog');
-                  handleViewMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  <ViewHeadlineIcon style={{ color: 'var(--main-icon-color)' }} />
-                </ListItemIcon>
-                <ListItemText primary="Shelly system log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-              </MenuItem>
-            )}
           </Menu>
 
           <Divider />
@@ -862,33 +734,6 @@ function Header() {
               </ListItemIcon>
               <ListItemText primary="Matterbridge system history" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
             </MenuItem>
-
-            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
-              <MenuItem
-                onClick={() => {
-                  handleMenuCloseConfirm('shelly-create-system-log');
-                  handleDownloadMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
-                </ListItemIcon>
-                <ListItemText primary="Create Shelly system log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-              </MenuItem>
-            )}
-            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
-              <MenuItem
-                onClick={() => {
-                  handleMenuCloseConfirm('shelly-download-system-log');
-                  handleDownloadMenuClose();
-                }}
-              >
-                <ListItemIcon>
-                  <DownloadIcon style={{ color: 'var(--main-icon-color)' }} />
-                </ListItemIcon>
-                <ListItemText primary="Download Shelly system log" slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-              </MenuItem>
-            )}
           </Menu>
 
           <Divider />
@@ -977,44 +822,6 @@ function Header() {
                     'Factory reset and shutdown',
                     'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.',
                     'factoryreset',
-                    handleMenuCloseConfirm,
-                    handleMenuCloseCancel,
-                  );
-                }}
-              >
-                <ListItemIcon>
-                  <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
-                </ListItemIcon>
-                <ListItemText primary="Factory reset..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-              </MenuItem>
-            )}
-            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
-              <MenuItem
-                onClick={() => {
-                  handleResetMenuClose();
-                  showConfirmCancelDialog(
-                    'Network reset',
-                    'Are you sure you want to factory reset the network parameters?',
-                    'softreset',
-                    handleMenuCloseConfirm,
-                    handleMenuCloseCancel,
-                  );
-                }}
-              >
-                <ListItemIcon>
-                  <PowerSettingsNewIcon style={{ color: 'var(--main-icon-color)' }} />
-                </ListItemIcon>
-                <ListItemText primary="Reset network..." slotProps={{ primary: { style: { fontWeight: 'normal', color: 'var(--main-icon-color)' } } }} />
-              </MenuItem>
-            )}
-            {settings.matterbridgeInformation && settings.matterbridgeInformation.shellyBoard && (
-              <MenuItem
-                onClick={() => {
-                  handleResetMenuClose();
-                  showConfirmCancelDialog(
-                    'Factory reset',
-                    'Are you sure you want to factory reset Matterbridge? You will have to manually remove Matterbridge from the controller.',
-                    'hardreset',
                     handleMenuCloseConfirm,
                     handleMenuCloseCancel,
                   );

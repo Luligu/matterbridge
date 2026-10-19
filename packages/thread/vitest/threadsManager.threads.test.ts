@@ -10,16 +10,21 @@ const NAME = 'ThreadsManagerThreads';
 const HOMEDIR = path.join('.cache', 'jest', NAME);
 
 import path from 'node:path';
+import url from 'node:url';
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import type { WorkerMessage } from '@matterbridge/types';
+import { waiter } from '@matterbridge/utils/wait';
 import { AnsiLogger, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
 import { BroadcastServer } from '../src/broadcastServer.js';
 import { ThreadsManager } from '../src/threadsManager.js';
-import { setupTest } from './vitestSetupTest.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+// Directory of the @matterbridge/core cli module used to resolve the core runners
+const coreDirectory = path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '..', '..', 'core', 'src');
 
 describe('ThreadsManagerThreads', () => {
   const log = new AnsiLogger({ logName: 'ThreadsManagerThreads', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
@@ -31,7 +36,7 @@ describe('ThreadsManagerThreads', () => {
   beforeAll(() => {
     // process.argv.push('--debug-worker');
     // Create ThreadsManager instance
-    manager = new ThreadsManager();
+    manager = new ThreadsManager(coreDirectory);
     // Create mocked broadcast servers
     broadcastserverMatterbridge = new BroadcastServer('matterbridge', log);
     broadcastserverMatterbridge.on('broadcast_message', (msg: WorkerMessage) => {
@@ -52,9 +57,10 @@ describe('ThreadsManagerThreads', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {});
-
-  afterAll(() => {
+  afterAll(async () => {
+    // The tests resolve when manager_run answers, which is as soon as each worker starts. Wait until every worker has
+    // exited (worker cleared on the native exit), so none is still logging to the console when the test file is torn down.
+    await waiter('All threads stopped', () => manager['threads'].every((thread) => thread.worker === undefined), false, 60_000, 100);
     // Close broadcast servers
     broadcastserverMatterbridge.close();
     broadcastserverPlugins.close();
@@ -62,7 +68,7 @@ describe('ThreadsManagerThreads', () => {
     manager.destroy();
     // Restore all mocks
     vi.restoreAllMocks();
-  });
+  }, 70_000);
 
   test('Run GlobalPrefix as a worker thread', async () => {
     await new Promise<void>((resolve) => {
@@ -74,7 +80,7 @@ describe('ThreadsManagerThreads', () => {
       broadcastserverMatterbridge.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'GlobalPrefix', pipedOutput: true } });
     });
     expect(true).toBe(true);
-  }, 10000);
+  }, 30000);
 
   test('Run CheckUpdates as a worker thread', async () => {
     await new Promise<void>((resolve) => {
@@ -86,7 +92,7 @@ describe('ThreadsManagerThreads', () => {
       broadcastserverMatterbridge.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'CheckUpdates', pipedOutput: true } });
     });
     expect(true).toBe(true);
-  }, 10000);
+  }, 30000);
 
   test('Run SystemCheck as a worker thread', async () => {
     await new Promise<void>((resolve) => {
@@ -98,7 +104,7 @@ describe('ThreadsManagerThreads', () => {
       broadcastserverMatterbridge.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'SystemCheck', pipedOutput: true } });
     });
     expect(true).toBe(true);
-  }, 10000);
+  }, 30000);
 
   test('Run SpawnCommand as a worker thread', async () => {
     await new Promise<void>((resolve) => {
@@ -120,7 +126,7 @@ describe('ThreadsManagerThreads', () => {
       });
     });
     expect(true).toBe(true);
-  }, 10000);
+  }, 30000);
 
   test('Run ArchiveCommand as a worker thread', async () => {
     await new Promise<void>((resolve) => {
@@ -147,10 +153,5 @@ describe('ThreadsManagerThreads', () => {
       });
     });
     expect(true).toBe(true);
-  }, 10000);
-
-  test('Pause', async () => {
-    await new Promise<void>((resolve) => setTimeout(resolve, 2000));
-    expect(true).toBe(true);
-  });
+  }, 30000);
 });

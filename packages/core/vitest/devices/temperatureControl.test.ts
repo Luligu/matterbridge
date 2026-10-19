@@ -8,7 +8,6 @@ const NAME = 'TemperatureControl';
 const MATTER_PORT = 8024;
 const MATTER_CREATE_ONLY = true;
 
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -19,7 +18,8 @@ import {
   server,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { createLevelTemperatureControlClusterServer, createNumberTemperatureControlClusterServer } from '../../src/devices/temperatureControl.js';
 import { laundryDryer, laundryWasher } from '../../src/matterbridgeDeviceTypes.js';

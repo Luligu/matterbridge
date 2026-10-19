@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { hslColorToRgbColor, kelvinToMireds, kelvinToRGB, miredsToKelvin, rgbColorToHslColor, rgbColorToXYColor, xyColorToRgbColor, xyToHsl } from '../src/colorUtils.js';
+
+// Setup the test environment
+await setupTest('ColorUtils', false);
 
 /* oxfmt-ignore */
 const colors = [

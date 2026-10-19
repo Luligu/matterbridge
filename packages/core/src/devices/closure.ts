@@ -30,11 +30,11 @@
 import { Millis, Time, type MaybePromise, type Timer } from '@matter/general';
 import { ClosureTag } from '@matter/node';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
-import { type EndpointNumber, StatusResponse } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { Identify } from '@matter/types/clusters/identify';
-import type { Semtag } from '@matter/types/globals';
-import { ThreeLevelAuto } from '@matter/types/globals';
+import { StatusResponse } from '@matter/types/common';
+import type { EndpointNumber } from '@matter/types/datatype';
+import { type Semtag, ThreeLevelAuto } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';

@@ -28,11 +28,12 @@
 import type { MaybePromise } from '@matter/general';
 import { OvenCavityOperationalStateServer } from '@matter/node/behaviors/oven-cavity-operational-state';
 import { OvenModeServer } from '@matter/node/behaviors/oven-mode';
-import type { EndpointNumber, Semtag } from '@matter/types';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { OvenCavityOperationalState } from '@matter/types/clusters/oven-cavity-operational-state';
 import { OvenMode } from '@matter/types/clusters/oven-mode';
+import type { EndpointNumber } from '@matter/types/datatype';
+import type { Semtag } from '@matter/types/globals';
 // @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 

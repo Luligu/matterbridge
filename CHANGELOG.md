@@ -29,6 +29,169 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.14] - 2026-10-16
+
+### Breaking news
+
+Two new production plugins bring Matter cameras to Matterbridge. Both require Matterbridge 3.10.14 or newer and ffmpeg. In Docker, ffmpeg is installed automatically at start if it is not found (`autoInstallFfmpeg`, enabled by default).
+
+- [matterbridge-camera](https://github.com/Luligu/matterbridge-camera): for network cameras that provide an RTSP stream (IP cameras, NVRs, doorbells). Cameras are configured manually with a video URL, an optional audio URL, resolution and bitrate; no discovery is performed.
+
+- [matterbridge-webcam](https://github.com/Luligu/matterbridge-webcam): for local cameras connected to the Matterbridge host (USB webcams, built-in laptop cameras). Webcams and microphones are discovered with a single button in the frontend on Linux (v4l2), macOS (avfoundation) and Windows (dshow).
+
+### Breaking changes
+
+- [matterbridge]: Require Node.js 22.13.0 or newer (supported majors: 22, 24 and 26); Node.js 20 is no longer supported.
+
+### Development Breaking changes
+
+- [types]: `/api/clusters` uses `pluginName` and `number`; both WebSocket and platform cluster requests require `serialNumber` and `uniqueId`.
+- [test-utils]: `addDevice()` and `deleteDevice()` (vitest, jest and bun) take `ticks` and `microTurns` (default 1) after `rounds`, so `pause` moves from the 4th to the 6th parameter; `rounds` now defaults to 1 (was 3).
+- [test-utils]: `flushServerNode()` (vitest, jest and bun) takes a first `rounds` parameter (default 3) and passes `rounds`, `ticks`, `microTurns` and `pause` to the endpoint number persistence flush, so it can run without timer pauses.
+
+### Development news
+
+- [errata]: Clarification of the v.3.10.12 RVC release note: `SkipArea` conformance `[CurrentArea | Progress]` makes the command optional when either attribute is implemented (Matter 1.6.1 Core § 7.3.4; Application Cluster § 1.17.7). Advertising `SkipArea` by default is a choice in Matterbridge’s `RoboticVacuumCleaner` implementation, not a specification requirement; `SkipAreaResponse` is required when `SkipArea` is implemented.
+
+### Added
+
+- [core]: Add `pluginName`-targeted `platform_get_apidevices`, `platform_get_apiselectdevices` and `platform_get_apiselectentities` broadcast requests.
+- [core]: Add `platform_get_apiclusters` with `pluginName` and `number` parameters to retrieve a device's cluster attributes and child endpoints in the frontend API format.
+- [backend]: Fetch `/api/clusters` data from the matching platform through `platform_get_apiclusters`.
+- [utils]: Add `constrainedMemory()` to `@matterbridge/utils/bun`: the container (cgroup) memory limit, or the total memory when there is none, normalized across Node.js and Bun.
+- [utils]: Add `constrainedMemory` and `peakConstrainedMemory` to the `Tracker` snapshot.
+- [types]: Add `constrainedMemory` to `SystemInformation`, `PlatformMatterbridge` and `SharedMatterbridge`.
+- [types]: Add the `ApiSystemUpdate` type and the `system_update` WebSocket message.
+- [core]: The cli broadcasts a single `system_update` WebSocket message (uptime, memory, memory limit and cpu) on each tracker snapshot.
+- [test-utils]: Add `getSharedMatterbridge()`, a mocked `SharedMatterbridge` for vitest, jest and bun.
+- [test-utils]: Add the `validation` parameter (`'off'`, `'warn'` or `'strict'`, default `'strict'`) to `createTestEnvironment()` in the vitest, jest and bun helpers.
+- [frontend]: Add the `Memory limit` (container or cgroup constrained memory) to the system info table; it is shown only when it differs from the total memory.
+- [powerSource]: Add optional `batCapacity`, `batTimeToFullCharge`, `batChargingCurrent` and `activeBatChargeFaults` parameters to `createDefaultPowerSourceRechargeableBatteryClusterServer()`.
+- [Intercom]: Add the `switchOptions` option and the `addSwitch()` method for the Generic Switch child endpoints.
+- [docs]: Extend [Camera](https://matterbridge.io/Camera.html) with browser peers hiding their address behind mDNS `.local` candidates, Docker Desktop UDP networking, the dev container setup, the stream resolution and allocation, the test video source and all the camera and WebRTC environment variables.
+- [utils]: Add `isDocker()` in `runtimeDocker.ts` to detect a Linux container (Docker, Podman, VS Code dev containers, Codespaces) without the `--docker` parameter.
+- [utils]: Add `getDockerRuntimeInfo()` (container kind, `--docker`, official image build config, bridge network) and `isDockerBridgeNetwork()` in `runtimeDocker.ts`, and `isRoot()` and `hasPasswordlessSudo()` in `runtime.ts`.
+
+### Changed
+
+- [core]: Honor the `extended` flag in local frontend, backend and platform device API requests.
+- [frontend]: Request extended device data in HomeDevices and DevicesTable.
+- [test-utils]: Set strict endpoint validation in all Matter test environment helpers.
+- [core]: Set warn endpoint validation in the Matterbridge and MatterNode environments.
+- [core]: Fetch platform and shared Matterbridge data after MatterNode construction.
+- [core]: Return the MatterNode shared Matterbridge instance to plugin platforms.
+- [core]: Bind plugin endpoint callbacks to their MatterNode instance.
+- [core]: Catch and log MatterNode broadcast message handler rejections with `fireAndForget`.
+- [core]: Skip unchanged values when initializing MatterNode storage contexts.
+- [webrtc]: The `test` video source follows `videoResolution` and `videoBitrate` like the `webcam` and `rtsp` sources (was fixed at 640x480 and 1000 kbps).
+- [webrtc]: Add `MATTERBRIDGE_TEST_VIDEO_FPS` to set the `test` video source frame rate (default 30, was fixed at 10), with a keyframe every 2 seconds.
+- [webrtc]: The `webcam` video source forces a constant 30 fps output (`-fps_mode cfr -r 30`), so the bitrate cap holds on macOS avfoundation (was about 7x the configured bitrate with a gray picture).
+- [ffmpeg]: `installFfmpeg()` also works without root through passwordless sudo (`sudo -n`), as in a dev container.
+- [ffmpeg]: Resolve the Homebrew ffmpeg on Apple Silicon (`/opt/homebrew/bin/ffmpeg`), which is not on the `PATH` of a launchd service.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.14.
+- [matterbridge]: Bump `marked` to v.18.1.0.
+- [matterbridge]: Bump `oxfmt` to v.0.72.0.
+- [matterbridge]: Bump `oxlint` to v.1.87.0.
+- [core]: Bump `express-rate-limit` to v.8.7.1.
+- [core]: Bump `werift` to v.0.25.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.23.0.
+- [core]: Remove the legacy `cpu_update`, `memory_update` and `uptime_update` WebSocket messages, the `wssSend*Update` methods and the matching `cliEmitter` events (replaced by `system_update`).
+- [types]: `SharedMatterbridge.systemInformation` is now a read-only `Pick` of `SystemInformation`.
+- [utils]: `Tracker` reads its flags with the `hasParameter` helpers; the verbose start log groups the CPUs by model and also logs the memory limit and the uptimes.
+- [frontend]: Rename system info labels to `Host memory`, `Process rss` and `Process heap`.
+- [frontend]: Show the full (not compact) system info table on mobile.
+- [frontend]: Remove `matterbridge-camera` and `matterbridge-webcam` from the plugin ignore list so they can be searched and installed.
+- [frontend]: Bump `frontend` version to v.3.6.5.
+- [frontend]: Bump `@mui/material` to v.9.5.0.
+- [frontend]: Bump `@mui/icons-material` to v.9.5.0.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.1.2.
+- [frontend]: Bump `jsdom` to v.30.1.2.
+- [frontend]: Bump `vite` to v.8.3.4.
+- [frontend]: Bump `oxfmt` to v.0.72.0.
+- [frontend]: Bump `oxlint` to v.1.87.0.
+- [tests]: Use `getSharedMatterbridge()` in the matterNode tests, add the `cliHistory` bun test and include `cliHistory` in the bun coverage.
+- [tests]: Consolidate CLI error tests and speed up the suite by mocking Matterbridge imports and replacing fixed delays.
+- [tests]: Use fake timers in the windowCovering movement and doorLock relock tests, and drop the duplicated timed windowCovering tests from `matterbridgeEndpoint-matterjs`.
+- [tests]: Add the bun tests of all the device classes (`packages/core/buntest/devices`), with zero-pause test helpers.
+- [tests]: Add an exact `forEachAttribute` attribute snapshot to every device class test (device and child endpoints) to catch matter.js drifts, and drop the per-attribute type checks already covered by the snapshot.
+- [tests]: Move the root `matterTest` bun test to port 15000 (was colliding with the intercom test).
+- [vscode]: Add the `Buntest: <Area>` tasks and `Buntest: All`.
+- [tests]: Drop the cluster behavior tests from `matterbridgeEndpoint-matterjs` (covered by the behaviors and devices suites) and cover the remaining `MatterbridgeEndpoint` branches.
+- [bun]: Document in [README-BUN.md](./README-BUN.md) known issues that `bun test --coverage` never counts implicit class constructors as called (upstream [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730)).
+
+### Fixed
+
+- [core]: Use the compliant TiltOnlyInteriorBlind end product type for tilt-only window coverings.
+- [tests]: Prevent test output leakage.
+- [core]: Don't answer an aborted download with a 500: on Bun 1.4.3 it threw an uncaught `ERR_HTTP_HEADERS_SENT` (oven-sh/bun#44925).
+- [test-utils]: `addDevice()` and `deleteDevice()` passed `pause` as the `ticks` argument of `flushAllEndpointNumberPersistence()`, adding ~60ms to every call.
+- [core]: `setWindowCoveringCurrentTargetStatus()` threw a conformance error on a tilt only window covering: it now sets the tilt positions when the server has no Lift feature.
+- [BatteryStorage]: Set the mandatory `BatCapacity`, `BatTimeToFullCharge`, `BatChargingCurrent` and `ActiveBatChargeFaults` on the battery Power Source (Matter 1.6.1 Device Library § 14.4.6.2), with the new `batCapacity` option.
+- [Intercom]: Add the mandatory Generic Switch child endpoint with a momentary switch (Matter 1.5.1 Intercom revision 2, Device Library § 16.4.4 and § 16.4.8).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.10.13] - 2026-10-09
+
+### Added
+
+- [thread]: Add the Backend thread entry point.
+- [test-utils]: Add `resetTest()` (vitest, jest and bun): it restores the spies, `process.argv` and `process.env`, and lets `setupTest()` run again for the same name.
+- [test-utils]: Add `getFreePort()`: it returns a free TCP, UDP4 or UDP6 port from the OS.
+- [test-utils]: Add the `/vitest/setup`, `/vitest/matter`, `/jest/setup`, `/jest/matter`, `/buntest/setup` and `/buntest/matter` subpaths: `setup` loads only the setup helpers and spies, without matter.js. The `/vitest`, `/jest` and `/buntest` subpaths still export both.
+- [core]: Re-export the new `test-utils` subpaths as `matterbridge/test-utils/{vitest,jest,buntest}/{setup,matter}`.
+- [core]: Export the ffmpeg helpers (`hasFfmpeg`, `runFfmpeg`, `redactSource`) from `matterbridge/behaviors`.
+- [core]: Add `listWebcams()` to the ffmpeg helpers: it discovers the webcams with avfoundation (macOS), dshow (Windows) or v4l2 (Linux).
+- [core]: Add `playWebcam()` and `getPlayWebcamArgs()` to the ffmpeg helpers: they play a webcam in an ffplay window with the input format of the current platform.
+- [core]: Add `installFfmpeg()` to the ffmpeg helpers: on Linux with root privileges it installs the full ffmpeg package with `apk` or `apt-get` and resolves it again.
+
+### Changed
+
+- [thread]: Run zip.js without web workers, so the ArchiveCommand thread exits right away on Bun instead of 5 seconds later.
+- [core]: Import the test helpers from the `test-utils` `/vitest/setup` and `/vitest/matter` subpaths instead of `/vitest`.
+- [dgram]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts` and `vitest/freePort.ts`, and add it to the devDependencies.
+- [utils]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts`, and add it to the devDependencies.
+- [thread]: Use `@matterbridge/test-utils` in the tests instead of the local `vitest/setupTest.ts`, `vitest/freePort.ts` and `vitest/flushAsync.ts`, and add it to the devDependencies.
+- [test-utils]: `setupTest()` (vitest, jest and bun) throws on names shorter than four characters or with characters other than letters, digits, `_` and `-`.
+- [test-utils]: `setupTest()` and `setDebug()` (vitest, jest and bun) share one spy installer that restores every spy first, so `setupTest(name, true)` after a mocked setup no longer keeps the output silenced.
+- [test-utils]: `setupTest()` (vitest, jest and bun) ignores a second call with the same suite name, and `setDebug()` ignores calls made before `setupTest()`; both write a warning to stderr.
+- [utils]: Bump Tracker to 1.1.0.
+- [utils]: Use Bun process memory footprint in tracker RSS readings when available, with a safe RSS fallback.
+- [utils]: Add `memoryFootprint()` to runtimeBun (Bun memory footprint, falling back to `process.memoryUsage().rss`).
+- [core]: Use `memoryFootprint()` for the system information RSS.
+- [core]: Refresh the variable system information (memory, uptime) in `Matterbridge.getApiSettings()`.
+- [frontend]: Enable https and wss with `--ssl`, `--tls` or `--mtls` (same as the backend); `--mtls` alone now also enables https and wss.
+- [core]: Remove the unused `lastOsCpuUsage`, `lastProcessCpuUsage` and their setters from `cliEmitter`; `Frontend.getApiSettings()` reports 0 cpu usage like `Matterbridge.getApiSettings()`.
+- [thread]: Include the worker thread ID in periodic status logs.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.13.
+- [scripts]: Sync the generic scripts (`clean`, `deep-clean`, `prepublish-clean`, `create-release`, `downloads`, `git-status`, `git-sync-dev`, `prune-releases`, `prune-tags`, `remove-workflows`, `version`) to v.2.0.0 and add `bun-bundle` from matterbridge-native.
+- [matterbridge]: Bump `@types/node` to v.26.6.4.
+- [core]: Bump `@types/node` to v.26.6.4.
+- [dgram]: Bump `@types/node` to v.26.6.4.
+- [jest-utils]: Bump `@types/node` to v.26.6.4.
+- [test-utils]: Bump `@types/node` to v.26.6.4.
+- [thread]: Bump `@types/node` to v.26.6.4.
+- [types]: Bump `@types/node` to v.26.6.4.
+- [utils]: Bump `@types/node` to v.26.6.4.
+- [vitest-utils]: Bump `@types/node` to v.26.6.4.
+- [frontend]: Bump `frontend` version to v.3.6.4.
+- [frontend]: Bump `@rjsf` to v.6.11.0.
+- [frontend]: Bump `@types/node` to v.26.6.4.
+- [frontend]: Bump `globals` to v.17.13.0.
+- [frontend]: Bump `vite` to v.8.3.2.
+- [core]: Reachability of devices without `BridgedDeviceBasicInformation` reads the owner server node `basicInformation.reachable` instead of returning true in childbridge mode.
+- [core]: The session `lastInteractionTimestamp` and `lastActiveTimestamp` in the matter API data are now ISO 8601 strings (empty when not available).
+
+### Fixed
+
+- [core]: Fix the missing space after the illuminance value in the device cluster text.
+- [core]: Fix the mode label in the device cluster text: read the `supportedModes` of the same mode cluster instead of relying on the attribute order.
+- [devcontainer]: Fix `post-create.sh` creating `apps/frontend/node_modules` when it does not exist; only chown it if present.
+- [core]: Fix `MatterNode.removeBridgedEndpoint()` for server mode endpoints: stop, destroy and remove the dependant MatterNode instead of deleting the endpoint.
+- [core]: Fix the the global node_modules check when switching from bun to node.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.12] - 2026-10-02
 
 ### Breaking changes

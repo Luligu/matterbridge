@@ -8,9 +8,13 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { Tracker, type TrackerSnapshot } from '@matterbridge/utils';
 
 import { generateHistoryPage } from '../src/cliHistory.js';
+
+// Setup the test environment
+await setupTest('CliHistory', false);
 
 const zeroEntry: TrackerSnapshot = {
   timestamp: 0,
@@ -18,6 +22,8 @@ const zeroEntry: TrackerSnapshot = {
   peakFreeMemory: 0,
   totalMemory: 0,
   peakTotalMemory: 0,
+  constrainedMemory: 0,
+  peakConstrainedMemory: 0,
   osCpu: 0,
   peakOsCpu: 0,
   processCpu: 0,

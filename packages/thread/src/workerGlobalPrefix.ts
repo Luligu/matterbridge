@@ -26,11 +26,11 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { getGlobalNodeModules } from '@matterbridge/utils/npm-prefix';
 import { LogLevel } from 'node-ansi-logger';
 
-import { WorkerWrapper } from './workerWrapper.js';
+import { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('GlobalPrefix', '\u001B[35m');
 
-export default new WorkerWrapper('GlobalPrefix', async (worker) => {
+export default new ThreadsWrapper('GlobalPrefix', async (worker) => {
   let prefix: string;
   worker.logger(LogLevel.INFO, `Starting global prefix check...`);
   let success = false;

@@ -15,14 +15,23 @@ import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OccupancySensingClient, OccupancySensingServer } from '@matter/node/behaviors/occupancy-sensing';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { OnOffPlugInUnitDevice } from '@matter/node/devices/on-off-plug-in-unit';
-import { EndpointNumber, FabricIndex, NodeId } from '@matter/types';
 import { getClusterNameById } from '@matter/types/cluster';
 import type { Binding } from '@matter/types/clusters/binding';
 import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
-import { flushAsync, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
-import { aggregator, createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, startServerNode, stopServerNode } from '@matterbridge/vitest-utils/matter';
+import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
+import {
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { debugStringify } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../../src/behaviors/bindingServer.js';

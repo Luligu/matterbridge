@@ -8,9 +8,8 @@ const NAME = 'CameraAvStreamManagementServerBehavior';
 const MATTER_PORT = 6003;
 const MATTER_CREATE_ONLY = true;
 
-import { Status, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
-import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
+import { Status, StreamUsage, ThreeLevelAuto } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -20,7 +19,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import {
   createDefaultAudioCameraAvStreamManagementClusterServer,
@@ -38,7 +38,8 @@ import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
 import { camera as cameraDeviceType, intercom as intercomDeviceType } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 vi.mock('../../src/behaviors/snapshot.js', async (importOriginal) => {
   const original = await importOriginal<typeof import('../../src/behaviors/snapshot.js')>();

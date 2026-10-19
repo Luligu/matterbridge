@@ -31,6 +31,7 @@ export * from './deviceEnergyManagementModeServer.js';
 export * from './deviceEnergyManagementServer.js';
 export * from './doorLockServer.js';
 export * from './fanControlServer.js';
+export * from './ffmpeg.js';
 export * from './hepaFilterMonitoringServer.js';
 export * from './identifyServer.js';
 export * from './levelControlServer.js';

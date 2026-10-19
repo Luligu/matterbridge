@@ -27,13 +27,13 @@
 // @matter
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
-import type { EndpointNumber } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
+import type { EndpointNumber } from '@matter/types/datatype';
 import type { Semtag } from '@matter/types/globals';
-// Utils
+// @matterbridge
 import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge

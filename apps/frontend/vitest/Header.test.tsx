@@ -67,9 +67,6 @@ const settings = {
     virtualMode: 'disabled',
     profile: undefined,
     readOnly: false,
-    shellyBoard: false,
-    shellySysUpdate: false,
-    shellyMainUpdate: false,
     loggerLevel: 'info',
     fileLogger: false,
     matterLoggerLevel: 'info',
@@ -98,6 +95,7 @@ const settings = {
     osArch: '',
     totalMemory: '',
     freeMemory: '',
+    constrainedMemory: '',
     systemUptime: '',
     processUptime: '',
     cpuUsage: '',
@@ -193,7 +191,7 @@ describe('Header', () => {
     locationMock.href = 'http://localhost/';
     Object.defineProperty(window, 'location', { configurable: true, value: locationMock });
     vi.spyOn(window, 'open').mockReturnValue(null);
-    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     localStorage.clear();
   });
 
@@ -228,12 +226,10 @@ describe('Header', () => {
     for (const message of [
       { method: 'update_required', response: { devVersion: false, version: '4.0.0' } },
       { method: 'update_required', response: { devVersion: true, version: '4.0.0-dev-1' } },
-      { method: 'shelly_sys_update', response: { available: true } },
-      { method: 'shelly_main_update', response: { available: true } },
     ])
       update(message);
     expect(screen.queryByText('Matterbridge')).not.toBeInTheDocument();
-    load({ bridgeMode: 'bridge', restartRequired: false, fixedRestartRequired: false, shellyBoard: true });
+    load({ bridgeMode: 'bridge', restartRequired: false, fixedRestartRequired: false });
     sendMessage.mockClear();
     update({ method: 'refresh_required', response: { changed: 'settings' } });
     expect(sendMessage).toHaveBeenCalledExactlyOnceWith({ id: 42, sender: 'Header', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
@@ -261,15 +257,6 @@ describe('Header', () => {
       update({ method: 'matterbridge_status_update', response: { status } });
       expect(screen.getByLabelText('Bridge mode').style.backgroundColor).toBe(color);
     }
-    update({ method: 'shelly_sys_update', response: { available: true } });
-    update({ method: 'shelly_main_update', response: { available: true } });
-    fireEvent.click(screen.getByRole('button', { name: 'Shelly system update' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Shelly software update' }));
-    expect(sendMessage.mock.calls.slice(-2).map(([message]) => message.method)).toEqual(['/api/shellysysupdate', '/api/shellymainupdate']);
-    update({ method: 'shelly_sys_update', response: { available: false } });
-    update({ method: 'shelly_main_update', response: { available: false } });
-    expect(screen.queryByRole('button', { name: 'Shelly system update' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Shelly software update' })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Matterbridge Logo' }));
     expect(toggleDebug).toHaveBeenCalledOnce();
     unmount();
@@ -291,20 +278,18 @@ describe('Header', () => {
 
   test('should expose informational badges and hide restricted controls in read-only mode', () => {
     const { load } = renderHeader();
-    load({ bridgeMode: 'childbridge', restartMode: 'service', profile: 'test-profile', shellyBoard: true }, { bunVersion: '1.3.0' });
+    load({ bridgeMode: 'childbridge', restartMode: 'service', profile: 'test-profile' }, { bunVersion: '1.3.0' });
     expect(screen.getByLabelText('Bridge mode')).toHaveTextContent('childbridge');
     expect(screen.getByLabelText('Restart mode')).toHaveTextContent('service');
     expect(screen.getByLabelText('Current profile')).toHaveTextContent('test-profile');
     expect(screen.getByLabelText('Bun version')).toHaveTextContent('bun');
-    expect(screen.getByRole('img', { name: 'Shelly Icon' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Shut down matterbridge' })).not.toBeInTheDocument();
     load({ readOnly: true, bridgeMode: 'childbridge', restartMode: 'service', profile: 'test-profile', updateRequired: true });
     for (const label of ['Bridge mode', 'Restart mode', 'Current profile', 'Bun version', 'Matterbridge v.3.9.2']) expect(screen.queryByLabelText(label)).not.toBeInTheDocument();
     for (const name of ['Matterbridge discord group', 'Give a star to Matterbridge', 'Sponsor Matterbridge'])
       expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     openMenu();
-    for (const name of ['Install latest stable', 'Install latest dev', 'Check for updates', 'Shutdown', 'Reboot...'])
-      expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
+    for (const name of ['Install latest stable', 'Install latest dev', 'Check for updates', 'Shutdown']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(screen.queryByRole('button', { name: 'Factory reset...' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reset commissioning...' })).toBeInTheDocument();
@@ -364,13 +349,11 @@ describe('Header', () => {
   test.each([false, true])('should dispatch menu commands and notifications with debug=%s', (debug) => {
     appSettings.debug = debug;
     const { load, sendMessage, logMessage, showSnackbarMessage } = renderHeader();
-    load({ shellyBoard: true, shellySysUpdate: true, shellyMainUpdate: true });
+    load();
     const commands: [string | undefined, string, string, Record<string, unknown>][] = [
       [undefined, 'Install latest stable', '/api/install', { packageName: 'matterbridge', restart: true }],
       [undefined, 'Install latest dev', '/api/install', { packageName: 'matterbridge@dev', restart: true }],
       [undefined, 'Check for updates', '/api/checkupdates', {}],
-      [undefined, 'Shelly system update', '/api/shellysysupdate', {}],
-      [undefined, 'Shelly software update', '/api/shellymainupdate', {}],
       [undefined, 'Restart', '/api/restart', {}],
       [undefined, 'Shutdown', '/api/shutdown', {}],
       [undefined, 'Backup', '/api/create-backup', {}],
@@ -380,7 +363,6 @@ describe('Header', () => {
       ['Download', 'Matter storage', '/api/create-matter-storage-backup', {}],
       ['Download', 'Matterbridge plugins storage', '/api/create-plugin-backup', {}],
       ['Download', 'Matterbridge plugins config', '/api/create-config-backup', {}],
-      ['Download', 'Create Shelly system log', '/api/shellycreatesystemlog', {}],
     ];
     for (const [submenu, label, method, params] of commands) {
       sendMessage.mockClear();
@@ -405,8 +387,6 @@ describe('Header', () => {
       ['Download', 'Matterbridge log', './api/download-mblog', 'Downloading matterbridge log...'],
       ['Download', 'Matter log', './api/download-mjlog', 'Downloading matter log...'],
       ['Download', 'Matterbridge diagnostic log', './api/download-diagnostic', 'Downloading diagnostic log...'],
-      ['Download', 'Download Shelly system log', './api/shellydownloadsystemlog', 'Downloading Shelly system log...'],
-      ['View', 'Shelly system log', './api/shellyviewsystemlog', 'Loading shelly system log...'],
     ]) {
       openMenu(submenu);
       fireEvent.click(within(screen.getByLabelText(`sub-menu-${submenu.toLowerCase()}`)).getByRole('button', { name: label }));
@@ -419,14 +399,11 @@ describe('Header', () => {
   test.each([false, true])('should confirm, cancel, and route reset actions with debug=%s', (debug) => {
     appSettings.debug = debug;
     const { load, sendMessage, showConfirmCancelDialog, showSnackbarMessage, logMessage } = renderHeader();
-    load({ shellyBoard: true });
+    load();
     const resetActions: [string | undefined, string, number, string][] = [
-      [undefined, 'Reboot...', 0, 'reboot'],
       ['Reset', 'Reset all devices...', 0, 'unregister'],
       ['Reset', 'Reset commissioning...', 0, 'reset'],
       ['Reset', 'Factory reset...', 0, 'factoryreset'],
-      ['Reset', 'Reset network...', 0, 'softreset'],
-      ['Reset', 'Factory reset...', 1, 'hardreset'],
     ];
     for (const [submenu, label, index, command] of resetActions) {
       sendMessage.mockClear();
@@ -550,7 +527,6 @@ describe('Header', () => {
     const sendMessage = vi.fn();
     const removeListener = vi.fn();
     let listener: ((message: unknown) => void) | undefined;
-    // oxlint-disable-next-line promise/prefer-await-to-callbacks -- This callback mirrors the WebSocket listener API.
     const addListener = vi.fn((callback: (message: unknown) => void) => {
       listener = callback;
     });

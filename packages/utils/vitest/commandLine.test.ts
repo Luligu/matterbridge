@@ -4,18 +4,21 @@
  * @author Luca Liguori
  */
 
+import { originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { getIntArrayParameter, getIntParameter, getParameter, getStringArrayParameter, hasAnyParameter, hasParameter } from '../src/commandLine.js';
 
-describe('Parameter Functions', () => {
-  const ORIGINAL_ARGV = process.argv;
+// Setup the test environment
+await setupTest('CommandLine', false);
 
+describe('Parameter Functions', () => {
   beforeEach(() => {
     vi.resetModules();
-    process.argv = ['node', 'script.js'];
+    process.argv = originalProcessArgv.slice(0, 2);
   });
 
   afterAll(() => {
-    process.argv = ORIGINAL_ARGV;
+    process.argv = [...originalProcessArgv];
   });
 
   describe('hasParameter', () => {

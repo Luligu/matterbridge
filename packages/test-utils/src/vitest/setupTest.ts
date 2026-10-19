@@ -3,7 +3,7 @@
  * @description This file contains the Vitest base helpers.
  * @author Luca Liguori
  * @created 2025-12-31
- * @version 1.0.0
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -52,6 +52,83 @@ export let log: AnsiLogger;
 
 const noop = (): void => undefined;
 
+// Names are joined into HOMEDIR and that directory is removed, so anything that could escape
+// .cache/vitest is rejected: path.join('.cache', 'vitest', '../../src') collapses to 'src'.
+const VALID_NAME = /^[A-Za-z0-9_-]+$/;
+
+// True once installSpies() has installed the spies.
+let initialized = false;
+
+// Suite names already set up. Test files share one module registry, so 'called once' can only be
+// enforced per suite name: one setupTest() call per test file, not one per process.
+const configured = new Set<string>();
+
+/**
+ * The spies currently installed, in a shape that only exposes what the restore loop needs.
+ *
+ * @returns {{ mockRestore: () => void }[]} The installed logger and console spies.
+ */
+function installedSpies(): { mockRestore: () => void }[] {
+  return [
+    loggerLogSpy,
+    loggerDebugSpy,
+    loggerInfoSpy,
+    loggerNoticeSpy,
+    loggerWarnSpy,
+    loggerErrorSpy,
+    loggerFatalSpy,
+    consoleLogSpy,
+    consoleDebugSpy,
+    consoleInfoSpy,
+    consoleWarnSpy,
+    consoleErrorSpy,
+  ];
+}
+
+/**
+ * Install the logger and console spies, replacing any that are already installed.
+ *
+ * `vi.spyOn` returns the mock already attached to a target instead of wrapping it again, so every
+ * previous spy is restored first. Without that, a mocked implementation would survive into debug
+ * mode and the output would stay silenced.
+ *
+ * @param {boolean} debug If true, the spies pass the calls through to the original implementation.
+ * @returns {Promise<void>} A promise that resolves once the spies are installed.
+ */
+async function installSpies(debug: boolean): Promise<void> {
+  const { vi } = await import('vitest');
+
+  if (initialized) {
+    for (const spy of installedSpies()) {
+      spy.mockRestore();
+    }
+  }
+
+  loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log');
+  loggerDebugSpy = vi.spyOn(AnsiLogger.prototype, 'debug');
+  loggerInfoSpy = vi.spyOn(AnsiLogger.prototype, 'info');
+  loggerNoticeSpy = vi.spyOn(AnsiLogger.prototype, 'notice');
+  loggerWarnSpy = vi.spyOn(AnsiLogger.prototype, 'warn');
+  loggerErrorSpy = vi.spyOn(AnsiLogger.prototype, 'error');
+  loggerFatalSpy = vi.spyOn(AnsiLogger.prototype, 'fatal');
+  consoleLogSpy = vi.spyOn(console, 'log');
+  consoleDebugSpy = vi.spyOn(console, 'debug');
+  consoleInfoSpy = vi.spyOn(console, 'info');
+  consoleWarnSpy = vi.spyOn(console, 'warn');
+  consoleErrorSpy = vi.spyOn(console, 'error');
+
+  if (!debug) {
+    loggerLogSpy.mockImplementation(noop);
+    consoleLogSpy.mockImplementation(noop);
+    consoleDebugSpy.mockImplementation(noop);
+    consoleInfoSpy.mockImplementation(noop);
+    consoleWarnSpy.mockImplementation(noop);
+    consoleErrorSpy.mockImplementation(noop);
+  }
+
+  initialized = true;
+}
+
 /**
  * Setup the Vitest environment:
  * - it will remove any existing home directory
@@ -59,15 +136,35 @@ const noop = (): void => undefined;
  * - process.argv will be set to ['vitest', name, ...argv]
  * - the provided environment variables will be set on process.env
  *
- * @param {string} name The name of the test suite.
+ * @param {string} name The name of the test suite. Letters, digits, underscores and dashes only.
  * @param {boolean} debug If true, the logging is not mocked.
  * @param {string[]} argv Additional process.argv arguments to set after the 'vitest' and name entries.
  * @param {Record<string, string>} env Environment variables to set on process.env.
+ *
+ * @throws {Error} When the name is shorter than four characters or contains characters that could escape the home directory.
+ *
+ * @remarks Logs an error and returns without doing anything when the same name is set up more than
+ * once. Call it once per test file, or call resetTest() first.
+ *
+ * Use `vi.restoreAllMocks()` only in `afterAll`, together with resetTest(). In `afterEach`, a
+ * `beforeEach` or a test body it also restores the logger and console spies installed here, so the
+ * exported spies stop recording for the rest of the file. To clean up after each test, restore only
+ * the spies that test created, for example by keeping them in a list and calling `mockRestore()` on
+ * each one in `afterEach`.
  */
 export async function setupTest(name: string, debug: boolean = false, argv: string[] = [], env: Record<string, string> = {}): Promise<void> {
-  expect(name).toBeDefined();
-  expect(typeof name).toBe('string');
-  expect(name.length).toBeGreaterThanOrEqual(4);
+  if (typeof name !== 'string' || name.length < 4) {
+    throw new Error(`setupTest: invalid name '${name}'. Use at least four characters.`);
+  }
+  if (!VALID_NAME.test(name)) {
+    throw new Error(`setupTest: invalid name '${name}'. Use letters, digits, underscores and dashes only.`);
+  }
+  if (configured.has(name)) {
+    // Written to stderr, not console.error, so the message survives a mocked console
+    process.stderr.write(`setupTest: '${name}' has already been set up. Call setupTest() once per test file.\n`);
+    return;
+  }
+  configured.add(name);
   NAME = name;
   HOMEDIR = path.join('.cache', 'vitest', name);
   process.argv = ['vitest', name, ...argv];
@@ -84,59 +181,59 @@ export async function setupTest(name: string, debug: boolean = false, argv: stri
   rmSync(HOMEDIR, { recursive: true, force: true });
   mkdirSync(HOMEDIR, { recursive: true });
 
-  const { vi } = await import('vitest');
-  loggerDebugSpy = vi.spyOn(AnsiLogger.prototype, 'debug');
-  loggerInfoSpy = vi.spyOn(AnsiLogger.prototype, 'info');
-  loggerNoticeSpy = vi.spyOn(AnsiLogger.prototype, 'notice');
-  loggerWarnSpy = vi.spyOn(AnsiLogger.prototype, 'warn');
-  loggerErrorSpy = vi.spyOn(AnsiLogger.prototype, 'error');
-  loggerFatalSpy = vi.spyOn(AnsiLogger.prototype, 'fatal');
-
-  if (debug) {
-    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = vi.spyOn(console, 'log');
-    consoleDebugSpy = vi.spyOn(console, 'debug');
-    consoleInfoSpy = vi.spyOn(console, 'info');
-    consoleWarnSpy = vi.spyOn(console, 'warn');
-    consoleErrorSpy = vi.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(noop);
-    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(noop);
-    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(noop);
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(noop);
-  }
+  await installSpies(debug);
 }
 
 /**
  * Set or unset the debug mode.
  *
+ * Logs an error and does nothing when called before setupTest(), since there are no spies to switch over.
+ *
  * @param {boolean} debug If true, the logging is not mocked.
  * @returns {Promise<void>} A promise that resolves when the debug mode is set.
  */
 export async function setDebug(debug: boolean): Promise<void> {
-  const { vi } = await import('vitest');
-  if (debug) {
-    loggerLogSpy.mockRestore();
-    consoleLogSpy.mockRestore();
-    consoleDebugSpy.mockRestore();
-    consoleInfoSpy.mockRestore();
-    consoleWarnSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+  if (!initialized) {
+    // Written to stderr, not console.error, so the message survives a mocked console
+    process.stderr.write('setDebug() called before setupTest(): no spies to switch, ignoring.\n');
+    return;
+  }
+  await installSpies(debug);
+}
 
-    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log');
-    consoleLogSpy = vi.spyOn(console, 'log');
-    consoleDebugSpy = vi.spyOn(console, 'debug');
-    consoleInfoSpy = vi.spyOn(console, 'info');
-    consoleWarnSpy = vi.spyOn(console, 'warn');
-    consoleErrorSpy = vi.spyOn(console, 'error');
-  } else {
-    loggerLogSpy = vi.spyOn(AnsiLogger.prototype, 'log').mockImplementation(noop);
-    consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(noop);
-    consoleDebugSpy = vi.spyOn(console, 'debug').mockImplementation(noop);
-    consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(noop);
-    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(noop);
-    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(noop);
+/**
+ * Undo what setupTest() did:
+ * - restores AnsiLogger.prototype and the console methods
+ * - restores process.argv and process.env to the values captured when this module was loaded
+ * - lets setupTest() run again for the same suite name
+ *
+ * Does nothing harmful when setupTest() has not run. It does not remove the home directory, so
+ * anything written there is still available afterwards.
+ *
+ * @returns {void}
+ *
+ * @example
+ * ```typescript
+ * afterAll(() => {
+ *   // Reset the test environment before the next test.
+ *   resetTest();
+ * });
+ * ```
+ */
+export function resetTest(): void {
+  if (initialized) {
+    for (const spy of installedSpies()) {
+      spy.mockRestore();
+    }
+    initialized = false;
+  }
+  if (NAME) configured.delete(NAME);
+
+  process.argv = [...originalProcessArgv];
+  for (const key of Object.keys(process.env)) {
+    if (!(key in originalProcessEnv)) Reflect.deleteProperty(process.env, key);
+  }
+  for (const [key, value] of Object.entries(originalProcessEnv)) {
+    if (value !== undefined) process.env[key] = value;
   }
 }

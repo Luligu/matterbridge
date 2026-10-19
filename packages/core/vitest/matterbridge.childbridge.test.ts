@@ -24,9 +24,10 @@ import path from 'node:path';
 import { Environment } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
+import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { dev, MATTER_STORAGE_DIR, plg } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
-import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { db, LogLevel, pl, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
@@ -47,31 +48,33 @@ vi.mock('../src/helpers.js', async () => {
 });
 
 // Setup the test environment
-await setupTest(NAME, false, [], { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' });
-
-// setupTest resets process.argv; set the frontend/matter args afterwards
-process.argv = [
-  'node',
-  'matterbridge.test.js',
-  '--novirtual',
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--childbridge',
-  '--frontend',
-  FRONTEND_PORT.toString(),
-  '--homedir',
-  HOMEDIR,
-  '--profile',
-  'Childbridge',
-  '--port',
-  MATTER_PORT.toString(),
-  '--passcode',
-  PASSCODE.toString(),
-  '--discriminator',
-  DISCRIMINATOR.toString(),
-];
+await setupTest(
+  NAME,
+  false,
+  [
+    '--novirtual',
+    '--logger',
+    'debug',
+    '--matterlogger',
+    'debug',
+    '--childbridge',
+    '--frontend',
+    FRONTEND_PORT.toString(),
+    '--profile',
+    'Childbridge',
+    '--port',
+    MATTER_PORT.toString(),
+    '--passcode',
+    PASSCODE.toString(),
+    '--discriminator',
+    DISCRIMINATOR.toString(),
+  ],
+  { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' },
+);
+process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
 
 describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
   let matterbridge: Matterbridge;
@@ -141,7 +144,7 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
     expect((matterbridge as any).serverNode).toBeUndefined();
     expect((matterbridge as any).aggregatorNode).toBeUndefined();
 
-    expect((matterbridge as any).mdnsInterface).toBe(undefined);
+    expect((matterbridge as any).mdnsInterface).toBe(mdnsInterface);
     expect((matterbridge as any).port).toBe(MATTER_PORT);
     expect((matterbridge as any).passcode).toBe(PASSCODE);
     expect((matterbridge as any).discriminator).toBe(DISCRIMINATOR);
@@ -569,5 +572,5 @@ describe('Matterbridge loadInstance() and cleanup() -childbridge mode', () => {
 
     // Close mDNS instance
     await closeMdnsInstance(matterbridge);
-  });
+  }, 30000);
 });

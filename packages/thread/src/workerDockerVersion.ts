@@ -29,11 +29,11 @@ import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { debugStringify, LogLevel } from 'node-ansi-logger';
 
 import { getDockerVersion, takeDockerVersionWarning } from './dockerVersion.js';
-import { WorkerWrapper } from './workerWrapper.js';
+import { ThreadsWrapper } from './threadsWrapper.js';
 
 logModuleLoaded('DockerVersion', '\u001B[35m');
 
-export default new WorkerWrapper('DockerVersion', async (worker) => {
+export default new ThreadsWrapper('DockerVersion', async (worker) => {
   worker.logger(LogLevel.INFO, `Starting docker version check...`);
   let success = false;
   let dockerBuildConfig: DockerBuildConfig | undefined;

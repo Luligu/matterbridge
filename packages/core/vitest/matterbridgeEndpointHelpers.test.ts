@@ -17,14 +17,14 @@ const MATTER_CREATE_ONLY = true;
 import { CommonNumberTag, PowerSourceTag } from '@matter/node';
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
-import { VendorId } from '@matter/types';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
-import type { ClusterId } from '@matter/types/datatype';
-import { log, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
+import { type ClusterId, VendorId } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,
   aggregator,
@@ -34,7 +34,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { log, loggerErrorSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
@@ -59,6 +60,7 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getImportedElectricalEnergyMeasurementClusterServer,
   getSemtag,
   getSnapshot,
   internalFor,
@@ -68,6 +70,26 @@ import {
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+/**
+ * Advance the fake timers in small steps until the promise settles, yielding a real event loop turn before each step
+ * so the endpoint transaction (which also waits on real I/O) can reach the timers it schedules.
+ *
+ * @param {Promise<T>} promise The promise to settle.
+ * @param {number} [realTimeout] The real time limit in milliseconds (Date is not faked). Default 2000.
+ * @returns {Promise<T>} The settled value of the promise.
+ */
+async function advanceUntilSettled<T>(promise: Promise<T>, realTimeout: number = 2000): Promise<T> {
+  const status = { settled: false };
+  void promise.finally(() => (status.settled = true));
+  const start = Date.now();
+  while (!status.settled && Date.now() - start < realTimeout) {
+    await new Promise((resolve) => setImmediate(resolve));
+    await vi.advanceTimersByTimeAsync(50);
+  }
+  expect(status.settled).toBe(true);
+  return promise;
+}
 
 describe('Options helpers', () => {
   let device: MatterbridgeEndpoint;
@@ -98,8 +120,6 @@ describe('Options helpers', () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode
@@ -143,7 +163,31 @@ describe('Options helpers', () => {
     expect(getDefaultPowerSourceBatteryClusterServer(null).batPercentRemaining).toBe(null);
     expect(getDefaultPowerSourceReplaceableBatteryClusterServer(null).batPercentRemaining).toBe(null);
     expect(getDefaultPowerSourceRechargeableBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    // The optional rechargeable battery attributes are omitted unless provided
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batCapacity');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batTimeToFullCharge');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batChargingCurrent');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('activeBatChargeFaults');
+    expect(
+      getDefaultPowerSourceRechargeableBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, 3600, 1500, [
+        PowerSource.BatChargeFault.AmbientTooHot,
+      ]),
+    ).toMatchObject({ batCapacity: 200_000, batTimeToFullCharge: 3600, batChargingCurrent: 1500, activeBatChargeFaults: [PowerSource.BatChargeFault.AmbientTooHot] });
+    expect(
+      getDefaultPowerSourceRechargeableBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, null, null, []),
+    ).toMatchObject({
+      batTimeToFullCharge: null,
+      batChargingCurrent: null,
+      activeBatChargeFaults: [],
+    });
     expect(getDefaultElectricalEnergyMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).toMatchObject({
+      cumulativeEnergyImported: { energy: 1000 },
+      cumulativeEnergyExported: { energy: 2000 },
+    });
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(-1, -1)).toMatchObject({ cumulativeEnergyImported: null, cumulativeEnergyExported: null });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000)).toMatchObject({ cumulativeEnergyImported: { energy: 1000 } });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(-1)).toMatchObject({ cumulativeEnergyImported: null });
     expect(getDefaultElectricalPowerMeasurementClusterServer()).toBeDefined();
     expect(getApparentElectricalPowerMeasurementClusterServer()).toBeDefined();
     expect(getDefaultDeviceEnergyManagementClusterServer()).toBeDefined();
@@ -459,24 +503,88 @@ describe('Options helpers', () => {
     device.addRequiredClusterServers();
     await addDevice(aggregator, device);
 
-    const invoked = await invokeBehaviorCommand(
-      device,
-      WindowCovering,
-      'goToLiftPercentage',
-      { liftPercent100thsValue: 10000 },
-      () => device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000,
-    );
-    expect(invoked).toBe(true);
+    // Fake the movement timer and the waiter timers, and advance them until the 200ms movement completes.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    try {
+      const invoked = invokeBehaviorCommand(
+        device,
+        WindowCovering,
+        'goToLiftPercentage',
+        { liftPercent100thsValue: 10000 },
+        () => device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000,
+      );
+      expect(await advanceUntilSettled(invoked)).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
     expect(device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
   });
 
   test('invokeBehaviorCommand with a waiterCondition resolves false if the condition never becomes true', async () => {
     device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandWaiterFalse' });
-    device.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 200);
+    // No simulated movement: the condition never becomes true, only the waiter timeout matters.
+    device.createDefaultLiftTiltWindowCoveringClusterServer();
     device.addRequiredClusterServers();
     await addDevice(aggregator, device);
 
-    const invoked = await invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 10000 }, () => false);
-    expect(invoked).toBe(false);
+    // Fake the waiter timers, and advance them until its 1000ms timeout expires.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
+    try {
+      const invoked = invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 10000 }, () => false);
+      expect(await advanceUntilSettled(invoked)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('invokeBehaviorCommand logs and returns false for an unknown cluster or command, and accepts a qualified command name', async () => {
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandErrors' });
+    device.createDefaultWindowCoveringClusterServer();
+    device.addRequiredClusterServers();
+    await addDevice(aggregator, device);
+
+    expect(await invokeBehaviorCommand(device, 'noCluster', 'stopMotion')).toBe(false);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`invokeBehaviorCommand error: command ${hk}stopMotion${er} not found on endpoint`));
+
+    expect(await invokeBehaviorCommand(device, WindowCovering, 'noCommand' as never)).toBe(false);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
+
+    expect(await invokeBehaviorCommand(device, WindowCovering, 'WindowCovering.goToLiftPercentage', { liftPercent100thsValue: 5000 })).toBe(true);
+    expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
+  });
+
+  test('invokeBehaviorCommand waits for the behavior lock held by another transaction instead of failing', async () => {
+    // The movement simulation completes in a timer callback that runs with `{ lock: true }`, so a command can
+    // legitimately arrive while another transaction holds the behavior lock. invokeBehaviorCommand mirrors the real
+    // invoke path and takes the lock asynchronously, so this waits instead of throwing a synchronous-transaction-conflict.
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandLock' });
+    device.createDefaultLiftTiltWindowCoveringClusterServer();
+    device.addRequiredClusterServers();
+    await addDevice(aggregator, device);
+
+    // Hold the windowCovering behavior lock in a separate transaction until the test releases it.
+    let releaseLock: () => void = () => {};
+    const lockReleased = new Promise<void>((resolve) => (releaseLock = resolve));
+    const holder = device.act(async (agent) => {
+      const transaction = agent.context.transaction;
+      transaction.addResourcesSync((agent as unknown as Record<string, object>)['windowCovering']);
+      transaction.beginSync();
+      await lockReleased;
+    });
+    await flushAsync(3, 10, 0);
+
+    // The command is blocked on the lock: it has not settled and has not written the target yet.
+    const status = { settled: false };
+    const invoked = invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    void invoked.finally(() => (status.settled = true));
+    await flushAsync(3, 10, 0);
+    expect(status.settled).toBe(false);
+    expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(0);
+
+    // Once the lock is released the command completes.
+    releaseLock();
+    await holder;
+    expect(await invoked).toBe(true);
+    expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
   });
 });

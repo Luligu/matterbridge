@@ -18,34 +18,27 @@ const MATTER_CREATE_ONLY = true;
 
 import { Lifecycle } from '@matter/general';
 import { type ActionContext, Endpoint } from '@matter/node';
-import {
-  BooleanStateBehavior,
-  BooleanStateServer,
-  ColorControlBehavior,
-  DescriptorBehavior,
-  DescriptorServer,
-  EnergyPreferenceServer,
-  GroupsBehavior,
-  GroupsServer,
-  IdentifyBehavior,
-  IdentifyServer,
-  LevelControlBehavior,
-  OnOffBehavior,
-  OnOffServer,
-  TemperatureMeasurementServer,
-  ThermostatBehavior,
-  ThermostatServer,
-  ThermostatUserInterfaceConfigurationServer,
-  TimeSynchronizationServer,
-} from '@matter/node/behaviors';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
+import { BooleanStateBehavior, BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { ColorControlBehavior } from '@matter/node/behaviors/color-control';
+import { DescriptorBehavior, DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { EnergyPreferenceServer } from '@matter/node/behaviors/energy-preference';
+import { GroupsBehavior, GroupsServer } from '@matter/node/behaviors/groups';
+import { IdentifyBehavior, IdentifyServer } from '@matter/node/behaviors/identify';
+import { LevelControlBehavior } from '@matter/node/behaviors/level-control';
+import { OnOffBehavior, OnOffServer } from '@matter/node/behaviors/on-off';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ThermostatBehavior, ThermostatServer } from '@matter/node/behaviors/thermostat';
+import { ThermostatUserInterfaceConfigurationServer } from '@matter/node/behaviors/thermostat-user-interface-configuration';
+import { TimeSynchronizationServer } from '@matter/node/behaviors/time-synchronization';
 import { OnOffLightDevice } from '@matter/node/devices/on-off-light';
-import { EndpointNumber } from '@matter/types';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
   BasicInformation,
   BooleanState,
   BooleanStateConfiguration,
+  BridgedDeviceBasicInformation,
   CarbonDioxideConcentrationMeasurement,
   CarbonMonoxideConcentrationMeasurement,
   ColorControl,
@@ -92,7 +85,7 @@ import {
   WaterTankLevelMonitoring,
   WindowCovering,
 } from '@matter/types/clusters';
-import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/vitest-utils';
+import { EndpointNumber } from '@matter/types/datatype';
 import {
   addDevice,
   aggregator,
@@ -102,7 +95,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, CYAN, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
@@ -152,8 +146,6 @@ describe('Matterbridge ' + NAME, () => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode
@@ -521,6 +513,51 @@ describe('Matterbridge ' + NAME, () => {
     expect(deserializedDevice?.productLabel).toBe('Matter Endpoint');
     expect(deserializedDevice?.productUrl).toBe('https://matterbridge.io/device');
     expect(deserializedDevice?.configurationVersion).toBe(4);
+  });
+
+  test('serialize returns undefined for an incomplete device and deserialize falls back to the defaults', () => {
+    expect(MatterbridgeEndpoint.serialize(new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightNotSerializable' }))).toBeUndefined();
+
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightSerializeDefaults', number: EndpointNumber(102) });
+    device.createDefaultBasicInformationClusterServer('OnOffLight', '5678');
+    // Basic Information normally lives on the root server node: require it here to serialize it from the endpoint behaviors.
+    device.behaviors.require(BasicInformationServer);
+    const serializedDevice = MatterbridgeEndpoint.serialize(device);
+    expect(serializedDevice?.clusterServersId).toEqual([BasicInformation.id]);
+    if (!serializedDevice) return;
+
+    const deserializedDevice = MatterbridgeEndpoint.deserialize({
+      ...serializedDevice,
+      vendorId: undefined,
+      vendorName: undefined,
+      productId: undefined,
+      productName: undefined,
+      clusterServersId: [BridgedDeviceBasicInformation.id, BasicInformation.id, OnOff.id],
+    });
+    expect(deserializedDevice).toBeDefined();
+    expect(deserializedDevice?.hasClusterServer(BridgedDeviceBasicInformation.id)).toBe(true);
+    expect(deserializedDevice?.hasClusterServer(OnOff.id)).toBe(false);
+  });
+
+  test('getClusterServerOptions returns undefined for a cluster the device does not have', () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightNoOptions' });
+    expect(device.getClusterServerOptions(Thermostat.id)).toBeUndefined();
+  });
+
+  test('forEachAttribute is a no-op until the device is active', () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLightNotActive' });
+    device.createDefaultOnOffClusterServer();
+    const callback = vi.fn();
+    device.forEachAttribute(callback);
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  test('addChildDeviceTypeWithClusterServer adds the missing cluster servers to an already added child', () => {
+    const parent = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'OnOffPlugInUnitChildAlreadyAdded' });
+    parent.addChildDeviceTypeWithClusterServer('contactChild', contactSensor, [BooleanState.id]);
+    const child = parent.addChildDeviceTypeWithClusterServer('contactChild', contactSensor, [BooleanState.id, BooleanStateConfiguration.id]);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`- endpoint ${CYAN}contactChild${db} already added!`));
+    expect(child.hasClusterServer(BooleanStateConfiguration.id)).toBe(true);
   });
 
   test('hasClusterServer', async () => {
@@ -1051,11 +1088,20 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(datas[2]).toEqual({ command: 'toggle', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() });
 
+    // The emitCommand method resolves the cluster from a behavior id or from a Behavior.Type.
+    await device.act((agent) => {
+      device.emitCommand('onOff', 'toggle', {}, agent.context);
+      device.emitCommand(OnOffBehavior, 'toggle', {}, agent.context);
+    });
+    expect(datas).toHaveLength(5);
+    expect(datas[3]).toEqual({ command: 'toggle', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() });
+    expect(datas[4]).toEqual({ command: 'toggle', cluster: 'onOff', request: {}, endpoint: device, context: expect.anything() });
+
     // Emitting a command that nobody subscribed to is a no-op.
     await device.act((agent) => {
       emitCommand(device, 'onOff', 'on', {}, agent.context);
     });
-    expect(datas).toHaveLength(3);
+    expect(datas).toHaveLength(5);
 
     // A cluster with no events object on the endpoint cannot expose a command observable.
     const eventsSpy = vi.spyOn(device, 'events', 'get').mockReturnValue({});

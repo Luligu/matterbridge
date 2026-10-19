@@ -19,7 +19,6 @@ import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText } from './MbfWindow';
-import { NetworkConfigDialog } from './NetworkConfigDialog';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
 
@@ -127,14 +126,6 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
   // Refs
   const uniqueId = useRef(getUniqueId());
 
-  // Network config dialog
-  const [openNetConfig, setOpenNetConfig] = useState(false);
-  const handleCloseNetConfig = () => setOpenNetConfig(false);
-  const handleSaveNetConfig = (config: { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string }) => {
-    if (debug) console.log('handleSaveNetConfig called with config:', config);
-    sendMessage({ id: uniqueId.current, sender: 'Settings', method: '/api/shellynetconfig', src: 'Frontend', dst: 'Matterbridge', params: config });
-  };
-
   // Change password dialog
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const handleCloseChangePassword = () => setOpenChangePassword(false);
@@ -226,7 +217,6 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
       <MbfWindowHeader>
         <MbfWindowHeaderText>Matterbridge settings</MbfWindowHeaderText>
       </MbfWindowHeader>
-      <NetworkConfigDialog open={openNetConfig} ip={systemInfo.ipv4Address} onClose={handleCloseNetConfig} onSave={handleSaveNetConfig} />
       <ChangePasswordDialog open={openChangePassword} onClose={handleCloseChangePassword} onSave={handleSaveChangePassword} />
       <MbfWindowContent style={{ flexDirection: 'column', padding: '10px', gap: '0px', backgroundColor: 'var(--div-bg-color)', color: 'var(--div-text-color)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
@@ -299,13 +289,6 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
             Change password
           </Button>
         </div>
-        {matterbridgeInfo.shellyBoard && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
-            <Button variant="contained" color="primary" onClick={() => setOpenNetConfig(true)}>
-              Configure IP
-            </Button>
-          </div>
-        )}
       </MbfWindowContent>
     </MbfWindow>
   );
@@ -641,7 +624,8 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
       label={label}
       variant="standard"
       sx={{
-        width: width ? `${width - 20}px` : '100%',
+        // v8 ignore next line -- just defensive check
+        'width': width ? `${width - 20}px` : '100%',
         // idle/blur underline
         '& .MuiInput-underline:before': {
           borderBottomColor: 'var(--main-label-color)',
@@ -665,15 +649,15 @@ function ReadOnlyTextField({ value, label, width }: { value: string; label: stri
         input: {
           readOnly: true,
           sx: {
-            color: 'var(--div-text-color)',
+            'color': 'var(--div-text-color)',
             '&:before': { borderBottomColor: 'var(--main-label-color)' },
             '&:after': { borderBottomColor: 'var(--main-label-color)' },
           },
         },
         inputLabel: {
           sx: {
-            marginTop: '3px',
-            color: 'var(--main-label-color)',
+            'marginTop': '3px',
+            'color': 'var(--main-label-color)',
             '&.Mui-focused': {
               color: 'var(--main-label-color)',
             },

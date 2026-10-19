@@ -27,8 +27,9 @@
 
 import { Seconds, Time, type Timer } from '@matter/general';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
-import { Status, StatusResponseError } from '@matter/types';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';

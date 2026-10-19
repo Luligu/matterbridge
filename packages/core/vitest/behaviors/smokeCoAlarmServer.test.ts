@@ -8,9 +8,8 @@ const NAME = 'SmokeCoAlarmServer';
 const MATTER_PORT = 13500;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -20,7 +19,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
 import { smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';

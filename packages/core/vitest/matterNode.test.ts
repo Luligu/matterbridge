@@ -4,32 +4,26 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable no-use-before-define */
-/* oxlint-disable typescript/prefer-nullish-coalescing */
-
 const MATTER_PORT = 10000;
 const NAME = 'MatterNode';
-const HOMEDIR = path.join('.cache', 'vitest', NAME);
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import url from 'node:url';
 
-import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import type { SessionsBehavior } from '@matter/node';
+import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
+import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
-import type { ExposedFabricInformation } from '@matter/protocol';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
-import { FabricId, FabricIndex, NodeId, VendorId } from '@matter/types/datatype';
+import { FabricIndex } from '@matter/types/datatype';
+import { closeServerNodeStores, getSharedMatterbridge } from '@matterbridge/test-utils/vitest/matter';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
-import { copyDirectory, formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, loggerWarnSpy, setupTest } from '@matterbridge/vitest-utils';
-import { closeServerNodeStores } from '@matterbridge/vitest-utils/matter';
+import { copyDirectory } from '@matterbridge/utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
@@ -40,72 +34,20 @@ import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { MatterNode } from '../src/matterNode.js';
 import { type Plugin, PluginManager } from '../src/pluginManager.js';
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
-const nic = getInterfaceDetails();
+// Setup the test environment
+await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
 const matterbridge: SharedMatterbridge = {
-  uuid: '',
-  rootDirectory: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../'),
-  homeDirectory: HOMEDIR,
-  matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
-  matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
-  matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
-  globalModulesDirectory: path.join('.', 'node_modules'),
-  matterbridgeVersion: matterbridgePackageJson.version,
-  matterbridgeLatestVersion: matterbridgePackageJson.version,
-  matterbridgeDevVersion: matterbridgePackageJson.version,
-  frontendVersion: frontendPackageJson.version,
-  dockerDev: undefined,
-  dockerVersion: undefined,
-  dockerLatestVersion: undefined,
-  dockerDevVersion: undefined,
+  ...getSharedMatterbridge(),
   bridgeMode: 'bridge',
-  restartMode: 'none',
   virtualMode: 'disabled',
-  profile: undefined,
-  logLevel: LogLevel.DEBUG,
   fileLogger: true,
-  matterLogLevel: LogLevel.DEBUG,
   matterFileLogger: true,
-  mdnsInterface: undefined,
-  ipv4Address: undefined,
-  ipv6Address: undefined,
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
-  startupAt: 0,
-  shutdownAt: 0,
-  runningTimes: 0,
-  runningDays: 0,
-  systemInformation: {
-    interfaceName: nic?.interfaceName || '',
-    macAddress: nic?.macAddress || '',
-    ipv4Address: nic?.ipv4Address || '',
-    ipv6Address: nic?.ipv6Address || '',
-    nodeVersion: process.versions.node,
-    hostname: os.hostname(),
-    user: os.userInfo().username,
-    osType: os.type(),
-    osRelease: os.release(),
-    osPlatform: os.platform(),
-    osArch: os.arch(),
-
-    totalMemory: formatBytes(os.totalmem()),
-    freeMemory: formatBytes(os.freemem()),
-    systemUptime: formatUptime(os.uptime()),
-    processUptime: formatUptime(Math.floor(process.uptime())),
-    cpuUsage: formatPercent(0),
-    processCpuUsage: formatPercent(0),
-    rss: formatBytes(process.memoryUsage().rss),
-    heapTotal: formatBytes(process.memoryUsage().heapTotal),
-    heapUsed: formatBytes(process.memoryUsage().heapUsed),
-  },
+  mdnsInterface: getInterfaceName(),
 };
-// process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
-
-// Setup the test environment
-await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
 describe('MatterNode', () => {
   let matter: MatterNode;
@@ -123,18 +65,15 @@ describe('MatterNode', () => {
   let device: MatterbridgeEndpoint;
 
   beforeAll(() => {
-    // process.stdout.write('=== Starting MatterNode tests ===\n\n');
-
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
+    expect(loggerDebugSpy).toHaveBeenCalledWith('MatterNode for Matterbridge loaded');
   });
 
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Close broadcast server and mDNS instance
@@ -149,8 +88,6 @@ describe('MatterNode', () => {
 
     // Log any keep-alive handles
     // logKeepAlives(matter.log);
-
-    // process.stdout.write('=== Finished MatterNode tests ===\n\n');
   });
 
   test('Broadcast unknown server message type', () => {
@@ -178,6 +115,20 @@ describe('MatterNode', () => {
     expect(testServer.close()).toBeUndefined();
   });
 
+  test('should log errors when the broadcast message handler rejects', async () => {
+    const error = new Error('Broadcast handler rejection');
+    const handlerSpy = vi.spyOn(matter, 'msgHandler').mockRejectedValueOnce(error);
+    try {
+      // @ts-expect-error access private property
+      matter.server.emit('broadcast_message', { type: 'get_log_level', src: 'test', dst: 'matter' });
+      await Promise.resolve();
+      expect(handlerSpy).toHaveBeenCalledTimes(1);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Broadcast message handler failed'));
+    } finally {
+      handlerSpy.mockRestore();
+    }
+  });
+
   test('MatterNode instance', () => {
     expect(matter).toBeDefined();
     expect(matter).toBeInstanceOf(MatterNode);
@@ -197,7 +148,58 @@ describe('MatterNode', () => {
     destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
+  test('pluginStatusUpdate should update the plugin manager and broadcast a plugin_status_update message to the frontend', () => {
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      matter.pluginStatusUpdate('matterbridge-test', { started: true, registeredDevices: 2 });
+      expect(requestSpy).toHaveBeenCalledTimes(2);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'plugins_set',
+        src: 'matter',
+        dst: 'plugins',
+        params: { plugin: { name: 'matterbridge-test', started: true, registeredDevices: 2 } },
+      });
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'matter',
+        dst: 'frontend',
+        params: {
+          msg: {
+            id: 0,
+            src: 'Matterbridge',
+            dst: 'Frontend',
+            method: 'plugin_status_update',
+            success: true,
+            response: { plugin: 'matterbridge-test', status: { started: true, registeredDevices: 2 } },
+          },
+        },
+      });
+    } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
+  test('matterbridgeStatusUpdate should broadcast a matterbridge_status_update message to the frontend', () => {
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      matter.matterbridgeStatusUpdate('started');
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'frontend_broadcast_message',
+        src: 'matter',
+        dst: 'frontend',
+        params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status: 'started' } } },
+      });
+    } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
   test('PluginManager instance', () => {
+    // @ts-expect-error access private property
+    expect(matter.pluginManager.matterbridge.getPlatformMatterbridge()).toBe(matterbridge);
     expect(pluginManager).toBeDefined();
     expect(pluginManager).toBeInstanceOf(PluginManager);
     expect(pluginManager.length).toBe(0);
@@ -254,6 +256,10 @@ describe('MatterNode', () => {
     });
     // @ts-expect-error access private property
     pluginManager.matterbridge.nodeContext = await pluginManager.matterbridge.nodeStorage.createStorage('matterbridge');
+    // @ts-expect-error access private properties
+    matter.pluginManager.matterbridge.nodeStorage = pluginManager.matterbridge.nodeStorage;
+    // @ts-expect-error access private properties
+    matter.pluginManager.matterbridge.nodeContext = pluginManager.matterbridge.nodeContext;
 
     expect(await pluginManager.add('./packages/core/src/mock/plugin1')).not.toBeNull();
     expect(await pluginManager.add('./packages/core/src/mock/plugin2')).not.toBeNull();
@@ -295,6 +301,40 @@ describe('MatterNode', () => {
   test('Start matter storage', async () => {
     expect(await matter.startMatterStorage()).toBeUndefined();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
+  });
+
+  test('should write missing and changed context values while preserving unchanged values and identity', async () => {
+    const setSpy = vi.spyOn(StorageContext.prototype, 'set');
+    const createContext = async (name: string, serialNumber?: string, uniqueId?: string): Promise<StorageContext> =>
+      matter.createServerNodeContext(
+        'ConditionalWrites',
+        name,
+        matter.aggregatorDeviceType,
+        matter.aggregatorVendorId,
+        matter.aggregatorVendorName,
+        matter.aggregatorProductId,
+        matter.aggregatorProductName,
+        serialNumber,
+        uniqueId,
+      );
+    try {
+      const context = await createContext('Original node');
+      expect(setSpy).toHaveBeenCalledTimes(17);
+      const serialNumber = await context.get('serialNumber');
+      const uniqueId = await context.get('uniqueId');
+      setSpy.mockClear();
+      await createContext('Original node', 'Replacement serial', 'Replacement ID');
+      expect(setSpy).not.toHaveBeenCalled();
+      await createContext('Renamed node');
+      expect(setSpy.mock.calls).toMatchObject([
+        ['deviceName', 'Renamed node'],
+        ['nodeLabel', 'Renamed node'],
+      ]);
+      expect(await context.get('serialNumber')).toBe(serialNumber);
+      expect(await context.get('uniqueId')).toBe(uniqueId);
+    } finally {
+      setSpy.mockRestore();
+    }
   });
 
   test('should validate commissioning and Basic Information values before creating a Matter node', async () => {
@@ -346,6 +386,17 @@ describe('MatterNode', () => {
     await invalidServerNode.close();
   });
 
+  test('should not add the TestEventTrigger server when MATTERBRIDGE_CHIP_TEST is set and chipTests.js is not available', async () => {
+    process.env.MATTERBRIDGE_CHIP_TEST = '1';
+    try {
+      const chipServerNode = await matter.createServerNode(MATTER_PORT + 1, PASSCODE, DISCRIMINATOR);
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running TestEventTrigger server. *');
+      await chipServerNode.close();
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+  });
+
   test('Create server node for Matterbridge', async () => {
     expect(await matter.createMatterbridgeServerNode()).toBeDefined();
     await matter.serverNode?.construction.ready;
@@ -368,32 +419,35 @@ describe('MatterNode', () => {
     await Promise.all([startPromise, onlinePromise]);
   });
 
-  test('Get server node for Matterbridge data', () => {
-    expect(matter.serverNode).toBeDefined();
-    if (matter.serverNode === undefined) return;
-    expect(matter.getServerNodeData(matter.serverNode)).toEqual({
-      advertiseTime: expect.any(Number),
-      advertising: false,
-      commissioned: true,
-      fabricInformations: [
-        {
-          fabricId: '2',
-          fabricIndex: 1,
-          label: 'Home',
-          nodeId: '116',
-          rootNodeId: '112233',
-          rootVendorId: 4939,
-          rootVendorName: '(HomeAssistant)',
-        },
-      ],
-      id: 'Matterbridge',
-      manualPairingCode: '35792000079',
-      online: true,
-      qrPairingCode: 'MT:Y.K904QI14UIQ663000',
-      serialNumber: expect.any(String),
-      sessionInformations: [],
-      windowStatus: 0,
-    });
+  test.each([
+    { args: [], expectedVersion: 1, description: 'leave the version unchanged without the flag' },
+    { args: ['--configuration-version'], expectedVersion: 2, description: 'increment the current version with a bare flag' },
+    { args: ['--configuration-version', 'invalid'], expectedVersion: 2, description: 'increment the current version with an invalid value' },
+    { args: ['--configuration-version', '42'], expectedVersion: 42, description: 'use the explicit version' },
+    { args: ['--configuration-version', '0'], expectedVersion: 1, description: 'clamp zero to one' },
+    { args: ['--configuration-version', '-10'], expectedVersion: 2, description: 'increment when the value is parsed as another flag' },
+    { args: ['--configuration-version', '4294967296'], expectedVersion: 4294967295, description: 'clamp the version to UINT32_MAX' },
+  ])('should $description when the server node goes online', async ({ args, expectedVersion }) => {
+    const serverNode = matter.serverNode;
+    if (!serverNode) throw new Error('Server node is not initialized');
+    const savedArgv = process.argv;
+    const originalVersion = serverNode.state.basicInformation.configurationVersion;
+    const setStateSpy = vi.spyOn(serverNode, 'setStateOf').mockImplementation(async () => await Promise.resolve());
+    process.argv = [...savedArgv, ...args];
+    try {
+      await serverNode.act(async (agent) => {
+        await serverNode.lifecycle.online.emit(agent.context);
+      });
+      await Promise.all(setStateSpy.mock.results.map((result) => result.value));
+      expect(setStateSpy.mock.calls).toEqual(args.length > 0 ? [[BasicInformationServer, { configurationVersion: expectedVersion }]] : []);
+      expect(serverNode.state.basicInformation.configurationVersion).toBe(originalVersion);
+      expect(loggerNoticeSpy.mock.calls.filter(([message]) => message.startsWith('Configuration version for server node Matterbridge is now'))).toEqual(
+        args.length > 0 ? [[`Configuration version for server node Matterbridge is now ${expectedVersion}`]] : [],
+      );
+    } finally {
+      process.argv = savedArgv;
+      setStateSpy.mockRestore();
+    }
   });
 
   test('Server node commissioned', () => {
@@ -428,6 +482,20 @@ describe('MatterNode', () => {
   test('Server node sessions.subscriptionsChanged', () => {
     matter.serverNode?.events.sessions.subscriptionsChanged.emit({} as any);
     expect(loggerNoticeSpy).toHaveBeenCalledWith(expect.stringContaining(`Session subscriptions changed on server node for Matterbridge`));
+  });
+
+  test('Broadcast matter_apimatter', async () => {
+    expect(matter.serverNode).toBeDefined();
+    if (!matter.serverNode) return;
+    // The shared testServer is closed in a previous test
+    const apiServer = new BroadcastServer('frontend', log);
+    // The owner of the server node responds with its data
+    const response = await apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: matter.serverNode.id } });
+    expect(response.result.matter.id).toBe(matter.serverNode.id);
+    expect(response.result.matter.qrPairingCode).toBe(matter.serverNode.state.commissioning.pairingCodes.qrPairingCode);
+    // No MatterNode owns an unknown server node, so nobody responds and the fetch times out
+    await expect(apiServer.fetch({ type: 'matter_apimatter', src: apiServer.name, dst: 'matter', params: { id: 'unknown' } }, 100)).rejects.toThrow();
+    apiServer.close();
   });
 
   test('Set aggregator reachability', async () => {
@@ -575,10 +643,14 @@ describe('MatterNode', () => {
 
     // Test adding AccessoryPlugin
     (matter as any).matterbridge.bridgeMode = 'childbridge';
+    // @ts-expect-error access private property
+    matter.pluginManager.matterbridge.bridgeMode = 'childbridge';
     expect(await matter.pluginManager.add('./packages/core/src/mock/plugin4')).not.toBeNull();
     expect(await matter.addVirtualEndpoint('matterbridge-mock4', 'Virtual device', 'switch', async () => {})).toBe(false);
     expect(loggerErrorSpy).toHaveBeenCalledWith(`Virtual devices are only supported in bridge mode and childbridge mode with a DynamicPlatform`);
     (matter as any).matterbridge.bridgeMode = 'bridge';
+    // @ts-expect-error access private property
+    matter.pluginManager.matterbridge.bridgeMode = 'bridge';
 
     // Test adding with no aggregator node
     const saved = matter.aggregatorNode;
@@ -805,95 +877,5 @@ describe('MatterNode', () => {
   test('Stop matter storage', async () => {
     expect(await matter.stopMatterStorage()).toBeUndefined();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Closed matter node storage`);
-  });
-
-  test('Sanitize fabrics', () => {
-    const fabricInfos: ExposedFabricInformation[] = [
-      {
-        fabricIndex: FabricIndex(1),
-        fabricId: FabricId(45653242346465555556n),
-        nodeId: NodeId(556546442432656555556n),
-        rootNodeId: NodeId(5565442324264656555556n),
-        rootVendorId: VendorId(4996),
-        label: 'Fabric 1 label',
-      },
-      {
-        fabricIndex: FabricIndex(2),
-        fabricId: FabricId(45654621214656555556n),
-        nodeId: NodeId(556546462112156555556n),
-        rootNodeId: NodeId(556546412212656555556n),
-        rootVendorId: VendorId(4937),
-        label: 'Fabric 2 label',
-      },
-    ];
-    expect(matter.sanitizeFabricInformations(fabricInfos).length).toBe(2);
-    expect(() => {
-      JSON.stringify(fabricInfos);
-    }).toThrow();
-    expect(JSON.stringify(matter.sanitizeFabricInformations(fabricInfos)).length).toBe(402);
-  });
-
-  test('Sanitize sessions', () => {
-    let sessionInfos: SessionsBehavior.Session[] = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: true,
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect(() => {
-      JSON.stringify(sessionInfos);
-    }).toThrow();
-    expect(matter.sanitizeSessionInformation(sessionInfos).length).toBe(1);
-    expect(JSON.stringify(matter.sanitizeSessionInformation(sessionInfos)).length).toBe(450);
-    sessionInfos = [
-      {
-        name: 'secure/64351',
-        nodeId: NodeId(16784206195868397986n),
-        peerNodeId: NodeId(1604858123872676291n),
-        fabric: {
-          fabricIndex: FabricIndex(2),
-          fabricId: FabricId(456546212146567986n),
-          nodeId: NodeId(1678420619586823323397986n),
-          rootNodeId: NodeId(18446744060824623349729n),
-          rootVendorId: VendorId(4362),
-          label: 'SmartThings Hub 0503',
-        },
-        isPeerActive: false,
-        lastInteractionTimestamp: 1720035723121269,
-        lastActiveTimestamp: 1720035761223121,
-        numberOfActiveSubscriptions: 0,
-      },
-    ];
-    expect(matter.sanitizeSessionInformation(sessionInfos).length).toBe(0);
-  });
-
-  test('Get VendorId name', () => {
-    expect((matter as any).getVendorIdName()).toBe('');
-    expect((matter as any).getVendorIdName(4937)).toContain('AppleHome');
-    expect((matter as any).getVendorIdName(4996)).toContain('AppleKeyChain');
-    expect((matter as any).getVendorIdName(4362)).toContain('SmartThings');
-    expect((matter as any).getVendorIdName(4939)).toContain('HomeAssistant');
-    expect((matter as any).getVendorIdName(24582)).toContain('GoogleHome');
-    expect((matter as any).getVendorIdName(4631)).toContain('Alexa');
-    expect((matter as any).getVendorIdName(4701)).toContain('Tuya');
-    expect((matter as any).getVendorIdName(4718)).toContain('Xiaomi');
-    expect((matter as any).getVendorIdName(4742)).toContain('eWeLink');
-    expect((matter as any).getVendorIdName(5264)).toContain('Shelly');
-    expect((matter as any).getVendorIdName(0x1488)).toContain('ShortcutLabsFlic');
-    expect((matter as any).getVendorIdName(65521)).toContain('MatterTest');
-    expect((matter as any).getVendorIdName(1)).toContain('Unknown vendorId');
   });
 });

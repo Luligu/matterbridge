@@ -14,7 +14,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/vitest-utils';
+import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
@@ -25,7 +25,8 @@ vi.mock('../../src/behaviors/ffmpeg.js', async (importOriginal) => {
   return { ...actual, hasFfmpeg: vi.fn(actual.hasFfmpeg), runFfmpeg: vi.fn(actual.runFfmpeg) };
 });
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 // The dev container exports MATTERBRIDGE_ICE_PORT_RANGE / MATTERBRIDGE_ICE_HOST_ADDRESSES for manual WebRTC testing. Unset
 // them here so every session in this file starts from werift's defaults (the ICE override tests stub them explicitly, and
@@ -339,17 +340,58 @@ describe('WeriftWebRtcSession', () => {
       }
     });
 
-    it('should keep the synthetic pattern fixed despite resolution and bitrate options', async () => {
-      options.videoResolution = '1920x1080';
-      options.videoBitrate = 2500;
+    it.each([
+      [undefined, undefined, 'testsrc=size=640x480:rate=30', '1000k'],
+      ['auto', undefined, 'testsrc=size=640x480:rate=30', '1000k'],
+      ['1280x720', 2000, 'testsrc=size=1280x720:rate=30', '2000k'],
+      ['1920x1080', 2500, 'testsrc=size=1920x1080:rate=30', '2500k'],
+    ])('should size the synthetic pattern from videoResolution=%s and videoBitrate=%s', async (resolution, bitrate, input, expectedBitrate) => {
+      options.videoResolution = resolution;
+      options.videoBitrate = bitrate;
       const session = new WeriftWebRtcSession(1, { ...options });
       try {
         await session.createOffer();
         const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
-        expect(args).toContain('testsrc=size=640x480:rate=10');
-        expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', '1000k']);
+        expect(args).toContain(input);
+        expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', expectedBitrate]);
       } finally {
         await session.close();
+      }
+    });
+
+    it.each([
+      [undefined, 'testsrc=size=640x480:rate=30', '60'],
+      ['10', 'testsrc=size=640x480:rate=10', '20'],
+      [' 60 ', 'testsrc=size=640x480:rate=60', '120'],
+      ['0', 'testsrc=size=640x480:rate=30', '60'],
+      ['61', 'testsrc=size=640x480:rate=30', '60'],
+      ['12.5', 'testsrc=size=640x480:rate=30', '60'],
+      ['abc', 'testsrc=size=640x480:rate=30', '60'],
+    ])('should set the synthetic pattern frame rate and keyframe interval from MATTERBRIDGE_TEST_VIDEO_FPS=%s', async (fps, input, keyFrameInterval) => {
+      if (fps !== undefined) vi.stubEnv('MATTERBRIDGE_TEST_VIDEO_FPS', fps);
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        await session.createOffer();
+        const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
+        expect(args).toContain(input);
+        expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', keyFrameInterval]);
+      } finally {
+        await session.close();
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('should keep a keyframe every 20 frames for the RTSP source regardless of MATTERBRIDGE_TEST_VIDEO_FPS', async () => {
+      vi.stubEnv('MATTERBRIDGE_TEST_VIDEO_FPS', '10');
+      const session = new WeriftWebRtcSession(1, { ...options, videoSource: 'rtsp', videoSourceDevice: 'rtsp://camera.local/live' });
+      try {
+        await session.createOffer();
+        const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
+        expect(args).not.toContain('testsrc=size=640x480:rate=10');
+        expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', '20']);
+      } finally {
+        await session.close();
+        vi.unstubAllEnvs();
       }
     });
 
@@ -560,10 +602,10 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it.each([
-      ['linux', '/dev/video0'],
-      ['darwin', '0'],
-      ['win32', 'Integrated Camera'],
-    ])('should attach a video track from the configured webcam device on platform %s', async (platform, device) => {
+      ['linux', '/dev/video0', 'v4l2', '/dev/video0'],
+      ['darwin', '0', 'avfoundation', '0'],
+      ['win32', 'Integrated Camera', 'dshow', 'video=Integrated Camera'],
+    ])('should attach a video track from the configured webcam device on platform %s with a constant 30 fps output', async (platform, device, format, input) => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = device;
       Object.defineProperty(process, 'platform', { value: platform });
@@ -572,6 +614,10 @@ describe('WeriftWebRtcSession', () => {
       const sdp = await session.createOffer();
 
       expect(sdp).toContain('m=video');
+      const args = vi.mocked(runFfmpeg).mock.calls.at(-1)?.[0] ?? [];
+      expect(args.slice(args.indexOf('-f'), args.indexOf('-f') + 2)).toEqual(['-f', format]);
+      const inputIndex = args.indexOf('-i');
+      expect(args.slice(inputIndex, inputIndex + 6)).toEqual(['-i', input, '-fps_mode', 'cfr', '-r', '30']);
 
       await session.close();
     });

@@ -24,9 +24,9 @@
 
 import { CameraAvStreamManagementServer } from '@matter/node/behaviors/camera-av-stream-management';
 import { WebRtcTransportProviderServer } from '@matter/node/behaviors/web-rtc-transport-provider';
-import { Status, StatusResponseError, StreamUsage, ThreeLevelAuto } from '@matter/types';
-import type { Viewport } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
+import { StatusResponseError } from '@matter/types/common';
+import { Status, StreamUsage, ThreeLevelAuto, type Viewport } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';

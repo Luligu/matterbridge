@@ -6,22 +6,24 @@
 
 const NAME = 'Ffmpeg';
 
-import { spawn as realSpawn } from 'node:child_process';
+import { spawn as realSpawn, spawnSync as realSpawnSync } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { setupTest } from '@matterbridge/vitest-utils';
+import { loggerDebugSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
-await setupTest(NAME);
+// Setup the test environment
+await setupTest(NAME, false);
 
 vi.mock('node:child_process', async () => {
   const actual = await vi.importActual<typeof import('node:child_process')>('node:child_process');
-  return { ...actual, spawn: vi.fn() };
+  return { ...actual, spawn: vi.fn(), spawnSync: vi.fn() };
 });
 
 const spawnMock = vi.mocked(realSpawn);
+const spawnSyncMock = vi.mocked(realSpawnSync);
 
 /**
  * Builds a fake ChildProcess-like EventEmitter that asynchronously emits either `exit` (with the given code) or
@@ -39,7 +41,18 @@ function fakeChild(outcome: number | Error): EventEmitter {
   return child;
 }
 
-describe('ffmpeg resolution at module load', () => {
+/**
+ * Builds a fake SpawnSyncReturns-like object for spawnSync mocks.
+ *
+ * @param {number | Error} outcome - The exit code or Error.
+ * @returns {ReturnType<typeof realSpawnSync>} The fake sync spawn return value.
+ */
+function fakeSync(outcome: number | Error): ReturnType<typeof realSpawnSync> {
+  if (outcome instanceof Error) return { status: null, error: outcome } as unknown as ReturnType<typeof realSpawnSync>;
+  return { status: outcome } as unknown as ReturnType<typeof realSpawnSync>;
+}
+
+describe('ffmpeg resolution', () => {
   const originalPath = process.env.PATH;
   const originalLocalAppData = process.env.LOCALAPPDATA;
   const originalProgramFiles = process.env.ProgramFiles;
@@ -48,6 +61,7 @@ describe('ffmpeg resolution at module load', () => {
 
   beforeEach(() => {
     spawnMock.mockReset();
+    spawnSyncMock.mockReset();
   });
 
   afterEach(() => {
@@ -60,7 +74,7 @@ describe('ffmpeg resolution at module load', () => {
   });
 
   it('should resolve ffmpeg and let runFfmpeg spawn it when the bare command runs successfully', async () => {
-    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
 
     vi.resetModules();
     const { hasFfmpeg, runFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
@@ -76,7 +90,7 @@ describe('ffmpeg resolution at module load', () => {
     delete process.env.LOCALAPPDATA;
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
 
     vi.resetModules();
     const { hasFfmpeg, runFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
@@ -91,9 +105,7 @@ describe('ffmpeg resolution at module load', () => {
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
     Object.defineProperty(process, 'platform', { value: 'linux' });
-    spawnMock.mockImplementation(
-      (_command, args) => fakeChild((args as string[]).includes('-version') ? 0 : new Error('unknown option --version')) as ReturnType<typeof realSpawn>,
-    );
+    spawnSyncMock.mockImplementation((_command, args) => fakeSync((args as string[]).includes('-version') ? 0 : new Error('unknown option --version')));
 
     vi.resetModules();
     const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
@@ -107,12 +119,66 @@ describe('ffmpeg resolution at module load', () => {
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
     Object.defineProperty(process, 'platform', { value: 'linux' });
-    spawnMock.mockImplementation(() => fakeChild(1) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(1));
 
     vi.resetModules();
     const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
 
     expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should handle spawnSync throwing an error and return false', async () => {
+    process.env.PATH = '';
+    delete process.env.LOCALAPPDATA;
+    process.env.ProgramFiles = '';
+    process.env['ProgramFiles(x86)'] = '';
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    spawnSyncMock.mockImplementation(() => {
+      throw new Error('EACCES');
+    });
+
+    vi.resetModules();
+    const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should reject a candidate whose probe is killed by a signal without an exit code', async () => {
+    process.env.PATH = '';
+    delete process.env.LOCALAPPDATA;
+    process.env.ProgramFiles = '';
+    process.env['ProgramFiles(x86)'] = '';
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    spawnSyncMock.mockImplementation(() => ({ status: null, signal: 'SIGKILL' }) as unknown as ReturnType<typeof realSpawnSync>);
+
+    vi.resetModules();
+    const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should enable DEBUG logLevel when debug CLI parameter is present', async () => {
+    process.argv.push('--debug');
+    try {
+      vi.resetModules();
+      const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+      expect(hasFfmpeg).toBeDefined();
+    } finally {
+      process.argv.pop();
+    }
+  });
+
+  it('should probe the Homebrew ffmpeg on Apple Silicon, which is not on the PATH of a launchd service', async () => {
+    process.env.PATH = '';
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
+
+    vi.resetModules();
+    const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
+
+    expect(hasFfmpeg()).toBe(false);
+    // Whether the file exists depends on the host: it is either skipped as not accessible or probed and rejected.
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Candidate \/opt\/homebrew\/bin\/ffmpeg (is not accessible|did not run successfully)$/));
   });
 
   it('should include the winget Gyan.FFmpeg package bin path on Windows', async () => {
@@ -129,14 +195,14 @@ describe('ffmpeg resolution at module load', () => {
     process.env.PATH = '';
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation((command) => fakeChild(command === expectedBin ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === expectedBin ? 0 : new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
       const { hasFfmpeg } = await import('../../src/behaviors/ffmpeg.js');
 
       expect(hasFfmpeg()).toBe(true);
-      expect(spawnMock).toHaveBeenCalledWith(expectedBin, expect.any(Array), expect.anything());
+      expect(spawnSyncMock).toHaveBeenCalledWith(expectedBin, expect.any(Array), expect.anything());
     } finally {
       await rm(localAppData, { force: true, recursive: true });
     }
@@ -152,7 +218,7 @@ describe('ffmpeg resolution at module load', () => {
     process.env.PATH = '';
     process.env.ProgramFiles = '';
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
@@ -174,7 +240,7 @@ describe('ffmpeg resolution at module load', () => {
     process.env.PATH = '';
     process.env.ProgramFiles = programFiles;
     process.env['ProgramFiles(x86)'] = '';
-    spawnMock.mockImplementation((command) => fakeChild(command === expectedBin ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === expectedBin ? 0 : new Error('spawn ENOENT')));
 
     try {
       vi.resetModules();
@@ -198,5 +264,363 @@ describe('redactSource', () => {
     const { redactSource } = await import('../../src/behaviors/ffmpeg.js');
 
     expect(redactSource(source)).toBe(expected);
+  });
+});
+
+describe('webcam discovery', () => {
+  const originalPlatform = process.platform;
+
+  beforeEach(() => {
+    spawnMock.mockReset();
+    spawnSyncMock.mockReset();
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  /**
+   * Builds a fake ChildProcess-like EventEmitter that emits the given text on the given stream and then `close`.
+   *
+   * @param {string} text - The text to emit.
+   * @param {'stdout' | 'stderr'} [stream] - The stream to emit the text on.
+   * @returns {EventEmitter} The fake child process.
+   */
+  function fakeListing(text: string, stream: 'stdout' | 'stderr' = 'stderr'): EventEmitter {
+    const child = new EventEmitter() as EventEmitter & { stdout: EventEmitter; stderr: EventEmitter };
+    child.stdout = new EventEmitter();
+    child.stderr = new EventEmitter();
+    setTimeout(() => {
+      child[stream].emit('data', Buffer.from(text));
+      child.emit('close', 1);
+    }, 0);
+    return child;
+  }
+
+  it('should parse the avfoundation webcams and skip the screens and the audio devices', async () => {
+    const { parseAvfoundationWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    const output = [
+      '[AVFoundation indev @ 0x1] AVFoundation video devices:',
+      '[AVFoundation indev @ 0x1] [0] FaceTime HD Camera',
+      '[AVFoundation indev @ 0x1] [1] Capture screen 0',
+      '[AVFoundation indev @ 0x1] AVFoundation audio devices:',
+      '[AVFoundation indev @ 0x1] [0] MacBook Pro Microphone',
+    ].join('\n');
+
+    expect(parseAvfoundationWebcams(output)).toEqual(['FaceTime HD Camera']);
+  });
+
+  it('should parse the dshow webcams with the device type tags', async () => {
+    const { parseDshowWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    const output = ['[dshow @ 0x1] "Integrated Camera" (video)', '[dshow @ 0x1]   Alternative name "@device_pnp_x"', '[dshow @ 0x1] "Microphone Array" (audio)'].join('\n');
+
+    expect(parseDshowWebcams(output)).toEqual(['Integrated Camera']);
+  });
+
+  it('should parse the dshow webcams with the legacy section headers', async () => {
+    const { parseDshowWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    const output = ['[dshow @ 0x1] DirectShow video devices', '[dshow @ 0x1]  "USB Camera"', '[dshow @ 0x1] DirectShow audio devices', '[dshow @ 0x1]  "Mic"'].join('\n');
+
+    expect(parseDshowWebcams(output)).toEqual(['USB Camera']);
+  });
+
+  it('should list the webcams with the avfoundation ffmpeg command on macOS', async () => {
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    vi.resetModules();
+    const { listWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    spawnMock.mockReset();
+    spawnMock.mockImplementation(
+      () => fakeListing('[AVFoundation indev @ 0x1] AVFoundation video devices:\n[AVFoundation indev @ 0x1] [0] FaceTime HD Camera\n') as ReturnType<typeof realSpawn>,
+    );
+
+    expect(await listWebcams()).toEqual(['FaceTime HD Camera']);
+    expect(spawnMock).toHaveBeenCalledWith('ffmpeg', ['-hide_banner', '-f', 'avfoundation', '-list_devices', 'true', '-i', '']);
+  });
+
+  it('should list the webcams with the dshow ffmpeg command on Windows', async () => {
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    vi.resetModules();
+    const { listWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    spawnMock.mockReset();
+    spawnMock.mockImplementation(() => fakeListing('[dshow @ 0x1] "Integrated Camera" (video)\n') as ReturnType<typeof realSpawn>);
+
+    expect(await listWebcams()).toEqual(['Integrated Camera']);
+    expect(spawnMock).toHaveBeenCalledWith('ffmpeg', ['-hide_banner', '-list_devices', 'true', '-f', 'dshow', '-i', 'dummy']);
+  });
+
+  it('should reject when ffmpeg cannot be spawned', async () => {
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    vi.resetModules();
+    const { listWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: 'darwin' });
+    spawnMock.mockReset();
+    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+
+    await expect(listWebcams()).rejects.toThrow('spawn ENOENT');
+  });
+
+  it('should parse the v4l2 webcams and keep only the lowest numbered node of each camera', async () => {
+    const { parseV4l2Webcams } = await import('../../src/behaviors/ffmpeg.js');
+    const output = [
+      'Auto-detected sources for video4linux2,v4l2:',
+      '  /dev/video3 [Luca iPhone Camera: Luca] (none)',
+      '  /dev/video2 [Luca iPhone Camera: Luca] (none)',
+      '  /dev/video1 [MacBook Pro Camera: MacBook Pro] (none)',
+      '  /dev/video0 [MacBook Pro Camera: MacBook Pro] (none)',
+      '  /dev/video10 [Other Camera: usb-1] (none)',
+      '  /dev/video11 [Other Camera: usb-1] (none)',
+    ].join('\n');
+
+    expect(parseV4l2Webcams(output)).toEqual(['/dev/video0', '/dev/video2', '/dev/video10']);
+  });
+
+  it('should list the webcams with the v4l2 ffmpeg command on Linux', async () => {
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    vi.resetModules();
+    const { listWebcams } = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    spawnMock.mockReset();
+    spawnMock.mockImplementation(
+      () =>
+        fakeListing('Auto-detected sources for video4linux2,v4l2:\n  /dev/video1 [Cam: bus] (none)\n  /dev/video0 [Cam: bus] (none)\n', 'stdout') as ReturnType<typeof realSpawn>,
+    );
+
+    expect(await listWebcams()).toEqual(['/dev/video0']);
+    expect(spawnMock).toHaveBeenCalledWith('ffmpeg', ['-hide_banner', '-sources', 'v4l2']);
+  });
+});
+
+describe('playWebcam', () => {
+  const originalPlatform = process.platform;
+
+  beforeEach(() => {
+    spawnMock.mockReset();
+    spawnSyncMock.mockReset();
+    spawnSyncMock.mockImplementation(() => fakeSync(0));
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+  });
+
+  it.each([
+    ['darwin', 'Cam', undefined, ['-hide_banner', '-window_title', 'Cam', '-f', 'avfoundation', '-framerate', '30', '-i', 'Cam']],
+    ['darwin', 'Cam', 'Mic', ['-hide_banner', '-window_title', 'Cam', '-f', 'avfoundation', '-framerate', '30', '-i', 'Cam:Mic']],
+    ['win32', 'Cam', undefined, ['-hide_banner', '-window_title', 'Cam', '-f', 'dshow', '-i', 'video=Cam']],
+    ['win32', 'Cam', 'Mic', ['-hide_banner', '-window_title', 'Cam', '-f', 'dshow', '-i', 'video=Cam:audio=Mic']],
+    ['linux', '/dev/video0', 'Mic', ['-hide_banner', '-window_title', '/dev/video0', '-f', 'v4l2', '-i', '/dev/video0']],
+  ])('should build the ffplay arguments on %s for %s and %s', async (platform, video, audio, expected) => {
+    const { getPlayWebcamArgs } = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: platform });
+
+    expect(getPlayWebcamArgs(video, audio)).toEqual(expected);
+  });
+
+  it('should spawn ffplay when ffmpeg is resolved from the PATH', async () => {
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+    vi.resetModules();
+    const { playWebcam } = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    spawnMock.mockClear();
+
+    playWebcam('/dev/video0');
+    expect(spawnMock).toHaveBeenCalledWith('ffplay', ['-hide_banner', '-window_title', '/dev/video0', '-f', 'v4l2', '-i', '/dev/video0']);
+  });
+
+  it('should spawn ffplay next to an absolute ffmpeg path', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'matterbridge-ffmpeg-'));
+    const ffmpegPath = path.join(dir, 'ffmpeg', 'bin', 'ffmpeg.exe');
+    await mkdir(path.dirname(ffmpegPath), { recursive: true });
+    await writeFile(ffmpegPath, '', { mode: 0o755 });
+    const originalPath = process.env.PATH;
+    const originalLocalAppData = process.env.LOCALAPPDATA;
+    const originalProgramFiles = process.env.ProgramFiles;
+    process.env.PATH = '';
+    delete process.env.LOCALAPPDATA;
+    process.env.ProgramFiles = dir;
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    // Only the fake install runs, so a real ffmpeg of the host (e.g. /opt/homebrew/bin/ffmpeg) is never picked.
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === ffmpegPath ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation(() => fakeChild(0) as ReturnType<typeof realSpawn>);
+
+    try {
+      vi.resetModules();
+      const { playWebcam } = await import('../../src/behaviors/ffmpeg.js');
+      spawnMock.mockClear();
+
+      playWebcam('Cam', 'Mic');
+      expect(spawnMock).toHaveBeenCalledWith(path.join(path.dirname(ffmpegPath), 'ffplay.exe'), expect.arrayContaining(['dshow', 'video=Cam:audio=Mic']));
+    } finally {
+      process.env.PATH = originalPath;
+      process.env.ProgramFiles = originalProgramFiles;
+      if (originalLocalAppData !== undefined) process.env.LOCALAPPDATA = originalLocalAppData;
+      await rm(dir, { force: true, recursive: true });
+    }
+  });
+
+  it('should throw when ffmpeg is not found', async () => {
+    const originalPath = process.env.PATH;
+    process.env.PATH = '';
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
+
+    try {
+      vi.resetModules();
+      const { playWebcam } = await import('../../src/behaviors/ffmpeg.js');
+
+      expect(() => playWebcam('Cam')).toThrow('Cannot play the webcam: ffmpeg not found on this host');
+    } finally {
+      process.env.PATH = originalPath;
+    }
+  });
+});
+
+describe('installFfmpeg', () => {
+  const originalPlatform = process.platform;
+  const originalGetuid = process.getuid;
+
+  /**
+   * Loads a fresh ffmpeg module and sets the platform and the user id for the installation.
+   *
+   * @param {string} platform - The platform to simulate.
+   * @param {number} uid - The user id to simulate.
+   * @returns {Promise<typeof import('../../src/behaviors/ffmpeg.js')>} The fresh module.
+   */
+  async function load(platform: string, uid: number): Promise<typeof import('../../src/behaviors/ffmpeg.js')> {
+    vi.resetModules();
+    const module = await import('../../src/behaviors/ffmpeg.js');
+    Object.defineProperty(process, 'platform', { value: platform });
+    process.getuid = (): number => uid;
+    spawnMock.mockClear();
+    spawnSyncMock.mockClear();
+    return module;
+  }
+
+  beforeEach(() => {
+    spawnMock.mockReset();
+    spawnSyncMock.mockReset();
+    // ffmpeg is not found at load: every spawn/spawnSync fails.
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
+    spawnMock.mockImplementation(() => fakeChild(new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+  });
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform });
+    process.getuid = originalGetuid;
+  });
+
+  it('should not install on a platform other than linux', async () => {
+    const { installFfmpeg } = await load('darwin', 0);
+
+    expect(await installFfmpeg()).toBe(false);
+    expect(spawnSyncMock).not.toHaveBeenCalled();
+  });
+
+  it('should not install without root privileges and without passwordless sudo', async () => {
+    const { installFfmpeg } = await load('linux', 1000);
+
+    expect(await installFfmpeg()).toBe(false);
+    expect(spawnSyncMock).toHaveBeenCalledWith('sudo', ['-n', 'true'], expect.anything());
+    expect(spawnMock).not.toHaveBeenCalled();
+  });
+
+  it('should install ffmpeg with apk through passwordless sudo when not root', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 1000);
+    let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'sudo' || command === 'apk' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command, args) => {
+      if (command === 'sudo' && (args as string[]).includes('add')) installed = true;
+      return fakeChild(command === 'sudo' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+    });
+
+    expect(await installFfmpeg()).toBe(true);
+    expect(hasFfmpeg()).toBe(true);
+    expect(spawnMock).toHaveBeenCalledWith('sudo', ['-n', 'apk', 'add', '--no-cache', 'ffmpeg'], expect.anything());
+    expect(spawnMock).not.toHaveBeenCalledWith('apk', expect.anything(), expect.anything());
+  });
+
+  it('should install ffmpeg with apt-get through passwordless sudo when not root', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 1000);
+    let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'sudo' || command === 'apt-get' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command, args) => {
+      if (command === 'sudo' && (args as string[]).includes('install')) installed = true;
+      return fakeChild(command === 'sudo' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+    });
+
+    expect(await installFfmpeg()).toBe(true);
+    expect(hasFfmpeg()).toBe(true);
+    expect(spawnMock).toHaveBeenCalledWith('sudo', ['-n', 'apt-get', 'update'], expect.anything());
+    expect(spawnMock).toHaveBeenCalledWith(
+      'sudo',
+      ['-n', 'env', 'DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', '--no-install-recommends', 'ffmpeg'],
+      expect.anything(),
+    );
+  });
+
+  it('should not install when no package manager is found', async () => {
+    const { installFfmpeg } = await load('linux', 0);
+
+    expect(await installFfmpeg()).toBe(false);
+    expect(spawnSyncMock).not.toHaveBeenCalledWith('apk', ['add', '--no-cache', 'ffmpeg'], expect.anything());
+  });
+
+  it('should install ffmpeg with apk and resolve it again', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
+    expect(hasFfmpeg()).toBe(false);
+    let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command, args) => {
+      if (command === 'apk' && (args as string[])[0] === 'add') installed = true;
+      return fakeChild(command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+    });
+
+    expect(await installFfmpeg()).toBe(true);
+    expect(hasFfmpeg()).toBe(true);
+    expect(spawnMock).toHaveBeenCalledWith('apk', ['add', '--no-cache', 'ffmpeg'], expect.anything());
+  });
+
+  it('should install ffmpeg with apt-get and resolve it again', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
+    let installed = false;
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apt-get' || (command === 'ffmpeg' && installed) ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command, args) => {
+      if (command === 'env' && (args as string[]).includes('install')) installed = true;
+      return fakeChild(command === 'apt-get' || command === 'env' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>;
+    });
+
+    expect(await installFfmpeg()).toBe(true);
+    expect(hasFfmpeg()).toBe(true);
+    expect(spawnMock).toHaveBeenCalledWith('apt-get', ['update'], expect.anything());
+    expect(spawnMock).toHaveBeenCalledWith('env', ['DEBIAN_FRONTEND=noninteractive', 'apt-get', 'install', '-y', '--no-install-recommends', 'ffmpeg'], expect.anything());
+  });
+
+  it('should return false when the installation fails', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command) => fakeChild(command === 'apk' ? 1 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+
+    expect(await installFfmpeg()).toBe(false);
+    expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should return false when ffmpeg is installed but cannot be resolved', async () => {
+    const { installFfmpeg, hasFfmpeg } = await load('linux', 0);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command) => fakeChild(command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+
+    expect(await installFfmpeg()).toBe(false);
+    expect(hasFfmpeg()).toBe(false);
+  });
+
+  it('should run the package manager with the async spawn, not spawnSync', async () => {
+    const { installFfmpeg } = await load('linux', 0);
+    spawnSyncMock.mockImplementation((command) => fakeSync(command === 'apk' ? 0 : new Error('spawn ENOENT')));
+    spawnMock.mockImplementation((command) => fakeChild(command === 'apk' ? 0 : new Error('spawn ENOENT')) as ReturnType<typeof realSpawn>);
+
+    await installFfmpeg();
+    expect(spawnSyncMock).not.toHaveBeenCalledWith('apk', ['add', '--no-cache', 'ffmpeg'], expect.anything());
   });
 });

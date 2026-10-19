@@ -20,14 +20,6 @@ import {
 } from '../src/matterbridgeTypes.js';
 
 describe('matterbridgeTypes constants', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  afterAll(() => {
-    vi.restoreAllMocks();
-  });
-
   describe('ANSI color constants', () => {
     test('plg should be the ANSI escape for color 33', () => {
       expect(plg).toBe('[38;5;33m');

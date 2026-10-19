@@ -5,7 +5,6 @@
  */
 
 /* oxlint-disable typescript/explicit-function-return-type */
-/* oxlint-disable typescript/consistent-return */
 /* oxlint-disable typescript/no-floating-promises */
 /* oxlint-disable no-console */
 
@@ -29,15 +28,15 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { EndpointNumber } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { BridgeStatus } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
-import { flushAsync, HOMEDIR, loggerDebugSpy, loggerInfoSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/vitest-utils';
 import { db, LogLevel, YELLOW } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 import { WebSocket } from 'ws';
 
-import { cliEmitter } from '../src/cliEmitter.js';
 import type { Frontend as FrontendType } from '../src/frontend.js';
 import type { Matterbridge as MatterbridgeType } from '../src/matterbridge.js';
 import { destroyInstance } from './vitestUtils.js';
@@ -74,25 +73,8 @@ const startSpy = vi.spyOn(Frontend.prototype, 'start');
 const stopSpy = vi.spyOn(Frontend.prototype, 'stop');
 
 // Setup the test environment
-await setupTest(NAME, false);
-
-// setupTest resets process.argv; set the frontend/matter args afterwards
-process.argv = [
-  'node',
-  'frontend.test.js',
-  '--novirtual',
-  '--test',
-  '--homedir',
-  HOMEDIR,
-  '--frontend',
-  FRONTEND_PORT.toString(),
-  '--port',
-  MATTER_PORT.toString(),
-  '--logger',
-  'debug',
-  '--debug',
-  '--verbose',
-];
+await setupTest(NAME, false, ['--novirtual', '--test', '--frontend', FRONTEND_PORT.toString(), '--port', MATTER_PORT.toString(), '--logger', 'debug', '--debug', '--verbose']);
+process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge frontend', () => {
   let matterbridge: MatterbridgeType;
@@ -153,6 +135,29 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
   }, 60000);
 
+  test.each([
+    { flag: '', debug: false, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--debug', debug: true, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--debug-frontend', debug: true, verbose: false, diagnostic: false, readOnly: false },
+    { flag: '--verbose', debug: true, verbose: true, diagnostic: false, readOnly: false },
+    { flag: '--verbose-frontend', debug: true, verbose: true, diagnostic: false, readOnly: false },
+    { flag: '--diagnostic', debug: false, verbose: false, diagnostic: true, readOnly: false },
+    { flag: '--diagnostic-frontend', debug: false, verbose: false, diagnostic: true, readOnly: false },
+    { flag: '--readonly', debug: false, verbose: false, diagnostic: false, readOnly: true },
+    { flag: '--shelly', debug: false, verbose: false, diagnostic: false, readOnly: false },
+  ])('should configure frontend flags for $flag', ({ flag, ...expected }) => {
+    const savedArgv = process.argv;
+    let instance: FrontendType | undefined;
+    try {
+      process.argv = [...originalProcessArgv.slice(0, 2), ...(flag ? [flag] : [])];
+      instance = new Frontend(matterbridge);
+      expect(instance).toMatchObject(expected);
+    } finally {
+      instance?.destroy();
+      process.argv = savedArgv;
+    }
+  });
+
   test('broadcast handler', async () => {
     startSpy.mockImplementationOnce(async () => Promise.resolve());
     stopSpy.mockImplementationOnce(async () => Promise.resolve());
@@ -163,10 +168,10 @@ describe('Matterbridge frontend', () => {
 
     expect((frontend as any).server).toBeInstanceOf(BroadcastServer);
 
-    await (frontend as any).broadcastMsgHandler({ type: 'jest', src: 'manager', dst: 'frontend' } as any); // no id
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'unknown' } as any); // unknown dst
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'frontend' } as any); // valid
-    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'jest', src: 'manager', dst: 'all' } as any); // valid
+    await (frontend as any).broadcastMsgHandler({ type: 'test', src: 'manager', dst: 'frontend' } as any); // no id
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'unknown' } as any); // unknown dst
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'frontend' } as any); // valid
+    await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'test', src: 'manager', dst: 'all' } as any); // valid
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'get_log_level', src: 'manager', dst: 'frontend', params: {} } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'set_log_level', src: 'manager', dst: 'frontend', params: { logLevel: LogLevel.DEBUG } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_start', src: 'manager', dst: 'frontend', params: { port: 3000 } } as any);
@@ -224,7 +229,7 @@ describe('Matterbridge frontend', () => {
       type: 'frontend_broadcast_message',
       src: 'manager',
       dst: 'frontend',
-      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'shelly_sys_update', success: true, response: { available: true } } },
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version: '1.0.0', devVersion: false } } },
     } as any);
     await (frontend as any).broadcastMsgHandler({
       id: 123456,
@@ -249,20 +254,6 @@ describe('Matterbridge frontend', () => {
 
       await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_archive_response', src: 'manager', dst: 'all', result: { success: true, command: 'zip', archivePath: 'test.zip', sourcePaths: ['file1', 'file2'], destinationPath: 'dest' } } as any);
     }
-  });
-
-  test('Frontend cliEmitter', () => {
-    // Test the cliEmitter functionality
-    expect(cliEmitter).toBeDefined();
-    expect(cliEmitter.on).toBeDefined();
-    expect(cliEmitter.emit).toBeDefined();
-    expect(cliEmitter.listeners('uptime')).toHaveLength(1);
-    expect(cliEmitter.listeners('memory')).toHaveLength(1);
-    expect(cliEmitter.listeners('cpu')).toHaveLength(1);
-
-    cliEmitter.emit('cpu', 12.34, 5.67);
-    cliEmitter.emit('uptime', '1 day, 10:00:00', '1 day, 10:00:00');
-    cliEmitter.emit('memory', '12345678', '87654321', '12345678', '87654321', '12345678', '87654321', '12345678');
   });
 
   test('Frontend validateReq', async () => {
@@ -296,118 +287,6 @@ describe('Matterbridge frontend', () => {
     expect(apiSetting.matterbridgeInformation).toBeDefined();
   });
 
-  test('Frontend getReachability', () => {
-    // False if cleanup has started
-    (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect((frontend as any).getReachability({})).toBe(false);
-    (frontend as any).matterbridge.hasCleanupStarted = false;
-
-    // Test the getReachability functionality
-    expect((frontend as any).getReachability({ lifecycle: { isReady: false } })).toBeFalsy();
-    expect((frontend as any).getReachability({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeFalsy();
-    expect(
-      (frontend as any).getReachability({
-        hasClusterServer: () => true,
-        getAttribute: () => true,
-        lifecycle: { isReady: true },
-        construction: { status: Lifecycle.Status.Active },
-      }),
-    ).toBeTruthy();
-    expect(
-      (frontend as any).getReachability({
-        hasClusterServer: () => false,
-        mode: 'server',
-        serverNode: { state: { basicInformation: { reachable: true } } },
-        lifecycle: { isReady: true },
-        construction: { status: Lifecycle.Status.Active },
-      }),
-    ).toBeTruthy();
-    matterbridge.bridgeMode = 'childbridge';
-    expect((frontend as any).getReachability({ hasClusterServer: () => false, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeTruthy();
-    matterbridge.bridgeMode = 'bridge';
-    expect((frontend as any).getReachability({ hasClusterServer: () => false, lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Active } })).toBeFalsy();
-  });
-
-  test('Frontend getPowerSource and getBatteryLevel', () => {
-    // Undefined if cleanup has started
-    (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect((frontend as any).getPowerSource({})).toBeUndefined();
-    expect((frontend as any).getBatteryLevel({})).toBeUndefined();
-    (frontend as any).matterbridge.hasCleanupStarted = false;
-
-    // Undefined if not active
-    expect((frontend as any).getPowerSource({ lifecycle: { isReady: false } })).toBeUndefined();
-    expect((frontend as any).getPowerSource({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
-    expect((frontend as any).getBatteryLevel({ lifecycle: { isReady: false } })).toBeUndefined();
-    expect((frontend as any).getBatteryLevel({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBeUndefined();
-
-    // Wired ac
-    let device = {
-      lifecycle: { isReady: true },
-      construction: { status: Lifecycle.Status.Active },
-      hasClusterServer: vi.fn(),
-      getAttribute: vi.fn((cluster: number, attribute: string): any => {}),
-      getChildEndpoints: vi.fn(),
-    };
-    device.hasClusterServer = vi.fn(() => true);
-    device.getAttribute = vi.fn((cluster: number, attribute: string): any => {
-      if (cluster === PowerSource.id && attribute === 'featureMap') return { wired: true };
-      if (cluster === PowerSource.id && attribute === 'wiredCurrentType') return PowerSource.WiredCurrentType.Ac;
-    });
-    expect((frontend as any).getPowerSource(device)).toBe('ac');
-    expect((frontend as any).getBatteryLevel(device)).toBeUndefined();
-
-    // Battery
-    device = {
-      lifecycle: { isReady: true },
-      construction: { status: Lifecycle.Status.Active },
-      hasClusterServer: vi.fn(),
-      getAttribute: vi.fn((cluster: number, attribute: string): any => {}),
-      getChildEndpoints: vi.fn(),
-    };
-    device.hasClusterServer = vi.fn(() => true);
-    device.getAttribute = vi.fn((cluster: number, attribute: string): any => {
-      if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
-      if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return 120;
-    });
-    expect((frontend as any).getPowerSource(device)).toBe('ok');
-    expect((frontend as any).getBatteryLevel(device)).toBe(60);
-    device.getAttribute = vi.fn((cluster: number, attribute: string): any => {
-      if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
-      if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return;
-    });
-    expect((frontend as any).getPowerSource(device)).toBe('ok');
-    expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
-    device.getAttribute = vi.fn((cluster: number, attribute: string): any => {
-      if (cluster === PowerSource.id && attribute === 'featureMap') return { battery: true };
-      if (cluster === PowerSource.id && attribute === 'batChargeLevel') return PowerSource.BatChargeLevel.Ok;
-      if (cluster === PowerSource.id && attribute === 'batPercentRemaining') return 120;
-    });
-
-    // Not wired nor battery
-    device = {
-      lifecycle: { isReady: true },
-      construction: { status: Lifecycle.Status.Active },
-      hasClusterServer: vi.fn(),
-      getAttribute: vi.fn((cluster: number, attribute: string): any => {}),
-      getChildEndpoints: vi.fn(),
-    };
-    device.hasClusterServer = vi.fn(() => true);
-    device.getAttribute = vi.fn((cluster: number, attribute: string): any => {
-      if (cluster === PowerSource.id && attribute === 'featureMap') return {};
-    });
-    expect((frontend as any).getPowerSource(device)).toBe(undefined);
-    expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
-    // Child endpoints
-    device.hasClusterServer.mockImplementationOnce(() => false);
-    device.getChildEndpoints = vi.fn(() => [device]);
-    expect((frontend as any).getPowerSource(device)).toBe(undefined);
-    device.hasClusterServer.mockImplementationOnce(() => false);
-    expect((frontend as any).getBatteryLevel(device)).toBe(undefined);
-  });
-
   test('Frontend getPlugins', () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
     expect(frontend.getApiPlugins()).toEqual([]);
@@ -422,214 +301,11 @@ describe('Matterbridge frontend', () => {
     expect(frontend.getApiDevices()).toEqual([]);
   });
 
-  test('Frontend getClusters', async () => {
+  test('Frontend getApiCluster', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(frontend.getClusters('', 1)).toBeUndefined();
+    expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();
     (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(frontend.getClusters('', 1)).toBeUndefined();
-  });
-
-  test('Frontend getClusterTextFromDevice', () => {
-    // Empty if cleanup has started
-    (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect((frontend as any).getClusterTextFromDevice({})).toBe('');
-    (frontend as any).matterbridge.hasCleanupStarted = false;
-
-    // Undefined if not active
-    expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: false } })).toBe('');
-    expect((frontend as any).getClusterTextFromDevice({ lifecycle: { isReady: true }, construction: { status: Lifecycle.Status.Inactive } })).toBe('');
-
-    // Drive the attribute chain via a fake device whose forEachAttribute replays the given tuples.
-    // Tuples are [clusterName, clusterId, attributeName, attributeId, attributeValue].
-    const runTuples = (tuples: [string, number, string, number, any][]): string => {
-      const device = {
-        lifecycle: { isReady: true },
-        construction: { status: Lifecycle.Status.Active },
-        forEachAttribute: (cb: (clusterName: string, clusterId: number, attributeName: string, attributeId: number, attributeValue: any) => void) => {
-          for (const [cn, ci, an, ai, av] of tuples) cb(cn, ci, an, ai, av);
-        },
-      };
-      return (frontend as any).getClusterTextFromDevice(device);
-    };
-
-    // undefined attribute value is skipped early
-    expect(runTuples([['onOff', 0x06, 'onOff', 0, undefined]])).toBe('');
-
-    // Simple branches (no getAttribute dependency)
-    const text = runTuples([
-      ['descriptor', 0x1d, 'clientList', 0, [4, 6, 8, 768]],
-      ['binding', 0x1e, 'binding', 0, []],
-      [
-        'binding',
-        0x1e,
-        'binding',
-        0,
-        [
-          { fabricIndex: 1, node: 2n, cluster: 6 },
-          { fabricIndex: 1, node: 3n },
-        ],
-      ],
-      ['onOff', 0x06, 'onOff', 0, true],
-      ['switch', 0x3b, 'currentPosition', 0, 1],
-      ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 5000],
-      ['doorLock', 0x101, 'lockState', 0, 1],
-      ['doorLock', 0x101, 'lockState', 0, 2],
-      ['closureControl', 0x104, 'overallCurrentState', 0, { position: 0, latch: true, speed: ThreeLevelAuto.Auto, secureState: true }],
-      ['thermostat', 0x201, 'localTemperature', 0, 2000],
-      ['thermostat', 0x201, 'occupiedHeatingSetpoint', 0, 2100],
-      ['thermostat', 0x201, 'occupiedCoolingSetpoint', 0, 2500],
-      ['rvcRunMode', 0x54, 'supportedModes', 0, [{ label: 'Cleaning', mode: 1 }]],
-      ['rvcRunMode', 0x54, 'currentMode', 0, 1],
-      ['rvcRunMode', 0x54, 'currentMode', 0, 99],
-      ['operationalState', 0x60, 'operationalState', 0, OperationalState.OperationalStateEnum.Running],
-      ['rvcOperationalState', 0x61, 'operationalState', 0, RvcOperationalState.OperationalState.Docked],
-      ['pumpConfigurationAndControl', 0x200, 'operationMode', 0, 1],
-      ['valveConfigurationAndControl', 0x81, 'currentState', 0, 1],
-      ['levelControl', 0x08, 'currentLevel', 0, 100],
-      ['applicationBasic', 0x50d, 'applicationName', 0, 'Netflix'],
-      ['booleanState', 0x45, 'stateValue', 0, true],
-      ['booleanStateConfiguration', 0x80, 'alarmsActive', 0, { foo: true }],
-      ['smokeCoAlarm', 0x5c, 'smokeState', 0, 0],
-      ['smokeCoAlarm', 0x5c, 'coState', 0, 0],
-      ['fanControl', 0x202, 'fanMode', 0, 1],
-      ['fanControl', 0x202, 'percentCurrent', 0, 50],
-      ['fanControl', 0x202, 'speedCurrent', 0, 3],
-      ['hepaFilterMonitoring', 0x71, 'condition', 0, 80],
-      ['activatedCarbonFilterMonitoring', 0x72, 'condition', 0, 90],
-      ['occupancySensing', 0x406, 'occupancy', 0, { occupied: true }],
-      ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 50000],
-      ['airQuality', 0x5b, 'airQuality', 0, AirQuality.AirQualityEnum.Good],
-      ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, 10],
-      ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, 5],
-      ['pm25ConcentrationMeasurement', 0x42a, 'measuredValue', 0, 5],
-      ['pm10ConcentrationMeasurement', 0x42d, 'measuredValue', 0, 5],
-      ['formaldehydeConcentrationMeasurement', 0x42b, 'measuredValue', 0, 5],
-      ['temperatureMeasurement', 0x402, 'measuredValue', 0, 2000],
-      ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, 5000],
-      ['pressureMeasurement', 0x403, 'measuredValue', 0, 1000],
-      ['flowMeasurement', 0x404, 'measuredValue', 0, 100],
-      ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, 50],
-      ['electricalPowerMeasurement', 0x90, 'voltage', 0, 220_000],
-      ['electricalPowerMeasurement', 0x90, 'activeCurrent', 0, 1_000],
-      ['electricalPowerMeasurement', 0x90, 'activePower', 0, 220_000],
-      ['electricalPowerMeasurement', 0x90, 'frequency', 0, 50_000],
-      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 100_000_000 }],
-      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyExported', 0, { energy: 10_000_000 }],
-      ['deviceEnergyManagement', 0x98, 'esaCanGenerate', 0, false],
-      ['deviceEnergyManagement', 0x98, 'esaState', 0, 1],
-      ['deviceEnergyManagementMode', 0x9f, 'supportedModes', 0, [{ label: 'No Energy Management', mode: 1 }]],
-      ['deviceEnergyManagementMode', 0x9f, 'currentMode', 0, 1],
-    ]);
-    expect(text).toContain('Client cluster(s): [Groups, OnOff, LevelControl, ColorControl]');
-    expect(text).toContain('Bound cluster(s): none');
-    expect(text).toContain('Bound cluster(s): [node: 2, cluster: OnOff, fabricIndex: 1] [node: 3, fabricIndex: 1]');
-    expect(text).toContain('OnOff: true');
-    expect(text).toContain('Position: 1');
-    expect(text).toContain('Cover position: 50%');
-    expect(text).toContain('State: Locked');
-    expect(text).toContain('State: Not locked');
-    expect(text).toContain('Position: FullyClosed');
-    expect(text).toContain('Latch: true');
-    expect(text).toContain('Speed: Auto');
-    expect(text).toContain('SecureState: true');
-    expect(text).toContain('Temperature: 20°C');
-    expect(text).toContain('Heat to: 21°C');
-    expect(text).toContain('Cool to: 25°C');
-    expect(text).toContain('Mode: Cleaning');
-    expect(text).toContain('OpState: Running');
-    expect(text).toContain('OpState: Docked');
-    expect(text).toContain('State: Open');
-    expect(text).toContain('Level: 100');
-    expect(text).toContain('App: Netflix');
-    expect(text).toContain('Contact: true');
-    expect(text).toContain('Active alarms:');
-    expect(text).toContain('Smoke: Normal');
-    expect(text).toContain('Co: Normal');
-    expect(text).toContain('Occupancy: true');
-    expect(text).toContain('Hepa filter: 80%');
-    expect(text).toContain('Carbon filter: 90%');
-    expect(text).toContain('Air quality: Good');
-    expect(text).toContain('Pm2.5: 5');
-    expect(text).toContain('Humidity: 50%');
-    expect(text).toContain('Pressure: 1000 hPa');
-    expect(text).toContain('Flow: 10 m³/h');
-    expect(text).toContain('Soil moisture: 50%');
-    expect(text).toContain('Voltage: 220V');
-    expect(text).toContain('Current: 1A');
-    expect(text).toContain('Power: 0.22kW');
-    expect(text).toContain('Frequency: 50Hz');
-    expect(text).toContain('Imported: 100kWh');
-    expect(text).toContain('Exported: 10kWh');
-    expect(text).toContain('ESA can generate: false');
-    expect(text).toContain('ESA state: Online');
-    expect(text).toContain('Mode: No Energy Management');
-
-    const defaultClosureControlText = runTuples([['closureControl', 0x104, 'overallCurrentState', 0, { position: 0, secureState: true }]]);
-    expect(defaultClosureControlText).toContain('Position: FullyClosed');
-    expect(defaultClosureControlText).not.toContain('Latch:');
-    expect(defaultClosureControlText).not.toContain('Speed:');
-    expect(defaultClosureControlText).toContain('SecureState: true');
-
-    const nullMeasurements = runTuples([
-      ['illuminanceMeasurement', 0x400, 'measuredValue', 0, null],
-      ['closureControl', 0x104, 'overallCurrentState', 0, null],
-      ['closureControl', 0x104, 'overallCurrentState', 0, { position: null, latch: null, speed: null, secureState: null }],
-      ['valveConfigurationAndControl', 0x81, 'currentState', 0, null],
-      ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, null],
-      ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, null],
-      ['pm25ConcentrationMeasurement', 0x42a, 'measuredValue', 0, null],
-      ['pm10ConcentrationMeasurement', 0x42d, 'measuredValue', 0, null],
-      ['formaldehydeConcentrationMeasurement', 0x42b, 'measuredValue', 0, null],
-      ['temperatureMeasurement', 0x402, 'measuredValue', 0, null],
-      ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, null],
-      ['pressureMeasurement', 0x403, 'measuredValue', 0, null],
-      ['flowMeasurement', 0x404, 'measuredValue', 0, null],
-      ['soilMeasurement', 0x430, 'soilMoistureMeasuredValue', 0, null],
-      ['electricalPowerMeasurement', 0x90, 'voltage', 0, null],
-      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, null],
-    ]);
-    expect(nullMeasurements).toContain('Illuminance: unknown');
-    expect(nullMeasurements).toContain('Position: unknown');
-    expect(nullMeasurements).toContain('Latch: unknown');
-    expect(nullMeasurements).toContain('Speed: unknown');
-    expect(nullMeasurements).toContain('SecureState: unknown');
-    expect(nullMeasurements).toContain('State: unknown');
-    expect(nullMeasurements).toContain('Voc: unknown');
-    expect(nullMeasurements).toContain('Pm1: unknown');
-    expect(nullMeasurements).toContain('Pm2.5: unknown');
-    expect(nullMeasurements).toContain('Pm10: unknown');
-    expect(nullMeasurements).toContain('CH₂O: unknown');
-    expect(nullMeasurements).toContain('Temperature: unknown');
-    expect(nullMeasurements).toContain('Humidity: unknown');
-    expect(nullMeasurements).toContain('Pressure: unknown');
-    expect(nullMeasurements).toContain('Flow: unknown');
-    expect(nullMeasurements).toContain('Soil moisture: unknown');
-    expect(nullMeasurements).toContain('Voltage: unknown');
-    expect(nullMeasurements).toContain('Imported: unknown');
-
-    // isValid* false sides (out-of-range / wrong-type values are not appended)
-    const skipped = runTuples([
-      ['descriptor', 0x1d, 'clientList', 0, []],
-      ['windowCovering', 0x102, 'currentPositionLiftPercent100ths', 0, 20000],
-      ['thermostat', 0x201, 'localTemperature', 0, 'x'],
-      ['thermostat', 0x201, 'occupiedHeatingSetpoint', 0, 'x'],
-      ['thermostat', 0x201, 'occupiedCoolingSetpoint', 0, 'x'],
-      ['booleanStateConfiguration', 0x80, 'alarmsActive', 0, 'not-an-object'],
-      ['occupancySensing', 0x406, 'occupancy', 0, 'not-an-object'],
-      ['illuminanceMeasurement', 0x400, 'measuredValue', 0, 'x'],
-      ['temperatureMeasurement', 0x402, 'measuredValue', 0, 'x'],
-      ['relativeHumidityMeasurement', 0x405, 'measuredValue', 0, 'x'],
-      ['pressureMeasurement', 0x403, 'measuredValue', 0, 'x'],
-      ['flowMeasurement', 0x404, 'measuredValue', 0, 'x'],
-      ['totalVolatileOrganicCompoundsConcentrationMeasurement', 0x42e, 'measuredValue', 0, 'x'],
-      ['pm1ConcentrationMeasurement', 0x42c, 'measuredValue', 0, 'x'],
-      ['pm25ConcentrationMeasurement', 0x42a, 'measuredValue', 0, 'x'],
-      ['pm10ConcentrationMeasurement', 0x42d, 'measuredValue', 0, 'x'],
-      ['formaldehydeConcentrationMeasurement', 0x42b, 'measuredValue', 0, 'x'],
-      ['electricalPowerMeasurement', 0x90, 'voltage', 0, 'x'],
-      ['electricalEnergyMeasurement', 0x91, 'cumulativeEnergyImported', 0, { energy: 'x' }],
-    ]);
-    expect(skipped).toBe('');
+    expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();
   });
 
   test('Frontend wssSendLogMessage', async () => {
@@ -898,30 +574,6 @@ describe('Matterbridge frontend', () => {
     spy.mockRestore();
   });
 
-  test('Frontend wssSendCpuUpdate wssSendMemoryUpdate wssSendUptimeUpdate', async () => {
-    // Mocks
-    const savedWss = (frontend as any).webSocketServer;
-    const spy = vi.spyOn(frontend, 'wssBroadcastMessage').mockImplementation(() => {});
-
-    (frontend as any).listening = false;
-    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
-    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
-    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(0);
-    vi.clearAllMocks();
-    (frontend as any).listening = true;
-    (frontend as any).webSocketServer = { clients: new Set([{}]) } as any;
-    expect(frontend.wssSendCpuUpdate(1, 1)).toBeUndefined();
-    expect(frontend.wssSendMemoryUpdate('', '', '', '', '', '', '')).toBeUndefined();
-    expect(frontend.wssSendUptimeUpdate('', '')).toBeUndefined();
-    expect(spy).toHaveBeenCalledTimes(3);
-
-    // Restore for next tests
-    (frontend as any).webSocketServer = savedWss;
-    (frontend as any).listening = false;
-    spy.mockRestore();
-  });
-
   test('Frontend wssSendSnackbarMessage  wssSendCloseSnackbarMessage', async () => {
     // Mocks
     const savedWss = (frontend as any).webSocketServer;
@@ -1077,7 +729,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() with createServerMock', async () => {
-    process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     createServerMock.mockImplementationOnce(() => {
       throw new Error('Test error');
@@ -1098,7 +750,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start()', async () => {
-    process.argv = ['node', 'frontend.test.js', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
       frontend.once('server_listening', () => resolve());
@@ -1141,7 +793,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl without certs shall reject', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     frontend.start(FRONTEND_PORT);
     await new Promise<void>((resolve) => {
@@ -1156,8 +808,47 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading certificate file`));
   });
 
+  test('Frontend.start() -tls without certs shall reject', async () => {
+    process.argv = [...originalProcessArgv.slice(0, 2), '-tls', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+
+    const wsProtocol = new Promise<string>((resolve) => frontend.once('websocket_server_listening', resolve));
+    frontend.start(FRONTEND_PORT);
+    await new Promise<void>((resolve) => {
+      frontend.once('server_error', () => resolve());
+    });
+    expect(await wsProtocol).toBe('wss');
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading certificate file`));
+  });
+
+  test('Frontend.start() -mtls without certs shall reject', async () => {
+    process.argv = [
+      ...originalProcessArgv.slice(0, 2),
+      '-mtls',
+      '-novirtual',
+      '-test',
+      '-homedir',
+      HOMEDIR,
+      '-frontend',
+      FRONTEND_PORT.toString(),
+      '-port',
+      MATTER_PORT.toString(),
+    ];
+
+    const wsProtocol = new Promise<string>((resolve) => frontend.once('websocket_server_listening', resolve));
+    frontend.start(FRONTEND_PORT);
+    await new Promise<void>((resolve) => {
+      frontend.once('server_error', () => resolve());
+    });
+    expect(await wsProtocol).toBe('wss');
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error reading certificate file`));
+  });
+
   test('Frontend.start() -ssl without key certs shall reject', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     copyFileSync(new URL('../src/mock/certs/server.crt', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pem'));
 
@@ -1175,7 +866,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl without ca cert', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     copyFileSync(new URL('../src/mock/certs/server.key', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/key.pem'));
 
@@ -1216,8 +907,7 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend.start() -ssl with ca cert', async () => {
     process.argv = [
-      'node',
-      'frontend.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-ingress',
       '-ssl',
       '-novirtual',
@@ -1340,7 +1030,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Frontend.start() -ssl with p12 cert', async () => {
-    process.argv = ['node', 'frontend.test.js', '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
+    process.argv = [...originalProcessArgv.slice(0, 2), '-ssl', '-novirtual', '-test', '-homedir', HOMEDIR, '-frontend', FRONTEND_PORT.toString(), '-port', MATTER_PORT.toString()];
 
     copyFileSync(new URL('../src/mock/certs/server.p12', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.p12'));
     copyFileSync(new URL('../src/mock/certs/server.pass', import.meta.url), path.join(matterbridge.matterbridgeDirectory, 'certs/cert.pass'));
@@ -1435,8 +1125,7 @@ describe('Matterbridge frontend', () => {
 
   test('Frontend.start() -ssl with p12 cert and mTLS', async () => {
     process.argv = [
-      'node',
-      'frontend.test.js',
+      ...originalProcessArgv.slice(0, 2),
       '-ssl',
       '-mtls',
       '-novirtual',

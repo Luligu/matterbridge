@@ -1,17 +1,31 @@
 /**
  * prune-tags.mjs
- * Version: 1.0.3
+ * Version: 2.0.0
  *
  * Deletes old remote git tags that do not match a given prefix.
  *
  * Usage:
+ *   node scripts/prune-tags.mjs --version, -v  Show the script version
  *   node scripts/prune-tags.mjs [--dry-run|-n] <tag-prefix-to-keep> [remote]
+ *
+ * The script runs only when executed directly. Importing it exposes `main` without side effects.
  */
 
+/* oxlint-disable no-console */
+
 import { spawnSync } from 'node:child_process';
+import path from 'node:path';
 import { createInterface } from 'node:readline';
 
+const scriptVersion = '2.0.0';
+
 class ExitError extends Error {
+  /**
+   * Create a CLI exit error.
+   *
+   * @param {string} message Error message.
+   * @param {number} [code] Exit status.
+   */
   constructor(message, code = 1) {
     super(message);
     this.code = code;
@@ -26,29 +40,29 @@ function usage() {
     '  node scripts/prune-tags.mjs 2.',
     '  node scripts/prune-tags.mjs 2. origin',
     '  node scripts/prune-tags.mjs --dry-run 2. origin',
+    '',
+    '  --version, -v  Show the script version',
   ].join('\n');
 }
 
 function createColors() {
   const enabled = process.stdout.isTTY && !process.env.NO_COLOR;
-  if (!enabled) {
-    return {
-      bold: (value) => value,
-      cyan: (value) => value,
-      dim: (value) => value,
-      green: (value) => value,
-      red: (value) => value,
-      yellow: (value) => value,
-    };
-  }
+  /**
+   * Create a colorizer for an ANSI SGR open/close pair.
+   *
+   * @param {number} open Opening SGR code.
+   * @param {number} close Closing SGR code.
+   * @returns {(value: string) => string} The colorizer, returning the plain value when colors are disabled.
+   */
+  const color = (open, close) => (value) => (enabled ? `\u001B[${open}m${value}\u001B[${close}m` : value);
 
   return {
-    bold: (value) => `\u001B[1m${value}\u001B[22m`,
-    cyan: (value) => `\u001B[36m${value}\u001B[39m`,
-    dim: (value) => `\u001B[2m${value}\u001B[22m`,
-    green: (value) => `\u001B[32m${value}\u001B[39m`,
-    red: (value) => `\u001B[31m${value}\u001B[39m`,
-    yellow: (value) => `\u001B[33m${value}\u001B[39m`,
+    bold: color(1, 22),
+    cyan: color(36, 39),
+    dim: color(2, 22),
+    green: color(32, 39),
+    red: color(31, 39),
+    yellow: color(33, 39),
   };
 }
 
@@ -62,31 +76,51 @@ function hr() {
   console.log(colors.dim('-'.repeat(lineWidth())));
 }
 
+/**
+ * Section.
+ *
+ * @param {string} title title value.
+ * @returns {void} No return value.
+ */
 function section(title) {
   hr();
   console.log(colors.bold(colors.cyan(title)));
   hr();
 }
 
+/**
+ * Throw an ExitError.
+ *
+ * @param {string} message - Error message.
+ * @param {number} [code] - Exit code.
+ * @returns {never} Never returns.
+ */
 function fail(message, code = 1) {
   throw new ExitError(message, code);
 }
 
+/**
+ * Parse args.
+ *
+ * @param {string[]} argv argv value.
+ * @returns {{dryRun: boolean, keepPrefix: string, remote: string} | undefined} The result.
+ */
 function parseArgs(argv) {
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(usage());
+    // oxlint-disable-next-line unicorn/no-useless-undefined
     return undefined;
   }
 
   const knownFlags = new Set(['--dry-run', '-n']);
-  const flags = argv.filter((value) => value.startsWith('-'));
-  const unknownFlags = flags.filter((value) => !knownFlags.has(value));
-  const dryRun = flags.some((value) => knownFlags.has(value));
+  const flags = argv.filter((/** @type {string} */ value) => value.startsWith('-'));
+  const unknownFlags = flags.filter((/** @type {string} */ value) => !knownFlags.has(value));
+  const dryRun = flags.some((/** @type {string} */ value) => knownFlags.has(value));
   if (unknownFlags.length > 0) {
     fail(`Unknown option(s): ${unknownFlags.join(', ')}\n\n${usage()}`);
   }
 
-  const positional = argv.filter((value) => !value.startsWith('-'));
+  const positional = argv.filter((/** @type {string} */ value) => !value.startsWith('-'));
   const [keepPrefix, remote = 'origin'] = positional;
   if (!keepPrefix) {
     fail(usage());
@@ -95,6 +129,14 @@ function parseArgs(argv) {
   return { dryRun, keepPrefix, remote };
 }
 
+/**
+ * Run git.
+ *
+ * @param {string[]} args args value.
+ * @param {{allowFailure?: boolean, input?: string, inherit?: boolean}} [options] options value.
+ * @returns {{status: number, stdout: string, stderr: string}} The result.
+ */
+// oxlint-disable-next-line typescript/consistent-return -- ends with fail(), which always throws
 function runGit(args, options = {}) {
   const { allowFailure = false, input, inherit = false } = options;
   const result = spawnSync('git', args, {
@@ -126,15 +168,37 @@ function runGit(args, options = {}) {
   fail(details ? `git ${args.join(' ')} failed:\n${details}` : `git ${args.join(' ')} failed.`);
 }
 
+/**
+ * Git.
+ *
+ * @param {string[]} args args value.
+ * @param {{allowFailure?: boolean, input?: string, inherit?: boolean}} [options] options value.
+ * @returns {string} The result.
+ */
 function git(args, options = {}) {
   return runGit(args, options).stdout;
 }
 
+/**
+ * Print key value.
+ *
+ * @param {string} key key value.
+ * @param {unknown} value value value.
+ * @param {(value: string) => string} [colorizer] colorizer value.
+ * @returns {void} No return value.
+ */
 function printKeyValue(key, value, colorizer) {
   const renderedValue = colorizer ? colorizer(String(value)) : String(value);
   console.log(`${key.padEnd(14)} ${renderedValue}`);
 }
 
+/**
+ * Chunk.
+ *
+ * @param {string[]} items items value.
+ * @param {number} size size value.
+ * @returns {string[][]} The result.
+ */
 function chunk(items, size) {
   const groups = [];
   for (let index = 0; index < items.length; index += size) {
@@ -143,6 +207,12 @@ function chunk(items, size) {
   return groups;
 }
 
+/**
+ * Parse tag names.
+ *
+ * @param {string} raw raw value.
+ * @returns {string[]} The result.
+ */
 function parseTagNames(raw) {
   const tags = new Set();
   for (const line of raw.split('\n')) {
@@ -158,10 +228,17 @@ function parseTagNames(raw) {
     tags.add(ref.replace(/^refs\/tags\//, '').replace(/\^\{\}$/, ''));
   }
 
-  return Array.from(tags).sort((left, right) => left.localeCompare(right));
+  return Array.from(tags).toSorted((left, right) => left.localeCompare(right));
 }
 
-function printTagTable(tags, colorizer = (value) => value) {
+/**
+ * Print tag table.
+ *
+ * @param {string[]} tags tags value.
+ * @param {(value: string) => string} colorizer colorizer value.
+ * @returns {void} No return value.
+ */
+function printTagTable(tags, colorizer) {
   if (tags.length === 0) {
     console.log(colors.dim('(none)'));
     return;
@@ -179,15 +256,24 @@ function printTagTable(tags, colorizer = (value) => value) {
 async function confirmPrompt() {
   const reader = createInterface({ input: process.stdin, output: process.stdout });
   try {
-    const answer = await new Promise((resolve) => {
-      reader.question(colors.bold(colors.yellow('Proceed? [y/N] ')), resolve);
-    });
+    const answer = await new Promise(
+      /** @param {(answer: string) => void} resolve Resolve with the answer. */ (resolve) => {
+        reader.question(colors.bold(colors.yellow('Proceed? [y/N] ')), resolve);
+      },
+    );
     return answer.trim().toLowerCase() === 'y';
   } finally {
     reader.close();
   }
 }
 
+/**
+ * Delete remote tags.
+ *
+ * @param {string} remote remote value.
+ * @param {string[]} tags tags value.
+ * @returns {void} No return value.
+ */
 function deleteRemoteTags(remote, tags) {
   for (const group of chunk(tags, 50)) {
     console.log(colors.bold(colors.yellow(`Deleting ${group.length} remote tag(s)...`)));
@@ -195,6 +281,13 @@ function deleteRemoteTags(remote, tags) {
   }
 }
 
+/**
+ * Print planned commands.
+ *
+ * @param {string} remote remote value.
+ * @param {string[]} tags tags value.
+ * @returns {void} No return value.
+ */
 function printPlannedCommands(remote, tags) {
   section('Dry Run');
   console.log(colors.green('No changes will be made.'));
@@ -216,6 +309,12 @@ function pruneFetchedTags() {
   runGit(['fetch', '--prune', '--prune-tags'], { inherit: true });
 }
 
+/**
+ * Delete local tags.
+ *
+ * @param {string[]} tags tags value.
+ * @returns {void} No return value.
+ */
 function deleteLocalTags(tags) {
   for (const group of chunk(tags, 50)) {
     console.log(colors.bold(colors.yellow(`Deleting ${group.length} local tag(s) if present...`)));
@@ -230,10 +329,16 @@ function cleanupRepository() {
   runGit(['gc', '--prune=now'], { inherit: true });
 }
 
-async function main() {
-  const parsedArgs = parseArgs(process.argv.slice(2));
+/**
+ * Prune the remote tags.
+ *
+ * @param {string[]} args Command line arguments.
+ * @returns {Promise<number>} The exit code.
+ */
+async function run(args) {
+  const parsedArgs = parseArgs(args);
   if (!parsedArgs) {
-    return;
+    return 0;
   }
 
   const { dryRun, keepPrefix, remote } = parsedArgs;
@@ -251,7 +356,7 @@ async function main() {
   const remoteTags = parseTagNames(git(['ls-remote', '--tags', remote]));
   if (remoteTags.length === 0) {
     console.log(colors.yellow(`No tags found on remote '${remote}'.`));
-    return;
+    return 0;
   }
 
   const tagsToDelete = remoteTags.filter((tag) => !tag.startsWith(keepPrefix));
@@ -267,7 +372,7 @@ async function main() {
     console.log();
     section('Remote Tags');
     printTagTable(remoteTags, colors.green);
-    return;
+    return 0;
   }
 
   section('Tags To Delete');
@@ -276,14 +381,13 @@ async function main() {
 
   if (dryRun) {
     printPlannedCommands(remote, tagsToDelete);
-    return;
+    return 0;
   }
 
   const confirmed = await confirmPrompt();
   if (!confirmed) {
     console.log(colors.red('Aborted.'));
-    process.exitCode = 1;
-    return;
+    return 1;
   }
 
   console.log();
@@ -306,21 +410,37 @@ async function main() {
     ? localTagsRaw
         .split('\n')
         .filter(Boolean)
-        .sort((left, right) => left.localeCompare(right))
+        .toSorted((left, right) => left.localeCompare(right))
     : [];
   printTagTable(localTags, colors.green);
+  return 0;
 }
 
-try {
-  await main();
-} catch (error) {
-  if (error instanceof ExitError) {
-    if (error.message) {
-      console.error(colors.red(error.message));
+/**
+ * Prune the remote tags and report the failures.
+ *
+ * @param {string[]} [args] Command line arguments, without the runtime and script paths.
+ * @returns {Promise<number>} The exit code.
+ */
+export async function main(args = process.argv.slice(2)) {
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(scriptVersion);
+    return 0;
+  }
+
+  try {
+    return await run(args);
+  } catch (error) {
+    if (error instanceof ExitError) {
+      if (error.message) {
+        console.error(colors.red(error.message));
+      }
+      return error.code;
     }
-    process.exitCode = error.code;
-  } else {
     console.error(colors.red(error instanceof Error ? error.message : String(error)));
-    process.exitCode = 1;
+    return 1;
   }
 }
+
+// `import.meta.main` needs Node.js 22.18 or 24.2; older runtimes fall back to comparing the executed script path.
+if (import.meta.main ?? path.resolve(process.argv[1] ?? '') === import.meta.filename) process.exitCode = await main();

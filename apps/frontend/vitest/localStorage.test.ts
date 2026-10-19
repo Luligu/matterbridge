@@ -1,5 +1,3 @@
-// oxlint-disable unicorn/no-array-for-each
-
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { LOCAL_STORAGE_PREFIX, LOCAL_STORAGE_TABLE_KEYS, MbfLsk, resetLocalStorage } from '../src/utils/localStorage';
@@ -34,18 +32,18 @@ describe('localStorage utils', () => {
     });
 
     expect(LOCAL_STORAGE_TABLE_KEYS).toEqual({
-      Devices_table_order_by: 'Devices_table_order_by',
-      Devices_table_order: 'Devices_table_order',
-      Devices_column_visibility: 'Devices_column_visibility',
-      Plugins_table_order_by: 'Plugins_table_order_by',
-      Plugins_table_order: 'Plugins_table_order',
-      Plugins_column_visibility: 'Plugins_column_visibility',
+      'Devices_table_order_by': 'Devices_table_order_by',
+      'Devices_table_order': 'Devices_table_order',
+      'Devices_column_visibility': 'Devices_column_visibility',
+      'Plugins_table_order_by': 'Plugins_table_order_by',
+      'Plugins_table_order': 'Plugins_table_order',
+      'Plugins_column_visibility': 'Plugins_column_visibility',
       'Registered devices_table_order_by': 'Registered devices_table_order_by',
       'Registered devices_table_order': 'Registered devices_table_order',
       'Registered devices_column_visibility': 'Registered devices_column_visibility',
-      Clusters_table_order_by: 'Clusters_table_order_by',
-      Clusters_table_order: 'Clusters_table_order',
-      Clusters_column_visibility: 'Clusters_column_visibility',
+      'Clusters_table_order_by': 'Clusters_table_order_by',
+      'Clusters_table_order': 'Clusters_table_order',
+      'Clusters_column_visibility': 'Clusters_column_visibility',
     });
   });
 

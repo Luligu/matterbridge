@@ -1,18 +1,29 @@
 /**
  * downloads.mjs
- * Version: 1.0.2
+ * Version: 2.0.0
  *
  * Prints daily npm downloads for the last month for the package in ../package.json.
  *
  * Usage:
- *   node scripts/downloads.mjs
+ *   node scripts/downloads.mjs --version, -v  Show the script version
+ *   node scripts/downloads.mjs --help, -h     Show the help
+ *   node scripts/downloads.mjs [--dry-run|-n]
  *
  * Requirements:
  *   Node.js 18+ (for global fetch)
+ *
+ * The script runs only when executed directly. Importing it exposes `main` without side effects.
  */
 
+/* oxlint-disable no-console */
+/* oxlint-disable typescript/no-unnecessary-type-conversion */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const scriptVersion = '2.0.0';
 
 /**
  * @typedef {{ day: string, downloads: number }} DownloadRow
@@ -25,6 +36,23 @@ import { fileURLToPath } from 'node:url';
 /**
  * @typedef {{ start: string, end: string, package: string, downloads: number }} NpmDownloadsPointResponse
  */
+
+/**
+ * Builds the help text.
+ *
+ * @returns {string} The usage message.
+ */
+function usage() {
+  return [
+    'Usage: node scripts/downloads.mjs [--dry-run|-n]',
+    '',
+    'Print the daily npm downloads of the last month for the package in ../package.json.',
+    '',
+    '  --dry-run, -n  Print the package name without querying the npm registry',
+    '  --version, -v  Show the script version',
+    '  --help, -h     Show this help message',
+  ].join('\n');
+}
 
 /**
  * Read and parse a JSON file.
@@ -54,7 +82,7 @@ async function fetchLastMonthDownloads(pkgName) {
     throw new Error(`HTTP ${res.status} fetching ${url}\n${text}`);
   }
 
-  const data = await res.json();
+  const data = /** @type {NpmDownloadsRangeResponse} */ (await res.json());
   if (!data || !Array.isArray(data.downloads)) {
     throw new Error(`Unexpected response shape from ${url}`);
   }
@@ -79,7 +107,7 @@ async function fetchCurrentDayDownloads(pkgName) {
     throw new Error(`HTTP ${res.status} fetching ${url}\n${text}`);
   }
 
-  const data = await res.json();
+  const data = /** @type {NpmDownloadsPointResponse} */ (await res.json());
   if (!data || typeof data.downloads !== 'number') {
     throw new Error(`Unexpected response shape from ${url}`);
   }
@@ -94,7 +122,7 @@ async function fetchCurrentDayDownloads(pkgName) {
  */
 function sumDownloads(rows) {
   let total = 0;
-  for (const r of rows) total += Number(r.downloads) || 0;
+  for (const r of rows) total += r.downloads || 0;
   return total;
 }
 
@@ -106,8 +134,7 @@ function sumDownloads(rows) {
  * @returns {string} Left-padded string.
  */
 function padLeft(s, width) {
-  const str = String(s);
-  return str.length >= width ? str : ' '.repeat(width - str.length) + str;
+  return s.length >= width ? s : ' '.repeat(width - s.length) + s;
 }
 
 /**
@@ -118,8 +145,7 @@ function padLeft(s, width) {
  * @returns {string} Right-padded string.
  */
 function padRight(s, width) {
-  const str = String(s);
-  return str.length >= width ? str : str + ' '.repeat(width - str.length);
+  return s.length >= width ? s : s + ' '.repeat(width - s.length);
 }
 
 /**
@@ -129,7 +155,7 @@ function padRight(s, width) {
  * @returns {string} Formatted number.
  */
 function formatNumber(n) {
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(n) || 0);
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n || 0);
 }
 
 /**
@@ -145,8 +171,7 @@ const colorEnabled = Boolean(process.stdout.isTTY && !process.env.NO_COLOR && pr
  * @returns {string} Styled text.
  */
 function ansi(code, text) {
-  if (!colorEnabled) return text;
-  return `\u001b[${code}m${text}\u001b[0m`;
+  return colorEnabled ? `\u001b[${code}m${text}\u001b[0m` : text;
 }
 
 /**
@@ -198,12 +223,13 @@ const style = {
 };
 
 /**
- * Entrypoint.
+ * Print the downloads of the package.
  *
+ * @param {string} pkgPath - Path of the package.json.
+ * @param {boolean} dryRun - When true, print the package name without querying the npm registry.
  * @returns {Promise<void>}
  */
-async function main() {
-  const pkgPath = fileURLToPath(new URL('../package.json', import.meta.url));
+async function printDownloads(pkgPath, dryRun) {
   const pkgUnknown = await readJson(pkgPath);
   if (!pkgUnknown || typeof pkgUnknown !== 'object') {
     throw new Error(`Unexpected JSON in ${pkgPath}`);
@@ -214,6 +240,11 @@ async function main() {
   const name = pkg.name;
   if (typeof name !== 'string' || !name) {
     throw new Error(`Missing/invalid "name" in ${pkgPath}`);
+  }
+
+  if (dryRun) {
+    console.log(`[dry-run] Would fetch the npm downloads of ${name}`);
+    return;
   }
 
   const [lastMonthData, currentDayData] = await Promise.all([fetchLastMonthDownloads(name), fetchCurrentDayDownloads(name)]);
@@ -230,10 +261,14 @@ async function main() {
   const total = sumDownloads(summaryRows);
   const days = summaryRows.length || 1;
   const avg = Math.round(total / days);
-  const minRow = summaryRows.reduce((m, r) => (r.downloads < m.downloads ? r : m), summaryRows[0] ?? { day: '-', downloads: 0 });
-  const maxRow = summaryRows.reduce((m, r) => (r.downloads > m.downloads ? r : m), summaryRows[0] ?? { day: '-', downloads: 0 });
+  let minRow = summaryRows[0] ?? { day: '-', downloads: 0 };
+  let maxRow = minRow;
+  for (const r of summaryRows) {
+    if (r.downloads < minRow.downloads) minRow = r;
+    if (r.downloads > maxRow.downloads) maxRow = r;
+  }
 
-  const dayWidth = Math.max(3, ...rows.map((r) => String(r.day).length));
+  const dayWidth = Math.max(3, ...rows.map((r) => r.day.length));
   const downloadStrings = rows.map((r) => formatNumber(r.downloads));
   const downloadsWidth = Math.max('DOWNLOADS'.length, ...downloadStrings.map((s) => s.length));
   const rangeStart = rows[0]?.day ?? lastMonthData.start;
@@ -265,7 +300,32 @@ async function main() {
   console.log(`${style.dim('Max:     ')} ${formatNumber(maxRow.downloads)} (${maxRow.day})`);
 }
 
-main().catch((err) => {
-  console.error(err?.stack || String(err));
-  process.exitCode = 1;
-});
+/**
+ * Entrypoint.
+ *
+ * @param {string[]} [args] - Command line arguments, without the runtime and script paths.
+ * @param {string} [pkgPath] - Path of the package.json.
+ * @returns {Promise<number>} The exit code.
+ */
+export async function main(args = process.argv.slice(2), pkgPath = fileURLToPath(new URL('../package.json', import.meta.url))) {
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(scriptVersion);
+    return 0;
+  }
+
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(usage());
+    return 0;
+  }
+
+  try {
+    await printDownloads(pkgPath, args.includes('--dry-run') || args.includes('-n'));
+    return 0;
+  } catch (err) {
+    console.error(err instanceof Error ? err.stack : String(err));
+    return 1;
+  }
+}
+
+// `import.meta.main` needs Node.js 22.18 or 24.2; older runtimes fall back to comparing the executed script path.
+if (import.meta.main ?? path.resolve(process.argv[1] ?? '') === import.meta.filename) process.exitCode = await main();

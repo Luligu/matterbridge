@@ -1,0 +1,64 @@
+name: Codecov Bun
+
+on:
+  push:
+    branches: [main, dev]
+    paths-ignore:
+      - 'docs/**' # any file under docs/
+      - 'screenshots/**' # any file under screenshots/
+      - '**/*.md' # any .md anywhere
+  pull_request:
+    branches: [main, dev]
+    paths-ignore:
+      - 'docs/**' # any file under docs/
+      - 'screenshots/**' # any file under screenshots/
+      - '**/*.md' # any .md anywhere
+  workflow_dispatch:
+
+# Cancel previous runs when a new one is triggered (same branch/PR)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run bun tests and collect coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 2
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install matterbridge dependencies
+        run: bun install
+
+      - name: Build matterbridge
+        run: bun run build
+
+      - name: Link matterbridge globally
+        run: bun link
+
+      - name: Install frontend dependencies
+        run: bun install
+        working-directory: apps/frontend
+
+      - name: Build frontend
+        run: bun run build
+        working-directory: apps/frontend
+
+      - name: Test matterbridge
+        run: bun run test:bun:coverage
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/bun/lcov.info
+          flags: bun
+          fail_ci_if_error: true

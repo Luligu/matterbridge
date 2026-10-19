@@ -3,7 +3,7 @@
  * @description This file contains the Jest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -33,16 +33,17 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
-import { inspectError } from '@matterbridge/utils/error';
+import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';
 // node-ansi-logger module
-import { er, rs } from 'node-ansi-logger';
+import { er, LogLevel, rs } from 'node-ansi-logger';
 
 // local modules
 import { flushAsync } from '../flushAsync.js';
+import { inspectError } from '../inspectError.js';
+import { getInterfaceName } from '../network.js';
 import { HOMEDIR, log, NAME } from './setupTest.js';
 
 export let environment: Environment;
@@ -55,7 +56,9 @@ const noop = (): void => undefined;
  * Create a matter test environment for testing:
  * - it will remove any existing home directory
  * - setup the matter environment with name, debug logging and ANSI format
+ * - set the endpoint device type validation mode (default 'strict')
  *
+ * @param {'off' | 'warn' | 'strict'} [validation] - The matter.js endpoint device type validation mode (`endpoint.validation`). Default is 'strict'.
  * @returns {Environment} - The default matter environment.
  * @example
  * ```typescript
@@ -84,7 +87,7 @@ const noop = (): void => undefined;
  * ```
  */
 // oxlint-disable-next-line typescript/require-await
-export async function createTestEnvironment(): Promise<Environment> {
+export async function createTestEnvironment(validation: 'off' | 'warn' | 'strict' = 'strict'): Promise<Environment> {
   expect(NAME).toBeDefined();
   expect(typeof NAME).toBe('string');
   expect(NAME.length).toBeGreaterThanOrEqual(4); // avoid accidental deletion of short paths like "/" or "C:\"
@@ -96,6 +99,7 @@ export async function createTestEnvironment(): Promise<Environment> {
   environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
+  environment.vars.set('endpoint.validation', validation);
   return environment;
 }
 
@@ -154,6 +158,7 @@ export function getMatterbridge(): PlatformMatterbridge {
       osArch: 'arm64',
       totalMemory: '0 B',
       freeMemory: '0 B',
+      constrainedMemory: '0 B',
       systemUptime: '0s',
       processUptime: '0s',
       cpuUsage: '0%',
@@ -169,10 +174,10 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.10.12',
-    matterbridgeLatestVersion: '3.10.12',
-    matterbridgeDevVersion: '3.10.12',
-    frontendVersion: '3.6.3',
+    matterbridgeVersion: '3.10.14',
+    matterbridgeLatestVersion: '3.10.14',
+    matterbridgeDevVersion: '3.10.14',
+    frontendVersion: '3.6.5',
     bridgeMode: 'none',
     restartMode: 'none',
     virtualMode: 'mounted_switch',
@@ -180,6 +185,73 @@ export function getMatterbridge(): PlatformMatterbridge {
     aggregatorVendorName: 'Matterbridge',
     aggregatorProductId: 0x8000,
     aggregatorProductName: 'Matterbridge Jest',
+  };
+  return matterbridge;
+}
+
+/**
+ * Get a mocked SharedMatterbridge.
+ *
+ * @returns {SharedMatterbridge} An object representing the mocked SharedMatterbridge.
+ */
+export function getSharedMatterbridge(): SharedMatterbridge {
+  const matterbridge: SharedMatterbridge = {
+    systemInformation: {
+      interfaceName: 'eth0',
+      macAddress: 'aa:bb:cc:dd:ee:ff',
+      ipv4Address: '192.168.68.100',
+      ipv6Address: 'fd78:cbf8:4939:46e2:51b2:2163:7f88:c33d',
+      nodeVersion: '24.16.0',
+      hostname: 'matterbridge',
+      user: 'jest',
+      osType: 'Linux',
+      osRelease: '6.8.0-xxxx',
+      osPlatform: 'linux',
+      osArch: 'arm64',
+      totalMemory: '0 B',
+      freeMemory: '0 B',
+      constrainedMemory: '0 B',
+      systemUptime: '0s',
+      processUptime: '0s',
+      cpuUsage: '0%',
+      processCpuUsage: '0%',
+      rss: '0 B',
+      heapTotal: '0 B',
+      heapUsed: '0 B',
+    },
+    uuid: '00000000-0000-0000-0000-000000000000',
+    rootDirectory: HOMEDIR,
+    homeDirectory: HOMEDIR,
+    matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
+    matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
+    matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
+    globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
+    matterbridgeVersion: '3.10.14',
+    matterbridgeLatestVersion: '3.10.14',
+    matterbridgeDevVersion: '3.10.14',
+    frontendVersion: '3.6.5',
+    dockerDev: undefined,
+    dockerVersion: undefined,
+    dockerLatestVersion: undefined,
+    dockerDevVersion: undefined,
+    bridgeMode: 'none',
+    restartMode: 'none',
+    virtualMode: 'mounted_switch',
+    profile: undefined,
+    logLevel: LogLevel.DEBUG,
+    fileLogger: false,
+    matterLogLevel: LogLevel.DEBUG,
+    matterFileLogger: false,
+    mdnsInterface: undefined,
+    ipv4Address: undefined,
+    ipv6Address: undefined,
+    port: undefined,
+    discriminator: undefined,
+    passcode: undefined,
+    startupAt: 0,
+    shutdownAt: 0,
+    runningTimes: 0,
+    runningDays: 0,
   };
   return matterbridge;
 }
@@ -454,6 +526,10 @@ export async function createServerNode(
   const { randomBytes } = await import('node:crypto');
   const random = randomBytes(8).toString('hex');
 
+  // Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+  const mdnsInterface = getInterfaceName();
+  if (mdnsInterface) environment.vars.set('mdns.networkInterface', mdnsInterface);
+
   // Create the server node
   server = await ServerNode.create({
     id: NAME + 'ServerNode',
@@ -647,6 +723,7 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
 /**
  * Flush any pending endpoint number persistence.
  *
+ * @param {number} rounds Number of endpoint number persistence flush cycles to run before closing the server (default 3).
  * @param {number} ticks Number of macrotask (setImmediate) turns to yield after stopping the server to allow asynchronous work to complete before returning (default 1).
  * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform after macrotask yielding to allow asynchronous work to complete before returning (default 1).
  * @param {number} pause Final timer delay in ms to wait after microtask draining to allow any follow-up work scheduled by the server stop process to run before returning (default 10ms).
@@ -677,9 +754,9 @@ export async function stopServerNode(ticks: number = 1, microTurns: number = 1, 
  * await destroyTestEnvironment();
  * ```
  */
-export async function flushServerNode(ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<void> {
+export async function flushServerNode(rounds: number = 3, ticks: number = 1, microTurns: number = 1, pause: number = 10): Promise<void> {
   // Flush any pending endpoint number persistence
-  await flushAllEndpointNumberPersistence(server);
+  await flushAllEndpointNumberPersistence(server, rounds, ticks, microTurns, pause);
 
   // Ensure all endpoint numbers are persisted
   await assertAllEndpointNumbersPersisted(server);
@@ -704,7 +781,9 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  *
  * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to add the device to.
  * @param {Endpoint} device The device to add.
- * @param {number} rounds The number of rounds to perform after addition (default 3).
+ * @param {number} rounds The number of rounds to perform after addition (default 1).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield in each round (default 1).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform in each round (default 1).
  * @param {number} pause The pause time in milliseconds after addition (default 10ms).
  * @returns {Promise<void>} Resolves when the device has been added and is ready.
  * @example
@@ -712,14 +791,21 @@ export async function flushServerNode(ticks: number = 1, microTurns: number = 1,
  * expect(await addDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
+export async function addDevice(
+  owner: ServerNode | Endpoint<AggregatorEndpoint>,
+  device: Endpoint,
+  rounds: number = 1,
+  ticks: number = 1,
+  microTurns: number = 1,
+  pause: number = 10,
+): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
 
   /* v8 ignore next */
   try {
@@ -737,7 +823,7 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Active);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
   return true;
 }
 
@@ -746,7 +832,9 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
  *
  * @param {ServerNode<ServerNode.RootEndpoint> | Endpoint<AggregatorEndpoint>} owner The server or aggregator to remove the device from.
  * @param {Endpoint} device The device to remove.
- * @param {number} rounds The number of rounds to perform after deletion (default 3).
+ * @param {number} rounds The number of rounds to perform after deletion (default 1).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield in each round (default 1).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform in each round (default 1).
  * @param {number} pause The pause time in milliseconds after deletion (default 10ms).
  * @returns {Promise<void>} Resolves when the device has been removed and is no longer ready.
  * @example
@@ -754,14 +842,21 @@ export async function addDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>
  * expect(await deleteDevice(aggregator, device)).toBeTruthy();
  * ```
  */
-export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoint>, device: Endpoint, rounds: number = 3, pause: number = 10): Promise<boolean> {
+export async function deleteDevice(
+  owner: ServerNode | Endpoint<AggregatorEndpoint>,
+  device: Endpoint,
+  rounds: number = 1,
+  ticks: number = 1,
+  microTurns: number = 1,
+  pause: number = 10,
+): Promise<boolean> {
   expect(owner).toBeDefined();
   expect(device).toBeDefined();
   expect(owner.lifecycle.isReady).toBeTruthy();
   expect(owner.construction.status).toBe(Lifecycle.Status.Active);
   expect(owner.lifecycle.isPartsReady).toBeTruthy();
   const rootServerNode = getRootServerNode(owner);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
 
   /* v8 ignore next */
   try {
@@ -778,6 +873,6 @@ export async function deleteDevice(owner: ServerNode | Endpoint<AggregatorEndpoi
   expect(device.lifecycle.hasId).toBeTruthy();
   expect(device.lifecycle.hasNumber).toBeTruthy();
   expect(device.construction.status).toBe(Lifecycle.Status.Destroyed);
-  await flushAllEndpointNumberPersistence(rootServerNode, rounds, pause);
+  await flushAllEndpointNumberPersistence(rootServerNode, rounds, ticks, microTurns, pause);
   return true;
 }

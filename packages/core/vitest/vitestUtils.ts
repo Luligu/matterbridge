@@ -22,14 +22,14 @@
  */
 
 /*
- * These helpers depend on the core Matterbridge class, so they cannot live in @matterbridge/vitest-utils
+ * These helpers depend on the core Matterbridge class, so they cannot live in @matterbridge/test-utils
  * (which must not depend on core). Keep them here and import them from the core vitest tests instead of
  * inlining them in every file, so they only need to change in one place.
  */
 
 import { type Environment, RuntimeService } from '@matter/general';
 import { MdnsService } from '@matter/protocol';
-import { flushAsync } from '@matterbridge/vitest-utils';
+import { flushAsync } from '@matterbridge/test-utils';
 
 import type { Matterbridge } from '../src/matterbridge.js';
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';

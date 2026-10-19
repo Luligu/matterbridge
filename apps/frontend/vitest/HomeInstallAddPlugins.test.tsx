@@ -197,7 +197,7 @@ describe('HomeInstallAddPlugins', () => {
   it('uploads via button + change and via drag/drop', async () => {
     const { logMessage } = renderWithCtx();
 
-    const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => undefined);
+    const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click').mockImplementation(() => {});
 
     fireEvent.click(screen.getByRole('button', { name: /upload/i }));
     expect(clickSpy).toHaveBeenCalled();
@@ -305,7 +305,7 @@ describe('HomeInstallAddPlugins', () => {
     const logMessage = vi.fn();
     renderWithCtx({ logMessage });
 
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('upload failed')) as any;
 

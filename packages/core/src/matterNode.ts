@@ -3,7 +3,7 @@
  * @description This file contains the class MatterNode.
  * @author Luca Liguori
  * @created 2025-10-01
- * @version 1.1.0
+ * @version 1.1.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -51,36 +51,36 @@ import {
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
+import { Endpoint, ServerNode } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { type DeviceCertification, type ExposedFabricInformation, MdnsService, PaseClient } from '@matter/protocol';
-import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types';
+import { type DeviceCertification, MdnsService, PaseClient } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiMatter, PluginName, SanitizedExposedFabricInformation, SanitizedSession, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import type { BridgeStatus, PluginName, PluginStatusUpdate, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
-import { getIntParameter, getParameter, hasParameter } from '@matterbridge/utils/cli';
+import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidInteger, isValidString, parseVersionString } from '@matterbridge/utils/validate';
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
-// AnsiLogger module
+// Ansi Logger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, TimestampFormat, zb } from 'node-ansi-logger';
 // Node persist manager module
 import { NodeStorageManager } from 'node-persist-manager';
 
 // matterbridge
-import { toBaseDevice } from './deviceManager.js';
 import { addVirtualDevice } from './helpers.js';
 import type { Matterbridge } from './matterbridge.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toBaseDevice } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('MatterNode');
@@ -146,19 +146,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   aggregatorSerialNumber = getParameter('serialNumber');
   aggregatorUniqueId = getParameter('uniqueId');
 
-  /** Advertising nodes map: time advertising started keyed by storeId */
-  advertisingNodes = new Map<string, number>();
-
   /** Plugins */
   readonly pluginManager: PluginManager;
 
-  /** Dependant MatterNodes keyed by device id */
+  /** Dependant MatterNodes for device with mode 'server' keyed by device id */
   readonly dependantMatterNodes = new Map<string, MatterNode>();
 
   /** Broadcast server */
   private readonly server: BroadcastServer;
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
-  private readonly verbose = hasParameter('verbose');
+  private readonly debug = hasAnyParameter('debug', 'verbose', 'debug-node', 'verbose-node');
+  private readonly verbose = hasAnyParameter('verbose', 'verbose-node');
 
   /**
    * Creates an instance of the Matter class.
@@ -174,28 +171,38 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   ) {
     super();
     this.log.logNameColor = '\x1b[38;5;65m';
+    this.log.logLevel = matterbridge.logLevel;
+    this.matterLog.logLevel = matterbridge.matterLogLevel;
     if (this.debug) this.log.debug(`MatterNode ${this.pluginName ? 'for plugin ' + this.pluginName : 'bridge'} loading...`);
+
+    // Setup the storeId of the server node: Matterbridge in bridge mode, the plugin name in childbridge mode or the device name for a server mode device
+    this.storeId = this.device?.deviceName ? this.device.deviceName.replace(/[ .]/g, '') : (this.pluginName ?? 'Matterbridge');
 
     // Setup Matter parameters
     this.port = matterbridge.port;
     this.passcode = matterbridge.passcode;
     this.discriminator = matterbridge.discriminator;
+    this.mdnsInterface = matterbridge.mdnsInterface;
 
     // Setup the broadcast server
     this.server = new BroadcastServer('matter', this.log);
-    // oxlint-disable-next-line typescript/no-misused-promises
-    this.server.on('broadcast_message', this.msgHandler.bind(this));
+    this.server.on('broadcast_message', (msg) => fireAndForget(this.msgHandler(msg), this.log, 'Broadcast message handler'));
     if (this.verbose) this.log.debug(`BroadcastServer is ready`);
 
-    // Ensure the matterbridge directory exists
-    fs.mkdirSync(matterbridge.matterbridgeDirectory, { recursive: true });
-
     // Setup the plugin manager with thread server closed
+    const injectMatterbridge = {
+      ...this.matterbridge,
+      getPlatformMatterbridge: (): SharedMatterbridge => this.matterbridge,
+      addBridgedEndpoint: this.addBridgedEndpoint.bind(this),
+      removeBridgedEndpoint: this.removeBridgedEndpoint.bind(this),
+      removeAllBridgedEndpoints: this.removeAllBridgedEndpoints.bind(this),
+      addVirtualEndpoint: this.addVirtualEndpoint.bind(this),
+    };
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    this.pluginManager = new PluginManager(this.matterbridge as Matterbridge);
-    this.pluginManager.logLevel = this.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    this.pluginManager = new PluginManager(injectMatterbridge as unknown as Matterbridge);
     // @ts-expect-error access private property
     this.pluginManager.server.close();
+    this.pluginManager.logLevel = this.debug ? LogLevel.DEBUG : LogLevel.INFO;
     if (this.verbose) this.log.debug(`PluginManager is ready`);
 
     // Setup the matter environment
@@ -204,7 +211,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.environment.vars.set('path.root', path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
-
+    this.environment.vars.set('endpoint.validation', 'warn');
+    if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
     if (this.verbose) this.log.debug(`Matter Environment is ready`);
 
     // Ensure MdnsService is registered in the default environment
@@ -226,7 +234,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     // oxlint-disable-next-line typescript/no-unsafe-type-assertion
     if (this.verbose) this.log.debug(`Matter logLevel: ${levels[Logger.level as MatterLogLevel]} fileLogger: ${matterbridge.matterFileLogger}.`);
 
-    if (this.debug) this.log.debug(`MatterNode ${this.pluginName ? 'for plugin ' + this.pluginName : 'bridge'} loaded`);
+    if (this.debug) this.log.debug(`MatterNode for ${this.storeId} loaded`);
   }
 
   /**
@@ -234,9 +242,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    *
    * @param {WorkerMessage} msg - The incoming message.
    */
-  // oxlint-disable-next-line typescript/require-await
   async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matter')) {
+    if (this.server.isWorkerRequest(msg)) {
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
         case 'get_log_level':
@@ -245,6 +252,33 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         case 'set_log_level':
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
+          break;
+        case 'matter_start':
+          // Only the MatterNode with the requested storeId responds. Dependant MatterNodes are started by their parent MatterNode.
+          if (this.device || msg.params.storeId !== this.storeId) break;
+          try {
+            await this.create();
+            await this.start();
+            this.server.respond({ ...msg, result: { storeId: this.storeId, success: true } });
+          } catch (error) {
+            inspectError(this.log, `Error starting MatterNode ${this.storeId}`, error);
+          }
+          break;
+        case 'matter_stop':
+          // Only the MatterNode with the requested storeId responds. Dependant MatterNodes are stopped by their parent MatterNode.
+          if (this.device || msg.params.storeId !== this.storeId) break;
+          try {
+            await this.stop();
+            // Respond before destroy() closes the broadcast server. Only the bridge MatterNode closes the shared mDNS service.
+            this.server.respond({ ...msg, result: { storeId: this.storeId, success: true } });
+            await this.destroy(!this.pluginName);
+          } catch (error) {
+            inspectError(this.log, `Error stopping MatterNode ${this.storeId}`, error);
+          }
+          break;
+        case 'matter_apimatter':
+          // Every MatterNode (dependant ones included) receives the request: only the one owning the server node responds
+          if (this.serverNode?.id === msg.params.id) this.server.respond({ ...msg, result: { matter: getServerNodeData(this.serverNode) } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
@@ -255,6 +289,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       switch (msg.type) {
         case 'get_log_level':
         case 'set_log_level':
+        case 'matterbridge_platform':
+        case 'matterbridge_shared':
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast response ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
@@ -295,7 +331,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * Creates and initializes the Matter node, storage, and plugins.
    */
   async create(): Promise<void> {
-    this.log.info('Creating Matter node...');
+    this.log.info(`Creating Matter node for ${this.storeId}...`);
+
+    // Setup Matter parameters
+    const { result } = await this.server.fetch({ type: 'matterbridge_matterdata', src: this.server.name, dst: 'matterbridge' });
+    this.port = result.port;
+    this.passcode = result.passcode;
+    this.discriminator = result.discriminator;
+    this.log.debug(
+      `Loaded Matter node  parameters for ${this.storeId}: port ${CYAN}${this.port}${db} passcode ${CYAN}${this.passcode}${db} discriminator ${CYAN}${this.discriminator}${db}`,
+    );
 
     // Start matter storage
     await this.startMatterStorage();
@@ -321,8 +366,18 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       return;
     }
 
-    // oxlint-disable-next-line unicorn/no-negated-condition
-    if (!this.pluginName) {
+    if (this.pluginName) {
+      this.log.debug(`Creating MatterNode instance for plugin ${CYAN}${this.pluginName}${db}...`);
+
+      // Load only the specified plugin
+      this.log.debug(`Loading plugin ${CYAN}${this.pluginName}${db}...`);
+      await this.pluginManager.load(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { loaded: this.pluginManager.get(this.pluginName)?.loaded });
+      this.log.debug(`Loaded plugin ${CYAN}${this.pluginName}${db}`);
+
+      this.log.debug(`Created MatterNode instance for plugin ${CYAN}${this.pluginName}${db}`);
+      this.emit('ready', this.pluginName);
+    } else {
       this.log.debug('Creating MatterNode instance for all plugins...');
 
       await this.createMatterbridgeServerNode();
@@ -334,23 +389,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         loadPromises.push(this.pluginManager.load(plugin));
       }
       await Promise.all(loadPromises);
+      for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
+        this.pluginStatusUpdate(plugin.name, { loaded: plugin.loaded });
+      }
       this.log.debug('Loaded all plugins');
 
       this.log.debug('Created MatterNode instance for all plugins');
       this.emit('ready', 'Matterbridge');
-    } else {
-      this.log.debug(`Creating MatterNode instance for plugin ${CYAN}${this.pluginName}${db}...`);
-
-      // Load only the specified plugin
-      this.log.debug(`Loading plugin ${CYAN}${this.pluginName}${db}...`);
-      await this.pluginManager.load(this.pluginName);
-      this.log.debug(`Loaded plugin ${CYAN}${this.pluginName}${db}`);
-
-      this.log.debug(`Created MatterNode instance for plugin ${CYAN}${this.pluginName}${db}`);
-      this.emit('ready', this.pluginName);
     }
 
-    this.log.info('Created Matter node');
+    this.log.info(`Created Matter node for ${this.storeId}`);
     await this.yieldToNode();
   }
 
@@ -358,8 +406,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * Starts the Matter node and any dependant nodes.
    */
   async start(): Promise<void> {
-    if (!this.serverNode && !this.pluginName) throw new Error('Matter server node not created yet. Call create() first.');
-    this.log.info('Starting MatterNode...');
+    if (!this.serverNode && !this.pluginName) throw new Error(`Matter server node for ${this.storeId} not created yet. Call create() first.`);
+    this.log.info(`Starting MatterNode for ${this.storeId}...`);
 
     // Start Matter node for a server mode device
     if (this.pluginName && this.device?.deviceName) {
@@ -372,48 +420,61 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     if (!this.pluginName) {
       // Start all loaded plugins
-      this.log.debug('Starting all plugins...');
+      this.log.debug(`Starting all plugins for ${this.storeId}...`);
       const startPromises: Promise<Plugin | undefined>[] = [];
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled && p.loaded)) {
         startPromises.push(this.pluginManager.start(plugin, 'Starting MatterNode'));
       }
       await Promise.all(startPromises);
-      this.log.debug('Started all plugins');
+      for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
+        this.pluginStatusUpdate(plugin.name, { started: plugin.started, registeredDevices: plugin.registeredDevices });
+      }
+      this.log.debug(`Started all plugins for ${this.storeId}`);
 
       // Start the server node
-      this.log.debug('Starting MatterNode for all plugins...');
+      this.log.debug(`Starting MatterNode for ${this.storeId}...`);
       await this.startServerNode();
-      this.log.debug('Started MatterNode for all plugins');
+      this.log.debug(`Started MatterNode for ${this.storeId}`);
 
       // Configure all loaded plugins
-      this.log.debug('Configuring all plugins...');
+      this.log.debug(`Configuring all plugins for ${this.storeId}...`);
       const configurePromises: Promise<Plugin | undefined>[] = [];
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled && p.started)) {
         configurePromises.push(this.pluginManager.configure(plugin));
       }
       await Promise.all(configurePromises);
-      this.log.debug('Configured all plugins');
+      for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
+        this.pluginStatusUpdate(plugin.name, { configured: plugin.configured });
+      }
+      this.log.debug(`Configured all plugins for ${this.storeId}`);
     } else {
       // Start the loaded plugin
+      this.log.debug(`Starting plugin ${this.pluginName}...`);
       await this.pluginManager.start(this.pluginName, 'Starting MatterNode');
+      const plugin = this.pluginManager.get(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { started: plugin?.started, registeredDevices: plugin?.registeredDevices });
+      this.log.debug(`Started plugin ${this.pluginName}...`);
 
       // Start the server node
-      this.log.debug(`Starting MatterNode for plugin ${this.pluginName}...`);
+      this.log.debug(`Starting MatterNode for plugin ${this.storeId}...`);
       await this.startServerNode();
-      this.log.debug(`Started MatterNode for plugin ${this.pluginName}`);
+      this.log.debug(`Started MatterNode for plugin ${this.storeId}`);
 
       // Configure the plugin
+      this.log.debug(`Configuring plugin ${this.pluginName}...`);
       await this.pluginManager.configure(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { configured: this.pluginManager.get(this.pluginName)?.configured });
+      this.log.debug(`Configured plugin ${this.pluginName}...`);
     }
 
     // Start the dependant MatterNodes
-    this.log.debug(`Starting dependant MatterNodes...`);
+    this.log.debug(`Starting dependant MatterNodes for ${this.storeId}...`);
     for (const dependantMatterNode of this.dependantMatterNodes.values()) {
       await dependantMatterNode.start();
     }
-    this.log.debug(`Started dependant MatterNodes`);
+    this.log.debug(`Started dependant MatterNodes for ${this.storeId}`);
 
-    this.log.info('Started MatterNode');
+    this.log.info(`Started MatterNode for ${this.storeId}`);
     await this.yieldToNode();
   }
 
@@ -421,8 +482,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * Stops the Matter node and releases associated resources.
    */
   async stop(): Promise<void> {
-    if (!this.serverNode) throw new Error('Matter server node not created yet. Call create() first.');
-    this.log.info('Stopping MatterNode...');
+    if (!this.serverNode) throw new Error(`Matter server node for ${this.storeId} not created yet. Call create() first.`);
+    this.log.info(`Stopping MatterNode for ${this.storeId}...`);
 
     // Stop Matter node for a server mode device
     if (this.pluginName && this.device?.deviceName) {
@@ -434,13 +495,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await this.stopMatterStorage();
       await this.destroy(false); // Do not close mDNS since it is shared
       this.log.debug(`Stopped MatterNode for server device ${this.pluginName}:${this.device.deviceName}`);
-      this.log.info('Stopped MatterNode');
+      this.log.info(`Stopped MatterNode for ${this.storeId}`);
       await this.yieldToNode();
       return;
     }
 
     if (!this.pluginName) {
-      this.log.debug('Stopping all plugins...');
+      this.log.debug(`Stopping all plugins for ${this.storeId}...`);
 
       const shutdownPromises: Promise<Plugin | undefined>[] = [];
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled && p.started)) {
@@ -448,7 +509,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
       await Promise.all(shutdownPromises);
 
-      this.log.debug('Stopped all plugins');
+      this.log.debug(`Stopped all plugins for ${this.storeId}`);
     } else {
       this.log.debug(`Stopping plugin ${this.pluginName}...`);
 
@@ -458,11 +519,11 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
 
     // Stop the dependant MatterNodes
-    this.log.debug(`Stopping dependant MatterNodes...`);
+    this.log.debug(`Stopping dependant MatterNodes for ${this.storeId}...`);
     for (const dependantMatterNode of this.dependantMatterNodes.values()) {
       await dependantMatterNode.stop();
     }
-    this.log.debug(`Stopped dependant MatterNodes`);
+    this.log.debug(`Stopped dependant MatterNodes for ${this.storeId}`);
 
     await this.stopServerNode();
     this.serverNode = undefined;
@@ -470,7 +531,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     await this.stopMatterStorage();
 
-    this.log.info('Stopped MatterNode');
+    this.log.info(`Stopped MatterNode for ${this.storeId}`);
     await this.yieldToNode();
   }
 
@@ -609,23 +670,36 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     const storageManager = await this.matterStorageService.open(storeId);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');
-    await storageContext.set('storeId', storeId);
-    await storageContext.set('deviceName', deviceName);
-    await storageContext.set('deviceType', deviceType);
-    await storageContext.set('vendorId', vendorId);
-    await storageContext.set('vendorName', vendorName.slice(0, 32));
-    await storageContext.set('productId', productId);
-    await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
-    await storageContext.set('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
-    await storageContext.set('nodeLabel', deviceName.slice(0, 32));
-    await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
-    await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
-    await storageContext.set('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
-    await storageContext.set('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
-    await storageContext.set('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
-    await storageContext.set('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
-    await storageContext.set('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
+    /**
+     * Writes a primitive initialization value only when missing or different.
+     *
+     * @param {string} key The storage key.
+     * @param {string | number} value The desired value.
+     * @returns {Promise<void>} Resolves after any required write completes.
+     */
+    async function setIfDifferent(key: string, value: string | number): Promise<void> {
+      if (!(await storageContext.has(key)) || (await storageContext.get(key)) !== value) {
+        await storageContext.set(key, value);
+      }
+    }
+
+    await setIfDifferent('storeId', storeId);
+    await setIfDifferent('deviceName', deviceName);
+    await setIfDifferent('deviceType', deviceType);
+    await setIfDifferent('vendorId', vendorId);
+    await setIfDifferent('vendorName', vendorName.slice(0, 32));
+    await setIfDifferent('productId', productId);
+    await setIfDifferent('productName', productName.slice(0, 32));
+    await setIfDifferent('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
+    await setIfDifferent('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
+    await setIfDifferent('nodeLabel', deviceName.slice(0, 32));
+    await setIfDifferent('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
+    await setIfDifferent('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
+    await setIfDifferent('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
+    await setIfDifferent('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
+    await setIfDifferent('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
+    await setIfDifferent('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
+    await setIfDifferent('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
 
     this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -795,15 +869,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      */
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
-      this.advertisingNodes.delete(storeId);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      deleteAdvertisingNode(storeId);
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
-      this.advertisingNodes.delete(storeId);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      deleteAdvertisingNode(storeId);
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is offline`, timeout: 5, severity: 'warning' } });
     });
 
@@ -819,15 +893,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       }
       if (!serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission ...`);
-        this.advertisingNodes.set(storeId, Date.now());
+        setAdvertisingNode(storeId, Date.now());
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
         this.log.notice(`Manual pairing code: ${manualPairingCode}`);
       } else {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
-        this.advertisingNodes.delete(storeId);
+        deleteAdvertisingNode(storeId);
       }
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is online`, timeout: 5, severity: 'success' } });
       this.emit('online', storeId);
     });
@@ -835,8 +909,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
-      this.advertisingNodes.delete(storeId);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      deleteAdvertisingNode(storeId);
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is offline`, timeout: 5, severity: 'warning' } });
       this.emit('offline', storeId);
     });
@@ -850,7 +924,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       // oxlint-disable-next-line default-case
       switch (fabricAction) {
         case 'added':
-          this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
+          deleteAdvertisingNode(storeId); // The advertising stops when a fabric is added
           action = 'added';
           break;
         case 'deleted':
@@ -861,7 +935,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           break;
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
     /**
@@ -870,7 +944,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      */
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
     /**
@@ -878,42 +952,18 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      */
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...this.getServerNodeData(serverNode) } } });
+      this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
     this.storeId = storeId;
     this.log.info(`Created server node for ${this.storeId}`);
     return serverNode;
-  }
-
-  /**
-   * Gets the matter serializable data of the specified server node.
-   *
-   * @param {ServerNode} [serverNode] - The server node to start.
-   * @returns {ApiMatter} The serializable data of the server node.
-   */
-  getServerNodeData(serverNode: ServerNode): ApiMatter {
-    // oxlint-disable-next-line typescript/prefer-nullish-coalescing
-    const advertiseTime = this.advertisingNodes.get(serverNode.id) || 0;
-    return {
-      id: serverNode.id,
-      online: serverNode.lifecycle.isOnline,
-      commissioned: serverNode.state.commissioning.commissioned,
-      advertising: advertiseTime > Date.now() - 15 * 60 * 1000,
-      advertiseTime,
-      windowStatus: serverNode.state.administratorCommissioning.windowStatus,
-      qrPairingCode: serverNode.state.commissioning.pairingCodes.qrPairingCode,
-      manualPairingCode: serverNode.state.commissioning.pairingCodes.manualPairingCode,
-      fabricInformations: this.sanitizeFabricInformations(Object.values(serverNode.state.commissioning.fabrics)),
-      sessionInformations: this.sanitizeSessionInformation(Object.values(serverNode.state.sessions.sessions)),
-      serialNumber: serverNode.state.basicInformation.serialNumber,
-    };
   }
 
   /**
@@ -956,6 +1006,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       /* v8 ignore next */
       this.log.error(`Failed to close ${this.serverNode.id} server node: ${getErrorMessage(error)}`);
     }
+    deleteAdvertisingNode(this.serverNode.id);
   }
 
   /**
@@ -999,11 +1050,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       'https://matterbridge.io',
       1,
     );
-    this.serverNode = await this.createServerNode(
-      this.port ? this.port++ : undefined,
-      this.passcode ? this.passcode++ : undefined,
-      this.discriminator ? this.discriminator++ : undefined,
-    );
+    this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
     this.aggregatorNode = await this.createAggregatorNode();
     this.log.debug(`Adding ${plg}Matterbridge${db} aggregator node...`);
     await this.serverNode.add(this.aggregatorNode);
@@ -1048,11 +1095,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.productUrl,
         device.configurationVersion,
       );
-      this.serverNode = await this.createServerNode(
-        this.port ? this.port++ : undefined,
-        this.passcode ? this.passcode++ : undefined,
-        this.discriminator ? this.discriminator++ : undefined,
-      );
+      this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node...`);
       await this.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to ${plg}${plugin.name}${db} server node`);
@@ -1096,11 +1139,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         plugin.homepage ?? 'https://matterbridge.io',
         plugin.configurationVersion,
       );
-      this.serverNode = await this.createServerNode(
-        this.port ? this.port++ : undefined,
-        this.passcode ? this.passcode++ : undefined,
-        this.discriminator ? this.discriminator++ : undefined,
-      );
+      this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
       this.aggregatorNode = await this.createAggregatorNode();
       this.log.debug(`Adding dynamic plugin ${plg}${plugin.name}${db} aggregator node...`);
@@ -1146,11 +1185,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.productUrl,
         device.configurationVersion,
       );
-      this.serverNode = await this.createServerNode(
-        this.port ? this.port++ : undefined,
-        this.passcode ? this.passcode++ : undefined,
-        this.discriminator ? this.discriminator++ : undefined,
-      );
+      this.serverNode = await this.createServerNode(this.port, this.passcode, this.discriminator);
       this.log.debug(`Adding ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node...`);
       await this.serverNode.add(device);
       this.log.debug(`Added ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} to server node`);
@@ -1177,9 +1212,6 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         this.log.debug(`Creating MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})...`);
         // Create the MatterNode to manage the device
         const matterNode = new MatterNode(this.matterbridge, pluginName, device);
-        matterNode.port = this.port ? this.port++ : undefined;
-        matterNode.passcode = this.passcode ? this.passcode++ : undefined;
-        matterNode.discriminator = this.discriminator ? this.discriminator++ : undefined;
         this.dependantMatterNodes.set(device.id, matterNode);
         await matterNode.create();
         this.log.debug(`Created MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})`);
@@ -1267,8 +1299,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     const plugin = this.pluginManager.get(pluginName);
     if (!plugin) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`);
 
-    if (device.serverNode) {
-      // TODO: Close and remove the MatterNode managing the device
+    if (device.mode === 'server') {
+      // Close and remove the MatterNode managing the device. The MdnsService is shared through Environment.default, so it stays open.
+      const matterNode = this.dependantMatterNodes.get(device.id);
+      if (matterNode) {
+        this.log.debug(`Closing MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})...`);
+        await matterNode.stop();
+        await matterNode.destroy(false);
+        this.dependantMatterNodes.delete(device.id);
+        this.log.debug(`Closed MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})`);
+      }
     } else if (this.matterbridge.bridgeMode === 'bridge') {
       if (!this.aggregatorNode)
         throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): aggregator node not found`);
@@ -1511,60 +1551,6 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   }
 
   /**
-   * Sanitizes the fabric information by converting bigint properties to strings because `res.json` doesn't support bigint.
-   *
-   * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
-   * @returns {SanitizedExposedFabricInformation[]} An array of sanitized exposed fabric information objects.
-   */
-  sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
-    return fabricInfo.map((info) => {
-      return {
-        fabricIndex: info.fabricIndex,
-        fabricId: info.fabricId.toString(),
-        nodeId: info.nodeId.toString(),
-        rootNodeId: info.rootNodeId.toString(),
-        rootVendorId: info.rootVendorId,
-        rootVendorName: this.getVendorIdName(info.rootVendorId),
-        label: info.label,
-      };
-    });
-  }
-
-  /**
-   * Sanitizes the session information by converting bigint properties to strings because `res.json` doesn't support bigint.
-   *
-   * @param {SessionsBehavior.Session[]} sessions - The array of session information objects.
-   * @returns {SanitizedSession[]} An array of sanitized session information objects.
-   */
-  sanitizeSessionInformation(sessions: SessionsBehavior.Session[]): SanitizedSession[] {
-    return sessions
-      .filter((session) => session.isPeerActive)
-      .map((session) => {
-        return {
-          name: session.name,
-          nodeId: session.nodeId.toString(),
-          peerNodeId: session.peerNodeId.toString(),
-          fabric: session.fabric
-            ? {
-                fabricIndex: session.fabric.fabricIndex,
-                fabricId: session.fabric.fabricId.toString(),
-                nodeId: session.fabric.nodeId.toString(),
-                rootNodeId: session.fabric.rootNodeId.toString(),
-                rootVendorId: session.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-                label: session.fabric.label,
-              }
-            : undefined,
-          isPeerActive: session.isPeerActive,
-          lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
-          lastActiveTimestamp: session.lastActiveTimestamp?.toString(),
-          numberOfActiveSubscriptions: session.numberOfActiveSubscriptions,
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        } as SanitizedSession;
-      });
-  }
-
-  /**
    * Sets the reachability of the specified server node and trigger the corresponding event.
    *
    * @param {boolean} reachable - A boolean indicating the reachability status to set.
@@ -1589,50 +1575,38 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
   }
 
-  getVendorIdName = (vendorId: number | undefined): string => {
-    if (!vendorId) return '';
-    let vendorName = '(Unknown vendorId)';
-    // oxlint-disable-next-line default-case
-    switch (vendorId) {
-      case 4937:
-        vendorName = '(AppleHome)';
-        break;
-      case 4996:
-        vendorName = '(AppleKeyChain)';
-        break;
-      case 4362:
-        vendorName = '(SmartThings)';
-        break;
-      case 4939:
-        vendorName = '(HomeAssistant)';
-        break;
-      case 24582:
-        vendorName = '(GoogleHome)';
-        break;
-      case 4631:
-        vendorName = '(Alexa)';
-        break;
-      case 4701:
-        vendorName = '(Tuya)';
-        break;
-      case 4718:
-        vendorName = '(Xiaomi)';
-        break;
-      case 4742:
-        vendorName = '(eWeLink)';
-        break;
-      case 5264:
-        vendorName = '(Shelly)';
-        break;
-      case 0x1488:
-        vendorName = '(ShortcutLabsFlic)';
-        break;
-      case 65521: // 0xFFF1
-        vendorName = '(MatterTest)';
-        break;
-    }
-    return vendorName;
-  };
+  /**
+   * Sends a plugin status update to the global plugin manager and to the frontend.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {PluginStatusUpdate} status - The status properties to update.
+   * @returns {void}
+   */
+  pluginStatusUpdate(pluginName: string, status: PluginStatusUpdate): void {
+    // Update the global plugin manager the frontend api plugins come from
+    this.server.request({ type: 'plugins_set', src: 'matter', dst: 'plugins', params: { plugin: { name: pluginName, ...status } } });
+    this.server.request({
+      type: 'frontend_broadcast_message',
+      src: 'matter',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'plugin_status_update', success: true, response: { plugin: pluginName, status } } },
+    });
+  }
+
+  /**
+   * Sends a matterbridge status update to the frontend.
+   *
+   * @param {BridgeStatus} status - The new matterbridge status.
+   * @returns {void}
+   */
+  matterbridgeStatusUpdate(status: BridgeStatus): void {
+    this.server.request({
+      type: 'frontend_broadcast_message',
+      src: 'matter',
+      dst: 'frontend',
+      params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status } } },
+    });
+  }
 
   /**
    * Yield to the Node.js event loop:
@@ -1643,10 +1617,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * This does **not** guarantee that every promise in the process is settled,
    * but it gives all already-scheduled work a very good chance to run before continuing.
    *
-   * @param {number} [timeout] - Optional timeout in milliseconds to wait after yielding. Default is 100 ms (minimum 10 ms).
+   * @param {number} [timeout] - Optional timeout in milliseconds to wait after yielding. Default is 10 ms (minimum 10 ms).
    * @returns {Promise<void>}
    */
-  async yieldToNode(timeout: number = 100): Promise<void> {
+  async yieldToNode(timeout: number = 10): Promise<void> {
     // 1. Let all currently queued microtasks run
     await Promise.resolve();
 

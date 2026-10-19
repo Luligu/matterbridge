@@ -3,7 +3,7 @@
  * @description This file contains the types for Matterbridge.
  * @author Luca Liguori
  * @created 2024-07-12
- * @version 1.0.4
+ * @version 1.0.5
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -21,9 +21,10 @@
  * limitations under the License.
  */
 
-// @matter
-import type { EndpointNumber, FabricIndex, Semtag, VendorId } from '@matter/types';
 import type { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
+// @matter
+import type { FabricIndex, VendorId } from '@matter/types/datatype';
+import type { Semtag } from '@matter/types/globals';
 // AnsiLogger
 import type { LogLevel } from 'node-ansi-logger';
 
@@ -68,28 +69,32 @@ export type BridgeStatus = 'inactive' | 'starting' | 'started' | 'stopping' | 's
  * A type representing a read-only subset of the Matterbridge properties.
  */
 export type SharedMatterbridge = Readonly<{
-  systemInformation: {
-    interfaceName: string;
-    macAddress: string;
-    ipv4Address: string;
-    ipv6Address: string;
-    nodeVersion: string;
-    hostname: string;
-    user: string;
-    osType: string;
-    osRelease: string;
-    osPlatform: string;
-    osArch: string;
-    totalMemory: string;
-    freeMemory: string;
-    systemUptime: string;
-    processUptime: string;
-    cpuUsage: string;
-    processCpuUsage: string;
-    rss: string;
-    heapTotal: string;
-    heapUsed: string;
-  };
+  systemInformation: Readonly<
+    Pick<
+      SystemInformation,
+      | 'interfaceName'
+      | 'macAddress'
+      | 'ipv4Address'
+      | 'ipv6Address'
+      | 'nodeVersion'
+      | 'hostname'
+      | 'user'
+      | 'osType'
+      | 'osRelease'
+      | 'osPlatform'
+      | 'osArch'
+      | 'totalMemory'
+      | 'freeMemory'
+      | 'constrainedMemory'
+      | 'systemUptime'
+      | 'processUptime'
+      | 'cpuUsage'
+      | 'processCpuUsage'
+      | 'rss'
+      | 'heapTotal'
+      | 'heapUsed'
+    >
+  >;
   uuid: string;
   rootDirectory: string;
   homeDirectory: string;
@@ -138,6 +143,11 @@ export interface ApiPlugin extends StoragePlugin {
   changelog?: string;
   funding?: string;
   frontendPath?: string;
+  /**
+   * Signal that the dedicated Matter server node of the plugin has been created (childbridge mode only).
+   * It is set when the server node of an AccessoryPlatform (with its single device) or of a DynamicPlatform (with its aggregator) is created,
+   * and guards against creating it twice. It is reset when the plugin is loaded at startup and when the plugin is shut down.
+   */
   locked?: boolean;
   error?: boolean;
   loaded?: boolean;
@@ -199,6 +209,7 @@ export interface SystemInformation {
   // Cpu and memory properties
   totalMemory: string;
   freeMemory: string;
+  constrainedMemory: string;
   systemUptime: string;
   processUptime: string;
   cpuUsage: string;
@@ -230,9 +241,6 @@ export interface MatterbridgeInformation {
   bridgeStatus: BridgeStatus;
   profile: string | undefined;
   readOnly: boolean;
-  shellyBoard: boolean;
-  shellySysUpdate: boolean;
-  shellyMainUpdate: boolean;
   loggerLevel: LogLevel;
   fileLogger: boolean;
   matterLoggerLevel: LogLevel;
@@ -281,27 +289,49 @@ export interface SanitizedSession {
 
 /** Define an interface for API device information */
 export interface ApiDevice {
-  pluginName: string;
+  // MatterbridgeEndpoint device information
+
+  /** The plugin name to be in sync with BaseDevice, ApiSelectDevice and ApiSelectEntity */
+  plugin: string;
+  /** The device type name and code, e.g. 'OnOffLight (0x0100)' */
   type: string;
-  endpoint: EndpointNumber | undefined;
-  name: string;
-  serial: string;
-  productUrl: string;
-  configUrl?: string;
+  /** The endpoint number */
+  number: number | undefined;
+  /** The endpoint id */
+  id: string | undefined;
+  /** The device name */
+  deviceName: string;
+  /** The device serial number */
+  serialNumber: string;
+  /** The device unique id */
   uniqueId: string;
+  /** The product url */
+  productUrl: string;
+  /** The device configuration url */
+  configUrl?: string;
+
+  // Lifecycle and state information of the MatterbridgeEndpoint device, from the helpers in packages/core/src/matterNodeHelpers.ts
+
+  /** MatterbridgeEndpoint state: the device reachability */
   reachable: boolean;
+  /** MatterbridgeEndpoint state: the device power source */
   powerSource?: 'ac' | 'dc' | 'ok' | 'warning' | 'critical';
+  /** MatterbridgeEndpoint state: the device battery level in percent 0-100 (the PowerSource batPercentRemaining 0-200 divided by 2, so it can be x.5) */
   batteryLevel?: number;
+  /** MatterbridgeEndpoint state: the attributes description of the cluster servers in the device */
   cluster: string;
+  /** Root node information for the devices in server mode */
   matter?: ApiMatter;
 }
 
 /** Define an interface for base device information */
 export interface BaseDevice {
   // MatterbridgeEndpoint properties
+
   mode: 'server' | 'matter' | undefined;
   plugin: string | undefined;
   configUrl: string | undefined;
+
   deviceName: string | undefined;
   serialNumber: string | undefined;
   uniqueId: string | undefined;
@@ -317,15 +347,22 @@ export interface BaseDevice {
   hardwareVersion: number | undefined;
   hardwareVersionString: string | undefined;
   tagList: Semtag[] | undefined;
+  /** The id passed in the MatterbridgeEndpoint constructor options, as is: the endpoint id is the same without spaces and dots (matter.js doesn't allow them), e.g. 'Light 1.0' gives id 'Light10' */
   originalId: string | undefined;
+  /** The name of the first device type of the MatterbridgeEndpoint, e.g. 'OnOffLight' */
   name: string | undefined;
+  /** The code of the first device type of the MatterbridgeEndpoint, e.g. 0x0100 */
   deviceType: number | undefined;
+  /** The codes of all the device types of the MatterbridgeEndpoint (the keys of its deviceTypes map), the first one is deviceType */
+  deviceTypes: number[] | undefined;
+
   // Endpoint properties
-  number: EndpointNumber | undefined;
+
+  number: number | undefined;
   id: string | undefined;
 }
 
-/** Define an interface for API matter information */
+/** Define an interface for root node information */
 export interface ApiMatter {
   id: string;
   online: boolean;
@@ -342,14 +379,21 @@ export interface ApiMatter {
 
 /** Define an interface for API clusters information */
 export interface ApiClusters {
+  /** The plugin name */
   plugin: string;
+  /** The device name */
   deviceName: string;
+  /** The device serial number */
   serialNumber: string;
+  /** The device unique id */
+  uniqueId: string;
   /** Endpoint number */
-  number: EndpointNumber;
+  number: number;
   /** Endpoint id */
   id: string;
+  /** The device type codes of the device root endpoint */
   deviceTypes: number[];
+  /** The cluster attributes of the device root endpoint and its child endpoints */
   clusters: Cluster[];
 }
 
@@ -358,7 +402,7 @@ export interface Cluster {
   /** Endpoint number > string */
   endpoint: string;
   /** Endpoint number */
-  number: EndpointNumber;
+  number: number;
   /** Endpoint id or main for the device root endpoint */
   id: string;
   deviceTypes: number[];

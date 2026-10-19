@@ -28,7 +28,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 // @matterbridge
-import { BroadcastServer } from '@matterbridge/thread';
+import { BroadcastServer } from '@matterbridge/thread/server';
 import {
   MATTER_LOGGER_FILE,
   MATTER_STORAGE_DIR,
@@ -44,10 +44,11 @@ import {
   type WorkerMessage,
 } from '@matterbridge/types';
 import { isBun } from '@matterbridge/utils/bun';
-import { hasParameter } from '@matterbridge/utils/cli';
+import { hasAnyParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 import { formatBytes } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
+import { fireAndForget } from '@matterbridge/utils/wait';
 // Express
 import escapeHtml from 'escape-html';
 import express from 'express';
@@ -63,6 +64,20 @@ import type { Backend } from './backend.js';
 logModuleLoaded('BackendExpress');
 
 /**
+ * Sends the 500 response of a failed res.download(), unless the client aborted the request (ECONNABORTED).
+ * The client is gone in that case, and answering breaks on Bun 1.4.3, where ending the orphaned response
+ * sets res._header but leaves res.headersSent false, so send throws ERR_HTTP_HEADERS_SENT (https://github.com/oven-sh/bun/issues/44925).
+ *
+ * @param {express.Response} res - The response of the download.
+ * @param {Error} error - The error passed to the res.download() callback.
+ * @param {string} message - The message to send with the 500 status.
+ */
+function sendDownloadError(res: express.Response, error: Error, message: string): void {
+  if ((error as NodeJS.ErrnoException).code === 'ECONNABORTED' || res.headersSent) return;
+  res.status(500).send(message);
+}
+
+/**
  * Class representing an Express application for frontend connections.
  *
  * This class manages the Express application that allows communication between the backend and the frontend.
@@ -70,6 +85,7 @@ logModuleLoaded('BackendExpress');
 export class BackendExpress {
   private debug: boolean;
   private verbose: boolean;
+  private diagnostic: boolean;
   private log: AnsiLogger;
   private backend: Backend;
   private matterbridge: SharedMatterbridge;
@@ -89,12 +105,11 @@ export class BackendExpress {
    * @param {Backend} backend - The backend instance to which this Express server will be connected.
    */
   constructor(matterbridge: SharedMatterbridge, backend: Backend) {
-    /* v8 ignore next 2 lines - debug/verbose flags are only used for development and testing, not in production */
-    this.debug = hasParameter('debug') || hasParameter('verbose') || hasParameter('debug-frontend') || hasParameter('verbose-frontend');
-    this.verbose = hasParameter('verbose') || hasParameter('verbose-frontend');
+    this.debug = hasAnyParameter('debug', 'verbose', 'debug-backend', 'verbose-backend');
+    this.verbose = hasAnyParameter('verbose', 'verbose-backend');
+    this.diagnostic = hasAnyParameter('diagnostic', 'diagnostic-backend');
     this.backend = backend;
     this.matterbridge = matterbridge;
-    /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
     this.log = new AnsiLogger({
       logName: 'BackendExpress',
       logNameColor: '\x1b[38;5;97m',
@@ -102,8 +117,7 @@ export class BackendExpress {
       logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO,
     });
     this.server = new BroadcastServer('frontend', this.log);
-    // oxlint-disable-next-line typescript/no-misused-promises
-    this.server.on('broadcast_message', this.broadcastMsgHandler.bind(this));
+    this.server.on('broadcast_message', (msg) => fireAndForget(this.broadcastMsgHandler(msg), this.log, 'Broadcast message handler'));
   }
 
   /**
@@ -120,7 +134,6 @@ export class BackendExpress {
    */
   // oxlint-disable-next-line typescript/require-await
   private async broadcastMsgHandler(msg: WorkerMessage): Promise<void> {
-    /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
       switch (msg.type) {
         case 'get_log_level':
@@ -130,8 +143,7 @@ export class BackendExpress {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
-        default:
-        //
+        // no default
       }
     }
   }
@@ -170,7 +182,6 @@ export class BackendExpress {
     this.expressApp = express();
 
     // Log all requests to the server for debugging
-    /* v8 ignore next */
     if (this.verbose) {
       this.expressApp.use((req, res, next) => {
         this.log.debug(`Received request on expressApp: ${req.method} ${req.url}`);
@@ -186,10 +197,14 @@ export class BackendExpress {
     this.expressApp.post('/api/login', express.json(), (req, res) => {
       const { password } = req.body;
       this.log.debug(`The frontend sent /api/login with password ${password ? '[redacted]' : '(empty)'}`);
+      if (this.backend.storedPassword === undefined) {
+        this.log.error('/api/login stored password not loaded');
+        res.status(500).json({ valid: false });
+        return;
+      }
       if (this.backend.storedPassword === '' || password === this.backend.storedPassword) {
         this.log.debug('/api/login password valid');
         res.json({ valid: true });
-        /* v8 ignore next */
         if (req.ip) this.backend.authClients.add(req.ip);
       } else {
         this.log.warn('/api/login error wrong password');
@@ -312,7 +327,7 @@ export class BackendExpress {
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the matterbridge log file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge log file');
         } else {
           this.log.debug(`Matterbridge log file ${MATTERBRIDGE_LOGGER_FILE} downloaded successfully`);
         }
@@ -351,7 +366,7 @@ export class BackendExpress {
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         if (error) {
           this.log.error(`Error downloading log file ${MATTER_LOGGER_FILE}: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the matter log file');
+          sendDownloadError(res, error, 'Error downloading the matter log file');
         } else {
           this.log.debug(`Matter log file ${MATTER_LOGGER_FILE} downloaded successfully`);
         }
@@ -385,14 +400,13 @@ export class BackendExpress {
         const data = await fs.promises.readFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), 'utf8');
         await fs.promises.writeFile(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), data, 'utf-8');
       } catch (error) {
-        /* v8 ignore next */
         this.log.debug(`Error in /api/download-diagnostic: ${getErrorMessage(error)}`);
       }
       res.type('text/plain; charset=utf-8');
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the diagnostic log file');
+          sendDownloadError(res, error, 'Error downloading the diagnostic log file');
         } else {
           this.log.debug(`Diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE} downloaded successfully`);
         }
@@ -427,7 +441,7 @@ export class BackendExpress {
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
             this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
-            res.status(500).send('Error downloading history file');
+            sendDownloadError(res, error, 'Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
@@ -446,7 +460,7 @@ export class BackendExpress {
         this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_BACKUP_FILE}: ${getErrorMessage(error)}`);
-          res.status(500).send(`Error downloading the matterbridge backup file.`);
+          sendDownloadError(res, error, `Error downloading the matterbridge backup file.`);
         } else {
           this.log.debug(`Backup ${MATTERBRIDGE_BACKUP_FILE} downloaded successfully`);
         }
@@ -461,7 +475,7 @@ export class BackendExpress {
         this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
         if (error) {
           this.log.error(`Error downloading file matterbridge.${NODE_STORAGE_DIR}.zip: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the matterbridge storage file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge storage file');
         } else {
           this.log.debug(`Matterbridge storage matterbridge.${NODE_STORAGE_DIR}.zip downloaded successfully`);
         }
@@ -476,7 +490,7 @@ export class BackendExpress {
         this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating matter storage backup...');
         if (error) {
           this.log.error(`Error downloading the matter storage matterbridge.${MATTER_STORAGE_DIR}.zip: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the matter storage file');
+          sendDownloadError(res, error, 'Error downloading the matter storage file');
         } else {
           this.log.debug(`Matter storage matterbridge.${MATTER_STORAGE_DIR}.zip downloaded successfully`);
         }
@@ -491,7 +505,7 @@ export class BackendExpress {
         this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating plugin backup...');
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_PLUGIN_STORAGE_FILE}: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the matterbridge plugin storage file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge plugin storage file');
         } else {
           this.log.debug(`Plugin storage ${MATTERBRIDGE_PLUGIN_STORAGE_FILE} downloaded successfully`);
         }
@@ -506,7 +520,7 @@ export class BackendExpress {
         this.backend.backendWsServer?.wssSendCloseSnackbarMessage('Creating config backup...');
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_PLUGIN_CONFIG_FILE}: ${getErrorMessage(error)}`);
-          res.status(500).send('Error downloading the matterbridge plugin config file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge plugin config file');
         } else {
           this.log.debug(`Plugin config ${MATTERBRIDGE_PLUGIN_CONFIG_FILE} downloaded successfully`);
         }

@@ -1,3 +1,5 @@
+// oxlint-disable unicorn/no-negated-condition
+
 // @mui/material
 import Tooltip from '@mui/material/Tooltip';
 

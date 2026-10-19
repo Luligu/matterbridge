@@ -1,6 +1,6 @@
 ---
 name: verify-version-alignment
-description: Verify that package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version rules. v.1.0.0
+description: Verify that package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version rules. v.1.0.1
 ---
 
 # Verify that package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version rules
@@ -23,7 +23,7 @@ Checks:
 - Verify [.dockerbuild.json](../../../.dockerbuild.json) has a `version` field equal to the root package version.
 - Verify [packages/jest-utils/src/jestMatterTest.ts](../../../packages/jest-utils/src/jestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion` and `getPlatformMatterbridge().matterbridgeDevVersion` to the root package version, and sets `getPlatformMatterbridge().frontendVersion` to the [apps/frontend/package.json](../../../apps/frontend/package.json) version.
 - Verify [packages/vitest-utils/src/vitestMatterTest.ts](../../../packages/vitest-utils/src/vitestMatterTest.ts) sets `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion` and `getPlatformMatterbridge().matterbridgeDevVersion` to the root package version, and sets `getPlatformMatterbridge().frontendVersion` to the [apps/frontend/package.json](../../../apps/frontend/package.json) version.
-- Verify [packages/test-utils/src/jest/matterTest.ts](../../../packages/test-utils/src/jest/matterTest.ts), [packages/test-utils/src/vitest/matterTest.ts](../../../packages/test-utils/src/vitest/matterTest.ts), and [packages/test-utils/src/buntest/matterTest.ts](../../../packages/test-utils/src/buntest/matterTest.ts) set `getPlatformMatterbridge().matterbridgeVersion`, `getPlatformMatterbridge().matterbridgeLatestVersion` and `getPlatformMatterbridge().matterbridgeDevVersion` to the root package version, and set `getPlatformMatterbridge().frontendVersion` to the [apps/frontend/package.json](../../../apps/frontend/package.json) version.
+- Verify [packages/test-utils/src/jest/matterTest.ts](../../../packages/test-utils/src/jest/matterTest.ts), [packages/test-utils/src/vitest/matterTest.ts](../../../packages/test-utils/src/vitest/matterTest.ts), and [packages/test-utils/src/buntest/matterTest.ts](../../../packages/test-utils/src/buntest/matterTest.ts) set, in both `getPlatformMatterbridge()` and `getSharedMatterbridge()`, `matterbridgeVersion`, `matterbridgeLatestVersion` and `matterbridgeDevVersion` to the root package version, and `frontendVersion` to the [apps/frontend/package.json](../../../apps/frontend/package.json) version.
 - Verify [docs/main_update.json](../../../docs/main_update.json) and [docs/dev_update.json](../../../docs/dev_update.json) have `latest` equal to the root package version.
 - Verify [docs/main_update.json](../../../docs/main_update.json) and [docs/dev_update.json](../../../docs/dev_update.json) have a `dev` value whose version prefix matches the root package version, preserving the existing `-dev-...` suffix format.
 - Verify the `engines.node` field in every real workspace package under [packages](../../../packages) is identical to the `engines.node` field in the root [package.json](../../../package.json).
@@ -41,6 +41,7 @@ If explicitly asked to fix the alignment:
 - Advance `latestDate` and `devDate` by 1 week from their current values, preserving the `YYYY-MM-DD` format.
 - Update `docker:run:hub:s6-rc:tag` in [package.json](../../../package.json) to use the expected release tag.
 - Update `docker:run:hub:s6-rc-legacy:tag` in [package.json](../../../package.json) to use the expected release tag with the `-legacy` suffix.
+- Update `matterbridgeVersion`, `matterbridgeLatestVersion`, `matterbridgeDevVersion` and `frontendVersion` in both `getPlatformMatterbridge()` and `getSharedMatterbridge()` of the test utility helpers.
 
 Output requirements:
 

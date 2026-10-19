@@ -1,3 +1,5 @@
+// oxlint-disable unicorn/no-negated-condition
+
 // React
 import { memo, useContext, useState } from 'react';
 
@@ -44,9 +46,6 @@ const excludeKeys = new Set([
   'matterIpv4Address',
   'matterIpv6Address',
   'readOnly',
-  'shellyBoard',
-  'shellySysUpdate',
-  'shellyMainUpdate',
   'matterPort',
   'matterDiscriminator',
   'matterPasscode',

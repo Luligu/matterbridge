@@ -9,7 +9,6 @@ const MATTER_PORT = 12100;
 const MATTER_CREATE_ONLY = true;
 
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
-import { setupTest } from '@matterbridge/vitest-utils';
 import {
   addDevice,
   aggregator,
@@ -19,7 +18,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { occupancySensor } from '../../src/matterbridgeDeviceTypes.js';
@@ -49,8 +49,6 @@ describe('HoldTime / PIROccupiedToUnoccupiedDelay backward-compatible sync', () 
     // Clear all mocks
     vi.clearAllMocks();
   });
-
-  afterEach(() => {});
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode

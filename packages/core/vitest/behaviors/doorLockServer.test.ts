@@ -10,10 +10,8 @@ const NAME = 'DoorLockServer';
 const MATTER_PORT = 11600;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { DoorLock } from '@matter/types/clusters/door-lock';
-import { wait } from '@matterbridge/utils/wait';
-import { setupTest } from '@matterbridge/vitest-utils';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,
@@ -23,7 +21,8 @@ import {
   flushServerNode,
   startServerNode,
   stopServerNode,
-} from '@matterbridge/vitest-utils/matter';
+} from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeDoorLockServer } from '../../src/behaviors/doorLockServer.js';
@@ -67,7 +66,10 @@ describe('Client clusters and behaviors', () => {
     vi.clearAllMocks();
   });
 
-  afterEach(() => {});
+  afterEach(() => {
+    // Restore the real timers if a timed test failed before restoring them
+    vi.useRealTimers();
+  });
 
   afterAll(async () => {
     // Stop or flush the server node depending on the create-only mode
@@ -121,36 +123,45 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('Auto relock', async () => {
+    // The relock runs on a matter.js timer backed by setTimeout: fake it and advance the clock instead of waiting.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await lock.setAttribute(DoorLock, 'autoRelockTime', 1); // Set autoRelockTime to 1 second
     await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1000); // Wait for autoRelockTime to trigger
+    await vi.advanceTimersByTimeAsync(1000); // Advance past autoRelockTime to trigger the relock
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
     await lock.setAttribute(DoorLock, 'autoRelockTime', 0); // Set autoRelockTime to 0 (disabled)
+    vi.useRealTimers();
   });
 
   test('Unlock with timeout', async () => {
+    // The relock runs on a matter.js timer backed by setTimeout: fake it and advance the clock instead of waiting.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1000); // Wait for unlockWithTimeout to trigger
+    await vi.advanceTimersByTimeAsync(1000); // Advance past the unlockWithTimeout timeout to trigger the relock
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    vi.useRealTimers();
   });
 
   test('Unlock commands without timeout scheduling', async () => {
+    // The relock runs on a matter.js timer backed by setTimeout: fake it and advance the clock instead of waiting.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     await lock.setAttribute(DoorLock, 'autoRelockTime', 0);
 
     await lock.invokeBehaviorCommand(DoorLock, 'unlockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1100);
+    await vi.advanceTimersByTimeAsync(1100);
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
 
     await lock.invokeBehaviorCommand(DoorLock, 'unlockWithTimeout', { timeout: 1 });
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Unlocked);
-    await wait(1100);
+    await vi.advanceTimersByTimeAsync(1100);
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
 
     await lock.invokeBehaviorCommand(DoorLock, 'lockDoor', {});
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
+    vi.useRealTimers();
   });
 
   test('Create userPinDoorLock device', async () => {
@@ -536,7 +547,7 @@ describe('Client clusters and behaviors', () => {
       userName: 'Guest Updated',
       userUniqueId: 4321,
       userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      userType: DoorLock.UserType.NonAccessUser,
       credentialRule: DoorLock.CredentialRule.Single,
     });
     const modifiedUser = await userPinDoorLock.act(async (agent) => agent.get(supportedDoorLockServer()).getUser({ userIndex: 1 }));
@@ -555,7 +566,7 @@ describe('Client clusters and behaviors', () => {
       userName: 'Guest Updated',
       userUniqueId: 4321,
       userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.ScheduleRestrictedUser,
+      userType: DoorLock.UserType.NonAccessUser,
       credentialRule: DoorLock.CredentialRule.Single,
     });
     expect(lockUserChange).toHaveBeenCalledTimes(2);
@@ -582,26 +593,42 @@ describe('Client clusters and behaviors', () => {
     const updatedPin = Buffer.from('5678');
     (userPinDoorLock.events as any).doorLock.lockUserChange.on(lockUserChange);
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Add,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
-      credentialData: initialPin,
-      userIndex: 1,
-      userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.UnrestrictedUser,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Add,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+          credentialData: initialPin,
+          userIndex: 1,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.Success });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
     const createdCredential = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
     );
 
-    await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Modify,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
-      credentialData: updatedPin,
-      userIndex: 1,
-      userStatus: null,
-      userType: null,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Modify,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 },
+          credentialData: updatedPin,
+          userIndex: 1,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.Success });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
     await userPinDoorLock.invokeBehaviorCommand(DoorLock, 'clearCredential', { credential: null });
     const clearedCredential = await userPinDoorLock.act(async (agent) =>
       agent.get(supportedDoorLockServer()).getCredentialStatus({ credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 1 } }),
@@ -886,14 +913,22 @@ describe('Client clusters and behaviors', () => {
 
     const branchDoorLockServer = branchDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Add,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 },
-      credentialData: Buffer.alloc(0),
-      userIndex: null,
-      userStatus: null,
-      userType: null,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Add,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 9 },
+          credentialData: Buffer.alloc(0),
+          userIndex: null,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.InvalidCommand });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
 
     expect(
       await branchDoorLock.act(async (agent) =>
@@ -914,14 +949,22 @@ describe('Client clusters and behaviors', () => {
       credentialRule: DoorLock.CredentialRule.Single,
     });
 
-    await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
-      operationType: DoorLock.DataOperationType.Add,
-      credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
-      credentialData: Buffer.from('2468'),
-      userIndex: 3,
-      userStatus: DoorLock.UserStatus.OccupiedEnabled,
-      userType: DoorLock.UserType.UnrestrictedUser,
-    });
+    {
+      const responseSpy = vi.spyOn(MatterbridgeDoorLockServer.prototype, 'setCredential');
+      try {
+        await branchDoorLock.invokeBehaviorCommand(DoorLock, 'setCredential', {
+          operationType: DoorLock.DataOperationType.Add,
+          credential: { credentialType: DoorLock.CredentialType.Pin, credentialIndex: 2 },
+          credentialData: Buffer.from('2468'),
+          userIndex: 3,
+          userStatus: null,
+          userType: null,
+        });
+        expect(await responseSpy.mock.results.at(-1)?.value).toMatchObject({ status: Status.Success });
+      } finally {
+        responseSpy.mockRestore();
+      }
+    }
 
     expect(
       await branchDoorLock.act(async (agent) =>

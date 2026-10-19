@@ -88,7 +88,7 @@ I suggest using Docker for its simplicity.
 
 If you don't have Node.js already installed, please use this method to install it on a Debian system: https://github.com/nodesource/distributions.
 
-The supported versions of Node.js are >=20.19.0, >=22.13.0, 24 and 26. Please **install Node.js 24 LTS**. Don't use Node.js Current; always use the Node.js LTS releases.
+The minimum supported version of Node.js is 22.13.0. The supported versions are >=22.13.0 within Node.js 22, Node.js 24 and Node.js 26. Node.js 20 is no longer supported. Please **install Node.js 24 LTS**. Don't use Node.js Current; always use the Node.js LTS releases.
 
 Node.js 21, 23, 25, 27, like all odd-numbered versions, are not supported.
 
@@ -531,7 +531,7 @@ Matterbridge looks first for .p12 certificate and, if they are not found, it loo
 
 ### Change the command line
 
-Add the **--ssl** parameter to the command line.
+Add the **--ssl** (or **--tls**) parameter to the command line.
 
 If desired, you can also change the frontend port with **-frontend 443**.
 
@@ -539,12 +539,12 @@ If desired, you can also change the frontend port with **-frontend 443**.
 matterbridge --ssl --frontend 443
 ```
 
-Add the **--mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible).
+Add the **--mtls** parameter to the command line if you want Matterbridge to request the client (your browser) to authenticate itself (this is the most secure connection possible). **--mtls** also enables https and wss, so **--ssl** is not needed.
 
 The browser must provide the client certificate: on Windows you need to import it in Current User → Personal → Certificates with certmgr.msc.
 
 ```bash
-matterbridge --ssl --mtls --frontend 443
+matterbridge --mtls --frontend 443
 ```
 
 ### Restart

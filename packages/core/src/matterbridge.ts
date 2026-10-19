@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.0
+ * @version 1.8.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -49,33 +49,30 @@ import {
   UINT16_MAX,
   UINT32_MAX,
 } from '@matter/general';
-import { Endpoint, ServerNode, type SessionsBehavior } from '@matter/node';
+import { Endpoint, ServerNode } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { type DeviceCertification, type ExposedFabricInformation, PaseClient } from '@matter/protocol';
+import { type DeviceCertification, PaseClient } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
-  ApiMatter,
   ApiSettings,
   BridgeMode,
   BridgeStatus,
   MaybePromise,
   PlatformMatterbridge,
   RestartMode,
-  SanitizedExposedFabricInformation,
-  SanitizedSession,
   SharedMatterbridge,
   SystemInformation,
   VirtualMode,
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import { isBun, getGlobalBunModules } from '@matterbridge/utils/bun';
+import { constrainedMemory, isBun, getGlobalBunModules, memoryFootprint } from '@matterbridge/utils/bun';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
@@ -117,6 +114,7 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './helpers.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('Matterbridge');
@@ -172,6 +170,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Cpu and memory properties
     totalMemory: '',
     freeMemory: '',
+    constrainedMemory: '',
     systemUptime: '',
     processUptime: '',
     cpuUsage: '',
@@ -368,9 +367,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   controllerProductId = getIntParameter('productId') ?? 0x8000;
   controllerProductName = getParameter('productName') ?? 'Matterbridge Controller';
 
-  /** Advertising nodes map: time advertising started keyed by storeId */
-  advertisingNodes = new Map<string, number>();
-
   /** Broadcast server */
   private readonly server: BroadcastServer;
 
@@ -393,6 +389,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {PlatformMatterbridge} The platform matterbridge object.
    */
   getPlatformMatterbridge(): PlatformMatterbridge {
+    // Update the variable system information properties
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.systemInformation.rss = formatBytes(memoryFootprint());
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
     return {
       systemInformation: { ...this.systemInformation },
       uuid: this.uuid,
@@ -422,6 +427,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {SharedMatterbridge} The shared matterbridge object.
    */
   getSharedMatterbridge(): SharedMatterbridge {
+    // Update the variable system information properties
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.systemInformation.rss = formatBytes(memoryFootprint());
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
     return {
       systemInformation: { ...this.systemInformation },
       uuid: this.uuid,
@@ -466,6 +480,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    * @returns {ApiSettings} The API settings object.
    */
   getApiSettings(): ApiSettings {
+    // Update the variable system information properties
+    this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
+    this.systemInformation.freeMemory = formatBytes(os.freemem());
+    this.systemInformation.systemUptime = formatUptime(os.uptime());
+    this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
+    this.systemInformation.rss = formatBytes(memoryFootprint());
+    this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
+    this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
+
     return {
       systemInformation: { ...this.systemInformation },
       matterbridgeInformation: {
@@ -489,9 +513,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         bridgeStatus: this.bridgeStatus,
         profile: this.profile,
         readOnly: hasParameter('readonly'),
-        shellyBoard: false,
-        shellySysUpdate: false,
-        shellyMainUpdate: false,
         loggerLevel: this.logLevel,
         fileLogger: this.fileLogger,
         matterLoggerLevel: this.matterLogLevel,
@@ -513,8 +534,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     };
   }
 
+  /**
+   * Handles the broadcast messages sent to matterbridge.
+   * Only the request messages with destination 'all' or 'matterbridge' are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   * @returns {Promise<void>} A promise that resolves when the message has been handled.
+   */
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+    if (this.server.isWorkerRequest(msg)) {
       /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
@@ -547,11 +575,26 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.nodeContext?.set<string>('globalModulesDirectory', msg.params.prefix);
           this.server.respond({ ...msg, result: { success: true } });
           break;
+        case 'matterbridge_matterdata':
+          this.server.respond({ ...msg, result: { port: this.port, passcode: this.passcode, discriminator: this.discriminator } });
+          // Each MatterNode gets its own port, passcode and discriminator
+          if (this.port !== undefined) this.port++;
+          if (this.passcode !== undefined) this.passcode++;
+          if (this.discriminator !== undefined) this.discriminator++;
+          break;
         case 'matterbridge_platform':
           this.server.respond({ ...msg, result: { data: this.getPlatformMatterbridge(), success: true } });
           break;
         case 'matterbridge_shared':
           this.server.respond({ ...msg, result: { data: this.getSharedMatterbridge(), success: true } });
+          break;
+        case 'matterbridge_restart':
+          this.server.respond({ ...msg, result: { success: true } });
+          await this.restartProcess();
+          break;
+        case 'matterbridge_shutdown':
+          this.server.respond({ ...msg, result: { success: true } });
+          await this.shutdownProcess();
           break;
         case 'matterbridge_apisettings':
           this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
@@ -689,6 +732,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
+    this.environment.vars.set('endpoint.validation', 'warn');
 
     // Register process handlers
     this.registerProcessHandlers();
@@ -1043,6 +1087,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.nodeContext.set<string>('globalModulesDirectory', this.globalModulesDirectory);
     } else {
       this.globalModulesDirectory = await this.nodeContext.get<string>('globalModulesDirectory', '');
+      if (this.globalModulesDirectory.includes('.bun')) this.globalModulesDirectory = '';
     }
     if (this.globalModulesDirectory === '') {
       // First run of Matterbridge so the node storage is empty
@@ -1157,12 +1202,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     );
 
     // Check node version and throw error
-    const minNodeVersion = 20;
+    const minNodeVersion = 22;
+    const minNodeMinorVersion = 13;
     const nodeVersion = process.versions.node;
-    const [versionMajor] = nodeVersion.split('.').map(Number);
-    if (versionMajor < minNodeVersion) {
-      this.log.error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
-      throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
+    const [versionMajor, versionMinor] = nodeVersion.split('.').map(Number);
+    if (versionMajor < minNodeVersion || (versionMajor === minNodeVersion && versionMinor < minNodeMinorVersion)) {
+      this.log.error(`Node version ${nodeVersion} is not supported. Please upgrade to ${minNodeVersion}.${minNodeMinorVersion}.0 or above.`);
+      throw new Error(`Node version ${nodeVersion} is not supported. Please upgrade to ${minNodeVersion}.${minNodeMinorVersion}.0 or above.`);
     }
 
     // Parse command line
@@ -1278,7 +1324,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Initialize frontend
-    if (getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) await this.frontend.start(getIntParameter('frontend'));
+    if ((getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) && !hasParameter('experimental-backend'))
+      await this.frontend.start(getIntParameter('frontend'));
 
     // Start the matter storage and create the matterbridge context
     try {
@@ -1397,10 +1444,32 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await wait(delay * 1000, 'Fixed race condition delay', true);
     }
 
+    /* v8 ignore next - not released yet */
+    if (hasParameter('experimental-tracker')) {
+      this.log.notice('***Experimental tracker enabled for Threads');
+      // Each Tracker thread, started by the ThreadsManager, runs its own Tracker
+      for (let i = 0; i < 10; i++) {
+        this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'Tracker' } });
+      }
+    }
+
     // Start matterbridge in bridge mode
     if (hasParameter('bridge') || (!hasParameter('childbridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'bridge')) {
       this.bridgeMode = 'bridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
+      /* v8 ignore next - not released yet */
+      if (hasParameter('experimental-node')) {
+        // The bridge MatterNode runs in the RootNode thread, started by the ThreadsManager, with all the enabled plugins
+        this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
+        this.server.request({
+          type: 'manager_run',
+          src: 'matterbridge',
+          dst: 'manager',
+          params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge() } },
+        });
+        this.log.notice(`***Started experimental MatterNode in ${this.bridgeMode} mode`);
+        return;
+      }
       await this.startBridge();
       return;
     }
@@ -1409,6 +1478,21 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     if (hasParameter('childbridge') || (!hasParameter('bridge') && (await this.nodeContext?.get<string>('bridgeMode', '')) === 'childbridge')) {
       this.bridgeMode = 'childbridge';
       this.log.debug(`Starting matterbridge in mode ${this.bridgeMode}`);
+      /* v8 ignore next - not released yet */
+      if (hasParameter('experimental-node')) {
+        // A MatterNode thread, started by the ThreadsManager, is requested for each enabled plugin
+        this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
+        for (const plugin of this.plugins.array().filter((p) => p.enabled)) {
+          this.server.request({
+            type: 'manager_run',
+            src: 'matterbridge',
+            dst: 'manager',
+            params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge(), pluginName: plugin.name } },
+          });
+        }
+        this.log.notice(`***Started experimental MatterNode in ${this.bridgeMode} mode`);
+        return;
+      }
       await this.startChildbridge();
       return;
     }
@@ -1580,12 +1664,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
     this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(process.uptime());
     this.systemInformation.cpuUsage = formatPercent(0);
     this.systemInformation.processCpuUsage = formatPercent(0);
-    this.systemInformation.rss = formatBytes(process.memoryUsage().rss);
+    this.systemInformation.rss = formatBytes(memoryFootprint());
     this.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
     this.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
 
@@ -1604,6 +1689,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- Architecture: ${this.systemInformation.osArch}`);
     this.log.debug(`- Total Memory: ${this.systemInformation.totalMemory}`);
     this.log.debug(`- Free Memory: ${this.systemInformation.freeMemory}`);
+    this.log.debug(`- Constrained Memory: ${this.systemInformation.constrainedMemory}`);
     this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
     this.log.debug(`- Process Uptime: ${this.systemInformation.processUptime}`);
     this.log.debug(`- RSS: ${this.systemInformation.rss}`);
@@ -1877,6 +1963,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug('Matterbridge reachability timeout cleared');
       }
 
+      // Request all the threads to shut down
+      this.server.request({ type: 'manager_shutdown', src: 'matterbridge', dst: 'manager', params: {} });
+
       // Call the shutdown method of each plugin and clear the plugins reachability timeout
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
@@ -1980,6 +2069,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Stop matter storage
       await this.stopMatterStorage();
 
+      // Clear the advertising nodes
+      clearAdvertisingNodes();
+
       /**
        * Unlink a file safely, ignoring errors.
        *
@@ -2033,8 +2125,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
 
       // Stop the frontend
-      await this.frontend.stop();
-      this.frontend.destroy();
+      if (!hasParameter('experimental-backend')) {
+        await this.frontend.stop();
+        this.frontend.destroy();
+      }
 
       // Close PluginManager and DeviceManager
       this.plugins.destroy();
@@ -2173,6 +2267,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       },
     });
   }
+
   /**
    * Starts the Matterbridge in bridge mode.
    *
@@ -3100,16 +3195,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
      */
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} commissioned successfully!`);
-      this.advertisingNodes.delete(storeId);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      deleteAdvertisingNode(storeId);
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} commissioned successfully!`, 5, 'success');
     });
 
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} fully decommissioned successfully!`);
-      this.advertisingNodes.delete(storeId);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      deleteAdvertisingNode(storeId);
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
     });
@@ -3127,10 +3222,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // v8 ignore if - cause the lifecycle.online event is triggered when the device is online, but it may not be commissioned yet
       if (serverNode.lifecycle.isCommissioned) {
         this.log.notice(`Server node for ${storeId} is already commissioned.`);
-        this.advertisingNodes.delete(storeId);
+        deleteAdvertisingNode(storeId);
       } else {
         this.log.notice(`Server node for ${storeId} is not commissioned. Pair to commission.`);
-        this.advertisingNodes.set(storeId, Date.now());
+        setAdvertisingNode(storeId, Date.now());
         const { qrPairingCode, manualPairingCode } = serverNode.state.commissioning.pairingCodes;
         const pairingData = ManualPairingCodeCodec.decode(manualPairingCode);
         this.log.notice(`QR Code URL: https://project-chip.github.io/connectedhomeip/qrcode.html?data=${qrPairingCode}`);
@@ -3138,7 +3233,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           `Manual pairing code ${CYAN}${manualPairingCode}${nt} discriminator ${CYAN}${discriminator}${nt} short discriminator ${CYAN}${pairingData.shortDiscriminator}${nt} passcode ${CYAN}${passcode}${nt}`,
         );
       }
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
       this.emit('online', storeId);
     });
@@ -3146,8 +3241,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     /** This event is triggered when the device went offline. It is no longer discoverable or connectable in the network. */
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
-      this.advertisingNodes.delete(storeId);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      deleteAdvertisingNode(storeId);
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.emit('offline', storeId);
     });
@@ -3160,7 +3255,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       let action = '';
       switch (fabricAction) {
         case 'added':
-          this.advertisingNodes.delete(storeId); // The advertising stops when a fabric is added
+          deleteAdvertisingNode(storeId); // The advertising stops when a fabric is added
           action = 'added';
           break;
         case 'deleted':
@@ -3172,7 +3267,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         // no default
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
     });
 
     /**
@@ -3181,7 +3276,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
      */
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
     });
 
     /**
@@ -3189,40 +3284,17 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
      */
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
-      this.frontend.wssSendRefreshRequired('matter', { matter: { ...this.getServerNodeData(serverNode) } });
+      this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
     });
 
     this.log.info(`Created server node for ${storeId}`);
     return serverNode;
-  }
-
-  /**
-   * Gets the matter sanitized data of the specified server node.
-   *
-   * @param {ServerNode} [serverNode] - The server node to start.
-   * @returns {ApiMatter} The sanitized data of the server node.
-   */
-  getServerNodeData(serverNode: ServerNode): ApiMatter {
-    const advertiseTime = this.advertisingNodes.get(serverNode.id) ?? 0;
-    return {
-      id: serverNode.id,
-      online: serverNode.lifecycle.isOnline,
-      commissioned: serverNode.state.commissioning.commissioned,
-      advertising: advertiseTime > 0, // Date.now() - 15 * 60 * 1000,
-      advertiseTime,
-      windowStatus: serverNode.state.administratorCommissioning.windowStatus,
-      qrPairingCode: serverNode.state.commissioning.pairingCodes.qrPairingCode,
-      manualPairingCode: serverNode.state.commissioning.pairingCodes.manualPairingCode,
-      fabricInformations: this.sanitizeFabricInformations(Object.values(serverNode.state.commissioning.fabrics)),
-      sessionInformations: this.sanitizeSessionInformation(Object.values(serverNode.state.sessions.sessions)),
-      serialNumber: serverNode.state.basicInformation.serialNumber,
-    };
   }
 
   /**
@@ -3723,60 +3795,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   }
 
   /**
-   * Sanitizes the fabric information by converting bigint properties to strings because `res.json` doesn't support bigint.
-   *
-   * @param {ExposedFabricInformation[]} fabricInfo - The array of exposed fabric information objects.
-   * @returns {SanitizedExposedFabricInformation[]} An array of sanitized exposed fabric information objects.
-   */
-  private sanitizeFabricInformations(fabricInfo: ExposedFabricInformation[]): SanitizedExposedFabricInformation[] {
-    return fabricInfo.map((info) => {
-      return {
-        fabricIndex: info.fabricIndex,
-        fabricId: info.fabricId.toString(),
-        nodeId: info.nodeId.toString(),
-        rootNodeId: info.rootNodeId.toString(),
-        rootVendorId: info.rootVendorId,
-        rootVendorName: this.getVendorIdName(info.rootVendorId),
-        label: info.label,
-      };
-    });
-  }
-
-  /**
-   * Sanitizes the session information by converting bigint properties to strings because `res.json` doesn't support bigint.
-   *
-   * @param {SessionsBehavior.Session[]} sessions - The array of session information objects.
-   * @returns {SanitizedSession[]} An array of sanitized session information objects.
-   */
-  private sanitizeSessionInformation(sessions: SessionsBehavior.Session[]): SanitizedSession[] {
-    return sessions
-      .filter((session) => session.isPeerActive)
-      .map((session) => {
-        return {
-          name: session.name,
-          nodeId: session.nodeId.toString(),
-          peerNodeId: session.peerNodeId.toString(),
-          fabric: session.fabric
-            ? {
-                fabricIndex: session.fabric.fabricIndex,
-                fabricId: session.fabric.fabricId.toString(),
-                nodeId: session.fabric.nodeId.toString(),
-                rootNodeId: session.fabric.rootNodeId.toString(),
-                rootVendorId: session.fabric.rootVendorId,
-                rootVendorName: this.getVendorIdName(session.fabric.rootVendorId),
-                label: session.fabric.label,
-              }
-            : undefined,
-          isPeerActive: session.isPeerActive,
-          lastInteractionTimestamp: session.lastInteractionTimestamp?.toString(),
-          lastActiveTimestamp: session.lastActiveTimestamp?.toString(),
-          numberOfActiveSubscriptions: session.numberOfActiveSubscriptions,
-          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        } as SanitizedSession;
-      });
-  }
-
-  /**
    * Sets the reachability of the specified aggregator node bridged devices and trigger the corresponding event.
    *
    * @param {Endpoint<AggregatorEndpoint>} aggregatorNode - The aggregator node to set the reachability for.
@@ -3792,49 +3810,4 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
     */
   }
-
-  private getVendorIdName = (vendorId: number | undefined): string => {
-    if (!vendorId) return '';
-    let vendorName = '(Unknown vendorId)';
-    switch (vendorId) {
-      case 4937:
-        vendorName = '(AppleHome)';
-        break;
-      case 4996:
-        vendorName = '(AppleKeyChain)';
-        break;
-      case 4362:
-        vendorName = '(SmartThings)';
-        break;
-      case 4939:
-        vendorName = '(HomeAssistant)';
-        break;
-      case 24582:
-        vendorName = '(GoogleHome)';
-        break;
-      case 4631:
-        vendorName = '(Alexa)';
-        break;
-      case 4701:
-        vendorName = '(Tuya)';
-        break;
-      case 4718:
-        vendorName = '(Xiaomi)';
-        break;
-      case 4742:
-        vendorName = '(eWeLink)';
-        break;
-      case 5264:
-        vendorName = '(Shelly)';
-        break;
-      case 0x1488:
-        vendorName = '(ShortcutLabsFlic)';
-        break;
-      case 65521: // 0xFFF1
-        vendorName = '(MatterTest)';
-        break;
-      // no default
-    }
-    return vendorName;
-  };
 }

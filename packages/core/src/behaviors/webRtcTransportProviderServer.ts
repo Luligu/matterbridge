@@ -26,9 +26,11 @@ import type { Endpoint, ServerNode } from '@matter/main';
 import { Node } from '@matter/main';
 import { WebRtcTransportProviderServer } from '@matter/node/behaviors/web-rtc-transport-provider';
 import { WebRtcTransportRequestorClient } from '@matter/node/behaviors/web-rtc-transport-requestor';
-import { EndpointNumber, FabricIndex, NodeId, StreamUsage, Status, StatusResponseError } from '@matter/types';
 import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
+import { StatusResponseError } from '@matter/types/common';
+import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
+import { Status, StreamUsage } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeCameraAvStreamManagementServer } from './cameraAvStreamManagementServer.js';

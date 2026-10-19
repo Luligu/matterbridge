@@ -25,12 +25,12 @@ import { isArchiveWorkerData } from '@matterbridge/types';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
-import { WorkerWrapper } from './workerWrapper.js';
+import { ThreadsWrapper } from './threadsWrapper.js';
 import { createZip, readZip, unZip } from './zipjs.js';
 
 logModuleLoaded('ArchiveCommand', '\u001B[35m');
 
-export default new WorkerWrapper('ArchiveCommand', async (worker) => {
+export default new ThreadsWrapper('ArchiveCommand', async (worker) => {
   if (!isArchiveWorkerData(worker.workerData)) {
     worker.logger(LogLevel.ERROR, `ArchiveCommand invalid parameters`);
     return false;

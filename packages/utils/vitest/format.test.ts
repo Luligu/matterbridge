@@ -4,7 +4,12 @@
  * @author Luca Liguori
  */
 
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { formatBytes, formatPercent, formatTimeStamp, formatUptime } from '../src/format.js';
+
+// Setup the test environment
+await setupTest('Format', false);
 
 describe('formatTimeStamp(), formatBytes() and formatUptime()', () => {
   test('Frontend formatTimeStamp', () => {

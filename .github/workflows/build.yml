@@ -52,19 +52,13 @@ jobs:
       - name: Build matterbridge
         run: npm run build
 
-      - name: Install matterbridge globally
-        run: npm install --no-fund --no-audit --global .
+      - name: Link matterbridge globally
+        run: npm link --no-fund --no-audit
 
       - name: Test matterbridge cli
         run: |
           matterbridge --version
           matterbridge --loginterfaces
-
-      - name: Lint matterbridge
-        run: npm run lint
-
-      - name: Check matterbridge formatting
-        run: npm run format:check
 
       - name: Install frontend dependencies
         run: npm ci --no-fund --no-audit
@@ -74,13 +68,14 @@ jobs:
         run: npm run build
         working-directory: apps/frontend
 
-      - name: Lint frontend
-        run: npm run lint
-        working-directory: apps/frontend
+      - name: Typecheck matterbridge
+        run: npm run typecheck
 
-      - name: Check frontend formatting
+      - name: Lint matterbridge
+        run: npm run lint
+
+      - name: Check matterbridge formatting
         run: npm run format:check
-        working-directory: apps/frontend
 
       - name: Test matterbridge
         run: npm run test -- --testTimeout=30000
@@ -90,20 +85,16 @@ jobs:
         working-directory: apps/frontend
 
       - name: List, audit, fix outdated dependencies and build again
-        # Informational only: every command is `|| true`. `npm audit` can hang rather than fail,
-        # so the step is bounded and its outcome must never fail the job.
-        # Normal duration is 34-83s across ubuntu/macos/windows, so 3 minutes is ample.
         timeout-minutes: 3
         continue-on-error: true
         run: |
           npm outdated || true
           npm audit || true
-          npm audit fix || true
-          npm update || true
           npx --workspaces --include-workspace-root npm-check-updates -u || true
-          npm install || true
+          npm install --no-fund --no-audit || true
           npm outdated || true
           npm audit || true
-          npm run format || true
-          npm run lint:fix || true
           npm run build || true
+          npm run typecheck || true
+          npm run lint || true
+          npm run format:check || true

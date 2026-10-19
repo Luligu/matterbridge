@@ -1,3 +1,5 @@
+// oxlint-disable unicorn/no-negated-condition
+
 // @mui/icons-material
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 import Favorite from '@mui/icons-material/Favorite';

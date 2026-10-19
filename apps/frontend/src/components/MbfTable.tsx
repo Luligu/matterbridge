@@ -171,7 +171,8 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
   const handleConfigureVisibilityChange = (id: string) => {
     setColumnVisibility((prev: ColumnVisibility) => {
       const col = columns.find((c) => c.id === id);
-      if (col && col.required) return prev;
+      // v8 ignore next line -- just defensive check
+      if (col?.required) return prev;
       const currentlyVisible = visibleMap[id] !== false; // based on derived map
       const next: ColumnVisibility = { ...prev };
       if (currentlyVisible) {
@@ -369,7 +370,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
                           checked={value}
                           disabled
                           size="small"
-                          sx={{ m: 0, p: 0, color: 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }}
+                          sx={{ 'm': 0, 'p': 0, 'color': 'var(--table-text-color)', '&.Mui-disabled': { color: 'var(--table-text-color)', opacity: 0.7 } }}
                         />
                       ) : column.format && typeof value === 'number' ? (
                         column.format(value)
