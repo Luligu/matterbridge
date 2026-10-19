@@ -41,9 +41,9 @@ import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.j
 /**
  * Options for configuring a {@link Camera} instance.
  *
- * The CameraAvStreamManagement Video, Audio, Snapshot and ImageControl features and the WebRtcTransportProvider cluster
- * are implemented; only the Answer/End invocations on the WebRtcTransportRequestor client (Offer invocation only is
- * implemented), required by the Matter specification for a fully compliant Camera device type, are not part of this example.
+ * The CameraAvStreamManagement Video, Audio, Snapshot and ImageControl features, the optional mechanical PTZ
+ * CameraAvSettingsUserLevelManagement cluster and the WebRtcTransportProvider cluster are implemented, together with
+ * the WebRtcTransportRequestor client used to invoke Offer, Answer, ICECandidates and End on the peer.
  */
 export interface CameraOptions extends MatterbridgeEndpointOptions {
   /** Identify time in seconds. Default: 0 */
@@ -110,7 +110,7 @@ export class Camera extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the Camera class.
    *
-   * A Camera device provides interfaces for controlling and transporting captured media. This example only implements the
+   * A Camera device provides interfaces for controlling and transporting captured media. It implements the
    * CameraAvStreamManagement cluster with the Video, Audio, Snapshot and ImageControl features enabled, and the WebRtcTransportProvider cluster.
    *
    * @param {string} name - The name of the camera.
@@ -192,7 +192,6 @@ export class Camera extends MatterbridgeEndpoint {
     if (identifyType !== Identify.IdentifyType.None) {
       this.createDefaultIdentifyClusterServer(identifyTime, identifyType);
     }
-    this.createDefaultBasicInformationClusterServer(name, serial, 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Chime');
     switch (powerSourceType) {
       case 'Rechargeable':
         this.createDefaultPowerSourceRechargeableBatteryClusterServer();

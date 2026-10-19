@@ -31,8 +31,14 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.10.15] - Dev branch
 
+### Added
+
+- [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
+
 ### Changed
 
+- [workflows]: Pin GitHub workflow dispatch requests to REST API version `2026-03-10` to avoid API retirement warnings.
+- [utils/scripts]: Pin GitHub data-model and Bun release requests to REST API version `2026-03-10`.
 - [matterbridge]: Bump `matterbridge` version to v.3.10.15.
 - [matterbridge]: Bump `@types/bun` to v.1.4.3.
 - [matterbridge]: Bump `@types/node` to v.26.6.5.
@@ -54,6 +60,15 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
 - [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
+
+### Fixed
+
+- [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
+- [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
+- [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
+- [camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.
+- [ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.
+- [scripts]: Fix the IPv4 and IPv6 lines of `info-debian.sh` and `info-alpine.sh` outside plain Docker bridges: read `src`/`dev` from `ip route get` by keyword (Docker Desktop host networking printed `IPv4: 2`), take IPv6 from the outgoing interface instead of `eth0`, and keep only the matching family in the `hostname` fallback.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
