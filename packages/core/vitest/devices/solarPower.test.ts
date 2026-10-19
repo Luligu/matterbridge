@@ -118,23 +118,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
@@ -223,6 +206,302 @@ describe('Matterbridge ' + NAME, () => {
         'powerTopology(0x9c).clusterRevision(0xfffd)=1',
         'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
         'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+      ].toSorted(),
+    );
+  });
+
+  test('SolarPanel1 child forEachAttribute', () => {
+    const child = device.getChildEndpointById('SolarPanel1');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 65, 144, 145, 156 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 2, label: undefined }, { mfgCode: null, namespaceId: 7, tag: 1, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: false, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+        'userLabel(0x41).acceptedCommandList(0xfff9)=[  ]',
+        'userLabel(0x41).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'userLabel(0x41).clusterRevision(0xfffd)=1',
+        'userLabel(0x41).featureMap(0xfffc)={  }',
+        'userLabel(0x41).generatedCommandList(0xfff8)=[  ]',
+        "userLabel(0x41).labelList(0x0)=[ { label: 'panel', value: 'Solar Panel 1' } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('SolarPanel2 child forEachAttribute', () => {
+    const child = device.getChildEndpointById('SolarPanel2');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 65, 144, 145, 156 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 2, label: undefined }, { mfgCode: null, namespaceId: 7, tag: 2, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: false, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+        'userLabel(0x41).acceptedCommandList(0xfff9)=[  ]',
+        'userLabel(0x41).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'userLabel(0x41).clusterRevision(0xfffd)=1',
+        'userLabel(0x41).featureMap(0xfffc)={  }',
+        'userLabel(0x41).generatedCommandList(0xfff8)=[  ]',
+        "userLabel(0x41).labelList(0x0)=[ { label: 'panel', value: 'Solar Panel 2' } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('SolarPanel3 child forEachAttribute', () => {
+    const child = device.getChildEndpointById('SolarPanel3');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 65, 144, 145, 156 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 2, label: undefined }, { mfgCode: null, namespaceId: 7, tag: 3, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: false, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+        'userLabel(0x41).acceptedCommandList(0xfff9)=[  ]',
+        'userLabel(0x41).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'userLabel(0x41).clusterRevision(0xfffd)=1',
+        'userLabel(0x41).featureMap(0xfffc)={  }',
+        'userLabel(0x41).generatedCommandList(0xfff8)=[  ]',
+        "userLabel(0x41).labelList(0x0)=[ { label: 'panel', value: 'Solar Panel 3' } ]",
+      ].toSorted(),
+    );
+  });
+
+  test('SolarPanel4 child forEachAttribute', () => {
+    const child = device.getChildEndpointById('SolarPanel4');
+    expect(child).toBeDefined();
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    child?.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      // Sort arrays for consistent snapshot testing
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1296, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 65, 144, 145, 156 ]',
+        'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 2, label: undefined }, { mfgCode: null, namespaceId: 7, tag: 4, label: undefined } ]',
+        'electricalEnergyMeasurement(0x91).acceptedCommandList(0xfff9)=[  ]',
+        'electricalEnergyMeasurement(0x91).accuracy(0x0)={ measurementType: 14, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }',
+        'electricalEnergyMeasurement(0x91).attributeList(0xfffb)=[ 0, 2, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalEnergyMeasurement(0x91).clusterRevision(0xfffd)=2',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyExported(0x2)=null',
+        'electricalEnergyMeasurement(0x91).cumulativeEnergyReset(0x5)=null',
+        'electricalEnergyMeasurement(0x91).featureMap(0xfffc)={ importedEnergy: false, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false, apparentEnergy: false, reactiveEnergy: false }',
+        'electricalEnergyMeasurement(0x91).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).acceptedCommandList(0xfff9)=[  ]',
+        'electricalPowerMeasurement(0x90).accuracy(0x2)=[ { measurementType: 1, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 2, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 5, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] }, { measurementType: 11, measured: true, minMeasuredValue: -9007199254740991, maxMeasuredValue: 9007199254740991, accuracyRanges: [ { rangeMin: -9007199254740991, rangeMax: 9007199254740991, percentMax: undefined, percentMin: undefined, percentTypical: undefined, fixedMax: 1, fixedMin: undefined, fixedTypical: undefined } ] } ]',
+        'electricalPowerMeasurement(0x90).activeCurrent(0x5)=null',
+        'electricalPowerMeasurement(0x90).activePower(0x8)=null',
+        'electricalPowerMeasurement(0x90).attributeList(0xfffb)=[ 0, 1, 2, 4, 5, 8, 14, 65528, 65529, 65531, 65532, 65533 ]',
+        'electricalPowerMeasurement(0x90).clusterRevision(0xfffd)=3',
+        'electricalPowerMeasurement(0x90).featureMap(0xfffc)={ directCurrent: false, alternatingCurrent: true, polyphasePower: false, harmonics: false, powerQuality: false }',
+        'electricalPowerMeasurement(0x90).frequency(0xe)=null',
+        'electricalPowerMeasurement(0x90).generatedCommandList(0xfff8)=[  ]',
+        'electricalPowerMeasurement(0x90).numberOfMeasurementTypes(0x1)=4',
+        'electricalPowerMeasurement(0x90).powerMode(0x0)=2',
+        'electricalPowerMeasurement(0x90).voltage(0x4)=null',
+        'powerTopology(0x9c).acceptedCommandList(0xfff9)=[  ]',
+        'powerTopology(0x9c).attributeList(0xfffb)=[ 65528, 65529, 65531, 65532, 65533 ]',
+        'powerTopology(0x9c).clusterRevision(0xfffd)=1',
+        'powerTopology(0x9c).featureMap(0xfffc)={ nodeTopology: false, treeTopology: true, setTopology: false, dynamicPowerFlow: false }',
+        'powerTopology(0x9c).generatedCommandList(0xfff8)=[  ]',
+        'userLabel(0x41).acceptedCommandList(0xfff9)=[  ]',
+        'userLabel(0x41).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'userLabel(0x41).clusterRevision(0xfffd)=1',
+        'userLabel(0x41).featureMap(0xfffc)={  }',
+        'userLabel(0x41).generatedCommandList(0xfff8)=[  ]',
+        "userLabel(0x41).labelList(0x0)=[ { label: 'panel', value: 'Solar Panel 4' } ]",
       ].toSorted(),
     );
   });

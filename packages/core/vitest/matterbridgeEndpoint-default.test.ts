@@ -14,26 +14,22 @@ const NAME = 'EndpointDefault';
 const MATTER_PORT = 11200;
 const MATTER_CREATE_ONLY = true;
 
-import {
-  AirQualityServer,
-  BooleanStateServer,
-  CarbonDioxideConcentrationMeasurementServer,
-  CarbonMonoxideConcentrationMeasurementServer,
-  ColorControlBehavior,
-  ColorControlServer,
-  DescriptorBehavior,
-  FormaldehydeConcentrationMeasurementServer,
-  NitrogenDioxideConcentrationMeasurementServer,
-  OzoneConcentrationMeasurementServer,
-  Pm1ConcentrationMeasurementServer,
-  Pm10ConcentrationMeasurementServer,
-  Pm25ConcentrationMeasurementServer,
-  RadonConcentrationMeasurementServer,
-  SoilMeasurementServer,
-  TotalVolatileOrganicCompoundsConcentrationMeasurementServer,
-} from '@matter/node/behaviors';
+import { AirQualityServer } from '@matter/node/behaviors/air-quality';
+import { BooleanStateServer } from '@matter/node/behaviors/boolean-state';
+import { CarbonDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-dioxide-concentration-measurement';
+import { CarbonMonoxideConcentrationMeasurementServer } from '@matter/node/behaviors/carbon-monoxide-concentration-measurement';
+import { ColorControlBehavior, ColorControlServer } from '@matter/node/behaviors/color-control';
+import { DescriptorBehavior } from '@matter/node/behaviors/descriptor';
 import { FanControlServer } from '@matter/node/behaviors/fan-control';
-import { Status } from '@matter/types';
+import { FormaldehydeConcentrationMeasurementServer } from '@matter/node/behaviors/formaldehyde-concentration-measurement';
+import { NitrogenDioxideConcentrationMeasurementServer } from '@matter/node/behaviors/nitrogen-dioxide-concentration-measurement';
+import { OzoneConcentrationMeasurementServer } from '@matter/node/behaviors/ozone-concentration-measurement';
+import { Pm1ConcentrationMeasurementServer } from '@matter/node/behaviors/pm1-concentration-measurement';
+import { Pm10ConcentrationMeasurementServer } from '@matter/node/behaviors/pm10-concentration-measurement';
+import { Pm25ConcentrationMeasurementServer } from '@matter/node/behaviors/pm25-concentration-measurement';
+import { RadonConcentrationMeasurementServer } from '@matter/node/behaviors/radon-concentration-measurement';
+import { SoilMeasurementServer } from '@matter/node/behaviors/soil-measurement';
+import { TotalVolatileOrganicCompoundsConcentrationMeasurementServer } from '@matter/node/behaviors/total-volatile-organic-compounds-concentration-measurement';
 import {
   ActivatedCarbonFilterMonitoring,
   AirQuality,
@@ -81,6 +77,7 @@ import {
   WindowCovering,
 } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
+import { Status } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,
@@ -170,6 +167,12 @@ describe('Matterbridge ' + NAME, () => {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
     expect(await addDevice(aggregator, device)).toBe(true);
+  }
+
+  function thermostatOptions(id: string, create: (device: MatterbridgeEndpoint) => void): ReturnType<MatterbridgeEndpoint['getClusterServerOptions']> {
+    const device = new MatterbridgeEndpoint(thermostat, { id });
+    create(device);
+    return device.getClusterServerOptions(Thermostat.id);
   }
 
   test('capitalizeFirstLetter', () => {
@@ -734,7 +737,7 @@ describe('Matterbridge ' + NAME, () => {
     await add(device);
 
     expect(device.getAttribute(WindowCovering.id, 'type')).toBe(WindowCovering.WindowCoveringType.TiltBlindTiltOnly);
-    expect(device.getAttribute(WindowCovering.id, 'endProductType')).toBe(WindowCovering.EndProductType.InteriorVenetianBlind);
+    expect(device.getAttribute(WindowCovering.id, 'endProductType')).toBe(WindowCovering.EndProductType.TiltOnlyInteriorBlind);
     expect(device.getAttribute(WindowCovering.id, 'targetPositionTiltPercent100ths')).toBe(0);
     expect(device.getAttribute(WindowCovering.id, 'currentPositionTiltPercent100ths')).toBe(0);
     expect(device.getAttribute(WindowCovering.id, 'operationalStatus')).toEqual({
@@ -1092,7 +1095,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await addDevice(aggregator, device);
-    await flushAsync();
+    await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'thermostatRunningState')).toEqual({
       cool: false,
@@ -1658,7 +1661,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await addDevice(aggregator, device);
-    await flushAsync();
+    await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 5, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
@@ -1843,7 +1846,7 @@ describe('Matterbridge ' + NAME, () => {
     });
 
     await addDevice(aggregator, device);
-    await flushAsync();
+    await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     expect(device.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
@@ -2640,6 +2643,19 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createDefaultPowerSourceRechargeableBatteryClusterServer forwards the optional rechargeable battery attributes', () => {
+    const device = new MatterbridgeEndpoint([powerSource], { id: 'RechargeableBatteryAttributes' });
+    device.createDefaultPowerSourceRechargeableBatteryClusterServer(80, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, null, null, []);
+    expect(device.getClusterServerOptions(PowerSource.id)).toMatchObject({
+      batPercentRemaining: 160,
+      batVoltage: 24_000,
+      batCapacity: 200_000,
+      batTimeToFullCharge: null,
+      batChargingCurrent: null,
+      activeBatChargeFaults: [],
+    });
+  });
+
   test('createDefaultDeviceEnergyManagementClusterServer', async () => {
     const device = new MatterbridgeEndpoint([powerSource], { id: 'DeviceEnergyManagement' });
     expect(device).toBeDefined();
@@ -2685,7 +2701,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(PowerSource.id, 'batPercentRemaining')).toBe(200);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
 
-    await flushAsync();
+    await flushAsync(3, 10, 0);
   });
 
   test('power source replaceable', async () => {
@@ -2971,5 +2987,132 @@ describe('Matterbridge ' + NAME, () => {
 
     expect(device.getAttribute(AirQuality.id, 'airQuality')).toBe(AirQuality.AirQualityEnum.Unknown);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+  });
+  test('thermostat cluster servers with occupancy, unoccupied setpoints and outdoor temperature variants', () => {
+    // Occupancy without unoccupied setpoints falls back to the default unoccupied setpoints, and a null outdoor temperature is kept as null.
+    expect(
+      thermostatOptions('ThermoOccupiedNoSetpoints', (d) => d.createDefaultThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, true, null)),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      outdoorTemperature: null,
+    });
+    expect(thermostatOptions('ThermoHeatingOccupied', (d) => d.createDefaultHeatingThermostatClusterServer(23, 21, 0, 50, 18, true, 15))).toMatchObject({
+      unoccupiedHeatingSetpoint: 1800,
+      outdoorTemperature: 1500,
+    });
+    expect(thermostatOptions('ThermoCoolingOccupied', (d) => d.createDefaultCoolingThermostatClusterServer(23, 25, 0, 50, 28, true, 30))).toMatchObject({
+      unoccupiedCoolingSetpoint: 2800,
+      outdoorTemperature: 3000,
+    });
+    expect(
+      thermostatOptions('ThermoPresetsOccupied', (d) => d.createDefaultPresetsThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, true, null)),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      outdoorTemperature: null,
+    });
+    expect(thermostatOptions('ThermoSchedulesOccupied', (d) => d.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, 18, 28, true, 15))).toMatchObject({
+      unoccupiedHeatingSetpoint: 1800,
+      unoccupiedCoolingSetpoint: 2800,
+      occupancy: { occupied: true },
+      externallyMeasuredOccupancy: true,
+      outdoorTemperature: 1500,
+    });
+    expect(
+      thermostatOptions('ThermoSchedulesOccupiedNoSetpoints', (d) =>
+        d.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, false, null),
+      ),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      occupancy: { occupied: false },
+      outdoorTemperature: null,
+    });
+    expect(thermostatOptions('ThermoSuggestionsOccupied', (d) => d.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 0, 0, 50, 0, 50, 18, 28, true, 15))).toMatchObject({
+      unoccupiedHeatingSetpoint: 1800,
+      unoccupiedCoolingSetpoint: 2800,
+      occupancy: { occupied: true },
+      externallyMeasuredOccupancy: true,
+      outdoorTemperature: 1500,
+    });
+    expect(
+      thermostatOptions('ThermoSuggestionsOccupiedNoSetpoints', (d) =>
+        d.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, false, null),
+      ),
+    ).toMatchObject({
+      unoccupiedHeatingSetpoint: 1900,
+      unoccupiedCoolingSetpoint: 2700,
+      occupancy: { occupied: false },
+      outdoorTemperature: null,
+    });
+  });
+
+  test('thermostat preset, schedule and suggestion lists with null handles and no preset types', () => {
+    const preset: Thermostat.Preset = { presetHandle: null, presetScenario: Thermostat.PresetScenario.Occupied, heatingSetpoint: 2100, builtIn: true };
+
+    // A null presetTypes list produces an empty list, and a null presetHandle is kept as null.
+    expect(
+      thermostatOptions('ThermoPresetsNoTypes', (d) =>
+        d.createDefaultPresetsThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, undefined, undefined, null, [preset], null),
+      ),
+    ).toMatchObject({ numberOfPresets: 1, presets: [{ presetHandle: null }], presetTypes: [] });
+    expect(
+      thermostatOptions('ThermoSuggestionsNoTypes', (d) =>
+        d.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, undefined, undefined, null, [preset], null),
+      ),
+    ).toMatchObject({ numberOfPresets: 1, presets: [{ presetHandle: null }], presetTypes: [] });
+
+    // A null scheduleHandle is kept as null, and a schedule presetHandle is copied.
+    const schedule: Thermostat.Schedule = { scheduleHandle: null, systemMode: Thermostat.SystemMode.Heat, presetHandle: new Uint8Array([1]), transitions: [], builtIn: false };
+    expect(
+      thermostatOptions('ThermoSchedulesNullHandle', (d) =>
+        d.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 0, 0, 50, 0, 50, undefined, undefined, undefined, undefined, null, [schedule]),
+      ),
+    ).toMatchObject({ schedules: [{ scheduleHandle: null, presetHandle: new Uint8Array([1]), transitions: [], builtIn: false }] });
+  });
+
+  test('createOnOffFanControlClusterServer with the fan on', () => {
+    const device = new MatterbridgeEndpoint(fan, { id: 'OnOffFanOn' });
+    device.createOnOffFanControlClusterServer(FanControl.FanMode.High);
+    expect(device.getClusterServerOptions(FanControl.id)).toMatchObject({ fanMode: FanControl.FanMode.High, percentSetting: 100, percentCurrent: 100 });
+  });
+
+  test('configureColorControlMode and configureEnhancedColorControlMode ignore an out of range mode', async () => {
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'ColorModeOutOfRange' });
+    const setAttributeSpy = vi.spyOn(device, 'setAttribute');
+    await device.configureColorControlMode(3 as ColorControl.ColorMode);
+    await device.configureEnhancedColorControlMode(4 as ColorControl.EnhancedColorMode);
+    expect(setAttributeSpy).not.toHaveBeenCalled();
+  });
+
+  test('setWindowCoveringTargetAsCurrentAndStopped with null current positions', async () => {
+    const liftTilt = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringNullPositions' });
+    liftTilt.createDefaultLiftTiltWindowCoveringClusterServer(null, null);
+    await add(liftTilt);
+    // A null current position is not copied to the target position.
+    await liftTilt.setWindowCoveringTargetAsCurrentAndStopped();
+    expect(liftTilt.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBeNull();
+    expect(liftTilt.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBeNull();
+    expect(liftTilt.getAttribute(WindowCovering, 'operationalStatus')).toEqual({
+      global: WindowCovering.MovementStatus.Stopped,
+      lift: WindowCovering.MovementStatus.Stopped,
+      tilt: WindowCovering.MovementStatus.Stopped,
+    });
+  });
+
+  test('setWindowCoveringCurrentTargetStatus on a tilt only server sets the tilt positions', async () => {
+    const tiltOnly = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringTiltOnlyStatus' });
+    tiltOnly.createDefaultTiltWindowCoveringClusterServer();
+    await add(tiltOnly);
+    // The server does not support the Lift feature: the positions go to the tilt axis and the lift field is not reported.
+    await tiltOnly.setWindowCoveringCurrentTargetStatus(4000, 6000, WindowCovering.MovementStatus.Opening);
+    expect(tiltOnly.getAttribute(WindowCovering, 'currentPositionTiltPercent100ths')).toBe(4000);
+    expect(tiltOnly.getAttribute(WindowCovering, 'targetPositionTiltPercent100ths')).toBe(6000);
+    expect(tiltOnly.getAttribute(WindowCovering, 'operationalStatus')).toEqual({ global: WindowCovering.MovementStatus.Opening, tilt: WindowCovering.MovementStatus.Opening });
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Set WindowCovering currentPositionTiltPercent100ths: 4000, targetPositionTiltPercent100ths: 6000 and operationalStatus: 1.`),
+    );
   });
 });

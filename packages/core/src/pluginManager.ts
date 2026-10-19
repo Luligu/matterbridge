@@ -181,6 +181,13 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     return this.findInvalidDependencies(packageJson) === null;
   }
 
+  /**
+   * Handles the broadcast messages sent to the plugin manager.
+   * Only the request messages are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   * @returns {Promise<void>} A promise that resolves when the message has been handled.
+   */
   private async msgHandler(msg: WorkerMessage): Promise<void> {
     /* v8 ignore next */
     if (this.server.isWorkerRequest(msg)) {
@@ -215,7 +222,16 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           }
           break;
         case 'plugins_set':
-          this.server.respond({ ...msg, result: { plugin: this.set(msg.params.plugin) } });
+          {
+            // Merge the properties into the existing plugin, so the fields not sent are preserved
+            const plugin = this.get(msg.params.plugin.name);
+            if (plugin) {
+              Object.assign(plugin, msg.params.plugin);
+              this.server.respond({ ...msg, result: { plugin: this.toApiPlugin(plugin) } });
+            } else {
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.plugin.name} not found` });
+            }
+          }
           break;
         case 'plugins_storagepluginarray':
           this.server.respond({ ...msg, result: { plugins: this.storagePluginArray() } });

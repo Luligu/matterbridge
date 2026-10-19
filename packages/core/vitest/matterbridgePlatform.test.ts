@@ -35,7 +35,9 @@ import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, wr } from 'nod
 
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { getSnapshot } from '../src/matterbridgeEndpointHelpers.js';
 import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatform } from '../src/matterbridgePlatform.js';
+import { toApiClusters, toApiDevice } from '../src/matterNodeHelpers.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -150,6 +152,43 @@ describe('Matterbridge platform', () => {
 
     expect(() => assertMatterbridgePlatform(platform)).not.toThrow();
     expect(() => assertMatterbridgePlatform({})).toThrow();
+    const [devices, selectDevices, selectEntities] = await Promise.all([
+      matterbridgeServer.fetch({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name, extended: false } }),
+      matterbridgeServer.fetch({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
+      matterbridgeServer.fetch({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
+    ]);
+    expect(devices.result.devices).toEqual([]);
+    expect(selectDevices.result.devices).toEqual(platform.getSelectDevices());
+    expect(selectEntities.result.entities).toEqual(platform.getSelectEntities());
+  });
+
+  test('should ignore unsupported broadcast requests and requests for another plugin', async () => {
+    const responseSpy = vi.fn();
+    matterbridgeServer.on('broadcast_message', responseSpy);
+
+    try {
+      matterbridgeServer.request({ type: 'test_simple', src: 'matterbridge', dst: 'platform' });
+      matterbridgeServer.request({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { pluginName: 'missing-plugin', extended: false } });
+      matterbridgeServer.request({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { pluginName: 'missing-plugin' } });
+      matterbridgeServer.request({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { pluginName: 'missing-plugin' } });
+      matterbridgeServer.request({
+        type: 'platform_get_apiclusters',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: 'missing-plugin', number: 155, serialNumber: 'missing-serial', uniqueId: 'missing-unique-id' },
+      });
+      const current = await matterbridgeServer.fetch({
+        type: 'platform_get_apidevices',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, extended: false },
+      });
+      expect(current.result.devices).toEqual([]);
+      expect(responseSpy).toHaveBeenCalledTimes(1);
+      expect(responseSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'platform_get_apidevices' }));
+    } finally {
+      matterbridgeServer.off('broadcast_message', responseSpy);
+    }
   });
 
   test('should validate and assert MatterbridgePlatform instances', async () => {
@@ -480,8 +519,32 @@ describe('Matterbridge platform', () => {
     platform.setSelectDevice('serial1', 'name1', 'url1', 'hub', [{ name: 'name1', description: 'description1', icon: 'icon1' }]);
     platform.setSelectDeviceEntity('serial1', 'name1', 'description1', 'icon1');
     platform.setSelectEntity('name1', 'description1', 'hub');
-    platform.getSelectDevices();
-    platform.getSelectEntities();
+    const selectDevices = platform.getSelectDevices();
+    const selectEntities = platform.getSelectEntities();
+    expect(selectDevices).toEqual([
+      {
+        plugin: platform.name,
+        serialNumber: 'serial1',
+        deviceName: 'name1',
+        configUrl: 'url1',
+        icon: 'hub',
+        entities: [{ name: 'name1', description: 'description1', icon: 'icon1' }],
+      },
+    ]);
+    expect(selectEntities).toEqual([{ plugin: platform.name, name: 'name1', description: 'description1', icon: 'hub' }]);
+    const responseSpy = vi.fn();
+    matterbridgeServer.on('broadcast_message', responseSpy);
+    try {
+      const [devices, entities] = await Promise.all([
+        matterbridgeServer.fetch({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
+        matterbridgeServer.fetch({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
+      ]);
+      expect(devices.result.devices).toEqual(selectDevices);
+      expect(entities.result.entities).toEqual(selectEntities);
+      expect(responseSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      matterbridgeServer.off('broadcast_message', responseSpy);
+    }
     await platform.clearSelect();
     await (platform as any).destroy();
   });
@@ -738,11 +801,6 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, "The plugin doesn't override onChangeLoggerLevel. Logger level set to: debug");
   });
 
-  test('onShutdown should log a message', async () => {
-    await platform.onShutdown('test reason');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform test', 'test reason');
-  });
-
   test('getDevice should return []', () => {
     expect(platform.getDevices()).toEqual([]);
   });
@@ -914,6 +972,145 @@ describe('Matterbridge platform', () => {
     expect(platform.getDeviceByNumber(155)).toBeDefined();
     expect(platform.getDeviceByNumber(10)).toBeUndefined();
 
-    await platform.onShutdown();
+    expect(platform.getDevices()[0]).toBe(device);
+    const apiDevices = platform
+      .getDevices()
+      .map((endpoint) => toApiDevice(endpoint))
+      .filter((endpoint) => endpoint !== undefined);
+    expect(apiDevices).toMatchObject([{ plugin: platform.name, id: device.id, number: 155, deviceName: 'test', serialNumber: 'serial01234', uniqueId: 'uniqueId0123' }]);
+    const response = await matterbridgeServer.fetch({
+      type: 'platform_get_apidevices',
+      src: 'matterbridge',
+      dst: 'platform',
+      params: { pluginName: platform.name, extended: false },
+    });
+    expect(response.result.devices).toEqual(apiDevices);
+
+    for (const extended of [false, true]) {
+      const extendedResponse = await matterbridgeServer.fetch({
+        type: 'platform_get_apidevices',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, extended },
+      });
+      expect(extendedResponse.result.devices).toEqual([toApiDevice(device, extended)].filter((endpoint) => endpoint !== undefined));
+    }
+
+    const uniqueId = device.uniqueId;
+    device.uniqueId = undefined;
+    try {
+      expect(platform.getDevices()).toHaveLength(1);
+      const incomplete = await matterbridgeServer.fetch({
+        type: 'platform_get_apidevices',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, extended: false },
+      });
+      expect(incomplete.result.devices).toEqual([]);
+    } finally {
+      device.uniqueId = uniqueId;
+    }
+  });
+
+  test('should return frontend API cluster attributes for a device and its child endpoint', async () => {
+    const device = new MatterbridgeEndpoint(contactSensor, { id: 'Clusters', number: EndpointNumber(160) }, true);
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('Cluster device', 'CLUSTERS-001');
+    device.addRequiredClusterServers();
+    const child = device.addChildDeviceType('temperature', temperatureSensor, undefined, true);
+    child.createDefaultTemperatureMeasurementClusterServer(2100);
+    child.addRequiredClusterServers();
+    child.number = 161;
+    await platform.registerDevice(device);
+
+    try {
+      expect(() => structuredClone(toApiClusters(device, platform.log))).not.toThrow();
+      const serialNumber = device.serialNumber;
+      const uniqueId = device.uniqueId;
+      if (!serialNumber || !uniqueId) throw new Error('Cluster test device identifiers not found');
+      const response = await matterbridgeServer.fetch({
+        type: 'platform_get_apiclusters',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, number: device.number, serialNumber, uniqueId },
+      });
+      expect(toApiClusters(device, platform.log)).toEqual(response.result.clusters);
+      expect(response.result.clusters).toMatchObject({
+        plugin: platform.name,
+        deviceName: 'Cluster device',
+        serialNumber: 'CLUSTERS-001',
+        uniqueId: device.uniqueId,
+        number: 160,
+        id: device.id,
+        deviceTypes: [contactSensor.code, bridgedNode.code],
+      });
+      expect(response.result.clusters.clusters).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            endpoint: '160',
+            number: 160,
+            id: 'main',
+            deviceTypes: [contactSensor.code, bridgedNode.code],
+            clusterName: 'BridgedDeviceBasicInformation',
+            attributeName: 'serialNumber',
+            attributeValue: 'CLUSTERS-001',
+            attributeLocalValue: 'CLUSTERS-001',
+          }),
+          expect.objectContaining({
+            endpoint: '161',
+            number: 161,
+            id: child.id,
+            deviceTypes: [temperatureSensor.code],
+            clusterName: 'TemperatureMeasurement',
+            clusterId: '0x402',
+            attributeName: 'measuredValue',
+            attributeId: '0x00',
+            attributeValue: '2100',
+            attributeLocalValue: 2100,
+          }),
+          expect.objectContaining({
+            id: 'main',
+            clusterName: 'Descriptor',
+            attributeName: 'deviceTypeList',
+            attributeValue: expect.any(String),
+            attributeLocalValue: getSnapshot(device.state.descriptor.deviceTypeList),
+          }),
+        ]),
+      );
+
+      for (const params of [
+        { pluginName: platform.name, number: 9999, serialNumber, uniqueId },
+        { pluginName: platform.name, number: device.number, serialNumber: 'missing-serial', uniqueId },
+        { pluginName: platform.name, number: device.number, serialNumber, uniqueId: 'missing-unique-id' },
+        { pluginName: platform.name, number: device.number, serialNumber: '', uniqueId },
+        { pluginName: platform.name, number: device.number, serialNumber, uniqueId: '' },
+      ]) {
+        await expect(matterbridgeServer.fetch({ type: 'platform_get_apiclusters', src: 'matterbridge', dst: 'platform', params })).rejects.toThrow(
+          'getApiCluster: no device found',
+        );
+      }
+
+      device.uniqueId = undefined;
+      try {
+        expect(toApiClusters(device, platform.log)).toBeUndefined();
+        await expect(
+          matterbridgeServer.fetch({
+            type: 'platform_get_apiclusters',
+            src: 'matterbridge',
+            dst: 'platform',
+            params: { pluginName: platform.name, number: device.number, serialNumber, uniqueId },
+          }),
+        ).rejects.toThrow('getApiCluster: no device found');
+        expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('getApiCluster: no device found'));
+      } finally {
+        device.uniqueId = uniqueId;
+      }
+    } finally {
+      await platform.unregisterDevice(device);
+    }
+  });
+
+  test('onShutdown should log a message', async () => {
+    await platform.onShutdown('test reason');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Shutting down platform test', 'test reason');
   });
 });

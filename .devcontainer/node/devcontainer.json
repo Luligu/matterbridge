@@ -44,9 +44,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // Use the non-root node user (passwordless sudo in this image)
   "remoteUser": "node",
   "mounts": [
-    // Package specific volumes for matterbridge node node_modules, frontend node node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
+    // Package specific volumes for matterbridge node node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
     "source=${localWorkspaceFolderBasename}-node-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
-    "source=${localWorkspaceFolderBasename}-node-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/node/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/node/.matterbridge,type=volume",

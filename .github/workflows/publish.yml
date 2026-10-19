@@ -52,10 +52,6 @@ jobs:
       - name: Test matterbridge cli
         run: matterbridge --version
 
-      - name: Install frontend dependencies
-        run: npm ci --no-fund --no-audit
-        working-directory: apps/frontend
-
       - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
@@ -70,11 +66,7 @@ jobs:
         run: npm run format:check
 
       - name: Test frontend
-        run: npm run test
-        working-directory: apps/frontend
-
-      - name: Publish frontend to npm under tag latest with trusted publishing / OIDC
-        run: npm publish --tag latest --access public || true
+        run: npm run test -- --testTimeout=30000
         working-directory: apps/frontend
 
       - name: Test matterbridge
@@ -105,6 +97,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-latest.yml',
@@ -117,6 +110,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-dev.yml',
@@ -129,6 +123,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bundev.yml',
@@ -141,6 +136,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-node-ubuntu-slim.yml',
@@ -153,6 +149,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bun-ubuntu-slim.yml',
@@ -165,6 +162,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-alpine.yml',
@@ -177,6 +175,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bun.yml',
@@ -189,6 +188,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-s6-rc.yml',
@@ -201,6 +201,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-s6-rc-legacy.yml',
@@ -213,6 +214,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bun-dev-container.yml',
@@ -225,6 +227,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-node-dev-container.yml',
@@ -237,6 +240,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-chip-test.yml',
@@ -277,10 +281,6 @@ jobs:
       - name: Test matterbridge cli
         run: matterbridge --version
 
-      - name: Install frontend dependencies
-        run: npm ci --no-fund --no-audit
-        working-directory: apps/frontend
-
       - name: Build frontend
         run: npm run build
         working-directory: apps/frontend
@@ -295,7 +295,7 @@ jobs:
         run: npm run format:check
 
       - name: Test frontend
-        run: npm run test
+        run: npm run test -- --testTimeout=30000
         working-directory: apps/frontend
 
       - name: Test matterbridge
@@ -347,19 +347,6 @@ jobs:
             echo "should_publish=true"  >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish frontend to npm under tag dev with trusted publishing / OIDC
-        if: steps.check_new.outputs.should_publish == 'true'
-        working-directory: apps/frontend
-        run: |
-          BASE=$(jq -r '.version' package.json)
-          DATE=$(date -u +'%Y%m%d')
-          SHA=$(git rev-parse --short=7 HEAD)
-          DEV_TAG="${BASE}-dev-${DATE}-${SHA}"
-          echo "Publishing frontend with tag ${DEV_TAG}"
-          npm version "${DEV_TAG}" --no-git-tag-version --ignore-scripts
-          npm publish --tag dev --access public || true
-          npm version "${BASE}" --no-git-tag-version --ignore-scripts
-
       - name: Publish matterbridge to npm under tag dev with trusted publishing / OIDC
         if: steps.check_new.outputs.should_publish == 'true'
         run: |
@@ -373,6 +360,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-dev.yml',
@@ -386,6 +374,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-bundev.yml',

@@ -44,10 +44,6 @@ jobs:
       - name: Link matterbridge globally
         run: bun link
 
-      - name: Install frontend dependencies
-        run: bun install
-        working-directory: apps/frontend
-
       - name: Build frontend
         run: bun run build
         working-directory: apps/frontend

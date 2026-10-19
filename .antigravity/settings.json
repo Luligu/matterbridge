@@ -1,5 +1,5 @@
 {
-  "_comment": "Antigravity settings v.1.0.5",
+  "_comment": "Antigravity settings v.1.0.6",
   "sandboxing": {
     "workspaceOnly": true,
     "subagentIsolation": "branch",
@@ -34,6 +34,7 @@
       "command(oxlint)",
       "command(oxfmt)",
       "command(vitest)",
+      "command(bun test)",
       "command(npm run lint:fix)"
     ],
     "ask": [
@@ -65,7 +66,6 @@
       "command(npm run format)",
       "command(npm run format:check)",
       "command(npm run update-htmls)",
-      "command(bun test)",
       "command(cat)",
       "command(ls)",
       "command(head)",

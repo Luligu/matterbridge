@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/jest-utils",
-  "version": "3.10.13",
+  "version": "3.10.15",
   "description": "Matterbridge jest utility library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -56,7 +56,7 @@
     }
   },
   "engines": {
-    "node": ">=20.19.0 <21.0.0 || >=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
+    "node": ">=22.13.0 <23.0.0 || >=24.0.0 <25.0.0 || >=26.0.0 <27.0.0"
   },
   "files": [
     "bin",
@@ -72,12 +72,12 @@
   },
   "dependencies": {
     "@matter/main": "0.17.9",
-    "@matterbridge/types": "3.10.13",
-    "@matterbridge/utils": "3.10.13",
+    "@matterbridge/types": "3.10.15",
+    "@matterbridge/utils": "3.10.15",
     "node-ansi-logger": "3.3.1"
   },
   "devDependencies": {
     "@types/jest": "30.0.0",
-    "@types/node": "26.6.4"
+    "@types/node": "26.6.5"
   }
 }

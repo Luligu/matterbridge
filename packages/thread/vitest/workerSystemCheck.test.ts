@@ -130,7 +130,7 @@ async function runWorkerSystemCheck(options: RunOptions): Promise<RunWorkerSyste
 }
 
 describe('workerSystemCheck', () => {
-  test('success: covers node 20 branch, NVM warning, excluded interface warn, interface scan', async () => {
+  test('success: reports unsupported node 20, NVM warning, excluded interface warn, interface scan', async () => {
     const { wrapperName, success, loggerMock, snackBarMock, fetchMock } = await runWorkerSystemCheck({
       nvmBin: true,
       nvmDir: true,
@@ -149,7 +149,7 @@ describe('workerSystemCheck', () => {
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Starting system check/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'You are running Node.js version: 20.18.0');
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: NVM is a development tool/));
-    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 20\.19\.0 is not supported/));
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringMatching(/^System Check: Node\.js version < 22\.13\.0 is not supported/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Found network interface 'docker0'.*Matter mDNS/));
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/^System Check: Use --mdnsinterface parameter or set Mdns interface in Settings.*Matter mDNS/));
     expect(snackBarMock).toHaveBeenCalledWith(
@@ -208,9 +208,9 @@ describe('workerSystemCheck', () => {
     expect(loggerMock).not.toHaveBeenCalledWith(LogLevel.WARN, expect.stringMatching(/Found network interface 'docker0'/));
   });
 
-  test('node 26: no error, but NOTICE recommending LTS fires', async () => {
+  test.each(['22.13.0', '26.0.0'])('node %s: no error, but NOTICE recommending LTS fires', async (nodeVersion) => {
     const { success, loggerMock } = await runWorkerSystemCheck({
-      nodeVersion: '26.0.0',
+      nodeVersion,
       mdnsInterface: 'eth0',
       networkInterfaces: {
         eth0: [{ family: 'IPv4', internal: true } as any, { family: 'IPv4', internal: false } as any, { family: 'IPv6', internal: false } as any],
@@ -240,6 +240,18 @@ describe('workerSystemCheck', () => {
     const noticeCalls = (loggerMock as Mock).mock.calls.filter((c) => c[0] === LogLevel.NOTICE);
     expect(noticeCalls).toHaveLength(0);
     expect(loggerMock).toHaveBeenCalledWith(LogLevel.INFO, 'System check succeeded');
+  });
+
+  test.each(['20.19.0', '20.20.0'])('should report Node.js %s as unsupported', async (nodeVersion) => {
+    const { loggerMock, snackBarMock } = await runWorkerSystemCheck({
+      nodeVersion,
+      mdnsInterface: '',
+      networkInterfaces: {},
+    });
+
+    const message = 'System Check: Node.js version < 22.13.0 is not supported. Please upgrade to Node.js LTS version (24.x).';
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, message);
+    expect(snackBarMock).toHaveBeenCalledWith(message, 0, 'error');
   });
 
   test.each(['20.18.0', '22.12.0', '21.0.0'])('should log Bun version and skip Node.js warnings when Bun reports Node.js %s', async (nodeVersion) => {

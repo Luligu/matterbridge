@@ -3,7 +3,7 @@
  * @description This file contains the class Frontend.
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.3
+ * @version 1.4.5
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -48,7 +48,7 @@ import { Diagnostic, LogDestination, LogFormat as MatterLogFormat, Logger, LogLe
 import type { ServerNode } from '@matter/node';
 import { DeviceAdvertiser, DeviceCommissioner, FabricManager } from '@matter/protocol';
 import { CommissioningOptions } from '@matter/types/commissioning';
-import { type EndpointNumber, FabricIndex } from '@matter/types/datatype';
+import { FabricIndex } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
@@ -58,7 +58,6 @@ import type {
   ApiPlugin,
   ApiSettings,
   BridgeStatus,
-  Cluster,
   MatterbridgeInformation,
   PluginStatusUpdate,
   RefreshRequiredChanged,
@@ -77,7 +76,7 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import { isBun, memoryFootprint } from '@matterbridge/utils/bun';
+import { constrainedMemory, isBun, memoryFootprint } from '@matterbridge/utils/bun';
 import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
@@ -87,18 +86,39 @@ import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidStri
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
-import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, stringify, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
+import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
 import type { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
-import { cliEmitter } from './cliEmitter.js';
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
-import { capitalizeFirstLetter } from './matterbridgeEndpointHelpers.js';
-import { deleteAdvertisingNode, getBatteryLevel, getClusterTextFromDevice, getPowerSource, getReachability, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
+import {
+  deleteAdvertisingNode,
+  getBatteryLevel,
+  getClusterTextFromDevice,
+  getPowerSource,
+  getReachability,
+  getServerNodeData,
+  setAdvertisingNode,
+  toApiClusters,
+} from './matterNodeHelpers.js';
 import type { Plugin } from './pluginManager.js';
 
 logModuleLoaded('Frontend');
+
+/**
+ * Sends the 500 response of a failed res.download(), unless the client aborted the request (ECONNABORTED).
+ * The client is gone in that case, and answering breaks on Bun 1.4.3, where ending the orphaned response
+ * sets res._header but leaves res.headersSent false, so send throws ERR_HTTP_HEADERS_SENT (https://github.com/oven-sh/bun/issues/44925).
+ *
+ * @param {import('express').Response} res - The response of the download.
+ * @param {Error} error - The error passed to the res.download() callback.
+ * @param {string} message - The message to send with the 500 status.
+ */
+function sendDownloadError(res: import('express').Response, error: Error, message: string): void {
+  if ((error as NodeJS.ErrnoException).code === 'ECONNABORTED' || res.headersSent) return;
+  res.status(500).send(message);
+}
 
 /**
  * Represents the Frontend events.
@@ -130,15 +150,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private webSocketServer: WebSocketServer | undefined;
   private readonly server: BroadcastServer;
   private serverFetchTimeout = 2000;
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
-  private readonly verbose = hasParameter('verbose');
-  private readonly diagnostic = hasParameter('diagnostic');
+  private readonly debug = hasAnyParameter('debug', 'debug-frontend', 'verbose', 'verbose-frontend');
+  private readonly verbose = hasAnyParameter('verbose', 'verbose-frontend');
+  private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-frontend');
 
   // Frontend settings
-  public readonly readOnly = hasParameter('readonly') || hasParameter('shelly');
-  public readonly shellyBoard = hasParameter('shelly');
-  public shellySysUpdate = false;
-  public shellyMainUpdate = false;
+  public readonly readOnly = hasParameter('readonly');
   /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
   public restartRequired = false;
   /** It indicates whether a fixed restart is required. It cannot be unset once set. */
@@ -677,18 +694,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       });
     }
 
-    // Subscribe to cli events
-    cliEmitter.removeAllListeners();
-    cliEmitter.on('uptime', (systemUptime: string, processUptime: string) => {
-      this.wssSendUptimeUpdate(systemUptime, processUptime);
-    });
-    cliEmitter.on('memory', (totalMememory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string) => {
-      this.wssSendMemoryUpdate(totalMememory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers);
-    });
-    cliEmitter.on('cpu', (cpuUsage: number, processCpuUsage: number) => {
-      this.wssSendCpuUpdate(cpuUsage, processCpuUsage);
-    });
-
     // Endpoint to validate login code
     // curl -X POST "http://localhost:8283/api/login" -H "Content-Type: application/json" -d "{\"password\":\"Here\"}"
     this.expressApp.post('/api/login', express.json(), (req, res) => {
@@ -780,7 +785,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     this.expressApp.get('/api/devices', (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
-      res.json(this.getApiDevices());
+      res.json(this.getApiDevices(undefined, true));
     });
 
     // Endpoint to view the matterbridge log
@@ -819,7 +824,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_LOGGER_FILE), 'matterbridge.log', (error) => {
         if (error) {
           logError(this.log, `Error downloading log file ${MATTERBRIDGE_LOGGER_FILE}`, error);
-          res.status(500).send('Error downloading the matterbridge log file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge log file');
         } else {
           this.log.debug(`Matterbridge log file ${MATTERBRIDGE_LOGGER_FILE} downloaded successfully`);
         }
@@ -858,7 +863,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), MATTER_LOGGER_FILE), 'matter.log', (error) => {
         if (error) {
           logError(this.log, `Error downloading log file ${MATTER_LOGGER_FILE}`, error);
-          res.status(500).send('Error downloading the matter log file');
+          sendDownloadError(res, error, 'Error downloading the matter log file');
         } else {
           this.log.debug(`Matter log file ${MATTER_LOGGER_FILE} downloaded successfully`);
         }
@@ -899,7 +904,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       res.download(path.join(os.tmpdir(), MATTERBRIDGE_DIAGNOSTIC_FILE), MATTERBRIDGE_DIAGNOSTIC_FILE, (error) => {
         if (error) {
           this.log.error(`Error downloading file ${MATTERBRIDGE_DIAGNOSTIC_FILE}: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the diagnostic log file');
+          sendDownloadError(res, error, 'Error downloading the diagnostic log file');
         } else {
           this.log.debug(`Diagnostic log file ${MATTERBRIDGE_DIAGNOSTIC_FILE} downloaded successfully`);
         }
@@ -934,7 +939,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
             logError(this.log, `Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
-            res.status(500).send('Error downloading history file');
+            sendDownloadError(res, error, 'Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
@@ -953,7 +958,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating matterbridge backup...');
         if (error) {
           logError(this.log, `Error downloading file matterbridge.backup.zip`, error);
-          res.status(500).send(`Error downloading file matterbridge.backup.zip: ${getErrorMessage(error)}`);
+          sendDownloadError(res, error, `Error downloading file matterbridge.backup.zip: ${getErrorMessage(error)}`);
         } else {
           this.log.debug('Backup matterbridge.backup.zip downloaded successfully');
         }
@@ -968,7 +973,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating matterbridge storage backup...');
         if (error) {
           this.log.error(`Error downloading file matterbridge.${NODE_STORAGE_DIR}.zip: ${error instanceof Error ? error.message : error}`);
-          res.status(500).send('Error downloading the matterbridge storage file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge storage file');
         } else {
           this.log.debug(`Matterbridge storage matterbridge.${NODE_STORAGE_DIR}.zip downloaded successfully`);
         }
@@ -983,7 +988,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating matter storage backup...');
         if (error) {
           logError(this.log, `Error downloading the matter storage matterbridge.${MATTER_STORAGE_DIR}.zip`, error);
-          res.status(500).send('Error downloading the matter storage zip file');
+          sendDownloadError(res, error, 'Error downloading the matter storage zip file');
         } else {
           this.log.debug(`Matter storage matterbridge.${MATTER_STORAGE_DIR}.zip downloaded successfully`);
         }
@@ -998,7 +1003,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating plugin backup...');
         if (error) {
           logError(this.log, `Error downloading file matterbridge.pluginstorage.zip`, error);
-          res.status(500).send('Error downloading the matterbridge plugin storage file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge plugin storage file');
         } else {
           this.log.debug('Plugin storage matterbridge.pluginstorage.zip downloaded successfully');
         }
@@ -1013,7 +1018,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendCloseSnackbarMessage('Creating config backup...');
         if (error) {
           logError(this.log, `Error downloading file matterbridge.pluginconfig.zip`, error);
-          res.status(500).send('Error downloading the matterbridge plugin config file');
+          sendDownloadError(res, error, 'Error downloading the matterbridge plugin config file');
         } else {
           this.log.debug('Plugin config matterbridge.pluginconfig.zip downloaded successfully');
         }
@@ -1268,6 +1273,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   getApiSettings(): ApiSettings {
     // Update the variable system information properties
     this.matterbridge.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.matterbridge.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
     this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
     this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -1309,9 +1315,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterDiscriminator: this.matterbridge.initialDiscriminator,
       matterPasscode: this.matterbridge.initialPasscode,
       readOnly: this.readOnly,
-      shellyBoard: this.shellyBoard,
-      shellySysUpdate: this.shellySysUpdate,
-      shellyMainUpdate: this.shellyMainUpdate,
       restartRequired: this.restartRequired,
       fixedRestartRequired: this.fixedRestartRequired,
       updateRequired: this.updateRequired,
@@ -1373,9 +1376,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
+   * @param {boolean} extended - Whether to include extended device information.
    * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
    */
-  getApiDevices(pluginName?: string): ApiDevice[] {
+  getApiDevices(pluginName?: string, extended: boolean = false): ApiDevice[] {
     if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
     const devices: ApiDevice[] = [];
     for (const device of this.matterbridge.devices.array()) {
@@ -1384,19 +1388,20 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       // Check if the device has the required properties
       if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
       devices.push({
-        pluginName: device.plugin,
+        plugin: device.plugin,
         type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        endpoint: device.number,
-        name: device.deviceName,
-        serial: device.serialNumber,
+        number: device.number,
+        id: device.id,
+        deviceName: device.deviceName,
+        serialNumber: device.serialNumber,
         productUrl: device.productUrl,
         configUrl: device.configUrl,
         uniqueId: device.uniqueId,
-        reachable: getReachability(device),
-        powerSource: getPowerSource(device),
-        batteryLevel: getBatteryLevel(device),
-        matter: device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
-        cluster: getClusterTextFromDevice(device),
+        reachable: extended ? getReachability(device) : true,
+        powerSource: extended ? getPowerSource(device) : undefined,
+        batteryLevel: extended ? getBatteryLevel(device) : undefined,
+        matter: extended && device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
+        cluster: extended ? getClusterTextFromDevice(device) : '',
       });
     }
     return devices;
@@ -1409,82 +1414,21 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    *
    * @param {string} pluginName - The name of the plugin.
    * @param {number} endpointNumber - The endpoint number.
-   * @param {string} [serialNumber] - The device serial number to filter by (optional).
-   * @param {string} [uniqueId] - The device unique ID to filter by (optional).
-   * @returns {ApiClusters | undefined} A promise that resolves to the clusters or undefined if not found.
+   * @param {string} serialNumber - The device serial number.
+   * @param {string} uniqueId - The device unique ID.
+   * @returns {ApiClusters | undefined} The clusters or undefined if not found.
    */
-  getApiCluster(pluginName: string, endpointNumber: number, serialNumber?: string, uniqueId?: string): ApiClusters | undefined {
+  getApiCluster(pluginName: string, endpointNumber: number, serialNumber: string, uniqueId: string): ApiClusters | undefined {
     if (this.matterbridge.hasCleanupStarted) return; // Skip if cleanup has started
     const endpoint = this.matterbridge.devices
       .array()
-      .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && (!serialNumber || d.serialNumber === serialNumber) && (!uniqueId || d.uniqueId === uniqueId));
-    if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber) {
-      this.log.error(
-        `getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber ?? 'N/A'}, uniqueId: ${uniqueId ?? 'N/A'})`,
-      );
+      .find((d) => d.plugin === pluginName && d.maybeNumber === endpointNumber && d.serialNumber === serialNumber && d.uniqueId === uniqueId);
+    if (!endpoint?.plugin || !endpoint.maybeNumber || !endpoint.maybeId || !endpoint.deviceName || !endpoint.serialNumber || !endpoint.uniqueId) {
+      this.log.error(`getApiCluster: no device found for plugin ${pluginName} and endpoint number ${endpointNumber} (serial: ${serialNumber}, uniqueId: ${uniqueId})`);
       return;
     }
 
-    // Get the device types from the main endpoint
-    const deviceTypes: number[] = [];
-    const clusters: Cluster[] = [];
-    endpoint.state.descriptor.deviceTypeList.forEach((d) => {
-      deviceTypes.push(d.deviceType);
-    });
-
-    // Get the clusters from the main endpoint
-    endpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-      if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-      // oxfmt-ignore
-      if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
-      clusters.push({
-        endpoint: endpoint.number.toString(),
-        number: endpoint.number,
-        id: 'main',
-        deviceTypes,
-        clusterName: capitalizeFirstLetter(clusterName),
-        clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
-        attributeName,
-        attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
-        attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
-        attributeLocalValue: attributeValue,
-      });
-    });
-
-    // Get the child endpoints
-    const childEndpoints = endpoint.getChildEndpoints();
-    childEndpoints.forEach((childEndpoint) => {
-      /* v8 ignore next cause is not reachable: should never happen but ... */
-      if (!childEndpoint.maybeId || !childEndpoint.maybeNumber) {
-        this.log.error(`getApiCluster: no child endpoint found for plugin ${pluginName} and endpoint number ${endpointNumber}`);
-        return;
-      }
-
-      // Get the device types of the child endpoint
-      const deviceTypes: number[] = [];
-      childEndpoint.state.descriptor.deviceTypeList.forEach((d) => {
-        deviceTypes.push(d.deviceType);
-      });
-
-      childEndpoint.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
-        if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
-        // oxfmt-ignore
-        if (clusterName === 'EveHistory' && ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc'].includes(attributeName)) return;
-        clusters.push({
-          endpoint: childEndpoint.number.toString(),
-          number: childEndpoint.number,
-          id: childEndpoint.id,
-          deviceTypes,
-          clusterName: capitalizeFirstLetter(clusterName),
-          clusterId: '0x' + clusterId.toString(16).padStart(2, '0'),
-          attributeName,
-          attributeId: '0x' + attributeId.toString(16).padStart(2, '0'),
-          attributeValue: typeof attributeValue === 'object' ? stringify(attributeValue) : attributeValue.toString(),
-          attributeLocalValue: attributeValue,
-        });
-      });
-    });
-    return { plugin: endpoint.plugin, deviceName: endpoint.deviceName, serialNumber: endpoint.serialNumber, number: endpoint.number, id: endpoint.id, deviceTypes, clusters };
+    return toApiClusters(endpoint, this.log);
   }
 
   /**
@@ -1766,49 +1710,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.request({ type: 'manager_run', src: 'matterbridge', dst: 'manager', params: { name: 'DockerVersion' } });
         }, 5_000).unref();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/shellysysupdate') {
-        /*
-        const { triggerShellySysUpdate } = await import('./shelly.js');
-        triggerShellySysUpdate(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/shellymainupdate') {
-        /*
-        const { triggerShellyMainUpdate } = await import('./shelly.js');
-        triggerShellyMainUpdate(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/shellycreatesystemlog') {
-        /*
-        const { createShellySystemLog } = await import('./shelly.js');
-        createShellySystemLog(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/shellynetconfig') {
-        /*
-        this.log.debug('/api/shellynetconfig:', data.params);
-        const { triggerShellyChangeIp } = await import('./shelly.js');
-        triggerShellyChangeIp(this.matterbridge, data.params as { type: 'static' | 'dhcp'; ip: string; subnet: string; gateway: string; dns: string });
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/softreset') {
-        /*
-        const { triggerShellySoftReset } = await import('./shelly.js');
-        triggerShellySoftReset(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/hardreset') {
-        /*
-        const { triggerShellyHardReset } = await import('./shelly.js');
-        triggerShellyHardReset(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
-      } else if (data.method === '/api/reboot') {
-        /*
-        const { triggerShellyReboot } = await import('./shelly.js');
-        triggerShellyReboot(this.matterbridge);
-        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-        */
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage(`Restarting matterbridge...`, 0);
         await this.matterbridge.restartProcess();
@@ -1918,34 +1819,54 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/settings') {
         const start = performance.now();
         const settings = this.getApiSettings();
+        // const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: undefined });
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
       } else if (data.method === '/api/plugins') {
         const start = performance.now();
         const plugins = this.getApiPlugins();
+        // const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: 'frontend', dst: 'plugins', params: undefined });
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
+        // const response = await this.server.fetch({
+        //   type: 'devices_apidevicearray',
+        //   src: 'frontend',
+        //   dst: 'devices',
+        //   params: { pluginName: data.params.pluginName, extended: data.params.extended },
+        // });
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
       } else if (data.method === '/api/clusters') {
-        if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/clusters' });
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
           return;
         }
-        if (!isValidNumber(data.params.endpoint, 1)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter endpoint in /api/clusters' });
+        if (!isValidNumber(data.params.number, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter number in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter serialNumber in /api/clusters' });
+          return;
+        }
+        if (!isValidString(data.params.uniqueId, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter uniqueId in /api/clusters' });
           return;
         }
         const start = performance.now();
-        const clusters = this.getApiCluster(data.params.plugin, data.params.endpoint, data.params.serialNumber, data.params.uniqueId);
+        const clusters = this.getApiCluster(data.params.pluginName, data.params.number, data.params.serialNumber, data.params.uniqueId);
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic)
+          writeDiagnostic(
+            `Frontend:${data.sender}`,
+            `getApiCluster(${data.params.pluginName}, ${data.params.number}, ${data.params.serialNumber}, ${data.params.uniqueId}) took ${(performance.now() - start).toFixed(2)} ms`,
+          );
         if (clusters) {
           sendResponse({
             id: data.id,
@@ -1970,7 +1891,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         }
         const start = performance.now();
         /* v8 ignore next */
-        const selectDevices = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name));
+        const selectDevices = !plugin.platform ? [] : plugin.platform.getSelectDevices().toSorted((keyA, keyB) => keyA.deviceName.localeCompare(keyB.deviceName));
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDevices });
@@ -2484,67 +2405,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Sends a cpu update message to all connected clients.
-   *
-   * @param {number} cpuUsage - The CPU usage percentage to send.
-   * @param {number} processCpuUsage - The CPU usage percentage of the process to send.
-   */
-  wssSendCpuUpdate(cpuUsage: number, processCpuUsage: number): void {
-    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    /* v8 ignore next */
-    if (hasParameter('debug')) this.log.debug('Sending a cpu update message to all connected clients');
-    // Send the message to all connected clients
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'cpu_update',
-      success: true,
-      response: { cpuUsage: Math.round(cpuUsage * 100) / 100, processCpuUsage: Math.round(processCpuUsage * 100) / 100 },
-    });
-  }
-
-  /**
-   * Sends a memory update message to all connected clients.
-   *
-   * @param {string} totalMemory - The total memory in bytes.
-   * @param {string} freeMemory - The free memory in bytes.
-   * @param {string} rss - The resident set size in bytes.
-   * @param {string} heapTotal - The total heap memory in bytes.
-   * @param {string} heapUsed - The used heap memory in bytes.
-   * @param {string} external - The external memory in bytes.
-   * @param {string} arrayBuffers - The array buffers memory in bytes.
-   */
-  wssSendMemoryUpdate(totalMemory: string, freeMemory: string, rss: string, heapTotal: string, heapUsed: string, external: string, arrayBuffers: string): void {
-    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    /* v8 ignore next */
-    if (hasParameter('debug')) this.log.debug('Sending a memory update message to all connected clients');
-    // Send the message to all connected clients
-    this.wssBroadcastMessage({
-      id: 0,
-      src: 'Matterbridge',
-      dst: 'Frontend',
-      method: 'memory_update',
-      success: true,
-      response: { totalMemory, freeMemory, rss, heapTotal, heapUsed, external, arrayBuffers },
-    });
-  }
-
-  /**
-   * Sends an uptime update message to all connected clients.
-   *
-   * @param {string} systemUptime - The system uptime in a human-readable format.
-   * @param {string} processUptime - The process uptime in a human-readable format.
-   */
-  wssSendUptimeUpdate(systemUptime: string, processUptime: string): void {
-    if (!this.listening || this.webSocketServer?.clients.size === 0) return;
-    /* v8 ignore next */
-    if (hasParameter('debug')) this.log.debug('Sending a uptime update message to all connected clients');
-    // Send the message to all connected clients
-    this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'uptime_update', success: true, response: { systemUptime, processUptime } });
-  }
-
-  /**
    * Sends an open snackbar message to all connected clients.
    *
    * @param {string} message - The message to send.
@@ -2581,7 +2441,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
    * @param {string | undefined} plugin - The name of the plugin.
    * @param {string | undefined} serialNumber - The serial number of the device.
    * @param {string | undefined} uniqueId - The unique identifier of the device.
-   * @param {EndpointNumber} number - The endpoint number where the attribute belongs.
+   * @param {number} number - The endpoint number where the attribute belongs.
    * @param {string} id - The endpoint id where the attribute belongs.
    * @param {string} cluster - The cluster name where the attribute belongs.
    * @param {string} attribute - The name of the attribute that changed.
@@ -2595,7 +2455,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     plugin: string,
     serialNumber: string,
     uniqueId: string,
-    number: EndpointNumber,
+    number: number,
     id: string,
     cluster: string,
     attribute: string,
@@ -2624,7 +2484,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     // Send the message to all connected clients
     const stringifiedMsg = JSON.stringify(msg);
-    if (!['log', 'cpu_update', 'memory_update', 'uptime_update'].includes(msg.method)) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
+    if (!['log', 'system_update'].includes(msg.method)) this.log.debug(`Sending a broadcast message: ${debugStringify(msg)}`);
     this.webSocketServer?.clients.forEach((client) => {
       /* v8 ignore next */
       if (client.readyState === client.OPEN) {

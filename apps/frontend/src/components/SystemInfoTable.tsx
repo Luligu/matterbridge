@@ -8,31 +8,11 @@ import Tooltip from '@mui/material/Tooltip';
 import { memo, useContext, useEffect, useRef, useState } from 'react';
 
 import { debug, enableMobile } from '../appState';
-import { type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
+import { type ApiSystemUpdate, type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
 import { MbfWindow, MbfWindowContent, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { TruncatedText } from './TruncatedText';
 import { UiContext } from './UiContext';
 import { WebSocketContext } from './WebSocketProvider';
-
-const keyNameMap = new Map<string, string>([
-  ['interfaceName', 'Interface name'],
-  ['macAddress', 'Mac address'],
-  ['ipv4Address', 'IPv4 address'],
-  ['ipv6Address', 'IPv6 address'],
-  ['nodeVersion', 'Node version'],
-  ['bunVersion', 'Bun version'],
-  ['hostname', 'Hostname'],
-  ['user', 'User'],
-  ['osType', 'Os'],
-  ['osPlatform', 'Platform'],
-  ['freeMemory', 'Memory'],
-  ['systemUptime', 'System uptime'],
-  ['processUptime', 'Process uptime'],
-  ['cpuUsage', 'Host CPU'],
-  ['processCpuUsage', 'Process CPU'],
-  ['rss', 'Rss'],
-  ['heapUsed', 'Heap'],
-]);
 
 function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformation; compact: boolean }) {
   // Contexts
@@ -48,7 +28,36 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
   if (debug) console.log('SystemInfoTable loading with systemInfo:', localSystemInfo, 'compact:', compact);
 
+  // Row labels, inside the component so they can depend on compact
+  const keyNameMap = new Map<string, string>([
+    ['interfaceName', 'Interface name'],
+    ['macAddress', 'Mac address'],
+    ['ipv4Address', 'IPv4 address'],
+    ['ipv6Address', 'IPv6 address'],
+    ['nodeVersion', 'Node version'],
+    ['bunVersion', 'Bun version'],
+    ['hostname', 'Hostname'],
+    ['user', 'User'],
+    ['osType', 'Os'],
+    ['osRelease', 'Os release'],
+    ['osPlatform', 'Platform'],
+    ['osArch', 'Architecture'],
+    ['freeMemory', compact ? 'Host memory' : 'Free memory'],
+    ['totalMemory', 'Total memory'],
+    ['constrainedMemory', 'Memory limit'],
+    ['systemUptime', 'System uptime'],
+    ['processUptime', 'Process uptime'],
+    ['cpuUsage', 'Host CPU'],
+    ['processCpuUsage', 'Process CPU'],
+    ['rss', 'Process memory'],
+    ['heapUsed', compact ? 'Process heap' : 'Used heap'],
+    ['heapTotal', 'Total heap'],
+  ]);
+
   const displaySystemInfo = { ...localSystemInfo };
+
+  // Omit the constrained memory when it is the same as the total memory (no container or cgroup limit)
+  if (displaySystemInfo.constrainedMemory === displaySystemInfo.totalMemory) displaySystemInfo.constrainedMemory = '';
 
   // Compact some fields if compact is true
   if (compact && displaySystemInfo.totalMemory && displaySystemInfo.freeMemory) {
@@ -88,51 +97,27 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
   };
 
   useEffect(() => {
-    const handleMemoryUpdate = (totalMemory: string, freeMemory: string, heapTotal: string, heapUsed: string, rss: string) => {
+    const handleSystemUpdate = (update: ApiSystemUpdate) => {
       setLocalSystemInfo((prev) => ({
         ...prev,
-        totalMemory: totalMemory,
-        freeMemory: freeMemory,
-        heapTotal: heapTotal,
-        heapUsed: heapUsed,
-        rss: rss,
-      }));
-    };
-
-    const handleCpuUpdate = (cpuUsage: number) => {
-      setLocalSystemInfo((prev) => ({
-        ...prev,
-        cpuUsage: cpuUsage.toFixed(2) + ' %',
-      }));
-    };
-
-    const handleProcessCpuUpdate = (processCpuUsage: number) => {
-      setLocalSystemInfo((prev) => ({
-        ...prev,
-        processCpuUsage: processCpuUsage.toFixed(2) + ' %',
-      }));
-    };
-
-    const handleUptimeUpdate = (systemUptime: string, processUptime: string) => {
-      setLocalSystemInfo((prev) => ({
-        ...prev,
-        systemUptime: systemUptime,
-        processUptime: processUptime,
+        totalMemory: update.totalMemory,
+        freeMemory: update.freeMemory,
+        constrainedMemory: update.constrainedMemory,
+        heapTotal: update.heapTotal,
+        heapUsed: update.heapUsed,
+        rss: update.rss,
+        cpuUsage: update.cpuUsage.toFixed(2) + ' %',
+        processCpuUsage: update.processCpuUsage.toFixed(2) + ' %',
+        systemUptime: update.systemUptime,
+        processUptime: update.processUptime,
       }));
     };
 
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (debug) console.log('SystemInfoTable received WebSocket Message:', msg);
-      if (msg.method === 'memory_update' && msg.response?.totalMemory && msg.response.freeMemory && msg.response.heapTotal && msg.response.heapUsed && msg.response.rss) {
-        if (debug) console.log('SystemInfoTable received memory_update', msg);
-        handleMemoryUpdate(msg.response.totalMemory, msg.response.freeMemory, msg.response.heapTotal, msg.response.heapUsed, msg.response.rss);
-      } else if (msg.method === 'cpu_update' && msg.response?.cpuUsage) {
-        if (debug) console.log('SystemInfoTable received cpu_update', msg);
-        handleCpuUpdate(msg.response.cpuUsage);
-        handleProcessCpuUpdate(msg.response.processCpuUsage);
-      } else if (msg.method === 'uptime_update' && msg.response?.systemUptime && msg.response.processUptime) {
-        if (debug) console.log('SystemInfoTable received uptime_update', msg);
-        handleUptimeUpdate(msg.response.systemUptime, msg.response.processUptime);
+      if (msg.method === 'system_update' && msg.response) {
+        if (debug) console.log('SystemInfoTable received system_update', msg);
+        handleSystemUpdate(msg.response);
       } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {
         if (debug) console.log('SystemInfoTable received /api/viewhistorypage success');
         window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');

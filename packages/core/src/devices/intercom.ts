@@ -22,19 +22,40 @@
  * limitations under the License.
  */
 
-import { StreamUsage } from '@matter/types';
+// @matter
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import type { EndpointNumber } from '@matter/types/datatype';
+import { type Semtag, StreamUsage } from '@matter/types/globals';
 
+// Matterbridge
 import { createDefaultIntercomCameraAvStreamManagementClusterServer } from '../behaviors/cameraAvStreamManagementServer.js';
 import { addChimeClient, addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../behaviors/clients.js';
 import { createDefaultWebRtcTransportProviderClusterServer } from '../behaviors/webRtcTransportProviderServer.js';
 import { createDefaultWebRtcTransportRequestorClusterServer } from '../behaviors/webRtcTransportRequestorServer.js';
 import type { WeriftOfferOptions } from '../behaviors/weriftSession.js';
-// Matterbridge
-import { intercom, powerSource } from '../matterbridgeDeviceTypes.js';
+import { genericSwitch, intercom, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
+
+/**
+ * Options for the mandatory Generic Switch child endpoint created by {@link Intercom}.
+ */
+export interface IntercomSwitchOptions {
+  /** The name of the switch. Default: 'Switch' */
+  name?: string;
+
+  /** The tagList associated with the switch, for disambiguation when more switches are added with {@link Intercom.addSwitch}. Default: no tags */
+  tagList?: Semtag[];
+
+  /** The endpoint number of the switch child endpoint. Default: the next available endpoint number */
+  number?: EndpointNumber;
+
+  /** Identify time in seconds. Default: 0 */
+  identifyTime?: number;
+  /** Identify type. The Identify cluster is always created because it is a required server cluster for the Generic Switch device type. Default: Identify.IdentifyType.None */
+  identifyType?: Identify.IdentifyType;
+}
 
 /**
  * Options for configuring an {@link Intercom} instance.
@@ -65,11 +86,14 @@ export interface IntercomOptions extends MatterbridgeEndpointOptions {
 
   /** Options for the werift WebRTC peer connection used by the WebRtcTransportProvider cluster. Default: both media kinds enabled with source injection disabled */
   weriftOfferOptions?: WeriftOfferOptions;
+
+  /** Options for the mandatory Generic Switch child endpoint. See {@link IntercomSwitchOptions} for the defaults */
+  switchOptions?: IntercomSwitchOptions;
 }
 
 /**
  * Matterbridge endpoint representing an intercom device.
- * Matter specs 1.6.0 chapter 16.4.
+ * Matter specs 1.6.1 chapter 16.4.
  */
 export class Intercom extends MatterbridgeEndpoint {
   /**
@@ -84,7 +108,9 @@ export class Intercom extends MatterbridgeEndpoint {
    * required WebRtcTransportProvider and WebRtcTransportRequestor client clusters are added automatically by
    * {@link addWebRtcTransportProviderClient}/{@link addWebRtcTransportRequestorClient}, so this endpoint can both
    * receive and solicit WebRTC offers to/from a peer intercom. The optional Chime client cluster is added
-   * automatically by {@link addChimeClient}, so a bound Chime device can be triggered.
+   * automatically by {@link addChimeClient}, so a bound Chime device can be triggered. The mandatory Generic Switch
+   * child endpoint, used by the Intercom to trigger an alert of the desired connected party, is created with the
+   * MomentarySwitch feature (see {@link Intercom.addSwitch}).
    *
    * @param {string} name - The name of the intercom.
    * @param {string} serial - The serial number of the intercom.
@@ -103,6 +129,7 @@ export class Intercom extends MatterbridgeEndpoint {
    *  - speakerCapabilities: { maxNumberOfChannels: 1, supportedCodecs: [AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] }
    *  - twoWayTalkSupport: CameraAvStreamManagement.TwoWayTalkSupportType.FullDuplex
    *  - weriftOfferOptions: { offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' }
+   *  - switchOptions: see {@link IntercomSwitchOptions} for the full list of defaults
    *
    * @returns {Intercom} The Intercom instance.
    */
@@ -119,6 +146,7 @@ export class Intercom extends MatterbridgeEndpoint {
       speakerCapabilities = { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] },
       twoWayTalkSupport = CameraAvStreamManagement.TwoWayTalkSupportType.FullDuplex,
       weriftOfferOptions,
+      switchOptions = {},
       id,
       number,
       tagList,
@@ -166,5 +194,41 @@ export class Intercom extends MatterbridgeEndpoint {
     addWebRtcTransportRequestorClient(this);
     addChimeClient(this);
     this.addRequiredClusters();
+
+    /** First mandatory Generic Switch child endpoint */
+    const {
+      name: switchName = 'Switch',
+      tagList: switchTagList = [],
+      number: switchNumber,
+      identifyTime: switchIdentifyTime = 0,
+      identifyType: switchIdentifyType = Identify.IdentifyType.None,
+    } = switchOptions;
+    this.addSwitch(switchName, { tagList: switchTagList, number: switchNumber, identifyTime: switchIdentifyTime, identifyType: switchIdentifyType });
+  }
+
+  /**
+   * Adds a Generic Switch child endpoint to the intercom.
+   *
+   * @param {string} name - The name of the switch.
+   * @param {IntercomSwitchOptions} [options] - Optional configuration values. Missing fields use the defaults documented on {@link IntercomSwitchOptions}.
+   *
+   * @returns {MatterbridgeEndpoint} The MatterbridgeEndpoint instance representing the switch.
+   *
+   * @remarks
+   * 16.4.4 An Intercom SHALL be composed of at least one endpoint with the Generic Switch (0x000F) device type. The
+   * Generic Switch SHALL model the mechanism used by the Intercom to trigger an alert of the desired connected party.
+   * 16.4.8 The Switch cluster of the Generic Switch SHALL have the MomentarySwitch feature.
+   * Generic Switch is a Simple device type, so it needs its own child endpoint (Core 9.2.1). The constructor already
+   * creates that mandatory switch; call this method to add further switches, for example to disambiguate multiple
+   * switches with a tagList.
+   */
+  addSwitch(name: string, options: IntercomSwitchOptions = {}): MatterbridgeEndpoint {
+    const { tagList = [], number, identifyTime = 0, identifyType = Identify.IdentifyType.None } = options;
+    const switchChild = this.addChildDeviceType(name, genericSwitch, { number, ...(tagList.length > 0 ? { tagList } : {}) });
+    switchChild.log.logName = name;
+    switchChild.createDefaultIdentifyClusterServer(identifyTime, identifyType);
+    switchChild.createDefaultMomentarySwitchClusterServer();
+    switchChild.addRequiredClusters();
+    return switchChild;
   }
 }

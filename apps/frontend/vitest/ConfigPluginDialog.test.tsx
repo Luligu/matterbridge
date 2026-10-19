@@ -427,10 +427,10 @@ describe('ConfigPluginDialog', () => {
     plugin.configJson = extendConfig(plugin, { devices: [] });
     const { addListener } = renderDialog(plugin);
     const listener = getListener(addListener);
-    const message = { id: 1234, src: 'Matterbridge', dst: 'Frontend', method: '/api/select/devices', response: [{ serial: 'valid', name: 'Valid device' }] };
+    const message = { id: 1234, src: 'Matterbridge', dst: 'Frontend', method: '/api/select/devices', response: [{ serialNumber: 'valid', deviceName: 'Valid device' }] };
     listener(message);
     for (const overrides of [{ src: 'Other' }, { dst: 'Other' }, { id: 0 }, { id: 9999 }, { method: '/api/other' }]) {
-      listener({ ...message, ...overrides, response: [{ serial: 'invalid', name: 'Invalid device' }] });
+      listener({ ...message, ...overrides, response: [{ serialNumber: 'invalid', deviceName: 'Invalid device' }] });
     }
     listener({ ...message, response: null });
     listener({ ...message, method: '/api/select/entities', response: null });
@@ -597,7 +597,7 @@ describe('ConfigPluginDialog', () => {
       src: 'Matterbridge',
       dst: 'Frontend',
       method: '/api/select/devices',
-      response: [{ serial: 'device-001', name: 'Kitchen Sensor', icon: 'wifi' }],
+      response: [{ serialNumber: 'device-001', deviceName: 'Kitchen Sensor', icon: 'wifi' }],
     });
 
     const mappingsTitle = screen.getByText('Mappings');
@@ -666,8 +666,8 @@ describe('ConfigPluginDialog', () => {
       method: '/api/select/devices',
       response: [
         {
-          serial: 'wifi-001',
-          name: 'Kitchen Sensor',
+          serialNumber: 'wifi-001',
+          deviceName: 'Kitchen Sensor',
           icon: 'wifi',
           entities: [
             { name: 'WiFi Entity', description: 'WiFi Desc', icon: 'wifi' },
@@ -677,8 +677,8 @@ describe('ConfigPluginDialog', () => {
             { name: 'Matter Entity', description: 'Matter Desc', icon: 'matter' },
           ],
         },
-        { serial: 'ble-001', name: 'Hall Sensor', icon: 'ble' },
-        { serial: 'hub-001', name: 'Hub Sensor', icon: 'hub' },
+        { serialNumber: 'ble-001', deviceName: 'Hall Sensor', icon: 'ble' },
+        { serialNumber: 'hub-001', deviceName: 'Hub Sensor', icon: 'hub' },
       ],
     });
     listener({
@@ -787,8 +787,8 @@ describe('ConfigPluginDialog', () => {
       method: '/api/select/devices',
       response: [
         {
-          serial: 'wifi-001',
-          name: 'Kitchen Sensor',
+          serialNumber: 'wifi-001',
+          deviceName: 'Kitchen Sensor',
           icon: 'wifi',
           entities: [
             { name: 'WiFi Entity', description: 'WiFi Desc', icon: 'wifi' },
@@ -796,7 +796,7 @@ describe('ConfigPluginDialog', () => {
             { name: 'Matter Entity', description: 'Matter Desc', icon: 'matter' },
           ],
         },
-        { serial: 'ble-001', name: 'Hall Sensor', icon: 'ble' },
+        { serialNumber: 'ble-001', deviceName: 'Hall Sensor', icon: 'ble' },
       ],
     });
     listener({
@@ -882,9 +882,9 @@ describe('ConfigPluginDialog', () => {
       dst: 'Frontend',
       method: '/api/select/devices',
       response: [
-        { serial: 'wifi-001', name: 'Kitchen Sensor', icon: 'wifi' },
-        { serial: 'ble-001', name: 'Hall Sensor', icon: 'ble' },
-        { serial: 'hub-001', name: 'Hub Sensor', icon: 'hub' },
+        { serialNumber: 'wifi-001', deviceName: 'Kitchen Sensor', icon: 'wifi' },
+        { serialNumber: 'ble-001', deviceName: 'Hall Sensor', icon: 'ble' },
+        { serialNumber: 'hub-001', deviceName: 'Hub Sensor', icon: 'hub' },
       ],
     });
 

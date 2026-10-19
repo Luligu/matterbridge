@@ -139,15 +139,15 @@ describe('ConfigPluginDialog debug paths', () => {
       method: '/api/select/devices',
       response: [
         {
-          serial: 'serial-001',
-          name: 'Kitchen Sensor',
+          serialNumber: 'serial-001',
+          deviceName: 'Kitchen Sensor',
           icon: 'wifi',
           entities: [
             { name: 'Kitchen Light', description: 'Kitchen Light Desc', icon: 'component' },
             { name: 'Kitchen Matter', description: 'Kitchen Matter Desc', icon: 'matter' },
           ],
         },
-        { serial: 'serial-002', name: 'Hall Sensor', icon: 'ble' },
+        { serialNumber: 'serial-002', deviceName: 'Hall Sensor', icon: 'ble' },
       ],
     });
     listener({

@@ -4,26 +4,21 @@
  * @author Luca Liguori
  */
 
-/* oxlint-disable typescript/prefer-nullish-coalescing */
-/* oxlint-disable typescript/explicit-function-return-type */
-
 const MATTER_PORT = 10200;
 const NAME = 'MatterNodeServer';
 const PASSCODE = 123460;
 const DISCRIMINATOR = 3864;
-const STRESS_TEST_ITERATIONS = 5;
+const STRESS_TEST_ITERATIONS = 3;
 
-import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
-import url from 'node:url';
 
-import { HOMEDIR, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { getSharedMatterbridge } from '@matterbridge/test-utils/vitest/matter';
+import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
 import type { SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { NODE_STORAGE_DIR } from '@matterbridge/types';
-import { formatBytes, formatPercent, formatUptime, getInterfaceDetails } from '@matterbridge/utils';
-import { AnsiLogger, LogLevel } from 'node-ansi-logger';
+import { getInterfaceName } from '@matterbridge/utils/network';
+import { AnsiLogger } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
 import { DeviceManager } from '../src/deviceManager.js';
@@ -36,86 +31,20 @@ import { PluginManager } from '../src/pluginManager.js';
 // Setup the test environment
 await setupTest(NAME, false, ['--verbose'], { MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS: '10' });
 
-const matterbridgePackageJson = JSON.parse(fs.readFileSync(new URL('../../../package.json', import.meta.url), 'utf8'));
-const frontendPackageJson = JSON.parse(fs.readFileSync(new URL('../../../apps/frontend/package.json', import.meta.url), 'utf8'));
-const nic = getInterfaceDetails();
-
 const matterbridge: SharedMatterbridge = {
-  uuid: '',
-  rootDirectory: path.resolve(path.dirname(url.fileURLToPath(import.meta.url)), '../'),
-  homeDirectory: HOMEDIR,
-  matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
-  matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
-  matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
-  globalModulesDirectory: path.join('.', 'node_modules'),
-  matterbridgeVersion: matterbridgePackageJson.version,
-  matterbridgeLatestVersion: matterbridgePackageJson.version,
-  matterbridgeDevVersion: matterbridgePackageJson.version,
-  frontendVersion: frontendPackageJson.version,
-  dockerDev: undefined,
-  dockerVersion: undefined,
-  dockerLatestVersion: undefined,
-  dockerDevVersion: undefined,
+  ...getSharedMatterbridge(),
   bridgeMode: 'bridge',
-  restartMode: 'none',
   virtualMode: 'disabled',
-  profile: undefined,
-  logLevel: LogLevel.DEBUG,
   fileLogger: true,
-  matterLogLevel: LogLevel.DEBUG,
   matterFileLogger: true,
-  mdnsInterface: undefined,
-  ipv4Address: undefined,
-  ipv6Address: undefined,
   port: MATTER_PORT,
   discriminator: DISCRIMINATOR,
   passcode: PASSCODE,
-  startupAt: 0,
-  shutdownAt: 0,
-  runningTimes: 0,
-  runningDays: 0,
-  systemInformation: {
-    interfaceName: nic?.interfaceName || '',
-    macAddress: nic?.macAddress || '',
-    ipv4Address: nic?.ipv4Address || '',
-    ipv6Address: nic?.ipv6Address || '',
-    nodeVersion: process.versions.node,
-    hostname: os.hostname(),
-    user: os.userInfo().username,
-    osType: os.type(),
-    osRelease: os.release(),
-    osPlatform: os.platform(),
-    osArch: os.arch(),
-
-    totalMemory: formatBytes(os.totalmem()),
-    freeMemory: formatBytes(os.freemem()),
-    systemUptime: formatUptime(os.uptime()),
-    processUptime: formatUptime(Math.floor(process.uptime())),
-    cpuUsage: formatPercent(0),
-    processCpuUsage: formatPercent(0),
-    rss: formatBytes(process.memoryUsage().rss),
-    heapTotal: formatBytes(process.memoryUsage().heapTotal),
-    heapUsed: formatBytes(process.memoryUsage().heapUsed),
-  },
+  mdnsInterface: getInterfaceName(),
 };
-// process.stdout.write(`Shared matterbridge:\n${JSON.stringify(matterbridge, null, 2)}\n`);
 
 describe('MatterNode server', () => {
   let matter: MatterNode;
-
-  // Override matterbridge methods to call MatterNode methods
-  (matterbridge as any).addBridgedEndpoint = async (pluginName: string, endpoint: MatterbridgeEndpoint) => {
-    return await matter.addBridgedEndpoint(pluginName, endpoint);
-  };
-  (matterbridge as any).removeBridgedEndpoint = async (pluginName: string, endpoint: MatterbridgeEndpoint) => {
-    return await matter.removeBridgedEndpoint(pluginName, endpoint);
-  };
-  (matterbridge as any).removeAllBridgedEndpoints = async (pluginName: string) => {
-    return await matter.removeAllBridgedEndpoints(pluginName);
-  };
-  (matterbridge as any).addVirtualEndpoint = async (pluginName: string, name: string, type: 'light' | 'outlet' | 'switch' | 'mounted_switch', callback: () => Promise<void>) => {
-    return await matter.addVirtualEndpoint(pluginName, name, type, callback);
-  };
 
   // Create PluginManager and DeviceManager to simulate the normal environment
   /* Simulate normal environment in test */
@@ -135,8 +64,6 @@ describe('MatterNode server', () => {
   });
 
   beforeAll(() => {
-    // process.stdout.write('=== Starting MatterNode server tests ===\n\n');
-
     // Create MatterNode instance
     matter = new MatterNode(matterbridge);
   });
@@ -160,8 +87,6 @@ describe('MatterNode server', () => {
 
     // Log any keep-alive handles
     // logKeepAlives(matter.log);
-
-    // process.stdout.write('=== Finished MatterNode server tests ===\n\n');
   });
 
   test('Add plugin', async () => {

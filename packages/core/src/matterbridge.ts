@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.0
+ * @version 1.8.1
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -72,7 +72,7 @@ import type {
   WorkerMessage,
 } from '@matterbridge/types';
 import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg, typ } from '@matterbridge/types';
-import { isBun, getGlobalBunModules, memoryFootprint } from '@matterbridge/utils/bun';
+import { constrainedMemory, isBun, getGlobalBunModules, memoryFootprint } from '@matterbridge/utils/bun';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { createDirectory } from '@matterbridge/utils/create-dir';
@@ -170,6 +170,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     // Cpu and memory properties
     totalMemory: '',
     freeMemory: '',
+    constrainedMemory: '',
     systemUptime: '',
     processUptime: '',
     cpuUsage: '',
@@ -390,6 +391,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getPlatformMatterbridge(): PlatformMatterbridge {
     // Update the variable system information properties
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -427,6 +429,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getSharedMatterbridge(): SharedMatterbridge {
     // Update the variable system information properties
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -479,6 +482,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   getApiSettings(): ApiSettings {
     // Update the variable system information properties
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
@@ -509,9 +513,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         bridgeStatus: this.bridgeStatus,
         profile: this.profile,
         readOnly: hasParameter('readonly'),
-        shellyBoard: false,
-        shellySysUpdate: false,
-        shellyMainUpdate: false,
         loggerLevel: this.logLevel,
         fileLogger: this.fileLogger,
         matterLoggerLevel: this.matterLogLevel,
@@ -533,8 +534,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     };
   }
 
+  /**
+   * Handles the broadcast messages sent to matterbridge.
+   * Only the request messages with destination 'all' or 'matterbridge' are handled: each one gets a response with the result, the other messages are ignored.
+   *
+   * @param {WorkerMessage} msg - The broadcast message received.
+   * @returns {Promise<void>} A promise that resolves when the message has been handled.
+   */
   private async msgHandler(msg: WorkerMessage): Promise<void> {
-    if (this.server.isWorkerRequest(msg) && (msg.dst === 'all' || msg.dst === 'matterbridge')) {
+    if (this.server.isWorkerRequest(msg)) {
       /* v8 ignore next - debug/verbose flags are only used for development and testing, not in production */
       if (this.verbose) this.log.debug(`Received broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}: ${debugStringify(msg)}${db}`);
       switch (msg.type) {
@@ -588,20 +596,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           await this.shutdownProcess();
           break;
-        case 'matterbridge_apimatter': {
-          let serverNode: ServerNode | undefined;
-          if (msg.params.id === 'Matterbridge') serverNode = this.serverNode;
-          else
-            serverNode =
-              this.plugins.array().find((p) => p.serverNode && p.serverNode.id === msg.params.id)?.serverNode ??
-              this.devices.array().find((d) => d.serverNode && d.serverNode.id === msg.params.id)?.serverNode;
-          if (!serverNode) {
-            this.server.respond({ ...msg, result: { matter: undefined } });
-            break;
-          }
-          this.server.respond({ ...msg, result: { matter: getServerNodeData(serverNode) } });
-          break;
-        }
         case 'matterbridge_apisettings':
           this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
           break;
@@ -738,6 +732,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.environment.vars.set('path.root', path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR));
     this.environment.vars.set('runtime.signals', false);
     this.environment.vars.set('runtime.exitcode', false);
+    this.environment.vars.set('endpoint.validation', 'warn');
 
     // Register process handlers
     this.registerProcessHandlers();
@@ -1203,12 +1198,13 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     );
 
     // Check node version and throw error
-    const minNodeVersion = 20;
+    const minNodeVersion = 22;
+    const minNodeMinorVersion = 13;
     const nodeVersion = process.versions.node;
-    const [versionMajor] = nodeVersion.split('.').map(Number);
-    if (versionMajor < minNodeVersion) {
-      this.log.error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
-      throw new Error(`Node version ${versionMajor} is not supported. Please upgrade to ${minNodeVersion} or above.`);
+    const [versionMajor, versionMinor] = nodeVersion.split('.').map(Number);
+    if (versionMajor < minNodeVersion || (versionMajor === minNodeVersion && versionMinor < minNodeMinorVersion)) {
+      this.log.error(`Node version ${nodeVersion} is not supported. Please upgrade to ${minNodeVersion}.${minNodeMinorVersion}.0 or above.`);
+      throw new Error(`Node version ${nodeVersion} is not supported. Please upgrade to ${minNodeVersion}.${minNodeMinorVersion}.0 or above.`);
     }
 
     // Parse command line
@@ -1664,6 +1660,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
     this.systemInformation.osArch = os.arch(); // "x64", "arm", etc.
     this.systemInformation.totalMemory = formatBytes(os.totalmem());
+    this.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
     this.systemInformation.freeMemory = formatBytes(os.freemem());
     this.systemInformation.systemUptime = formatUptime(os.uptime());
     this.systemInformation.processUptime = formatUptime(process.uptime());
@@ -1688,6 +1685,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.log.debug(`- Architecture: ${this.systemInformation.osArch}`);
     this.log.debug(`- Total Memory: ${this.systemInformation.totalMemory}`);
     this.log.debug(`- Free Memory: ${this.systemInformation.freeMemory}`);
+    this.log.debug(`- Constrained Memory: ${this.systemInformation.constrainedMemory}`);
     this.log.debug(`- System Uptime: ${this.systemInformation.systemUptime}`);
     this.log.debug(`- Process Uptime: ${this.systemInformation.processUptime}`);
     this.log.debug(`- RSS: ${this.systemInformation.rss}`);
@@ -1961,6 +1959,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.debug('Matterbridge reachability timeout cleared');
       }
 
+      // Request all the threads to shut down
+      this.server.request({ type: 'manager_shutdown', src: 'matterbridge', dst: 'manager', params: {} });
+
       // Call the shutdown method of each plugin and clear the plugins reachability timeout
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
@@ -2120,16 +2121,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       }
 
       // Stop the frontend
-      await this.frontend.stop();
-      this.frontend.destroy();
+      if (!hasParameter('experimental-backend')) {
+        await this.frontend.stop();
+        this.frontend.destroy();
+      }
 
       // Close PluginManager and DeviceManager
       this.plugins.destroy();
       this.devices.destroy();
-
-      // Request all the threads to shut down
-      this.server.request({ type: 'manager_shutdown', src: 'matterbridge', dst: 'manager', params: {} });
-      await wait(100);
 
       // Stop thread messaging server
       this.server.close();
@@ -2264,6 +2263,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       },
     });
   }
+
   /**
    * Starts the Matterbridge in bridge mode.
    *

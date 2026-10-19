@@ -22,10 +22,11 @@
  * limitations under the License.
  */
 
+// @matter
 import { Identify } from '@matter/types/clusters/identify';
 
-import { addChimeClient } from '../behaviors/clients.js';
 // Matterbridge
+import { addChimeClient } from '../behaviors/clients.js';
 import { doorbell, powerSource } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';

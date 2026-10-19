@@ -10,6 +10,7 @@ on:
   #     github-token: ${{ secrets.TRIGGER_TOKEN }}
   #     script: |
   #       await github.rest.actions.createWorkflowDispatch({
+  #         headers: { 'X-GitHub-Api-Version': '2026-03-10' },
   #         owner: 'Luligu',
   #         repo: 'matterbridge',
   #         workflow_id: 'docker-buildx-latest.yml',

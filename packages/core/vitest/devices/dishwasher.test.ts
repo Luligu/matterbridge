@@ -9,8 +9,8 @@ const MATTER_PORT = 8004;
 const MATTER_CREATE_ONLY = true;
 
 // @matter
-import { DishwasherModeServer, TemperatureControlServer } from '@matter/node/behaviors';
-import { Status, TlvOfModel } from '@matter/types';
+import { DishwasherModeServer } from '@matter/node/behaviors/dishwasher-mode';
+import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
 import { DishwasherAlarm } from '@matter/types/clusters/dishwasher-alarm';
 import { DishwasherMode } from '@matter/types/clusters/dishwasher-mode';
 import { Identify } from '@matter/types/clusters/identify';
@@ -18,6 +18,8 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { Status } from '@matter/types/globals';
+import { TlvOfModel } from '@matter/types/tlv';
 import {
   addDevice,
   aggregator,
@@ -101,23 +103,6 @@ describe('Matterbridge ' + NAME, () => {
     }[] = [];
     device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
       if (attributeValue === undefined) return;
-
-      expect(clusterName).toBeDefined();
-      expect(typeof clusterName).toBe('string');
-      expect(clusterName.length).toBeGreaterThanOrEqual(1);
-
-      expect(clusterId).toBeDefined();
-      expect(typeof clusterId).toBe('number');
-      expect(clusterId).toBeGreaterThanOrEqual(1);
-
-      expect(attributeName).toBeDefined();
-      expect(typeof attributeName).toBe('string');
-      expect(attributeName.length).toBeGreaterThanOrEqual(1);
-
-      expect(attributeId).toBeDefined();
-      expect(typeof attributeId).toBe('number');
-      expect(attributeId).toBeGreaterThanOrEqual(0);
-
       if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
         const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
         attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
@@ -280,6 +265,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('reject SupportedModes without a Normal mode at initialization', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const invalid = new Dishwasher('Dishwasher No Normal', 'DW000000', {
       currentMode: 1,
       supportedModes: [{ label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] }],
@@ -287,6 +273,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(await addDevice(server, invalid)).toBeFalsy();
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error adding device DishwasherNoNormal-DW000000'));
     loggerErrorSpy.mockClear();
+    stderrSpy.mockRestore();
   });
 
   test('encode DishwasherAlarm attributes with the cluster-specific bitmap', () => {

@@ -62,6 +62,8 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+import type { BaseDevice } from '@matterbridge/types';
+import { AnsiLogger, stringify } from 'node-ansi-logger';
 
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
@@ -76,6 +78,9 @@ import {
   sanitizeFabricInformations,
   sanitizeSessionInformation,
   setAdvertisingNode,
+  toApiClusters,
+  toApiDevice,
+  toBaseDevice,
 } from '../src/matterNodeHelpers.js';
 
 const colorAttributes: Record<string, unknown> = { colorMode: 0 };
@@ -84,7 +89,8 @@ const labels: Record<string, unknown> = {};
 
 const supportedModes = new Map<string, unknown>();
 
-vi.mock('../src/matterbridgeEndpointHelpers.js', () => ({
+vi.mock('../src/matterbridgeEndpointHelpers.js', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../src/matterbridgeEndpointHelpers.js')>()),
   getAttribute: vi.fn((_device: unknown, cluster: string | { id: number }, attribute: string) => {
     if (cluster === 'colorControl') return colorAttributes[attribute];
     if (typeof cluster === 'string' && attribute === 'supportedModes') return supportedModes.get(cluster);
@@ -170,6 +176,219 @@ function text(...list: Attribute[]): string {
 }
 
 describe('matterNodeHelpers', () => {
+  describe('toApiClusters', () => {
+    /**
+     * Creates a fresh API endpoint fixture without a Matter node or shared test state.
+     *
+     * @param {Attribute[]} list The attributes to iterate.
+     * @param {MatterbridgeEndpoint[]} children The child endpoints.
+     * @param {number} number The endpoint number.
+     * @param {string} id The endpoint id.
+     * @param {number} deviceType The descriptor device type.
+     * @returns {MatterbridgeEndpoint} The endpoint fixture.
+     */
+    function endpoint(list: Attribute[] = [], children: MatterbridgeEndpoint[] = [], number = 5, id = 'contact', deviceType = 0x15): MatterbridgeEndpoint {
+      return Object.assign(fake({ list, children }), {
+        plugin: 'test-plugin',
+        deviceName: 'Contact',
+        serialNumber: 'CONTACT-001',
+        uniqueId: 'contact-unique-id',
+        number,
+        maybeNumber: number,
+        id,
+        maybeId: id,
+        state: { descriptor: { deviceTypeList: [{ deviceType, revision: 1 }] } },
+      });
+    }
+
+    test('should serialize root and child attributes with their own endpoint metadata', () => {
+      const child = endpoint([at(TemperatureMeasurement, 'measuredValue', 2100)], [], 6, 'temperature', 0x302);
+      const device = endpoint([at(BooleanState, 'stateValue', false), at(BridgedDeviceBasicInformation, 'serialNumber', 'CONTACT-001')], [child]);
+      const log = new AnsiLogger({ logName: 'ApiClusters' });
+
+      expect(toApiClusters(device, log)).toEqual({
+        plugin: 'test-plugin',
+        deviceName: 'Contact',
+        serialNumber: 'CONTACT-001',
+        uniqueId: 'contact-unique-id',
+        number: 5,
+        id: 'contact',
+        deviceTypes: [0x15],
+        clusters: [
+          {
+            endpoint: '5',
+            number: 5,
+            id: 'main',
+            deviceTypes: [0x15],
+            clusterName: 'BooleanState',
+            clusterId: '0x45',
+            attributeName: 'stateValue',
+            attributeId: '0x00',
+            attributeValue: 'false',
+            attributeLocalValue: false,
+          },
+          {
+            endpoint: '5',
+            number: 5,
+            id: 'main',
+            deviceTypes: [0x15],
+            clusterName: 'BridgedDeviceBasicInformation',
+            clusterId: '0x39',
+            attributeName: 'serialNumber',
+            attributeId: '0x0f',
+            attributeValue: 'CONTACT-001',
+            attributeLocalValue: 'CONTACT-001',
+          },
+          {
+            endpoint: '6',
+            number: 6,
+            id: 'temperature',
+            deviceTypes: [0x302],
+            clusterName: 'TemperatureMeasurement',
+            clusterId: '0x402',
+            attributeName: 'measuredValue',
+            attributeId: '0x00',
+            attributeValue: '2100',
+            attributeLocalValue: 2100,
+          },
+        ],
+      });
+    });
+
+    test('should detach managed objects and binary values while preserving null, bigint and zero', () => {
+      const managed = new Proxy({ entries: new Proxy([{ value: 42n }], {}) }, {});
+      const bytes = Uint8Array.from([1, 2]);
+      const device = endpoint([
+        at(Descriptor, 'deviceTypeList', managed),
+        at(Descriptor, 'serverList', bytes),
+        at(TemperatureMeasurement, 'measuredValue', null),
+        at(TemperatureMeasurement, 'minMeasuredValue', 42n),
+        at(TemperatureMeasurement, 'maxMeasuredValue', 0),
+      ]);
+      const result = toApiClusters(device, new AnsiLogger({ logName: 'ApiClusters' }));
+      expect(result?.clusters.map((attribute) => attribute.attributeValue)).toEqual([stringify(managed), stringify(bytes), stringify(null), '42', '0']);
+      expect(result?.clusters.map((attribute) => attribute.attributeLocalValue)).toEqual([{ entries: [{ value: 42n }] }, bytes, null, 42n, 0]);
+      expect(result?.clusters[0].attributeLocalValue).not.toBe(managed);
+      expect(result?.clusters[1].attributeLocalValue).not.toBe(bytes);
+      expect(structuredClone(result)).toEqual(result);
+      managed.entries[0].value = 99n;
+      bytes[0] = 9;
+      expect(result?.clusters[0].attributeLocalValue).toEqual({ entries: [{ value: 42n }] });
+      expect(result?.clusters[1].attributeLocalValue).toEqual(Uint8Array.from([1, 2]));
+    });
+
+    test('should omit undefined attributes and EveHistory transport fields on root and child endpoints', () => {
+      const list: Attribute[] = [at(TemperatureMeasurement, 'measuredValue', undefined)];
+      for (const name of ['configDataGet', 'configDataSet', 'historyStatus', 'historyEntries', 'historyRequest', 'historySetTime', 'rLoc']) {
+        list.push(['EveHistory', name, Uint8Array.from([1]), 0x130a0001, 1]);
+      }
+      list.push(['EveHistory', 'other', 7, 0x130a0001, 2]);
+      const device = endpoint(list, [endpoint(list, [], 6, 'temperature', 0x302)]);
+      const result = toApiClusters(device, new AnsiLogger({ logName: 'ApiClusters' }));
+      expect(result?.clusters.map((attribute) => ({ id: attribute.id, name: attribute.attributeName, value: attribute.attributeLocalValue }))).toEqual([
+        { id: 'main', name: 'other', value: 7 },
+        { id: 'temperature', name: 'other', value: 7 },
+      ]);
+    });
+
+    test('should return undefined when required root metadata is missing', () => {
+      for (const property of ['plugin', 'deviceName', 'serialNumber', 'uniqueId', 'maybeId', 'maybeNumber']) {
+        const device = Object.assign(endpoint(), { [property]: undefined });
+        const attributesSpy = vi.spyOn(device, 'forEachAttribute');
+        expect(toApiClusters(device, new AnsiLogger({ logName: 'ApiClusters' }))).toBeUndefined();
+        expect(attributesSpy).not.toHaveBeenCalled();
+        attributesSpy.mockRestore();
+      }
+    });
+
+    test('should log and skip children missing an id or number while retaining root attributes', () => {
+      for (const property of ['maybeId', 'maybeNumber']) {
+        const child = Object.assign(endpoint([], [], 6, 'temperature', 0x302), { [property]: undefined });
+        const device = endpoint([at(BooleanState, 'stateValue', true)], [child]);
+        const attributesSpy = vi.spyOn(child, 'forEachAttribute');
+        const log = new AnsiLogger({ logName: 'ApiClusters' });
+        const errorSpy = vi.spyOn(log, 'error');
+        try {
+          expect(toApiClusters(device, log)?.clusters).toHaveLength(1);
+          expect(attributesSpy).not.toHaveBeenCalled();
+          expect(errorSpy).toHaveBeenCalledTimes(1);
+          expect(errorSpy).toHaveBeenCalledWith('getApiCluster: no child endpoint found for plugin test-plugin and endpoint number 5');
+        } finally {
+          attributesSpy.mockRestore();
+          errorSpy.mockRestore();
+        }
+      }
+    });
+
+    test('should return an empty cluster list when no attributes are defined', () => {
+      expect(toApiClusters(endpoint(), new AnsiLogger({ logName: 'ApiClusters' }))?.clusters).toEqual([]);
+    });
+  });
+
+  describe('toApiDevice', () => {
+    const metadata = {
+      plugin: 'plugin',
+      deviceType: 0x0100,
+      name: 'OnOffLight',
+      deviceName: 'Light',
+      serialNumber: 'SN',
+      uniqueId: 'unique',
+      id: 'light',
+      number: 5,
+      productUrl: 'https://product',
+      configUrl: 'https://config',
+    };
+
+    test('should convert a ready endpoint to the basic API device shape by default', () => {
+      expect(toApiDevice(Object.assign(fake(), metadata))).toEqual({
+        plugin: 'plugin',
+        type: 'OnOffLight (0x0100)',
+        number: 5,
+        id: 'light',
+        deviceName: 'Light',
+        serialNumber: 'SN',
+        productUrl: 'https://product',
+        configUrl: 'https://config',
+        uniqueId: 'unique',
+        reachable: true,
+        powerSource: undefined,
+        batteryLevel: undefined,
+        matter: undefined,
+        cluster: '',
+      });
+    });
+
+    test('should include live attributes and cluster text only when extended is true', () => {
+      const device = Object.assign(
+        fake({
+          servers: [PowerSource.id],
+          attributes: { [PowerSource.id]: { featureMap: { battery: true }, batChargeLevel: PowerSource.BatChargeLevel.Warning, batPercentRemaining: 150 } },
+          list: [at(OnOff, 'onOff', true)],
+        }),
+        metadata,
+      );
+      const getAttributeSpy = vi.spyOn(device, 'getAttribute');
+      const forEachAttributeSpy = vi.spyOn(device, 'forEachAttribute');
+      expect(toApiDevice(device, false)).toEqual(toApiDevice(device));
+      expect(getAttributeSpy).not.toHaveBeenCalled();
+      expect(forEachAttributeSpy).not.toHaveBeenCalled();
+      expect(toApiDevice(device, true)).toMatchObject({ reachable: false, powerSource: 'warning', batteryLevel: 75, cluster: getClusterTextFromDevice(device) });
+      expect(toApiDevice(device, true)?.cluster).not.toBe('');
+    });
+
+    test('should skip endpoints that are not ready or lack required metadata', () => {
+      expect(toApiDevice(Object.assign(fake({ ready: false }), metadata))).toBeUndefined();
+      for (const property of ['plugin', 'deviceType', 'name', 'deviceName', 'serialNumber', 'uniqueId']) {
+        expect(toApiDevice(Object.assign(fake(), metadata, { [property]: undefined }))).toBeUndefined();
+      }
+    });
+
+    test('should omit Matter data when a server endpoint has no server node', () => {
+      const device = Object.assign(fake(), metadata, { mode: 'server', serverNode: undefined });
+      expect(toApiDevice(device, true)?.matter).toBeUndefined();
+    });
+  });
+
   describe('getReachability', () => {
     test('returns false when endpoint not ready/active', () => {
       expect(getReachability(fake())).toBe(false);
@@ -588,6 +807,19 @@ describe('matterNodeHelpers', () => {
         serialNumber: 'SN123',
       });
       expect(() => JSON.stringify(data)).not.toThrow();
+      const device = Object.assign(fake({ mode: 'server' }), {
+        plugin: 'plugin',
+        deviceType: 0x0100,
+        name: 'OnOffLight',
+        deviceName: 'Light',
+        serialNumber: 'SN123',
+        uniqueId: 'unique',
+        serverNode,
+      });
+      expect(toApiDevice(device)?.matter).toBeUndefined();
+      const apiDevice = toApiDevice(device, true);
+      expect(apiDevice?.matter).toEqual(data);
+      expect(() => JSON.stringify(apiDevice)).not.toThrow();
     });
 
     test('reports advertising when the node is in the advertising map', () => {
@@ -620,5 +852,19 @@ describe('matterNodeHelpers', () => {
       clearAdvertisingNodes(); // no-op when empty
       expect(getServerNodeData(serverNode)).toMatchObject({ advertising: false, advertiseTime: 0 });
     });
+  });
+
+  test('toBaseDevice converts the deviceTypes map to the device type codes', () => {
+    const endpoint = {
+      uniqueId: 'DeviceUniqueIdTypes',
+      deviceTypes: new Map([
+        [0x0100, {}],
+        [0x0013, {}],
+      ]),
+    } as unknown as MatterbridgeEndpoint;
+    expect(toBaseDevice(endpoint).deviceTypes).toEqual([0x0100, 0x0013]);
+    const baseDevice = { uniqueId: 'DeviceUniqueIdTypes', deviceTypes: [0x0100, 0x0013] } as unknown as BaseDevice;
+    expect(toBaseDevice(baseDevice).deviceTypes).toEqual([0x0100, 0x0013]);
+    expect(toBaseDevice({ uniqueId: 'DeviceUniqueIdTypes' } as unknown as BaseDevice).deviceTypes).toBeUndefined();
   });
 });

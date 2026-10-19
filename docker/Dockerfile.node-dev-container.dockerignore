@@ -12,3 +12,9 @@
 
 # ...except the files this Dockerfile copies.
 !docker/devcontainer
+
+# OS metadata (macOS Finder, Windows Explorer)
+**/.DS_Store
+**/Thumbs.db
+**/ehthumbs.db
+**/desktop.ini

@@ -1,6 +1,6 @@
 /**
  * pack-workspaces.mjs
- * Version: 1.0.3
+ * Version: 1.1.0
  *
  * Packs all workspace packages into tarballs.
  *
@@ -35,7 +35,7 @@ function usage() {
     '  1) Runs scripts/version.mjs <tag> (sets a publish version suffix; skipped when tag=latest)',
     '  2) Runs scripts/sync-workspaces.mjs (sync workspace versions + scoped deps)',
     '  3) Runs scripts/bundle-workspaces.mjs (sync workspace versions + scoped deps)',
-    '  4) Runs npm run buildProduction',
+    '  4) Runs npm run cleanBuildProduction',
     '  5) Temporarily removes devDependencies, scripts from all package.json files',
     '  6) Pack the monorepo (or --dry-run pack)',
     '  7) Restores original package.json files from the in-memory backup',
@@ -304,7 +304,7 @@ try {
   runCmd(repoRoot, false, 'npm', ['shrinkwrap']);
 
   console.log('packing root package: package.json');
-  runCmd(repoRoot, dryRun, 'npm', ['pack']);
+  runCmd(repoRoot, dryRun, 'npm', dryRun ? ['pack', '--dry-run'] : ['pack']);
 } finally {
   try {
     await restoreAllPackageJson();

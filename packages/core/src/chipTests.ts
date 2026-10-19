@@ -32,7 +32,6 @@ import { Seconds, Time, type Timer } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { GeneralDiagnosticsServer } from '@matter/node/behaviors/general-diagnostics';
-import { MATTER_EPOCH_OFFSET_S, Status, StatusResponseError } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
 import { CommodityMetering } from '@matter/types/clusters/commodity-metering';
@@ -51,7 +50,9 @@ import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-stat
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Switch } from '@matter/types/clusters/switch';
-import { TariffPriceType, TariffUnit } from '@matter/types/globals';
+import { StatusResponseError } from '@matter/types/common';
+import { Status, TariffPriceType, TariffUnit } from '@matter/types/globals';
+import { MATTER_EPOCH_OFFSET_S } from '@matter/types/tlv';
 import { wait } from '@matterbridge/utils/wait';
 import type { AnsiLogger } from 'node-ansi-logger';
 

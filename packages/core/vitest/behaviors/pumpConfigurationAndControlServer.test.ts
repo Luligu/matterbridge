@@ -8,10 +8,10 @@ const NAME = 'PumpConfigurationAndControlServer';
 const MATTER_PORT = 12400;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
+import { Status } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addDevice,

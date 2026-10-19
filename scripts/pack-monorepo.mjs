@@ -1,6 +1,6 @@
 /**
  * pack-monorepo.mjs
- * Version: 1.0.1
+ * Version: 1.1.0
  *
  * Packs Matterbridge with its workspace distribution files and without npm bundled dependencies.
  *
@@ -21,6 +21,32 @@ function green(text) {
   return `${ANSI_GREEN}${text}${ANSI_RESET}`;
 }
 
+/**
+ * Describe the packaging phases and supported command-line options.
+ *
+ * @returns {string} The usage text.
+ */
+function usage() {
+  return [
+    'Usage: node scripts/pack-monorepo.mjs --tag <dev|edge|git|local|latest> [--scope <prefix>] [--dry-run]',
+    '',
+    'What it does:',
+    '  0) Backs up root + workspace package.json files and bin entrypoints in-memory',
+    '  1) Sets the version suffix (unless tag=latest) and synchronizes workspace versions + scoped dependencies',
+    '  2) Runs npm run build and npm run buildFrontend',
+    '  3) Rewrites workspace imports and bin entrypoints for packed self-resolution',
+    '  4) Prepares root package metadata with workspace distributions, internal exports and external dependencies',
+    '  5) Replaces the lock files with an external-only npm-shrinkwrap.json',
+    '  6) Packs the root package (or runs npm pack --dry-run)',
+    '  7) Restores package.json files and bin entrypoints from the in-memory backup',
+    '',
+    'Options:',
+    '  --tag, -t    Required. One of: dev | edge | git | local | latest',
+    '  --scope, -s  Dependency name prefix to sync and replace with internal exports (default: @matterbridge)',
+    '  --dry-run    Only applies to pack; builds, distribution rewrites and lock-file changes still run',
+  ].join('\n');
+}
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const rootPackagePath = path.join(root, 'package.json');
 const args = process.argv.slice(2);
@@ -31,8 +57,7 @@ const option = (longName, shortName) => {
 const tag = option('--tag', '-t')?.toLowerCase();
 const scope = option('--scope', '-s') ?? '@matterbridge';
 const dryRun = args.includes('--dry-run');
-if (!['dev', 'edge', 'git', 'local', 'latest'].includes(tag))
-  throw new Error('Usage: node scripts/pack-monorepo.mjs --scope @matterbridge --tag <dev|edge|git|local|latest> [--dry-run]');
+if (!['dev', 'edge', 'git', 'local', 'latest'].includes(tag)) throw new Error(usage());
 const read = async (file) => JSON.parse(await fs.readFile(file, 'utf8'));
 const run = (command, commandArgs) => {
   console.log(`$ ${command} ${commandArgs.map(JSON.stringify).join(' ')}`);
@@ -68,6 +93,8 @@ const workspaces = await Promise.all(
     package: await read(path.join(root, relative, 'package.json')),
   })),
 );
+// Only the workspaces with exports ship a dist (apps/frontend ships its prebuilt build folder from the root files).
+const codeWorkspaces = workspaces.filter(({ package: workspacePackage }) => workspacePackage.exports);
 const bins = ['bin/matterbridge.js', 'bin/mb_coap.js', 'bin/mb_health.js', 'bin/mb_mdns.js'].map((file) => path.join(root, file));
 const backups = new Map(
   await Promise.all([rootPackagePath, ...workspaces.map(({ packagePath }) => packagePath), ...bins].map(async (file) => [file, await fs.readFile(file, 'utf8')])),
@@ -85,11 +112,12 @@ try {
 
   console.log(`\n${green('phase 2/6: building workspace distributions')}`);
   run('npm', ['run', 'build']);
+  run('npm', ['run', 'buildFrontend']);
 
   console.log(`\n${green('phase 3/6: rewriting workspace imports for packed self-resolution')}`);
-  const names = new Map(workspaces.map(({ package: workspacePackage }) => [workspacePackage.name, `${originalRoot.name}/internal/${workspacePackage.name.split('/').at(-1)}`]));
+  const names = new Map(codeWorkspaces.map(({ package: workspacePackage }) => [workspacePackage.name, `${originalRoot.name}/internal/${workspacePackage.name.split('/').at(-1)}`]));
   let rewrittenFiles = 0;
-  for (const directory of [path.join(root, 'dist'), ...workspaces.map(({ directory }) => path.join(directory, 'dist'))])
+  for (const directory of [path.join(root, 'dist'), ...codeWorkspaces.map(({ directory }) => path.join(directory, 'dist'))])
     for (const file of await walk(directory)) {
       let text = await fs.readFile(file, 'utf8');
       for (const [from, to] of names) text = text.replaceAll(from, to);
@@ -102,7 +130,7 @@ try {
   console.log(`\n${green('phase 4/6: preparing packed package metadata')}`);
   const packed = await read(rootPackagePath);
   const dependencies = { ...(packed.dependencies ?? {}) };
-  for (const { package: workspace } of workspaces)
+  for (const { package: workspace } of codeWorkspaces)
     for (const [name, version] of Object.entries(workspace.dependencies ?? {}))
       if (!name.startsWith(scope)) {
         if (dependencies[name] && dependencies[name] !== version) throw new Error(`Dependency conflict: ${name}`);
@@ -114,8 +142,8 @@ try {
   delete packed.scripts;
   delete packed.workspaces;
   delete packed.overrides;
-  packed.files = [...new Set([...(packed.files ?? []), ...workspaces.flatMap(({ relative }) => [`${relative}/dist`, `${relative}/package.json`])])];
-  for (const { relative, package: workspace } of workspaces) {
+  packed.files = [...new Set([...(packed.files ?? []), ...codeWorkspaces.flatMap(({ relative }) => [`${relative}/dist`, `${relative}/package.json`])])];
+  for (const { relative, package: workspace } of codeWorkspaces) {
     const short = workspace.name.split('/').at(-1);
     for (const [subpath, exportValue] of Object.entries(workspace.exports ?? {})) {
       const suffix = subpath === '.' ? '' : subpath.slice(1);

@@ -100,6 +100,7 @@ jobs:
           github-token: ${{ secrets.PAT_TOKEN }}
           script: |
             await github.rest.actions.createWorkflowDispatch({
+              headers: { 'X-GitHub-Api-Version': '2026-03-10' },
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'docker-buildx-ubuntu.yml',

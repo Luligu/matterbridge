@@ -8,8 +8,8 @@ const NAME = 'CameraAvStreamManagementServerBehavior';
 const MATTER_PORT = 6003;
 const MATTER_CREATE_ONLY = true;
 
-import { Status, StreamUsage, ThreeLevelAuto } from '@matter/types';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
+import { Status, StreamUsage, ThreeLevelAuto } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

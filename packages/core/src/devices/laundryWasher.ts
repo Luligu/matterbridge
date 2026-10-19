@@ -24,13 +24,14 @@
 // @matter
 import { LaundryWasherControlsServer } from '@matter/node/behaviors/laundry-washer-controls';
 import { LaundryWasherModeServer } from '@matter/node/behaviors/laundry-washer-mode';
-import { Status, StatusResponseError, type EndpointNumber } from '@matter/types';
 import { LaundryWasherControls } from '@matter/types/clusters/laundry-washer-controls';
 import { LaundryWasherMode } from '@matter/types/clusters/laundry-washer-mode';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { OperationalState } from '@matter/types/clusters/operational-state';
-import type { Semtag } from '@matter/types/globals';
+import { StatusResponseError } from '@matter/types/common';
+import type { EndpointNumber } from '@matter/types/datatype';
+import { type Semtag, Status } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';

@@ -16,9 +16,10 @@ const NAME = 'MatterbridgeMatterjs';
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
-import { FabricIndex } from '@matter/types';
+import { FabricIndex } from '@matter/types/datatype';
 import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { waiter } from '@matterbridge/utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
 import { LogLevel } from 'node-ansi-logger';
 
 import { Matterbridge } from '../src/matterbridge.js';
@@ -27,6 +28,9 @@ import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 // Setup the test environment
 await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()]);
 process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
 
 describe('Matterbridge matterjs', () => {
   let matterbridge: Matterbridge;

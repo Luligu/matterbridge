@@ -1,6 +1,6 @@
 /**
  * update-htmls.mjs
- * Version: 1.0.2
+ * Version: 1.0.3
  *
  * Converts Markdown files to HTML using the marked library.
  *
@@ -8,8 +8,8 @@
  *   node scripts/update-htmls.mjs
  */
 
-import { readFile, writeFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { Marked, TextRenderer } from 'marked';
@@ -88,6 +88,7 @@ const FILES_TO_RENDER = [
   { source: 'Matter-1.5.1.md', target: 'Matter-1.5.1.html' },
   { source: 'Matter-1.6.0.md', target: 'Matter-1.6.0.html' },
   { source: 'Matter.js-0.17.md', target: 'Matter.js-0.17.html' },
+  { source: 'packages/core/src/behaviors/Camera.md', target: 'Camera.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },
 ];
@@ -107,6 +108,7 @@ async function renderMarkdownFiles(header, footer) {
     const parser = createMarkdownParser();
     const body = await parser.parse(markdown);
 
+    await mkdir(dirname(targetPath), { recursive: true });
     await writeFile(targetPath, `${header}${body}${footer}`, 'utf8');
     console.log(`Rendered ${source} to ${target}`);
   }

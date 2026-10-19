@@ -25,10 +25,10 @@
 import { ChimeClient } from '@matter/node/behaviors/chime';
 import { WebRtcTransportProviderClient } from '@matter/node/behaviors/web-rtc-transport-provider';
 import { WebRtcTransportRequestorClient } from '@matter/node/behaviors/web-rtc-transport-requestor';
-import type { ClusterId } from '@matter/types';
 import { Chime } from '@matter/types/clusters/chime';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import type { ClusterId } from '@matter/types/datatype';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeBindingServer } from './bindingServer.js';

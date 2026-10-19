@@ -14,14 +14,14 @@ RUN \
   bun --bun scripts/version.mjs git && \
   bun --bun scripts/sync-workspaces.mjs --scope @matterbridge && \
   bun run buildProduction && \
-  cd apps/frontend && bun install && bun run build && rm -rf node_modules public src vitest package-lock.json && cd ../.. && \
+  cd apps/frontend && bun run build && cd ../.. && \
+  find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
   bun link && \
   bun --workspaces --include-workspace-root pm pkg delete devDependencies scripts && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
   bun install --omit=dev
 
 WORKDIR /matterbridge-zigbee2mqtt
-# ADD https://api.github.com/repos/Luligu/matterbridge-zigbee2mqtt/commits/dev /tmp/matterbridge-zigbee2mqtt-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-zigbee2mqtt.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -30,7 +30,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-somfy-tahoma
-# ADD https://api.github.com/repos/Luligu/matterbridge-somfy-tahoma/commits/dev /tmp/matterbridge-somfy-tahoma-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-somfy-tahoma.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -39,7 +38,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-shelly
-# ADD https://api.github.com/repos/Luligu/matterbridge-shelly/commits/dev /tmp/matterbridge-shelly-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-shelly.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -48,7 +46,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-hass
-# ADD https://api.github.com/repos/Luligu/matterbridge-hass/commits/dev /tmp/matterbridge-hass-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-hass.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -57,7 +54,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-webhooks
-# ADD https://api.github.com/repos/Luligu/matterbridge-webhooks/commits/dev /tmp/matterbridge-webhooks-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webhooks.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -66,7 +62,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-security
-# ADD https://api.github.com/repos/Luligu/matterbridge-security/commits/dev /tmp/matterbridge-security-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-security.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -75,7 +70,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-irobot
-# ADD https://api.github.com/repos/Luligu/matterbridge-irobot/commits/dev /tmp/matterbridge-irobot-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-irobot.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -84,7 +78,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-mqtt
-# ADD https://api.github.com/repos/Luligu/matterbridge-mqtt/commits/dev /tmp/matterbridge-mqtt-dev-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-mqtt.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -92,8 +85,23 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
+WORKDIR /matterbridge-camera
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-camera.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
+  bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
+
+WORKDIR /matterbridge-webcam
+RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge-webcam.git . && \
+  SHA7=$(git rev-parse --short=7 HEAD) && \
+  BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
+  bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
+  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
+
 WORKDIR /matterbridge-test
-# ADD https://api.github.com/repos/Luligu/matterbridge-test/commits/main /tmp/matterbridge-test-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-test.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -102,7 +110,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-example-accessory-platform
-# ADD https://api.github.com/repos/Luligu/matterbridge-example-accessory-platform/commits/main /tmp/matterbridge-example-accessory-platform-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-accessory-platform.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -111,7 +118,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-example-dynamic-platform
-# ADD https://api.github.com/repos/Luligu/matterbridge-example-dynamic-platform/commits/main /tmp/matterbridge-example-dynamic-platform-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-dynamic-platform.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -120,7 +126,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
   WORKDIR /matterbridge-example-camera
-# ADD https://api.github.com/repos/Luligu/matterbridge-example-camera/commits/main /tmp/matterbridge-example-camera-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-camera.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -129,7 +134,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-door
-# ADD https://api.github.com/repos/Luligu/matterbridge-eve-door/commits/main /tmp/matterbridge-eve-door-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-door.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -138,7 +142,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-motion
-# ADD https://api.github.com/repos/Luligu/matterbridge-eve-motion/commits/main /tmp/matterbridge-eve-motion-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-motion.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -147,7 +150,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-energy
-# ADD https://api.github.com/repos/Luligu/matterbridge-eve-energy/commits/main /tmp/matterbridge-eve-energy-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-energy.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -156,7 +158,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-room
-# ADD https://api.github.com/repos/Luligu/matterbridge-eve-room/commits/main /tmp/matterbridge-eve-room-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-room.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -165,7 +166,6 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-weather
-# ADD https://api.github.com/repos/Luligu/matterbridge-eve-weather/commits/main /tmp/matterbridge-eve-weather-main-head.json
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-eve-weather.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
@@ -209,6 +209,8 @@ COPY --from=builder /matterbridge-webhooks/ ./matterbridge-webhooks/
 COPY --from=builder /matterbridge-security/ ./matterbridge-security/
 COPY --from=builder /matterbridge-irobot/ ./matterbridge-irobot/
 COPY --from=builder /matterbridge-mqtt/ ./matterbridge-mqtt/
+COPY --from=builder /matterbridge-camera/ ./matterbridge-camera/
+COPY --from=builder /matterbridge-webcam/ ./matterbridge-webcam/
 COPY --from=builder /matterbridge-test/ ./matterbridge-test/
 COPY --from=builder /matterbridge-example-accessory-platform/ ./matterbridge-example-accessory-platform/
 COPY --from=builder /matterbridge-example-dynamic-platform/ ./matterbridge-example-dynamic-platform/

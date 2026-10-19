@@ -78,7 +78,7 @@ git -C matterbridge fetch --depth 1 --no-tags origin "$BRANCH"
 # or deleted upstream are handled; clean removes stale untracked leftovers (for example a
 # previous build output) while preserving the installed dependencies.
 git -C matterbridge checkout -f -B "$BRANCH" FETCH_HEAD
-git -C matterbridge clean -qxdf -e node_modules -e apps/frontend/node_modules
+git -C matterbridge clean -qxdf -e node_modules
 cd matterbridge
 
 if [ "$MODE" = "bun" ]; then
@@ -88,8 +88,8 @@ if [ "$MODE" = "bun" ]; then
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "5.install-matterbridge - Installing Matterbridge dependencies and building..."
   rm -f package-lock.json && bun install && bun run build
 
-  echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "6.install-matterbridge - Installing Matterbridge frontend dependencies and building..."
-  cd apps/frontend && rm -f package-lock.json && bun install && bun run build && cd ../..
+  echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "6.install-matterbridge - Building Matterbridge frontend..."
+  cd apps/frontend && bun run build && cd ../..
 
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "7.install-matterbridge - Installing Matterbridge globally..."
   # sudo is required because BUN_INSTALL_BIN=/usr/local/bin is root-owned.
@@ -105,8 +105,8 @@ else
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "5.install-matterbridge - Installing Matterbridge dependencies and building..."
   npm install --no-fund --no-audit && npm run build
 
-  echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "6.install-matterbridge - Installing Matterbridge frontend dependencies and building..."
-  cd apps/frontend && npm install --no-fund --no-audit && npm run build && cd ../..
+  echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "6.install-matterbridge - Building Matterbridge frontend..."
+  cd apps/frontend && npm run build && cd ../..
 
   echo $'\033[36m'"[$(date '+%Y-%m-%d %H:%M:%S')]"$'\033[0m' "7.install-matterbridge - Installing Matterbridge globally..."
   sudo npm link --no-fund --no-audit

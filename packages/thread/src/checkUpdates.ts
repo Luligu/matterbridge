@@ -42,7 +42,6 @@ let noUpdatesAvailable = true;
 
 /**
  * Checks for updates for Matterbridge and its plugins.
- * If the 'shelly' parameter is present, also checks for Shelly updates.
  *
  * @param {SharedMatterbridge} matterbridge - The Matterbridge instance.
  * @param {BroadcastServer} server - The broadcast server used to communicate update results.

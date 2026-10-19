@@ -14,7 +14,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { loggerDebugSpy, loggerErrorSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
@@ -167,6 +167,16 @@ describe('WeriftWebRtcSession', () => {
     expect(session.localIceCandidates).toHaveLength(2);
 
     await session.close();
+  });
+
+  it('should not let the diagnostics timer keep the process alive', async () => {
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: false, offerAudio: false });
+
+    const { diagnosticsInterval } = session as unknown as { diagnosticsInterval: NodeJS.Timeout };
+    expect(diagnosticsInterval.hasRef()).toBe(false);
+
+    await session.close();
+    expect((session as unknown as { diagnosticsInterval?: NodeJS.Timeout }).diagnosticsInterval).toBeUndefined();
   });
 
   it('should create a real SDP offer with a video transceiver when video is requested', async () => {
@@ -340,17 +350,58 @@ describe('WeriftWebRtcSession', () => {
       }
     });
 
-    it('should keep the synthetic pattern fixed despite resolution and bitrate options', async () => {
-      options.videoResolution = '1920x1080';
-      options.videoBitrate = 2500;
+    it.each([
+      [undefined, undefined, 'testsrc=size=640x480:rate=30', '1000k'],
+      ['auto', undefined, 'testsrc=size=640x480:rate=30', '1000k'],
+      ['1280x720', 2000, 'testsrc=size=1280x720:rate=30', '2000k'],
+      ['1920x1080', 2500, 'testsrc=size=1920x1080:rate=30', '2500k'],
+    ])('should size the synthetic pattern from videoResolution=%s and videoBitrate=%s', async (resolution, bitrate, input, expectedBitrate) => {
+      options.videoResolution = resolution;
+      options.videoBitrate = bitrate;
       const session = new WeriftWebRtcSession(1, { ...options });
       try {
         await session.createOffer();
         const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
-        expect(args).toContain('testsrc=size=640x480:rate=10');
-        expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', '1000k']);
+        expect(args).toContain(input);
+        expect(args.slice(args.indexOf('-b:v'), args.indexOf('-b:v') + 2)).toEqual(['-b:v', expectedBitrate]);
       } finally {
         await session.close();
+      }
+    });
+
+    it.each([
+      [undefined, 'testsrc=size=640x480:rate=30', '60'],
+      ['10', 'testsrc=size=640x480:rate=10', '20'],
+      [' 60 ', 'testsrc=size=640x480:rate=60', '120'],
+      ['0', 'testsrc=size=640x480:rate=30', '60'],
+      ['61', 'testsrc=size=640x480:rate=30', '60'],
+      ['12.5', 'testsrc=size=640x480:rate=30', '60'],
+      ['abc', 'testsrc=size=640x480:rate=30', '60'],
+    ])('should set the synthetic pattern frame rate and keyframe interval from MATTERBRIDGE_TEST_VIDEO_FPS=%s', async (fps, input, keyFrameInterval) => {
+      if (fps !== undefined) vi.stubEnv('MATTERBRIDGE_TEST_VIDEO_FPS', fps);
+      const session = new WeriftWebRtcSession(1, { ...options });
+      try {
+        await session.createOffer();
+        const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
+        expect(args).toContain(input);
+        expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', keyFrameInterval]);
+      } finally {
+        await session.close();
+        vi.unstubAllEnvs();
+      }
+    });
+
+    it('should keep a keyframe every 20 frames for the RTSP source regardless of MATTERBRIDGE_TEST_VIDEO_FPS', async () => {
+      vi.stubEnv('MATTERBRIDGE_TEST_VIDEO_FPS', '10');
+      const session = new WeriftWebRtcSession(1, { ...options, videoSource: 'rtsp', videoSourceDevice: 'rtsp://camera.local/live' });
+      try {
+        await session.createOffer();
+        const args = vi.mocked(runFfmpeg).mock.calls[0]?.[0] ?? [];
+        expect(args).not.toContain('testsrc=size=640x480:rate=10');
+        expect(args.slice(args.indexOf('-g'), args.indexOf('-g') + 2)).toEqual(['-g', '20']);
+      } finally {
+        await session.close();
+        vi.unstubAllEnvs();
       }
     });
 
@@ -561,10 +612,10 @@ describe('WeriftWebRtcSession', () => {
     });
 
     it.each([
-      ['linux', '/dev/video0'],
-      ['darwin', '0'],
-      ['win32', 'Integrated Camera'],
-    ])('should attach a video track from the configured webcam device on platform %s', async (platform, device) => {
+      ['linux', '/dev/video0', 'v4l2', '/dev/video0'],
+      ['darwin', '0', 'avfoundation', '0'],
+      ['win32', 'Integrated Camera', 'dshow', 'video=Integrated Camera'],
+    ])('should attach a video track from the configured webcam device on platform %s with a constant 30 fps output', async (platform, device, format, input) => {
       options.videoSource = 'webcam';
       options.videoSourceDevice = device;
       Object.defineProperty(process, 'platform', { value: platform });
@@ -573,6 +624,10 @@ describe('WeriftWebRtcSession', () => {
       const sdp = await session.createOffer();
 
       expect(sdp).toContain('m=video');
+      const args = vi.mocked(runFfmpeg).mock.calls.at(-1)?.[0] ?? [];
+      expect(args.slice(args.indexOf('-f'), args.indexOf('-f') + 2)).toEqual(['-f', format]);
+      const inputIndex = args.indexOf('-i');
+      expect(args.slice(inputIndex, inputIndex + 6)).toEqual(['-i', input, '-fps_mode', 'cfr', '-r', '30']);
 
       await session.close();
     });
@@ -1059,6 +1114,73 @@ describe('WeriftWebRtcSession', () => {
     });
   });
 
+  describe('ffmpeg generator exit logging', () => {
+    type GeneratorState = { testVideoGenerator?: ChildProcess; testAudioGenerator?: ChildProcess };
+
+    /** Makes runFfmpeg spawn a node process that streams until it is killed, like a real ffmpeg generator. */
+    function mockStreamingFfmpeg(): void {
+      vi.mocked(hasFfmpeg).mockReturnValue(true);
+      vi.mocked(runFfmpeg).mockImplementation(() => spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']));
+    }
+
+    /**
+     * Creates a session with an attached video generator.
+     *
+     * @returns {Promise<WeriftWebRtcSession>} The session.
+     */
+    async function createVideoSession(): Promise<WeriftWebRtcSession> {
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
+      const transceiver = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
+      transceiver.codecs = [new RTCRtpCodecParameters({ mimeType: 'video/VP8', clockRate: 90000, payloadType: 96 })];
+      await session.createOffer();
+      return session;
+    }
+
+    it('should log the stop of a generator and not warn when the session closes it', async () => {
+      mockStreamingFfmpeg();
+      const session = await createVideoSession();
+      const generator = (session as unknown as GeneratorState).testVideoGenerator;
+      expect(generator).toBeDefined();
+      const exited = new Promise((resolve) => generator?.once('exit', resolve));
+      loggerWarnSpy.mockClear();
+
+      await session.close();
+      await exited;
+
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Stopping ffmpeg video generator (pid ${generator?.pid})`));
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(expect.stringContaining('exited unexpectedly'));
+    });
+
+    it('should warn when a video generator is killed while its track is attached', async () => {
+      mockStreamingFfmpeg();
+      const session = await createVideoSession();
+      loggerWarnSpy.mockClear();
+
+      (session as unknown as GeneratorState).testVideoGenerator?.kill('SIGKILL');
+
+      await vi.waitFor(() =>
+        expect(loggerWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Ffmpeg video generator exited unexpectedly with signal SIGKILL: the video track carries no more media'),
+        ),
+      );
+      await session.close();
+    });
+
+    it('should warn when an audio generator exits on its own while its track is attached', async () => {
+      vi.mocked(hasFfmpeg).mockReturnValue(true);
+      vi.mocked(runFfmpeg).mockImplementation(() => spawn(process.execPath, ['-e', 'setTimeout(() => process.exit(1), 200)']));
+      const session = new WeriftWebRtcSession(1, { ...options });
+      loggerWarnSpy.mockClear();
+
+      await session.createAnswer(await createRemoteAudioOfferSdp());
+      expect((session as unknown as GeneratorState).testAudioGenerator).toBeDefined();
+
+      await vi.waitFor(() => expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Ffmpeg audio generator exited unexpectedly with code 1')));
+      await session.close();
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Stopping ffmpeg audio generator'));
+    });
+  });
+
   describe('audio track injection lifecycle', () => {
     it('should not attach a second test audio track when creating a subsequent answer on the same session', async () => {
       type TestAudioState = { testAudioAttached: boolean; testAudioGenerator?: { killed: boolean } };
@@ -1146,29 +1268,6 @@ describe('WeriftWebRtcSession', () => {
       expect(() => process.emit('exit', 0)).not.toThrow();
 
       await session.close();
-    });
-  });
-
-  describe('closeAll', () => {
-    it('should close every active session and remove them from the active session registry', async () => {
-      const first = new WeriftWebRtcSession(1, { ...options });
-      const second = new WeriftWebRtcSession(2, { ...options });
-      const firstCloseSpy = vi.spyOn(first, 'close');
-      const secondCloseSpy = vi.spyOn(second, 'close');
-
-      await WeriftWebRtcSession.closeAll();
-
-      expect(firstCloseSpy).toHaveBeenCalledTimes(1);
-      expect(secondCloseSpy).toHaveBeenCalledTimes(1);
-
-      // Closing again should be a no-op since closeAll() already removed both sessions from the registry.
-      await expect(WeriftWebRtcSession.closeAll()).resolves.toBeUndefined();
-      expect(firstCloseSpy).toHaveBeenCalledTimes(1);
-      expect(secondCloseSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should not throw when there are no active sessions', async () => {
-      await expect(WeriftWebRtcSession.closeAll()).resolves.toBeUndefined();
     });
   });
 

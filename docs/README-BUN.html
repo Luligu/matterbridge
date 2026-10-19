@@ -284,7 +284,24 @@ Reproduced and asserted by <a href="./buntest/wssTest.test.ts">buntest/wssTest.t
 Reported upstream: <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a> (open,
 &quot;WebSocket npm fails TLS handshake with self signed certificates&quot;), with a fix proposed in
 <a href="https://github.com/oven-sh/bun/pull/31397">oven-sh/bun#31397</a> (open, not yet merged) —
-revisit dropping the workaround once that lands in a release.</p>
+revisit dropping the workaround once that lands in a release.
+</p>
+</li>
+<li><p><input disabled="" type="checkbox"> <strong><code>bun test --coverage</code> never counts implicit class constructors as called.</strong> A derived class
+without its own constructor gets the default <code>constructor(...args) { super(...args); }</code> from
+the language, and it runs on every <code>new</code>. JavaScriptCore records that synthesized constructor
+as a function that never executed, so <code>% Funcs</code> drops below 100% while <code>% Lines</code> stays at 100%.
+In <code>packages/core/src/devices</code> this hits every file that defines a <code>Matterbridge…Server</code>
+behavior class (for example <code>MatterbridgeLaundryDryerControlsServer</code> in
+<a href="./packages/core/src/devices/laundryDryer.ts">laundryDryer.ts</a>): vitest reports 100% functions
+on the same tests. Present in Bun 1.4.2 and 1.4.3.
+Do not add <code>constructor(...args) { super(...args); }</code> only to satisfy the report: it is
+useless code and the implicit constructor is the correct form.
+Reported upstream: <a href="https://github.com/oven-sh/bun/issues/42730">oven-sh/bun#42730</a> (open,
+&quot;test --coverage: implicit constructor invocations never counted in %Funcs&quot;), with fixes
+proposed in <a href="https://github.com/oven-sh/bun/pull/38282">oven-sh/bun#38282</a> and
+<a href="https://github.com/oven-sh/bun/pull/38518">oven-sh/bun#38518</a> (open, not yet merged) —
+recheck the device function coverage once either lands in a release.</p>
 </li>
 </ul>
   <script>

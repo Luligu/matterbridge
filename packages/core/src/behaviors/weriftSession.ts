@@ -69,12 +69,12 @@ export interface WeriftOfferOptions {
   /**
    * Capture resolution for this session: 640x480, 1280x720, or 1920x1080. When unset, `auto`, or unsupported,
    * the resolution falls back to 640x480.
-   * Applies to webcam and RTSP sources; ignored for the synthetic test pattern.
+   * Applies to the synthetic test pattern, webcam and RTSP sources.
    */
   videoResolution?: string;
   /**
    * Target video encoder bitrate in kbps.
-   * Must be a finite positive number. The default and synthetic test pattern bitrate are 1000 kbps.
+   * Must be a finite positive number. The default is 1000 kbps.
    */
   videoBitrate?: number;
   /**
@@ -108,8 +108,8 @@ export type WeriftOfferOverrides = Partial<WeriftOfferOptions>;
  * `webcam`, a real RTSP camera stream when the source is `rtsp`, or no injected track when the source is unset or
  * `none`. options.videoSourceDevice identifies the webcam device (e.g. /dev/video0 on Linux, an
  * avfoundation index on macOS, or a dshow device name on Windows) for `webcam`, or the RTSP url (e.g.
- * rtsp://user:password@host:554/path) for `rtsp`. The webcam capture resolution defaults to 640x480 and can be set
- * to 1280x720 or 1920x1080 with options.videoResolution.
+ * rtsp://user:password@host:554/path) for `rtsp`. The video resolution of every source defaults to 640x480 and can be
+ * set to 1280x720 or 1920x1080 with options.videoResolution.
  *
  * Similarly, the audio track can inject a synthetic test tone (e.g. for an Intercom's "Listen" live view) when
  * `options.audioSource=test`, capture from a local microphone when the source is `microphone`, or pull
@@ -290,7 +290,8 @@ export class WeriftWebRtcSession {
     });
     this.log.debug(`Created RTCPeerConnection with codecs: audio=[OPUS, PCMU], video=[H264, VP8] for session ${webRtcSessionId}`);
 
-    this.diagnosticsInterval = setInterval(() => void this.logDiagnosticsSnapshot(), WeriftWebRtcSession.DIAGNOSTICS_INTERVAL_MS);
+    // Unref'd: the diagnostics timer only logs and must not keep the process alive on its own.
+    this.diagnosticsInterval = setInterval(() => void this.logDiagnosticsSnapshot(), WeriftWebRtcSession.DIAGNOSTICS_INTERVAL_MS).unref();
 
     WeriftWebRtcSession.activeSessions.add(this);
     if (!WeriftWebRtcSession.exitHandlerRegistered) {
@@ -395,11 +396,37 @@ export class WeriftWebRtcSession {
   private static readonly SUPPORTED_VIDEO_RESOLUTIONS = ['640x480', '1280x720', '1920x1080'];
 
   /**
-   * Default target encoder bitrate (kbps), used for the test pattern and as the fallback when
+   * Default target encoder bitrate (kbps), used as the fallback when
    * options.videoBitrate is unset or invalid. Without an explicit -b:v, ffmpeg falls back to a generic
    * ~200kbps default that is far too low even at 640x480 and produces heavy blocking artifacts.
    */
   private static readonly DEFAULT_BITRATE_KBPS = 1000;
+
+  /** Default frame rate of the synthetic test pattern, overridable with `MATTERBRIDGE_TEST_VIDEO_FPS`. */
+  private static readonly DEFAULT_TEST_VIDEO_FPS = 30;
+
+  /** Highest frame rate accepted from `MATTERBRIDGE_TEST_VIDEO_FPS`. */
+  private static readonly MAX_TEST_VIDEO_FPS = 60;
+
+  /**
+   * Resolves the frame rate of the synthetic test pattern from the `MATTERBRIDGE_TEST_VIDEO_FPS` environment
+   * variable, an integer from 1 to {@link MAX_TEST_VIDEO_FPS}. Falls back to {@link DEFAULT_TEST_VIDEO_FPS} when
+   * unset, and with a warning when the value is not a valid integer in range.
+   *
+   * @returns {number} The test pattern frame rate in frames per second.
+   */
+  private getTestVideoFps(): number {
+    const raw = process.env.MATTERBRIDGE_TEST_VIDEO_FPS?.trim();
+    if (!raw) return WeriftWebRtcSession.DEFAULT_TEST_VIDEO_FPS;
+    const fps = Number(raw);
+    if (!/^\d+$/.test(raw) || fps < 1 || fps > WeriftWebRtcSession.MAX_TEST_VIDEO_FPS) {
+      this.log.warn(
+        `Invalid MATTERBRIDGE_TEST_VIDEO_FPS "${raw}" (supported: 1-${WeriftWebRtcSession.MAX_TEST_VIDEO_FPS}); falling back to ${WeriftWebRtcSession.DEFAULT_TEST_VIDEO_FPS}`,
+      );
+      return WeriftWebRtcSession.DEFAULT_TEST_VIDEO_FPS;
+    }
+    return fps;
+  }
 
   /**
    * Resolves the configured encoder bitrate (kbps) from options.videoBitrate, applied regardless of the
@@ -469,23 +496,25 @@ export class WeriftWebRtcSession {
    * (the RTSP url for `rtsp`); yields no source (logging an error) if the device/url is missing or webcam capture
    * isn't supported on this platform, so a misconfigured camera is never silently replaced by the test pattern. The output resolution is resolved via
    * {@link getConfiguredVideoResolution}: a fixed options.videoResolution (640x480, 1280x720, or
-   * 1920x1080) is used, while `auto` (or unset) falls back to 640x480. For `webcam` this selects the capture resolution directly; for
+   * 1920x1080) is used, while `auto` (or unset) falls back to 640x480. For `test` this sets the size of the generated
+   * pattern; for `webcam` it selects the capture resolution directly; for
    * `rtsp` the camera streams at its own native resolution and is scaled to the resolved resolution with a `scale`
    * filter. The encoder bitrate defaults to {@link DEFAULT_BITRATE_KBPS} and can be overridden with
-   * options.videoBitrate, regardless of resolution.
+   * options.videoBitrate, regardless of resolution and source. The test pattern frame rate comes from
+   * {@link getTestVideoFps}, with a keyframe every 2 seconds (`-g` = 2 × fps); the other sources keep a keyframe
+   * every 20 frames.
    *
    * @param {'test' | 'webcam' | 'rtsp'} videoSource - The configured video source after `none` has been handled by the caller.
-   * @returns {{ args: string[]; description: string; bitrateKbps: number } | undefined} The ffmpeg input arguments, a description of the source for logging, and the target encoder bitrate; `undefined` when the configured source is unusable and no track should be injected.
+   * @returns {{ args: string[]; description: string; bitrateKbps: number; keyFrameInterval: number } | undefined} The ffmpeg input arguments, a description of the source for logging, the target encoder bitrate and the keyframe interval in frames; `undefined` when the configured source is unusable and no track should be injected.
    */
-  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number } | undefined {
+  private buildFfmpegVideoInputArgs(videoSource: 'test' | 'webcam' | 'rtsp'): { args: string[]; description: string; bitrateKbps: number; keyFrameInterval: number } | undefined {
     if (videoSource === 'test') {
-      const testPatternInput = {
-        args: ['-re', '-f', 'lavfi', '-i', 'testsrc=size=640x480:rate=10'],
-        description: 'synthetic moving test pattern',
-        bitrateKbps: WeriftWebRtcSession.DEFAULT_BITRATE_KBPS,
-      };
-      this.log.debug(`Test pattern params: resolution=640x480, description="${testPatternInput.description}", bitrateKbps=${testPatternInput.bitrateKbps}`);
-      return testPatternInput;
+      const resolution = this.getConfiguredVideoResolution();
+      const bitrateKbps = this.getConfiguredVideoBitrate();
+      const fps = this.getTestVideoFps();
+      const description = `synthetic moving test pattern (${resolution}, ${fps}fps)`;
+      this.log.debug(`Test pattern params: resolution=${resolution}, fps=${fps}, description="${description}", bitrateKbps=${bitrateKbps}`);
+      return { args: ['-re', '-f', 'lavfi', '-i', `testsrc=size=${resolution}:rate=${fps}`], description, bitrateKbps, keyFrameInterval: fps * 2 };
     }
 
     const device = this.options.videoSourceDevice;
@@ -500,18 +529,33 @@ export class WeriftWebRtcSession {
     if (videoSource === 'rtsp') {
       const description = `RTSP camera (${device}, ${resolution})`;
       this.log.debug(`RTSP capture params: url=${device}, resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
-      return { args: ['-rtsp_transport', 'tcp', '-i', device, '-vf', `scale=${resolution.replace('x', ':')}`], description, bitrateKbps };
+      return { args: ['-rtsp_transport', 'tcp', '-i', device, '-vf', `scale=${resolution.replace('x', ':')}`], description, bitrateKbps, keyFrameInterval: 20 };
     }
 
     const description = `local webcam (${device}, ${resolution})`;
     this.log.debug(`Webcam capture params: device=${device}, resolution=${resolution}, description="${description}", bitrateKbps=${bitrateKbps}`);
     switch (process.platform) {
       case 'linux':
-        return { args: ['-f', 'v4l2', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps };
+        return {
+          args: ['-f', 'v4l2', '-video_size', resolution, '-framerate', '30', '-i', device, '-fps_mode', 'cfr', '-r', '30'],
+          description,
+          bitrateKbps,
+          keyFrameInterval: 20,
+        };
       case 'darwin':
-        return { args: ['-f', 'avfoundation', '-video_size', resolution, '-framerate', '30', '-i', device], description, bitrateKbps };
+        return {
+          args: ['-f', 'avfoundation', '-video_size', resolution, '-framerate', '30', '-i', device, '-fps_mode', 'cfr', '-r', '30'],
+          description,
+          bitrateKbps,
+          keyFrameInterval: 20,
+        };
       case 'win32':
-        return { args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`], description, bitrateKbps };
+        return {
+          args: ['-f', 'dshow', '-video_size', resolution, '-framerate', '30', '-i', `video=${device}`, '-fps_mode', 'cfr', '-r', '30'],
+          description,
+          bitrateKbps,
+          keyFrameInterval: 20,
+        };
       default:
         this.log.error(`Webcam capture via ffmpeg is not supported on platform "${process.platform}"; not injecting a video track`);
         return undefined;
@@ -535,6 +579,24 @@ export class WeriftWebRtcSession {
     generator.stderr?.on('data', (chunk: Buffer) => {
       const message = chunk.toString().trim();
       if (message) this.log.debug(`Ffmpeg ${kind} generator: ${message}`);
+    });
+  }
+
+  /**
+   * Warns when an injected track's ffmpeg process exits while its track is still attached. A generator streams until
+   * the session stops it (see {@link cleanupTestVideoArtifacts} and {@link cleanupTestAudioArtifacts}), so exiting on
+   * its own (an RTSP camera dropping the stream, a capture device unplugged, an encoder failure) leaves the track
+   * without media. The exit of a generator the session stopped is not reported here: it is no longer the attached one.
+   *
+   * @param {ChildProcess} generator - The spawned ffmpeg process.
+   * @param {'video' | 'audio'} kind - The injected track kind, used to find the attached generator and label the log line.
+   * @returns {void}
+   */
+  private watchGeneratorExit(generator: ChildProcess, kind: 'video' | 'audio'): void {
+    generator.once('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+      const attached = kind === 'video' ? this.testVideoGenerator : this.testAudioGenerator;
+      if (attached !== generator) return;
+      this.log.warn(`Ffmpeg ${kind} generator exited unexpectedly with ${signal ? `signal ${signal}` : `code ${code}`}: the ${kind} track carries no more media`);
     });
   }
 
@@ -575,10 +637,28 @@ export class WeriftWebRtcSession {
       this.peerConnection.addTrack(track);
 
       const bitrate = `${videoInput.bitrateKbps}k`;
+      const keyFrameInterval = String(videoInput.keyFrameInterval);
       const encoderArgs =
         selectedMimeType === 'video/h264'
-          ? ['-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-pix_fmt', 'yuv420p', '-g', '20', '-b:v', bitrate, '-maxrate', bitrate, '-bufsize', bitrate]
-          : ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '4', '-pix_fmt', 'yuv420p', '-g', '20', '-b:v', bitrate, '-maxrate', bitrate, '-bufsize', bitrate];
+          ? [
+              '-c:v',
+              'libx264',
+              '-preset',
+              'ultrafast',
+              '-tune',
+              'zerolatency',
+              '-pix_fmt',
+              'yuv420p',
+              '-g',
+              keyFrameInterval,
+              '-b:v',
+              bitrate,
+              '-maxrate',
+              bitrate,
+              '-bufsize',
+              bitrate,
+            ]
+          : ['-c:v', 'libvpx', '-deadline', 'realtime', '-cpu-used', '4', '-pix_fmt', 'yuv420p', '-g', keyFrameInterval, '-b:v', bitrate, '-maxrate', bitrate, '-bufsize', bitrate];
 
       const ffmpegArgs = [
         '-hide_banner',
@@ -595,6 +675,7 @@ export class WeriftWebRtcSession {
       ];
       const generator = runFfmpeg(ffmpegArgs);
       this.logFfmpegStderr(generator, 'video');
+      this.watchGeneratorExit(generator, 'video');
 
       /* v8 ignore start -- requires the spawned ffmpeg process itself to fail after hasFfmpeg already verified
        * it runs (e.g. the binary is removed between the check and this spawn), which this harness can't simulate
@@ -803,6 +884,7 @@ export class WeriftWebRtcSession {
       ];
       const generator = runFfmpeg(ffmpegArgs);
       this.logFfmpegStderr(generator, 'audio');
+      this.watchGeneratorExit(generator, 'audio');
 
       /* v8 ignore start -- requires the spawned ffmpeg process itself to fail after hasFfmpeg already verified
        * it runs (e.g. the binary is removed between the check and this spawn), which this harness can't simulate
@@ -831,6 +913,7 @@ export class WeriftWebRtcSession {
    */
   private cleanupTestVideoArtifacts(): void {
     if (this.testVideoGenerator) {
+      this.log.debug(`Stopping ffmpeg video generator (pid ${this.testVideoGenerator.pid ?? 'unknown'})`);
       this.testVideoGenerator.kill('SIGTERM');
       this.testVideoGenerator = undefined;
     }
@@ -846,6 +929,7 @@ export class WeriftWebRtcSession {
    */
   private cleanupTestAudioArtifacts(): void {
     if (this.testAudioGenerator) {
+      this.log.debug(`Stopping ffmpeg audio generator (pid ${this.testAudioGenerator.pid ?? 'unknown'})`);
       this.testAudioGenerator.kill('SIGTERM');
       this.testAudioGenerator = undefined;
     }
@@ -986,7 +1070,7 @@ export class WeriftWebRtcSession {
    * - a concurrent/duplicate call to {@link close} (e.g. from {@link logDtlsTransportStateChanges}'s own auto-close,
    *   or a second DTLS transport reaching `closed`/`failed`) is a no-op instead of doing the cleanup work twice.
    * - {@link logDtlsTransportStateChanges} can tell a DTLS transport reaching `closed` as a *side effect of our own*
-   *   close() (every close — EndSession, closeAll(), this same auto-close — stops the DTLS transports, which
+   *   close() (every close — EndSession, this same auto-close — stops the DTLS transports, which
    *   triggers this same onStateChange) apart from one reaching `closed` on its own, unprompted, which is the real
    *   orphaned-session signal that should trigger an auto-close.
    */
@@ -1095,17 +1179,5 @@ export class WeriftWebRtcSession {
     this.cleanupTestAudioArtifacts();
     WeriftWebRtcSession.activeSessions.delete(this);
     this.log.info(`RTCPeerConnection closed (connectionState=${this.peerConnection.connectionState})`);
-  }
-
-  /**
-   * Closes every currently active session, e.g. during a graceful platform shutdown.
-   *
-   * @returns {Promise<void>} Resolves once every active session has been closed.
-   */
-  static async closeAll(): Promise<void> {
-    for (const session of WeriftWebRtcSession.activeSessions) {
-      session.log.info(`Closing session ${session.webRtcSessionId} as part of closeAll()`);
-      await session.close();
-    }
   }
 }

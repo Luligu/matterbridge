@@ -25,9 +25,10 @@
 /* oxlint-disable typescript/no-namespace */
 
 import { CameraAvSettingsUserLevelManagementServer } from '@matter/node/behaviors/camera-av-settings-user-level-management';
-import { Status, StatusResponseError, type Viewport } from '@matter/types';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import type { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
+import { StatusResponseError } from '@matter/types/common';
+import { Status, type Viewport } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeCameraAvStreamManagementServer } from './cameraAvStreamManagementServer.js';

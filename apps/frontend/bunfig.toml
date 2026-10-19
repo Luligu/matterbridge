@@ -1,5 +1,15 @@
-# Matterbridge — Bun config v 1.0.2.
+# Matterbridge — Bun-native test runner config v 1.0.3.
 
 [install]
-# installation strategy: "hoisted" or "isolated"
+
+# Installation strategy: "hoisted" places dependencies in the shared node_modules root;
+# "isolated" keeps each package's dependencies in its own node_modules directory.
+# Default: "hoisted".
 # linker = "isolated"
+
+# globalStore (isolated linker only) symlinks packages from a store shared by all projects in
+# ~/.bun/install/cache/links instead of copying them into node_modules/.bun.
+# Their real path is outside the project, so a dependency's undeclared import can't reach the
+# project's fallback node_modules (e.g. bun-types -> undici-types until Bun 1.4.3).
+# Default: false.
+globalStore = false

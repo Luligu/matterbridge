@@ -75,7 +75,7 @@ describe('MbfPage', () => {
       </UiContext.Provider>,
     );
     const div = container.firstChild as HTMLElement;
-    expect(div).toHaveStyle({ background: 'red', width: '80%' });
+    expect(div).toHaveStyle({ backgroundColor: 'rgb(255, 0, 0)', width: '80%' });
     expect(div).toHaveStyle({ display: 'flex', flexDirection: 'column' });
   });
 

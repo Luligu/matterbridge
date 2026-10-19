@@ -1,4 +1,4 @@
-// vitest.config.ts v.2.0.7
+// vitest.config.ts v.2.0.8
 
 // This Vitest configuration is designed for a TypeScript project.
 
@@ -21,17 +21,22 @@ export default defineConfig({
       '**/scripts/',
       '**/src/mock/',
       '**/temp/',
+      '**/tmp/',
       '**/vendor/',
       '**/jest-utils/', // Plugins test package for Jest
       '**/vitest-utils/', // Plugins test package for Vitest
-      'packages/core/vitest/matterNode.*.ts',
-      'packages/thread/vitest/backend*.ts',
+      'packages/core/vitest/matterNode.*.ts', // Not released files
+      'packages/core/vitest/backend*.ts', // Not released files
     ],
     globals: true,
     clearMocks: false,
     restoreMocks: false,
     environment: 'node',
     maxWorkers: '100%',
+    // Every run also writes a JUnit XML report with the duration of each test (handy to find slow tests).
+    // A --reporter passed on the command line replaces this list.
+    reporters: ['default', 'junit'],
+    outputFile: { junit: '.cache/vitest/junit.xml' },
     coverage: {
       provider: 'v8',
       reportsDirectory: 'coverage/vitest',
@@ -55,7 +60,7 @@ export default defineConfig({
         '**/scripts/',
         '**/src/mock/',
         '**/temp/',
-        '**/vendor/',
+        '**/tmp/',
         '**/vitest/**',
         '**/src/**/*.d.ts', // TypeScript declaration files should be excluded from coverage
         '**/src/**/*.{spec,test}.{ts,mts,cts}', // Any test files should be excluded from coverage, even if they are not in the vitest folder
@@ -108,7 +113,7 @@ export default defineConfig({
           functions: 100,
           lines: 100,
         },
-        'packages/core/src/{deviceManager,helpers,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory,matterNodeHelpers}.ts':
+        'packages/core/src/{deviceManager,helpers,matterbridgeEndpoint,matterbridgeAccessoryPlatform,matterbridgeDeviceTypes,matterbridgeDynamicPlatform,matterbridgeEndpointHelpers,matterbridgeEndpointCommandHandler,matterbridgeFactory,matterNodeHelpers}.ts':
           {
             perFile: true,
             statements: 100,
@@ -116,7 +121,7 @@ export default defineConfig({
             functions: 100,
             lines: 100,
           },
-        'packages/core/src/{frontend,matterbridge,matterbridgeEndpoint,matterNode}.ts': {
+        'packages/core/src/{frontend,matterbridge,matterNode}.ts': {
           perFile: true,
           statements: 98,
           branches: 80,

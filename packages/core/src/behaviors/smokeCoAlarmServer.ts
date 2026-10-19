@@ -26,8 +26,9 @@
 
 import { Seconds, Time, type Timer } from '@matter/general';
 import { SmokeCoAlarmServer } from '@matter/node/behaviors/smoke-co-alarm';
-import { Status, StatusResponseError } from '@matter/types';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';

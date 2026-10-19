@@ -3,7 +3,7 @@
  * @description This file contains the Tracker class.
  * @author Luca Liguori
  * @created 2025-10-10
- * @version 1.1.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,9 +26,10 @@ import os from 'node:os';
 
 import { AnsiLogger, BRIGHT, CYAN, db, LogLevel, RED, RESET, TimestampFormat, YELLOW } from 'node-ansi-logger';
 
-import { formatBytes, formatPercent, formatTimeStamp } from './format.js';
+import { hasAnyParameter, hasParameter } from './commandLine.js';
+import { formatBytes, formatPercent, formatTimeStamp, formatUptime } from './format.js';
 import { logModuleLoaded } from './loader.js';
-import { isBun, gc, memoryFootprint, setGcLevel } from './runtimeBun.js';
+import { isBun, gc, constrainedMemory, memoryFootprint, setGcLevel } from './runtimeBun.js';
 
 logModuleLoaded('Tracker');
 
@@ -39,6 +40,8 @@ export type TrackerSnapshot = {
   peakFreeMemory: number;
   totalMemory: number;
   peakTotalMemory: number;
+  constrainedMemory: number;
+  peakConstrainedMemory: number;
   osCpu: number;
   peakOsCpu: number;
   processCpu: number;
@@ -62,9 +65,9 @@ interface TrackerEvents {
   /** Stop tracking */
   stop: [];
   /** Uptime event */
-  uptime: [os: number, process: number];
+  uptime: [systemUptime: number, processUptime: number];
   /** CPU event */
-  cpu: [os: number, process: number];
+  cpu: [osCpu: number, processCpu: number];
   /** Memory event */
   memory: [free: number, total: number, rss: number, heapUsed: number, heapTotal: number, external: number, arrayBuffers: number];
   /** Snapshot event */
@@ -85,7 +88,7 @@ interface TrackerEvents {
 export class Tracker extends EventEmitter<TrackerEvents> {
   private trackerInterval?: NodeJS.Timeout;
   static historyIndex = 0;
-  // History for 8h at 1 sample each 10 seconds = 2880 entries
+  // History for 8h at 1 sample each 10 seconds = 2880 entries (about 1.6 MB of V8 heap once filled with float values, about 0.7 MB on Bun)
   static readonly historySize = 2880;
   static readonly history: TrackerSnapshot[] = Array.from({ length: this.historySize }, () => ({
     timestamp: 0,
@@ -93,6 +96,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     peakFreeMemory: 0,
     totalMemory: 0,
     peakTotalMemory: 0,
+    constrainedMemory: 0,
+    peakConstrainedMemory: 0,
     osCpu: 0,
     peakOsCpu: 0,
     processCpu: 0,
@@ -116,9 +121,9 @@ export class Tracker extends EventEmitter<TrackerEvents> {
    * Creates a Tracker instance.
    *
    * @param {string} name - Logger and tracker instance name.
-   * @param {boolean} debug - Enables debug logging, including per-sample tracker output.
+   * @param {boolean} debug - Enables debug logging.
    * @param {boolean} verbose - Enables verbose startup diagnostics for CPU and memory state.
-   * @param {boolean} tracker - Enables tracker mode and DEBUG log level for tracker lifecycle output.
+   * @param {boolean} tracker - Enables tracker output for tracker lifecycle output.
    * @param {boolean} forceGc - Forces garbage collection during each tracker sampling interval.
    */
   constructor(
@@ -129,24 +134,40 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     private readonly forceGc: boolean = false,
   ) {
     super();
-    if (process.argv.includes('--debug') || process.argv.includes('--verbose') || process.argv.includes('--tracker')) {
+    if (hasAnyParameter('debug', 'verbose')) {
       this.debug = true;
     }
-    if (process.argv.includes('--verbose')) {
+    if (hasParameter('verbose')) {
       this.verbose = true;
     }
-    if (process.argv.includes('--tracker')) {
+    if (hasParameter('tracker')) {
       this.tracker = true;
     }
-    if (process.argv.includes('--force-gc')) {
+    if (hasParameter('force-gc')) {
       this.forceGc = true;
     }
-    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug || this.tracker ? LogLevel.DEBUG : LogLevel.INFO });
+    if (this.verbose) this.debug = true;
+    this.log = new AnsiLogger({ logName: name, logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: this.debug ? LogLevel.DEBUG : LogLevel.INFO });
     this.log.logNameColor = YELLOW;
     if (this.verbose) {
-      this.log.debug(`os.cpus():\n${RESET}`, os.cpus());
-      this.log.debug(`process.cpuUsage():\n${RESET}`, process.cpuUsage());
-      this.log.debug(`process.memoryUsage():\n${RESET}`, process.memoryUsage());
+      // Group the cores by model and speed, so hybrid CPUs show one entry per core type
+      const cpuGroups = new Map<string, number>();
+      for (const cpu of os.cpus()) {
+        const key = `${cpu.model} @ ${cpu.speed} MHz`;
+        cpuGroups.set(key, (cpuGroups.get(key) ?? 0) + 1);
+      }
+      const cpus = Array.from(cpuGroups, ([key, count]) => `${CYAN}${count} × ${key}${db}`).join(', ') || `${CYAN}unknown${db}`;
+      this.log.debug(`os.cpus(): ${cpus} (availableParallelism ${CYAN}${os.availableParallelism()}${db})`);
+      const cpuUsage = process.cpuUsage();
+      this.log.debug(`process.cpuUsage(): user ${CYAN}${(cpuUsage.user / 1_000_000).toFixed(2)} s${db}, system ${CYAN}${(cpuUsage.system / 1_000_000).toFixed(2)} s${db}`);
+      const memoryUsage = process.memoryUsage();
+      this.log.debug(
+        `process.memoryUsage(): rss ${CYAN}${formatBytes(memoryUsage.rss)}${db}, heapTotal ${CYAN}${formatBytes(memoryUsage.heapTotal)}${db}, heapUsed ${CYAN}${formatBytes(memoryUsage.heapUsed)}${db}, ` +
+          `external ${CYAN}${formatBytes(memoryUsage.external)}${db}, arrayBuffers ${CYAN}${formatBytes(memoryUsage.arrayBuffers)}${db}`,
+      );
+      this.log.debug(`constrainedMemory(): ${CYAN}${formatBytes(constrainedMemory())}${db}`);
+      this.log.debug(`os.uptime(): ${CYAN}${formatUptime(Math.floor(os.uptime()))}${db}`);
+      this.log.debug(`process.uptime(): ${CYAN}${formatUptime(Math.floor(process.uptime()))}${db}`);
     }
 
     this.on('start', () => {
@@ -236,6 +257,8 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       entry.peakFreeMemory = Math.max(prevEntry.peakFreeMemory, entry.freeMemory);
       entry.totalMemory = os.totalmem();
       entry.peakTotalMemory = Math.max(prevEntry.peakTotalMemory, entry.totalMemory);
+      entry.constrainedMemory = constrainedMemory();
+      entry.peakConstrainedMemory = Math.max(prevEntry.peakConstrainedMemory, entry.constrainedMemory);
       const mem = process.memoryUsage();
       // On Bun, report process footprint; RSS can include reusable resident pages on macOS.
       entry.rss = memoryFootprint();
@@ -253,10 +276,11 @@ export class Tracker extends EventEmitter<TrackerEvents> {
       // Emit tracker event with current snapshot
       this.emit('snapshot', entry);
 
-      // Debug output
-      if (this.debug) {
-        this.log.debug(
-          `Time: ${formatTimeStamp(entry.timestamp)} ` +
+      // Tracker output
+      if (this.tracker) {
+        this.log.info(
+          db +
+            `Time: ${formatTimeStamp(entry.timestamp)} ` +
             `os ${CYAN}${BRIGHT}${formatPercent(entry.osCpu)}${RESET}${db} (${entry.peakOsCpu > prevEntry.peakOsCpu ? RED : ''}${formatPercent(entry.peakOsCpu)}${db}) ` +
             `process ${CYAN}${BRIGHT}${formatPercent(entry.processCpu)}${RESET}${db} (${entry.peakProcessCpu > prevEntry.peakProcessCpu ? RED : ''}${formatPercent(entry.peakProcessCpu)}${db}) ` +
             `rss: ${CYAN}${BRIGHT}${formatBytes(entry.rss)}${RESET}${db} (${entry.peakRss > prevEntry.peakRss ? RED : ''}${formatBytes(entry.peakRss)}${db}) ` +
@@ -337,18 +361,19 @@ export class Tracker extends EventEmitter<TrackerEvents> {
     }
 
     // Log all history entries
-    if (this.debug) {
-      this.log.debug(`Tracker history for ${YELLOW}${BRIGHT}${this.name}:${RESET}`);
-      this.log.debug(
-        'Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers',
+    if (this.tracker) {
+      this.log.info(db + `Tracker history for ${YELLOW}${BRIGHT}${this.name}:${RESET}`);
+      this.log.info(
+        db + 'Timestamp            Host cpu            Process cpu         Rss                   Heap Used             Heap Total            External              ArrayBuffers',
       );
       //              10/10/2025, 20:52:12   4.76 % (  4.76 %)   0.16 % (  0.16 %)  38.45 MB ( 38.45 MB)   3.75 MB (  3.75 MB)   5.29 MB (  5.29 MB)   1.66 MB (  1.66 MB)  10.25 KB ( 10.25 KB)
       for (let i = 0; i < Tracker.historySize; i++) {
         const index = (Tracker.historyIndex + i) % Tracker.historySize;
         const entry = Tracker.history[index];
         if (entry.timestamp === 0) continue;
-        this.log.debug(
-          `${formatTimeStamp(entry.timestamp)} ` +
+        this.log.info(
+          db +
+            `${formatTimeStamp(entry.timestamp)} ` +
             `${CYAN}${BRIGHT}${formatPercent(entry.osCpu).padStart(8)}${RESET} (${formatPercent(entry.peakOsCpu).padStart(8)}) ` +
             `${CYAN}${BRIGHT}${formatPercent(entry.processCpu).padStart(8)}${RESET} (${formatPercent(entry.peakProcessCpu).padStart(8)}) ` +
             `${CYAN}${BRIGHT}${formatBytes(entry.rss).padStart(9)}${RESET} (${formatBytes(entry.peakRss).padStart(9)}) ` +

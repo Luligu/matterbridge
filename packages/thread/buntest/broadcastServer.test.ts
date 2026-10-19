@@ -374,6 +374,24 @@ describe('BroadcastServer', () => {
     expect(result).toEqual({ id: 111111, timestamp: expect.any(Number), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } });
   });
 
+  test('fetch: should write the diagnostic timing when diagnostic is enabled', async () => {
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    (server as any).diagnostic = true;
+    try {
+      const requestMsg = { id: 111111, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+      const responseMsg = { id: 111111, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'Test', age: 99 } } as const;
+      setTimeout(() => {
+        // Simulate receiving the response
+        (server as any).broadcastChannel.onmessage({ data: responseMsg });
+      }, 10);
+      await server.fetch(requestMsg);
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Broadcast:manager: fetch test from manager to manager took`));
+    } finally {
+      (server as any).diagnostic = false;
+      stderrSpy.mockRestore();
+    }
+  });
+
   test('fetch: should resolve with correct response without id', async () => {
     const generatedId = 123456789;
     const getUniqueIdSpy = vi.spyOn(server, 'getUniqueId').mockReturnValue(generatedId);

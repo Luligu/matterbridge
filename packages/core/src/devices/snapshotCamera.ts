@@ -22,13 +22,14 @@
  * limitations under the License.
  */
 
-import { StreamUsage } from '@matter/types';
+// @matter
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Identify } from '@matter/types/clusters/identify';
+import { StreamUsage } from '@matter/types/globals';
 
+// Matterbridge
 import { createDefaultSnapshotCameraAvStreamManagementClusterServer, type SnapshotSource } from '../behaviors/cameraAvStreamManagementServer.js';
 import { powerSource, snapshotCamera } from '../matterbridgeDeviceTypes.js';
-// Matterbridge
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { MatterbridgeEndpointOptions } from '../matterbridgeEndpointTypes.js';
 
@@ -81,8 +82,8 @@ export class SnapshotCamera extends MatterbridgeEndpoint {
    * A Snapshot Camera is a camera which can only support retrieving still images on-demand via the Capture
    * Snapshot command in the Camera AV Stream Management cluster.
    *
-   * The CameraAvStreamManagement Snapshot and ImageControl features are implemented; the Video and Audio features
-   * are not part of this example (see the Camera device for one implementing those).
+   * Only the CameraAvStreamManagement Snapshot feature is implemented; the Video, Audio and ImageControl features
+   * are not enabled (see the Camera device for one implementing those).
    *
    * @param {string} name - The name of the snapshot camera.
    * @param {string} serial - The serial number of the snapshot camera.

@@ -76,6 +76,8 @@ export class ThreadsWrapper extends EventEmitter<ThreadsWrapperEvents> {
   constructor(
     public name: ThreadNames,
     public entrypoint: (worker: ThreadsWrapper) => Promise<boolean>,
+    public startup?: (worker: ThreadsWrapper) => Promise<void>,
+    public shutdown?: (worker: ThreadsWrapper) => Promise<void>,
   ) {
     super();
     // Update debug, verbose and tracker flags if workerData is available
@@ -97,7 +99,7 @@ export class ThreadsWrapper extends EventEmitter<ThreadsWrapperEvents> {
     if (this.useTracker) {
       void import('@matterbridge/utils/tracker')
         .then(({ Tracker }) => {
-          this.tracker = new Tracker(`Thread${this.name}`, this.debug || this.useTracker, this.verbose, this.useTracker);
+          this.tracker = new Tracker(`Thread${this.name}`, this.debug, this.verbose, this.useTracker);
           this.tracker.start();
           return;
         })
@@ -129,10 +131,28 @@ export class ThreadsWrapper extends EventEmitter<ThreadsWrapperEvents> {
           // The manager sends startup as soon as it receives init, which can arrive before the entrypoint (scheduled with setImmediate) has registered its
           // listeners. setImmediate runs in order, so emitting from one runs after the entrypoint has started.
           case 'startup':
-            setImmediate(() => this.emit('startup'));
+            setImmediate(() => {
+              void (async (): Promise<void> => {
+                try {
+                  if (startup) await startup(this);
+                } catch (err) {
+                  inspectError(this.log, `Worker ${this.name} startup failed`, err);
+                }
+              })();
+              this.emit('startup');
+            });
             break;
           case 'shutdown':
-            setImmediate(() => this.emit('shutdown'));
+            setImmediate(() => {
+              void (async (): Promise<void> => {
+                try {
+                  if (shutdown) await shutdown(this);
+                } catch (err) {
+                  inspectError(this.log, `Worker ${this.name} shutdown failed`, err);
+                }
+              })();
+              this.emit('shutdown');
+            });
             break;
           default:
             this.parentLog(this.name, LogLevel.WARN, `Worker ${this.name}:${threadId} received unknown message type from parent: ${debugStringify(message)}`);
@@ -158,6 +178,7 @@ export class ThreadsWrapper extends EventEmitter<ThreadsWrapperEvents> {
           let success = false;
           try {
             success = await entrypoint(this);
+            this.parentPost({ type: 'ready', threadId, threadName: this.name, memoryUsage: process.memoryUsage(), success: true });
           } catch (err) {
             inspectError(this.log, `Worker ${this.name} entrypoint failed`, err);
           } finally {

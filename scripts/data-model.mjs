@@ -1,6 +1,6 @@
 /**
  * Data model script.
- * Version: 1.0.2
+ * Version: 1.0.3
  *
  * This script will fetch from the connectedhomeip GitHub repository the data model files and convert them to JSON.
  *
@@ -35,7 +35,8 @@ const DEVICE_TYPES_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_
 const CLUSTERS_DIRECTORY_API = `${GITHUB_API_BASE}/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/clusters?ref=master`;
 const GITHUB_API_HEADERS = {
   'User-Agent': 'matterbridge-data-model-script',
-  'Accept': 'application/vnd.github.v3+json',
+  'Accept': 'application/vnd.github+json',
+  'X-GitHub-Api-Version': '2026-03-10',
 };
 
 const sanitizeKey = (value) => value.replace(/[\s/-]+/g, '');

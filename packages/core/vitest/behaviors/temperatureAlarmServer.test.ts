@@ -8,8 +8,9 @@ const NAME = 'TemperatureAlarmServer';
 const MATTER_PORT = 12500;
 const MATTER_CREATE_ONLY = true;
 
-import { Status, TlvOfModel } from '@matter/types';
 import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
+import { Status } from '@matter/types/globals';
+import { TlvOfModel } from '@matter/types/tlv';
 import {
   addDevice,
   aggregator,

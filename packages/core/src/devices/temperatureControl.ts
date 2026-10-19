@@ -25,8 +25,9 @@
 
 // @matter
 import { TemperatureControlServer } from '@matter/node/behaviors/temperature-control';
-import { Status, StatusResponseError } from '@matter/types';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';

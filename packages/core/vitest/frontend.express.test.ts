@@ -513,6 +513,29 @@ describe('Matterbridge frontend express with http', () => {
     }
   }, 30000);
 
+  test('GET /api/download-mblog aborted does not send a 500', async () => {
+    await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), 'Test aborted content', 'utf8');
+    const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation(function (this: typeof expressResponse, ...args: unknown[]) {
+      const done = args[args.length - 1];
+      if (typeof done === 'function') {
+        const error = Object.assign(new Error('Request aborted'), { code: 'ECONNABORTED' });
+        (done as (error: Error) => void)(error);
+      }
+      // The client is still connected here, so end the response to complete the request
+      this.end();
+    });
+
+    try {
+      const response = await makeRequest('/api/download-mblog', 'GET');
+
+      expect(response.status).toBe(200);
+      expect(response.body).toBe('');
+    } finally {
+      downloadSpy.mockRestore();
+      await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE));
+    }
+  }, 30000);
+
   test('GET /api/download-mjlog no log', async () => {
     const response = await makeRequest('/api/download-mjlog', 'GET');
 

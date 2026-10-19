@@ -8,8 +8,8 @@ const NAME = 'BooleanStateConfigurationServer';
 const MATTER_PORT = 13600;
 const MATTER_CREATE_ONLY = true;
 
-import { Status } from '@matter/types';
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
+import { Status } from '@matter/types/globals';
 import {
   addDevice,
   aggregator,

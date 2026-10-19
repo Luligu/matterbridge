@@ -27,8 +27,9 @@
 import type { MaybePromise } from '@matter/general';
 import { AttributeElement, CommandElement, EventElement, FieldElement } from '@matter/model';
 import { TemperatureAlarmServer } from '@matter/node/behaviors/temperature-alarm';
-import { Status, StatusResponseError } from '@matter/types';
 import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
+import { StatusResponseError } from '@matter/types/common';
+import { Status } from '@matter/types/globals';
 import { debugStringify, nf } from 'node-ansi-logger';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';

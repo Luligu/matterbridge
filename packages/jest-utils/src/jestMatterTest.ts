@@ -33,7 +33,7 @@ import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/brid
 import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
-import { AggregatorEndpoint } from '@matter/node/endpoints';
+import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge } from '@matterbridge/types';
@@ -96,6 +96,7 @@ export async function createTestEnvironment(): Promise<Environment> {
   environment.vars.set('path.root', path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR));
   environment.vars.set('runtime.signals', false);
   environment.vars.set('runtime.exitcode', false);
+  environment.vars.set('endpoint.validation', 'strict');
   return environment;
 }
 
@@ -154,6 +155,7 @@ export function getMatterbridge(): PlatformMatterbridge {
       osArch: 'arm64',
       totalMemory: '0 B',
       freeMemory: '0 B',
+      constrainedMemory: '0 B',
       systemUptime: '0s',
       processUptime: '0s',
       cpuUsage: '0%',
@@ -169,10 +171,10 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.10.13',
-    matterbridgeLatestVersion: '3.10.13',
-    matterbridgeDevVersion: '3.10.13',
-    frontendVersion: '3.6.4',
+    matterbridgeVersion: '3.10.15',
+    matterbridgeLatestVersion: '3.10.15',
+    matterbridgeDevVersion: '3.10.15',
+    frontendVersion: '3.10.15',
     bridgeMode: 'none',
     restartMode: 'none',
     virtualMode: 'mounted_switch',

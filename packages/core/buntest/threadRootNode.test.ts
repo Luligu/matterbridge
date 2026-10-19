@@ -28,6 +28,8 @@ describe('ThreadRootNode', () => {
   };
   const create = vi.fn<() => Promise<void>>();
   const start = vi.fn<() => Promise<void>>();
+  const stop = vi.fn<() => Promise<void>>();
+  const destroy = vi.fn<() => Promise<void>>();
   const createMatterNode = vi.fn();
   let wrapper: ThreadsWrapper;
 
@@ -38,7 +40,7 @@ describe('ThreadRootNode', () => {
       MatterNode: class {
         constructor(shared: unknown, pluginName: unknown) {
           createMatterNode(shared, pluginName);
-          return { create, start };
+          return { storeId: 'matterbridge-test', create, start, stop, destroy };
         }
       },
     }));
@@ -49,6 +51,8 @@ describe('ThreadRootNode', () => {
   beforeEach(() => {
     create.mockReset().mockImplementation(async () => await Promise.resolve());
     start.mockReset().mockImplementation(async () => await Promise.resolve());
+    stop.mockReset().mockImplementation(async () => await Promise.resolve());
+    destroy.mockReset().mockImplementation(async () => await Promise.resolve());
     createMatterNode.mockReset();
     wrapper.workerData = { ...workerData };
   });
@@ -59,21 +63,43 @@ describe('ThreadRootNode', () => {
     resetTest();
   });
 
-  test('should create and start the MatterNode for the plugin', async () => {
+  // The runner keeps the MatterNode in module state across tests: this test must run before any successful entrypoint
+  test('should do nothing on startup and shutdown when the MatterNode was not created', async () => {
+    await wrapper.startup?.(wrapper);
+    await wrapper.shutdown?.(wrapper);
+    expect(create).not.toHaveBeenCalled();
+    expect(stop).not.toHaveBeenCalled();
+  });
+
+  test('should create the MatterNode for the plugin without starting it', async () => {
     expect(await wrapper.entrypoint(wrapper)).toBe(true);
     expect(wrapper.name).toBe('RootNode');
     expect(createMatterNode).toHaveBeenCalledWith(sharedMatterbridge, 'matterbridge-test');
-    expect(create).toHaveBeenCalledTimes(1);
-    expect(start).toHaveBeenCalledTimes(1);
+    expect(create).not.toHaveBeenCalled();
+    expect(start).not.toHaveBeenCalled();
   });
 
-  test('should create and start the MatterNode in bridge mode without a plugin name', async () => {
+  test('should create the MatterNode in bridge mode without a plugin name', async () => {
     const { pluginName: _, ...bridgeWorkerData } = workerData;
     wrapper.workerData = bridgeWorkerData;
     expect(await wrapper.entrypoint(wrapper)).toBe(true);
     expect(createMatterNode).toHaveBeenCalledWith(sharedMatterbridge, undefined);
+  });
+
+  test('should create and start the MatterNode on startup and stop and destroy it on shutdown', async () => {
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    await wrapper.startup?.(wrapper);
     expect(create).toHaveBeenCalledTimes(1);
     expect(start).toHaveBeenCalledTimes(1);
+    expect(stop).not.toHaveBeenCalled();
+    await wrapper.shutdown?.(wrapper);
+    expect(stop).toHaveBeenCalledTimes(1);
+    expect(destroy).toHaveBeenCalledTimes(1);
+    // The MatterNode is released after shutdown
+    await wrapper.startup?.(wrapper);
+    await wrapper.shutdown?.(wrapper);
+    expect(start).toHaveBeenCalledTimes(1);
+    expect(stop).toHaveBeenCalledTimes(1);
   });
 
   test('should report failure when the worker data is missing', async () => {
@@ -98,16 +124,21 @@ describe('ThreadRootNode', () => {
     expect(start).not.toHaveBeenCalled();
   });
 
-  test('should report failure when MatterNode creation rejects', async () => {
+  test('should reject startup when MatterNode creation rejects', async () => {
     create.mockRejectedValue(new Error('MatterNode creation failed'));
-    expect(await wrapper.entrypoint(wrapper)).toBe(false);
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    let error: unknown;
+    await wrapper.startup?.(wrapper).catch((err: unknown) => (error = err));
+    expect((error as Error).message).toBe('MatterNode creation failed');
     expect(start).not.toHaveBeenCalled();
   });
 
-  test('should report failure when MatterNode startup rejects', async () => {
+  test('should reject startup when MatterNode start rejects', async () => {
     start.mockRejectedValue(new Error('MatterNode startup failed'));
-    expect(await wrapper.entrypoint(wrapper)).toBe(false);
+    expect(await wrapper.entrypoint(wrapper)).toBe(true);
+    let error: unknown;
+    await wrapper.startup?.(wrapper).catch((err: unknown) => (error = err));
+    expect((error as Error).message).toBe('MatterNode startup failed');
     expect(create).toHaveBeenCalledTimes(1);
-    expect(start).toHaveBeenCalledTimes(1);
   });
 });
