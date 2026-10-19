@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import DevicesTable from '../src/components/DevicesTable';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
+import { MbfLsk } from '../src/utils/localStorage';
 
 const endpointNumber = (value: number): Cluster['number'] => value;
 
@@ -214,7 +215,7 @@ describe('DevicesTable', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Tree' }));
     expect(await screen.findByRole('tree')).toBeInTheDocument();
-    expect(localStorage.getItem('DevicesTable_clusters_view')).toBe('tree');
+    expect(localStorage.getItem(MbfLsk.devicesClusterViewMode)).toBe('tree');
     expect(screen.getByText('Total child endpoints: 0')).toBeInTheDocument();
 
     // Clicking the selected toggle keeps the current view
@@ -223,11 +224,11 @@ describe('DevicesTable', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Grid' }));
     await waitFor(() => expect(screen.queryByRole('tree')).toBeNull());
-    expect(localStorage.getItem('DevicesTable_clusters_view')).toBe('grid');
+    expect(localStorage.getItem(MbfLsk.devicesClusterViewMode)).toBe('grid');
   });
 
   it('should open the clusters in the tree view when the saved choice is the tree', async () => {
-    localStorage.setItem('DevicesTable_clusters_view', 'tree');
+    localStorage.setItem(MbfLsk.devicesClusterViewMode, 'tree');
     const socket = createSocket();
     const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
 

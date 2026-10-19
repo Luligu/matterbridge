@@ -9,6 +9,7 @@ import { useContext, useEffect, useMemo, useState, useRef, memo, useCallback } f
 
 import { debug } from '../appState';
 import { type ApiDevice, type Cluster, type WsMessageApiResponse, type WsMessageApiStateUpdate } from '../utils/backendShared';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
 import DevicesClustersTree from './DevicesClustersTree';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
@@ -130,7 +131,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
-  const [clustersView, setClustersView] = useState<'grid' | 'tree'>(() => (localStorage.getItem('DevicesTable_clusters_view') === 'tree' ? 'tree' : 'grid'));
+  const [clustersView, setClustersView] = useState<'grid' | 'tree'>(() => (localStorage.getItem(MbfLsk.devicesClusterViewMode) === 'tree' ? 'tree' : 'grid'));
 
   // Selected device for clusters view. handleDeviceClick sets these states based on the clicked device row, and if the same row is clicked again, it resets them to null to go back to the devices view.
   const [pluginName, setPluginName] = useState<string | null>(null);
@@ -291,7 +292,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   const handleClustersView = (_event: React.MouseEvent<HTMLElement>, view: 'grid' | 'tree' | null) => {
     if (!view) return;
-    localStorage.setItem('DevicesTable_clusters_view', view);
+    localStorage.setItem(MbfLsk.devicesClusterViewMode, view);
     setClustersView(view);
   };
   const clustersViewToggle = (

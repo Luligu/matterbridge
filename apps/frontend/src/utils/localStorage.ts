@@ -7,6 +7,7 @@ export const MbfLsk = {
   devicesFilterPlugins: `${LOCAL_STORAGE_PREFIX}devicesFilterPlugins`,
   devicesFilterDevices: `${LOCAL_STORAGE_PREFIX}devicesFilterDevices`,
   devicesViewMode: `${LOCAL_STORAGE_PREFIX}devicesViewMode`,
+  devicesClusterViewMode: `${LOCAL_STORAGE_PREFIX}devicesClusterViewMode`,
   // Home page
   frontendVersion: `${LOCAL_STORAGE_PREFIX}frontendVersion`,
   matterbridgeVersion: `${LOCAL_STORAGE_PREFIX}matterbridgeVersion`,
