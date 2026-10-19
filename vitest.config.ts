@@ -21,11 +21,12 @@ export default defineConfig({
       '**/scripts/',
       '**/src/mock/',
       '**/temp/',
+      '**/tmp/',
       '**/vendor/',
       '**/jest-utils/', // Plugins test package for Jest
       '**/vitest-utils/', // Plugins test package for Vitest
-      'packages/core/vitest/matterNode.*.ts',
-      'packages/core/vitest/backend*.ts',
+      'packages/core/vitest/matterNode.*.ts', // Not released files
+      'packages/core/vitest/backend*.ts', // Not released files
     ],
     globals: true,
     clearMocks: false,
@@ -59,7 +60,7 @@ export default defineConfig({
         '**/scripts/',
         '**/src/mock/',
         '**/temp/',
-        '**/vendor/',
+        '**/tmp/',
         '**/vitest/**',
         '**/src/**/*.d.ts', // TypeScript declaration files should be excluded from coverage
         '**/src/**/*.{spec,test}.{ts,mts,cts}', // Any test files should be excluded from coverage, even if they are not in the vitest folder

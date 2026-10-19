@@ -290,7 +290,8 @@ export class WeriftWebRtcSession {
     });
     this.log.debug(`Created RTCPeerConnection with codecs: audio=[OPUS, PCMU], video=[H264, VP8] for session ${webRtcSessionId}`);
 
-    this.diagnosticsInterval = setInterval(() => void this.logDiagnosticsSnapshot(), WeriftWebRtcSession.DIAGNOSTICS_INTERVAL_MS);
+    // Unref'd: the diagnostics timer only logs and must not keep the process alive on its own.
+    this.diagnosticsInterval = setInterval(() => void this.logDiagnosticsSnapshot(), WeriftWebRtcSession.DIAGNOSTICS_INTERVAL_MS).unref();
 
     WeriftWebRtcSession.activeSessions.add(this);
     if (!WeriftWebRtcSession.exitHandlerRegistered) {
@@ -582,6 +583,24 @@ export class WeriftWebRtcSession {
   }
 
   /**
+   * Warns when an injected track's ffmpeg process exits while its track is still attached. A generator streams until
+   * the session stops it (see {@link cleanupTestVideoArtifacts} and {@link cleanupTestAudioArtifacts}), so exiting on
+   * its own (an RTSP camera dropping the stream, a capture device unplugged, an encoder failure) leaves the track
+   * without media. The exit of a generator the session stopped is not reported here: it is no longer the attached one.
+   *
+   * @param {ChildProcess} generator - The spawned ffmpeg process.
+   * @param {'video' | 'audio'} kind - The injected track kind, used to find the attached generator and label the log line.
+   * @returns {void}
+   */
+  private watchGeneratorExit(generator: ChildProcess, kind: 'video' | 'audio'): void {
+    generator.once('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+      const attached = kind === 'video' ? this.testVideoGenerator : this.testAudioGenerator;
+      if (attached !== generator) return;
+      this.log.warn(`Ffmpeg ${kind} generator exited unexpectedly with ${signal ? `signal ${signal}` : `code ${code}`}: the ${kind} track carries no more media`);
+    });
+  }
+
+  /**
    * Attaches an injected video track (test pattern, webcam, or RTSP camera, per {@link buildFfmpegVideoInputArgs}) to the peer
    * connection by spawning ffmpeg to encode into it over a local UDP/RTP loop, unless one is already attached, the
    * configured source is `none`, or ffmpeg can't be resolved. Failures are logged and swallowed rather than thrown,
@@ -656,6 +675,7 @@ export class WeriftWebRtcSession {
       ];
       const generator = runFfmpeg(ffmpegArgs);
       this.logFfmpegStderr(generator, 'video');
+      this.watchGeneratorExit(generator, 'video');
 
       /* v8 ignore start -- requires the spawned ffmpeg process itself to fail after hasFfmpeg already verified
        * it runs (e.g. the binary is removed between the check and this spawn), which this harness can't simulate
@@ -864,6 +884,7 @@ export class WeriftWebRtcSession {
       ];
       const generator = runFfmpeg(ffmpegArgs);
       this.logFfmpegStderr(generator, 'audio');
+      this.watchGeneratorExit(generator, 'audio');
 
       /* v8 ignore start -- requires the spawned ffmpeg process itself to fail after hasFfmpeg already verified
        * it runs (e.g. the binary is removed between the check and this spawn), which this harness can't simulate
@@ -892,6 +913,7 @@ export class WeriftWebRtcSession {
    */
   private cleanupTestVideoArtifacts(): void {
     if (this.testVideoGenerator) {
+      this.log.debug(`Stopping ffmpeg video generator (pid ${this.testVideoGenerator.pid ?? 'unknown'})`);
       this.testVideoGenerator.kill('SIGTERM');
       this.testVideoGenerator = undefined;
     }
@@ -907,6 +929,7 @@ export class WeriftWebRtcSession {
    */
   private cleanupTestAudioArtifacts(): void {
     if (this.testAudioGenerator) {
+      this.log.debug(`Stopping ffmpeg audio generator (pid ${this.testAudioGenerator.pid ?? 'unknown'})`);
       this.testAudioGenerator.kill('SIGTERM');
       this.testAudioGenerator = undefined;
     }
@@ -1047,7 +1070,7 @@ export class WeriftWebRtcSession {
    * - a concurrent/duplicate call to {@link close} (e.g. from {@link logDtlsTransportStateChanges}'s own auto-close,
    *   or a second DTLS transport reaching `closed`/`failed`) is a no-op instead of doing the cleanup work twice.
    * - {@link logDtlsTransportStateChanges} can tell a DTLS transport reaching `closed` as a *side effect of our own*
-   *   close() (every close — EndSession, closeAll(), this same auto-close — stops the DTLS transports, which
+   *   close() (every close — EndSession, this same auto-close — stops the DTLS transports, which
    *   triggers this same onStateChange) apart from one reaching `closed` on its own, unprompted, which is the real
    *   orphaned-session signal that should trigger an auto-close.
    */
@@ -1156,17 +1179,5 @@ export class WeriftWebRtcSession {
     this.cleanupTestAudioArtifacts();
     WeriftWebRtcSession.activeSessions.delete(this);
     this.log.info(`RTCPeerConnection closed (connectionState=${this.peerConnection.connectionState})`);
-  }
-
-  /**
-   * Closes every currently active session, e.g. during a graceful platform shutdown.
-   *
-   * @returns {Promise<void>} Resolves once every active session has been closed.
-   */
-  static async closeAll(): Promise<void> {
-    for (const session of WeriftWebRtcSession.activeSessions) {
-      session.log.info(`Closing session ${session.webRtcSessionId} as part of closeAll()`);
-      await session.close();
-    }
   }
 }

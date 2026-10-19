@@ -216,7 +216,12 @@ export function runFfmpeg(args: string[]): ChildProcess {
     throw new Error('Cannot run ffmpeg: not found on this host');
   }
   log.debug(`Spawning ffmpeg: ${ffmpegCommand} ${args.map(redactSource).join(' ')}`);
-  return spawn(ffmpegCommand, args);
+  const child = spawn(ffmpegCommand, args);
+  // Every ffmpeg process logs its end, whoever spawned it (WebRTC track injection, snapshot capture).
+  child.once('exit', (code: number | null, signal: NodeJS.Signals | null) => {
+    log.debug(`ffmpeg process ${child.pid ?? 'unknown'} exited with ${signal ? `signal ${signal}` : `code ${code}`}`);
+  });
+  return child;
 }
 
 /**

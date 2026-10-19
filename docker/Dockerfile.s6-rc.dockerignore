@@ -14,3 +14,9 @@
 # ...except the files this Dockerfile copies.
 !.dockerbuild.json
 !docker/rootfs
+
+# OS metadata (macOS Finder, Windows Explorer)
+**/.DS_Store
+**/Thumbs.db
+**/ehthumbs.db
+**/desktop.ini

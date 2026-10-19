@@ -29,6 +29,49 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.10.15] - Dev branch
+
+### Added
+
+- [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
+
+### Changed
+
+- [workflows]: Pin GitHub workflow dispatch requests to REST API version `2026-03-10` to avoid API retirement warnings.
+- [utils/scripts]: Pin GitHub data-model and Bun release requests to REST API version `2026-03-10`.
+- [matterbridge]: Bump `matterbridge` version to v.3.10.15.
+- [matterbridge]: Bump `@types/bun` to v.1.4.3.
+- [matterbridge]: Bump `@types/node` to v.26.6.5.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.5.
+- [matterbridge]: Bump `jsdom` to v.30.1.3.
+- [matterbridge]: Bump `marked` to v.18.1.1.
+- [matterbridge]: Bump `oxfmt` to v.0.73.0.
+- [matterbridge]: Bump `oxlint` to v.1.88.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2004.
+- [matterbridge]: Bump `vitest` to v.5.0.5.
+- [core]: Bump `express` to v.5.3.0.
+- [thread]: Bump `@zip.js/zip.js` to v.2.24.0.
+- [frontend]: Add `apps/frontend` to the npm workspaces: it is now versioned with matterbridge (v.3.10.15) and published by `publish-workspaces`.
+- [frontend]: Move all dependencies to devDependencies, since they are bundled by vite into `build`.
+- [scripts]: Fix `pack-workspaces --dry-run` creating a tarball instead of previewing its contents.
+- [scripts]: Add `buildFrontend` and run it after the clean build in `publish-workspaces`, `pack-workspaces`, `pack-monorepo`, `runMeBeforePublish`, `prepublishOnly` and `softReset`; remove `reset:all`, `softReset:all`, `softReset:bun:all` and `runMeBeforePublish:all` (the frontend coverage now runs in `runMeBeforePublish`).
+- [frontend]: Bump `react` to v.19.3.1.
+- [frontend]: Bump `react-dom` to v.19.3.1.
+- [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
+- [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
+- [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
+
+### Fixed
+
+- [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
+- [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
+- [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
+- [camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.
+- [ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.
+- [scripts]: Fix the IPv4 and IPv6 lines of `info-debian.sh` and `info-alpine.sh` outside plain Docker bridges: read `src`/`dev` from `ip route get` by keyword (Docker Desktop host networking printed `IPv4: 2`), take IPv6 from the outgoing interface instead of `eth0`, and keep only the matching family in the `hostname` fallback.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.10.14] - 2026-10-16
 
 ### Breaking news

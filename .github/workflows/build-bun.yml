@@ -55,10 +55,6 @@ jobs:
           bunx --bun matterbridge --version
           bunx --bun matterbridge --loginterfaces
 
-      - name: Install frontend dependencies
-        run: bun install
-        working-directory: apps/frontend
-
       - name: Build frontend
         run: bun run build
         working-directory: apps/frontend

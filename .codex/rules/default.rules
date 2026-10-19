@@ -1,4 +1,4 @@
-# Codex rules v.1.0.6
+# Codex rules v.1.0.7
 
 # Git mutations
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
@@ -24,6 +24,7 @@ prefix_rule(pattern = ["tsc"], decision = "forbidden", justification = "Use the 
 prefix_rule(pattern = ["oxlint"], decision = "forbidden", justification = "Use the matching npm script instead.")
 prefix_rule(pattern = ["oxfmt"], decision = "forbidden", justification = "Use the matching npm script instead.")
 prefix_rule(pattern = ["vitest"], decision = "forbidden", justification = "Use the matching npm script instead.")
+prefix_rule(pattern = ["bun", "test"], decision = "forbidden", justification = "Use the matching npm script instead.")
 
 # Dependency installs
 prefix_rule(pattern = ["npm", "install"], decision = "prompt", justification = "Ask before installing dependencies.")
@@ -47,19 +48,24 @@ prefix_rule(pattern = ["npm", "run", "lint:fix"], decision = "forbidden", justif
 prefix_rule(pattern = ["npm", "run", "format"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "format:check"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "update-htmls"], decision = "allow")
-prefix_rule(pattern = ["bun", "test"], decision = "allow")
 
-# Shell utilities
-prefix_rule(pattern = ["cat"], decision = "allow")
-prefix_rule(pattern = ["ls"], decision = "allow")
-prefix_rule(pattern = ["head"], decision = "allow")
-prefix_rule(pattern = ["tail"], decision = "allow")
-prefix_rule(pattern = ["grep"], decision = "allow")
-prefix_rule(pattern = ["echo"], decision = "allow")
-prefix_rule(pattern = ["cd"], decision = "allow")
+# Repository automation: mb-run rewrites vendored files and package.json, so it always needs a confirmation.
+prefix_rule(pattern = ["mb-run"], decision = "prompt", justification = "Ask before running mb-run: it rewrites repository files.")
+prefix_rule(pattern = ["npx", "mb-run"], decision = "prompt", justification = "Ask before running mb-run: it rewrites repository files.")
+prefix_rule(pattern = ["bunx", "mb-run"], decision = "prompt", justification = "Ask before running mb-run: it rewrites repository files.")
 
 # External network and containers
 prefix_rule(pattern = ["curl"], decision = "prompt", justification = "Ask before external network fetches.")
 prefix_rule(pattern = ["Invoke-WebRequest"], decision = "prompt", justification = "Ask before external network fetches.")
 prefix_rule(pattern = ["docker", "pull"], decision = "prompt", justification = "Ask before downloading Docker images.")
 prefix_rule(pattern = ["docker", "run"], decision = "prompt", justification = "Ask before running Docker containers.")
+
+# Shell utilities
+prefix_rule(pattern = ["cat"], decision = "allow")
+prefix_rule(pattern = ["ls"], decision = "allow")
+prefix_rule(pattern = ["head"], decision = "allow")
+prefix_rule(pattern = ["tail"], decision = "allow")
+prefix_rule(pattern = ["find"], decision = "allow")
+prefix_rule(pattern = ["grep"], decision = "allow")
+prefix_rule(pattern = ["echo"], decision = "allow")
+prefix_rule(pattern = ["cd"], decision = "allow")
