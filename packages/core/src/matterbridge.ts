@@ -3203,6 +3203,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
+      // The server node is reset to factory defaults and the subscribeAttribute listeners of the plugins are lost (#657)
+      this.log.notice(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`);
+      this.frontend.wssSendRestartRequired();
+      this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`, 10, 'warning');
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */

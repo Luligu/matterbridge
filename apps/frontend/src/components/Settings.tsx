@@ -15,6 +15,7 @@ import { debug, enableMobile, setWssPassword } from '../appState';
 import { type WsMessageApiResponse, type MatterbridgeInformation, type SystemInformation } from '../utils/backendShared';
 import { createDebouncer } from '../utils/createDebouncer';
 import { MbfLsk } from '../utils/localStorage';
+import { applyThemePreference } from '../utils/theme';
 import { ChangePasswordDialog } from './ChangePasswordDialog';
 import { Connecting } from './Connecting';
 import { MbfPage } from './MbfPage';
@@ -183,7 +184,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
     if (debug) console.log('handleChangeTheme called with value:', newTheme);
     setFrontendTheme(newTheme);
     localStorage.setItem(MbfLsk.frontendTheme, newTheme);
-    document.body.setAttribute('frontend-theme', newTheme);
+    applyThemePreference(newTheme);
   };
 
   // Define a function to handle change home page setup
@@ -255,6 +256,7 @@ function MatterbridgeSettings({ matterbridgeInfo, systemInfo }: { matterbridgeIn
             <MenuItem value="classic">Classic</MenuItem>
             <MenuItem value="light">Light</MenuItem>
             <MenuItem value="dark">Dark</MenuItem>
+            <MenuItem value="auto">Auto</MenuItem>
           </Select>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginTop: '5px' }}>
