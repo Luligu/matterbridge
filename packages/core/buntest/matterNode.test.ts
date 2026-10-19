@@ -9,11 +9,11 @@ const NAME = 'MatterNode';
 const PASSCODE = 123456;
 const DISCRIMINATOR = 3860;
 
-import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun:test';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, type Mock, test, vi } from 'bun:test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
+import { Diagnostic, Lifecycle, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
@@ -396,6 +396,64 @@ describe('MatterNode', () => {
     } finally {
       delete process.env.MATTERBRIDGE_CHIP_TEST;
     }
+  });
+
+  describe('restart after the decommissioning of a server node', () => {
+    // The server nodes are created but not started: they are not added to the matter.js runtime, so emitting a crash does not cancel it
+    let requestSpy: Mock<BroadcastServer['request']>;
+    const restartRequests = (): Parameters<BroadcastServer['request']>[] => requestSpy.mock.calls.filter(([msg]) => msg.type === 'matterbridge_restart');
+
+    beforeEach(() => {
+      // @ts-expect-error access private property
+      requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      requestSpy.mockRestore();
+    });
+
+    test('should not request a restart of Matterbridge when the server node goes online without being decommissioned', async () => {
+      const serverNode = await matter.createServerNode(MATTER_PORT + 1, PASSCODE, DISCRIMINATOR);
+      await serverNode.act(async (agent) => {
+        await serverNode.lifecycle.online.emit(agent.context);
+      });
+      expect(restartRequests()).toHaveLength(0);
+      await serverNode.close();
+    });
+
+    test('should request a restart of Matterbridge once when the server node goes online after being decommissioned', async () => {
+      const serverNode = await matter.createServerNode(MATTER_PORT + 1, PASSCODE, DISCRIMINATOR);
+      const storeId = await matter.matterStorageContext?.get<string>('storeId');
+      serverNode.lifecycle.decommissioned.emit(undefined as any);
+      expect(loggerNoticeSpy).toHaveBeenCalledWith(`Matterbridge will restart when the factory reset of the server node for ${storeId} completes`);
+      expect(restartRequests()).toHaveLength(0);
+      await serverNode.act(async (agent) => {
+        await serverNode.lifecycle.online.emit(agent.context);
+      });
+      expect(loggerNoticeSpy).toHaveBeenCalledWith(`Restarting Matterbridge because the last controller removed the server node for ${storeId}...`);
+      expect(restartRequests()).toEqual([[{ type: 'matterbridge_restart', src: 'matter', dst: 'matterbridge', params: undefined }]]);
+      // The restart is armed once per decommissioning
+      await serverNode.act(async (agent) => {
+        await serverNode.lifecycle.online.emit(agent.context);
+      });
+      serverNode.construction.change.emit(Lifecycle.Status.Crashed, serverNode);
+      expect(restartRequests()).toHaveLength(1);
+      await serverNode.close();
+    });
+
+    test('should request a restart of Matterbridge once when the factory reset of a decommissioned server node crashes', async () => {
+      const serverNode = await matter.createServerNode(MATTER_PORT + 1, PASSCODE, DISCRIMINATOR);
+      serverNode.construction.change.emit(Lifecycle.Status.Crashed, serverNode);
+      expect(restartRequests()).toHaveLength(0);
+      serverNode.lifecycle.decommissioned.emit(undefined as any);
+      serverNode.construction.change.emit(Lifecycle.Status.Crashed, serverNode);
+      expect(restartRequests()).toHaveLength(1);
+      await serverNode.act(async (agent) => {
+        await serverNode.lifecycle.online.emit(agent.context);
+      });
+      expect(restartRequests()).toHaveLength(1);
+      await serverNode.close();
+    });
   });
 
   test('Create server node for Matterbridge', async () => {

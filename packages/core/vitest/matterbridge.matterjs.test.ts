@@ -15,12 +15,14 @@ const NAME = 'MatterbridgeMatterjs';
 
 import path from 'node:path';
 
-import { Environment } from '@matter/general';
+import { Environment, Lifecycle } from '@matter/general';
+import type { ServerNode } from '@matter/node';
 import { FabricIndex } from '@matter/types/datatype';
 import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { waiter } from '@matterbridge/utils';
 import { getInterfaceName } from '@matterbridge/utils/network';
 import { LogLevel } from 'node-ansi-logger';
+import type { MockInstance } from 'vitest';
 
 import { Matterbridge } from '../src/matterbridge.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
@@ -181,6 +183,84 @@ describe('Matterbridge matterjs', () => {
       process.argv = argv;
     }
   }, 60000);
+
+  describe('restart after the decommissioning of a server node', () => {
+    // The server nodes are created but not started: they are not added to the matter.js runtime, so emitting a crash does not cancel it
+    let port = MATTER_PORT + 10;
+    const createTestServerNode = async (storeId: string): Promise<ServerNode> => {
+      const context = await (matterbridge as any).createServerNodeContext(
+        storeId,
+        'Decommissioning',
+        matterbridge.aggregatorDeviceType,
+        matterbridge.aggregatorVendorId,
+        matterbridge.aggregatorVendorName,
+        matterbridge.aggregatorProductId,
+        matterbridge.aggregatorProductName,
+      );
+      return (matterbridge as any).createServerNode(context, port++);
+    };
+    let restartSpy: MockInstance<() => Promise<void>>;
+
+    beforeEach(() => {
+      restartSpy = vi.spyOn(matterbridge, 'restartProcess').mockResolvedValue();
+    });
+
+    afterEach(() => {
+      restartSpy.mockRestore();
+    });
+
+    test('should not restart Matterbridge when the server node goes online without being decommissioned', async () => {
+      const serverNode = await createTestServerNode('DecommissioningOnline');
+      await serverNode.lifecycle.online.emit(undefined as any);
+      expect(restartSpy).not.toHaveBeenCalled();
+      await serverNode.close();
+    });
+
+    test('should restart Matterbridge once when the server node goes online after being decommissioned', async () => {
+      const serverNode = await createTestServerNode('DecommissioningRestart');
+      serverNode.lifecycle.decommissioned.emit(undefined as any);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Matterbridge will restart when the factory reset of the server node for DecommissioningRestart completes`);
+      expect(restartSpy).not.toHaveBeenCalled();
+      await serverNode.lifecycle.online.emit(undefined as any);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Restarting Matterbridge because the last controller removed the server node for DecommissioningRestart...`);
+      expect(restartSpy).toHaveBeenCalledTimes(1);
+      // The restart is armed once per decommissioning
+      await serverNode.lifecycle.online.emit(undefined as any);
+      serverNode.construction.change.emit(Lifecycle.Status.Crashed, serverNode);
+      expect(restartSpy).toHaveBeenCalledTimes(1);
+      await serverNode.close();
+    });
+
+    test('should restart Matterbridge once when the factory reset of a decommissioned server node crashes', async () => {
+      const serverNode = await createTestServerNode('DecommissioningCrash');
+      serverNode.construction.change.emit(Lifecycle.Status.Crashed, serverNode);
+      expect(restartSpy).not.toHaveBeenCalled();
+      serverNode.lifecycle.decommissioned.emit(undefined as any);
+      serverNode.construction.change.emit(Lifecycle.Status.Crashed, serverNode);
+      expect(restartSpy).toHaveBeenCalledTimes(1);
+      await serverNode.lifecycle.online.emit(undefined as any);
+      expect(restartSpy).toHaveBeenCalledTimes(1);
+      await serverNode.close();
+    });
+
+    test('should not restart Matterbridge when the server node is decommissioned while the cleanup is in progress', async () => {
+      const serverNode = await createTestServerNode('DecommissioningCleanup');
+      matterbridge.hasCleanupStarted = true;
+      try {
+        serverNode.lifecycle.decommissioned.emit(undefined as any);
+        await serverNode.lifecycle.online.emit(undefined as any);
+        // The cleanup started between the decommissioning and the end of the factory reset
+        matterbridge.hasCleanupStarted = false;
+        serverNode.lifecycle.decommissioned.emit(undefined as any);
+        matterbridge.hasCleanupStarted = true;
+        await serverNode.lifecycle.online.emit(undefined as any);
+      } finally {
+        matterbridge.hasCleanupStarted = false;
+      }
+      expect(restartSpy).not.toHaveBeenCalled();
+      await serverNode.close();
+    });
+  });
 
   test('serverNode commissioned', () => {
     matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);

@@ -44,6 +44,7 @@ import {
   Environment,
   LogFormat as MatterLogFormat,
   Logger,
+  Lifecycle,
   LogLevel as MatterLogLevel,
   type StorageContext,
   type StorageManager,
@@ -873,12 +874,37 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
+    /**
+     * When the last fabric is removed, matter.js resets the server node to factory defaults in-process (ServerNode.erase()).
+     * The reset closes the behaviors of every endpoint, which drops the attribute and command subscriptions of the plugins
+     * and of Matterbridge, so Matterbridge restarts once the reset completes (the node is online again) or fails (the node crashed).
+     * Matterbridge ignores the restart request if its cleanup has already started.
+     */
+    let restartAfterFactoryReset = false;
+    const restartAfterDecommissioning = (): void => {
+      if (!restartAfterFactoryReset) return;
+      restartAfterFactoryReset = false;
+      this.log.notice(`Restarting Matterbridge because the last controller removed the server node for ${storeId}...`);
+      this.server.request({
+        type: 'frontend_snackbarmessage',
+        src: 'matter',
+        dst: 'frontend',
+        params: { message: `Restarting Matterbridge because the last controller removed ${storeId}...`, timeout: 0 },
+      });
+      this.server.request({ type: 'matterbridge_restart', src: 'matter', dst: 'matterbridge', params: undefined });
+    };
+    serverNode.construction.change.on((status) => {
+      if (status === Lifecycle.Status.Crashed) restartAfterDecommissioning();
+    });
+
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
       deleteAdvertisingNode(storeId);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is offline`, timeout: 5, severity: 'warning' } });
+      this.log.notice(`Matterbridge will restart when the factory reset of the server node for ${storeId} completes`);
+      restartAfterFactoryReset = true;
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
@@ -904,6 +930,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is online`, timeout: 5, severity: 'success' } });
       this.emit('online', storeId);
+      restartAfterDecommissioning();
     });
 
     /** This event is triggered when the device went offline. it is not longer discoverable or connectable in the network. */

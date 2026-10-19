@@ -42,6 +42,7 @@ import {
   Environment,
   LogFormat as MatterLogFormat,
   Logger,
+  Lifecycle,
   LogLevel as MatterLogLevel,
   type StorageContext,
   type StorageManager,
@@ -3196,6 +3197,25 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} commissioned successfully!`, 5, 'success');
     });
 
+    /**
+     * When the last fabric is removed, matter.js resets the server node to factory defaults in-process (ServerNode.erase()).
+     * The reset closes the behaviors of every endpoint, which drops the attribute and command subscriptions of the plugins
+     * and of Matterbridge, so Matterbridge restarts once the reset completes (the node is online again) or fails (the node crashed).
+     */
+    let restartAfterFactoryReset = false;
+    const restartAfterDecommissioning = (): void => {
+      if (!restartAfterFactoryReset) return;
+      restartAfterFactoryReset = false;
+      if (this.hasCleanupStarted) return;
+      this.log.notice(`Restarting Matterbridge because the last controller removed the server node for ${storeId}...`);
+      this.frontend.wssSendSnackbarMessage(`Restarting Matterbridge because the last controller removed ${storeId}...`, 0);
+      // Do not await: the online event is emitted while the server node holds its lifecycle mutex, which stopping the node needs
+      fireAndForget(this.restartProcess(), this.log, `Restart of Matterbridge after the decommissioning of server node ${storeId}`);
+    };
+    serverNode.construction.change.on((status) => {
+      if (status === Lifecycle.Status.Crashed) restartAfterDecommissioning();
+    });
+
     /** This event is triggered when all fabrics are removed from the device, usually it also does a factory reset then. */
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} fully decommissioned successfully!`);
@@ -3203,6 +3223,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
+      if (!this.hasCleanupStarted) {
+        this.log.notice(`Matterbridge will restart when the factory reset of the server node for ${storeId} completes`);
+        restartAfterFactoryReset = true;
+      }
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */
@@ -3232,6 +3256,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is online`, 5, 'success');
       this.emit('online', storeId);
+      restartAfterDecommissioning();
     });
 
     /** This event is triggered when the device went offline. It is no longer discoverable or connectable in the network. */

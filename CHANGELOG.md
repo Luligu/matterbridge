@@ -63,6 +63,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [core]: Restart Matterbridge automatically when a server node is decommissioned (its last fabric removed), since matter.js's in-process factory reset drops the attribute and command subscriptions of plugins and of Matterbridge, so controls stopped working after re-pairing until a restart. The restart runs once the reset brings the node back online, or if the reset crashes (#657).
 - [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
 - [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
 - [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
