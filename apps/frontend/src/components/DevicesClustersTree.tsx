@@ -1,5 +1,5 @@
 // React
-import { memo, useMemo, useState } from 'react';
+import { memo, useMemo, useRef, useState } from 'react';
 
 import { type Cluster } from '../utils/backendShared';
 
@@ -20,6 +20,16 @@ type TreeNode =
   | { kind: 'endpoint'; key: string; group: EndpointGroup }
   | { kind: 'cluster'; key: string; group: EndpointGroup; cluster: ClusterGroup }
   | { kind: 'attribute'; key: string; group: EndpointGroup; cluster: ClusterGroup; attribute: Cluster };
+
+interface TreeRow {
+  key: string;
+  depth: number;
+  label: string;
+  expandable: boolean;
+  parent: string | null;
+  posinset: number;
+  setsize: number;
+}
 
 const hex = (num: number) => `0x${num.toString(16).padStart(4, '0')}`;
 const endpointKey = (endpoint: string) => `ep:${endpoint}`;
@@ -133,10 +143,6 @@ function Detail({ node }: { node: TreeNode | undefined }) {
           <DetailRow label="Device types">{node.group.deviceTypes.map(hex).join(', ')}</DetailRow>
         </tbody>
       </table>
-      <div style={{ color: 'var(--secondary-color)' }}>Value</div>
-      <pre style={{ margin: '4px 0 12px 0', padding: '8px', border: '1px solid var(--table-border-color)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-        {attribute.attributeValue}
-      </pre>
       <div style={{ color: 'var(--secondary-color)' }}>Raw (attributeLocalValue)</div>
       <pre style={{ margin: '4px 0 0 0', padding: '8px', border: '1px solid var(--table-border-color)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
         {JSON.stringify(attribute.attributeLocalValue, (_key, value) => (typeof value === 'bigint' ? value.toString() : (value as unknown)), 2) ?? 'undefined'}
@@ -178,55 +184,124 @@ function DevicesClustersTree({ clusters }: DevicesClustersTreeProps): React.JSX.
     return map;
   }, [endpoints]);
 
-  const select = (key: string) => {
-    setSelectedKey(key);
+  const toggle = (key: string) =>
     setToggled((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
       return next;
     });
+  const select = (key: string) => {
+    setSelectedKey(key);
+    toggle(key);
   };
 
-  const renderRow = (key: string, depth: number, label: string, expandable: boolean) => (
+  // Flat list of the visible rows, with the WAI-ARIA tree metadata (level, position in set, size of set) and the parent
+  const rows = (() => {
+    const list: TreeRow[] = [];
+    endpoints.forEach((group, ei) => {
+      const ek = endpointKey(group.endpoint);
+      list.push({ key: ek, depth: 0, label: `Endpoint ${group.endpoint}`, expandable: true, parent: null, posinset: ei + 1, setsize: endpoints.length });
+      if (!isExpanded(ek)) return;
+      group.clusters.forEach((cluster, ci) => {
+        const ck = clusterKey(group.endpoint, cluster.name);
+        list.push({ key: ck, depth: 1, label: cluster.name, expandable: true, parent: ek, posinset: ci + 1, setsize: group.clusters.length });
+        if (!isExpanded(ck)) return;
+        cluster.attributes.forEach((a, ai) =>
+          list.push({
+            key: attributeKey(group.endpoint, cluster.name, a.attributeName),
+            depth: 2,
+            label: a.attributeName,
+            expandable: false,
+            parent: ck,
+            posinset: ai + 1,
+            setsize: cluster.attributes.length,
+          }),
+        );
+      });
+    });
+    return list;
+  })();
+
+  // Roving tab stop: only one row is in the tab order, the others are reached with the arrow keys
+  const [focusKey, setFocusKey] = useState<string | null>(null);
+  const rowRefs = useRef(new Map<string, HTMLDivElement>());
+  const tabKey = rows.some((r) => r.key === focusKey) ? focusKey : rows[0]?.key;
+
+  const moveFocus = (key: string | undefined) => {
+    if (!key) return;
+    setFocusKey(key);
+    rowRefs.current.get(key)?.focus();
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent, index: number) => {
+    const row = rows[index];
+    switch (event.key) {
+      case 'Enter':
+      case ' ':
+        select(row.key);
+        break;
+      case 'ArrowDown':
+        moveFocus(rows[index + 1]?.key);
+        break;
+      case 'ArrowUp':
+        moveFocus(rows[index - 1]?.key);
+        break;
+      case 'Home':
+        moveFocus(rows[0].key);
+        break;
+      case 'End':
+        moveFocus(rows[rows.length - 1].key);
+        break;
+      case 'ArrowRight':
+        if (!row.expandable) break;
+        if (isExpanded(row.key)) moveFocus(rows[index + 1]?.key);
+        else toggle(row.key);
+        break;
+      case 'ArrowLeft':
+        if (row.expandable && isExpanded(row.key)) toggle(row.key);
+        else moveFocus(row.parent ?? undefined);
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+  };
+
+  const renderRow = (row: TreeRow, index: number) => (
     <div
-      key={key}
-      role="treeitem"
-      aria-selected={selectedKey === key}
-      aria-expanded={expandable ? isExpanded(key) : undefined}
-      style={rowStyle(selectedKey === key, depth)}
-      tabIndex={0}
-      onClick={() => select(key)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          select(key);
-        }
+      key={row.key}
+      ref={(el) => {
+        if (el) rowRefs.current.set(row.key, el);
+        else rowRefs.current.delete(row.key);
       }}
+      role="treeitem"
+      aria-level={row.depth + 1}
+      aria-posinset={row.posinset}
+      aria-setsize={row.setsize}
+      aria-selected={selectedKey === row.key}
+      aria-expanded={row.expandable ? isExpanded(row.key) : undefined}
+      style={rowStyle(selectedKey === row.key, row.depth)}
+      tabIndex={row.key === tabKey ? 0 : -1}
+      onClick={() => {
+        setFocusKey(row.key);
+        select(row.key);
+      }}
+      onKeyDown={(event) => handleKeyDown(event, index)}
     >
-      <span style={{ width: '12px' }}>{expandable ? (isExpanded(key) ? '▾' : '▸') : ''}</span>
-      {label}
+      <span style={{ width: '12px' }}>{row.expandable ? (isExpanded(row.key) ? '▾' : '▸') : ''}</span>
+      {row.label}
     </div>
   );
 
   return (
     <div style={{ display: 'flex', flexDirection: 'row', flex: '1 1 auto', minHeight: 0, width: '100%', overflow: 'hidden', color: 'var(--div-text-color)' }}>
-      <div role="tree" style={{ flex: '0 0 30%', minWidth: '200px', overflowX: 'hidden', overflowY: 'auto', borderRight: '2px solid var(--main-grey-color)' }}>
-        {endpoints.map((group) => {
-          const ek = endpointKey(group.endpoint);
-          return [
-            renderRow(ek, 0, `Endpoint ${group.endpoint}`, true),
-            ...(isExpanded(ek)
-              ? group.clusters.flatMap((cluster) => {
-                  const ck = clusterKey(group.endpoint, cluster.name);
-                  return [
-                    renderRow(ck, 1, cluster.name, true),
-                    ...(isExpanded(ck) ? cluster.attributes.map((a) => renderRow(attributeKey(group.endpoint, cluster.name, a.attributeName), 2, a.attributeName, false)) : []),
-                  ];
-                })
-              : []),
-          ];
-        })}
+      <div
+        role="tree"
+        aria-label="Clusters"
+        style={{ flex: '0 0 30%', minWidth: '200px', overflowX: 'hidden', overflowY: 'auto', borderRight: '2px solid var(--main-grey-color)' }}
+      >
+        {rows.map(renderRow)}
       </div>
       <div style={{ flex: '1 1 auto', overflowX: 'hidden', overflowY: 'auto' }}>
         <Detail node={selectedKey ? nodes.get(selectedKey) : undefined} />

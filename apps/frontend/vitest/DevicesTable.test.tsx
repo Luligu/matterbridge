@@ -213,16 +213,12 @@ describe('DevicesTable', () => {
     });
     expect(await screen.findByText('Clusters')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Tree' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to tree view' }));
     expect(await screen.findByRole('tree')).toBeInTheDocument();
     expect(localStorage.getItem(MbfLsk.devicesClusterViewMode)).toBe('tree');
     expect(screen.getByText('Total child endpoints: 0')).toBeInTheDocument();
 
-    // Clicking the selected toggle keeps the current view
-    fireEvent.click(screen.getByRole('button', { name: 'Tree' }));
-    expect(screen.getByRole('tree')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Grid' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Switch to grid view' }));
     await waitFor(() => expect(screen.queryByRole('tree')).toBeNull());
     expect(localStorage.getItem(MbfLsk.devicesClusterViewMode)).toBe('grid');
   });

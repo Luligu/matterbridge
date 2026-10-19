@@ -1,9 +1,9 @@
 // @mui/icons-material
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
+import GridViewIcon from '@mui/icons-material/GridView';
 import SettingsIcon from '@mui/icons-material/Settings';
 // @mui/material
 import IconButton from '@mui/material/IconButton';
-import ToggleButton from '@mui/material/ToggleButton';
-import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 // React
 import { useContext, useEffect, useMemo, useState, useRef, memo, useCallback } from 'react';
 
@@ -290,20 +290,19 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     setDeviceName(row.deviceName);
   };
 
-  const handleClustersView = (_event: React.MouseEvent<HTMLElement>, view: 'grid' | 'tree' | null) => {
-    if (!view) return;
+  const handleClustersView = () => {
+    const view = clustersView === 'tree' ? 'grid' : 'tree';
     localStorage.setItem(MbfLsk.devicesClusterViewMode, view);
     setClustersView(view);
   };
   const clustersViewToggle = (
-    <ToggleButtonGroup size="small" exclusive value={clustersView} onChange={handleClustersView} aria-label="Clusters view" sx={{ height: '22px' }}>
-      <ToggleButton value="grid" sx={{ padding: '0 8px', color: 'var(--header-text-color)' }}>
-        Grid
-      </ToggleButton>
-      <ToggleButton value="tree" sx={{ padding: '0 8px', color: 'var(--header-text-color)' }}>
-        Tree
-      </ToggleButton>
-    </ToggleButtonGroup>
+    <IconButton
+      onClick={handleClustersView}
+      aria-label={clustersView === 'tree' ? 'Switch to grid view' : 'Switch to tree view'}
+      sx={{ margin: 0, padding: 0, color: 'var(--header-text-color)' }}
+    >
+      {clustersView === 'tree' ? <GridViewIcon fontSize="small" /> : <AccountTreeIcon fontSize="small" />}
+    </IconButton>
   );
   const clustersFooter = `Total child endpoints: ${subEndpointsCount - 1}`;
 
