@@ -69,6 +69,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.
 - [ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.
 - [scripts]: Fix the IPv4 and IPv6 lines of `info-debian.sh` and `info-alpine.sh` outside plain Docker bridges: read `src`/`dev` from `ip route get` by keyword (Docker Desktop host networking printed `IPv4: 2`), take IPv6 from the outgoing interface instead of `eth0`, and keep only the matching family in the `hostname` fallback.
+- [thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

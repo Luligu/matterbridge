@@ -190,6 +190,8 @@
 <li>[camera]: Remove the unused static <code>WeriftWebRtcSession.closeAll()</code>, which would close the sessions of every plugin.</li>
 <li>[camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.</li>
 <li>[ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.</li>
+<li>[scripts]: Fix the IPv4 and IPv6 lines of <code>info-debian.sh</code> and <code>info-alpine.sh</code> outside plain Docker bridges: read <code>src</code>/<code>dev</code> from <code>ip route get</code> by keyword (Docker Desktop host networking printed <code>IPv4: 2</code>), take IPv6 from the outgoing interface instead of <code>eth0</code>, and keep only the matching family in the <code>hostname</code> fallback.</li>
+<li>[thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31014-2026-10-16">[3.10.14] - 2026-10-16</h2>
