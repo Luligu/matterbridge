@@ -34,6 +34,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
+- [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
 
 ### Changed
 
