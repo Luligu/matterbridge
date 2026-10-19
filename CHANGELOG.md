@@ -35,6 +35,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
 - [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
+- [matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the `subscribeAttribute` listeners are lost. Closes [#657](https://github.com/Luligu/matterbridge/issues/657). Thanks Calvin Che.
 
 ### Changed
 
@@ -71,8 +72,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.
 - [scripts]: Fix the IPv4 and IPv6 lines of `info-debian.sh` and `info-alpine.sh` outside plain Docker bridges: read `src`/`dev` from `ip route get` by keyword (Docker Desktop host networking printed `IPv4: 2`), take IPv6 from the outgoing interface instead of `eth0`, and keep only the matching family in the `hostname` fallback.
 - [thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.
-
-<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+  <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.14] - 2026-10-16
 

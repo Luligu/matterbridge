@@ -156,6 +156,8 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[camera]: Add <code>closeWebRtcSessions(device)</code> to <code>matterbridge/devices/camera</code> so a plugin closes its own WebRTC sessions in <code>onShutdown</code>.</li>
+<li>[frontend]: Add the <code>Auto</code> frontend theme, which follows the OS or browser color scheme (dark or light). The default stays <code>Dark</code>.</li>
+<li>[matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the <code>subscribeAttribute</code> listeners are lost. Closes <a href="https://github.com/Luligu/matterbridge/issues/657">#657</a>. Thanks Calvin Che.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -191,9 +193,9 @@
 <li>[camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.</li>
 <li>[ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.</li>
 <li>[scripts]: Fix the IPv4 and IPv6 lines of <code>info-debian.sh</code> and <code>info-alpine.sh</code> outside plain Docker bridges: read <code>src</code>/<code>dev</code> from <code>ip route get</code> by keyword (Docker Desktop host networking printed <code>IPv4: 2</code>), take IPv6 from the outgoing interface instead of <code>eth0</code>, and keep only the matching family in the <code>hostname</code> fallback.</li>
-<li>[thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.</li>
+<li>[thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></li>
 </ul>
-<p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31014-2026-10-16">[3.10.14] - 2026-10-16</h2>
 <h3 id="breaking-news">Breaking news</h3>
 <p>Two new production plugins bring Matter cameras to Matterbridge. Both require Matterbridge 3.10.14 or newer and ffmpeg. In Docker, ffmpeg is installed automatically at start if it is not found (<code>autoInstallFfmpeg</code>, enabled by default).</p>
