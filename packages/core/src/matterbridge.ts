@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.1
+ * @version 1.8.2
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -147,9 +147,11 @@ interface MatterbridgeEvents {
  */
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Debug flag */
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly debug = hasAnyParameter('debug', 'verbose', 'debug-matterbridge', 'verbose-matterbridge');
   /** Verbose flag */
-  private readonly verbose = hasParameter('verbose');
+  private readonly verbose = hasAnyParameter('verbose', 'verbose-matterbridge');
+  /** Diagnostic flag */
+  private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-matterbridge');
 
   /** Matterbridge system information */
   public systemInformation: SystemInformation = {
