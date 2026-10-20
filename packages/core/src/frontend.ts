@@ -83,7 +83,7 @@ import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/err
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
-import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
+import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
@@ -1450,8 +1450,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE)))
       fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
     const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
+    // LogDestination.add() doesn't await write(), so keep the pending writes to await them below
+    const writes: Promise<void>[] = [];
     diagnosticDestination.write = async (text: string, _message: Diagnostic.Message): Promise<void> => {
-      await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
+      const write = fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
+      writes.push(write);
+      await write;
     };
     Logger.destinations.diagnostic = diagnosticDestination;
     if (!diagnosticDestination.context) {
@@ -1469,7 +1473,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       ),
     );
     delete Logger.destinations.diagnostic;
-    await wait(500); // Wait for the log to be written
+    await Promise.allSettled(writes); // Wait for the log to be written
   }
 
   /**
