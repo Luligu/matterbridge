@@ -135,7 +135,7 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.17.9",
+    "@matter/main": "0.18.0",
     "@matterbridge/dgram": "3.10.15",
     "@matterbridge/thread": "3.10.15",
     "@matterbridge/types": "3.10.15",
