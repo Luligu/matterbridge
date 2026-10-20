@@ -55,6 +55,7 @@ import { EnergyPreference } from '@matter/types/clusters/energy-preference';
 import { FanControl } from '@matter/types/clusters/fan-control';
 import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
 import { FormaldehydeConcentrationMeasurement } from '@matter/types/clusters/formaldehyde-concentration-measurement';
+import { GroupKeyManagement } from '@matter/types/clusters/group-key-management';
 import { Groups } from '@matter/types/clusters/groups';
 import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { Identify } from '@matter/types/clusters/identify';
@@ -127,7 +128,7 @@ const getClusterRevision = (entry: any): number | undefined => entry?.Cluster?.r
 await setupTest(NAME, false);
 
 describe('Matter clusters revision (guard against upstream changes)', () => {
-  // Hard-coded expected revisions for matter.js 0.17.5 / Matter 1.6.0.
+  // Hard-coded expected revisions for matter.js 0.18 / Matter 1.6.1.
   const cases: Array<[string, any, number]> = [
     ['AccountLogin', AccountLogin, 2],
     ['Actions', Actions, 1],
@@ -170,6 +171,7 @@ describe('Matter clusters revision (guard against upstream changes)', () => {
     ['FanControl', FanControl, 6],
     ['FlowMeasurement', FlowMeasurement, 5],
     ['FormaldehydeConcentrationMeasurement', FormaldehydeConcentrationMeasurement, 5],
+    ['GroupKeyManagement', GroupKeyManagement, 4],
     ['Groups', Groups, 4],
     ['HepaFilterMonitoring', HepaFilterMonitoring, 1],
     ['Identify', Identify, 6],
