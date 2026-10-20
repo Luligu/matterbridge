@@ -960,6 +960,10 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
 
+    // Shorten the 1000 ms MessageExchange pause of cleanup() to keep the test fast
+    const cleanup = (matterbridge as any).cleanup;
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation((...args: unknown[]) => cleanup.call(matterbridge, args[0], args[1], 10));
+
     const shutdownPromise = new Promise((resolve) => {
       matterbridge.on('shutdown', resolve as () => void);
       const interval = setInterval(() => {
@@ -1010,6 +1014,7 @@ describe('Matterbridge', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    cleanupSpy.mockRestore();
   });
 
   test('matterbridge -reset xxx', async () => {
@@ -1062,6 +1067,10 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
 
+    // Shorten the 1000 ms MessageExchange pause of cleanup() to keep the test fast
+    const cleanup = (matterbridge as any).cleanup;
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation((...args: unknown[]) => cleanup.call(matterbridge, args[0], args[1], 10));
+
     process.argv = [
       ...originalProcessArgv.slice(0, 2),
       '--frontend',
@@ -1105,6 +1114,7 @@ describe('Matterbridge', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    cleanupSpy.mockRestore();
   });
 
   test('matterbridge cleanup("updating...", true)', async () => {

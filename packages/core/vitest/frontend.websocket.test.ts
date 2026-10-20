@@ -56,24 +56,29 @@ const startServerNodeSpy = vi.spyOn(Matterbridge.prototype as any, 'startServerN
 const stopServerNodeSpy = vi.spyOn(Matterbridge.prototype as any, 'stopServerNode');
 
 // Setup the test environment
-await setupTest(NAME, false, [
-  '--frontend',
-  FRONTEND_PORT.toString(),
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--debug',
-  '--bridge',
-  '--profile',
-  'JestFrontendWebsocket',
-  '--port',
-  MATTER_PORT.toString(),
-  '--passcode',
-  '123456',
-  '--discriminator',
-  '3860',
-]);
+await setupTest(
+  NAME,
+  false,
+  [
+    '--frontend',
+    FRONTEND_PORT.toString(),
+    '--logger',
+    'debug',
+    '--matterlogger',
+    'debug',
+    '--debug',
+    '--bridge',
+    '--profile',
+    'JestFrontendWebsocket',
+    '--port',
+    MATTER_PORT.toString(),
+    '--passcode',
+    '123456',
+    '--discriminator',
+    '3860',
+  ],
+  { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' },
+);
 process.argv.push('--homedir', HOMEDIR);
 
 let ws: WebSocket;

@@ -48,21 +48,26 @@ const broadcastServerFetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').moc
 });
 
 // Setup the test environment
-await setupTest(NAME, false, [
-  '--logger',
-  'debug',
-  '--matterlogger',
-  'debug',
-  '--bridge',
-  '--frontend',
-  FRONTEND_PORT.toString(),
-  '--port',
-  MATTER_PORT.toString(),
-  '--passcode',
-  '123456',
-  '--discriminator',
-  '3860',
-]);
+await setupTest(
+  NAME,
+  false,
+  [
+    '--logger',
+    'debug',
+    '--matterlogger',
+    'debug',
+    '--bridge',
+    '--frontend',
+    FRONTEND_PORT.toString(),
+    '--port',
+    MATTER_PORT.toString(),
+    '--passcode',
+    '123456',
+    '--discriminator',
+    '3860',
+  ],
+  { MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10', MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10' },
+);
 process.argv.push('--homedir', HOMEDIR);
 
 describe('Matterbridge frontend express with http', () => {
