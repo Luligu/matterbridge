@@ -1,7 +1,7 @@
 // @mui/icons-material
 import AccountTreeIcon from '@mui/icons-material/AccountTree';
-import GridViewIcon from '@mui/icons-material/GridView';
 import SettingsIcon from '@mui/icons-material/Settings';
+import TableViewIcon from '@mui/icons-material/TableView';
 // @mui/material
 import IconButton from '@mui/material/IconButton';
 // React
@@ -301,7 +301,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       aria-label={clustersView === 'tree' ? 'Switch to grid view' : 'Switch to tree view'}
       sx={{ margin: 0, padding: 0, color: 'var(--header-text-color)' }}
     >
-      {clustersView === 'tree' ? <GridViewIcon fontSize="small" /> : <AccountTreeIcon fontSize="small" />}
+      {clustersView === 'tree' ? <TableViewIcon fontSize="small" /> : <AccountTreeIcon fontSize="small" />}
     </IconButton>
   );
   const clustersFooter = `Total child endpoints: ${subEndpointsCount - 1}`;

@@ -155,6 +155,7 @@
 <h2 id="31015-dev-branch">[3.10.15] - Dev branch</h2>
 <h3 id="added">Added</h3>
 <ul>
+<li>[frontend]: Add an optional tree view for device clusters with a saved Grid/Tree preference and live attribute updates. Thanks to <a href="https://github.com/RinDevJunior">@RinDevJunior</a> for <a href="https://github.com/Luligu/matterbridge/pull/660">PR #660</a>.</li>
 <li>[camera]: Add <code>closeWebRtcSessions(device)</code> to <code>matterbridge/devices/camera</code> so a plugin closes its own WebRTC sessions in <code>onShutdown</code>.</li>
 <li>[frontend]: Add the <code>Auto</code> frontend theme, which follows the OS or browser color scheme (dark or light). The default stays <code>Dark</code>.</li>
 <li>[matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the <code>subscribeAttribute</code> listeners are lost. Closes <a href="https://github.com/Luligu/matterbridge/issues/657">#657</a>. Thanks Calvin Che.</li>

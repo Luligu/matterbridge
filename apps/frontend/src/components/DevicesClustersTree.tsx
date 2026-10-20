@@ -113,9 +113,9 @@ function Detail({ node }: { node: TreeNode | undefined }) {
         <table style={{ borderCollapse: 'collapse', width: '100%' }}>
           <thead>
             <tr>
-              <th style={{ ...labelStyle, textAlign: 'left' }}>Attribute</th>
-              <th style={{ ...labelStyle, textAlign: 'left' }}>ID</th>
-              <th style={{ ...labelStyle, textAlign: 'left' }}>Value</th>
+              <th style={{ ...labelStyle, color: 'var(--primary-color)', textAlign: 'left' }}>Attribute</th>
+              <th style={{ ...labelStyle, color: 'var(--primary-color)', textAlign: 'left' }}>ID</th>
+              <th style={{ ...labelStyle, color: 'var(--primary-color)', textAlign: 'left' }}>Value</th>
             </tr>
           </thead>
           <tbody>
@@ -143,7 +143,7 @@ function Detail({ node }: { node: TreeNode | undefined }) {
           <DetailRow label="Device types">{node.group.deviceTypes.map(hex).join(', ')}</DetailRow>
         </tbody>
       </table>
-      <div style={{ color: 'var(--secondary-color)' }}>Raw (attributeLocalValue)</div>
+      <div style={{ fontWeight: 'bold' }}>Value</div>
       <pre style={{ margin: '4px 0 0 0', padding: '8px', border: '1px solid var(--table-border-color)', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
         {JSON.stringify(attribute.attributeLocalValue, (_key, value) => (typeof value === 'bigint' ? value.toString() : (value as unknown)), 2) ?? 'undefined'}
       </pre>
