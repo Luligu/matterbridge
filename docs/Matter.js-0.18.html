@@ -249,7 +249,7 @@
 </tbody></table>
 <p>Matterbridge sets <code>warn</code> in production and <code>strict</code> in the test helpers before creating server nodes:</p>
 <ul>
-<li>Production uses <code>warn</code> so that a non-conformant plugin device is logged instead of refused when added; tests use <code>strict</code> so that non-conformant fixtures and device classes fail. It has no validation effect with matter.js 0.17.9; it prepares these environments for 0.18.</li>
+<li>Production uses <code>warn</code> so that a non-conformant plugin device is logged instead of refused when added; tests use <code>strict</code> so that non-conformant fixtures and device classes fail.</li>
 <li>The mode is read when the server node&#39;s environment is built. Changing the variable afterward does not change an existing node&#39;s mode.</li>
 <li>Adding an endpoint can invalidate requirements on its parent or siblings, so a strict construction error can name an endpoint other than the one being added. Validation throws <code>DeviceTypeConformanceError</code>, containing individual <code>DeviceTypeViolationError</code> entries.</li>
 <li>Exception to the mode table: violations caused only by conditions asserted at the <code>Root</code> location are flagged <code>assertedAtRoot</code>, log at debug level and never refuse an endpoint, including in <code>strict</code> mode. They remain visible in validation results and, except in <code>off</code> mode, recorded violations. Conditions explicitly stated by the root in <code>deviceConditions</code> and requirements that apply independently remain subject to normal validation.</li>
@@ -282,10 +282,11 @@
 </tr>
 <tr>
 <td>3. Non-serializable conformance errors</td>
-<td><code>DeviceTypeViolationError.endpoint</code> is now a getter backed by a private field, not an own enumerable property, so error serializers no longer traverse the node graph.</td>
+<td><code>DeviceTypeViolationError.endpoint</code> is now a getter backed by a private field, not an own enumerable property, so serializers that copy only own properties no longer traverse the node graph. See the note below.</td>
 <td><a href="https://github.com/matter-js/matter.js/pull/4745">matter-js/matter.js#4745</a></td>
 </tr>
 </tbody></table>
+<p>Point 3 is only partly resolved for tests: Vitest&#39;s error serializer also reads getters on the prototype. A <code>DeviceTypeConformanceError</code> that reaches Vitest, as a rejected promise or a rejected <code>construction.ready</code>, still leads through <code>endpoint</code> into the node and the Matter model, whose getters build new objects on each read, and the worker runs out of memory (<code>SIGABRT</code>, no message). Bun reports the failure instead. The tests avoid it by adding devices with <code>addDevice()</code> / <code>addBridgedDevice()</code>, which catch the error, and by keeping the fixtures valid; a <code>toJSON()</code> on the matter.js validation errors would fix it upstream.</p>
 <p>The Root-assertion fix removes the validation blocker; it does not implement Time Synchronization, TLS Certificate Management or TLS Client Management. All 18 warning-mode workarounds have been removed from the Vitest and Bun device and behavior test setups, which now use the default strict validation. Tests of the validation-mode option still exercise <code>off</code> and <code>warn</code>, then restore <code>strict</code> before creating the server.</p>
 <h2 id="door-lock-validation-and-events">Door lock validation and events</h2>
 <p>Door-lock tests now use a supported user type when schedule features are disabled, send null UserStatus and UserType when adding credentials to existing users (§5.2.10.20), and assert SetCredential response statuses. These test changes also pass with matter.js 0.17.9.</p>
