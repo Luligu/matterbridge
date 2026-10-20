@@ -43,6 +43,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matter]: Open enums (OperationalState, RvcOperationalState, Mode Base `ModeTagStruct.value`, ...) are typed as `Enum | number`: comparisons with enum members are flagged by `typescript/no-unsafe-enum-comparison`; widen the member with `as number`.
 - [matter]: A mandatory command implemented with `Behavior.unimplemented` fails the endpoint initialization in `strict` validation mode.
 - [test-utils]: `createTestEnvironment()` (vitest, jest and bun) sets the endpoint validation to `'strict'` by default, so non-conformant test devices are refused; pass `'warn'` or `'off'` to relax it. Use `addBridgedDevice()` for test devices that would be bridged.
+- [test-utils]: Remove the `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` packages and the `matterbridge/jest-utils`, `matterbridge/jest-utils/matter`, `matterbridge/vitest-utils` and `matterbridge/vitest-utils/matter` exports. Use `@matterbridge/test-utils` (`matterbridge/test-utils/jest`, `matterbridge/test-utils/vitest` and their `/setup` and `/matter` subpaths) instead.
 
 ### Added
 

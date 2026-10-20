@@ -7,12 +7,10 @@
       "dependencies": {
         "@matterbridge/core": "3.11.0",
         "@matterbridge/dgram": "3.11.0",
-        "@matterbridge/jest-utils": "3.11.0",
         "@matterbridge/test-utils": "3.11.0",
         "@matterbridge/thread": "3.11.0",
         "@matterbridge/types": "3.11.0",
         "@matterbridge/utils": "3.11.0",
-        "@matterbridge/vitest-utils": "3.11.0",
         "node-ansi-logger": "3.3.1",
         "node-persist-manager": "2.1.1",
       },
@@ -100,20 +98,6 @@
         "vitest": "5.0.5",
       },
     },
-    "packages/jest-utils": {
-      "name": "@matterbridge/jest-utils",
-      "version": "3.11.0",
-      "dependencies": {
-        "@matter/main": "0.18.0",
-        "@matterbridge/types": "3.11.0",
-        "@matterbridge/utils": "3.11.0",
-        "node-ansi-logger": "3.3.1",
-      },
-      "devDependencies": {
-        "@types/jest": "30.0.0",
-        "@types/node": "26.6.5",
-      },
-    },
     "packages/test-utils": {
       "name": "@matterbridge/test-utils",
       "version": "3.11.0",
@@ -166,20 +150,6 @@
       "devDependencies": {
         "@matterbridge/test-utils": "3.11.0",
         "@types/bun": "1.4.3",
-        "@types/node": "26.6.5",
-        "vitest": "5.0.5",
-      },
-    },
-    "packages/vitest-utils": {
-      "name": "@matterbridge/vitest-utils",
-      "version": "3.11.0",
-      "dependencies": {
-        "@matter/main": "0.18.0",
-        "@matterbridge/types": "3.11.0",
-        "@matterbridge/utils": "3.11.0",
-        "node-ansi-logger": "3.3.1",
-      },
-      "devDependencies": {
         "@types/node": "26.6.5",
         "vitest": "5.0.5",
       },
@@ -308,8 +278,6 @@
 
     "@matterbridge/frontend": ["@matterbridge/frontend@workspace:apps/frontend"],
 
-    "@matterbridge/jest-utils": ["@matterbridge/jest-utils@workspace:packages/jest-utils"],
-
     "@matterbridge/test-utils": ["@matterbridge/test-utils@workspace:packages/test-utils"],
 
     "@matterbridge/thread": ["@matterbridge/thread@workspace:packages/thread"],
@@ -317,8 +285,6 @@
     "@matterbridge/types": ["@matterbridge/types@workspace:packages/types"],
 
     "@matterbridge/utils": ["@matterbridge/utils@workspace:packages/utils"],
-
-    "@matterbridge/vitest-utils": ["@matterbridge/vitest-utils@workspace:packages/vitest-utils"],
 
     "@mdi/js": ["@mdi/js@7.4.47", "", {}, "sha512-KPnNOtm5i2pMabqZxpUz7iQf+mfrYZyKCZ8QNz85czgEt7cuHcGorWfdzUMWYA0SD+a6Hn4FmJ+YhzzzjkTZrQ=="],
 

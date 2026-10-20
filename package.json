@@ -59,8 +59,6 @@
   "workspaces": [
     "apps/frontend",
     "packages/types",
-    "packages/jest-utils",
-    "packages/vitest-utils",
     "packages/test-utils",
     "packages/utils",
     "packages/dgram",
@@ -95,22 +93,6 @@
     "./dgram": {
       "import": "./dist/dgram/export.js",
       "types": "./dist/dgram/export.d.ts"
-    },
-    "./jest-utils": {
-      "import": "./dist/jest-utils/export.js",
-      "types": "./dist/jest-utils/export.d.ts"
-    },
-    "./jest-utils/matter": {
-      "import": "./dist/jest-utils/matter.js",
-      "types": "./dist/jest-utils/matter.d.ts"
-    },
-    "./vitest-utils": {
-      "import": "./dist/vitest-utils/export.js",
-      "types": "./dist/vitest-utils/export.d.ts"
-    },
-    "./vitest-utils/matter": {
-      "import": "./dist/vitest-utils/matter.js",
-      "types": "./dist/vitest-utils/matter.d.ts"
     },
     "./test-utils": {
       "import": "./dist/test-utils/export.js",
@@ -253,8 +235,6 @@
         "**/chip/",
         "**/src/mock/",
         "**/vendor/",
-        "**/jest-utils/",
-        "**/vitest-utils/",
         "**/test-utils/",
         "packages/core/vitest/matterNode.*.ts",
         "packages/core/vitest/backend*.ts",
@@ -263,8 +243,6 @@
         "src/clusters/export.ts",
         "src/devices/export.ts",
         "src/dgram/export.ts",
-        "src/jest-utils/export.ts",
-        "src/jest-utils/matter.ts",
         "src/logger/export.ts",
         "src/matter/behaviors.ts",
         "src/matter/clusters.ts",
@@ -280,8 +258,6 @@
         "src/test-utils/matter/export.ts",
         "src/test-utils/vitest/export.ts",
         "src/utils/export.ts",
-        "src/vitest-utils/export.ts",
-        "src/vitest-utils/matter.ts",
         "packages/core/src/behaviors/export.ts",
         "packages/core/src/clusters/export.ts",
         "packages/core/src/devices/camera/export.ts",
@@ -584,12 +560,10 @@
   "dependencies": {
     "@matterbridge/core": "3.11.0",
     "@matterbridge/dgram": "3.11.0",
-    "@matterbridge/jest-utils": "3.11.0",
     "@matterbridge/test-utils": "3.11.0",
     "@matterbridge/thread": "3.11.0",
     "@matterbridge/types": "3.11.0",
     "@matterbridge/utils": "3.11.0",
-    "@matterbridge/vitest-utils": "3.11.0",
     "node-ansi-logger": "3.3.1",
     "node-persist-manager": "2.1.1"
   },

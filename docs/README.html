@@ -622,16 +622,6 @@ While Amazon has expanded support to include core categories like lighting, plug
 <td>Shared TypeScript types and constants.</td>
 </tr>
 <tr>
-<td><code>packages/jest-utils</code></td>
-<td><code>@matterbridge/jest-utils</code></td>
-<td>Jest test-environment setup helpers.</td>
-</tr>
-<tr>
-<td><code>packages/vitest-utils</code></td>
-<td><code>@matterbridge/vitest-utils</code></td>
-<td>Vitest test-environment setup helpers.</td>
-</tr>
-<tr>
 <td><code>packages/test-utils</code></td>
 <td><code>@matterbridge/test-utils</code></td>
 <td>Common test helpers with Matter, Jest, Vitest and Bun test-specific exports.</td>
@@ -646,11 +636,9 @@ While Amazon has expanded support to include core categories like lighting, plug
   dgram[&quot;@matterbridge/dgram&quot;]
   utils[&quot;@matterbridge/utils&quot;]
   types[&quot;@matterbridge/types&quot;]
-  vitestutils[&quot;@matterbridge/vitest-utils&quot;]
   testutils[&quot;@matterbridge/test-utils&quot;]
 
   matterbridge --&gt; core
-  matterbridge --&gt; vitestutils
   matterbridge --&gt; testutils
 
   core --&gt; thread
@@ -661,8 +649,6 @@ While Amazon has expanded support to include core categories like lighting, plug
   thread --&gt; utils
   thread --&gt; types
   dgram --&gt; utils
-  vitestutils --&gt; utils
-  vitestutils --&gt; types
   testutils --&gt; utils
   testutils --&gt; types
 </code></pre>
@@ -670,7 +656,7 @@ While Amazon has expanded support to include core categories like lighting, plug
 <ul>
 <li><strong>Foundation (no internal dependencies):</strong> <code>@matterbridge/types</code>, <code>@matterbridge/utils</code>.</li>
 <li><strong>Networking &amp; workers:</strong> <code>@matterbridge/dgram</code> (→ <code>utils</code>), <code>@matterbridge/thread</code> (→ <code>utils</code>, <code>types</code>).</li>
-<li><strong>Test helpers:</strong> <code>@matterbridge/jest-utils</code>, <code>@matterbridge/vitest-utils</code> and <code>@matterbridge/test-utils</code> (→ <code>utils</code>, <code>types</code>).</li>
+<li><strong>Test helpers:</strong> <code>@matterbridge/test-utils</code> (→ <code>utils</code>, <code>types</code>).</li>
 <li><strong>Core:</strong> <code>@matterbridge/core</code> (→ <code>dgram</code>, <code>thread</code>, <code>utils</code>, <code>types</code>).</li>
 <li><strong>Top level:</strong> <code>matterbridge</code> declares all scoped packages as direct dependencies; <code>core</code> pulls in the rest transitively.</li>
 </ul>
