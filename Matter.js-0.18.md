@@ -10,13 +10,12 @@ Audited dev version: `0.18.0-alpha.0-20261015-9c1725759` (npm `dev` verified on 
 
 Verified on October 15, 2026, on branch `matter018` with matter.js `0.18.0-alpha.0-20261015-9c1725759`. Root results below are from the rerun after removing the warning-mode workarounds and updating the test fixtures and snapshots; frontend results are from the unchanged frontend's earlier run.
 
-| Validation                           | Result                                                                     |
-| ------------------------------------ | -------------------------------------------------------------------------- |
-| Lint, format, type-check             | Passed - root and frontend                                                 |
-| Full root Vitest with coverage       | 3,797 tests passed across 174 files; configured coverage thresholds passed |
-| Full frontend Vitest                 | 608 tests passed across 41 files                                           |
-| Full Bun suite                       | 1,958 tests passed across 113 files                                        |
-| Camera AV Stream Management coverage | 100% statements, branches, functions and lines                             |
+| Validation                             | Result                              |
+| -------------------------------------- | ----------------------------------- |
+| Lint, format, type-check               | Passed - root and frontend          |
+| Full matterbridge Vitest with coverage | 3,797 tests passed across 174 files |
+| Full frontend Vitest with coverage     | 608 tests passed across 41 files    |
+| Full Bun suite with coverage           | 1,958 tests passed across 113 files |
 
 Strict-mode follow-up:
 
