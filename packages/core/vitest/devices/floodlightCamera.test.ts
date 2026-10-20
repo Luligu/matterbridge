@@ -284,7 +284,7 @@ describe('FloodlightCamera', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 4 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
@@ -404,8 +404,8 @@ describe('FloodlightCamera', () => {
 
   it('should add an additional light with an explicit endpoint number', async () => {
     const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER');
-    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_3) });
-    expect(light.number).toBe(EndpointNumber(16_02_3));
+    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_0) });
+    expect(light.number).toBe(EndpointNumber(16_02_0));
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });

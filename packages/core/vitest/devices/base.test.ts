@@ -74,7 +74,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and add onOffLight device', async () => {
-    device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight' }).createDefaultIdentifyClusterServer().createOnOffClusterServer().addRequiredClusterServers();
+    device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight' }).createDefaultIdentifyClusterServer().createDefaultOnOffClusterServer().addRequiredClusterServers();
     expect(device).toBeDefined();
     expect(device.id).toBe('OnOffLight');
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'onOff', 'groups', 'scenesManagement']);
@@ -115,7 +115,7 @@ describe('Matterbridge ' + NAME, () => {
       [
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 4 } ]',
         'descriptor(0x1d).serverList(0x1)=[ 3, 4, 6, 29, 98 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
@@ -130,10 +130,14 @@ describe('Matterbridge ' + NAME, () => {
         'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
         'identify(0x3).generatedCommandList(0xfff8)=[  ]',
         'onOff(0x6).clusterRevision(0xfffd)=6',
-        'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
+        'onOff(0x6).featureMap(0xfffc)={ lighting: true, deadFrontBehavior: false, offOnly: false }',
         'onOff(0x6).onOff(0x0)=false',
-        'onOff(0x6).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
-        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'onOff(0x6).globalSceneControl(0x4000)=false',
+        'onOff(0x6).onTime(0x4001)=0',
+        'onOff(0x6).offWaitTime(0x4002)=0',
+        'onOff(0x6).startUpOnOff(0x4003)=null',
+        'onOff(0x6).attributeList(0xfffb)=[ 0, 16384, 16385, 16386, 16387, 65528, 65529, 65531, 65532, 65533 ]',
+        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2, 64, 65, 66 ]',
         'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
         'groups(0x4).clusterRevision(0xfffd)=4',
         'groups(0x4).featureMap(0xfffc)={ groupNames: true }',

@@ -3,7 +3,7 @@
  * @description This file contains the Jest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -34,6 +34,10 @@ import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { EcosystemInformation } from '@matter/types/clusters/ecosystem-information';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';
@@ -774,6 +778,108 @@ export async function flushServerNode(rounds: number = 3, ticks: number = 1, mic
 
   // Ensure the queue is empty
   await flushAsync(ticks, microTurns, pause);
+}
+
+/** The BridgedNode device type definition, same as `bridgedNode` in the core matterbridgeDeviceTypes (this package cannot depend on core). */
+const bridgedNode = {
+  name: 'BridgedNode',
+  code: DeviceTypeId(0x0013),
+  deviceClass: 'Utility',
+  deviceScope: 'endpoint',
+  revision: 3,
+  requiredServerClusters: [BridgedDeviceBasicInformation.id],
+  optionalServerClusters: [PowerSource.id, EcosystemInformation.id, AdministratorCommissioning.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [],
+  requiredDeviceTypes: [],
+  requiredServerClustersOneOf: [],
+  composedOf: [],
+};
+
+/** The members of a MatterbridgeEndpoint used by {@link addBridgedDevice}, so this package does not depend on core. */
+interface MatterbridgeEndpoint {
+  deviceTypes: Map<number, unknown>;
+  deviceName?: string;
+  serialNumber?: string;
+  uniqueId?: string;
+  vendorId?: number;
+  vendorName?: string;
+  productName?: string;
+  softwareVersion?: number;
+  softwareVersionString?: string;
+  hardwareVersion?: number;
+  hardwareVersionString?: string;
+  productLabel?: string;
+  productUrl?: string;
+  configurationVersion?: number;
+  productId?: number;
+}
+
+/**
+ * Whether the device is a MatterbridgeEndpoint that {@link addBridgedDevice} can bridge.
+ *
+ * @param {Endpoint} device The device to check.
+ * @returns {boolean} True when the device has the MatterbridgeEndpoint members used by {@link addBridgedDevice}.
+ */
+function isMatterbridgeEndpoint(device: Endpoint): device is Endpoint & MatterbridgeEndpoint {
+  return 'deviceTypes' in device && device.deviceTypes instanceof Map;
+}
+
+/**
+ * Add a device (endpoint) to an aggregator as a bridged device, like `registerDevice()` does in bridge mode.
+ *
+ * For a MatterbridgeEndpoint, adds the BridgedNode device type to the device types and, when the endpoint has none, the
+ * matter.js BridgedDeviceBasicInformationServer with Reachable true and the MatterbridgeEndpoint identity values when present
+ * (matter.js creates the UniqueID when missing). Other endpoints are added unchanged.
+ * Then adds the device with {@link addDevice}.
+ *
+ * Aggregator children with BridgedNode are disambiguated by their NodeLabel, so strict endpoint validation does not require
+ * a TagList on siblings sharing a device type (Matter 1.6.1 Core § 9.2.9, Device Library § 11.2.6).
+ *
+ * @param {Endpoint<AggregatorEndpoint>} owner The aggregator to add the device to.
+ * @param {Endpoint} device The device to bridge and add.
+ * @param {number} rounds The number of rounds to perform after addition (default 1).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield in each round (default 1).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform in each round (default 1).
+ * @param {number} pause The pause time in milliseconds after addition (default 10ms).
+ * @returns {Promise<boolean>} The result of {@link addDevice}: true when the device has been added and is ready, false when adding it failed.
+ * @example
+ * ```typescript
+ * expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
+ * ```
+ */
+export async function addBridgedDevice(
+  owner: Endpoint<AggregatorEndpoint>,
+  device: Endpoint,
+  rounds: number = 1,
+  ticks: number = 1,
+  microTurns: number = 1,
+  pause: number = 10,
+): Promise<boolean> {
+  if (isMatterbridgeEndpoint(device)) {
+    if (!device.deviceTypes.has(bridgedNode.code)) device.deviceTypes.set(bridgedNode.code, bridgedNode);
+    if (device.behaviors.supported.bridgedDeviceBasicInformation === undefined) {
+      // Values from the MatterbridgeEndpoint, when present. matter.js creates the UniqueID when missing.
+      device.behaviors.require(BridgedDeviceBasicInformationServer, {
+        vendorId: device.vendorId === undefined ? undefined : VendorId(device.vendorId), // Fixed quality (F)
+        vendorName: device.vendorName?.slice(0, 32), // Fixed quality (F)
+        productId: device.productId, // Fixed quality (F)
+        productName: device.productName?.slice(0, 32), // Fixed quality (F)
+        productLabel: device.productLabel?.slice(0, 64), // Fixed quality (F)
+        productUrl: device.productUrl, // Fixed quality (F)
+        nodeLabel: device.deviceName?.slice(0, 32), // Non-Volatile quality (N)
+        serialNumber: device.serialNumber?.slice(0, 32), // Fixed quality (F)
+        uniqueId: device.uniqueId?.slice(0, 32), // Fixed quality (F) in the specs, made Fixed and Non-Volatile (FN) by matter.js
+        softwareVersion: device.softwareVersion, // Fixed quality (F)
+        softwareVersionString: device.softwareVersionString, // Fixed quality (F)
+        hardwareVersion: device.hardwareVersion, // Fixed quality (F)
+        hardwareVersionString: device.hardwareVersionString, // Fixed quality (F)
+        configurationVersion: device.configurationVersion, // Non-Volatile quality (N)
+        reachable: true, // No quality (volatile)
+      });
+    }
+  }
+  return addDevice(owner, device, rounds, ticks, microTurns, pause);
 }
 
 /**

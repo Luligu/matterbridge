@@ -116,7 +116,15 @@ describe('MatterbridgeLevelControlServer', () => {
     });
     expectCurrentLevel(1);
 
+    // Matter 1.6.1 §1.6.7.6: reaching minimum with MoveWithOnOff turns the light off.
+    expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
     const stepRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, false);
+    // Ordinary Step cannot execute while off without ExecuteIfOff (§1.6.4.1.3).
+    await light.invokeBehaviorCommand(LevelControl, 'step', stepRequest);
+    expectCurrentLevel(1);
+    expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
+
+    await light.setAttribute(OnOff, 'onOff', true);
     await expectCommand(light, LevelControl, 'LevelControl.step', stepRequest, (data) => {
       expect(data.cluster).toBe('levelControl');
       expect(data.attributes.currentLevel).toBe(1);

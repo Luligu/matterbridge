@@ -397,8 +397,8 @@ describe('VideoDoorbell', () => {
 
   it('should add an additional doorbell with an explicit endpoint number', async () => {
     const device = new VideoDoorbell('Video Doorbell Doorbell Number', 'VIDEO-DOORBELL-DOORBELL-NUMBER');
-    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_3) });
-    expect(doorbellChild.number).toBe(EndpointNumber(16_03_3));
+    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_0) });
+    expect(doorbellChild.number).toBe(EndpointNumber(16_03_0));
 
     expect(await addDevice(aggregator, device)).toBeTruthy();
   });
