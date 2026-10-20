@@ -397,7 +397,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 0 });
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({ lift: WindowCovering.MovementStatus.Opening });
     await timedCover.invokeBehaviorCommand('windowCovering', 'stopMotion');
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(timedCover.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(10000);
     expect(timedCover.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({

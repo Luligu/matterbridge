@@ -199,7 +199,7 @@ describe('Client clusters and behaviors', () => {
       .addRequiredClusterServers();
     expect(await aggregator.add(sw)).toBeDefined();
     await sw.construction.ready;
-    await flushAsync(); // Wait for onSuccess to be processed
+    await flushAsync(undefined, undefined, 0); // Wait for onSuccess to be processed
     // OccupancySensing must have been appended to the Descriptor clientList
     expect(sw.getAttribute(DescriptorServer, 'clientList')).toContain(OccupancySensing.id);
     // Logs must include initialization with the clientList, adding client clusters, and active binding

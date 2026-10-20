@@ -156,7 +156,7 @@ describe('Matterbridge frontend', () => {
     // oxfmt-ignore
     await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
@@ -300,7 +300,7 @@ describe('Matterbridge frontend', () => {
     expect(ws.readyState).toBe(WebSocket.OPEN);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/WebSocketServer client ".*" connected to Matterbridge/));
     ws.addEventListener('message', onMessage);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
   });
 
   test('Websocket API send bad json message', async () => {

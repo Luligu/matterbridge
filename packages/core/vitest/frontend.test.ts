@@ -122,7 +122,7 @@ describe('Matterbridge frontend', () => {
     // oxfmt-ignore
     await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
 
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
 
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();

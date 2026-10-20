@@ -114,24 +114,24 @@ describe('Server clusters and behaviors', () => {
     expect(await addDevice(aggregator, levelPump)).toBeTruthy();
 
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 120);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 200);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // Level 201-255 clamps to a 100.0% setpoint.
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 254);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // Level 0 stops the pump.
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 0);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
   });
@@ -152,12 +152,12 @@ describe('Server clusters and behaviors', () => {
     expect(await addDevice(aggregator, onOffPump)).toBeTruthy();
 
     await onOffPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
     await onOffPump.setAttribute(OnOff.id, 'onOff', false);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
   });
@@ -173,7 +173,7 @@ describe('Server clusters and behaviors', () => {
     expect(noLevelPump.hasAttributeServer(LevelControl.id, 'currentLevel')).toBe(false);
 
     await noLevelPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
   });
@@ -206,24 +206,24 @@ describe('Server clusters and behaviors', () => {
     expect(await addDevice(aggregator, nullLevelPump)).toBeTruthy();
 
     await nullLevelPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // A CurrentLevel change back to null stops the pump but keeps the last known level for a later OnOff.on.
     await nullLevelPump.setAttribute(LevelControl.id, 'currentLevel', 120);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
     await nullLevelPump.setAttribute(LevelControl.id, 'currentLevel', null);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
 
     await nullLevelPump.setAttribute(OnOff.id, 'onOff', false);
     await nullLevelPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
   });
@@ -247,14 +247,14 @@ describe('Server clusters and behaviors', () => {
     // it is derived purely from the setpoint percentage, not from MaxConstSpeed/MaxSpeed.
     await noConstSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'maxConstSpeed', null);
     await noConstSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 254);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // Both MaxConstSpeed and MaxSpeed unset: falls back to 0.
     await noConstSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'maxSpeed', null);
     await noConstSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 200);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
   });
@@ -330,7 +330,7 @@ describe('Server clusters and behaviors', () => {
     expect(await addDevice(aggregator, opSpeedPump)).toBeTruthy();
 
     await opSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 120);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
@@ -345,7 +345,7 @@ describe('Server clusters and behaviors', () => {
     // A LevelControl change while Maximum has no effect on Speed/Capacity (level 42 -> 21% would otherwise
     // give speed 630, capacity 4200 — clearly distinct from both Maximum's and Minimum's values above).
     await opSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 42);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 

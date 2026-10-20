@@ -238,7 +238,7 @@ describe('Matterbridge frontend express with http', () => {
     // oxfmt-ignore
     await waiter('Matter server node started', () => { return matterbridge.serverNode?.lifecycle.isOnline === true; });
 
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
 
     expect(loggerLogSpy).toHaveBeenCalledWith(
       LogLevel.INFO,
