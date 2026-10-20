@@ -222,6 +222,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public bridgeStatus: BridgeStatus = 'inactive';
   /** It indicates the Matterbridge profile in use. */
   public readonly profile = getParameter('profile');
+  // Frontend settings
+  public readonly readOnly = hasParameter('readonly');
+  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
+  public restartRequired = false;
+  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
+  public fixedRestartRequired = false;
+  /** It indicates whether an update is available. */
+  public updateRequired = false;
 
   /** Matterbridge logger */
   public readonly log = new AnsiLogger({
@@ -514,7 +522,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         virtualMode: this.virtualMode,
         bridgeStatus: this.bridgeStatus,
         profile: this.profile,
-        readOnly: hasParameter('readonly'),
+        readOnly: this.readOnly,
+        restartRequired: this.restartRequired,
+        fixedRestartRequired: this.fixedRestartRequired,
+        updateRequired: this.updateRequired,
         loggerLevel: this.logLevel,
         fileLogger: this.fileLogger,
         matterLoggerLevel: this.matterLogLevel,
@@ -525,9 +536,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         matterPort: this.port ?? 5540,
         matterDiscriminator: this.discriminator,
         matterPasscode: this.passcode,
-        restartRequired: false,
-        fixedRestartRequired: false,
-        updateRequired: false,
         startupAt: this.startupAt,
         shutdownAt: this.shutdownAt,
         runningTimes: this.runningTimes,
@@ -599,6 +607,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.shutdownProcess();
           break;
         case 'matterbridge_apisettings':
+          // A fixed restart cannot be unset once set and it locks restartRequired to true
+          if (msg.params?.fixedRestartRequired === true) this.fixedRestartRequired = true;
+          if (this.fixedRestartRequired) this.restartRequired = true;
+          else if (msg.params?.restartRequired !== undefined) this.restartRequired = msg.params.restartRequired;
+          if (msg.params?.updateRequired !== undefined) this.updateRequired = msg.params.updateRequired;
           this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
           break;
         case 'matterbridge_start_plugin_server':
@@ -3207,6 +3220,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
       // The server node is reset to factory defaults and the subscribeAttribute listeners of the plugins are lost (#657)
       this.log.notice(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`);
+      this.restartRequired = true;
       this.frontend.wssSendRestartRequired();
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`, 10, 'warning');
     });

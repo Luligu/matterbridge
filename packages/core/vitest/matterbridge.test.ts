@@ -186,6 +186,24 @@ describe('Matterbridge', () => {
       // systemInformation is refreshed on every getApiSettings() call (memory, uptime)
       result: { data: { ...apiSettings, systemInformation: expect.objectContaining({ hostname: apiSettings.systemInformation.hostname }) }, success: true },
     });
+    for (const required of [true, false]) {
+      const params = { restartRequired: required, updateRequired: required };
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params });
+      expect(matterbridge).toMatchObject({ ...params, fixedRestartRequired: false });
+    }
+    // A fixed restart cannot be unset once set and it locks restartRequired to true
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params: { fixedRestartRequired: true } });
+    expect(matterbridge).toMatchObject({ restartRequired: true, fixedRestartRequired: true });
+    await (matterbridge as any).msgHandler({
+      id: 123456,
+      type: 'matterbridge_apisettings',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: { restartRequired: false, fixedRestartRequired: false },
+    });
+    expect(matterbridge).toMatchObject({ restartRequired: true, fixedRestartRequired: true });
+    matterbridge.restartRequired = false;
+    matterbridge.fixedRestartRequired = false;
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);

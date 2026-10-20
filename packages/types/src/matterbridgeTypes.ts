@@ -241,6 +241,9 @@ export interface MatterbridgeInformation {
   bridgeStatus: BridgeStatus;
   profile: string | undefined;
   readOnly: boolean;
+  restartRequired: boolean;
+  fixedRestartRequired: boolean;
+  updateRequired: boolean;
   loggerLevel: LogLevel;
   fileLogger: boolean;
   matterLoggerLevel: LogLevel;
@@ -251,9 +254,6 @@ export interface MatterbridgeInformation {
   matterPort: number;
   matterDiscriminator: number | undefined;
   matterPasscode: number | undefined;
-  restartRequired: boolean;
-  fixedRestartRequired: boolean;
-  updateRequired: boolean;
   /** Timestamp when the Matterbridge instance started up */
   startupAt: number;
   /** Timestamp when the Matterbridge instance shut down */

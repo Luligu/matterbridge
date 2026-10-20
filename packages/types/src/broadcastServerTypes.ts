@@ -242,7 +242,7 @@ export type WorkerMessageTypes = {
     response: { result: { success: true } };
   };
   matterbridge_apisettings: {
-    request: { params: undefined };
+    request: { params: { restartRequired?: boolean; fixedRestartRequired?: boolean; updateRequired?: boolean } };
     response: { result: { data: ApiSettings; success: true } };
   };
   matterbridge_start_plugin_server: {

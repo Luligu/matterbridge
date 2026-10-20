@@ -66,6 +66,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.
 - [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
 - [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
 - [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
