@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import { Status } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -69,7 +69,7 @@ describe('Server clusters and behaviors', () => {
     valve = new MatterbridgeEndpoint(waterValve, { id: 'valve' });
     valve.createDefaultValveConfigurationAndControlClusterServer();
     valve.addRequiredClusterServers();
-    expect(await addDevice(aggregator, valve)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, valve)).toBeTruthy();
 
     expect(valve.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
     expect(valve.getAttribute(ValveConfigurationAndControl.id, 'targetState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
@@ -166,7 +166,7 @@ describe('Server clusters and behaviors', () => {
     const timedValve = new MatterbridgeEndpoint(waterValve, { id: 'timedValve' });
     timedValve.createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, 1000, false);
     timedValve.addRequiredClusterServers();
-    expect(await addDevice(aggregator, timedValve)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, timedValve)).toBeTruthy();
 
     // The completion timer is a Time.getTimer() under the hood (see valveConfigurationAndControlServer.ts),
     // so fake timers let this fire deterministically without waiting out the real duration.
@@ -197,7 +197,7 @@ describe('Server clusters and behaviors', () => {
     const timedValve = new MatterbridgeEndpoint(waterValve, { id: 'autoCloseValve' });
     timedValve.createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, 0, true);
     timedValve.addRequiredClusterServers();
-    expect(await addDevice(aggregator, timedValve)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, timedValve)).toBeTruthy();
 
     // The countdown timer is a Time.getPeriodicTimer() under the hood, ticking once per second.
     vi.useFakeTimers();
@@ -258,7 +258,7 @@ describe('Server clusters and behaviors', () => {
       autoClose: false,
     });
     noLevelValve.addRequiredClusterServers();
-    expect(await addDevice(aggregator, noLevelValve)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, noLevelValve)).toBeTruthy();
     expect(noLevelValve.hasAttributeServer(ValveConfigurationAndControl.id, 'currentLevel')).toBe(false);
     expect(noLevelValve.hasAttributeServer(ValveConfigurationAndControl.id, 'targetLevel')).toBe(false);
 

@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { Identify } from '@matter/types/clusters/identify';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -69,7 +69,7 @@ describe('MatterbridgeIdentifyServer', () => {
     light.addChildDeviceType('illuminance', lightSensor).addRequiredClusterServers();
     light.addChildDeviceType('motion', occupancySensor).addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, light)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
   });
 
   test('Identify server', async () => {

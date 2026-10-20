@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -69,7 +69,7 @@ describe('Client clusters and behaviors', () => {
     expect(esa).toBeDefined();
     esa.createDefaultDeviceEnergyManagementClusterServer();
     esa.addRequiredClusterServers();
-    expect(await addDevice(aggregator, esa)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, esa)).toBeDefined();
     expect(esa.getAttribute(DeviceEnergyManagement, 'esaState')).toBe(DeviceEnergyManagement.EsaState.Online);
     expect(esa.getAttribute(DeviceEnergyManagement, 'powerAdjustmentCapability')).toBeNull();
     expect(esa.getAttribute(DeviceEnergyManagement, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
@@ -272,7 +272,7 @@ describe('Client clusters and behaviors', () => {
       energyManagement.createDefaultDeviceEnergyManagementModeClusterServer();
       energyManagement.addRequiredClusterServers();
       expect(energyManagement).toBeDefined();
-      expect(await addDevice(aggregator, energyManagement)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, energyManagement)).toBeTruthy();
     });
 
     test('DeviceEnergyManagement server', async () => {

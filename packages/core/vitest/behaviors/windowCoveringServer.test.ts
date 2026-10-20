@@ -12,7 +12,7 @@ import { WindowCoveringServer } from '@matter/node/behaviors/window-covering';
 import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -94,7 +94,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     coverLift = new MatterbridgeEndpoint(windowCovering, { id: 'coverLift' });
     coverLift.addRequiredClusterServers();
     expect(coverLift).toBeDefined();
-    expect(await addDevice(aggregator, coverLift)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, coverLift)).toBeTruthy();
   });
 
   test('Device type: coverLiftTilt', async () => {
@@ -102,7 +102,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     coverLiftTilt.createDefaultLiftTiltWindowCoveringClusterServer();
     coverLiftTilt.addRequiredClusterServers();
     expect(coverLiftTilt).toBeDefined();
-    expect(await addDevice(aggregator, coverLiftTilt)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, coverLiftTilt)).toBeTruthy();
   });
 
   test('Device type: coverTilt', async () => {
@@ -111,7 +111,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     coverTilt.createDefaultTiltWindowCoveringClusterServer(5000, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.TiltOnlyInteriorBlind, 60_000);
     coverTilt.addRequiredClusterServers();
     expect(coverTilt).toBeDefined();
-    expect(await addDevice(aggregator, coverTilt)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, coverTilt)).toBeTruthy();
   });
 
   test('LiftWindowCovering server', async () => {
@@ -361,7 +361,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     // are not racing the completion timer on a slow runner.
     timedCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, MOVEMENT_DURATION);
     timedCover.addRequiredClusterServers();
-    expect(await addDevice(aggregator, timedCover)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, timedCover)).toBeTruthy();
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 
     await timedCover.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
@@ -410,7 +410,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const coverTiltOnly = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTiltOnly' });
     coverTiltOnly.createDefaultTiltWindowCoveringClusterServer();
     coverTiltOnly.addRequiredClusterServers();
-    expect(await addDevice(aggregator, coverTiltOnly)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, coverTiltOnly)).toBeTruthy();
 
     const coverTiltOnlyServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt);
     expect(coverTiltOnly.behaviors.has(coverTiltOnlyServer)).toBeTruthy();
@@ -441,7 +441,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const liftOnlyTimed = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLiftOnlyTimed' });
     liftOnlyTimed.createDefaultWindowCoveringClusterServer();
     liftOnlyTimed.addRequiredClusterServers();
-    expect(await addDevice(aggregator, liftOnlyTimed)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, liftOnlyTimed)).toBeTruthy();
     await liftOnlyTimed.setAttribute(MatterbridgeWindowCoveringServer, 'movementDuration', 1000);
     await liftOnlyTimed.invokeBehaviorCommand('windowCovering', 'goToLiftPercentage', { liftPercent100thsValue: 10000 });
     expect(liftOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
@@ -458,7 +458,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const tiltOnlyTimed = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverTiltOnlyTimed' });
     tiltOnlyTimed.createDefaultTiltWindowCoveringClusterServer();
     tiltOnlyTimed.addRequiredClusterServers();
-    expect(await addDevice(aggregator, tiltOnlyTimed)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, tiltOnlyTimed)).toBeTruthy();
     await tiltOnlyTimed.setAttribute(MatterbridgeWindowCoveringServer, 'movementDuration', 1000);
     await tiltOnlyTimed.invokeBehaviorCommand('windowCovering', 'goToTiltPercentage', { tiltPercent100thsValue: 10000 });
     expect(tiltOnlyTimed.getAttribute(WindowCovering, 'operationalStatus')).toMatchObject({
@@ -477,7 +477,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const edgeCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverEdge' });
     edgeCover.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, MOVEMENT_DURATION);
     edgeCover.addRequiredClusterServers();
-    expect(await addDevice(aggregator, edgeCover)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, edgeCover)).toBeTruthy();
 
     // Already-at-target: goToLiftPercentage/goToTiltPercentage to the current position (0) computes Stopped and
     // never schedules a completion timer.
@@ -562,7 +562,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const lockCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverLock' });
     lockCover.createDefaultLiftTiltWindowCoveringClusterServer();
     lockCover.addRequiredClusterServers();
-    expect(await addDevice(aggregator, lockCover)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, lockCover)).toBeTruthy();
 
     // Hold the windowCovering behavior lock in a separate transaction for longer than the command needs to reach
     // its first state write.
@@ -583,7 +583,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
     const percentageCover = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoverPercentage' });
     percentageCover.createDefaultLiftTiltWindowCoveringClusterServer();
     percentageCover.addRequiredClusterServers();
-    expect(await addDevice(aggregator, percentageCover)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, percentageCover)).toBeTruthy();
 
     await percentageCover.setAttribute(WindowCovering, 'currentPositionLiftPercent100ths', 5000);
     expect(percentageCover.getAttribute(WindowCovering, 'currentPositionLiftPercentage')).toBe(50);

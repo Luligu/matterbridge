@@ -13,7 +13,7 @@ const MATTER_CREATE_ONLY = true;
 import { DoorLock } from '@matter/types/clusters/door-lock';
 import { Status } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -87,7 +87,7 @@ describe('Client clusters and behaviors', () => {
     expect(lock).toBeDefined();
     lock.createDefaultDoorLockClusterServer();
     lock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, lock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, lock)).toBeDefined();
     expect(lock.behaviors.has(MatterbridgeDoorLockServer.with())).toBe(true);
     expect(lock.getAttribute(DoorLock, 'lockState')).toBe(DoorLock.LockState.Locked);
   });
@@ -169,7 +169,7 @@ describe('Client clusters and behaviors', () => {
     expect(userPinDoorLock).toBeDefined();
     userPinDoorLock.createUserPinDoorLockClusterServer();
     userPinDoorLock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, userPinDoorLock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, userPinDoorLock)).toBeDefined();
     expect(userPinDoorLock.behaviors.has(userPinDoorLock.behaviors.supported.doorLock)).toBe(true);
     expect(userPinDoorLock.getAttribute(DoorLock, 'requirePinForRemoteOperation')).toBe(undefined);
     expect(userPinDoorLock.getAttribute(DoorLock, 'numberOfTotalUsersSupported')).toBe(10);
@@ -179,7 +179,7 @@ describe('Client clusters and behaviors', () => {
     scheduleDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'scheduleDoorLock' });
     scheduleDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2, 2, 2);
     scheduleDoorLock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, scheduleDoorLock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, scheduleDoorLock)).toBeDefined();
     // Collect the commands announced to subscribeCommand() listeners
     const emitted: unknown[] = [];
     scheduleDoorLock.subscribeCommand(DoorLock, 'setWeekDaySchedule', () => emitted.push('setWeekDaySchedule'));
@@ -284,7 +284,7 @@ describe('Client clusters and behaviors', () => {
     const device = new MatterbridgeEndpoint(doorLock, { id: 'WeekDayScheduleCompliance' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
     for (const userIndex of [1, 2]) {
@@ -362,7 +362,7 @@ describe('Client clusters and behaviors', () => {
     const device = new MatterbridgeEndpoint(doorLock, { id: 'YearDayScheduleCompliance' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, 2);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
     for (const userIndex of [1, 2]) {
@@ -428,7 +428,7 @@ describe('Client clusters and behaviors', () => {
     const device = new MatterbridgeEndpoint(doorLock, { id: 'HolidayScheduleCompliance' });
     device.createDefaultDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, undefined, undefined, 2);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
     const index = { holidayIndex: 1 };
@@ -475,7 +475,7 @@ describe('Client clusters and behaviors', () => {
     const device = new MatterbridgeEndpoint(doorLock, { id: 'expiringUserDoorLock' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, 1);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     expect(device.getAttribute(DoorLock, 'expiringUserTimeout')).toBe(1);
     const server = device.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
     const pinCode = Buffer.from('2468');
@@ -675,7 +675,7 @@ describe('Client clusters and behaviors', () => {
     const rfidDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'rfidDoorLock' });
     rfidDoorLock.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 5);
     rfidDoorLock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, rfidDoorLock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, rfidDoorLock)).toBeDefined();
 
     const rfidDoorLockServer = rfidDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
     expect(rfidDoorLock.getAttribute(DoorLock, 'numberOfRfidUsersSupported')).toBe(5);
@@ -717,7 +717,7 @@ describe('Client clusters and behaviors', () => {
     const device = new MatterbridgeEndpoint(doorLock, { id: 'rfidCredentialLimits' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, undefined, 2, 4, 7);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     expect(device.getAttribute(DoorLock.id, 'featureMap')).toMatchObject({ rfidCredential: true });
     expect(device.getAttribute(DoorLock, 'numberOfRfidUsersSupported')).toBe(2);
     expect(device.getAttribute(DoorLock, 'minRfidCodeLength')).toBe(4);
@@ -868,7 +868,7 @@ describe('Client clusters and behaviors', () => {
     const branchDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'branchDoorLockUsers' });
     branchDoorLock.createUserPinDoorLockClusterServer();
     branchDoorLock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, branchDoorLock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, branchDoorLock)).toBeDefined();
 
     const branchDoorLockServer = branchDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
@@ -909,7 +909,7 @@ describe('Client clusters and behaviors', () => {
     const branchDoorLock = new MatterbridgeEndpoint(doorLock, { id: 'branchDoorLockCredentials' });
     branchDoorLock.createUserPinDoorLockClusterServer();
     branchDoorLock.addRequiredClusterServers();
-    expect(await addDevice(aggregator, branchDoorLock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, branchDoorLock)).toBeDefined();
 
     const branchDoorLockServer = branchDoorLock.behaviors.supported.doorLock as typeof MatterbridgeDoorLockServer;
 
@@ -996,7 +996,7 @@ describe('Client clusters and behaviors', () => {
       lock = new MatterbridgeEndpoint(doorLock, { id: 'doorLock' });
       lock.addRequiredClusterServers();
       expect(lock).toBeDefined();
-      expect(await addDevice(aggregator, lock)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, lock)).toBeTruthy();
       // Disable timeout for testing, to avoid flaky tests
       const internal = await internalFor(lock, MatterbridgeDoorLockServer);
       expect(internal).toBeDefined();

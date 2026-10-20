@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Status, StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -29,13 +29,15 @@ import {
   createDefaultSnapshotCameraAvStreamManagementClusterServer,
   MatterbridgeCameraAvStreamManagementServer,
 } from '../../src/behaviors/cameraAvStreamManagementServer.js';
+import { addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../../src/behaviors/clients.js';
 import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from '../../src/behaviors/snapshot.js';
-import { MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import { createDefaultWebRtcTransportProviderClusterServer, MatterbridgeWebRtcTransportProviderServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
+import { createDefaultWebRtcTransportRequestorClusterServer } from '../../src/behaviors/webRtcTransportRequestorServer.js';
 import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
 import { AudioDoorbell } from '../../src/devices/audioDoorbell.js';
 import { Camera } from '../../src/devices/camera.js';
 import { SnapshotCamera } from '../../src/devices/snapshotCamera.js';
-import { intercom as intercomDeviceType } from '../../src/matterbridgeDeviceTypes.js';
+import { genericSwitch, intercom as intercomDeviceType } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -90,7 +92,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       streamUsagePriorities: [StreamUsage.Recording, StreamUsage.LiveView],
     });
     expect(device.behaviors.has(MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Snapshot))).toBeTruthy();
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
 
     // allocatedSnapshotStreams is persisted (not a constructor option); replace the self-allocated default stream
     // (see MatterbridgeCameraAvStreamManagementServer#initialize) with the fixture the tests below build on.
@@ -306,7 +308,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       supportedStreamUsages: [StreamUsage.Recording, StreamUsage.LiveView],
       streamUsagePriorities: [StreamUsage.Recording, StreamUsage.LiveView],
     });
-    expect(await addDevice(aggregator, priorityDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, priorityDevice)).toBeTruthy();
 
     // A default snapshot stream is self-allocated on construction (see MatterbridgeCameraAvStreamManagementServer#initialize).
     // Deallocate it so this device starts from a genuinely empty state for the tests below.
@@ -365,7 +367,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   it('should create and register a camera using the Camera AV Stream Management behavior', async () => {
     camera = new Camera('Camera Behavior', 'CAMERA-AV-BEHAVIOR', { maxConcurrentEncoders: 2 });
-    expect(await addDevice(aggregator, camera)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, camera)).toBeTruthy();
 
     // Default video/audio/snapshot streams are self-allocated on construction (see
     // MatterbridgeCameraAvStreamManagementServer#initialize). Deallocate them so this device starts from a
@@ -519,7 +521,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   it('should reject allocating a video stream that would exceed maxConcurrentEncoders', async () => {
     const singleEncoderCamera = new Camera('Camera Single Encoder', 'CAMERA-SINGLE-ENCODER');
-    expect(await addDevice(aggregator, singleEncoderCamera)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, singleEncoderCamera)).toBeTruthy();
 
     // Deallocate the self-allocated default video stream (see MatterbridgeCameraAvStreamManagementServer#initialize)
     // so this maxConcurrentEncoders=1 device starts genuinely empty for this test.
@@ -724,7 +726,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   it('should reject setting stream priorities while a video stream is allocated', async () => {
     const videoOnlyCamera = new Camera('Camera Video Priorities', 'CAMERA-VIDEO-PRIORITIES');
-    expect(await addDevice(aggregator, videoOnlyCamera)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, videoOnlyCamera)).toBeTruthy();
 
     // Deallocate all self-allocated defaults (see MatterbridgeCameraAvStreamManagementServer#initialize) so only
     // the explicit video stream allocated below is present, matching this test's stated precondition.
@@ -755,7 +757,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   it('should reject setting stream priorities while an audio stream is allocated', async () => {
     const audioOnlyCamera = new Camera('Camera Audio Priorities', 'CAMERA-AUDIO-PRIORITIES');
-    expect(await addDevice(aggregator, audioOnlyCamera)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, audioOnlyCamera)).toBeTruthy();
 
     // Deallocate all self-allocated defaults (see MatterbridgeCameraAvStreamManagementServer#initialize) so only
     // the explicit audio stream allocated below is present, matching this test's stated precondition.
@@ -783,7 +785,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
 
   it('should leave watermark and OSD unset and unadvertised when the production camera features are used', async () => {
     const endpoint = new Camera('Camera Default Stream Features', 'CAMERA-DEFAULT-STREAM-FEATURES');
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
     expect(endpoint.getAttribute(CameraAvStreamManagement.id, 'featureMap')).toMatchObject({ watermark: false, onScreenDisplay: false });
 
@@ -808,7 +810,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
         { resolution: { width: 1920, height: 1080 }, maxFrameRate: 15, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
       ],
     });
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
     expect(endpoint.getAttribute(CameraAvStreamManagement, 'allocatedSnapshotStreams')).toEqual([
       expect.objectContaining({ snapshotStreamId: 0, minResolution: { width: 640, height: 480 }, maxResolution: { width: 1920, height: 1080 }, frameRate: 15 }),
     ]);
@@ -819,7 +821,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
     process.env.MATTERBRIDGE_SKIP_AUTO_ALLOCATE_CAMERA_AV_STREAM_MANAGEMENT = '1';
     try {
       const endpoint = new Camera('Camera Skip Auto Allocate', 'CAMERA-SKIP-AUTO-ALLOCATE');
-      expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
       expect(endpoint.getAttribute(CameraAvStreamManagement, 'allocatedVideoStreams')).toEqual([]);
       expect(endpoint.getAttribute(CameraAvStreamManagement, 'allocatedAudioStreams')).toEqual([]);
@@ -859,7 +861,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       webRtcCamera = new Camera('Camera Snapshot Source', 'CAMERA-SNAPSHOT-SOURCE', {
         weriftOfferOptions: { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none' },
       });
-      expect(await addDevice(aggregator, webRtcCamera)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, webRtcCamera)).toBeTruthy();
     });
 
     beforeEach(() => {
@@ -1010,12 +1012,19 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
       }),
     ).toBe(endpoint);
 
+    // The other clusters and the Generic Switch component required by the Intercom device type
+    createDefaultWebRtcTransportProviderClusterServer(endpoint);
+    createDefaultWebRtcTransportRequestorClusterServer(endpoint);
+    addWebRtcTransportProviderClient(endpoint);
+    addWebRtcTransportRequestorClient(endpoint);
+    endpoint.addChildDeviceType('Switch', genericSwitch).createDefaultIdentifyClusterServer().createDefaultMomentarySwitchClusterServer();
+
     // TODO: use addRequiredClusters() here once the Intercom device type's required WebRtcTransportProvider/WebRtcTransportRequestor
     // client clusters have a registered client behavior: today it logs "addClusterClients: no client behavior found" warnings, which
     // this suite's afterEach rejects. The Intercom device wires those clients itself via addWebRtcTransportProviderClient()/
     // addWebRtcTransportRequestorClient(), so they are not part of this helper's contract.
     endpoint.addRequiredClusterServers();
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
     // The Audio and Speaker features are enabled, the Video, Snapshot and ImageControl features are not.
     expect(endpoint.getAttribute(CameraAvStreamManagement, 'microphoneCapabilities')).toEqual(audioCapabilities);

@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { BooleanStateConfiguration } from '@matter/types/clusters/boolean-state-configuration';
 import { Status } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -65,7 +65,7 @@ describe('MatterbridgeBooleanStateConfigurationServer', () => {
     contact.createDefaultBooleanStateConfigurationClusterServer();
     contact.addRequiredClusterServers();
     expect(contact).toBeDefined();
-    expect(await addDevice(aggregator, contact)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, contact)).toBeTruthy();
   });
 
   test('BooleanStateConfiguration server', async () => {

@@ -9,9 +9,11 @@ const MATTER_PORT = 6007;
 const MATTER_CREATE_ONLY = true;
 
 import { WebRtcTransportRequestorServer } from '@matter/node/behaviors/web-rtc-transport-requestor';
+import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
+import { StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -22,9 +24,12 @@ import {
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
+import { createDefaultIntercomCameraAvStreamManagementClusterServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
+import { addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../../src/behaviors/clients.js';
+import { createDefaultWebRtcTransportProviderClusterServer } from '../../src/behaviors/webRtcTransportProviderServer.js';
 import { createDefaultWebRtcTransportRequestorClusterServer, MatterbridgeWebRtcTransportRequestorServer } from '../../src/behaviors/webRtcTransportRequestorServer.js';
 import { Intercom } from '../../src/devices/intercom.js';
-import { intercom } from '../../src/matterbridgeDeviceTypes.js';
+import { genericSwitch, intercom } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -73,7 +78,7 @@ describe('MatterbridgeWebRtcTransportRequestorServer', () => {
     device = new Intercom('WebRtc Requestor Behavior', 'WEBRTC-REQUESTOR-BEHAVIOR');
     expect(device.behaviors.has(MatterbridgeWebRtcTransportRequestorServer)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(WebRtcTransportRequestor, 'currentSessions')).toEqual([]);
   });
 
@@ -82,7 +87,23 @@ describe('MatterbridgeWebRtcTransportRequestorServer', () => {
     expect(createDefaultWebRtcTransportRequestorClusterServer(endpoint)).toBe(endpoint);
     expect(endpoint.behaviors.has(MatterbridgeWebRtcTransportRequestorServer)).toBeTruthy();
 
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    // The other clusters and the Generic Switch component required by the Intercom device type
+    const audioCapabilities = { maxNumberOfChannels: 1, supportedCodecs: [CameraAvStreamManagement.AudioCodec.Opus], supportedSampleRates: [48000], supportedBitDepths: [16] };
+    createDefaultIntercomCameraAvStreamManagementClusterServer(endpoint, {
+      maxContentBufferSize: 65_536,
+      maxNetworkBandwidth: 128_000,
+      supportedStreamUsages: [StreamUsage.LiveView],
+      streamUsagePriorities: [StreamUsage.LiveView],
+      microphoneCapabilities: audioCapabilities,
+      speakerCapabilities: audioCapabilities,
+      twoWayTalkSupport: CameraAvStreamManagement.TwoWayTalkSupportType.FullDuplex,
+    });
+    createDefaultWebRtcTransportProviderClusterServer(endpoint);
+    addWebRtcTransportProviderClient(endpoint);
+    addWebRtcTransportRequestorClient(endpoint);
+    endpoint.addChildDeviceType('Switch', genericSwitch).createDefaultIdentifyClusterServer().createDefaultMomentarySwitchClusterServer();
+
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
     expect(endpoint.getAttribute(WebRtcTransportRequestor, 'currentSessions')).toEqual([]);
   });
 

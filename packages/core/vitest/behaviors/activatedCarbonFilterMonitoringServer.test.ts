@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { ActivatedCarbonFilterMonitoring } from '@matter/types/clusters/activated-carbon-filter-monitoring';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -67,7 +67,7 @@ describe('MatterbridgeActivatedCarbonFilterMonitoringServer', () => {
     purifier.createDefaultActivatedCarbonFilterMonitoringClusterServer(30);
     purifier.addRequiredClusterServers();
     expect(purifier).toBeDefined();
-    expect(await addDevice(aggregator, purifier)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, purifier)).toBeTruthy();
   });
 
   test('ActivatedCarbonFilterMonitoring server', async () => {
@@ -108,7 +108,7 @@ describe('MatterbridgeActivatedCarbonFilterMonitoringServer', () => {
       },
     );
     endpoint.addRequiredClusterServers();
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
     await endpoint.invokeBehaviorCommand(ActivatedCarbonFilterMonitoring, 'resetCondition');
 

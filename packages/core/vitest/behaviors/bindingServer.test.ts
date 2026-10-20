@@ -23,6 +23,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -96,7 +97,7 @@ describe('Client clusters and behaviors', () => {
       onOff: false,
     });
     device.addRequiredClusterServers();
-    expect(await aggregator.add(device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     await device.construction.ready;
     Logger.get('client').notice(`Device clientList: ${device.stateOf(DescriptorServer).clientList.join(', ')}`);
     Logger.get('client').notice('Device behaviors:', device.behaviors);
@@ -197,7 +198,7 @@ describe('Client clusters and behaviors', () => {
       .createDefaultIdentifyClusterServer()
       .createDefaultOnOffClusterServer(false)
       .addRequiredClusterServers();
-    expect(await aggregator.add(sw)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, sw)).toBeTruthy();
     await sw.construction.ready;
     await flushAsync(undefined, undefined, 0); // Wait for onSuccess to be processed
     // OccupancySensing must have been appended to the Descriptor clientList
@@ -219,7 +220,7 @@ describe('Client clusters and behaviors', () => {
   test('server-kind binding: occupancy sensor bound to OnOff light', async () => {
     // Create the occupancy sensor (the binding target)
     const sensor = new MatterbridgeEndpoint(occupancySensor, { id: 'OccSensor' }).createDefaultIdentifyClusterServer().addRequiredClusterServers();
-    expect(await aggregator.add(sensor)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, sensor)).toBeTruthy();
     await sensor.construction.ready;
 
     // Create the OnOff light with OccupancySensing advertised as a client cluster
@@ -228,7 +229,7 @@ describe('Client clusters and behaviors', () => {
       .createDefaultIdentifyClusterServer()
       .createDefaultOnOffClusterServer(false)
       .addRequiredClusterServers();
-    expect(await aggregator.add(light)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
     await light.construction.ready;
 
     // Descriptor of the light must advertise OccupancySensing as a client cluster
@@ -289,7 +290,7 @@ describe('Client clusters and behaviors', () => {
   test('add onOffOutlet', async () => {
     const endpoint = new MatterbridgeEndpoint(onOffPlugInUnit, { id: 'OnOffOutlet' }).addRequiredClusters().addClusterClients([OccupancySensing.id]);
     expect(endpoint).toBeDefined();
-    expect(await aggregator.add(endpoint)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
     await endpoint.construction.ready;
 
     // Descriptor of the plug must advertise OccupancySensing as a client cluster
@@ -315,8 +316,12 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('add OnOffPlugInUnitDevice', async () => {
-    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(BindingServer).withClientClusters(OccupancySensingClient), {
+    // A plain matter.js endpoint gets no BridgedDeviceBasicInformation from addBridgedDevice(): the TagList disambiguates it from the OnOffOutlet sibling
+    const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(BindingServer, DescriptorServer.with('TagList')).withClientClusters(OccupancySensingClient), {
       id: 'OnOffPlugIn',
+      descriptor: {
+        tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Plug' }],
+      },
       identify: {
         identifyTime: 0,
         identifyType: Identify.IdentifyType.None,
@@ -326,7 +331,7 @@ describe('Client clusters and behaviors', () => {
       },
     });
     expect(endpoint).toBeDefined();
-    expect(await aggregator.add(endpoint)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
     await endpoint.construction.ready;
 
     // Descriptor of the plug must advertise OccupancySensing as a client cluster

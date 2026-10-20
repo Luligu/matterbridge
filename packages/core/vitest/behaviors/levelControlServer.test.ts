@@ -12,7 +12,7 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { getMoveRequest, getMoveToLevelRequest, getStepRequest, getStopRequest } from '@matterbridge/test-utils/matter';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -23,7 +23,7 @@ import {
 } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, bridgedNode, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -71,7 +71,7 @@ describe('MatterbridgeLevelControlServer', () => {
     light.addChildDeviceType('illuminance', lightSensor).addRequiredClusterServers();
     light.addChildDeviceType('motion', occupancySensor).addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, light)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
   });
 
   test('LevelControl server', async () => {
@@ -170,7 +170,7 @@ describe('MatterbridgeLevelControlServer', () => {
       device.createDefaultBridgedDeviceBasicInformationClusterServer(id, `SN-${id}`);
       device.createDefaultLevelControlClusterServer(currentLevel, 1, 254, null, startUpCurrentLevel);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       return device.getAttribute(LevelControl, 'currentLevel');
     };
 
@@ -191,12 +191,12 @@ describe('MatterbridgeLevelControlServer', () => {
     });
 
     it('does not apply without the Lighting feature', async () => {
-      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suLevelNoLighting' });
+      const device = new MatterbridgeEndpoint([bridgedNode, bridge], { id: 'suLevelNoLighting' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suLevelNoLighting', 'SN-suLevelNoLighting');
       device.createOnOffClusterServer(false);
       device.createLevelControlClusterServer(100);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       expect(device.getAttribute(LevelControl, 'currentLevel')).toBe(100);
     });
   });

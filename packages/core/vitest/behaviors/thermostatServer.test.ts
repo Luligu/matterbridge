@@ -14,7 +14,7 @@ import { Bytes } from '@matter/general';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { Status } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -177,13 +177,13 @@ describe('MatterbridgeThermostatServer', () => {
     thermo = new MatterbridgeEndpoint(thermostat, { id: 'thermostat' });
     thermo.addRequiredClusterServers();
     expect(thermo).toBeDefined();
-    expect(await addDevice(aggregator, thermo)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, thermo)).toBeTruthy();
   });
 
   test('Device type: thermostatPreset', async () => {
     thermostatPreset = createPresetThermostatEndpoint('thermostatPreset');
     expect(thermostatPreset).toBeDefined();
-    expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, thermostatPreset)).toBeTruthy();
   });
 
   test('Thermostat server', async () => {
@@ -251,7 +251,7 @@ describe('MatterbridgeThermostatServer', () => {
 
   test('PresetThermostat server', async () => {
     thermostatPreset = createPresetThermostatEndpoint('thermostatPresetBehavior');
-    expect(await addDevice(aggregator, thermostatPreset)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, thermostatPreset)).toBeTruthy();
     // Collect the requests announced to subscribeCommand() listeners
     const emitted: unknown[] = [];
     thermostatPreset.subscribeCommand(Thermostat, 'setActivePresetRequest', (data) => emitted.push(data.request));
@@ -365,7 +365,7 @@ describe('MatterbridgeThermostatServer', () => {
 
   test('ScheduleThermostat server', async () => {
     thermostatSchedule = createScheduleThermostatEndpoint('thermostatScheduleBehavior');
-    expect(await addDevice(aggregator, thermostatSchedule)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, thermostatSchedule)).toBeTruthy();
     // Collect the requests announced to subscribeCommand() listeners
     const emitted: unknown[] = [];
     thermostatSchedule.subscribeCommand(Thermostat, 'setActiveScheduleRequest', (data) => emitted.push(data.request));
@@ -413,7 +413,7 @@ describe('MatterbridgeThermostatServer', () => {
 
   test('ThermostatSuggestion server', async () => {
     thermostatSuggestion = createThermostatSuggestionEndpoint('thermostatSuggestionBehavior');
-    expect(await addDevice(aggregator, thermostatSuggestion)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, thermostatSuggestion)).toBeTruthy();
     // Collect the requests announced to subscribeCommand() listeners
     const emittedAdd: unknown[] = [];
     const emittedRemove: unknown[] = [];

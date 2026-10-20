@@ -12,7 +12,7 @@ import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/came
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
 import { Status, StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -82,7 +82,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
         ),
       ),
     ).toBeTruthy();
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 0, tilt: 0, zoom: 1 });
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'movementState')).toBe(CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'maxPresets')).toBe(5);
@@ -511,7 +511,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   it('should keep the entry of a surviving stream when another stream is allocated', async () => {
     // A second concurrent encoder, so that two video streams can be allocated at the same time on this endpoint.
     twoStreamDevice = new Camera('Ptz Camera Two Streams', 'PTZ-CAMERA-TWO-STREAMS', { ptz: true, maxConcurrentEncoders: 2 });
-    expect(await addDevice(aggregator, twoStreamDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, twoStreamDevice)).toBeTruthy();
     const [selfAllocated] = twoStreamDevice.getAttribute(CameraAvSettingsUserLevelManagement, 'dptzStreams') ?? [];
     await expect(
       twoStreamDevice.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', {
