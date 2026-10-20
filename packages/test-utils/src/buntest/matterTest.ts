@@ -918,7 +918,10 @@ export async function addDevice(
     await owner.add(device);
   } catch (error) {
     inspectError(log, `Error adding device ${device.maybeId}.${device.maybeNumber}`, error);
-    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}${rs}\n`);
+    // Only the messages: the matter.js validation errors (an AggregateError of violations) reference the endpoint and its node graph
+    const message = error instanceof Error ? error.message : String(error);
+    const causes = error instanceof AggregateError ? error.errors.map((cause) => `\n  - ${cause instanceof Error ? cause.message : String(cause)}`).join('') : '';
+    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${message}${causes}${rs}\n`);
     return false;
   }
   await device.construction.ready;
