@@ -1,5 +1,7 @@
 // @mui/icons-material
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import SettingsIcon from '@mui/icons-material/Settings';
+import TableViewIcon from '@mui/icons-material/TableView';
 // @mui/material
 import IconButton from '@mui/material/IconButton';
 // React
@@ -7,9 +9,11 @@ import { useContext, useEffect, useMemo, useState, useRef, memo, useCallback } f
 
 import { debug } from '../appState';
 import { type ApiDevice, type Cluster, type WsMessageApiResponse, type WsMessageApiStateUpdate } from '../utils/backendShared';
+import { MbfLsk } from '../utils/localStorage';
 import { Connecting } from './Connecting';
+import DevicesClustersTree from './DevicesClustersTree';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
-import { MbfWindow } from './MbfWindow';
+import { MbfWindow, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 import { WebSocketContext } from './WebSocketProvider';
 
 const debugUpdate = false;
@@ -127,6 +131,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
+  const [clustersView, setClustersView] = useState<'grid' | 'tree'>(() => (localStorage.getItem(MbfLsk.devicesClusterViewMode) === 'tree' ? 'tree' : 'grid'));
 
   // Selected device for clusters view. handleDeviceClick sets these states based on the clicked device row, and if the same row is clicked again, it resets them to null to go back to the devices view.
   const [pluginName, setPluginName] = useState<string | null>(null);
@@ -285,12 +290,28 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
     setDeviceName(row.deviceName);
   };
 
+  const handleClustersView = () => {
+    const view = clustersView === 'tree' ? 'grid' : 'tree';
+    localStorage.setItem(MbfLsk.devicesClusterViewMode, view);
+    setClustersView(view);
+  };
+  const clustersViewToggle = (
+    <IconButton
+      onClick={handleClustersView}
+      aria-label={clustersView === 'tree' ? 'Switch to grid view' : 'Switch to tree view'}
+      sx={{ margin: 0, padding: 0, color: 'var(--header-text-color)' }}
+    >
+      {clustersView === 'tree' ? <TableViewIcon fontSize="small" /> : <AccountTreeIcon fontSize="small" />}
+    </IconButton>
+  );
+  const clustersFooter = `Total child endpoints: ${subEndpointsCount - 1}`;
+
   if (debug || localDebug) console.log('DevicesTable rendering...');
   if (!online) {
     return <Connecting />;
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', margin: '0px', padding: '0px', gap: '20px', width: '100%', flex: '1 1 auto', minHeight: 0, overflow: 'hidden' }}>
       {/* Devices Table */}
       <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', maxHeight: pluginName && endpoint ? '30%' : '100%', flex: '1 1 auto', overflow: 'hidden' }}>
         <MbfTable
@@ -306,14 +327,29 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       {/* Clusters Table */}
       {pluginName && endpoint && (
         <MbfWindow style={{ margin: '0px', padding: '0px', gap: '0px', width: '100%', height: '70%', maxHeight: '70%', flex: '1 1 auto', overflow: 'hidden' }}>
-          <MbfTable
-            name="Clusters"
-            title={deviceName || ''}
-            getRowKey={getClusterRowKey}
-            rows={clusters}
-            columns={clustersColumns}
-            footerLeft={`Total child endpoints: ${subEndpointsCount - 1}`}
-          />
+          {clustersView === 'tree' ? (
+            <div style={{ flex: '1 1 auto', display: 'flex', flexDirection: 'column', margin: '0', padding: '0', gap: '0', width: '100%', height: '100%', overflow: 'hidden' }}>
+              <MbfWindowHeader style={{ height: '30px', minHeight: '30px', borderBottom: 'none' }}>
+                <MbfWindowHeaderText>Clusters</MbfWindowHeaderText>
+                <MbfWindowHeaderText>{deviceName || ''}</MbfWindowHeaderText>
+                <MbfWindowIcons>{clustersViewToggle}</MbfWindowIcons>
+              </MbfWindowHeader>
+              <DevicesClustersTree clusters={clusters} />
+              <MbfWindowFooter>
+                <MbfWindowFooterText style={{ fontSize: '14px', fontWeight: 'normal', color: 'var(--secondary-color)' }}>{clustersFooter}</MbfWindowFooterText>
+              </MbfWindowFooter>
+            </div>
+          ) : (
+            <MbfTable
+              name="Clusters"
+              title={deviceName || ''}
+              getRowKey={getClusterRowKey}
+              rows={clusters}
+              columns={clustersColumns}
+              footerLeft={clustersFooter}
+              headerActions={clustersViewToggle}
+            />
+          )}
         </MbfWindow>
       )}
     </div>
