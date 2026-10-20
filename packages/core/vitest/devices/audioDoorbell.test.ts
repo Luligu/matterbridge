@@ -18,7 +18,7 @@ import { Switch } from '@matter/types/clusters/switch';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -89,7 +89,7 @@ describe('AudioDoorbell', () => {
     expect(device.type.clientClusters['chime']).toBe(ChimeClient);
     expect(device.type.clientClusters['webRtcTransportRequestor']).toBe(WebRtcTransportRequestorClient);
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(Switch, 'numberOfPositions')).toBe(2);
     expect(device.getAttribute(Switch, 'currentPosition')).toBe(0);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(65_536);
@@ -108,7 +108,7 @@ describe('AudioDoorbell', () => {
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new AudioDoorbell('Audio Doorbell Snapshot', 'AUDIO-DOORBELL-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -144,6 +144,26 @@ describe('AudioDoorbell', () => {
         'binding(0x1e).clusterRevision(0xfffd)=1',
         'binding(0x1e).featureMap(0xfffc)={  }',
         'binding(0x1e).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Audio Doorbell Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Audio Doorbell'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='AUDIO-DOORBELL-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='4c00f5066cfb0abe3d838b7b419e0241'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'cameraAvStreamManagement(0x551).acceptedCommandList(0xfff9)=[ 0, 2, 11 ]',
         'cameraAvStreamManagement(0x551).allocatedAudioStreams(0x10)=[ { audioStreamId: 0, streamUsage: 3, audioCodec: 0, channelCount: 1, sampleRate: 48000, bitRate: 32000, bitDepth: 16, referenceCount: 0 } ]',
         'cameraAvStreamManagement(0x551).attributeList(0xfffb)=[ 6, 7, 11, 14, 16, 18, 21, 29, 30, 31, 32, 33, 39, 65528, 65529, 65531, 65532, 65533 ]',
@@ -166,11 +186,11 @@ describe('AudioDoorbell', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[ 1364, 1366 ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 321, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 321, revision: 2 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 30, 47, 59, 1361, 1363 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 30, 47, 57, 59, 1361, 1363 ]',
         'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
         'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
         'identify(0x3).clusterRevision(0xfffd)=6',
@@ -209,7 +229,7 @@ describe('AudioDoorbell', () => {
     const device = new AudioDoorbell('Audio Doorbell Identify', 'AUDIO-DOORBELL-IDENTIFY', { identifyTime: 5, identifyType: Identify.IdentifyType.VisibleIndicator });
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(device.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -222,7 +242,7 @@ describe('AudioDoorbell', () => {
     const device = new AudioDoorbell(`Audio Doorbell ${powerSourceType}`, `AUDIO-DOORBELL-${powerSourceType.toUpperCase()}`, { powerSourceType });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(expectedChargeLevel);
   });
 
@@ -230,12 +250,12 @@ describe('AudioDoorbell', () => {
     const device = new AudioDoorbell('Audio Doorbell None', 'AUDIO-DOORBELL-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should trigger a single press switch event', async () => {
     const device = new AudioDoorbell('Audio Doorbell Press', 'AUDIO-DOORBELL-PRESS', { powerSourceType: 'None' });
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
 
     expect(await device.triggerSwitchEvent('Single', device.log)).toBeTruthy();
     expect(device.getAttribute(Switch, 'currentPosition')).toBe(0);
@@ -247,7 +267,7 @@ describe('AudioDoorbell', () => {
       streamUsagePriorities: [StreamUsage.LiveView, StreamUsage.Recording],
     });
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
   });
@@ -256,7 +276,7 @@ describe('AudioDoorbell', () => {
     const weriftOfferOptions: WeriftOfferOptions = { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' };
     const device = new AudioDoorbell('Audio Doorbell Werift', 'AUDIO-DOORBELL-WERIFT', { weriftOfferOptions });
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });
 });

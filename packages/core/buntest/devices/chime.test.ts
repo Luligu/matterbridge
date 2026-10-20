@@ -14,7 +14,7 @@ import { Chime as ChimeCluster } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -74,7 +74,7 @@ describe('Chime', () => {
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
     expect(device.hasClusterServer(ChimeCluster.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(ChimeCluster, 'installedChimeSounds')).toEqual([{ chimeId: 0, name: 'Default Chime' }]);
     expect(device.getAttribute(ChimeCluster, 'selectedChime')).toBe(0);
     expect(device.getAttribute(ChimeCluster, 'enabled')).toBe(true);
@@ -82,7 +82,7 @@ describe('Chime', () => {
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new Chime('Chime Snapshot', 'CHIME-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -112,6 +112,26 @@ describe('Chime', () => {
         .toSorted(),
     ).toEqual(
       [
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Chime Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Chime'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='CHIME-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='55b78b6e547d3bea4824513181cca38f'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'chime(0x556).acceptedCommandList(0xfff9)=[ 0 ]',
         'chime(0x556).attributeList(0xfffb)=[ 0, 1, 2, 65528, 65529, 65531, 65532, 65533 ]',
         'chime(0x556).clusterRevision(0xfffd)=2',
@@ -124,11 +144,11 @@ describe('Chime', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 326, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 326, revision: 2 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 1366 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 57, 1366 ]',
         'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
@@ -147,7 +167,7 @@ describe('Chime', () => {
     const device = new Chime('Chime Identify', 'CHIME-IDENTIFY', { identifyTime: 5, identifyType: Identify.IdentifyType.AudibleBeep });
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(device.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.AudibleBeep);
   });
@@ -156,7 +176,7 @@ describe('Chime', () => {
     const device = new Chime('Chime Rechargeable', 'CHIME-RECHARGEABLE', { powerSourceType: 'Rechargeable' });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
   });
 
@@ -164,7 +184,7 @@ describe('Chime', () => {
     const device = new Chime('Chime Replaceable', 'CHIME-REPLACEABLE', { powerSourceType: 'Replaceable' });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batReplacementDescription')).toBe('Battery type');
   });
 
@@ -172,7 +192,7 @@ describe('Chime', () => {
     const device = new Chime('Chime Battery', 'CHIME-BATTERY', { powerSourceType: 'Battery' });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
   });
 
@@ -180,7 +200,7 @@ describe('Chime', () => {
     const device = new Chime('Chime None', 'CHIME-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should create a chime device with custom chime sounds', async () => {
@@ -193,7 +213,7 @@ describe('Chime', () => {
       enabled: false,
     });
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(ChimeCluster, 'installedChimeSounds')).toEqual([
       { chimeId: 0, name: 'Default Chime' },
       { chimeId: 1, name: 'Chime 1' },

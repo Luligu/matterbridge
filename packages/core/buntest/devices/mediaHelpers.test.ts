@@ -135,6 +135,7 @@ describe('Matterbridge ' + NAME, () => {
   test('createDefaultMediaBindingClusterServer resolves every mapped media client cluster', () => {
     device = new MatterbridgeEndpoint([castingVideoClient, powerSource], { id: 'MediaHelpersTestDevice' });
     device.createDefaultBasicInformationClusterServer('MediaHelpers Test Device', 'MH123456', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge Media Helpers Test Device');
+    device.createDefaultPowerSourceWiredClusterServer();
 
     const clientList = allMediaClientClusters.map((c) => c.id);
     createDefaultMediaBindingClusterServer(device, clientList);

@@ -22,6 +22,7 @@ import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-manag
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { EndpointNumber } from '@matter/types/datatype';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
@@ -510,7 +511,7 @@ describe('Matterbridge Water Heater', () => {
 
   test('should emit completed water heater commands after awaited plugin forwarding', async () => {
     const observed = new WaterHeater('Observed Heater', 'WH-OBS');
-    await addDevice(server, observed);
+    await addBridgedDevice(aggregator, observed);
     const order: string[] = [];
     const request0 = { boostInfo: { duration: 60 } };
     observed.addCommandHandler('WaterHeaterManagement.boost', async (data) => {

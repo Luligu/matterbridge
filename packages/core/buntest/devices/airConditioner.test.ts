@@ -17,7 +17,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { ThermostatUserInterfaceConfiguration } from '@matter/types/clusters/thermostat-user-interface-configuration';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -148,7 +148,7 @@ describe('Matterbridge ' + NAME, () => {
       temperatureDisplayMode: 0,
     });
     expect(custom.getClusterServerOptions(FanControl.id)).toEqual({ fanMode: 0, fanModeSequence: 2, percentSetting: 40, percentCurrent: 0 });
-    expect(await addDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
     expect(custom.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -158,12 +158,13 @@ describe('Matterbridge ' + NAME, () => {
       'thermostat',
       'thermostatUserInterfaceConfiguration',
       'fanControl',
+      'bridgedDeviceBasicInformation',
     ]);
     expect(await deleteDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
   });
 
   test('add air conditioner to server', async () => {
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAllClusterServerNames()).toEqual([
       'descriptor',
       'matterbridge',
@@ -173,6 +174,7 @@ describe('Matterbridge ' + NAME, () => {
       'thermostat',
       'thermostatUserInterfaceConfiguration',
       'fanControl',
+      'bridgedDeviceBasicInformation',
     ]);
   });
 
@@ -264,15 +266,35 @@ describe('Matterbridge ' + NAME, () => {
         .toSorted(),
     ).toEqual(
       [
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Air Conditioner Test Device'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Air Conditioner'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='AC123456'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='1b456dbb5e49481e63bd0bd64d0ec352'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 114, revision: 4 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 114, revision: 4 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 3, 6, 29, 47, 513, 514, 516 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 6, 29, 47, 57, 513, 514, 516 ]',
         'fanControl(0x202).acceptedCommandList(0xfff9)=[ 0 ]',
         'fanControl(0x202).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'fanControl(0x202).clusterRevision(0xfffd)=6',

@@ -15,7 +15,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -85,13 +85,13 @@ describe('CameraController', () => {
     expect(clientList).toEqual([WebRtcTransportProvider.id]);
     expect(device.type.clientClusters['webRtcTransportProvider']).toBe(WebRtcTransportProviderClient);
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(WebRtcTransportRequestor, 'currentSessions')).toEqual([]);
   });
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new CameraController('Camera Controller Snapshot', 'CAMERACONTROLLER-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -127,15 +127,35 @@ describe('CameraController', () => {
         'binding(0x1e).clusterRevision(0xfffd)=1',
         'binding(0x1e).featureMap(0xfffc)={  }',
         'binding(0x1e).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Camera Controller Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Camera Controller'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='CAMERACONTROLLER-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='3a19afa41a973ed774a98ee3fa842a62'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[ 1363 ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 327, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 327, revision: 1 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 29, 30, 47, 1364 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 30, 47, 57, 1364 ]',
         'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
@@ -164,14 +184,14 @@ describe('CameraController', () => {
     const device = new CameraController(`Camera Controller ${powerSourceType}`, `CAMERACONTROLLER-${powerSourceType.toUpperCase()}`, { powerSourceType });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(expectedChargeLevel);
   });
 
   it('should create a camera controller device with a replaceable power source description', async () => {
     const device = new CameraController('Camera Controller Replaceable Description', 'CAMERACONTROLLER-REPLACEABLE-DESCRIPTION', { powerSourceType: 'Replaceable' });
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batReplacementDescription')).toBe('Battery type');
   });
 
@@ -179,13 +199,13 @@ describe('CameraController', () => {
     const device = new CameraController('Camera Controller None', 'CAMERACONTROLLER-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it.each(['offer', 'answer', 'iceCandidates', 'end'] as const)('should notify %s subscribers only after the inherited handler succeeds', async (command) => {
     const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };
     const device = new CameraController(`Camera Controller ${command}`, `CAMERACONTROLLER-${command}`);
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     const listener = vi.fn();
     device.subscribeCommand(WebRtcTransportRequestor.id, command, listener);
     const handler = vi.spyOn(WebRtcTransportRequestorServer.prototype, command).mockImplementation(async () => {
