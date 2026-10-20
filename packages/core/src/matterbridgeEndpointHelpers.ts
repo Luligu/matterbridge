@@ -3,7 +3,7 @@
  * @description This file contains the helpers for the class MatterbridgeEndpoint.
  * @author Luca Liguori
  * @created 2024-10-01
- * @version 2.1.1
+ * @version 2.2.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.

@@ -3,7 +3,7 @@
  * @description This file contains the ElectricalUtilityMeter class.
  * @author Luca Liguori
  * @created 2026-08-15
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.

@@ -3,7 +3,7 @@
  * @description This file contains the RoboticVacuumCleaner class.
  * @author Luca Liguori
  * @created 2025-05-01
- * @version 1.3.0
+ * @version 1.3.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -332,8 +332,10 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    const currentIsIdle = this.state.supportedModes.some((mode) => mode.mode === this.state.currentMode && mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
-    const requestedIsIdle = supported.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle);
+    const currentIsIdle = this.state.supportedModes.some(
+      (mode) => mode.mode === this.state.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)),
+    );
+    const requestedIsIdle = supported.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number));
     // Matter 1.6.0 § 7.2.4.1: Without DirectModeChange, respond with InvalidInMode to a change from a non-Idle mode to another non-Idle mode.
     if (request.newMode !== this.state.currentMode && !this.features.directModeChange && !currentIsIdle && !requestedIsIdle) {
       device.log.debug(
@@ -348,7 +350,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
     // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
     this.state.currentMode = request.newMode;
     const operationalState = this.agent.get(MatterbridgeRvcOperationalStateServer);
-    if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Cleaning)) {
+    if (supported.modeTags.find((tag) => tag.value === (RvcRunMode.ModeTag.Cleaning as number))) {
       device.log.debug(`MatterbridgeRvcRunModeServer: changeToMode called with newMode Cleaning => Running (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       // Matter 1.6.0 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
       operationalState.beginOperation();
@@ -356,7 +358,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       operationalState.state.operationalState = RvcOperationalState.OperationalState.Running;
       this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Running' };
-    } else if (supported.modeTags.find((tag) => tag.value === RvcRunMode.ModeTag.Idle)) {
+    } else if (supported.modeTags.find((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number))) {
       device.log.debug(`MatterbridgeRvcRunModeServer: changeToMode called with newMode Idle => SeekingCharger (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       // Matter 1.6.0 § 1.14.7.2: The overall operation ends, so generate the OperationCompletion event.
       operationalState.completeOperation();
@@ -418,7 +420,9 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Already in requested mode' };
     }
     const runModeState = this.agent.get(MatterbridgeRvcRunModeServer).state;
-    const runModeIsIdle = runModeState.supportedModes.some((mode) => mode.mode === runModeState.currentMode && mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+    const runModeIsIdle = runModeState.supportedModes.some(
+      (mode) => mode.mode === runModeState.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)),
+    );
     // Matter 1.6.0 § 7.3.4.1: Without DirectModeChange, respond with InvalidInMode to a clean mode change while the RVC Run Mode CurrentMode is not Idle.
     if (!this.features.directModeChange && !runModeIsIdle) {
       device.log.debug(
@@ -495,11 +499,14 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       context: this.context,
     });
     // Matter 1.6.0 § 1.14.6.1: Respond with ErrorStateID NoError and take no further action if Pause is received while already Paused.
-    if (this.state.operationalState === RvcOperationalState.OperationalState.Paused) {
+    if (this.state.operationalState === (RvcOperationalState.OperationalState.Paused as number)) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already paused' } };
     }
     // Matter 1.6.0 § 1.14.6.1 and § 7.4.4.1: Respond with CommandInvalidInState when the current state is not Pause-compatible (only Running and SeekingCharger are).
-    if (this.state.operationalState !== RvcOperationalState.OperationalState.Running && this.state.operationalState !== RvcOperationalState.OperationalState.SeekingCharger) {
+    if (
+      this.state.operationalState !== (RvcOperationalState.OperationalState.Running as number) &&
+      this.state.operationalState !== (RvcOperationalState.OperationalState.SeekingCharger as number)
+    ) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Pause-compatible in the current operational state' },
       };
@@ -541,11 +548,11 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       context: this.context,
     });
     // Matter 1.6.0 § 1.14.6.4: Respond with ErrorStateID NoError and take no further action if Resume is received while already Running.
-    if (this.state.operationalState === RvcOperationalState.OperationalState.Running) {
+    if (this.state.operationalState === (RvcOperationalState.OperationalState.Running as number)) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already running' } };
     }
     // Matter 1.6.0 § 1.14.6.4: Respond with CommandInvalidInState when the current state is not Resume-compatible (only Paused is).
-    if (this.state.operationalState !== RvcOperationalState.OperationalState.Paused) {
+    if (this.state.operationalState !== (RvcOperationalState.OperationalState.Paused as number)) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Resume-compatible in the current operational state' },
       };
@@ -591,18 +598,18 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       context: this.context,
     });
     // Matter 1.6.0 § 7.4.5.1: Respond with ErrorStateID NoError and take no further action if GoHome is received while already SeekingCharger.
-    if (this.state.operationalState === RvcOperationalState.OperationalState.SeekingCharger) {
+    if (this.state.operationalState === (RvcOperationalState.OperationalState.SeekingCharger as number)) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already seeking charger' } };
     }
     // Matter 1.6.0 § 7.4.5.1: Respond with CommandInvalidInState when the device cannot seek the charger in the current state.
     if (
-      this.state.operationalState === RvcOperationalState.OperationalState.Error ||
-      this.state.operationalState === RvcOperationalState.OperationalState.Charging ||
-      this.state.operationalState === RvcOperationalState.OperationalState.Docked ||
-      this.state.operationalState === RvcOperationalState.OperationalState.EmptyingDustBin ||
-      this.state.operationalState === RvcOperationalState.OperationalState.CleaningMop ||
-      this.state.operationalState === RvcOperationalState.OperationalState.FillingWaterTank ||
-      this.state.operationalState === RvcOperationalState.OperationalState.UpdatingMaps
+      this.state.operationalState === (RvcOperationalState.OperationalState.Error as number) ||
+      this.state.operationalState === (RvcOperationalState.OperationalState.Charging as number) ||
+      this.state.operationalState === (RvcOperationalState.OperationalState.Docked as number) ||
+      this.state.operationalState === (RvcOperationalState.OperationalState.EmptyingDustBin as number) ||
+      this.state.operationalState === (RvcOperationalState.OperationalState.CleaningMop as number) ||
+      this.state.operationalState === (RvcOperationalState.OperationalState.FillingWaterTank as number) ||
+      this.state.operationalState === (RvcOperationalState.OperationalState.UpdatingMaps as number)
     ) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Cannot seek the charger in the current operational state' },

@@ -3,7 +3,7 @@
  * @description This file contains the Dishwasher class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.2.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -217,7 +217,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
         `MatterbridgeDishwasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       // SupportedModes includes a Normal mode at startup (Matter 1.6.0 § 8.3.6.1), but a plugin can still replace the list at runtime.
-      const normalMode = this.state.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === DishwasherMode.ModeTag.Normal));
+      const normalMode = this.state.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (DishwasherMode.ModeTag.Normal as number)));
       // Matter 1.6.0 § 1.5.4.2: Other clusters MAY use best-effort attribute values in dead front, so set CurrentMode to the Normal mode when there is one.
       if (normalMode) this.state.currentMode = normalMode.mode;
     }
