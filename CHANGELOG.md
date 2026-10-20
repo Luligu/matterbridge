@@ -36,6 +36,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add an optional tree view for device clusters with a saved Grid/Tree preference and live attribute updates. Thanks to [@RinDevJunior](https://github.com/RinDevJunior) for [PR #660](https://github.com/Luligu/matterbridge/pull/660).
 - [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
 - [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
+- [test-utils]: Add `addBridgedDevice()` to the test-utils helpers: it adds the Bridged Node device type and, when missing, the `BridgedDeviceBasicInformationServer` to a test device, like `registerDevice()` does in bridge mode.
 - [matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the `subscribeAttribute` listeners are lost. Closes [#657](https://github.com/Luligu/matterbridge/issues/657). Thanks Calvin Che.
 
 ### Changed
@@ -63,6 +64,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
 - [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
+- [test-utils]: Default the `createTestEnvironment()` endpoint validation to `'warn'` in the vitest, jest and bun helpers, so synthetic test devices are not refused by matter.js 0.18; pass `'strict'` to refuse violations or `'off'` to skip validation.
 
 ### Fixed
 

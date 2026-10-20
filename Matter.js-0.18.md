@@ -82,11 +82,6 @@ The `endpoint.validation` variable, also available as `MATTER_ENDPOINT_VALIDATIO
 
 Matterbridge sets `warn` in production and `strict` in the test helpers before creating server nodes:
 
-```ts
-this.environment.vars.set('endpoint.validation', 'warn'); // Matterbridge and MatterNode
-this.environment.vars.set('endpoint.validation', 'strict'); // the five test-helper environment setups
-```
-
 - Production uses `warn` so that a non-conformant plugin device is logged instead of refused when added; tests use `strict` so that non-conformant fixtures and device classes fail. It has no validation effect with matter.js 0.17.9; it prepares these environments for 0.18.
 - The mode is read when the server node's environment is built. Changing the variable afterward does not change an existing node's mode.
 - Adding an endpoint can invalidate requirements on its parent or siblings, so a strict construction error can name an endpoint other than the one being added. Validation throws `DeviceTypeConformanceError`, containing individual `DeviceTypeViolationError` entries.

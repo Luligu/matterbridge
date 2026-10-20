@@ -158,6 +158,7 @@
 <li>[frontend]: Add an optional tree view for device clusters with a saved Grid/Tree preference and live attribute updates. Thanks to <a href="https://github.com/RinDevJunior">@RinDevJunior</a> for <a href="https://github.com/Luligu/matterbridge/pull/660">PR #660</a>.</li>
 <li>[camera]: Add <code>closeWebRtcSessions(device)</code> to <code>matterbridge/devices/camera</code> so a plugin closes its own WebRTC sessions in <code>onShutdown</code>.</li>
 <li>[frontend]: Add the <code>Auto</code> frontend theme, which follows the OS or browser color scheme (dark or light). The default stays <code>Dark</code>.</li>
+<li>[test-utils]: Add <code>addBridgedDevice()</code> to the test-utils helpers: it adds the Bridged Node device type and, when missing, the <code>BridgedDeviceBasicInformationServer</code> to a test device, like <code>registerDevice()</code> does in bridge mode.</li>
 <li>[matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the <code>subscribeAttribute</code> listeners are lost. Closes <a href="https://github.com/Luligu/matterbridge/issues/657">#657</a>. Thanks Calvin Che.</li>
 </ul>
 <h3 id="changed">Changed</h3>
@@ -185,6 +186,7 @@
 <li>[frontend]: Remove duplicated devDependencies (<code>@types/node</code>, <code>@vitest/coverage-v8</code>, <code>vitest</code>, <code>typescript</code>, <code>oxfmt</code>, <code>oxlint</code> and <code>oxlint-tsgolint</code>) and use the root tooling; move <code>jsdom</code> to the root devDependencies with <code>vitest</code>.</li>
 <li>[docker]: Add the <code>matterbridge-camera</code> and <code>matterbridge-webcam</code> plugins (dev branch) to the <code>dev</code> and <code>bundev</code> images.</li>
 <li>[docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.</li>
+<li>[test-utils]: Default the <code>createTestEnvironment()</code> endpoint validation to <code>&#39;warn&#39;</code> in the vitest, jest and bun helpers, so synthetic test devices are not refused by matter.js 0.18; pass <code>&#39;strict&#39;</code> to refuse violations or <code>&#39;off&#39;</code> to skip validation.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
@@ -195,7 +197,9 @@
 <li>[camera]: Unref the WebRTC session diagnostics timer, so it no longer keeps the process alive.</li>
 <li>[ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.</li>
 <li>[scripts]: Fix the IPv4 and IPv6 lines of <code>info-debian.sh</code> and <code>info-alpine.sh</code> outside plain Docker bridges: read <code>src</code>/<code>dev</code> from <code>ip route get</code> by keyword (Docker Desktop host networking printed <code>IPv4: 2</code>), take IPv6 from the outgoing interface instead of <code>eth0</code>, and keep only the matching family in the <code>hostname</code> fallback.</li>
-<li>[thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.
+<li>[thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.</li>
+<li>[frontend]: Await the diagnostic log writes instead of a fixed 500 ms wait in <code>generateDiagnostic()</code>, so view and download of the diagnostic are faster and never read a partial file.</li>
+<li>[matterbridge]: Write the server node storage context values in <code>createServerNodeContext()</code> only when missing or changed (as in <code>MatterNode</code>), avoiding 17 disk writes per server node at every start.
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></li>
 </ul>
 <h2 id="31014-2026-10-16">[3.10.14] - 2026-10-16</h2>
