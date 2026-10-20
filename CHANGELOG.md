@@ -29,7 +29,20 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## [3.10.15] - Dev branch
+## [3.11.0] - Dev branch
+
+### Breaking changes
+
+- [matter]: Bump `matter.js` to v.0.18.0 and Matter to 1.6.1. See [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) and [Matter.js 0.18 changes from 0.17](Matter.js-0.18.md).
+- [matter]: matter.js 0.18 validates every endpoint against its declared device types (Matter 1.6.1 Core § 9.2). Matterbridge uses the `warn` mode in production: a non-conformant plugin device is logged, not refused.
+- [matter]: Update the device types to Matter 1.6.1: Simple device types with mandatory application clients (e.g. On/Off Light Switch) now require the Binding cluster server, mapped to `MatterbridgeBindingServer`.
+
+### Development Breaking changes
+
+- [matter]: The CommodityMetering and CommodityTariff fields use `Ids` instead of `IDs`: `dayEntryIds`, `dayPatternIds` and `tariffComponentIds`.
+- [matter]: Open enums (OperationalState, RvcOperationalState, Mode Base `ModeTagStruct.value`, ...) are typed as `Enum | number`: comparisons with enum members are flagged by `typescript/no-unsafe-enum-comparison`; widen the member with `as number`.
+- [matter]: A mandatory command implemented with `Behavior.unimplemented` fails the endpoint initialization in `strict` validation mode.
+- [test-utils]: `createTestEnvironment()` (vitest, jest and bun) sets the endpoint validation to `'strict'` by default, so non-conformant test devices are refused; pass `'warn'` or `'off'` to relax it. Use `addBridgedDevice()` for test devices that would be bridged.
 
 ### Added
 
@@ -43,7 +56,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [workflows]: Pin GitHub workflow dispatch requests to REST API version `2026-03-10` to avoid API retirement warnings.
 - [utils/scripts]: Pin GitHub data-model and Bun release requests to REST API version `2026-03-10`.
-- [matterbridge]: Bump `matterbridge` version to v.3.10.15.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.0.
 - [matterbridge]: Bump `@types/bun` to v.1.4.3.
 - [matterbridge]: Bump `@types/node` to v.26.6.5.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.5.
@@ -55,7 +68,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `vitest` to v.5.0.5.
 - [core]: Bump `express` to v.5.3.0.
 - [thread]: Bump `@zip.js/zip.js` to v.2.24.0.
-- [frontend]: Add `apps/frontend` to the npm workspaces: it is now versioned with matterbridge (v.3.10.15) and published by `publish-workspaces`.
+- [frontend]: Add `apps/frontend` to the npm workspaces: it is now versioned with matterbridge (v.3.11.0) and published by `publish-workspaces`.
 - [frontend]: Move all dependencies to devDependencies, since they are bundled by vite into `build`.
 - [scripts]: Fix `pack-workspaces --dry-run` creating a tarball instead of previewing its contents.
 - [scripts]: Add `buildFrontend` and run it after the clean build in `publish-workspaces`, `pack-workspaces`, `pack-monorepo`, `runMeBeforePublish`, `prepublishOnly` and `softReset`; remove `reset:all`, `softReset:all`, `softReset:bun:all` and `runMeBeforePublish:all` (the frontend coverage now runs in `runMeBeforePublish`).
@@ -64,7 +77,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
 - [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
-- [test-utils]: Default the `createTestEnvironment()` endpoint validation to `'warn'` in the vitest, jest and bun helpers, so synthetic test devices are not refused by matter.js 0.18; pass `'strict'` to refuse violations or `'off'` to skip validation.
 
 ### Fixed
 
