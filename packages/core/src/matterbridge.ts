@@ -3023,23 +3023,36 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.serverNodeStorageManagers.set(storeId, storageManager);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');
-    await storageContext.set('storeId', storeId);
-    await storageContext.set('deviceName', deviceName);
-    await storageContext.set('deviceType', deviceType);
-    await storageContext.set('vendorId', vendorId);
-    await storageContext.set('vendorName', vendorName.slice(0, 32));
-    await storageContext.set('productId', productId);
-    await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
-    await storageContext.set('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
-    await storageContext.set('nodeLabel', deviceName.slice(0, 32));
-    await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
-    await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
-    await storageContext.set('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
-    await storageContext.set('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
-    await storageContext.set('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
-    await storageContext.set('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
-    await storageContext.set('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
+    /**
+     * Writes a primitive initialization value only when missing or different.
+     *
+     * @param {string} key The storage key.
+     * @param {string | number} value The desired value.
+     * @returns {Promise<void>} Resolves after any required write completes.
+     */
+    async function setIfDifferent(key: string, value: string | number): Promise<void> {
+      if (!(await storageContext.has(key)) || (await storageContext.get(key)) !== value) {
+        await storageContext.set(key, value);
+      }
+    }
+
+    await setIfDifferent('storeId', storeId);
+    await setIfDifferent('deviceName', deviceName);
+    await setIfDifferent('deviceType', deviceType);
+    await setIfDifferent('vendorId', vendorId);
+    await setIfDifferent('vendorName', vendorName.slice(0, 32));
+    await setIfDifferent('productId', productId);
+    await setIfDifferent('productName', productName.slice(0, 32));
+    await setIfDifferent('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
+    await setIfDifferent('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
+    await setIfDifferent('nodeLabel', deviceName.slice(0, 32));
+    await setIfDifferent('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
+    await setIfDifferent('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
+    await setIfDifferent('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
+    await setIfDifferent('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
+    await setIfDifferent('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
+    await setIfDifferent('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
+    await setIfDifferent('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
 
     this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
