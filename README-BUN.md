@@ -159,9 +159,10 @@ built and served. See the TODO list below for the known limitations.
       TLS fields **both** top-level and nested under `tls` in the same options object — each
       runtime reads the shape it understands and ignores the other.
       Reproduced and asserted by [buntest/wssTest.test.ts](./buntest/wssTest.test.ts).
-      Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396) (open,
-      "WebSocket npm fails TLS handshake with self signed certificates"), with a fix proposed in
-      [oven-sh/bun#31397](https://github.com/oven-sh/bun/pull/31397) (open, not yet merged) —
+      Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396) (closed,
+      "WebSocket npm fails TLS handshake with self signed certificates"), fixed by
+      [oven-sh/bun#44618](https://github.com/oven-sh/bun/pull/44618) (merged on 2026-10-10, after
+      Bun 1.4.3, not yet released) —
       revisit dropping the workaround once that lands in a release.
 
 - [ ] **`bun test --coverage` never counts implicit class constructors as called.** A derived class
@@ -174,8 +175,8 @@ built and served. See the TODO list below for the known limitations.
       on the same tests. Present in Bun 1.4.2 and 1.4.3.
       Do not add `constructor(...args) { super(...args); }` only to satisfy the report: it is
       useless code and the implicit constructor is the correct form.
-      Reported upstream: [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730) (open,
-      "test --coverage: implicit constructor invocations never counted in %Funcs"), with fixes
-      proposed in [oven-sh/bun#38282](https://github.com/oven-sh/bun/pull/38282) and
-      [oven-sh/bun#38518](https://github.com/oven-sh/bun/pull/38518) (open, not yet merged) —
-      recheck the device function coverage once either lands in a release.
+      Reported upstream: [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730) (closed,
+      "test --coverage: implicit constructor invocations never counted in %Funcs"), fixed by
+      [oven-sh/bun#45677](https://github.com/oven-sh/bun/pull/45677) (merged on 2026-10-20, not
+      yet released) —
+      recheck the device function coverage once that lands in a release.

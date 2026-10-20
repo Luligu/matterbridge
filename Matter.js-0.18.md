@@ -2,7 +2,9 @@
 
 This file tracks the matter.js 0.18.x deltas compared with matter.js 0.17.9 that matter for Matterbridge, following [the 0.17 migration notes](Matter.js-0.17.md).
 
-Audited dev version: `0.18.0-alpha.0-20261015-9c1725759` (npm `dev` verified on October 15, 2026). The findings were first audited on `0.18.0-alpha.0-20261008-6066b7499` and rechecked on `0.18.0-alpha.0-20261013-2e5a97ca3`, with the full test suite giving the same results on both historical snapshots. The three upstream validation issues reported on that October 13 snapshot are now resolved as recorded below. These findings describe this dev snapshot, not a final 0.18 release. Add newly discovered drifts here as the migration progresses.
+Released version: `0.18.0` (published on npm on October 20, 2026), used by Matterbridge on the `dev` branch.
+
+Audited dev version: `0.18.0-alpha.0-20261015-9c1725759` (npm `dev` verified on October 15, 2026). The findings were first audited on `0.18.0-alpha.0-20261008-6066b7499` and rechecked on `0.18.0-alpha.0-20261013-2e5a97ca3`, with the full test suite giving the same results on both historical snapshots. The three upstream validation issues reported on that October 13 snapshot are now resolved as recorded below, and the fixes ship in the 0.18.0 release. The audit sections below record the work done on these dev snapshots before the release. Add newly discovered drifts here as the migration progresses.
 
 ## Validation results
 
@@ -27,7 +29,7 @@ Strict-mode follow-up:
 
 The generated CommodityMetering and CommodityTariff types now use `Ids` instead of `IDs` in property names.
 
-| Previous name        | Dev name             |
+| Previous name        | 0.18 name            |
 | -------------------- | -------------------- |
 | `dayEntryIDs`        | `dayEntryIds`        |
 | `dayPatternIDs`      | `dayPatternIds`      |
@@ -98,7 +100,7 @@ See the upstream [Device Type Validation documentation](https://github.com/matte
 
 ## Resolved upstream validation issues
 
-All three points reported in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the audited dev version.
+All three points reported in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the audited dev version and in the 0.18.0 release.
 
 | Issue point                                        | Resolution                                                                                                                                                                                                                            | Upstream PR                                                                  |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |

@@ -281,9 +281,10 @@ Workaround (works identically on both Node and Bun, no runtime detection needed)
 TLS fields <strong>both</strong> top-level and nested under <code>tls</code> in the same options object — each
 runtime reads the shape it understands and ignores the other.
 Reproduced and asserted by <a href="./buntest/wssTest.test.ts">buntest/wssTest.test.ts</a>.
-Reported upstream: <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a> (open,
-&quot;WebSocket npm fails TLS handshake with self signed certificates&quot;), with a fix proposed in
-<a href="https://github.com/oven-sh/bun/pull/31397">oven-sh/bun#31397</a> (open, not yet merged) —
+Reported upstream: <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a> (closed,
+&quot;WebSocket npm fails TLS handshake with self signed certificates&quot;), fixed by
+<a href="https://github.com/oven-sh/bun/pull/44618">oven-sh/bun#44618</a> (merged on 2026-10-10, after
+Bun 1.4.3, not yet released) —
 revisit dropping the workaround once that lands in a release.
 </p>
 </li>
@@ -297,11 +298,11 @@ behavior class (for example <code>MatterbridgeLaundryDryerControlsServer</code> 
 on the same tests. Present in Bun 1.4.2 and 1.4.3.
 Do not add <code>constructor(...args) { super(...args); }</code> only to satisfy the report: it is
 useless code and the implicit constructor is the correct form.
-Reported upstream: <a href="https://github.com/oven-sh/bun/issues/42730">oven-sh/bun#42730</a> (open,
-&quot;test --coverage: implicit constructor invocations never counted in %Funcs&quot;), with fixes
-proposed in <a href="https://github.com/oven-sh/bun/pull/38282">oven-sh/bun#38282</a> and
-<a href="https://github.com/oven-sh/bun/pull/38518">oven-sh/bun#38518</a> (open, not yet merged) —
-recheck the device function coverage once either lands in a release.</p>
+Reported upstream: <a href="https://github.com/oven-sh/bun/issues/42730">oven-sh/bun#42730</a> (closed,
+&quot;test --coverage: implicit constructor invocations never counted in %Funcs&quot;), fixed by
+<a href="https://github.com/oven-sh/bun/pull/45677">oven-sh/bun#45677</a> (merged on 2026-10-20, not
+yet released) —
+recheck the device function coverage once that lands in a release.</p>
 </li>
 </ul>
   <script>
