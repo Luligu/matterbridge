@@ -18,7 +18,7 @@ import FormGroup from '@mui/material/FormGroup';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 // React
-import { useMemo, useState, memo } from 'react';
+import { useMemo, useState, memo, type ReactNode } from 'react';
 
 import { debug } from '../appState';
 import { ConditionalTooltip } from './ConditionalTooltip';
@@ -71,10 +71,11 @@ interface MbfTableProps<T extends object> {
   getRowKey?: string | ((row: T) => string | number);
   footerLeft?: string;
   footerRight?: string;
+  headerActions?: ReactNode;
   onRowClick?: (row: T, rowKey: string | number, event: React.MouseEvent<HTMLTableRowElement>) => void;
 }
 
-function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, footerLeft, footerRight, onRowClick }: MbfTableProps<T>) {
+function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, footerLeft, footerRight, headerActions, onRowClick }: MbfTableProps<T>) {
   const getStableRowKey = (row: T): string | number => {
     if (typeof getRowKey === 'string') {
       // oxlint-disable-next-line typescript/no-explicit-any
@@ -274,6 +275,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         <MbfWindowHeaderText>{name}</MbfWindowHeaderText>
         {title && <MbfWindowHeaderText>{title}</MbfWindowHeaderText>}
         <MbfWindowIcons close={() => setClosed(true)}>
+          {headerActions}
           <IconButton
             size="small"
             sx={{ color: 'var(--header-text-color)', margin: '0px', padding: '0px' }}
