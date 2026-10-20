@@ -205,10 +205,6 @@ export type WorkerMessageTypes = {
   };
 
   // Matterbridge methods
-  matterbridge_initialize: {
-    request: { params: undefined };
-    response: { result: { success: true } };
-  };
   matterbridge_latest_version: {
     request: { params: { version: string } };
     response: { result: { success: true } };
