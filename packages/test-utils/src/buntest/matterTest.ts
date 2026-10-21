@@ -41,7 +41,7 @@ import { EcosystemInformation } from '@matter/types/clusters/ecosystem-informati
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';
+import { type BridgeMode, MATTER_STORAGE_DIR, type PlatformMatterbridge, type RestartMode, type SharedMatterbridge, type VirtualMode } from '@matterbridge/types';
 // node-ansi-logger module
 import { er, LogLevel, rs } from 'node-ansi-logger';
 
@@ -145,9 +145,12 @@ export async function destroyTestEnvironment(): Promise<void> {
 /**
  * Get a mocked PlatformMatterbridge.
  *
+ * @param {BridgeMode} [bridgeMode] - The bridge mode of the mocked Matterbridge. Default is 'none'.
+ * @param {RestartMode} [restartMode] - The restart mode of the mocked Matterbridge. Default is 'none'.
+ * @param {VirtualMode} [virtualMode] - The virtual mode of the mocked Matterbridge. Default is 'mounted_switch'.
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
-export function getMatterbridge(): PlatformMatterbridge {
+export function getMatterbridge(bridgeMode: BridgeMode = 'none', restartMode: RestartMode = 'none', virtualMode: VirtualMode = 'mounted_switch'): PlatformMatterbridge {
   const matterbridge: PlatformMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
@@ -183,9 +186,9 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgeLatestVersion: '3.11.0',
     matterbridgeDevVersion: '3.11.0',
     frontendVersion: '3.11.0',
-    bridgeMode: 'none',
-    restartMode: 'none',
-    virtualMode: 'mounted_switch',
+    bridgeMode,
+    restartMode,
+    virtualMode,
     aggregatorVendorId: VendorId(0xfff1),
     aggregatorVendorName: 'Matterbridge',
     aggregatorProductId: 0x8000,
@@ -197,9 +200,12 @@ export function getMatterbridge(): PlatformMatterbridge {
 /**
  * Get a mocked SharedMatterbridge.
  *
+ * @param {BridgeMode} [bridgeMode] - The bridge mode of the mocked Matterbridge. Default is 'none'.
+ * @param {RestartMode} [restartMode] - The restart mode of the mocked Matterbridge. Default is 'none'.
+ * @param {VirtualMode} [virtualMode] - The virtual mode of the mocked Matterbridge. Default is 'mounted_switch'.
  * @returns {SharedMatterbridge} An object representing the mocked SharedMatterbridge.
  */
-export function getSharedMatterbridge(): SharedMatterbridge {
+export function getSharedMatterbridge(bridgeMode: BridgeMode = 'none', restartMode: RestartMode = 'none', virtualMode: VirtualMode = 'mounted_switch'): SharedMatterbridge {
   const matterbridge: SharedMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
@@ -239,9 +245,9 @@ export function getSharedMatterbridge(): SharedMatterbridge {
     dockerVersion: undefined,
     dockerLatestVersion: undefined,
     dockerDevVersion: undefined,
-    bridgeMode: 'none',
-    restartMode: 'none',
-    virtualMode: 'mounted_switch',
+    bridgeMode,
+    restartMode,
+    virtualMode,
     profile: undefined,
     logLevel: LogLevel.DEBUG,
     fileLogger: false,
