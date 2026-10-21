@@ -21,6 +21,7 @@
     "TC_FAN_3_1.py",
     "TC_FAN_3_2.py",
     "TC_TSTAT_2_2.py",
+    "TC_TSTAT_4_2.py",
     "TC_TSTAT_Utils.py",
     "Test_TC_TSTAT_2_1.yaml",
     "Test_TC_OO_2_2.yaml",
@@ -1849,7 +1850,7 @@
       "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on Fan Complete",
       "test": "TC_FAN_3_1.py",
       "endpoint": 9024,
-      "args": ["--PICS /root/fan-control-complete.pics"],
+      "args": ["--PICS /root/fan-control-complete.pics", "--no-wildcard-subscription"],
       "comment": "Patched locally to wait for each write's triggered reports to actually arrive before the next write, instead of firing the whole value_range as fast as possible; also fixes log_results()/verify_attribute_progression() iterating the live subscription queue while a concurrent report callback could mutate it (RuntimeError: deque mutated during iteration)."
     },
     {
@@ -1900,7 +1901,7 @@
       "test": "TC_FAN_3_1.py",
       "endpoint": 9021,
       "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
-      "args": ["--PICS /root/fan-control-base.pics"]
+      "args": ["--PICS /root/fan-control-base.pics", "--no-wildcard-subscription"]
     },
     { "name": "FanControl optional speed functionality on FanOnOff", "test": "TC_FAN_3_2.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
     { "name": "FanControl optional rock functionality on FanOnOff", "test": "TC_FAN_3_3.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
@@ -1924,7 +1925,7 @@
       "test": "TC_FAN_3_1.py",
       "endpoint": 9022,
       "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
-      "args": ["--PICS /root/fan-control-base.pics"]
+      "args": ["--PICS /root/fan-control-base.pics", "--no-wildcard-subscription"]
     },
     { "name": "FanControl optional speed functionality on FanBase", "test": "TC_FAN_3_2.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
     { "name": "FanControl optional rock functionality on FanBase", "test": "TC_FAN_3_3.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
@@ -3047,7 +3048,7 @@
       "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on ExtractorHood",
       "test": "TC_FAN_3_1.py",
       "endpoint": 1310,
-      "args": ["--PICS /root/fan-control-base.pics"],
+      "args": ["--PICS /root/fan-control-base.pics", "--no-wildcard-subscription"],
       "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete)."
     },
     {

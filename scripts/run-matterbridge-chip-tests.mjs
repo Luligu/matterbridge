@@ -544,7 +544,11 @@ function filterTests(tests, nameFilter) {
 // and the final recap block written to both log files.
 function formatResultLines(result) {
   const icon = result.skipped ? '⏭️' : result.passed ? '✅' : '❌';
-  const line = `${icon} ${result.label}`;
+  // Endpoint (when the entry pins one) and the duration of the test run itself, excluding the before/after steps.
+  const details = [];
+  if (result.endpoint !== undefined) details.push(`endpoint ${result.endpoint}`);
+  if (result.durationMs !== undefined) details.push(formatDuration(result.durationMs));
+  const line = `${icon} ${result.label}${details.length ? ` [${details.join(', ')}]` : ''}`;
   return (result.skipped || !result.passed) && result.comment ? [line, `   ↳ ${result.comment}`] : [line];
 }
 
@@ -578,7 +582,7 @@ function runTests(nameFilter) {
     if (test.skip) {
       console.log(`SKIP: ${label}`);
       appendFileSync(logFile, `=== ${label} ===\nSkipped ("skip": true set in ${testsFile})\n\n`);
-      const testResult = { label, passed: false, skipped: true, comment: test.comment };
+      const testResult = { label, passed: false, skipped: true, comment: test.comment, endpoint: test.endpoint };
       results.push(testResult);
       appendFileSync(summaryLogFile, `${formatResultLines(testResult).join('\n')}\n`);
       continue;
@@ -611,6 +615,7 @@ function runTests(nameFilter) {
     console.log(`Running: ${label}`);
     appendFileSync(logFile, `=== ${label} ===\n${commandLine}\n`);
 
+    const testStartTime = Date.now();
     const result = spawnSync('docker', ['exec', '-i', containerName, ...execArgs], {
       cwd: root,
       encoding: 'utf8',
@@ -622,6 +627,7 @@ function runTests(nameFilter) {
       // in the summary log without inspecting result.error.
       maxBuffer: Infinity,
     });
+    const durationMs = Date.now() - testStartTime;
 
     appendFileSync(logFile, `${result.stdout ?? ''}${result.stderr ?? ''}\n`);
 
@@ -629,7 +635,7 @@ function runTests(nameFilter) {
     appendFileSync(logFile, `Result: ${passed ? 'PASS' : 'FAIL'} (exit ${result.status})\n\n`);
     console.log(passed ? `PASS: ${label}` : `FAIL: ${label} (exit ${result.status})`);
 
-    const testResult = { label, passed, comment: test.comment };
+    const testResult = { label, passed, comment: test.comment, endpoint: test.endpoint, durationMs };
     results.push(testResult);
     appendFileSync(summaryLogFile, `${formatResultLines(testResult).join('\n')}\n`);
 

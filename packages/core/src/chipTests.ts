@@ -449,6 +449,8 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
   }
 
   const readBuffer = Buffer.alloc(4096);
+  // Poll every 10 ms: write_to_app_pipe() waits only 50 ms before the test reads the resulting state, so a 50 ms
+  // poll plus the handler time can miss it (TC_RVCOPSTATE_2_3 Step 25 read Running instead of Stopped).
   const pollInterval = setInterval(() => {
     if (isClosing || pipeFd === undefined) return;
     try {
@@ -461,7 +463,7 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
       if (error instanceof Error && 'code' in error && ['EAGAIN', 'EWOULDBLOCK'].includes(String(error.code))) return;
       matterbridge.log.error(`CHIP test app pipe ${chipTestAppPipePath} read error: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, 50);
+  }, 10);
   pollInterval.unref();
 
   const closePipeWithInterval = (): void => {

@@ -32,6 +32,33 @@ import { Camera } from '../../src/devices/camera.js';
 // Setup the test environment
 await setupTest(NAME, false);
 
+/*
+ * A mechanical move completes on a matter.js timer, which is backed by the global setTimeout. The move tests below
+ * fake setTimeout/clearTimeout and advance the clock past the movement duration instead of waiting for it in real
+ * time, so they neither take longer nor race the completion timer on a loaded CI runner.
+ */
+const MOVEMENT_ADVANCE = 1000;
+
+/**
+ * Runs a mechanical move command and checks that MovementState is Moving after the response and back to Idle once
+ * the move completes.
+ *
+ * @param {Camera} camera The camera that receives the move command.
+ * @param {() => Promise<unknown>} move Invokes the move command.
+ * @returns {Promise<void>} Resolves once the move has completed.
+ */
+async function expectMovement(camera: Camera, move: () => Promise<unknown>): Promise<void> {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  try {
+    await expect(move()).resolves.toBeUndefined();
+    expect(camera.getAttribute(CameraAvSettingsUserLevelManagement, 'movementState')).toBe(CameraAvSettingsUserLevelManagement.PhysicalMovement.Moving);
+    await vi.advanceTimersByTimeAsync(MOVEMENT_ADVANCE);
+  } finally {
+    vi.useRealTimers();
+  }
+  expect(camera.getAttribute(CameraAvSettingsUserLevelManagement, 'movementState')).toBe(CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle);
+}
+
 describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   let device: Camera;
   let twoStreamDevice: Camera;
@@ -121,7 +148,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   it('should set an absolute pan, tilt and zoom position', async () => {
     const listener = vi.fn();
     device.subscribeCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', listener);
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 45, tilt: 10, zoom: 5 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 45, tilt: 10, zoom: 5 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 45, tilt: 10, zoom: 5 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('set mechanical PTZ position to pan 45°, tilt 10°, zoom 5'));
@@ -137,7 +164,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should leave fields not present in the request unchanged', async () => {
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { zoom: 2 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { zoom: 2 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 45, tilt: 10, zoom: 2 });
   });
@@ -145,7 +172,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   it('should move by a relative pan, tilt and zoom delta', async () => {
     const listener = vi.fn();
     device.subscribeCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', listener);
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -5, tiltDelta: 5, zoomDelta: 3 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -5, tiltDelta: 5, zoomDelta: 3 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 40, tilt: 15, zoom: 5 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan -5°, tilt 5°, zoom 3 to pan 40°, tilt 15°, zoom 5'));
@@ -161,22 +188,22 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should clamp a relative move at the pan, tilt and zoom limits', async () => {
-    await expect(
+    await expectMovement(device, async () =>
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: 1000, tiltDelta: 1000, zoomDelta: -1000 }),
-    ).resolves.toBeUndefined();
+    );
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 170, tilt: 90, zoom: 1 });
   });
 
   it('should move by a relative pan delta only, leaving tilt and zoom unchanged', async () => {
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -10 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: -10 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 160, tilt: 90, zoom: 1 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan -10°, tilt 0°, zoom 0 to pan 160°, tilt 90°, zoom 1'));
   });
 
   it('should move by a relative tilt delta only, leaving pan and zoom unchanged', async () => {
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { tiltDelta: -10 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { tiltDelta: -10 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 160, tilt: 80, zoom: 1 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position by pan 0°, tilt -10°, zoom 0 to pan 160°, tilt 80°, zoom 1'));
@@ -191,7 +218,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should preserve tilt and zoom when only pan is present in an absolute position request', async () => {
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: -170 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: -170 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: -170, tilt: 80, zoom: 1 });
   });
@@ -228,7 +255,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should update an existing preset with the current position when the preset id already exists', async () => {
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 10, tilt: 20, zoom: 3 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 10, tilt: 20, zoom: 3 }));
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSavePreset', { presetId: 1, name: 'Front gate' })).resolves.toBeUndefined();
 
     const presets = device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPresets');
@@ -252,7 +279,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   it('should move to a saved preset', async () => {
     const listener = vi.fn();
     device.subscribeCommand(CameraAvSettingsUserLevelManagement, 'mptzMoveToPreset', listener);
-    await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzMoveToPreset', { presetId: 2 })).resolves.toBeUndefined();
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzMoveToPreset', { presetId: 2 }));
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: -170, tilt: 80, zoom: 1 });
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('moved mechanical PTZ position to preset 2 "Driveway": pan -170°, tilt 80°, zoom 1'));
@@ -265,6 +292,30 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
         context: expect.anything(),
       }),
     );
+  });
+
+  it('should keep MPTZPosition and reject further moves with BUSY when a move is still in progress', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 30 })).resolves.toBeUndefined();
+      expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'movementState')).toBe(CameraAvSettingsUserLevelManagement.PhysicalMovement.Moving);
+      // Matter 1.6.1 § 11.3.7.1.4: MPTZPosition takes the new values only once the movement completes.
+      expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: -170, tilt: 80, zoom: 1 });
+
+      await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', { pan: 40 })).rejects.toMatchObject({ code: Status.Busy });
+      await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', { panDelta: 5 })).rejects.toMatchObject({ code: Status.Busy });
+      await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzMoveToPreset', { presetId: 2 })).rejects.toMatchObject({ code: Status.Busy });
+
+      await vi.advanceTimersByTimeAsync(MOVEMENT_ADVANCE);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'movementState')).toBe(CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle);
+    expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: 30, tilt: 80, zoom: 1 });
+
+    // Move back to preset 2, so the following steps keep starting from the same position.
+    await expectMovement(device, async () => device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'mptzMoveToPreset', { presetId: 2 }));
+    expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPosition')).toEqual({ pan: -170, tilt: 80, zoom: 1 });
   });
 
   it('should reject moving to a preset that does not exist', async () => {

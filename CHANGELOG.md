@@ -81,12 +81,18 @@ If you like this project and find it useful, please consider giving it a star on
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
 - [chip]: Build the `chip-test` docker image on the CHIP `v1.6.1-branch` and rebase the `TC_DeviceBasicComposition.py` and `Test_TC_OO_2_2.yaml` patches on it.
 - [chip]: Run the SmokeCOAlarm conformance tests with the `TC_SMOKECO_2_x.py` Python tests, since `v1.6.1-branch` removed the YAML ones, on all three SmokeCOAlarm endpoints (709, 7091 and 7092).
+- [chip]: Show the endpoint and the test run duration in each result line of the CHIP test summary log.
 
 ### Fixed
 
 - [frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.
 - [chip]: Map the SmokeCOAlarm critical battery, hardware fault and end of service test event triggers sent by the Python tests, and start the self-test from the app-pipe `LongPress` command.
 - [chip]: Patch `TC_SMOKECO_2_1.py` and `TC_SMOKECO_2_5.py` to guard the optional `ContaminationState` and `SmokeSensitivityLevel` attributes and fix misplaced `skip_step` calls.
+- [chip]: Patch `Test_TC_DRLK_2_1.yaml` to restore `OperatingMode` after Step 24c, so `NoRemoteLockUnlock` no longer fails the following DoorLock tests with matter.js 0.18.
+- [chip]: Patch `TC_TSTAT_4_2.py` to give the presets added by Steps 13 and 18 a unique name, as Matter 1.6.1 § 4.3.10.23.3 requires.
+- [chip]: Run `TC_FAN_3_1.py` with `--no-wildcard-subscription`, so the `v1.6.1-branch` subscription check no longer times it out.
+- [chip]: Poll the CHIP test app pipe every 10 ms instead of 50 ms, so `TC_RVCOPSTATE_2_3.py` no longer reads the state before the `Reset` command is applied.
+- [camera]: The PTZ move commands set `MovementState` to Moving, respond, and complete on a short timer (Idle and the new `MPTZPosition`); a move received while moving fails with BUSY (Matter 1.6.1 § 11.3.7.1.4).
 - [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
 - [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
 - [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.

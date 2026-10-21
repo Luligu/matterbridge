@@ -24,6 +24,7 @@
 
 /* oxlint-disable typescript/no-namespace */
 
+import { Millis, Time, type Timer } from '@matter/general';
 import { CameraAvSettingsUserLevelManagementServer } from '@matter/node/behaviors/camera-av-settings-user-level-management';
 import { CameraAvSettingsUserLevelManagement } from '@matter/types/clusters/camera-av-settings-user-level-management';
 import type { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
@@ -33,6 +34,12 @@ import { Status, type Viewport } from '@matter/types/globals';
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeCameraAvStreamManagementServer } from './cameraAvStreamManagementServer.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
+
+/**
+ * How long a mechanical move stays in MovementState Moving before it completes. A bridged camera has no physical
+ * movement to wait for, so this only keeps Moving and the return to Idle two separate, reported changes.
+ */
+const MPTZ_MOVEMENT_DURATION = Millis(100);
 
 /**
  * Clamps a value between a minimum and a maximum.
@@ -107,11 +114,11 @@ function viewportAt(x1: number, y1: number, width: number, height: number, senso
  * relative-move and saved-preset commands, and the per-stream digital viewport commands, required by a PTZ Camera
  * device.
  *
- * Matter 1.6.0 § 11.3.7.1.4, § 11.3.7.2.4 and § 11.3.7.3.2 model a physical camera: each move command sets
+ * Matter 1.6.1 § 11.3.7.1.4, § 11.3.7.2.4 and § 11.3.7.3.2 model a physical camera: each move command sets
  * MovementState to Moving, responds, and only sets it back to Idle and updates MPTZPosition once the physical
  * movement completes, rejecting a move that arrives while another is in flight with BUSY. A bridged camera has no
- * mechanics to wait for, so every move here completes synchronously within the command: MPTZPosition is updated
- * before the response, MovementState is never observably anything but Idle, and BUSY can therefore never arise.
+ * mechanics to wait for, so every move here completes on a short timer (MPTZ_MOVEMENT_DURATION) after the response:
+ * controllers see MovementState go Moving and back to Idle, and MPTZPosition takes the new values on completion.
  */
 export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends CameraAvSettingsUserLevelManagementServer.with(
   CameraAvSettingsUserLevelManagement.Feature.MechanicalPan,
@@ -216,15 +223,18 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.1.4: Update MPTZPosition with the received values; any field not present in the command SHALL NOT be modified.
-    this.state.mptzPosition = {
+    // Matter 1.6.1 § 11.3.7.1.4: Fail with BUSY while the camera is already engaged in a physical move.
+    this.#assertNotMoving('mptzSetPosition');
+    // Matter 1.6.1 § 11.3.7.1.4: MPTZPosition takes the received values once the movement completes; any field not present in the command SHALL NOT be modified.
+    const target = {
       pan: pan ?? this.state.mptzPosition.pan,
       tilt: tilt ?? this.state.mptzPosition.tilt,
       zoom: zoom ?? this.state.mptzPosition.zoom,
     };
     device.log.info(
-      `MatterbridgeCameraAvSettingsUserLevelManagementServer: set mechanical PTZ position to pan ${this.state.mptzPosition.pan}°, tilt ${this.state.mptzPosition.tilt}°, zoom ${this.state.mptzPosition.zoom} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+      `MatterbridgeCameraAvSettingsUserLevelManagementServer: set mechanical PTZ position to pan ${target.pan}°, tilt ${target.tilt}°, zoom ${target.zoom} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    this.#startMovement(target);
     this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzSetPosition', request, this.context);
   }
 
@@ -246,6 +256,8 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
         Status.InvalidCommand,
       );
     }
+    // Matter 1.6.1 § 11.3.7.2.4: Fail with BUSY while the camera is already engaged in a physical move.
+    this.#assertNotMoving('mptzRelativeMove');
     const current = this.state.mptzPosition;
     // Matter 1.6.0 § 11.3.7.2.4: Add PanDelta to the Pan value in MPTZPosition and clip the result to PanMin..PanMax inclusive.
     /* v8 ignore next -- pan/tilt/zoom are conformance-mandatory once MechanicalPan/MechanicalTilt/MechanicalZoom are
@@ -258,11 +270,11 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     // Matter 1.6.0 § 11.3.7.2.4: Add ZoomDelta to the Zoom value in MPTZPosition and clip the result to 1..ZoomMax inclusive.
     // v8 ignore next -- same as above, for zoom.
     const zoom = request.zoomDelta === undefined ? current.zoom : clamp((current.zoom ?? 1) + request.zoomDelta, 1, this.state.zoomMax);
-    // Matter 1.6.0 § 11.3.7.2.4: Update MPTZPosition with the clipped pan, tilt and zoom values once the movement completes.
-    this.state.mptzPosition = { pan, tilt, zoom };
     device.log.info(
       `MatterbridgeCameraAvSettingsUserLevelManagementServer: moved mechanical PTZ position by pan ${request.panDelta ?? 0}°, tilt ${request.tiltDelta ?? 0}°, zoom ${request.zoomDelta ?? 0} to pan ${pan}°, tilt ${tilt}°, zoom ${zoom} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    // Matter 1.6.1 § 11.3.7.2.4: Update MPTZPosition with the clipped pan, tilt and zoom values once the movement completes.
+    this.#startMovement({ pan, tilt, zoom });
     this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzRelativeMove', request, this.context);
   }
 
@@ -292,12 +304,62 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
         Status.NotFound,
       );
     }
-    // Matter 1.6.0 § 11.3.7.3.2: Initiate movement to the Pan, Tilt and Zoom values found in the identified entry, then update MPTZPosition once the movement completes.
-    this.state.mptzPosition = preset.settings;
+    // Matter 1.6.1 § 11.3.7.3.2: Fail with BUSY while the camera is already engaged in a physical move.
+    this.#assertNotMoving('mptzMoveToPreset');
     device.log.info(
       `MatterbridgeCameraAvSettingsUserLevelManagementServer: moved mechanical PTZ position to preset ${presetId} "${preset.name}": pan ${preset.settings.pan}°, tilt ${preset.settings.tilt}°, zoom ${preset.settings.zoom} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
+    // Matter 1.6.1 § 11.3.7.3.2: Initiate movement to the Pan, Tilt and Zoom values found in the identified entry, then update MPTZPosition once the movement completes.
+    this.#startMovement(preset.settings);
     this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzMoveToPreset', request, this.context);
+  }
+
+  /**
+   * Rejects a move command with BUSY while a previous move is still in progress.
+   *
+   * @param {string} command - The name of the rejected command, for the error message.
+   * @throws {StatusResponseError} With status Busy if MovementState is Moving.
+   */
+  #assertNotMoving(command: string): void {
+    if (this.state.movementState === CameraAvSettingsUserLevelManagement.PhysicalMovement.Moving) {
+      throw new StatusResponseError(
+        `MatterbridgeCameraAvSettingsUserLevelManagementServer: ${command} rejected, the camera is already moving (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        Status.Busy,
+      );
+    }
+  }
+
+  /**
+   * Sets MovementState to Moving and schedules the completion of the move, which updates MPTZPosition and sets
+   * MovementState back to Idle after MPTZ_MOVEMENT_DURATION.
+   *
+   * @param {CameraAvSettingsUserLevelManagement.Mptz} target - The pan, tilt and zoom values the move reaches.
+   */
+  #startMovement(target: CameraAvSettingsUserLevelManagement.Mptz): void {
+    // Matter 1.6.1 § 11.3.7.1.4, § 11.3.7.2.4 and § 11.3.7.3.2: Set MovementState to Moving before responding.
+    this.state.movementState = CameraAvSettingsUserLevelManagement.PhysicalMovement.Moving;
+    this.internal.movementTarget = target;
+    this.internal.movementTimer = Time.getTimer(
+      'CameraAvSettingsUserLevelManagement movement complete',
+      MPTZ_MOVEMENT_DURATION,
+      // The reactor must be a real method, not an arrow function, so the framework can rebind `this` to a fresh,
+      // still-valid Behavior context when the timer fires after the originating command's own context exited.
+      // oxlint-disable-next-line typescript/unbound-method
+      this.callback(this.#completeMovement, { lock: true }),
+    ).start();
+  }
+
+  /**
+   * Reactor for {@link #startMovement}; reads its target from `internal.movementTarget` since a timer callback takes
+   * no custom arguments.
+   */
+  #completeMovement(): void {
+    this.internal.movementTimer = undefined;
+    // Matter 1.6.1 § 11.3.7.1.4, § 11.3.7.2.4 and § 11.3.7.3.2: Once the movement completes, update MPTZPosition and set MovementState to Idle.
+    // v8 ignore next -- #startMovement always sets movementTarget before it starts the timer, so the guard can never be false.
+    if (this.internal.movementTarget !== undefined) this.state.mptzPosition = this.internal.movementTarget;
+    this.internal.movementTarget = undefined;
+    this.state.movementState = CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle;
   }
 
   /**
@@ -536,6 +598,15 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     );
     this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'dptzRelativeMove', request, this.context);
   }
+
+  /**
+   * Stops the pending movement completion timer, if any, when the behavior is disposed.
+   */
+  override async [Symbol.asyncDispose](): Promise<void> {
+    this.internal.movementTimer?.stop();
+    this.internal.movementTimer = undefined;
+    await super[Symbol.asyncDispose]?.();
+  }
 }
 
 /* v8 ignore start */
@@ -548,6 +619,16 @@ export namespace MatterbridgeCameraAvSettingsUserLevelManagementServer {
      * The preset id most recently generated by mptzSavePreset, used to keep generated ids monotonic.
      */
     lastGeneratedPresetId = 0;
+
+    /**
+     * The timer that completes the mechanical move in progress, if any.
+     */
+    movementTimer?: Timer;
+
+    /**
+     * The pan, tilt and zoom values the mechanical move in progress reaches, applied to MPTZPosition on completion.
+     */
+    movementTarget?: CameraAvSettingsUserLevelManagement.Mptz;
   }
 }
 /* v8 ignore stop */

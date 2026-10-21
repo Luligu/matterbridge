@@ -363,6 +363,10 @@ Robotic Vacuum Cleaner clusters:
 - RvcOperationalState (Stopped, Running, Paused, Error, SeekingCharger, Charging, and Docked states)
 - ServiceArea (Maps and SelectAreas; ProgressReporting and SkipArea are not implemented)
 
+`TC_RVCOPSTATE_2_3.py` reads the operational state right after `write_to_app_pipe()`, which waits only 50 ms
+after writing. The app-pipe reader in `chipTests.ts` polls the FIFO every 10 ms; with the earlier 50 ms poll the
+`Reset` at Step 24 could still be pending, and Step 25 intermittently read Running instead of Stopped.
+
 ## Endpoint 1301
 
 Laundry Washer with level temperature control clusters:
@@ -560,6 +564,13 @@ minimal `MATTERBRIDGE_CHIP_TEST`-gated FaultInjection server for those two fault
 would make it runnable, and would be the only AVSM test that actually asserts allocated
 video streams survive a restart.
 
+On the PTZ Camera (16011), `TC_AVSUM_2_2`, `2_3`, `2_4` and `2_9` wait for a `MovementState`
+Idle report after each mechanical move. The PTZ move commands therefore set `MovementState`
+to Moving, respond, and complete about 100 ms later with Idle and the new `MPTZPosition`
+(Matter 1.6.1 § 11.3.7.1.4). Earlier the move completed inside the command, so `MovementState`
+never changed: the tests only passed on matter.js 0.17, which also reported unchanged
+attributes of a cluster whenever its DataVersion changed.
+
 ### `TC_WEBRTCP_*` and `resetBefore`
 
 The WebRTC Transport Provider tests leave two kinds of residue behind: open WebRTC sessions
@@ -741,6 +752,13 @@ during iteration`. Patch adds a `wait_for_triggered_reports()`/`wait_for_latest_
 synchronization approach as PR #73629 below, generalized to `TC_FAN_3_1.py`'s two update-attribute scenarios)
 and snapshots the subscription queue before iterating it. See "Known Issues" below.
 
+On the `v1.6.1-branch` image every entry also passes `--no-wildcard-subscription`. That image's `matter.testing`
+checks each single-attribute read against a background wildcard subscription and, when the read comes in before
+that subscription's report, retries 1 s apart (`verify_attribute_subscription_value()`). The test reads right
+after every write of its 1–100 value ranges, so a run took about 215 s and the default 90 s timeout aborted
+Step 4 with `TimeoutError` on all four endpoints. The test verifies reports through its own subscriptions, so
+the background one adds nothing here; without it a run takes about 25 s.
+
 ### `TC_FAN_3_2.py`
 
 The exact-report-count assertion (`FanMode` emits exactly 3 subscription reports) is timing-fragile:
@@ -783,6 +801,12 @@ the test can verify the Matter 1.6-required `UNSUPPORTED_COMMAND` responses on a
 Corrects the no-PIN `LockDoor` and `UnlockDoor` PICS guards. Upstream requires both PIN and Credential OTA
 Access to send a PIN, but its fallback path runs only when both features are absent; the patch runs that path
 whenever the combined requirement is false, including endpoint 8011 where PIN is supported without COTA.
+
+It also adds Step 24e, which writes `OperatingMode` back to the `Current_OperatingMode` saved in Step 24a.
+Upstream (unchanged from 1.6 to 1.6.1) leaves the lock in `NoRemoteLockUnlock` after Step 24c, and the value is
+persisted. Since matter.js 0.18 the DUT correctly rejects remote lock operations in that mode (Matter 1.6.1
+§ 5.2.6.15, § 5.2.10.1) with `FAILURE`, so the residue broke the following `TC_DRLK_2_2.py`, `TC_DRLK_2_3.py`
+and `Test_TC_DRLK_2_4` on endpoints 801 and 8012. matter.js 0.17 ignored the operating mode, which hid it.
 
 ### `Test_TC_DRLK_2_4.yaml`
 
@@ -879,6 +903,16 @@ passes all six entries. Master has since applied the same Step 9b fix upstream; 
 correction. Master's current file cannot replace this one, because it was rewritten again on a new
 `ThermostatBaseTest`/`MatterTestCommissionedDevice` base that the `v1.6.1-branch` `matter.testing` package does
 not provide.
+
+### `TC_TSTAT_4_2.py`
+
+Based on the `v1.6.1-branch` upstream file. Steps 13 and 18 add presets with a null `Name` to a scenario that
+already holds one (Step 4 commits an unnamed `Occupied` preset), which Matter 1.6.1 § 4.3.10.23.3 forbids:
+within a scenario no two presets may share a `Name`, including null. Since matter.js 0.18 the DUT enforces this
+with `CONSTRAINT_ERROR`, so Step 13 failed its expected `SUCCESS` and Step 18 its expected `RESOURCE_EXHAUSTED`
+on endpoints 9013 and 9015; matter.js 0.17 did not check names, which hid it. The patch gives each added preset a
+unique name (`Step13`, `Step18-<n>`) when its scenario supports names, via a small `unique_preset_name()`
+helper; nothing else is touched. Still unfixed on master.
 
 ### `TC_TSTAT_Utils.py`
 

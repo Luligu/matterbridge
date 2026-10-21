@@ -1027,6 +1027,15 @@ tests:
           value: Current_OperatingMode
 
     - label:
+          "Step 24e: TH writes OperatingMode attribute back to
+          Current_OperatingMode"
+      PICS: DRLK.S.M.OperatingModeAttributeWritable && DRLK.S.A0025
+      command: "writeAttribute"
+      attribute: "OperatingMode"
+      arguments:
+          value: Current_OperatingMode
+
+    - label:
           "Step 25a: TH reads Default ConfigurationRegister attribute from DUT"
       PICS: DRLK.S.A0027
       command: "readAttribute"
