@@ -115,6 +115,13 @@ const smokeCoAlarmHardwareFaultAlertTrigger = 0xffffffff00000093n;
 const smokeCoAlarmHardwareFaultAlertClearTrigger = 0xffffffff000000a3n;
 const smokeCoAlarmEndOfServiceAlertTrigger = 0xffffffff0000009an;
 const smokeCoAlarmEndOfServiceAlertClearTrigger = 0xffffffff000000aan;
+// The Matter 1.6.1 TC_SMOKECO_2_x.py tests send every trigger in the 0x005c (SmokeCoAlarm cluster id) range
+// (src/python_testing/support_modules/smokeco_support.py).
+const smokeCoAlarmYamlCriticalBatteryAlertTrigger = 0x005c00000000009en;
+const smokeCoAlarmYamlHardwareFaultAlertTrigger = 0x005c000000000093n;
+const smokeCoAlarmYamlHardwareFaultAlertClearTrigger = 0x005c0000000000a3n;
+const smokeCoAlarmYamlEndOfServiceAlertTrigger = 0x005c00000000009an;
+const smokeCoAlarmYamlEndOfServiceAlertClearTrigger = 0x005c0000000000aan;
 const smokeCoAlarmDeviceMutedTrigger = 0x005c00000000009bn;
 const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 // TC_EPM_2_2/TC_EEM_2_2/TC_EEM_2_3's send_test_event_trigger_start_fake_1kw_load_2s()/
@@ -502,6 +509,11 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertClearTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlCriticalBatteryAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertClearTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmDeviceMutedTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmDeviceMutedClearTrigger)
   ) {
@@ -808,6 +820,7 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmCriticalBatteryAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlCriticalBatteryAlertTrigger):
       await endpoint.setCluster(
         SmokeCoAlarm,
         { batteryAlert: SmokeCoAlarm.AlarmState.Critical, expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Critical }) },
@@ -825,18 +838,22 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { hardwareFaultAlert: true, expressedState: SmokeCoAlarm.ExpressedState.HardwareFault }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'hardwareFault', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertClearTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { hardwareFaultAlert: false, expressedState: SmokeCoAlarm.ExpressedState.Normal }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { endOfServiceAlert: SmokeCoAlarm.EndOfService.Expired, expressedState: SmokeCoAlarm.ExpressedState.EndOfService }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'endOfService', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertClearTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal, expressedState: SmokeCoAlarm.ExpressedState.Normal }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
@@ -1610,6 +1627,12 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       return;
     case 'SimulateLongPress':
       await simulateChipTestSwitchLongPress(matterbridge, endpoint, endpointId, command);
+      return;
+    case 'LongPress':
+      // smokeco_support.py's start_device_self_test(): with PICS_SDK_CI_ONLY the manual self-test of
+      // TC_SMOKECO_2_4 is started by a LongPress of the test button, which runs the same self-test procedure as SelfTestRequest.
+      await endpoint.invokeBehaviorCommand(SmokeCoAlarm, 'selfTestRequest');
+      matterbridge.log.info(`CHIP test app pipe started the SmokeCoAlarm self-test on endpoint ${endpointId}`);
       return;
     case 'SimulateLatchPosition': {
       // TC_SWTCH.py's _send_latching_switch_named_pipe_command(): move a latching switch to a new position.

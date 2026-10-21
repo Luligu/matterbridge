@@ -59,6 +59,7 @@
  *
  * Usage:
  *   node scripts/run-matterbridge-chip-tests.mjs --start          Create and start the chip-test container.
+ *   node scripts/run-matterbridge-chip-tests.mjs --start --local  Create and start the chip-test container from the local matterbridge:chip-test image (no pull).
  *   node scripts/run-matterbridge-chip-tests.mjs --stop           Stop the chip-test container.
  *   node scripts/run-matterbridge-chip-tests.mjs                  Run the tests listed in chipTests.json inside the running container.
  *   node scripts/run-matterbridge-chip-tests.mjs --test NAME       Run only the tests whose "name" or "test" property includes NAME (case-insensitive).
@@ -120,11 +121,13 @@ import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:f
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const scriptVersion = '1.0.0';
+const scriptVersion = '1.1.0';
 
 const root = process.cwd();
 const containerName = 'chip-test';
 const image = 'luligu/matterbridge:chip-test';
+// Image built locally by `npm run docker:build:local:chip-test`, used by `--start --local` (never pulled).
+const localImage = 'matterbridge:chip-test';
 const testsFile = resolve(root, 'chipTests.json');
 const logFile = resolve(root, 'chipTests.log');
 const summaryLogFile = resolve(root, 'chipTestsSummary.log');
@@ -215,6 +218,7 @@ chipTests.json.
 
 Usage:
   node scripts/run-matterbridge-chip-tests.mjs --start          Create and start the chip-test container.
+  node scripts/run-matterbridge-chip-tests.mjs --start --local  Create and start the chip-test container from the local matterbridge:chip-test image (no pull).
   node scripts/run-matterbridge-chip-tests.mjs --stop           Stop the chip-test container.
   node scripts/run-matterbridge-chip-tests.mjs                  Run the tests listed in chipTests.json inside the running container.
   node scripts/run-matterbridge-chip-tests.mjs --test NAME      Run only the tests whose "name" or "test" property includes NAME (case-insensitive).
@@ -222,12 +226,18 @@ Usage:
   node scripts/run-matterbridge-chip-tests.mjs --version        Show the script version.`);
 }
 
-function start() {
+function start(local = false) {
   console.log('Removing any existing chip-test container...');
   run('docker', ['rm', containerName, '-f']);
 
-  console.log(`Pulling ${image}...`);
-  runOrFail('docker', ['pull', image]);
+  // A locally built image exists only in the local docker image store, so it is used as is, never pulled.
+  const startImage = local ? localImage : image;
+  if (local) {
+    console.log(`Using the local ${startImage} image...`);
+  } else {
+    console.log(`Pulling ${startImage}...`);
+    runOrFail('docker', ['pull', startImage]);
+  }
 
   // The container needs an IPv6 link-local address (e.g. chip-tool's own traffic to fe80::.../UDP:5540), so
   // a plain IPv4-only network breaks it — create it with --ipv6 if a fresh host doesn't already have it.
@@ -259,7 +269,7 @@ function start() {
     // previously documented.
     '-e',
     'MATTERBRIDGE_DEMO_DEVICES=1',
-    image,
+    startImage,
   ]);
 
   waitForContainerReady(startedAt);
@@ -672,7 +682,7 @@ function main() {
   loadChipTestsFile();
 
   if (args.includes('--start')) {
-    start();
+    start(args.includes('--local'));
     return;
   }
 

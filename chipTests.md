@@ -12,6 +12,13 @@ from the `dev` branch, started with `--novirtual` — nothing local is installed
 node scripts/run-matterbridge-chip-tests.mjs --start
 ```
 
+To test an image built locally with `npm run docker:build:local:chip-test` (e.g. a new CHIP branch), start
+the local `matterbridge:chip-test` image instead; it is used as is, without pulling:
+
+```shell
+node scripts/run-matterbridge-chip-tests.mjs --start --local
+```
+
 ## Run all configured tests inside the container
 
 ```shell
@@ -720,8 +727,9 @@ spec-compliant `Closure` tag (`namespaceID=0x44`) is rejected. See "Known Issues
 on master ([PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481), merged) by checking
 `self.xml_namespaces` instead of a literal list; the patch now carries that same data-driven check, but
 master's file cannot be copied verbatim because it relies on `BasicCompositionTests.xml_namespaces`, which
-`v1.6-branch` does not populate — the patch builds the namespace map itself and defers to the attribute as
-soon as a future image provides it.
+`v1.6.1-branch` does not populate — the patch builds the namespace map itself and defers to the attribute as
+soon as a future image provides it. The patch is based on the `v1.6.1-branch` upstream file (including its
+`disable_wildcard_subscription = True`), with only this namespace check changed.
 
 ### `TC_FAN_3_1.py`
 
@@ -755,7 +763,9 @@ the relative Matter 1.6 setpoint-limit checks.
 
 Adds the triggering command's PICS guard to each subsequent state read, so an unsupported `On`/`Toggle`
 command on an OffOnly endpoint (Cooktop, endpoint 1308) no longer asserts the state change that skipped
-command would have caused.
+command would have caused. Still unfixed on `v1.6.1-branch` and master: the unpatched file fails at Step 3b on
+the three OffOnly endpoints (1308, 13081, 13082). The patch is based on the `v1.6.1-branch` upstream file, with
+only the PICS guards changed.
 
 ### `Test_TC_OO_2_3.yaml`
 
@@ -863,7 +873,12 @@ local corrections fix genuine bugs still present in #42326's rewrite as of this 
 Step 9b writes `absMinCoolSetpointLimit - 10` instead of the wrong `minCoolSetpointLimit - 10` (matching its
 own documented intent), and Step 9c's `hasAutoModeFeature` branch computes a real deadband-aware target
 instead of duplicating its `else` branch. Not yet backported to a release branch or baked into the published
-`chip-test` image.
+`chip-test` image. Still required on the `v1.6.1-branch` image: the upstream file there keeps the wrong Step 6b
+expectation and fails on every AutoMode endpoint (901, Presets, Schedules, Suggestions), while this patch
+passes all six entries. Master has since applied the same Step 9b fix upstream; Step 9c is still a local
+correction. Master's current file cannot replace this one, because it was rewritten again on a new
+`ThermostatBaseTest`/`MatterTestCommissionedDevice` base that the `v1.6.1-branch` `matter.testing` package does
+not provide.
 
 ### `TC_TSTAT_Utils.py`
 
@@ -913,6 +928,30 @@ particular `originatingEndpointID=1` in the command payload is deliberately left
 TH's own `WebRtcTransportRequestor` endpoint, not the DUT's, and is correctly 1.
 
 Not yet reported upstream.
+
+### `TC_SMOKECO_2_1.py`
+
+`v1.6.1-branch` removed the `Test_TC_SMOKECO_2_x` YAML tests in favor of these Python tests, which have two
+bugs (still present on master). Steps 3 and 4 call `self.skip_step(n)` after `self.step(n)` when the
+SmokeAlarm/CoAlarm feature is missing, so the Smoke-only (7091) and CO-only (7092) endpoints fail with
+"Unexpected test step". Steps 12 and 13 read `ContaminationState` and `SmokeSensitivityLevel` whenever the
+SmokeAlarm feature is present, but both attributes are optional under it (`[SMOKE]`, Matter 1.6.1 Application
+Cluster § 2.11.6) and Matterbridge does not implement them. The patch drops the misplaced `skip_step()` calls,
+guards steps 12 and 13 on the attribute (`attribute_guard`, like steps 6, 10 and 11), and takes master's
+`SensitivityEnum` fix for step 13.
+
+Not yet reported upstream.
+
+### `TC_SMOKECO_2_5.py`
+
+Same optional-attribute bug as `TC_SMOKECO_2_1.py`: steps 23 and 32 subscribe to `ContaminationState` and
+`SmokeSensitivityLevel` whenever the SmokeAlarm feature is present. The patch guards both on the attribute.
+
+Not yet reported upstream.
+
+The SmokeCOAlarm `.pics` files set `PICS_SDK_CI_ONLY=1` so that the self-test of `TC_SMOKECO_2_2.py`,
+`TC_SMOKECO_2_3.py` and `TC_SMOKECO_2_4.py` is started through the app-pipe `LongPress` command (handled in
+`chipTests.ts` by running `SelfTestRequest`) instead of a manual operator step; those entries pass `--app-pipe`.
 
 # Known Issues
 

@@ -35,13 +35,17 @@
 #   run2: # tests PASE connection using manual code (12.1 only)
 #     app: ${CHIP_LOCK_APP}
 #     app-args: --discriminator 1234 --KVS kvs1
-#     script-args: --storage-path admin_storage.json --manual-code 10054912339
+#     script-args: >
+#       --storage-path admin_storage.json
+#       --manual-code 10054912339
 #     factory-reset: true
 #     quiet: true
 #   run3: # tests PASE connection using QR code (12.1 only)
 #     app: ${CHIP_LOCK_APP}
 #     app-args: --discriminator 1234 --KVS kvs1
-#     script-args: --storage-path admin_storage.json --qr-code MT:-24J0Q1212-10648G00
+#     script-args: >
+#       --storage-path admin_storage.json
+#       --qr-code MT:-24J0Q1212-10648G00
 #     factory-reset: true
 #     quiet: true
 #   run4: # tests PASE connection using discriminator and passcode (12.1 only)
@@ -84,7 +88,8 @@
 #   run8: # Tests reusing storage from run7 (i.e. factory-reset=false)
 #     app: ${CHIP_LOCK_APP}
 #     app-args: --discriminator 1234 --KVS kvs1
-#     script-args: --storage-path admin_storage.json
+#     script-args: >
+#       --storage-path admin_storage.json
 #     factory-reset: false
 #     quiet: true
 #   run9: # Test using the generated attribute wildcard file from previous run
@@ -178,6 +183,38 @@
 #       --discriminator 1234
 #       --KVS kvs1
 #       --device on-off-light
+#       --groupcast
+#     script-args: >
+#       --storage-path admin_storage.json
+#       --manual-code 10054912339
+#       --PICS src/app/tests/suites/certification/ci-pics-values
+#       --trace-to json:${TRACE_TEST_JSON}.json
+#       --trace-to perfetto:${TRACE_TEST_PERFETTO}.perfetto
+#     factory-reset: true
+#     quiet: true
+#   run18: # Tests against all-devices-app - wildcard (all leaf devices)
+#     app: ${ALL_DEVICES_APP}
+#     app-args: >
+#       --discriminator 1234
+#       --KVS kvs1
+#       --device "*"
+#       --groupcast
+#     script-args: >
+#       --storage-path admin_storage.json
+#       --manual-code 10054912339
+#       --PICS src/app/tests/suites/certification/ci-pics-values
+#       --trace-to json:${TRACE_TEST_JSON}.json
+#       --trace-to perfetto:${TRACE_TEST_PERFETTO}.perfetto
+#     factory-reset: true
+#     quiet: true
+#   run19: # Tests against all-devices-app - bridged wildcard (all leaf devices bridged)
+#     app: ${ALL_DEVICES_APP}
+#     app-args: >
+#       --discriminator 1234
+#       --KVS kvs1
+#       --device aggregator:1
+#       --device "*,parent=1,bridged"
+#       --groupcast
 #     script-args: >
 #       --storage-path admin_storage.json
 #       --manual-code 10054912339
@@ -291,6 +328,9 @@ def check_no_duplicates(obj: Any) -> None:
 
 
 class TC_DeviceBasicComposition(BasicCompositionTests):
+    # Large wildcard priming + ACL churn are disabled for composition / multi-app CI matrix.
+    disable_wildcard_subscription = True
+
     @async_test_body
     async def setup_class(self):
         super().setup_class()
@@ -1073,7 +1113,7 @@ class TC_DeviceBasicComposition(BasicCompositionTests):
         # model's namespaces/*.xml, not a hand-coded whitelist, so namespaces added by a later spec revision
         # are picked up automatically. This mirrors the upstream master fix (PR #73481); it is kept as a patch
         # only because master reads self.xml_namespaces, which BasicCompositionTests does not populate in the
-        # v1.6-branch SDK this image is built from. The getattr below uses it as soon as it does exist.
+        # v1.6.1-branch SDK this image is built from. The getattr below uses it as soon as it does exist.
         xml_namespaces = getattr(self, 'xml_namespaces', None)
         if xml_namespaces is None:
             xml_namespaces, _ = build_xml_namespaces(self._get_dm())

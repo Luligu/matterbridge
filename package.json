@@ -491,6 +491,7 @@
     "docker:prune:buildx": "docker buildx prune --all -f",
     "docker:prune:system": "docker system prune --all -f",
     "chip:start": "node scripts/run-matterbridge-chip-tests.mjs --start",
+    "chip:start:local": "node scripts/run-matterbridge-chip-tests.mjs --start --local",
     "chip:test": "node scripts/run-matterbridge-chip-tests.mjs",
     "chip:test:generic": "node scripts/run-matterbridge-chip-tests.mjs --test Generic",
     "chip:test:basic-info": "node scripts/run-matterbridge-chip-tests.mjs --test TC_BINFO_",
