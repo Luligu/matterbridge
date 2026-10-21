@@ -174,6 +174,7 @@
 <li>[frontend]: Add the <code>Auto</code> frontend theme, which follows the OS or browser color scheme (dark or light). The default stays <code>Dark</code>.</li>
 <li>[test-utils]: Add <code>addBridgedDevice()</code> to the test-utils helpers: it adds the Bridged Node device type and, when missing, the <code>BridgedDeviceBasicInformationServer</code> to a test device, like <code>registerDevice()</code> does in bridge mode.</li>
 <li>[matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the <code>subscribeAttribute</code> listeners are lost. Closes <a href="https://github.com/Luligu/matterbridge/issues/657">#657</a>. Thanks Calvin Che.</li>
+<li>[chip]: Add <code>--start --local</code> (<code>npm run chip:start:local</code>) to <code>run-matterbridge-chip-tests.mjs</code> to run the locally built <code>matterbridge:chip-test</code> image without pulling.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -200,10 +201,14 @@
 <li>[frontend]: Remove duplicated devDependencies (<code>@types/node</code>, <code>@vitest/coverage-v8</code>, <code>vitest</code>, <code>typescript</code>, <code>oxfmt</code>, <code>oxlint</code> and <code>oxlint-tsgolint</code>) and use the root tooling; move <code>jsdom</code> to the root devDependencies with <code>vitest</code>.</li>
 <li>[docker]: Add the <code>matterbridge-camera</code> and <code>matterbridge-webcam</code> plugins (dev branch) to the <code>dev</code> and <code>bundev</code> images.</li>
 <li>[docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.</li>
+<li>[chip]: Build the <code>chip-test</code> docker image on the CHIP <code>v1.6.1-branch</code> and rebase the <code>TC_DeviceBasicComposition.py</code> and <code>Test_TC_OO_2_2.yaml</code> patches on it.</li>
+<li>[chip]: Run the SmokeCOAlarm conformance tests with the <code>TC_SMOKECO_2_x.py</code> Python tests, since <code>v1.6.1-branch</code> removed the YAML ones, on all three SmokeCOAlarm endpoints (709, 7091 and 7092).</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.</li>
+<li>[chip]: Map the SmokeCOAlarm critical battery, hardware fault and end of service test event triggers sent by the Python tests, and start the self-test from the app-pipe <code>LongPress</code> command.</li>
+<li>[chip]: Patch <code>TC_SMOKECO_2_1.py</code> and <code>TC_SMOKECO_2_5.py</code> to guard the optional <code>ContaminationState</code> and <code>SmokeSensitivityLevel</code> attributes and fix misplaced <code>skip_step</code> calls.</li>
 <li>[camera]: Remove the duplicate BasicInformation setup in <code>Camera</code> that briefly named it <code>Matterbridge Chime</code>.</li>
 <li>[camera]: Fix stale JSDoc in <code>CameraOptions</code>, <code>Camera</code> and <code>SnapshotCamera</code> describing the implemented features.</li>
 <li>[camera]: Remove the unused static <code>WeriftWebRtcSession.closeAll()</code>, which would close the sessions of every plugin.</li>
