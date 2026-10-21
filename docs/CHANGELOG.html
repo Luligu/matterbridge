@@ -203,12 +203,18 @@
 <li>[docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.</li>
 <li>[chip]: Build the <code>chip-test</code> docker image on the CHIP <code>v1.6.1-branch</code> and rebase the <code>TC_DeviceBasicComposition.py</code> and <code>Test_TC_OO_2_2.yaml</code> patches on it.</li>
 <li>[chip]: Run the SmokeCOAlarm conformance tests with the <code>TC_SMOKECO_2_x.py</code> Python tests, since <code>v1.6.1-branch</code> removed the YAML ones, on all three SmokeCOAlarm endpoints (709, 7091 and 7092).</li>
+<li>[chip]: Show the endpoint and the test run duration in each result line of the CHIP test summary log.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.</li>
 <li>[chip]: Map the SmokeCOAlarm critical battery, hardware fault and end of service test event triggers sent by the Python tests, and start the self-test from the app-pipe <code>LongPress</code> command.</li>
 <li>[chip]: Patch <code>TC_SMOKECO_2_1.py</code> and <code>TC_SMOKECO_2_5.py</code> to guard the optional <code>ContaminationState</code> and <code>SmokeSensitivityLevel</code> attributes and fix misplaced <code>skip_step</code> calls.</li>
+<li>[chip]: Patch <code>Test_TC_DRLK_2_1.yaml</code> to restore <code>OperatingMode</code> after Step 24c, so <code>NoRemoteLockUnlock</code> no longer fails the following DoorLock tests with matter.js 0.18.</li>
+<li>[chip]: Patch <code>TC_TSTAT_4_2.py</code> to give the presets added by Steps 13 and 18 a unique name, as Matter 1.6.1 § 4.3.10.23.3 requires.</li>
+<li>[chip]: Run <code>TC_FAN_3_1.py</code> with <code>--no-wildcard-subscription</code>, so the <code>v1.6.1-branch</code> subscription check no longer times it out.</li>
+<li>[chip]: Poll the CHIP test app pipe every 10 ms instead of 50 ms, so <code>TC_RVCOPSTATE_2_3.py</code> no longer reads the state before the <code>Reset</code> command is applied.</li>
+<li>[camera]: The PTZ move commands set <code>MovementState</code> to Moving, respond, and complete on a short timer (Idle and the new <code>MPTZPosition</code>); a move received while moving fails with BUSY (Matter 1.6.1 § 11.3.7.1.4).</li>
 <li>[camera]: Remove the duplicate BasicInformation setup in <code>Camera</code> that briefly named it <code>Matterbridge Chime</code>.</li>
 <li>[camera]: Fix stale JSDoc in <code>CameraOptions</code>, <code>Camera</code> and <code>SnapshotCamera</code> describing the implemented features.</li>
 <li>[camera]: Remove the unused static <code>WeriftWebRtcSession.closeAll()</code>, which would close the sessions of every plugin.</li>
