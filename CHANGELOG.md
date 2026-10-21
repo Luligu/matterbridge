@@ -52,6 +52,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
 - [test-utils]: Add `addBridgedDevice()` to the test-utils helpers: it adds the Bridged Node device type and, when missing, the `BridgedDeviceBasicInformationServer` to a test device, like `registerDevice()` does in bridge mode.
 - [matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the `subscribeAttribute` listeners are lost. Closes [#657](https://github.com/Luligu/matterbridge/issues/657). Thanks Calvin Che.
+- [chip]: Add `--start --local` (`npm run chip:start:local`) to `run-matterbridge-chip-tests.mjs` to run the locally built `matterbridge:chip-test` image without pulling.
 
 ### Changed
 
@@ -78,10 +79,14 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
 - [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
+- [chip]: Build the `chip-test` docker image on the CHIP `v1.6.1-branch` and rebase the `TC_DeviceBasicComposition.py` and `Test_TC_OO_2_2.yaml` patches on it.
+- [chip]: Run the SmokeCOAlarm conformance tests with the `TC_SMOKECO_2_x.py` Python tests, since `v1.6.1-branch` removed the YAML ones, on all three SmokeCOAlarm endpoints (709, 7091 and 7092).
 
 ### Fixed
 
 - [frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.
+- [chip]: Map the SmokeCOAlarm critical battery, hardware fault and end of service test event triggers sent by the Python tests, and start the self-test from the app-pipe `LongPress` command.
+- [chip]: Patch `TC_SMOKECO_2_1.py` and `TC_SMOKECO_2_5.py` to guard the optional `ContaminationState` and `SmokeSensitivityLevel` attributes and fix misplaced `skip_step` calls.
 - [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
 - [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
 - [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
