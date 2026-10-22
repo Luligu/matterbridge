@@ -30,3 +30,4 @@ chip/
 heap_snapshots
 heap_profiles
 TODO.md
+!* chipTestsSummary.log

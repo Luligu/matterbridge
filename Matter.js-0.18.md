@@ -1,6 +1,6 @@
 # Matter.js 0.18.x
 
-This file tracks the matter.js 0.18.x deltas compared with matter.js 0.17.9 that matter for Matterbridge, following [the 0.17 migration notes](Matter.js-0.17.md).
+This file tracks the matter.js 0.18.0 deltas compared with matter.js 0.17.9 that matter for Matterbridge.
 
 Released version: `0.18.0` (published on npm on October 20, 2026), used by Matterbridge on the `dev` branch.
 
@@ -8,21 +8,15 @@ Audited dev version: `0.18.0-alpha.0-20261015-9c1725759` (npm `dev` verified on 
 
 ## Validation results
 
-Verified on October 15, 2026, on branch `matter018` with matter.js `0.18.0-alpha.0-20261015-9c1725759`. Root results below are from the rerun after removing the warning-mode workarounds and updating the test fixtures and snapshots; frontend results are from the unchanged frontend's earlier run.
+Verified on October 21, 2026, on branch `dev` with matter.js `0.18.0`.
 
-| Validation                             | Result                              |
-| -------------------------------------- | ----------------------------------- |
-| Lint, format, type-check               | Passed - root and frontend          |
-| Full matterbridge Vitest with coverage | 3,797 tests passed across 174 files |
-| Full frontend Vitest with coverage     | 608 tests passed across 41 files    |
-| Full Bun suite with coverage           | 1,958 tests passed across 113 files |
-
-Strict-mode follow-up:
-
-- Updated six device attribute snapshots in each runner with the Bridged Node attributes added by the strict-mode test helpers.
-- Updated fourteen isolated Vitest behavior fixtures to use Bridged Node rather than advertise incomplete Camera or Intercom device types, preserving their negative-path assertions.
-- Replaced the unsupported Watermark/OnScreenDisplay feature test with a production-camera test that verifies both features are disabled, their stream fields are unset and their modify commands are not advertised. The four conditional default-stream initialization branches are commented out until those features and commands are implemented; allocation-command handlers are unchanged.
-- Added a supported-camera test for default snapshot allocation with unsorted resolution capabilities.
+| Validation                             | Result                                             |
+| -------------------------------------- | -------------------------------------------------- |
+| Lint, format, type-check               | Passed - root and frontend                         |
+| Full matterbridge Vitest with coverage | 3,797 tests passed across 174 files in strict mode |
+| Full frontend Vitest with coverage     | 608 tests passed across 41 files                   |
+| Full Bun suite with coverage           | 1,958 tests passed across 113 files in strict mode |
+| Full chip-test suite                   | 524 conformance tests passeds                      |
 
 ## Renamed commodity fields
 
@@ -99,7 +93,7 @@ See the upstream [Device Type Validation documentation](https://github.com/matte
 
 ## Resolved upstream validation issues
 
-All three points reported in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the audited dev version and in the 0.18.0 release.
+All three points reported in [matter-js/matter.js#4744](https://github.com/matter-js/matter.js/issues/4744) were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the 0.18.0 release.
 
 | Issue point                                        | Resolution                                                                                                                                                                                                                            | Upstream PR                                                                  |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |

@@ -130,11 +130,11 @@
 </head>
 <body>
 <h1 id="matterjs-018x">Matter.js 0.18.x</h1>
-<p>This file tracks the matter.js 0.18.x deltas compared with matter.js 0.17.9 that matter for Matterbridge, following <a href="Matter.js-0.17.html">the 0.17 migration notes</a>.</p>
+<p>This file tracks the matter.js 0.18.0 deltas compared with matter.js 0.17.9 that matter for Matterbridge.</p>
 <p>Released version: <code>0.18.0</code> (published on npm on October 20, 2026), used by Matterbridge on the <code>dev</code> branch.</p>
 <p>Audited dev version: <code>0.18.0-alpha.0-20261015-9c1725759</code> (npm <code>dev</code> verified on October 15, 2026). The findings were first audited on <code>0.18.0-alpha.0-20261008-6066b7499</code> and rechecked on <code>0.18.0-alpha.0-20261013-2e5a97ca3</code>, with the full test suite giving the same results on both historical snapshots. The three upstream validation issues reported on that October 13 snapshot are now resolved as recorded below, and the fixes ship in the 0.18.0 release. The audit sections below record the work done on these dev snapshots before the release. Add newly discovered drifts here as the migration progresses.</p>
 <h2 id="validation-results">Validation results</h2>
-<p>Verified on October 15, 2026, on branch <code>matter018</code> with matter.js <code>0.18.0-alpha.0-20261015-9c1725759</code>. Root results below are from the rerun after removing the warning-mode workarounds and updating the test fixtures and snapshots; frontend results are from the unchanged frontend&#39;s earlier run.</p>
+<p>Verified on October 21, 2026, on branch <code>dev</code> with matter.js <code>0.18.0</code>.</p>
 <table>
 <thead>
 <tr>
@@ -148,7 +148,7 @@
 </tr>
 <tr>
 <td>Full matterbridge Vitest with coverage</td>
-<td>3,797 tests passed across 174 files</td>
+<td>3,797 tests passed across 174 files in strict mode</td>
 </tr>
 <tr>
 <td>Full frontend Vitest with coverage</td>
@@ -156,16 +156,13 @@
 </tr>
 <tr>
 <td>Full Bun suite with coverage</td>
-<td>1,958 tests passed across 113 files</td>
+<td>1,958 tests passed across 113 files in strict mode</td>
+</tr>
+<tr>
+<td>Full chip-test suite</td>
+<td>524 conformance tests passeds</td>
 </tr>
 </tbody></table>
-<p>Strict-mode follow-up:</p>
-<ul>
-<li>Updated six device attribute snapshots in each runner with the Bridged Node attributes added by the strict-mode test helpers.</li>
-<li>Updated fourteen isolated Vitest behavior fixtures to use Bridged Node rather than advertise incomplete Camera or Intercom device types, preserving their negative-path assertions.</li>
-<li>Replaced the unsupported Watermark/OnScreenDisplay feature test with a production-camera test that verifies both features are disabled, their stream fields are unset and their modify commands are not advertised. The four conditional default-stream initialization branches are commented out until those features and commands are implemented; allocation-command handlers are unchanged.</li>
-<li>Added a supported-camera test for default snapshot allocation with unsorted resolution capabilities.</li>
-</ul>
 <h2 id="renamed-commodity-fields">Renamed commodity fields</h2>
 <p>The generated CommodityMetering and CommodityTariff types now use <code>Ids</code> instead of <code>IDs</code> in property names.</p>
 <table>
@@ -261,7 +258,7 @@
 <p>Migration implication: endpoint definitions and test fixtures must satisfy their advertised device types, and mandatory command stubs can now prevent initialization. <code>strict</code> is not continuous enforcement of every runtime mutation.</p>
 <p>See the upstream <a href="https://github.com/matter-js/matter.js/blob/main/docs/DEVICE_TYPE_VALIDATION.html">Device Type Validation documentation</a> for the full rules and limitations.</p>
 <h2 id="resolved-upstream-validation-issues">Resolved upstream validation issues</h2>
-<p>All three points reported in <a href="https://github.com/matter-js/matter.js/issues/4744">matter-js/matter.js#4744</a> were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the audited dev version and in the 0.18.0 release.</p>
+<p>All three points reported in <a href="https://github.com/matter-js/matter.js/issues/4744">matter-js/matter.js#4744</a> were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the 0.18.0 release.</p>
 <table>
 <thead>
 <tr>
