@@ -30,10 +30,6 @@ The generated CommodityMetering and CommodityTariff types now use `Ids` instead 
 
 This affects metered quantities, tariff periods, days, day patterns, calendar periods, and the GetTariffComponent response. Fixtures, property access, and response expectations must all use the new names.
 
-- Source adapted: `packages/core/src/chipTests.ts` and `packages/core/src/devices/electricalUtilityMeter.ts`.
-- Test fixtures and response expectations adapted: `packages/core/vitest/devices/electricalUtilityMeter.test.ts` and `packages/core/buntest/devices/electricalUtilityMeter.test.ts` now use the same `Ids` names. The initial audit found six test type errors and six runtime failures, including failures cascading from endpoint initialization.
-- The overload error at `setCluster(CommodityMetering, ...)` was caused by the old nested `tariffComponentIDs` field, not by the cluster argument.
-
 ## Inherited device cluster requirements
 
 The audited snapshot includes the inherited Base Binding requirement in device definitions. Matterbridge now includes Binding in the affected Simple device definitions with mandatory application clients.

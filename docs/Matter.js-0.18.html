@@ -186,11 +186,6 @@
 </tr>
 </tbody></table>
 <p>This affects metered quantities, tariff periods, days, day patterns, calendar periods, and the GetTariffComponent response. Fixtures, property access, and response expectations must all use the new names.</p>
-<ul>
-<li>Source adapted: <code>packages/core/src/chipTests.ts</code> and <code>packages/core/src/devices/electricalUtilityMeter.ts</code>.</li>
-<li>Test fixtures and response expectations adapted: <code>packages/core/vitest/devices/electricalUtilityMeter.test.ts</code> and <code>packages/core/buntest/devices/electricalUtilityMeter.test.ts</code> now use the same <code>Ids</code> names. The initial audit found six test type errors and six runtime failures, including failures cascading from endpoint initialization.</li>
-<li>The overload error at <code>setCluster(CommodityMetering, ...)</code> was caused by the old nested <code>tariffComponentIDs</code> field, not by the cluster argument.</li>
-</ul>
 <h2 id="inherited-device-cluster-requirements">Inherited device cluster requirements</h2>
 <p>The audited snapshot includes the inherited Base Binding requirement in device definitions. Matterbridge now includes Binding in the affected Simple device definitions with mandatory application clients.</p>
 <ul>
