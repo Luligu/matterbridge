@@ -85,6 +85,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [test-utils]: Report strict endpoint registration violations, including nested causes, without serializing the Matter node graph in Vitest, Jest and Bun.
 - [frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.
 - [chip]: Map the SmokeCOAlarm critical battery, hardware fault and end of service test event triggers sent by the Python tests, and start the self-test from the app-pipe `LongPress` command.
 - [chip]: Patch `TC_SMOKECO_2_1.py` and `TC_SMOKECO_2_5.py` to guard the optional `ContaminationState` and `SmokeSensitivityLevel` attributes and fix misplaced `skip_step` calls.

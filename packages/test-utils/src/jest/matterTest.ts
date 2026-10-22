@@ -3,7 +3,7 @@
  * @description This file contains the Jest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -45,6 +45,7 @@ import { type BridgeMode, MATTER_STORAGE_DIR, type PlatformMatterbridge, type Re
 import { er, LogLevel, rs } from 'node-ansi-logger';
 
 // local modules
+import { errorCauseMessages } from '../errorMessages.js';
 import { flushAsync } from '../flushAsync.js';
 import { inspectError } from '../inspectError.js';
 import { getInterfaceName } from '../network.js';
@@ -278,7 +279,11 @@ export const addBridgedEndpoint = async (pluginName: string, device: Endpoint): 
     await aggregator.add(device);
     return Promise.resolve(true);
   } catch (error) {
-    return Promise.reject(error);
+    // Error serializers may traverse prototype getters, including the endpoint's entire node graph.
+    // Copy only messages; retaining the original error as a cause also exposes that graph.
+    const message = error instanceof Error ? error.message : String(error);
+    const registrationError = new Error([`Error registering device ${pluginName}.${device.maybeId}: ${message}`, ...errorCauseMessages(error)].join('\n'));
+    return Promise.reject(registrationError);
   }
 };
 
@@ -926,7 +931,9 @@ export async function addDevice(
     inspectError(log, `Error adding device ${device.maybeId}.${device.maybeNumber}`, error);
     // Only the messages: the matter.js validation errors (an AggregateError of violations) reference the endpoint and its node graph
     const message = error instanceof Error ? error.message : String(error);
-    const causes = error instanceof AggregateError ? error.errors.map((cause) => `\n  - ${cause instanceof Error ? cause.message : String(cause)}`).join('') : '';
+    const causes = errorCauseMessages(error)
+      .map((cause) => `\n${cause}`)
+      .join('');
     process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${message}${causes}${rs}\n`);
     return false;
   }
