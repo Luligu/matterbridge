@@ -225,7 +225,6 @@
 <li>[frontend]: Await the diagnostic log writes instead of a fixed 500 ms wait in <code>generateDiagnostic()</code>, so view and download of the diagnostic are faster and never read a partial file.</li>
 <li>[bun]: Update <code>buntest/wssTest.test.ts</code> and <code>README-BUN.html</code> for Bun 1.4.4: the <code>ws</code> client now honors top-level TLS options and <code>bun test --coverage</code> counts implicit constructors.</li>
 <li>[bun]: Fix the <code>Dockerfile.bundev</code> build: <code>bun pm pkg</code> has no <code>--workspaces</code>/<code>--include-workspace-root</code> flags (Bun 1.4.3 and earlier silently ignored unknown flags, Bun 1.4.4 rejects them), so strip <code>devDependencies</code> and <code>scripts</code> in the root and in each workspace.</li>
-<li>[thread]: Fix <code>dockerVersion</code> throwing in the response callback on a malformed redirect <code>Location</code> header: it now rejects (so <code>getDockerVersion</code> returns <code>undefined</code>); remove the unreachable <code>try</code>/<code>catch</code> around the redirect host check.</li>
 <li>[matterbridge]: Write the server node storage context values in <code>createServerNodeContext()</code> only when missing or changed (as in <code>MatterNode</code>), avoiding 17 disk writes per server node at every start.
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></li>
 </ul>

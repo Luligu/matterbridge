@@ -103,7 +103,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Await the diagnostic log writes instead of a fixed 500 ms wait in `generateDiagnostic()`, so view and download of the diagnostic are faster and never read a partial file.
 - [bun]: Update `buntest/wssTest.test.ts` and `README-BUN.md` for Bun 1.4.4: the `ws` client now honors top-level TLS options and `bun test --coverage` counts implicit constructors.
 - [bun]: Fix the `Dockerfile.bundev` build: `bun pm pkg` has no `--workspaces`/`--include-workspace-root` flags (Bun 1.4.3 and earlier silently ignored unknown flags, Bun 1.4.4 rejects them), so strip `devDependencies` and `scripts` in the root and in each workspace.
-- [thread]: Fix `dockerVersion` throwing in the response callback on a malformed redirect `Location` header: it now rejects (so `getDockerVersion` returns `undefined`); remove the unreachable `try`/`catch` around the redirect host check.
 - [matterbridge]: Write the server node storage context values in `createServerNodeContext()` only when missing or changed (as in `MatterNode`), avoiding 17 disk writes per server node at every start.
   <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
