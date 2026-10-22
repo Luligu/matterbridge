@@ -317,6 +317,28 @@ describe('Matterbridge ' + NAME, () => {
     }
   });
 
+  test('should enable the movement simulation when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    const chipTestDevice = createClosurePanelTestEndpoint('Closure Panel Chip Test Device', 'CPCHIPTEST', 'lift');
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    try {
+      expect(await addDevice(server, chipTestDevice, 0, 0, 0, 0)).toBeTruthy();
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+
+    // movementDuration is 2000 ms under MATTERBRIDGE_CHIP_TEST (0, i.e. immediate, otherwise).
+    vi.useFakeTimers();
+    try {
+      await chipTestDevice.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
+      expect(chipTestDevice.getAttribute(ClosureDimension.id, 'currentState')).toEqual({ position: 0 });
+
+      await advanceTimersByTimeAsync(2000);
+      expect(chipTestDevice.getAttribute(ClosureDimension.id, 'currentState')).toEqual({ position: 5000 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('reject closure dimension commands while associated closure control is in invalid state', async () => {
     const closure = new Closure('Closure Panel Parent Test Device', 'CPPARENT', { motionLatching: true, speed: true });
     const panel = closure.addPanel('Lift', [getSemtag(ClosurePanelTag.Lift)], 'lift', { motionLatching: true, speed: true });

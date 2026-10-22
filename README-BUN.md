@@ -133,7 +133,7 @@ built and served. See the TODO list below for the known limitations.
 
 ---
 
-## Known issue with release 1.4.0
+## Known issues (checked on Bun 1.4.4)
 
 - [ ] **Bun docker image cannot resolve the container user name.** In the official Bun images,
       both `node:os` and `bun:os` return `username: "unknown"` and `shell: "unknown"`
@@ -141,42 +141,61 @@ built and served. See the TODO list below for the known limitations.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
+      Still present in `oven/bun:1.4.4-slim`. Tracked upstream:
+      [oven-sh/bun#39859](https://github.com/oven-sh/bun/issues/39859) and
+      [oven-sh/bun#25171](https://github.com/oven-sh/bun/issues/25171) (both open).
 
-- [ ] **The `ws` package client ignores top-level TLS options under Bun.** Under Node, both the
-      global `WebSocket` and the `ws` package client accept the TLS material (`ca`, `cert`, `key`,
-      `rejectUnauthorized`) as top-level constructor options, the same way `https.request` does:
-      `new WebSocket(url, { ca, cert, key, rejectUnauthorized })`. Under Bun, the `ws` package
-      delegates to Bun's native `WebSocket` implementation, which only reads TLS options nested
-      under a `tls` field (`new WebSocket(url, { tls: { ca, cert, key, rejectUnauthorized } })`).
-      Passing the Node-style top-level options under Bun does not throw — it silently falls back
-      to Bun's default TLS settings, so the handshake fails against a self-signed/mTLS server with
-      a `close` event, code 1015 ("TLS handshake failed"), or the connection is torn down entirely
-      (code 1006) if the server also requires a client certificate. This bit `matterbridge-hass`'s
-      `HomeAssistant.connect()`, which opens an outbound `wss://` connection to Home Assistant with
-      a custom CA and/or `rejectUnauthorized: false` and previously passed those fields top-level
-      only.
-      Workaround (works identically on both Node and Bun, no runtime detection needed): pass the
-      TLS fields **both** top-level and nested under `tls` in the same options object — each
-      runtime reads the shape it understands and ignores the other.
-      Reproduced and asserted by [buntest/wssTest.test.ts](./buntest/wssTest.test.ts).
-      Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396) (closed,
-      "WebSocket npm fails TLS handshake with self signed certificates"), fixed by
-      [oven-sh/bun#44618](https://github.com/oven-sh/bun/pull/44618) (merged on 2026-10-10, after
-      Bun 1.4.3, not yet released) —
-      revisit dropping the workaround once that lands in a release.
+## Fixed in Bun 1.4.4
 
-- [ ] **`bun test --coverage` never counts implicit class constructors as called.** A derived class
-      without its own constructor gets the default `constructor(...args) { super(...args); }` from
-      the language, and it runs on every `new`. JavaScriptCore records that synthesized constructor
-      as a function that never executed, so `% Funcs` drops below 100% while `% Lines` stays at 100%.
-      In `packages/core/src/devices` this hits every file that defines a `Matterbridge…Server`
-      behavior class (for example `MatterbridgeLaundryDryerControlsServer` in
-      [laundryDryer.ts](./packages/core/src/devices/laundryDryer.ts)): vitest reports 100% functions
-      on the same tests. Present in Bun 1.4.2 and 1.4.3.
+- [x] **The `ws` package client ignored top-level TLS options under Bun (up to 1.4.3).** Under Node, the
+      `ws` package client accepts the TLS material (`ca`, `cert`, `key`, `rejectUnauthorized`) as
+      top-level constructor options, the same way `https.request` does:
+      `new WebSocket(url, { ca, cert, key, rejectUnauthorized })`. Up to Bun 1.4.3 the `ws` package
+      delegated to Bun's native `WebSocket` implementation, which only reads TLS options nested
+      under a `tls` field (`new WebSocket(url, { tls: { ca, cert, key, rejectUnauthorized } })`), and
+      silently fell back to Bun's default TLS settings, so the handshake failed against a
+      self-signed/mTLS server with a `close` event, code 1015 ("TLS handshake failed"). This bit
+      `matterbridge-hass`'s `HomeAssistant.connect()`, which opens an outbound `wss://` connection to
+      Home Assistant with a custom CA and/or `rejectUnauthorized: false`.
+      Since Bun 1.4.4 the `ws` package client honors the top-level shape like Node does. The global
+      `WebSocket` still reads TLS options only under `tls` (Node's global `WebSocket` ignores the
+      top-level shape too), and a failed handshake now closes with code 1006 instead of 1015.
+      The workaround (pass the TLS fields **both** top-level and nested under `tls` in the same
+      options object) still works on Node and on every Bun release; drop the `tls` copy only when
+      Bun 1.4.3 and older no longer need to be supported.
+      Asserted by [buntest/wssTest.test.ts](./buntest/wssTest.test.ts).
+      Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396), fixed by
+      [oven-sh/bun#44618](https://github.com/oven-sh/bun/pull/44618), released in Bun 1.4.4.
+
+- [x] **`bun test --coverage` never counted implicit class constructors as called (up to 1.4.3).** A
+      derived class without its own constructor gets the default
+      `constructor(...args) { super(...args); }` from the language, and it runs on every `new`.
+      JavaScriptCore recorded that synthesized constructor as a function that never executed, so
+      `% Funcs` dropped below 100% in every file of `packages/core/src/devices` that defines a
+      `Matterbridge…Server` behavior class (for example
+      [laundryDryer.ts](./packages/core/src/devices/laundryDryer.ts) at 83.33%). On Bun 1.4.4 all of
+      them report 100% functions.
       Do not add `constructor(...args) { super(...args); }` only to satisfy the report: it is
       useless code and the implicit constructor is the correct form.
-      Reported upstream: [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730) (closed,
-      "test --coverage: implicit constructor invocations never counted in %Funcs"), fixed by
-      [oven-sh/bun#45677](https://github.com/oven-sh/bun/pull/45677) (merged on 2026-10-20, not
-      yet released) —
-      recheck the device function coverage once that lands in a release.
+      Reported upstream: [oven-sh/bun#42730](https://github.com/oven-sh/bun/issues/42730), fixed by
+      [oven-sh/bun#45677](https://github.com/oven-sh/bun/pull/45677), released in Bun 1.4.4.
+
+## Coverage line reporting since Bun 1.4.4
+
+The same fix ([oven-sh/bun#45677](https://github.com/oven-sh/bun/pull/45677)) makes Bun report
+the exact lines that never ran. Up to Bun 1.4.3 the full `npm run test:bun:coverage` run reported
+100% lines; on Bun 1.4.4 it reports 99.88% lines and 99.97% functions (was 98.97%). There is no
+test regression: the newly uncovered lines are code Bun never runs, which Bun 1.4.3 counted as covered:
+
+- Node-only fallbacks, for example the `process.hrtime`/`delay` branches in
+  [runtimeBun.ts](./packages/utils/src/runtimeBun.ts) and the `global.gc` branch in
+  [tracker.ts](./packages/utils/src/tracker.ts).
+- Blocks excluded with `v8 ignore` comments, which Bun does not honor (it has no line-level
+  ignore), for example the `MATTERBRIDGE_CHIP_TEST` branches in
+  [closure.ts](./packages/core/src/devices/closure.ts) and
+  [matterNode.ts](./packages/core/src/matterNode.ts).
+- `catch` blocks no Bun test triggers, for example in
+  [matterNode.ts](./packages/core/src/matterNode.ts).
+
+`coverageThreshold` is not enabled in [bunfig.toml](./bunfig.toml), so the lower line figure does
+not fail the run.

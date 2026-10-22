@@ -13,29 +13,25 @@
 // signed by the same mock CA, to pin down exactly how each one needs its TLS options populated
 // under Bun.
 //
-// KNOWN DIFFERENCE — Bun WebSocket TLS options vs Node
-// -----------------------------------------------------
-// Under Node, both the global `WebSocket` and the `ws` package client accept the TLS material
-// (`ca`, `cert`, `key`, `rejectUnauthorized`) as top-level constructor options, the same way
-// `https.request` does:
+// Bun WebSocket TLS options vs Node
+// ---------------------------------
+// The `ws` package client accepts the TLS material (`ca`, `cert`, `key`, `rejectUnauthorized`)
+// as top-level constructor options, the same way `https.request` does:
 //   new WebSocket(url, { ca, cert, key, rejectUnauthorized })
-// Under Bun, neither client honors that shape. The `ws` package delegates to Bun's native
-// WebSocket implementation when running on Bun, so importing `ws` does NOT get you Node's
-// behavior back — it inherits Bun's requirement that the TLS material be nested under a `tls`
-// option instead:
+// Bun's native WebSocket reads the TLS material only when nested under a `tls` option:
 //   new WebSocket(url, { tls: { ca, cert, key, rejectUnauthorized } })
-// Passing the Node-style top-level options under Bun does not throw and does not error out
-// synchronously — it silently falls back to Bun's default TLS settings, so the handshake fails
-// against a self-signed/mTLS server and the failure surfaces later, asynchronously, as a
-// `close` event with code 1015 (TLS handshake failed). That's what makes this easy to miss by
-// hand and worth pinning down with a real test.
+// Up to Bun 1.4.3 the `ws` package delegated to Bun's native WebSocket and ignored the top-level
+// shape: the handshake failed against a self-signed/mTLS server with close code 1015
+// (oven-sh/bun#31396). Since Bun 1.4.4 (oven-sh/bun#44618) the `ws` package client honors the
+// top-level shape like Node does, while the global `WebSocket` still ignores it (as under Node)
+// and a failed handshake closes with code 1006.
 //
 // Cases audited below, each run once against the global `WebSocket` and once against the `ws`
-// package client to prove both behave identically under Bun:
+// package client to pin down where they behave the same under Bun and where they differ:
 //   1a. Global `WebSocket`,  TLS material nested under `tls`             -> handshake succeeds, server authorizes the client cert.
 //   1b. `ws` package client, TLS material nested under `tls`             -> same as (1a).
-//   2a. Global `WebSocket`,  TLS material passed top-level (Node shape)  -> handshake fails, close code 1015.
-//   2b. `ws` package client, TLS material passed top-level (Node shape)  -> same as (2a).
+//   2a. Global `WebSocket`,  TLS material passed top-level (Node shape)  -> options ignored, handshake fails, close code 1006.
+//   2b. `ws` package client, TLS material passed top-level (Node shape)  -> handshake succeeds, server authorizes the client cert (Bun >= 1.4.4).
 //   3a. Global `WebSocket`,  `tls.ca` set but no client cert/key         -> server rejects the missing mTLS cert, close code 1006.
 //   3b. `ws` package client, `tls.ca` set but no client cert/key         -> same as (3a).
 //   4a. Global `WebSocket`,  `tls.rejectUnauthorized: false`, no `ca`    -> client skips validating the server's cert but still presents
@@ -121,7 +117,7 @@ describe('bunWssTest', () => {
     await new Promise<void>((resolve) => client.on('close', () => resolve()));
   });
 
-  test('2a. global WebSocket rejects the handshake when the client TLS material is passed top-level instead of under `tls`', async () => {
+  test('2a. global WebSocket ignores the client TLS material passed top-level instead of under `tls`', async () => {
     lastAuthorized = undefined;
     const client = new WebSocket(`wss://localhost:${port}`, {
       // Intentionally the Node shape (top-level, not nested under `tls`) to prove Bun ignores it.
@@ -138,30 +134,31 @@ describe('bunWssTest', () => {
       });
     });
 
-    // Bun ignores the top-level TLS options and fails the TLS handshake against the self-signed CA.
-    expect(closeEvent.code).toBe(1015);
+    // The global WebSocket ignores the top-level TLS options (as under Node) and fails the TLS handshake against the self-signed CA.
+    expect(closeEvent.code).toBe(1006);
     expect(lastAuthorized).toBeUndefined();
   });
 
-  test('2b. `ws` package client rejects the handshake when the client TLS material is passed top-level instead of under `tls`', async () => {
+  test('2b. `ws` package client connects and authorizes the client when TLS material is passed top-level (Node style)', async () => {
     lastAuthorized = undefined;
     const client = new WsPackageWebSocket(`wss://localhost:${port}`, {
-      // Same Node shape as 2a: `ws`'s own types accept these top-level fields, but under Bun they are ignored.
+      // Same Node shape as 2a: since Bun 1.4.4 the `ws` package client honors these top-level fields.
       ca: caCert,
       cert: clientCert,
       key: clientKey,
       rejectUnauthorized: true,
     });
 
-    const closeEvent = await new Promise<{ code: number }>((resolve) => {
-      client.on('close', (code) => resolve({ code }));
-      client.on('error', () => {
-        // The handshake failure surfaces as both an error and a close event; wait for close to assert on the code.
-      });
+    await new Promise<void>((resolve, reject) => {
+      client.on('open', () => resolve());
+      client.on('error', (error) => reject(error));
     });
 
-    expect(closeEvent.code).toBe(1015);
-    expect(lastAuthorized).toBeUndefined();
+    expect(client.readyState).toBe(WsPackageWebSocket.OPEN);
+    expect(Boolean(lastAuthorized)).toBe(true);
+
+    client.close();
+    await new Promise<void>((resolve) => client.on('close', () => resolve()));
   });
 
   test('3a. global WebSocket rejects the handshake when the client presents no certificate to a server that requires mTLS', async () => {
