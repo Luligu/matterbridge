@@ -881,7 +881,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is offline`, timeout: 5, severity: 'warning' } });
       // The server node is reset to factory defaults and the subscribeAttribute listeners of the plugins are lost (#657)
       this.log.notice(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`);
-      this.server.request({ type: 'frontend_restartrequired', src: 'matter', dst: 'frontend', params: { snackbar: true, fixed: false } });
+      this.server.request({ type: 'frontend_restartrequired', src: 'matter', dst: 'frontend', params: { snackbar: true, fixed: true } });
       this.server.request({
         type: 'frontend_snackbarmessage',
         src: 'matter',

@@ -3234,7 +3234,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // The server node is reset to factory defaults and the subscribeAttribute listeners of the plugins are lost (#657)
       this.log.notice(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`);
       this.restartRequired = true;
-      this.frontend.wssSendRestartRequired();
+      this.frontend.wssSendRestartRequired(true, true);
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`, 10, 'warning');
     });
 
