@@ -161,9 +161,9 @@
 </ul>
 <h3 id="development-breaking-changes">Development Breaking changes</h3>
 <ul>
-<li>[matter]: The CommodityMetering and CommodityTariff fields use <code>Ids</code> instead of <code>IDs</code>: <code>dayEntryIds</code>, <code>dayPatternIds</code> and <code>tariffComponentIds</code>.</li>
-<li>[matter]: Open enums (OperationalState, RvcOperationalState, Mode Base <code>ModeTagStruct.value</code>, ...) are typed as <code>Enum | number</code>: comparisons with enum members are flagged by <code>typescript/no-unsafe-enum-comparison</code>; widen the member with <code>as number</code>.</li>
-<li>[matter]: A mandatory command implemented with <code>Behavior.unimplemented</code> fails the endpoint initialization in <code>strict</code> validation mode.</li>
+<li>[matter.js]: The CommodityMetering and CommodityTariff fields use <code>Ids</code> instead of <code>IDs</code>: <code>dayEntryIds</code>, <code>dayPatternIds</code> and <code>tariffComponentIds</code>.</li>
+<li>[matter.js]: Open enums (OperationalState, RvcOperationalState, Mode Base <code>ModeTagStruct.value</code>, ...) are typed as <code>Enum | number</code>: comparisons with enum members are flagged by <code>typescript/no-unsafe-enum-comparison</code>; widen the member with <code>as number</code>.</li>
+<li>[matter.js]: A mandatory command implemented with <code>Behavior.unimplemented</code> fails the endpoint initialization in <code>strict</code> validation mode.</li>
 <li>[test-utils]: <code>createTestEnvironment()</code> (vitest, jest and bun) sets the endpoint validation to <code>&#39;strict&#39;</code> by default, so non-conformant test devices are refused; pass <code>&#39;warn&#39;</code> or <code>&#39;off&#39;</code> to relax it. Use <code>addBridgedDevice()</code> for test devices that would be bridged.</li>
 <li>[test-utils]: Remove the <code>@matterbridge/jest-utils</code> and <code>@matterbridge/vitest-utils</code> packages and the <code>matterbridge/jest-utils</code>, <code>matterbridge/jest-utils/matter</code>, <code>matterbridge/vitest-utils</code> and <code>matterbridge/vitest-utils/matter</code> exports. Use <code>@matterbridge/test-utils</code> (<code>matterbridge/test-utils/jest</code>, <code>matterbridge/test-utils/vitest</code> and their <code>/setup</code> and <code>/matter</code> subpaths) instead.</li>
 </ul>

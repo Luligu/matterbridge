@@ -16,7 +16,7 @@ Verified on October 21, 2026, on branch `dev` with matter.js `0.18.0`.
 | Full matterbridge Vitest with coverage | 3,797 tests passed across 174 files in strict mode |
 | Full frontend Vitest with coverage     | 608 tests passed across 41 files                   |
 | Full Bun suite with coverage           | 1,958 tests passed across 113 files in strict mode |
-| Full chip-test suite                   | 524 conformance tests passeds                      |
+| Full chip-test suite                   | 524 conformance tests passed                       |
 
 ## Renamed commodity fields
 
