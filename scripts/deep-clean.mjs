@@ -1,9 +1,9 @@
 /**
  * deep-clean.mjs
- * Version: 2.0.0
+ * Version: 2.1.0
  *
  * Dependency-free replacement for:
- *   npx shx rm -rf *.tsbuildinfo dist build coverage jest temp bun.lock package-lock.json npm-shrinkwrap.json \
+ *   npx shx rm -rf *.tsbuildinfo dist build coverage jest temp tmp bun.lock package-lock.json npm-shrinkwrap.json \
  *     .cache/* .cache/.[!.]* .cache/..?* node_modules/* node_modules/.[!.]* node_modules/..?*
  *
  * Every removed path is logged under the directory it belongs to, prefixed with a red dash. The
@@ -37,7 +37,7 @@
 import { existsSync, lstatSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
-const scriptVersion = '2.0.0';
+const scriptVersion = '2.1.0';
 const scriptName = path.basename(import.meta.filename);
 
 /**
@@ -176,7 +176,7 @@ const clean = (state, dir, workspace) => {
   } catch {
     return; // Directory does not exist, nothing to clean.
   }
-  targets.push('dist', 'build', 'coverage', 'jest', 'temp', 'bun.lock', 'package-lock.json', 'npm-shrinkwrap.json');
+  targets.push('dist', 'build', 'coverage', 'jest', 'temp', 'tmp', 'bun.lock', 'package-lock.json', 'npm-shrinkwrap.json');
   for (const target of targets) {
     const entry = rm(state, dir, target);
     if (entry !== null) logRemoved(state, dir, entry);

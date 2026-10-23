@@ -29,6 +29,24 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.1] - Dev branch
+
+### Changed
+
+- [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.1.
+- [matterbridge]: Bump `@types/bun` to v.1.4.4.
+- [matterbridge]: Bump `oxfmt` to v.0.74.0.
+- [matterbridge]: Bump `oxlint` to v.1.89.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2005.
+- [frontend]: Bump `react-router` to v.8.5.0.
+- [frontend]: Bump `vite` to v.8.3.5.
+- [core]: Bump `multer` to v.2.5.0.
+- [core]: Bump `werift` to v.0.25.1.
+- [tests]: Remove redundant WebSocket error event casts after updating the Bun types.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.0] - 2026-10-23
 
 ### Breaking changes

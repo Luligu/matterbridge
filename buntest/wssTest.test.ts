@@ -88,7 +88,7 @@ describe('bunWssTest', () => {
 
     await new Promise<void>((resolve, reject) => {
       client.addEventListener('open', () => resolve());
-      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${(event as ErrorEvent).message ?? event.type}`)));
+      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${event.message ?? event.type}`)));
     });
 
     expect(client.readyState).toBe(WebSocket.OPEN);
@@ -203,7 +203,7 @@ describe('bunWssTest', () => {
 
     await new Promise<void>((resolve, reject) => {
       client.addEventListener('open', () => resolve());
-      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${(event as ErrorEvent).message ?? event.type}`)));
+      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${event.message ?? event.type}`)));
     });
 
     expect(client.readyState).toBe(WebSocket.OPEN);
