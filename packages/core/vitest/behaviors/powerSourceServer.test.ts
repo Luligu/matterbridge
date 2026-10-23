@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { PowerSource } from '@matter/types/clusters/power-source';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -74,7 +74,7 @@ describe('MatterbridgePowerSourceServer', () => {
     poweredDevice.addChildDeviceType('light', lightSensor).addRequiredClusterServers();
     const notReadyChild = poweredDevice.addChildDeviceType('pending', occupancySensor).addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, poweredDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, poweredDevice)).toBeTruthy();
     vi.spyOn(notReadyChild.lifecycle, 'isReady', 'get').mockReturnValue(false);
     await Promise.resolve(constructionCallbacks.at(-1)?.());
     expect(poweredDevice.getAttribute(PowerSource.id, 'endpointList')).toEqual([

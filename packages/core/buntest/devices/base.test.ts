@@ -16,7 +16,7 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { ScenesManagement } from '@matter/types/clusters/scenes-management';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -76,7 +76,11 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create and add onOffLight device', async () => {
-    device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight' }).createDefaultIdentifyClusterServer().createOnOffClusterServer().addRequiredClusters();
+    device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight' })
+      .createDefaultBasicInformationClusterServer('OnOff Light', 'OOL123456', 0xfff1, 'Matterbridge', 0x8000, 'Matterbridge OnOff Light')
+      .createDefaultIdentifyClusterServer()
+      .createDefaultOnOffClusterServer()
+      .addRequiredClusters();
     expect(device).toBeDefined();
     expect(device.id).toBe('OnOffLight');
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'onOff', 'groups', 'scenesManagement']);
@@ -85,7 +89,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(LevelControl)).toBeFalsy();
     expect(device.hasClusterServer(Groups)).toBeTruthy();
     expect(device.hasClusterServer(ScenesManagement)).toBeTruthy();
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });
 
   test('device forEachAttribute', () => {
@@ -115,10 +119,30 @@ describe('Matterbridge ' + NAME, () => {
         .toSorted(),
     ).toEqual(
       [
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='OnOff Light'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge OnOff Light'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='OOL123456'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='2f84e79949372a7810b7702c2dc71d8f'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
-        'descriptor(0x1d).serverList(0x1)=[ 3, 4, 6, 29, 98 ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 4 }, { deviceType: 19, revision: 3 } ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 4, 6, 29, 57, 98 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
@@ -132,10 +156,14 @@ describe('Matterbridge ' + NAME, () => {
         'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
         'identify(0x3).generatedCommandList(0xfff8)=[  ]',
         'onOff(0x6).clusterRevision(0xfffd)=6',
-        'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
+        'onOff(0x6).featureMap(0xfffc)={ lighting: true, deadFrontBehavior: false, offOnly: false }',
         'onOff(0x6).onOff(0x0)=false',
-        'onOff(0x6).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
-        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'onOff(0x6).globalSceneControl(0x4000)=false',
+        'onOff(0x6).onTime(0x4001)=0',
+        'onOff(0x6).offWaitTime(0x4002)=0',
+        'onOff(0x6).startUpOnOff(0x4003)=null',
+        'onOff(0x6).attributeList(0xfffb)=[ 0, 16384, 16385, 16386, 16387, 65528, 65529, 65531, 65532, 65533 ]',
+        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2, 64, 65, 66 ]',
         'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
         'groups(0x4).clusterRevision(0xfffd)=4',
         'groups(0x4).featureMap(0xfffc)={ groupNames: true }',

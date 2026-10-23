@@ -2,6 +2,7 @@
 # Matches createSmokeOnlySmokeCOAlarmClusterServer() on CHIP SmokeCOAlarm endpoint 7091
 PICS_USER_PROMPT=0
 PICS_SKIP_SAMPLE_APP=1
+PICS_SDK_CI_ONLY=1 # TC_SMOKECO_2_4 starts the manual self-test through the app-pipe LongPress command
 DGGEN.S.A0008=1 # TestEventTriggersEnabled
 DGGEN.S.C00.Rsp=1 # TestEventTrigger
 SMOKECO.S=1

@@ -80,6 +80,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 import { Status } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
@@ -96,6 +97,7 @@ import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySe
 import {
   airPurifier,
   airQualitySensor,
+  bridgedNode,
   contactSensor,
   doorLock,
   electricalSensor,
@@ -166,7 +168,7 @@ describe('Matterbridge ' + NAME, () => {
   async function add(device: MatterbridgeEndpoint): Promise<void> {
     expect(device).toBeDefined();
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
   }
 
   function thermostatOptions(id: string, create: (device: MatterbridgeEndpoint) => void): ReturnType<MatterbridgeEndpoint['getClusterServerOptions']> {
@@ -279,7 +281,9 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.productUrl).toBe('http://matterbridge.io');
     expect(device.configurationVersion).toBe(1.5);
 
-    await add(device);
+    // Not bridged: the BasicInformation values are not valid for the BridgedDeviceBasicInformation cluster
+    device.addRequiredClusterServers();
+    expect(await addDevice(aggregator, device)).toBe(true);
   });
 
   test('createDefaultBridgedDeviceBasicInformationClusterServer', async () => {
@@ -411,7 +415,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight15', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(bridgedNode, { id: 'OnOffLight15', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -422,7 +426,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDeadFrontOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight16', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(bridgedNode, { id: 'OnOffLight16', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDeadFrontOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -821,7 +825,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([]);
@@ -867,7 +871,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -900,7 +904,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -933,7 +937,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -964,7 +968,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Heat);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -995,7 +999,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Heat);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -1026,7 +1030,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Cool);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -1057,7 +1061,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Cool);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
@@ -1094,9 +1098,18 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
+    expect(device.getAttribute(Thermostat.id, 'thermostatRunningState')).toEqual({
+      cool: false,
+      coolStage2: false,
+      fan: false,
+      fanStage2: false,
+      fanStage3: false,
+      heat: false,
+      heatStage2: false,
+    });
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 6, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
@@ -1167,7 +1180,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     const retrievedPresets = device.getAttribute(Thermostat.id, 'presets');
@@ -1245,7 +1258,7 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultPresetsThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, undefined, [], presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     // numberOfPresets must not report less than the capacity advertised in presetTypes.
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(20);
   });
@@ -1286,7 +1299,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
     expect(device.getCluster(Thermostat)).toMatchObject({
@@ -1450,7 +1463,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'outdoorTemperature')).toBe(2050);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(6);
@@ -1651,7 +1664,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 5, 254]);
@@ -1755,7 +1768,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: false,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'acceptedCommandList')).toEqual([0, 5, 254]);
     expect(device.getAttribute(Thermostat.id, 'generatedCommandList')).toEqual([253]);
     expect(device.getAttribute(Thermostat.id, 'numberOfSchedules')).toBe(2);
@@ -1796,7 +1809,7 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultSchedulesThermostatClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, null, [], scheduleTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     // numberOfSchedules must not report less than the capacity advertised in scheduleTypes.
     expect(device.getAttribute(Thermostat.id, 'numberOfSchedules')).toBe(20);
   });
@@ -1836,7 +1849,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: true,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     await flushAsync(3, 10, 0);
     expect(device.getAttribute(Thermostat.id, 'systemMode')).toBe(Thermostat.SystemMode.Auto);
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(2);
@@ -1915,7 +1928,7 @@ describe('Matterbridge ' + NAME, () => {
       thermostatSuggestions: true,
     });
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
     const retrievedThermostatSuggestions = device.getAttribute(Thermostat.id, 'thermostatSuggestions');
     expect(retrievedThermostatSuggestions).toHaveLength(1);
@@ -1938,7 +1951,7 @@ describe('Matterbridge ' + NAME, () => {
     device.createDefaultThermostatSuggestionsClusterServer(23, 21, 25, 2, 0, 48, 2, 50, undefined, undefined, undefined, undefined, null, [], presetTypes);
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     // numberOfPresets must not report less than the capacity advertised in presetTypes.
     expect(device.getAttribute(Thermostat.id, 'numberOfPresets')).toBe(20);
   });
@@ -2304,7 +2317,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultSmokeCOAlarmClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeAlarm' });
+    const device = new MatterbridgeEndpoint([smokeCoAlarm, powerSource], { id: 'SmokeAlarm' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultSmokeCOAlarmClusterServer();
@@ -2320,7 +2333,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultSmokeCOAlarmClusterServer smoke only', async () => {
-    const device = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeAlarmSmokeOnly' });
+    const device = new MatterbridgeEndpoint([smokeCoAlarm, powerSource], { id: 'SmokeAlarmSmokeOnly' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createSmokeOnlySmokeCOAlarmClusterServer();
@@ -2335,7 +2348,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultSmokeCOAlarmClusterServer co only', async () => {
-    const device = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeAlarmCoOnly' });
+    const device = new MatterbridgeEndpoint([smokeCoAlarm, powerSource], { id: 'SmokeAlarmCoOnly' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createCoOnlySmokeCOAlarmClusterServer();
@@ -2682,6 +2695,7 @@ describe('Matterbridge ' + NAME, () => {
 
     // Test endpointList with child device
     const temp = device.addChildDeviceType('temperature', temperatureSensor);
+    temp.createDefaultIdentifyClusterServer();
     temp.createDefaultTemperatureMeasurementClusterServer(2200);
 
     await add(device);

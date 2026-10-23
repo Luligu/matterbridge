@@ -120,7 +120,7 @@ import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 // Setup the test environment
 await setupTest(NAME, false);
 
-const XML_CLUSTERS_DIR = path.join('chip', '1.6.0', 'xml', 'clusters');
+const XML_CLUSTERS_DIR = path.join('chip', '1.6.1', 'xml', 'clusters');
 
 let hasXmlDir = true;
 try {
@@ -176,13 +176,13 @@ async function buildXmlIndex(): Promise<Map<string, XmlClusterInfo>> {
 
 // oxlint-disable-next-line unicorn/no-negated-condition
 if (!hasXmlDir) {
-  describe('Matter 1.6.0 XML vs @matter/types cluster revisions dummy', () => {
+  describe('Matter 1.6.1 XML vs @matter/types cluster revisions dummy', () => {
     test(`Skipped: missing ${XML_CLUSTERS_DIR}`, () => {
       expect(true).toBe(true);
     });
   });
 } else {
-  describe('Matter 1.6.0 XML vs @matter/types cluster revisions', () => {
+  describe('Matter 1.6.1 XML vs @matter/types cluster revisions', () => {
     let xmlIndex: Map<string, XmlClusterInfo>;
     beforeAll(async () => {
       xmlIndex = await buildXmlIndex();
@@ -293,7 +293,7 @@ if (!hasXmlDir) {
       ['WindowCovering', WindowCovering],
       ['ZoneManagement', ZoneManagement],
     ];
-    test.each(cases)('Cluster %s matches Matter 1.6.0 XML (id, name, revision)', (display, entry) => {
+    test.each(cases)('Cluster %s matches Matter 1.6.1 XML (id, name, revision)', (display, entry) => {
       const key = normalizeName(display);
       const xmlInfo = xmlIndex.get(key);
       const { id: typesId, name: typesName, revision: typesRevision } = getClusterData(entry);
@@ -302,7 +302,7 @@ if (!hasXmlDir) {
         console.warn(
           `No XML entry found for ${display} (likely a template or derived cluster). types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`,
         );
-        return; // not all clusters have individual 1.6.0 XML files
+        return; // not all clusters have individual 1.6.1 XML files
       }
       // oxlint-disable-next-line no-console
       console.info(`${display}: xml=${JSON.stringify(xmlInfo)} types=${JSON.stringify({ id: typesId, name: typesName, revision: typesRevision })}`);

@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { FanControl } from '@matter/types/clusters/fan-control';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -67,7 +67,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
     expect(device).toBeDefined();
     device.createDefaultFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     expect(device.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Off);
     expect(device.getAttribute(FanControl, 'fanModeSequence')).toBe(FanControl.FanModeSequence.OffLowMedHighAuto);
   });
@@ -121,7 +121,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       percentCurrent: 0,
     });
     noAuto.addRequiredClusterServers();
-    expect(await addDevice(aggregator, noAuto)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, noAuto)).toBeDefined();
 
     // oxlint-disable-next-line typescript/no-deprecated
     await noAuto.setAttribute(FanControl, 'fanMode', FanControl.FanMode.Smart);
@@ -134,7 +134,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
     const other = new MatterbridgeEndpoint(fan, { id: 'FanControlServerConstraintTest' });
     other.createDefaultFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowHighAuto, 0, 0);
     other.addRequiredClusterServers();
-    expect(await addDevice(aggregator, other)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, other)).toBeDefined();
 
     await expect(other.setAttribute(FanControl, 'fanMode', FanControl.FanMode.Medium)).rejects.toThrow();
     expect(other.getAttribute(FanControl, 'fanMode')).toBe(FanControl.FanMode.Off);
@@ -144,7 +144,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
     const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'FanControlServerMultiSpeedTest' });
     multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Medium, FanControl.FanModeSequence.OffLowMedHighAuto, 60, 60, 10, 6, 6);
     multiSpeed.addRequiredClusterServers();
-    expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
     expect(multiSpeed.getAttribute(FanControl, 'speedSetting')).toBe(6);
     expect(multiSpeed.getAttribute(FanControl, 'speedCurrent')).toBe(6);
 
@@ -168,7 +168,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       percentDevice = new MatterbridgeEndpoint(fan, { id: 'PercentSettingServerTest' });
       percentDevice.createDefaultFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0);
       percentDevice.addRequiredClusterServers();
-      expect(await addDevice(aggregator, percentDevice)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, percentDevice)).toBeDefined();
     });
 
     test('Writing PercentSetting to 0 sets FanMode to Off (§ 4.4.6.3.1)', async () => {
@@ -236,7 +236,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       // speed = ceil( SpeedMax * (percent * 0.01) ): with SpeedMax 42 and PercentSetting 25, speed = ceil(10.5) = 11.
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 42, 0, 0);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'percentSetting', 25);
 
@@ -250,7 +250,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'PercentSettingFloatingPointTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'percentSetting', 70);
 
@@ -266,7 +266,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'PercentSettingRoundTripTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'percentSetting', 1);
 
@@ -281,7 +281,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingAscendingTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       for (let speed = 1; speed <= 10; speed++) {
         await multiSpeed.setAttribute(FanControl, 'speedSetting', speed);
@@ -293,7 +293,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingZeroTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.High, FanControl.FanModeSequence.OffLowMedHighAuto, 90, 90, 10, 9, 9);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'speedSetting', 0);
 
@@ -305,7 +305,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingMaxTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'speedSetting', 10);
 
@@ -317,7 +317,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingNullTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Low, FanControl.FanModeSequence.OffLowMedHighAuto, 20, 20, 10, 2, 2);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'speedSetting', null);
 
@@ -334,7 +334,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'SpeedSettingReverseMapIdempotencyTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.High, FanControl.FanModeSequence.OffLowMedHighAuto, 67, 67, 3, 3, 3);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.setAttribute(FanControl, 'speedSetting', 2);
 
@@ -353,7 +353,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       stepDevice = new MatterbridgeEndpoint(fan, { id: 'FanControlServerStepTest' });
       stepDevice.createDefaultFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0);
       stepDevice.addRequiredClusterServers();
-      expect(await addDevice(aggregator, stepDevice)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, stepDevice)).toBeDefined();
     });
 
     test('Increase from Off steps to Low and converges PercentCurrent (§ 4.4.7.1.5)', async () => {
@@ -400,7 +400,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const multiSpeed = new MatterbridgeEndpoint(fan, { id: 'FanControlServerStepMultiSpeedTest' });
       multiSpeed.createMultiSpeedFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0, 10, 0, 0);
       multiSpeed.addRequiredClusterServers();
-      expect(await addDevice(aggregator, multiSpeed)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, multiSpeed)).toBeDefined();
 
       await multiSpeed.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase, wrap: false, lowestOff: true }));
 
@@ -416,7 +416,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       const defaultsDevice = new MatterbridgeEndpoint(fan, { id: 'FanControlServerStepDefaultsTest' });
       defaultsDevice.createDefaultFanControlClusterServer(FanControl.FanMode.Off, FanControl.FanModeSequence.OffLowMedHighAuto, 0, 0);
       defaultsDevice.addRequiredClusterServers();
-      expect(await addDevice(aggregator, defaultsDevice)).toBeDefined();
+      expect(await addBridgedDevice(aggregator, defaultsDevice)).toBeDefined();
 
       // Same as an explicit { wrap: false, lowestOff: true } Increase from Off (§ 4.4.7.1.5).
       await defaultsDevice.act(async (agent) => agent.get(MatterbridgeFanControlServer).step({ direction: FanControl.StepDirection.Increase }));
@@ -434,7 +434,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       vent.createDefaultHepaFilterMonitoringClusterServer();
       vent.addRequiredClusterServers();
       expect(vent).toBeDefined();
-      expect(await addDevice(aggregator, vent)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, vent)).toBeTruthy();
     });
 
     test('FanControl server', async () => {

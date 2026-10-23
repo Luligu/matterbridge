@@ -259,6 +259,18 @@ describe('Settings', () => {
     expect(sendMessage).not.toHaveBeenCalled();
   });
 
+  it('should store auto and apply dark or light to the document when Auto is selected', async () => {
+    const { emit } = renderSettings();
+    emit({ method: '/api/settings', id: 23, response: settings });
+
+    await pickOption('#frontend-theme', 'Auto');
+
+    expect(localStorage.getItem(MbfLsk.frontendTheme)).toBe('auto');
+    expect(['dark', 'light']).toContain(document.body.getAttribute('frontend-theme'));
+    // Leave no color scheme listener behind for the next tests.
+    await pickOption('#frontend-theme', 'Dark');
+  });
+
   it('stores the home page preferences locally without notifying the backend', async () => {
     const { sendMessage, emit } = renderSettings();
     emit({ method: '/api/settings', id: 23, response: settings });

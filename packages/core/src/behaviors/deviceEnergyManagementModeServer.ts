@@ -3,7 +3,7 @@
  * @description This file contains the MatterbridgeDeviceEnergyManagementModeServer class of Matterbridge.
  * @author Luca Liguori
  * @created 2026-03-28
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -65,7 +65,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
     // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
     this.state.currentMode = request.newMode;
     // Matter 1.6.0 § 9.8.7.1.1: A mode tagged NoOptimization prohibits energy usage optimization, so opt the ESA out of adjustment.
-    if (supported.modeTags.find((tag) => tag.value === DeviceEnergyManagementMode.ModeTag.NoOptimization)) {
+    if (supported.modeTags.find((tag) => tag.value === (DeviceEnergyManagementMode.ModeTag.NoOptimization as number))) {
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer)) {
         await this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
           optOutState: DeviceEnergyManagement.OptOutState.OptOut,

@@ -213,6 +213,29 @@ describe('getDockerVersion', () => {
     expect(resume).toHaveBeenCalled();
   });
 
+  test('returns undefined when the Location header of a 3xx response is malformed', async () => {
+    const resume = vi.fn<(...args: any[]) => any>();
+
+    httpsGetImpl.mockImplementation((url: string, _options: any, callback: (res: any) => void) => {
+      const request = { on: vi.fn<(...args: any[]) => any>().mockReturnThis() };
+
+      queueMicrotask(() => {
+        if (url.startsWith('https://auth.docker.io/token')) {
+          // An invalid IPv6 host makes new URL() throw: the request must reject instead of throwing in the response callback.
+          const response = createStreamingJsonResponse(307, '', true, { location: 'http://[bad' });
+          response.resume = resume;
+          callback(response);
+          return;
+        }
+      });
+
+      return request as any;
+    });
+
+    await expect(getDockerVersion('luligu', 'matterbridge', 'latest', 5_000)).resolves.toBeUndefined();
+    expect(resume).toHaveBeenCalled();
+  });
+
   test('follows redirect when Location is an array and keeps Authorization for same-host redirect', async () => {
     let redirectedOptions: any;
 

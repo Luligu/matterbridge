@@ -511,7 +511,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiSettings(): Promise<ApiSettings> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: undefined });
+    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: {} });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.data;
   }

@@ -1079,6 +1079,34 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     );
     this.endpoint.emitCommand(WebRtcTransportProvider, 'endSession', request, this.context);
   }
+
+  /**
+   * Closes every WebRTC session of this endpoint, e.g. from the plugin's onShutdown (see {@link closeWebRtcSessions}).
+   * Only the sessions owned by this endpoint are touched: each session is removed from currentSessions, its stream
+   * reference counts are released as EndSession does, and its werift peer connection (with its ffmpeg processes) is
+   * closed. A session whose close fails is logged and does not prevent the others from closing.
+   *
+   * @returns {Promise<void>} Resolves once every session of this endpoint has been closed.
+   */
+  async closeAllSessions(): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    for (const session of this.state.currentSessions) this.#updateStreamReferenceCounts(session.videoStreams, session.audioStreams, -1);
+    this.state.currentSessions = [];
+    this.internal.trickledSessions.clear();
+    const webRtcPeers = [...this.internal.sessions.entries()];
+    this.internal.sessions.clear();
+    const results = await Promise.allSettled(webRtcPeers.map(async ([, webRtcPeer]) => webRtcPeer.close()));
+    for (const [index, result] of results.entries()) {
+      if (result.status === 'rejected') {
+        device.log.error(
+          `MatterbridgeWebRtcTransportProviderServer.closeAllSessions: failed to close webRTC session ${webRtcPeers[index][0]}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+        );
+      }
+    }
+    device.log.info(
+      `MatterbridgeWebRtcTransportProviderServer.closeAllSessions: closed ${webRtcPeers.length} webRTC session(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
+  }
 }
 
 /**
@@ -1129,4 +1157,27 @@ export function createDefaultWebRtcTransportProviderClusterServer(
 ): MatterbridgeEndpoint {
   endpoint.behaviors.require(MatterbridgeWebRtcTransportProviderServer, { currentSessions: [], weriftOfferOptions });
   return endpoint;
+}
+
+/**
+ * Closes every WebRTC session of a device: on the device endpoint itself and on its child endpoints (a Floodlight
+ * Camera or a Video Doorbell has its WebRtcTransportProvider cluster on the camera child). Each endpoint closes only
+ * its own sessions (see {@link MatterbridgeWebRtcTransportProviderServer.closeAllSessions}), so a plugin closes its
+ * own sessions without affecting other plugins. A device without the cluster is skipped, so a plugin can call this
+ * for all its devices in onShutdown, before super.onShutdown() which clears the registered devices:
+ *
+ * ```typescript
+ * for (const device of this.getDevices()) await closeWebRtcSessions(device);
+ * await super.onShutdown(reason);
+ * ```
+ *
+ * @param {MatterbridgeEndpoint} device - The device whose WebRTC sessions to close.
+ * @returns {Promise<void>} Resolves once every WebRTC session of the device has been closed.
+ */
+export async function closeWebRtcSessions(device: MatterbridgeEndpoint): Promise<void> {
+  await Promise.all(
+    [device, ...device.getChildEndpoints()]
+      .filter((endpoint) => endpoint.behaviors.has(MatterbridgeWebRtcTransportProviderServer))
+      .map(async (endpoint) => endpoint.act(async (agent) => agent.get(MatterbridgeWebRtcTransportProviderServer).closeAllSessions())),
+  );
 }

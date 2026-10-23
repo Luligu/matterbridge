@@ -32,7 +32,7 @@ import {
   getStopMoveStepRequest,
 } from '@matterbridge/test-utils/matter';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -44,7 +44,7 @@ import {
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeColorControlServer } from '../../src/behaviors/colorControlServer.js';
-import { bridge, colorTemperatureLight, extendedColorLight, lightSensor, occupancySensor, onOffLight, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, bridgedNode, colorTemperatureLight, extendedColorLight, lightSensor, occupancySensor, onOffLight, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -93,7 +93,7 @@ describe('MatterbridgeColorControlServer', () => {
     light.addChildDeviceType('illuminance', lightSensor).addRequiredClusterServers();
     light.addChildDeviceType('motion', occupancySensor).addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, light)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
   });
 
   test('Device type: enhancedLight', async () => {
@@ -104,7 +104,7 @@ describe('MatterbridgeColorControlServer', () => {
     enhancedLight.createEnhancedColorControlClusterServer();
     enhancedLight.addRequiredClusterServers();
     expect(enhancedLight).toBeDefined();
-    expect(await addDevice(aggregator, enhancedLight)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, enhancedLight)).toBeTruthy();
   });
 
   test('ColorControl server', async () => {
@@ -260,7 +260,7 @@ describe('MatterbridgeColorControlServer', () => {
     const validationLight = new MatterbridgeEndpoint([extendedColorLight, bridge, powerSource], { id: 'validationLight' });
     validationLight.createDefaultBridgedDeviceBasicInformationClusterServer('Validation Light', 'SN11223344');
     validationLight.addRequiredClusterServers();
-    expect(await addDevice(aggregator, validationLight)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, validationLight)).toBeTruthy();
     await validationLight.setAttribute(OnOff, 'onOff', true);
 
     const stepHueCalls: Array<{ cluster: string; request: object }> = [];
@@ -433,7 +433,7 @@ describe('MatterbridgeColorControlServer', () => {
       device.createDefaultBridgedDeviceBasicInformationClusterServer(id, `SN-${id}`);
       device.createCtColorControlClusterServer(colorTemperatureMireds, 147, 500, startUpColorTemperatureMireds);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       return { mireds: device.getAttribute(ColorControl, 'colorTemperatureMireds'), colorMode: device.getAttribute(ColorControl, 'colorMode') };
     };
 
@@ -473,14 +473,14 @@ describe('MatterbridgeColorControlServer', () => {
         remainingTime: 0,
       });
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       expect(device.getAttribute(ColorControl, 'colorTemperatureMireds')).toBe(250);
       expect(device.getAttribute(ColorControl, 'colorMode')).toBe(ColorControl.ColorMode.ColorTemperatureMireds);
       expect(device.getAttribute(ColorControl, 'enhancedColorMode')).toBe(ColorControl.EnhancedColorMode.ColorTemperatureMireds);
     });
 
     it('does not apply without the ColorTemperature feature', async () => {
-      const device = new MatterbridgeEndpoint([colorTemperatureLight, bridge], { id: 'suCtNoFeature' });
+      const device = new MatterbridgeEndpoint([bridgedNode, bridge], { id: 'suCtNoFeature' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suCtNoFeature', 'SN-suCtNoFeature');
       device.behaviors.require(MatterbridgeColorControlServer.with(ColorControl.Feature.HueSaturation), {
         colorMode: ColorControl.ColorMode.CurrentHueAndCurrentSaturation,
@@ -493,7 +493,7 @@ describe('MatterbridgeColorControlServer', () => {
         remainingTime: 0,
       });
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       expect(device.getAttribute(ColorControl, 'currentHue')).toBe(10);
     });
   });

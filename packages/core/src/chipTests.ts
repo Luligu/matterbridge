@@ -3,7 +3,7 @@
  * @description This file contains the CHIP test helpers of Matterbridge.
  * @author Luca Liguori
  * @created 2026-08-16
- * @version 1.1.0
+ * @version 1.1.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -115,6 +115,13 @@ const smokeCoAlarmHardwareFaultAlertTrigger = 0xffffffff00000093n;
 const smokeCoAlarmHardwareFaultAlertClearTrigger = 0xffffffff000000a3n;
 const smokeCoAlarmEndOfServiceAlertTrigger = 0xffffffff0000009an;
 const smokeCoAlarmEndOfServiceAlertClearTrigger = 0xffffffff000000aan;
+// The Matter 1.6.1 TC_SMOKECO_2_x.py tests send every trigger in the 0x005c (SmokeCoAlarm cluster id) range
+// (src/python_testing/support_modules/smokeco_support.py).
+const smokeCoAlarmYamlCriticalBatteryAlertTrigger = 0x005c00000000009en;
+const smokeCoAlarmYamlHardwareFaultAlertTrigger = 0x005c000000000093n;
+const smokeCoAlarmYamlHardwareFaultAlertClearTrigger = 0x005c0000000000a3n;
+const smokeCoAlarmYamlEndOfServiceAlertTrigger = 0x005c00000000009an;
+const smokeCoAlarmYamlEndOfServiceAlertClearTrigger = 0x005c0000000000aan;
 const smokeCoAlarmDeviceMutedTrigger = 0x005c00000000009bn;
 const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 // TC_EPM_2_2/TC_EEM_2_2/TC_EEM_2_3's send_test_event_trigger_start_fake_1kw_load_2s()/
@@ -442,6 +449,8 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
   }
 
   const readBuffer = Buffer.alloc(4096);
+  // Poll every 10 ms: write_to_app_pipe() waits only 50 ms before the test reads the resulting state, so a 50 ms
+  // poll plus the handler time can miss it (TC_RVCOPSTATE_2_3 Step 25 read Running instead of Stopped).
   const pollInterval = setInterval(() => {
     if (isClosing || pipeFd === undefined) return;
     try {
@@ -454,7 +463,7 @@ export function createChipTestAppPipe(matterbridge: Matterbridge): void {
       if (error instanceof Error && 'code' in error && ['EAGAIN', 'EWOULDBLOCK'].includes(String(error.code))) return;
       matterbridge.log.error(`CHIP test app pipe ${chipTestAppPipePath} read error: ${error instanceof Error ? error.message : String(error)}`);
     }
-  }, 50);
+  }, 10);
   pollInterval.unref();
 
   const closePipeWithInterval = (): void => {
@@ -502,6 +511,11 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertClearTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlCriticalBatteryAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertClearTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertTrigger) &&
+    normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertClearTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmDeviceMutedTrigger) &&
     normalizedEventTrigger !== normalizeTestEventTrigger(smokeCoAlarmDeviceMutedClearTrigger)
   ) {
@@ -808,6 +822,7 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       await endpoint.triggerEvent(SmokeCoAlarm, 'lowBattery', { alarmSeverityLevel: SmokeCoAlarm.AlarmState.Warning }, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmCriticalBatteryAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlCriticalBatteryAlertTrigger):
       await endpoint.setCluster(
         SmokeCoAlarm,
         { batteryAlert: SmokeCoAlarm.AlarmState.Critical, expressedState: getSmokeCoAlarmExpressedState(endpoint, { batteryAlert: SmokeCoAlarm.AlarmState.Critical }) },
@@ -825,18 +840,22 @@ async function applySmokeCoAlarmTestEventTrigger(endpoint: MatterbridgeEndpoint,
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { hardwareFaultAlert: true, expressedState: SmokeCoAlarm.ExpressedState.HardwareFault }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'hardwareFault', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmHardwareFaultAlertClearTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlHardwareFaultAlertClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { hardwareFaultAlert: false, expressedState: SmokeCoAlarm.ExpressedState.Normal }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { endOfServiceAlert: SmokeCoAlarm.EndOfService.Expired, expressedState: SmokeCoAlarm.ExpressedState.EndOfService }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'endOfService', undefined, log);
       return;
     case normalizeTestEventTrigger(smokeCoAlarmEndOfServiceAlertClearTrigger):
+    case normalizeTestEventTrigger(smokeCoAlarmYamlEndOfServiceAlertClearTrigger):
       await endpoint.setCluster(SmokeCoAlarm, { endOfServiceAlert: SmokeCoAlarm.EndOfService.Normal, expressedState: SmokeCoAlarm.ExpressedState.Normal }, log);
       await endpoint.triggerEvent(SmokeCoAlarm, 'allClear', undefined, log);
       return;
@@ -1075,7 +1094,7 @@ async function handleMeterIdentificationTestEventTrigger(eventTrigger: bigint): 
 // trigger restores the original null values.
 const commodityMeteringFakeValues = {
   maximumMeteredQuantities: 8,
-  meteredQuantity: [{ tariffComponentIDs: [1], quantity: 1_234 }],
+  meteredQuantity: [{ tariffComponentIds: [1], quantity: 1_234 }],
   meteredQuantityTimestamp: Math.floor(Date.now() / 1000),
   tariffUnit: TariffUnit.KWh,
 };
@@ -1181,8 +1200,8 @@ const commodityTariffTariffComponents = [
   },
 ];
 const commodityTariffTariffPeriods = [
-  { label: 'Morning', dayEntryIDs: [1], tariffComponentIDs: [100] },
-  { label: 'Afternoon', dayEntryIDs: [2], tariffComponentIDs: [101] },
+  { label: 'Morning', dayEntryIds: [1], tariffComponentIds: [100] },
+  { label: 'Afternoon', dayEntryIds: [2], tariffComponentIds: [101] },
 ];
 const commodityTariffClearedValues = {
   tariffInfo: null,
@@ -1236,13 +1255,13 @@ function buildCommodityTariffFakeValues(
   // this fake data can produce, which get_day_pattern_IDs_for_active_calendar_period() (TC_SETRF_TestBase.py)
   // requires to resolve the active calendar period.
   const tariffStartDate = anchor - 365 * 86_400;
-  const dayOf = (offset: number): CommodityTariff.Day => ({ date: anchor + offset * 86_400, dayType: CommodityTariff.DayType.Standard, dayEntryIDs: [1, 2] });
+  const dayOf = (offset: number): CommodityTariff.Day => ({ date: anchor + offset * 86_400, dayType: CommodityTariff.DayType.Standard, dayEntryIds: [1, 2] });
   const entryDate = (offset: number, idx: number): number => anchor + offset * 86_400 + commodityTariffDayEntries[idx].startTime * 60;
   const nextEntry = entryIndex === commodityTariffDayEntries.length - 1 ? { offset: dayOffset + 1, idx: 0 } : { offset: dayOffset, idx: entryIndex + 1 };
   const tariffComponentsFor = (dayEntryId: number): CommodityTariff.TariffComponent[] =>
     commodityTariffTariffPeriods
-      .filter((period) => period.dayEntryIDs.includes(dayEntryId))
-      .flatMap((period) => period.tariffComponentIDs)
+      .filter((period) => period.dayEntryIds.includes(dayEntryId))
+      .flatMap((period) => period.tariffComponentIds)
       .map((id) => commodityTariffTariffComponents.find((component) => component.tariffComponentId === id))
       .filter((component): component is (typeof commodityTariffTariffComponents)[number] => component !== undefined);
 
@@ -1256,12 +1275,12 @@ function buildCommodityTariffFakeValues(
     tariffUnit: TariffUnit.KWh,
     startDate: tariffStartDate,
     dayEntries: commodityTariffDayEntries,
-    dayPatterns: [{ dayPatternId: commodityTariffDayPatternId, daysOfWeek: commodityTariffAllDaysOfWeek, dayEntryIDs: [1, 2] }],
-    calendarPeriods: [{ startDate: tariffStartDate, dayPatternIDs: [commodityTariffDayPatternId] }],
+    dayPatterns: [{ dayPatternId: commodityTariffDayPatternId, daysOfWeek: commodityTariffAllDaysOfWeek, dayEntryIds: [1, 2] }],
+    calendarPeriods: [{ startDate: tariffStartDate, dayPatternIds: [commodityTariffDayPatternId] }],
     // A single day 30 days in the past — clear of any CurrentDay/NextDay date this fake data can produce — so
     // IndividualDays also differs from its null default (see the tariffStartDate comment above for why that
     // matters), while still trivially satisfying "the DayStruct in this list shall not overlap".
-    individualDays: [{ date: anchor - 30 * 86_400, dayType: CommodityTariff.DayType.Holiday, dayEntryIDs: [1, 2] }],
+    individualDays: [{ date: anchor - 30 * 86_400, dayType: CommodityTariff.DayType.Holiday, dayEntryIds: [1, 2] }],
     currentDay: dayOf(dayOffset),
     nextDay: dayOf(dayOffset + 1),
     currentDayEntry: commodityTariffDayEntries[entryIndex],
@@ -1479,7 +1498,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
         return;
       }
       const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
-      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)));
       if (!idleMode) {
         matterbridge.log.warn(`Ignoring RVC Reset CHIP test app pipe command because endpoint ${endpointId} has no Idle run mode`);
         return;
@@ -1533,7 +1552,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
     case 'Charged':
     case 'Docked': {
       const runModeState = endpoint.stateOf(MatterbridgeRvcRunModeServer);
-      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === RvcRunMode.ModeTag.Idle));
+      const idleMode = runModeState.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)));
       if (idleMode) await endpoint.setStateOf(MatterbridgeRvcRunModeServer, { currentMode: idleMode.mode });
       await endpoint.setStateOf(MatterbridgeRvcOperationalStateServer, { operationalState: RvcOperationalState.OperationalState.Docked });
       matterbridge.log.info(`CHIP test app pipe set RVC OperationalState to Docked on endpoint ${endpointId}`);
@@ -1610,6 +1629,12 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       return;
     case 'SimulateLongPress':
       await simulateChipTestSwitchLongPress(matterbridge, endpoint, endpointId, command);
+      return;
+    case 'LongPress':
+      // smokeco_support.py's start_device_self_test(): with PICS_SDK_CI_ONLY the manual self-test of
+      // TC_SMOKECO_2_4 is started by a LongPress of the test button, which runs the same self-test procedure as SelfTestRequest.
+      await endpoint.invokeBehaviorCommand(SmokeCoAlarm, 'selfTestRequest');
+      matterbridge.log.info(`CHIP test app pipe started the SmokeCoAlarm self-test on endpoint ${endpointId}`);
       return;
     case 'SimulateLatchPosition': {
       // TC_SWTCH.py's _send_latching_switch_named_pipe_command(): move a latching switch to a new position.

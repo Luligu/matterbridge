@@ -2,7 +2,7 @@ FROM ubuntu:24.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG CHIP_BRANCH=v1.6-branch
+ARG CHIP_BRANCH=v1.6.1-branch
 
 # Build deps (toolchain + headers) + Node.js for building Matterbridge
 RUN \
@@ -75,7 +75,7 @@ WORKDIR /root/matterbridge
 RUN \
   git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/matterbridge.git . && \
   npm ci --no-fund --no-audit && npm run build && \
-  cd apps/frontend && npm ci --no-fund --no-audit && npm run build && rm -rf node_modules && cd ../.. && \
+  cd apps/frontend && npm run build && cd ../.. && \
   npm prune --omit=dev --no-fund --no-audit
 
 FROM ubuntu:24.04 AS release

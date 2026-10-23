@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "_comment": "Claude settings v.1.0.7",
+  "_comment": "Claude settings v.1.0.9",
   "permissions": {
     "deny": [
       "Read(.env)",
@@ -24,6 +24,7 @@
       "Bash(npm run lint:fix:*)",
       "Bash(npx vitest:*)",
       "Bash(vitest:*)",
+      "Bash(bun test:*)",
       "Bash(npx oxfmt:*)",
       "Bash(oxfmt:*)",
       "Bash(npx oxlint:*)",
@@ -40,6 +41,9 @@
       "Bash(bun uninstall:*)",
       "Bash(bun add:*)",
       "Bash(bun remove:*)",
+      "Bash(mb-run:*)",
+      "Bash(npx mb-run:*)",
+      "Bash(bunx mb-run:*)",
       "Bash(curl:*)",
       "PowerShell(Invoke-WebRequest:*)",
       "Bash(docker pull:*)",
@@ -53,10 +57,10 @@
       "Bash(npm run lint:*)",
       "Bash(npm run format:*)",
       "Bash(npm run update-htmls:*)",
-      "Bash(bun test:*)",
       "Bash(grep:*)",
       "Bash(cd:*)",
       "Bash(tail:*)",
+      "Bash(find:*)",
       "Bash(echo:*)",
       "Bash(head:*)",
       "Bash(cat:*)",

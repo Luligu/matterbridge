@@ -21,11 +21,10 @@ export default defineConfig({
       '**/scripts/',
       '**/src/mock/',
       '**/temp/',
+      '**/tmp/',
       '**/vendor/',
-      '**/jest-utils/', // Plugins test package for Jest
-      '**/vitest-utils/', // Plugins test package for Vitest
-      'packages/core/vitest/matterNode.*.ts',
-      'packages/core/vitest/backend*.ts',
+      'packages/core/vitest/matterNode.*.ts', // Not released files
+      'packages/core/vitest/backend*.ts', // Not released files
     ],
     globals: true,
     clearMocks: false,
@@ -59,7 +58,7 @@ export default defineConfig({
         '**/scripts/',
         '**/src/mock/',
         '**/temp/',
-        '**/vendor/',
+        '**/tmp/',
         '**/vitest/**',
         '**/src/**/*.d.ts', // TypeScript declaration files should be excluded from coverage
         '**/src/**/*.{spec,test}.{ts,mts,cts}', // Any test files should be excluded from coverage, even if they are not in the vitest folder
@@ -67,8 +66,6 @@ export default defineConfig({
         'src/clusters/export.ts', // Root package entrypoint re-export file
         'src/devices/export.ts', // Root package entrypoint re-export file
         'src/dgram/export.ts', // Root package entrypoint re-export file
-        'src/jest-utils/export.ts', // Root package entrypoint re-export file
-        'src/jest-utils/matter.ts', // Root package entrypoint re-export file
         'src/logger/export.ts', // Root package entrypoint re-export file
         'src/matter/behaviors.ts', // Root package entrypoint re-export file
         'src/matter/clusters.ts', // Root package entrypoint re-export file
@@ -84,8 +81,6 @@ export default defineConfig({
         'src/test-utils/matter/export.ts', // Root package entrypoint re-export file
         'src/test-utils/vitest/export.ts', // Root package entrypoint re-export file
         'src/utils/export.ts', // Root package entrypoint re-export file
-        'src/vitest-utils/export.ts', // Root package entrypoint re-export file
-        'src/vitest-utils/matter.ts', // Root package entrypoint re-export file
         'packages/core/src/behaviors/export.ts', // Core behavior barrel re-export file
         'packages/core/src/clusters/export.ts', // Root package entrypoint re-export file
         'packages/core/src/devices/camera/export.ts', // Core devices camera barrel re-export file

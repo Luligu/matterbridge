@@ -44,9 +44,8 @@ Dev containers have networking limitations depending on the host OS and Docker s
   // Use the non-root bun user (passwordless sudo in this image)
   "remoteUser": "bun",
   "mounts": [
-    // Package specific volumes for matterbridge bun node_modules, frontend bun node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
+    // Package specific volumes for matterbridge bun node_modules, .cache, Matterbridge .matterbridge, .mattercert to improve performance
     "source=${localWorkspaceFolderBasename}-bun-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume",
-    "source=${localWorkspaceFolderBasename}-bun-frontend-node_modules,target=${containerWorkspaceFolder}/apps/frontend/node_modules,type=volume",
     "source=${localWorkspaceFolderBasename}-cache,target=${containerWorkspaceFolder}/.cache,type=volume",
     "source=${localWorkspaceFolderBasename}-plugins,target=/home/bun/Matterbridge,type=volume",
     "source=${localWorkspaceFolderBasename}-storage,target=/home/bun/.matterbridge,type=volume",

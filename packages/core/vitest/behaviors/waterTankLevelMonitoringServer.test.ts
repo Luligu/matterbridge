@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import { WaterTankLevelMonitoring } from '@matter/types/clusters/water-tank-level-monitoring';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -68,7 +68,7 @@ describe('MatterbridgeWaterTankLevelMonitoringServer', () => {
     waterTank.createDefaultWaterTankLevelMonitoringClusterServer(20);
     waterTank.addRequiredClusterServers();
     expect(waterTank).toBeDefined();
-    expect(await addDevice(aggregator, waterTank)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, waterTank)).toBeTruthy();
   });
 
   test('WaterTankLevelMonitoring server', async () => {
@@ -110,7 +110,7 @@ describe('MatterbridgeWaterTankLevelMonitoringServer', () => {
       replacementProductList: [],
     });
     endpoint.addRequiredClusterServers();
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
     const emitted: unknown[] = [];
     endpoint.subscribeCommand(WaterTankLevelMonitoring, 'resetCondition', (data) => emitted.push(data.request));

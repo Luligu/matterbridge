@@ -33,3 +33,6 @@ export * from '../floodlightCamera.js';
 export * from '../intercom.js';
 export * from '../snapshotCamera.js';
 export * from '../videoDoorbell.js';
+
+// WebRTC session cleanup for the plugin onShutdown
+export { closeWebRtcSessions } from '../../behaviors/webRtcTransportProviderServer.js';

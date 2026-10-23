@@ -186,6 +186,24 @@ describe('Matterbridge', () => {
       // systemInformation is refreshed on every getApiSettings() call (memory, uptime)
       result: { data: { ...apiSettings, systemInformation: expect.objectContaining({ hostname: apiSettings.systemInformation.hostname }) }, success: true },
     });
+    for (const required of [true, false]) {
+      const params = { restartRequired: required, updateRequired: required };
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params });
+      expect(matterbridge).toMatchObject({ ...params, fixedRestartRequired: false });
+    }
+    // A fixed restart cannot be unset once set and it locks restartRequired to true
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params: { fixedRestartRequired: true } });
+    expect(matterbridge).toMatchObject({ restartRequired: true, fixedRestartRequired: true });
+    await (matterbridge as any).msgHandler({
+      id: 123456,
+      type: 'matterbridge_apisettings',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: { restartRequired: false, fixedRestartRequired: false },
+    });
+    expect(matterbridge).toMatchObject({ restartRequired: true, fixedRestartRequired: true });
+    matterbridge.restartRequired = false;
+    matterbridge.fixedRestartRequired = false;
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);
@@ -942,6 +960,10 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
 
+    // Shorten the 1000 ms MessageExchange pause of cleanup() to keep the test fast
+    const cleanup = (matterbridge as any).cleanup;
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation((...args: unknown[]) => cleanup.call(matterbridge, args[0], args[1], 10));
+
     const shutdownPromise = new Promise((resolve) => {
       matterbridge.on('shutdown', resolve as () => void);
       const interval = setInterval(() => {
@@ -992,6 +1014,7 @@ describe('Matterbridge', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    cleanupSpy.mockRestore();
   });
 
   test('matterbridge -reset xxx', async () => {
@@ -1044,6 +1067,10 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
 
+    // Shorten the 1000 ms MessageExchange pause of cleanup() to keep the test fast
+    const cleanup = (matterbridge as any).cleanup;
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation((...args: unknown[]) => cleanup.call(matterbridge, args[0], args[1], 10));
+
     process.argv = [
       ...originalProcessArgv.slice(0, 2),
       '--frontend',
@@ -1087,6 +1114,7 @@ describe('Matterbridge', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    cleanupSpy.mockRestore();
   });
 
   test('matterbridge cleanup("updating...", true)', async () => {

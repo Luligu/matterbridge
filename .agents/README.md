@@ -1,4 +1,4 @@
-# Shared agent instructions (v.1.0.2)
+# Shared agent instructions (v.1.0.3)
 
 This folder is the **single source of truth** for the instructions given to every coding agent used on this
 repository — OpenAI Codex, Claude Code, GitHub Copilot and Google Gemini / Antigravity. Each agent reads the same documents through its
@@ -77,13 +77,12 @@ paths:
   - '**/*.test.ts'
 ---
 
-@../../../.agents/rules/testing.instructions.md
+Read and follow [.agents/rules/testing.instructions.md](../../../.agents/rules/testing.instructions.md) in full. It is the single source for this guidance.
 ```
 
 The frontmatter is what makes the tool load the file at the right moment; the body just redirects here. The
-`.claude/skills/*` and `.github/skills/*` wrappers work the same way for skills, except that a skill mirror
-redirects with a markdown link rather than an `@` transclusion — both agents follow the link when the skill
-runs, and both also read the mirror's `description` to offer the skill on their own.
+`.claude/skills/*` and `.github/skills/*` wrappers work the same way for skills: both agents follow the link
+when the skill runs, and both also read the mirror's `description` to offer the skill on their own.
 
 ## Adding to this folder
 
@@ -100,12 +99,11 @@ runs, and both also read the mirror's `description` to offer the skill on their 
 **A new skill:**
 
 1. Write `.agents/skills/<name>/SKILL.md` with `name` (matching the folder) and `description`.
-2. Create the two pointer skills, each holding frontmatter (`name` matching its own folder, the same
+2. Add a bullet for it in `AGENTS.md` under _Additional Agent Guidance_.
+3. Create the two pointer skills, each holding frontmatter (`name` matching its own folder, the same
    `description`, and an `argument-hint`) plus a link back to the document above:
    - `.claude/skills/<name>/SKILL.md`
    - `.github/skills/<name>/SKILL.md`
-3. List it in `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, and `.github/copilot-instructions.md`, using that tool's invocation
-   form (`$name` for Codex, `/name` for the others).
 
 Keep the description identical across a document and its pointers, so the tools describe the same
 thing in the same words.

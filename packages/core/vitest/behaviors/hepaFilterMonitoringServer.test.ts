@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { HepaFilterMonitoring } from '@matter/types/clusters/hepa-filter-monitoring';
 import { ResourceMonitoring } from '@matter/types/clusters/resource-monitoring';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -67,7 +67,7 @@ describe('MatterbridgeHepaFilterMonitoringServer', () => {
     purifier.createDefaultActivatedCarbonFilterMonitoringClusterServer(30);
     purifier.addRequiredClusterServers();
     expect(purifier).toBeDefined();
-    expect(await addDevice(aggregator, purifier)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, purifier)).toBeTruthy();
   });
 
   test('HepaFilterMonitoring server', async () => {
@@ -101,7 +101,7 @@ describe('MatterbridgeHepaFilterMonitoringServer', () => {
       },
     );
     endpoint.addRequiredClusterServers();
-    expect(await addDevice(aggregator, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
     await endpoint.invokeBehaviorCommand(HepaFilterMonitoring, 'resetCondition');
 

@@ -14,7 +14,7 @@ import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configu
 import { Status } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -27,7 +27,7 @@ import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeLevelControlServer } from '../../src/behaviors/levelControlServer.js';
-import { pump } from '../../src/matterbridgeDeviceTypes.js';
+import { bridgedNode, pump } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -70,7 +70,7 @@ describe('Server clusters and behaviors', () => {
     noDefaultsPump.createOnOffClusterServer();
     noDefaultsPump.createDefaultPumpConfigurationAndControlClusterServer();
     noDefaultsPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, noDefaultsPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, noDefaultsPump)).toBeTruthy();
 
     expect(noDefaultsPump.getAttribute(PumpConfigurationAndControl.id, 'minConstSpeed')).toBe(600);
     expect(noDefaultsPump.getAttribute(PumpConfigurationAndControl.id, 'maxConstSpeed')).toBe(3000);
@@ -85,7 +85,7 @@ describe('Server clusters and behaviors', () => {
     explicitPump.createOnOffClusterServer();
     explicitPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, 8000, 4000, 200, 1000, 4000);
     explicitPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, explicitPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, explicitPump)).toBeTruthy();
 
     expect(explicitPump.getAttribute(PumpConfigurationAndControl.id, 'minConstSpeed')).toBe(1000);
     expect(explicitPump.getAttribute(PumpConfigurationAndControl.id, 'maxConstSpeed')).toBe(4000);
@@ -111,27 +111,27 @@ describe('Server clusters and behaviors', () => {
     });
     levelPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     levelPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, levelPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, levelPump)).toBeTruthy();
 
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 120);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 200);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // Level 201-255 clamps to a 100.0% setpoint.
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 254);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // Level 0 stops the pump.
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 0);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
   });
@@ -149,15 +149,15 @@ describe('Server clusters and behaviors', () => {
     });
     onOffPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     onOffPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, onOffPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, onOffPump)).toBeTruthy();
 
     await onOffPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
     await onOffPump.setAttribute(OnOff.id, 'onOff', false);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
   });
@@ -169,21 +169,21 @@ describe('Server clusters and behaviors', () => {
     // No LevelControl cluster on this endpoint: LevelControl is optional for the Pump device type.
     noLevelPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     noLevelPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, noLevelPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, noLevelPump)).toBeTruthy();
     expect(noLevelPump.hasAttributeServer(LevelControl.id, 'currentLevel')).toBe(false);
 
     await noLevelPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
   });
 
   test('should not react to OnOff when the Pump has no OnOff cluster', async () => {
-    const noOnOffPump = new MatterbridgeEndpoint(pump, { id: 'noOnOffPump' });
+    const noOnOffPump = new MatterbridgeEndpoint(bridgedNode, { id: 'noOnOffPump' });
     noOnOffPump.createDefaultIdentifyClusterServer();
     // No OnOff cluster on this endpoint, so initialize() must skip registering the OnOff reactor entirely.
     noOnOffPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
-    expect(await addDevice(aggregator, noOnOffPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, noOnOffPump)).toBeTruthy();
     expect(noOnOffPump.hasAttributeServer(OnOff.id, 'onOff')).toBe(false);
     expect(noOnOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBeNull();
     expect(noOnOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBeNull();
@@ -203,27 +203,27 @@ describe('Server clusters and behaviors', () => {
     });
     nullLevelPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     nullLevelPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, nullLevelPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, nullLevelPump)).toBeTruthy();
 
     await nullLevelPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // A CurrentLevel change back to null stops the pump but keeps the last known level for a later OnOff.on.
     await nullLevelPump.setAttribute(LevelControl.id, 'currentLevel', 120);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
     await nullLevelPump.setAttribute(LevelControl.id, 'currentLevel', null);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
 
     await nullLevelPump.setAttribute(OnOff.id, 'onOff', false);
     await nullLevelPump.setAttribute(OnOff.id, 'onOff', true);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(nullLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
   });
@@ -241,20 +241,20 @@ describe('Server clusters and behaviors', () => {
     });
     noConstSpeedPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     noConstSpeedPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, noConstSpeedPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, noConstSpeedPump)).toBeTruthy();
 
     // MaxConstSpeed unset (null): falls back to MaxSpeed for the 100% setpoint. Capacity is unaffected, since
     // it is derived purely from the setpoint percentage, not from MaxConstSpeed/MaxSpeed.
     await noConstSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'maxConstSpeed', null);
     await noConstSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 254);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
     // Both MaxConstSpeed and MaxSpeed unset: falls back to 0.
     await noConstSpeedPump.setAttribute(PumpConfigurationAndControl.id, 'maxSpeed', null);
     await noConstSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 200);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(noConstSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
   });
@@ -267,7 +267,7 @@ describe('Server clusters and behaviors', () => {
     opModePump.createOnOffClusterServer();
     opModePump.createDefaultPumpConfigurationAndControlClusterServer();
     opModePump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, opModePump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, opModePump)).toBeTruthy();
     expect(opModePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Normal);
 
     await opModePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
@@ -291,7 +291,7 @@ describe('Server clusters and behaviors', () => {
     localOverridePump.createOnOffClusterServer();
     localOverridePump.createDefaultPumpConfigurationAndControlClusterServer();
     localOverridePump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, localOverridePump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, localOverridePump)).toBeTruthy();
 
     await localOverridePump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Minimum);
     expect(localOverridePump.getAttribute(PumpConfigurationAndControl.id, 'effectiveOperationMode')).toBe(PumpConfigurationAndControl.OperationMode.Minimum);
@@ -327,10 +327,10 @@ describe('Server clusters and behaviors', () => {
     });
     opSpeedPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     opSpeedPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, opSpeedPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, opSpeedPump)).toBeTruthy();
 
     await opSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 120);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
 
@@ -345,7 +345,7 @@ describe('Server clusters and behaviors', () => {
     // A LevelControl change while Maximum has no effect on Speed/Capacity (level 42 -> 21% would otherwise
     // give speed 630, capacity 4200 — clearly distinct from both Maximum's and Minimum's values above).
     await opSpeedPump.setAttribute(LevelControl.id, 'currentLevel', 42);
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(opSpeedPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
 
@@ -363,7 +363,7 @@ describe('Server clusters and behaviors', () => {
     minNoMaxPump.createOnOffClusterServer();
     minNoMaxPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
     minNoMaxPump.addRequiredClusterServers();
-    expect(await addDevice(aggregator, minNoMaxPump)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, minNoMaxPump)).toBeTruthy();
 
     await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'maxConstSpeed', null);
     await minNoMaxPump.setAttribute(PumpConfigurationAndControl.id, 'maxSpeed', null);

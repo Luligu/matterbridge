@@ -21,6 +21,7 @@
     "TC_FAN_3_1.py",
     "TC_FAN_3_2.py",
     "TC_TSTAT_2_2.py",
+    "TC_TSTAT_4_2.py",
     "TC_TSTAT_Utils.py",
     "Test_TC_TSTAT_2_1.yaml",
     "Test_TC_OO_2_2.yaml",
@@ -38,7 +39,9 @@
     "Test_TC_EEVSE_2_1.yaml",
     "TC_EEVSE_2_2.py",
     "TC_AVSUM_2_7.py",
-    "TC_WEBRTCP_2_16.py"
+    "TC_WEBRTCP_2_16.py",
+    "TC_SMOKECO_2_1.py",
+    "TC_SMOKECO_2_5.py"
   ],
   "tests": [
     {
@@ -762,81 +765,112 @@
     },
     {
       "name": "SmokeCOAlarm attributes on SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_1",
+      "test": "TC_SMOKECO_2_1.py",
       "endpoint": 709,
       "args": ["--PICS /root/smoke-co-alarm.pics"]
     },
     {
       "name": "SmokeCOAlarm smoke primary functionality on SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_2",
+      "test": "TC_SMOKECO_2_2.py",
       "endpoint": 709,
-      "args": ["--PICS /root/smoke-co-alarm.pics"]
+      "args": ["--PICS /root/smoke-co-alarm.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "SmokeCOAlarm CO primary functionality on SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_3",
+      "test": "TC_SMOKECO_2_3.py",
       "endpoint": 709,
-      "args": ["--PICS /root/smoke-co-alarm.pics"]
+      "args": ["--PICS /root/smoke-co-alarm.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_4",
+      "test": "TC_SMOKECO_2_4.py",
       "endpoint": 709,
-      "args": ["--PICS /root/smoke-co-alarm.pics"]
+      "args": ["--PICS /root/smoke-co-alarm.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "SmokeCOAlarm optional secondary functionality on SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_5",
+      "test": "TC_SMOKECO_2_5.py",
       "endpoint": 709,
-      "args": ["--PICS /root/smoke-co-alarm.pics"]
+      "args": ["--PICS /root/smoke-co-alarm.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
     },
     {
       "name": "SmokeCOAlarm expressed state with multiple alarms on SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_6",
+      "test": "TC_SMOKECO_2_6.py",
       "endpoint": 709,
       "args": [
         "--PICS /root/smoke-co-alarm.pics",
-        "--HIEST_PRI_ALARM_2 ExpressedStateEnum.BatteryAlert",
-        "--HIEST_PRI_ALARM_3 ExpressedStateEnum.BatteryAlert",
-        "--HIEST_PRI_ALARM_4 ExpressedStateEnum.BatteryAlert"
+        "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f",
+        "--int-arg PIXIT.SMOKECO.HIEST_PRI_ALARM_2:3",
+        "--int-arg PIXIT.SMOKECO.HIEST_PRI_ALARM_3:3",
+        "--int-arg PIXIT.SMOKECO.HIEST_PRI_ALARM_4:3"
       ],
-      "comment": "The YAML's default HIEST_PRI_ALARM_2/3/4 (InterconnectSmoke=7) assume InterconnectSmokeAlarm/InterconnectCOAlarm attribute support (SMOKECO.S.A0008/A0009), which Matterbridge does not implement. Per spec 2.11.6.1, ExpressedState priority ordering is manufacturer-defined, so these are overridden to match Matterbridge's own priority order (smokeState > batteryAlert > coState, see getSmokeCoAlarmExpressedState in chipTest.ts)."
+      "comment": "The test's default PIXIT.SMOKECO.HIEST_PRI_ALARM_2/3/4 (InterconnectSmoke=7) assume InterconnectSmokeAlarm/InterconnectCOAlarm attribute support (SMOKECO.S.A0008/A0009), which Matterbridge does not implement. Per spec 2.11.6.1, ExpressedState priority ordering is manufacturer-defined, so these are overridden to BatteryAlert (3) to match Matterbridge's own priority order (smokeState > batteryAlert > coState, see getSmokeCoAlarmExpressedState in chipTest.ts)."
+    },
+    {
+      "name": "SmokeCOAlarm unmount attribute on SmokeCOAlarm",
+      "test": "TC_SMOKECO_2_7.py",
+      "endpoint": 709,
+      "args": ["--PICS /root/smoke-co-alarm.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--bool-arg simulate_mounting:true"]
     },
     {
       "name": "SmokeCOAlarm attributes on Smoke-only SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_1",
+      "test": "TC_SMOKECO_2_1.py",
       "endpoint": 7091,
       "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics"]
     },
     {
       "name": "SmokeCOAlarm smoke primary functionality on Smoke-only SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_2",
+      "test": "TC_SMOKECO_2_2.py",
       "endpoint": 7091,
-      "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics"]
+      "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on Smoke-only SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_4",
+      "test": "TC_SMOKECO_2_4.py",
       "endpoint": 7091,
-      "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics"]
+      "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "SmokeCOAlarm optional secondary functionality on Smoke-only SmokeCOAlarm",
+      "test": "TC_SMOKECO_2_5.py",
+      "endpoint": 7091,
+      "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "SmokeCOAlarm unmount attribute on Smoke-only SmokeCOAlarm",
+      "test": "TC_SMOKECO_2_7.py",
+      "endpoint": 7091,
+      "args": ["--PICS /root/smoke-co-alarm-smoke-only.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--bool-arg simulate_mounting:true"]
     },
     {
       "name": "SmokeCOAlarm attributes on CO-only SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_1",
+      "test": "TC_SMOKECO_2_1.py",
       "endpoint": 7092,
       "args": ["--PICS /root/smoke-co-alarm-co-only.pics"]
     },
     {
       "name": "SmokeCOAlarm CO primary functionality on CO-only SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_3",
+      "test": "TC_SMOKECO_2_3.py",
       "endpoint": 7092,
-      "args": ["--PICS /root/smoke-co-alarm-co-only.pics"]
+      "args": ["--PICS /root/smoke-co-alarm-co-only.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
     },
     {
       "name": "SmokeCOAlarm mandatory secondary functionality on CO-only SmokeCOAlarm",
-      "test": "Test_TC_SMOKECO_2_4",
+      "test": "TC_SMOKECO_2_4.py",
       "endpoint": 7092,
-      "args": ["--PICS /root/smoke-co-alarm-co-only.pics"]
+      "args": ["--PICS /root/smoke-co-alarm-co-only.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f", "--app-pipe /tmp/matterbridge-chip-test-app-pipe"]
+    },
+    {
+      "name": "SmokeCOAlarm optional secondary functionality on CO-only SmokeCOAlarm",
+      "test": "TC_SMOKECO_2_5.py",
+      "endpoint": 7092,
+      "args": ["--PICS /root/smoke-co-alarm-co-only.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "SmokeCOAlarm unmount attribute on CO-only SmokeCOAlarm",
+      "test": "TC_SMOKECO_2_7.py",
+      "endpoint": 7092,
+      "args": ["--PICS /root/smoke-co-alarm-co-only.pics", "--app-pipe /tmp/matterbridge-chip-test-app-pipe", "--bool-arg simulate_mounting:true"]
     },
     {
       "name": "AirQuality attributes on AirQualitySensor",
@@ -1816,7 +1850,7 @@
       "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on Fan Complete",
       "test": "TC_FAN_3_1.py",
       "endpoint": 9024,
-      "args": ["--PICS /root/fan-control-complete.pics"],
+      "args": ["--PICS /root/fan-control-complete.pics", "--no-wildcard-subscription"],
       "comment": "Patched locally to wait for each write's triggered reports to actually arrive before the next write, instead of firing the whole value_range as fast as possible; also fixes log_results()/verify_attribute_progression() iterating the live subscription queue while a concurrent report callback could mutate it (RuntimeError: deque mutated during iteration)."
     },
     {
@@ -1867,7 +1901,7 @@
       "test": "TC_FAN_3_1.py",
       "endpoint": 9021,
       "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
-      "args": ["--PICS /root/fan-control-base.pics"]
+      "args": ["--PICS /root/fan-control-base.pics", "--no-wildcard-subscription"]
     },
     { "name": "FanControl optional speed functionality on FanOnOff", "test": "TC_FAN_3_2.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
     { "name": "FanControl optional rock functionality on FanOnOff", "test": "TC_FAN_3_3.py", "endpoint": 9021, "args": ["--PICS /root/fan-control-base.pics"] },
@@ -1891,7 +1925,7 @@
       "test": "TC_FAN_3_1.py",
       "endpoint": 9022,
       "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete).",
-      "args": ["--PICS /root/fan-control-base.pics"]
+      "args": ["--PICS /root/fan-control-base.pics", "--no-wildcard-subscription"]
     },
     { "name": "FanControl optional speed functionality on FanBase", "test": "TC_FAN_3_2.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
     { "name": "FanControl optional rock functionality on FanBase", "test": "TC_FAN_3_3.py", "endpoint": 9022, "args": ["--PICS /root/fan-control-base.pics"] },
@@ -3014,7 +3048,7 @@
       "name": "FanControl mandatory functionality with PercentSetting/FanMode ordering on ExtractorHood",
       "test": "TC_FAN_3_1.py",
       "endpoint": 1310,
-      "args": ["--PICS /root/fan-control-base.pics"],
+      "args": ["--PICS /root/fan-control-base.pics", "--no-wildcard-subscription"],
       "comment": "Patched locally, see docker/chip-test/patches/TC_FAN_3_1.py (same patch as Fan Complete)."
     },
     {

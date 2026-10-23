@@ -9,7 +9,7 @@ const MATTER_PORT = 8024;
 const MATTER_CREATE_ONLY = true;
 
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -63,36 +63,41 @@ describe('Matterbridge Temperature Control', () => {
   test('create a laundryDryer device with all parameters', async () => {
     device = new MatterbridgeEndpoint(laundryDryer, { id: 'TestDevice-001' });
     expect(device).toBeDefined();
+    device.createDefaultOperationalStateClusterServer();
     createNumberTemperatureControlClusterServer(device, 40 * 100, 30 * 100, 60 * 100, 10 * 100);
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   test('create a laundryDryer device with default parameters', async () => {
     device = new MatterbridgeEndpoint(laundryDryer, { id: 'TestDevice-002' });
     expect(device).toBeDefined();
+    device.createDefaultOperationalStateClusterServer();
     createNumberTemperatureControlClusterServer(device);
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   test('create a laundryWasher device with all parameters', async () => {
     device = new MatterbridgeEndpoint(laundryWasher, { id: 'TestDevice-003' });
     expect(device).toBeDefined();
+    device.createDefaultOperationalStateClusterServer();
     createLevelTemperatureControlClusterServer(device, 1, ['Cold', 'Warm', 'Hot', '30°', '40°', '60°', '80°']);
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   test('create a laundryWasher device with default parameters', async () => {
     device = new MatterbridgeEndpoint(laundryWasher, { id: 'TestDevice-004' });
     expect(device).toBeDefined();
+    device.createDefaultOperationalStateClusterServer();
     createLevelTemperatureControlClusterServer(device);
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   test('create a laundryWasher device with custom parameters', async () => {
     device = new MatterbridgeEndpoint(laundryWasher, { id: 'TestDevice-005' });
     expect(device).toBeDefined();
+    device.createDefaultOperationalStateClusterServer();
     createLevelTemperatureControlClusterServer(device, 0, ['Warm']);
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   test('start the server node', async () => {

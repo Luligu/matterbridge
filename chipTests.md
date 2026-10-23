@@ -12,6 +12,13 @@ from the `dev` branch, started with `--novirtual` — nothing local is installed
 node scripts/run-matterbridge-chip-tests.mjs --start
 ```
 
+To test an image built locally with `npm run docker:build:local:chip-test` (e.g. a new CHIP branch), start
+the local `matterbridge:chip-test` image instead; it is used as is, without pulling:
+
+```shell
+node scripts/run-matterbridge-chip-tests.mjs --start --local
+```
+
 ## Run all configured tests inside the container
 
 ```shell
@@ -356,6 +363,10 @@ Robotic Vacuum Cleaner clusters:
 - RvcOperationalState (Stopped, Running, Paused, Error, SeekingCharger, Charging, and Docked states)
 - ServiceArea (Maps and SelectAreas; ProgressReporting and SkipArea are not implemented)
 
+`TC_RVCOPSTATE_2_3.py` reads the operational state right after `write_to_app_pipe()`, which waits only 50 ms
+after writing. The app-pipe reader in `chipTests.ts` polls the FIFO every 10 ms; with the earlier 50 ms poll the
+`Reset` at Step 24 could still be pending, and Step 25 intermittently read Running instead of Stopped.
+
 ## Endpoint 1301
 
 Laundry Washer with level temperature control clusters:
@@ -553,6 +564,13 @@ minimal `MATTERBRIDGE_CHIP_TEST`-gated FaultInjection server for those two fault
 would make it runnable, and would be the only AVSM test that actually asserts allocated
 video streams survive a restart.
 
+On the PTZ Camera (16011), `TC_AVSUM_2_2`, `2_3`, `2_4` and `2_9` wait for a `MovementState`
+Idle report after each mechanical move. The PTZ move commands therefore set `MovementState`
+to Moving, respond, and complete about 100 ms later with Idle and the new `MPTZPosition`
+(Matter 1.6.1 § 11.3.7.1.4). Earlier the move completed inside the command, so `MovementState`
+never changed: the tests only passed on matter.js 0.17, which also reported unchanged
+attributes of a cluster whenever its DataVersion changed.
+
 ### `TC_WEBRTCP_*` and `resetBefore`
 
 The WebRTC Transport Provider tests leave two kinds of residue behind: open WebRTC sessions
@@ -720,8 +738,9 @@ spec-compliant `Closure` tag (`namespaceID=0x44`) is rejected. See "Known Issues
 on master ([PR #73481](https://github.com/project-chip/connectedhomeip/pull/73481), merged) by checking
 `self.xml_namespaces` instead of a literal list; the patch now carries that same data-driven check, but
 master's file cannot be copied verbatim because it relies on `BasicCompositionTests.xml_namespaces`, which
-`v1.6-branch` does not populate — the patch builds the namespace map itself and defers to the attribute as
-soon as a future image provides it.
+`v1.6.1-branch` does not populate — the patch builds the namespace map itself and defers to the attribute as
+soon as a future image provides it. The patch is based on the `v1.6.1-branch` upstream file (including its
+`disable_wildcard_subscription = True`), with only this namespace check changed.
 
 ### `TC_FAN_3_1.py`
 
@@ -732,6 +751,13 @@ arriving mid-iteration of `log_results()`'s live subscription queue can raise `R
 during iteration`. Patch adds a `wait_for_triggered_reports()`/`wait_for_latest_report_value()` pair (same
 synchronization approach as PR #73629 below, generalized to `TC_FAN_3_1.py`'s two update-attribute scenarios)
 and snapshots the subscription queue before iterating it. See "Known Issues" below.
+
+On the `v1.6.1-branch` image every entry also passes `--no-wildcard-subscription`. That image's `matter.testing`
+checks each single-attribute read against a background wildcard subscription and, when the read comes in before
+that subscription's report, retries 1 s apart (`verify_attribute_subscription_value()`). The test reads right
+after every write of its 1–100 value ranges, so a run took about 215 s and the default 90 s timeout aborted
+Step 4 with `TimeoutError` on all four endpoints. The test verifies reports through its own subscriptions, so
+the background one adds nothing here; without it a run takes about 25 s.
 
 ### `TC_FAN_3_2.py`
 
@@ -755,7 +781,9 @@ the relative Matter 1.6 setpoint-limit checks.
 
 Adds the triggering command's PICS guard to each subsequent state read, so an unsupported `On`/`Toggle`
 command on an OffOnly endpoint (Cooktop, endpoint 1308) no longer asserts the state change that skipped
-command would have caused.
+command would have caused. Still unfixed on `v1.6.1-branch` and master: the unpatched file fails at Step 3b on
+the three OffOnly endpoints (1308, 13081, 13082). The patch is based on the `v1.6.1-branch` upstream file, with
+only the PICS guards changed.
 
 ### `Test_TC_OO_2_3.yaml`
 
@@ -773,6 +801,12 @@ the test can verify the Matter 1.6-required `UNSUPPORTED_COMMAND` responses on a
 Corrects the no-PIN `LockDoor` and `UnlockDoor` PICS guards. Upstream requires both PIN and Credential OTA
 Access to send a PIN, but its fallback path runs only when both features are absent; the patch runs that path
 whenever the combined requirement is false, including endpoint 8011 where PIN is supported without COTA.
+
+It also adds Step 24e, which writes `OperatingMode` back to the `Current_OperatingMode` saved in Step 24a.
+Upstream (unchanged from 1.6 to 1.6.1) leaves the lock in `NoRemoteLockUnlock` after Step 24c, and the value is
+persisted. Since matter.js 0.18 the DUT correctly rejects remote lock operations in that mode (Matter 1.6.1
+§ 5.2.6.15, § 5.2.10.1) with `FAILURE`, so the residue broke the following `TC_DRLK_2_2.py`, `TC_DRLK_2_3.py`
+and `Test_TC_DRLK_2_4` on endpoints 801 and 8012. matter.js 0.17 ignored the operating mode, which hid it.
 
 ### `Test_TC_DRLK_2_4.yaml`
 
@@ -863,7 +897,22 @@ local corrections fix genuine bugs still present in #42326's rewrite as of this 
 Step 9b writes `absMinCoolSetpointLimit - 10` instead of the wrong `minCoolSetpointLimit - 10` (matching its
 own documented intent), and Step 9c's `hasAutoModeFeature` branch computes a real deadband-aware target
 instead of duplicating its `else` branch. Not yet backported to a release branch or baked into the published
-`chip-test` image.
+`chip-test` image. Still required on the `v1.6.1-branch` image: the upstream file there keeps the wrong Step 6b
+expectation and fails on every AutoMode endpoint (901, Presets, Schedules, Suggestions), while this patch
+passes all six entries. Master has since applied the same Step 9b fix upstream; Step 9c is still a local
+correction. Master's current file cannot replace this one, because it was rewritten again on a new
+`ThermostatBaseTest`/`MatterTestCommissionedDevice` base that the `v1.6.1-branch` `matter.testing` package does
+not provide.
+
+### `TC_TSTAT_4_2.py`
+
+Based on the `v1.6.1-branch` upstream file. Steps 13 and 18 add presets with a null `Name` to a scenario that
+already holds one (Step 4 commits an unnamed `Occupied` preset), which Matter 1.6.1 § 4.3.10.23.3 forbids:
+within a scenario no two presets may share a `Name`, including null. Since matter.js 0.18 the DUT enforces this
+with `CONSTRAINT_ERROR`, so Step 13 failed its expected `SUCCESS` and Step 18 its expected `RESOURCE_EXHAUSTED`
+on endpoints 9013 and 9015; matter.js 0.17 did not check names, which hid it. The patch gives each added preset a
+unique name (`Step13`, `Step18-<n>`) when its scenario supports names, via a small `unique_preset_name()`
+helper; nothing else is touched. Still unfixed on master.
 
 ### `TC_TSTAT_Utils.py`
 
@@ -913,6 +962,30 @@ particular `originatingEndpointID=1` in the command payload is deliberately left
 TH's own `WebRtcTransportRequestor` endpoint, not the DUT's, and is correctly 1.
 
 Not yet reported upstream.
+
+### `TC_SMOKECO_2_1.py`
+
+`v1.6.1-branch` removed the `Test_TC_SMOKECO_2_x` YAML tests in favor of these Python tests, which have two
+bugs (still present on master). Steps 3 and 4 call `self.skip_step(n)` after `self.step(n)` when the
+SmokeAlarm/CoAlarm feature is missing, so the Smoke-only (7091) and CO-only (7092) endpoints fail with
+"Unexpected test step". Steps 12 and 13 read `ContaminationState` and `SmokeSensitivityLevel` whenever the
+SmokeAlarm feature is present, but both attributes are optional under it (`[SMOKE]`, Matter 1.6.1 Application
+Cluster § 2.11.6) and Matterbridge does not implement them. The patch drops the misplaced `skip_step()` calls,
+guards steps 12 and 13 on the attribute (`attribute_guard`, like steps 6, 10 and 11), and takes master's
+`SensitivityEnum` fix for step 13.
+
+Not yet reported upstream.
+
+### `TC_SMOKECO_2_5.py`
+
+Same optional-attribute bug as `TC_SMOKECO_2_1.py`: steps 23 and 32 subscribe to `ContaminationState` and
+`SmokeSensitivityLevel` whenever the SmokeAlarm feature is present. The patch guards both on the attribute.
+
+Not yet reported upstream.
+
+The SmokeCOAlarm `.pics` files set `PICS_SDK_CI_ONLY=1` so that the self-test of `TC_SMOKECO_2_2.py`,
+`TC_SMOKECO_2_3.py` and `TC_SMOKECO_2_4.py` is started through the app-pipe `LongPress` command (handled in
+`chipTests.ts` by running `SelfTestRequest`) instead of a manual operator step; those entries pass `--app-pipe`.
 
 # Known Issues
 

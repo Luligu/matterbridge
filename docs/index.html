@@ -605,7 +605,7 @@
                         <p>Community Plugins</p>
                     </div>
                     <div class="stat-item">
-                        <h3>1.2M+</h3>
+                        <h3>1.3M+</h3>
                         <p>Plugins downloads</p>
                     </div>
                     <div class="stat-item">
@@ -874,7 +874,7 @@ function copyToClipboard(id) {
                 if (npmResp.ok) {
                     const npmData = await npmResp.json();
                     const dl = npmData.downloads;
-                    const formatted = dl > 1000 ? (dl/1000).toFixed(1).replace(/\.0$/,'') + 'K' : dl.toString();
+                    const formatted = dl > 1000 ? (dl/1000).toFixed(1) + 'K' : dl.toString();
                     const el = document.getElementById('npm-downloads');
                     if (el) el.textContent = formatted + '/wk';
                 }
@@ -888,7 +888,7 @@ function copyToClipboard(id) {
                     const rangeData = await rangeResp.json();
                     if (Array.isArray(rangeData.downloads)) {
                         const total = rangeData.downloads.reduce((acc, d) => acc + (d.downloads||0), 0);
-                        const formattedTotal = total >= 1_000_000 ? (total/1_000_000).toFixed(1).replace(/\.0$/,'') + 'M' : total >= 1000 ? (total/1000).toFixed(1).replace(/\.0$/,'') + 'K' : total.toString();
+                        const formattedTotal = total >= 1_000_000 ? (total/1_000_000).toFixed(1) + 'M' : total >= 1000 ? (total/1000).toFixed(1) + 'K' : total.toString();
                         const totalEl = document.getElementById('npm-total-downloads');
                         if (totalEl) totalEl.textContent = formattedTotal;
                     }
@@ -907,7 +907,7 @@ function copyToClipboard(id) {
                 const pullsEl = document.getElementById('docker-pulls');
                 if (!pullsEl) return;
                 // Helper formatter
-                const fmt = n => n >= 1_000_000 ? (n/1_000_000).toFixed(1).replace(/\.0$/,'') + 'M' : n >= 1000 ? (n/1000).toFixed(1).replace(/\.0$/,'') + 'K' : n.toString();
+                const fmt = n => n >= 1_000_000 ? (n/1_000_000).toFixed(1) + 'M' : n >= 1000 ? (n/1000).toFixed(1) + 'K' : n.toString();
                 // 1) Try Docker Hub API (may be blocked by CORS on some browsers)
                 try {
                     const dockerResp = await fetch('https://hub.docker.com/v2/repositories/luligu/matterbridge');
@@ -925,8 +925,9 @@ function copyToClipboard(id) {
                     if (shieldResp.ok) {
                         const shieldData = await shieldResp.json();
                         if (shieldData && shieldData.value) {
-                            // shieldData.value already formatted (e.g., 1.2M) but normalize to our style
-                            pullsEl.textContent = shieldData.value.replace(/([0-9]+\.[0-9])0M/,'$1M');
+                            // shieldData.value already formatted (e.g., 1M or 1.2M): normalize to 1 decimal
+                            const m = /^([0-9.]+)([kKM])$/.exec(shieldData.value);
+                            pullsEl.textContent = m ? parseFloat(m[1]).toFixed(1) + m[2].toUpperCase() : shieldData.value;
                             return;
                         }
                     }

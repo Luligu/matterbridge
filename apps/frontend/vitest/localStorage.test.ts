@@ -15,6 +15,7 @@ describe('localStorage utils', () => {
       devicesFilterPlugins: 'devicesFilterPlugins',
       devicesFilterDevices: 'devicesFilterDevices',
       devicesViewMode: 'devicesViewMode',
+      devicesClusterViewMode: 'devicesClusterViewMode',
       frontendVersion: 'frontendVersion',
       matterbridgeVersion: 'matterbridgeVersion',
       homePageMode: 'homePageMode',

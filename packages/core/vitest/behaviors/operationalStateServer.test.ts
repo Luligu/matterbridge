@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { OperationalState } from '@matter/types/clusters/operational-state';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -81,7 +81,7 @@ describe('Server clusters and behaviors', () => {
     washer = new MatterbridgeEndpoint(laundryWasher, { id: 'operationalStateWasher' });
     washer.createDefaultOperationalStateClusterServer();
     washer.addRequiredClusterServers();
-    expect(await addDevice(aggregator, washer)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, washer)).toBeTruthy();
 
     // Every command is always forwarded to the plugin's command handler first, unconditionally, regardless of
     // the conformance branch it then falls into below.
@@ -304,7 +304,7 @@ describe('Server clusters and behaviors', () => {
     const externallyPausedWasher = new MatterbridgeEndpoint(laundryWasher, { id: 'externallyPausedWasher' });
     externallyPausedWasher.createDefaultOperationalStateClusterServer();
     externallyPausedWasher.addRequiredClusterServers();
-    expect(await addDevice(aggregator, externallyPausedWasher)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, externallyPausedWasher)).toBeTruthy();
 
     // Simulate the device having been paused by means outside of this cluster (e.g. a manual button press),
     // so the Pause command handler above never ran and never recorded a prior operational state.

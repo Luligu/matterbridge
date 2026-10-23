@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.1
+ * @version 1.8.2
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -147,9 +147,11 @@ interface MatterbridgeEvents {
  */
 export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   /** Debug flag */
-  private readonly debug = hasParameter('debug') || hasParameter('verbose');
+  private readonly debug = hasAnyParameter('debug', 'verbose', 'debug-matterbridge', 'verbose-matterbridge');
   /** Verbose flag */
-  private readonly verbose = hasParameter('verbose');
+  private readonly verbose = hasAnyParameter('verbose', 'verbose-matterbridge');
+  /** Diagnostic flag */
+  private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-matterbridge');
 
   /** Matterbridge system information */
   public systemInformation: SystemInformation = {
@@ -220,6 +222,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public bridgeStatus: BridgeStatus = 'inactive';
   /** It indicates the Matterbridge profile in use. */
   public readonly profile = getParameter('profile');
+  // Frontend settings
+  public readonly readOnly = hasParameter('readonly');
+  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
+  public restartRequired = false;
+  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
+  public fixedRestartRequired = false;
+  /** It indicates whether an update is available. */
+  public updateRequired = false;
 
   /** Matterbridge logger */
   public readonly log = new AnsiLogger({
@@ -512,7 +522,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         virtualMode: this.virtualMode,
         bridgeStatus: this.bridgeStatus,
         profile: this.profile,
-        readOnly: hasParameter('readonly'),
+        readOnly: this.readOnly,
+        restartRequired: this.restartRequired,
+        fixedRestartRequired: this.fixedRestartRequired,
+        updateRequired: this.updateRequired,
         loggerLevel: this.logLevel,
         fileLogger: this.fileLogger,
         matterLoggerLevel: this.matterLogLevel,
@@ -523,9 +536,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         matterPort: this.port ?? 5540,
         matterDiscriminator: this.discriminator,
         matterPasscode: this.passcode,
-        restartRequired: false,
-        fixedRestartRequired: false,
-        updateRequired: false,
         startupAt: this.startupAt,
         shutdownAt: this.shutdownAt,
         runningTimes: this.runningTimes,
@@ -597,6 +607,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           await this.shutdownProcess();
           break;
         case 'matterbridge_apisettings':
+          // A fixed restart cannot be unset once set and it locks restartRequired to true
+          if (msg.params?.fixedRestartRequired === true) this.fixedRestartRequired = true;
+          if (this.fixedRestartRequired) this.restartRequired = true;
+          else if (msg.params?.restartRequired !== undefined) this.restartRequired = msg.params.restartRequired;
+          if (msg.params?.updateRequired !== undefined) this.updateRequired = msg.params.updateRequired;
           this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
           break;
         case 'matterbridge_start_plugin_server':
@@ -3008,23 +3023,36 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     this.serverNodeStorageManagers.set(storeId, storageManager);
     const storageContext = storageManager.createContext('persist');
     const random = randomBytes(8).toString('hex');
-    await storageContext.set('storeId', storeId);
-    await storageContext.set('deviceName', deviceName);
-    await storageContext.set('deviceType', deviceType);
-    await storageContext.set('vendorId', vendorId);
-    await storageContext.set('vendorName', vendorName.slice(0, 32));
-    await storageContext.set('productId', productId);
-    await storageContext.set('productName', productName.slice(0, 32));
-    await storageContext.set('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
-    await storageContext.set('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
-    await storageContext.set('nodeLabel', deviceName.slice(0, 32));
-    await storageContext.set('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
-    await storageContext.set('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
-    await storageContext.set('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
-    await storageContext.set('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
-    await storageContext.set('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
-    await storageContext.set('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
-    await storageContext.set('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
+    /**
+     * Writes a primitive initialization value only when missing or different.
+     *
+     * @param {string} key The storage key.
+     * @param {string | number} value The desired value.
+     * @returns {Promise<void>} Resolves after any required write completes.
+     */
+    async function setIfDifferent(key: string, value: string | number): Promise<void> {
+      if (!(await storageContext.has(key)) || (await storageContext.get(key)) !== value) {
+        await storageContext.set(key, value);
+      }
+    }
+
+    await setIfDifferent('storeId', storeId);
+    await setIfDifferent('deviceName', deviceName);
+    await setIfDifferent('deviceType', deviceType);
+    await setIfDifferent('vendorId', vendorId);
+    await setIfDifferent('vendorName', vendorName.slice(0, 32));
+    await setIfDifferent('productId', productId);
+    await setIfDifferent('productName', productName.slice(0, 32));
+    await setIfDifferent('productLabel', productLabel.replace(vendorName, '').trim().slice(0, 64));
+    await setIfDifferent('productUrl', isValidString(productUrl, 8, 256) && productUrl.startsWith('https://') ? productUrl : 'https://matterbridge.io');
+    await setIfDifferent('nodeLabel', deviceName.slice(0, 32));
+    await setIfDifferent('serialNumber', await storageContext.get('serialNumber', serialNumber ? serialNumber.slice(0, 32) : 'SN' + random));
+    await setIfDifferent('uniqueId', await storageContext.get('uniqueId', uniqueId ? uniqueId.slice(0, 32) : 'UI' + random));
+    await setIfDifferent('softwareVersion', isValidInteger(softwareVersion, 0, UINT32_MAX) ? softwareVersion : 1);
+    await setIfDifferent('softwareVersionString', isValidString(softwareVersionString, 1, 64) ? softwareVersionString : '1.0.0');
+    await setIfDifferent('hardwareVersion', isValidInteger(hardwareVersion, 0, UINT16_MAX) ? hardwareVersion : 1);
+    await setIfDifferent('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
+    await setIfDifferent('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
 
     this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
@@ -3203,6 +3231,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.frontend.wssSendRefreshRequired('matter', { matter: { ...getServerNodeData(serverNode) } });
       this.frontend.wssSendSnackbarMessage(`${storeId} is offline`, 5, 'warning');
       this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} fully decommissioned successfully!`, 5, 'success');
+      // The server node is reset to factory defaults and the subscribeAttribute listeners of the plugins are lost (#657)
+      this.log.notice(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`);
+      this.restartRequired = true;
+      this.frontend.wssSendRestartRequired(true, true);
+      this.frontend.wssSendSnackbarMessage(`Server node for ${storeId} was reset to factory defaults: restart Matterbridge before pairing it again`, 10, 'warning');
     });
 
     /** This event is triggered when the device went online. This means that it is discoverable in the network. */

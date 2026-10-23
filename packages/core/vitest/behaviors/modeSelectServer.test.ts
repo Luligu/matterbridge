@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { ModeSelect } from '@matter/types/clusters/mode-select';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -67,7 +67,7 @@ describe('MatterbridgeModeSelectServer', () => {
     ]);
     mode.addRequiredClusterServers();
     expect(mode).toBeDefined();
-    expect(await addDevice(aggregator, mode)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, mode)).toBeTruthy();
   });
 
   test('ModeSelect server', async () => {

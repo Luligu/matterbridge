@@ -12,7 +12,7 @@ import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-ener
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -67,7 +67,7 @@ describe('MatterbridgeDeviceEnergyManagementModeServer', () => {
     energyManagement.createDefaultDeviceEnergyManagementModeClusterServer();
     energyManagement.addRequiredClusterServers();
     expect(energyManagement).toBeDefined();
-    expect(await addDevice(aggregator, energyManagement)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, energyManagement)).toBeTruthy();
   });
 
   test('DeviceEnergyManagementMode server', async () => {

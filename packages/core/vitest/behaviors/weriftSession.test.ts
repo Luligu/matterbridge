@@ -14,7 +14,7 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
-import { loggerDebugSpy, loggerErrorSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { loggerDebugSpy, loggerErrorSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import { hasFfmpeg, runFfmpeg } from '../../src/behaviors/ffmpeg.js';
@@ -167,6 +167,16 @@ describe('WeriftWebRtcSession', () => {
     expect(session.localIceCandidates).toHaveLength(2);
 
     await session.close();
+  });
+
+  it('should not let the diagnostics timer keep the process alive', async () => {
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: false, offerAudio: false });
+
+    const { diagnosticsInterval } = session as unknown as { diagnosticsInterval: NodeJS.Timeout };
+    expect(diagnosticsInterval.hasRef()).toBe(false);
+
+    await session.close();
+    expect((session as unknown as { diagnosticsInterval?: NodeJS.Timeout }).diagnosticsInterval).toBeUndefined();
   });
 
   it('should create a real SDP offer with a video transceiver when video is requested', async () => {
@@ -1104,6 +1114,73 @@ describe('WeriftWebRtcSession', () => {
     });
   });
 
+  describe('ffmpeg generator exit logging', () => {
+    type GeneratorState = { testVideoGenerator?: ChildProcess; testAudioGenerator?: ChildProcess };
+
+    /** Makes runFfmpeg spawn a node process that streams until it is killed, like a real ffmpeg generator. */
+    function mockStreamingFfmpeg(): void {
+      vi.mocked(hasFfmpeg).mockReturnValue(true);
+      vi.mocked(runFfmpeg).mockImplementation(() => spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)']));
+    }
+
+    /**
+     * Creates a session with an attached video generator.
+     *
+     * @returns {Promise<WeriftWebRtcSession>} The session.
+     */
+    async function createVideoSession(): Promise<WeriftWebRtcSession> {
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
+      const transceiver = session.peerConnection.addTransceiver('video', { direction: 'sendonly' });
+      transceiver.codecs = [new RTCRtpCodecParameters({ mimeType: 'video/VP8', clockRate: 90000, payloadType: 96 })];
+      await session.createOffer();
+      return session;
+    }
+
+    it('should log the stop of a generator and not warn when the session closes it', async () => {
+      mockStreamingFfmpeg();
+      const session = await createVideoSession();
+      const generator = (session as unknown as GeneratorState).testVideoGenerator;
+      expect(generator).toBeDefined();
+      const exited = new Promise((resolve) => generator?.once('exit', resolve));
+      loggerWarnSpy.mockClear();
+
+      await session.close();
+      await exited;
+
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining(`Stopping ffmpeg video generator (pid ${generator?.pid})`));
+      expect(loggerWarnSpy).not.toHaveBeenCalledWith(expect.stringContaining('exited unexpectedly'));
+    });
+
+    it('should warn when a video generator is killed while its track is attached', async () => {
+      mockStreamingFfmpeg();
+      const session = await createVideoSession();
+      loggerWarnSpy.mockClear();
+
+      (session as unknown as GeneratorState).testVideoGenerator?.kill('SIGKILL');
+
+      await vi.waitFor(() =>
+        expect(loggerWarnSpy).toHaveBeenCalledWith(
+          expect.stringContaining('Ffmpeg video generator exited unexpectedly with signal SIGKILL: the video track carries no more media'),
+        ),
+      );
+      await session.close();
+    });
+
+    it('should warn when an audio generator exits on its own while its track is attached', async () => {
+      vi.mocked(hasFfmpeg).mockReturnValue(true);
+      vi.mocked(runFfmpeg).mockImplementation(() => spawn(process.execPath, ['-e', 'setTimeout(() => process.exit(1), 200)']));
+      const session = new WeriftWebRtcSession(1, { ...options });
+      loggerWarnSpy.mockClear();
+
+      await session.createAnswer(await createRemoteAudioOfferSdp());
+      expect((session as unknown as GeneratorState).testAudioGenerator).toBeDefined();
+
+      await vi.waitFor(() => expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining('Ffmpeg audio generator exited unexpectedly with code 1')));
+      await session.close();
+      expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('Stopping ffmpeg audio generator'));
+    });
+  });
+
   describe('audio track injection lifecycle', () => {
     it('should not attach a second test audio track when creating a subsequent answer on the same session', async () => {
       type TestAudioState = { testAudioAttached: boolean; testAudioGenerator?: { killed: boolean } };
@@ -1191,29 +1268,6 @@ describe('WeriftWebRtcSession', () => {
       expect(() => process.emit('exit', 0)).not.toThrow();
 
       await session.close();
-    });
-  });
-
-  describe('closeAll', () => {
-    it('should close every active session and remove them from the active session registry', async () => {
-      const first = new WeriftWebRtcSession(1, { ...options });
-      const second = new WeriftWebRtcSession(2, { ...options });
-      const firstCloseSpy = vi.spyOn(first, 'close');
-      const secondCloseSpy = vi.spyOn(second, 'close');
-
-      await WeriftWebRtcSession.closeAll();
-
-      expect(firstCloseSpy).toHaveBeenCalledTimes(1);
-      expect(secondCloseSpy).toHaveBeenCalledTimes(1);
-
-      // Closing again should be a no-op since closeAll() already removed both sessions from the registry.
-      await expect(WeriftWebRtcSession.closeAll()).resolves.toBeUndefined();
-      expect(firstCloseSpy).toHaveBeenCalledTimes(1);
-      expect(secondCloseSpy).toHaveBeenCalledTimes(1);
-    });
-
-    it('should not throw when there are no active sessions', async () => {
-      await expect(WeriftWebRtcSession.closeAll()).resolves.toBeUndefined();
     });
   });
 

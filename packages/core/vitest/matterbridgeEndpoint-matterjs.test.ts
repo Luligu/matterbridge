@@ -36,9 +36,20 @@ import { OccupancySensorDevice, OccupancySensorDeviceDefinition } from '@matter/
 import { OnOffLightSwitchDevice, OnOffLightSwitchRequirements } from '@matter/node/devices/on-off-light-switch';
 import { OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices/on-off-plug-in-unit';
 import { FabricManager } from '@matter/protocol';
-import { ColorControl, Descriptor, Groups, Identify, LevelControl, OccupancySensing, OnOff, ScenesManagement, Thermostat } from '@matter/types/clusters';
+import { Binding, ColorControl, Descriptor, Groups, Identify, LevelControl, OccupancySensing, OnOff, ScenesManagement, Thermostat } from '@matter/types/clusters';
 import { flushAsync } from '@matterbridge/test-utils';
-import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/test-utils/vitest/matter';
+import {
+  addBridgedDevice,
+  addDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  destroyTestEnvironment,
+  flushServerNode,
+  server,
+  startServerNode,
+  stopServerNode,
+} from '@matterbridge/test-utils/vitest/matter';
 import { HOMEDIR, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import {
@@ -52,6 +63,7 @@ import {
   onOffLight,
   onOffLightSwitch,
   onOffPlugInUnit,
+  powerSource,
   smokeCoAlarm,
   thermostat,
   waterHeater,
@@ -310,11 +322,11 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a smoke device', () => {
-    smoke = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'SmokeSensor' });
+    smoke = new MatterbridgeEndpoint([smokeCoAlarm, powerSource], { id: 'SmokeSensor' });
     smoke.addRequiredClusterServers();
     expect(smoke).toBeDefined();
     expect(smoke.id).toBe('SmokeSensor');
-    expect(smoke.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'identify', 'smokeCoAlarm']);
+    expect(smoke.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'powerSource', 'identify', 'smokeCoAlarm']);
   });
 
   test('create a water leak device', () => {
@@ -420,7 +432,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add onOffLight device to serverNode', async () => {
-    expect(await server.add(light)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
     expect(light.hasClusterServer(Descriptor)).toBe(true);
     expect(light.hasClusterServer(Identify)).toBe(true);
     expect(light.hasClusterServer(Groups)).toBe(true);
@@ -477,7 +489,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add enhanced onOffLight device to serverNode', async () => {
-    expect(await server.add(extendedLight)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, extendedLight)).toBeTruthy();
     expect(extendedLight.hasClusterServer(Descriptor)).toBe(true);
     expect(extendedLight.hasClusterServer(Identify)).toBe(true);
     expect(extendedLight.hasClusterServer(Groups)).toBe(true);
@@ -488,56 +500,56 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('add lift coverDevice device to serverNode', async () => {
-    expect(await server.add(coverLift)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, coverLift)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(coverLift);
   });
 
   test('add tilt coverDevice device to serverNode', async () => {
-    expect(await server.add(coverLiftTilt)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, coverLiftTilt)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(coverLiftTilt);
   });
 
   test('add lockDevice device to serverNode', async () => {
-    expect(await server.add(lock)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, lock)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(lock);
   });
 
   test('add fan device to serverNode', async () => {
-    expect(await server.add(vent)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, vent)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(vent);
   });
 
   test('add water tank device to serverNode', async () => {
-    expect(await server.add(waterTank)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, waterTank)).toBeTruthy();
   });
 
   test('add thermostat device to serverNode', async () => {
-    expect(await server.add(thermo)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, thermo)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(thermo);
   });
 
   test('add valve device to serverNode', async () => {
-    expect(await server.add(valve)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, valve)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(valve);
   });
 
   test('add mode device to serverNode', async () => {
-    expect(await server.add(mode)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, mode)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(mode);
   });
 
   test('add smoke device to serverNode', async () => {
-    expect(await server.add(smoke)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, smoke)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(smoke);
   });
 
   test('add leak device to serverNode', async () => {
-    expect(await server.add(leak)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, leak)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(leak);
   });
 
   test('add laundry device to serverNode', async () => {
-    expect(await server.add(laundry)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, laundry)).toBeTruthy();
     // (matterbridge as any).frontend.getClusterTextFromDevice(laundry);
   });
 
@@ -607,7 +619,7 @@ describe('Matterbridge ' + NAME, () => {
         { deviceType: occupancySensor.code, revision: occupancySensor.revision },
       ],
     });
-    expect(await server.add(endpoint)).toBeDefined();
+    expect(await addDevice(server, endpoint)).toBeTruthy();
 
     const endpoint_copy = server.parts.get('OnOffPlugin1');
     expect(endpoint_copy).toBeDefined();
@@ -638,6 +650,9 @@ describe('Matterbridge ' + NAME, () => {
       });
       void endpoint.setStateOf(OccupancySensingServer, { occupancy: { occupied: true } });
     });
+
+    // Same-type siblings need a TagList under strict validation: remove the endpoint without one before the next tests add theirs
+    await endpoint.delete();
   });
 
   test('add deviceType to onOffPlugin with tagList', async () => {
@@ -676,7 +691,7 @@ describe('Matterbridge ' + NAME, () => {
         ],
       }),
     ).not.toThrow();
-    await expect(server.add(endpoint)).resolves.toBeDefined();
+    expect(await addDevice(server, endpoint)).toBeTruthy();
   });
 
   test('add deviceType to onOffPlugin in the costructor', async () => {
@@ -711,7 +726,7 @@ describe('Matterbridge ' + NAME, () => {
       },
     );
     expect(endpoint).toBeDefined();
-    await expect(server.add(endpoint)).resolves.toBeDefined();
+    expect(await addDevice(server, endpoint)).toBeTruthy();
     const deviceTypeList = endpoint.state.descriptor.deviceTypeList;
     expect(deviceTypeList).toHaveLength(3);
     expect(deviceTypeList[0].deviceType).toBe(onOffPlugInUnit.code);
@@ -737,7 +752,7 @@ describe('Matterbridge ' + NAME, () => {
       },
     });
     expect(endpoint).toBeDefined();
-    await expect(server.add(endpoint)).resolves.toBeDefined();
+    expect(await addDevice(server, endpoint)).toBeTruthy();
     /*
     await endpoint.setStateOf(BooleanStateServer, { stateValue: true });
     await endpoint.set({ booleanState: { stateValue: false } });
@@ -765,11 +780,10 @@ describe('Matterbridge ' + NAME, () => {
 
     const mbServerMandatory = clusterIds((device.type as any).requirements?.server?.mandatory ?? {});
     const mjServerMandatory = clusterIds(OnOffLightSwitchRequirements.server.mandatory);
-    // matter.js: server mandatory = [Identify] only.
-    // Matterbridge: server mandatory = [Identify, OnOff] — OnOff is also kept as a server cluster
-    // so that bridge plugins receive OnOff commands directly.
-    expect(mjServerMandatory).toEqual([Identify.id]);
-    expect(mbServerMandatory).toContain(Identify.id);
+    // Device Library §1.1.7 requires Binding for Simple endpoints with application clients.
+    // On/Off Light Switch (§6.1) requires Identify server and Identify/OnOff clients.
+    expect(mjServerMandatory).toEqual([Identify.id, Binding.id]);
+    expect(mbServerMandatory).toEqual(mjServerMandatory);
     expect(mbServerMandatory).not.toContain(OnOff.id);
 
     const mbClientMandatory = clusterIds((device.type as any).requirements?.client?.mandatory ?? {});

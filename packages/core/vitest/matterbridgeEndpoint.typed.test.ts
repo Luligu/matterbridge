@@ -28,7 +28,15 @@ import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { BooleanState, Identify, PowerSource, Switch, Thermostat } from '@matter/types/clusters';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { type ClusterId, EndpointNumber } from '@matter/types/datatype';
-import { addDevice, aggregator, createServerNode, createTestEnvironment, deleteDevice, destroyTestEnvironment, flushServerNode } from '@matterbridge/test-utils/vitest/matter';
+import {
+  addBridgedDevice,
+  aggregator,
+  createServerNode,
+  createTestEnvironment,
+  deleteDevice,
+  destroyTestEnvironment,
+  flushServerNode,
+} from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
@@ -60,7 +68,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(true);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       await device.setAttribute(BooleanState, 'stateValue', true, device.log);
 
@@ -105,7 +113,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(true);
     device.createDefaultBindingClusterServer([Identify.id]);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const behaviorOptions: { clientList?: ClusterId[] } | undefined = device.getClusterServerOptions(MatterbridgeBindingServer);
       const clusterOptions: { stateValue?: boolean } | undefined = device.getClusterServerOptions(BooleanState);
@@ -139,7 +147,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(false);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const setFromBehavior: boolean = await device.setAttribute(BooleanStateBehavior, 'stateValue', true, device.log);
       expect(setFromBehavior).toBe(true);
@@ -194,7 +202,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(false);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const updateFromBehavior: boolean = await device.updateAttribute(BooleanStateBehavior, 'stateValue', true, device.log);
       expect(updateFromBehavior).toBe(true);
@@ -249,7 +257,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(true);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       let behaviorState: boolean | undefined;
       let behaviorOldState: boolean | undefined;
@@ -349,7 +357,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(true);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const clusterFromBehavior: { stateValue: boolean } | undefined = device.getCluster(BooleanStateBehavior, device.log);
       const clusterFromServer: { stateValue: boolean } | undefined = device.getCluster(BooleanStateServer, device.log);
@@ -384,7 +392,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultBooleanStateClusterServer(false);
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const setFromBehavior: boolean = await device.setCluster(BooleanStateBehavior, { stateValue: true }, device.log);
       expect(setFromBehavior).toBe(true);
@@ -438,7 +446,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const setFromBehavior: boolean = await device.setCluster(OnOffBehavior, { onOff: true }, device.log);
       expect(setFromBehavior).toBe(true);
@@ -492,7 +500,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultThermostatClusterServer();
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       type ThermostatInternal = InstanceType<(typeof ThermostatServer)['Internal']>;
 
@@ -535,7 +543,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorInvokeTypeCheck', number: EndpointNumber(907) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    device.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const invokeFromBehavior: Promise<void> = device.invokeBehaviorCommand(IdentifyBehavior, 'identify', { identifyTime: 5 });
       await invokeFromBehavior;
@@ -590,7 +599,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorSubscribeCommandTypeCheck', number: EndpointNumber(913) }, true);
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    device.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const subscribeFromBehavior: MatterbridgeEndpoint = device.subscribeCommand(IdentifyBehavior, 'identify', ({ request }) => {
         const identifyTime: number = request.identifyTime;
@@ -637,7 +647,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultSwitchClusterServer();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const triggerFromBehavior: boolean = await device.triggerEvent(
         SwitchServer.with(Switch.Feature.MomentarySwitch, Switch.Feature.MomentarySwitchRelease, Switch.Feature.MomentarySwitchLongPress, Switch.Feature.MomentarySwitchMultiPress),
@@ -696,7 +706,8 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     const device = new MatterbridgeEndpoint(rainSensor, { id: 'RainSensorPowerSourceTypeCheck', number: EndpointNumber(908) }, true);
     expect(device).toBeDefined();
     device.createDefaultPowerSourceBatteryClusterServer();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    device.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
     try {
       const batteryBehavior = PowerSourceBehavior.with(PowerSource.Feature.Battery);
       const wiredBehavior = PowerSourceBehavior.with(PowerSource.Feature.Wired);

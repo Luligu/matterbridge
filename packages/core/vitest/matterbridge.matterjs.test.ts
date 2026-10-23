@@ -17,6 +17,7 @@ import path from 'node:path';
 
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { waiter } from '@matterbridge/utils';
 import { getInterfaceName } from '@matterbridge/utils/network';
@@ -26,7 +27,10 @@ import { Matterbridge } from '../src/matterbridge.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
 
 // Setup the test environment
-await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()]);
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
 process.argv.push('--homedir', HOMEDIR);
 // Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
 const mdnsInterface = getInterfaceName();
@@ -190,6 +194,7 @@ describe('Matterbridge matterjs', () => {
   test('serverNode decommissioned', () => {
     matterbridge.serverNode?.lifecycle.decommissioned.emit(undefined as any);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge fully decommissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was reset to factory defaults: restart Matterbridge before pairing it again`);
   });
 
   test('serverNode fabricsChanged', () => {
@@ -235,10 +240,7 @@ describe('Matterbridge matterjs', () => {
     await (matterbridge as any).stopServerNode(matterbridge.serverNode, 100);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Closing Matterbridge server node`));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to close Matterbridge server node`));
-    await new Promise((resolve) => {
-      setTimeout(resolve, 1000);
-    });
-    await Promise.resolve();
+    await flushAsync(undefined, undefined, 100);
 
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge, 0, 0);

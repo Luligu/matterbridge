@@ -18,7 +18,7 @@ import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transpo
 import { EndpointNumber } from '@matter/types/datatype';
 import { StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -97,7 +97,7 @@ describe('FloodlightCamera', () => {
     expect(clientList).toEqual([WebRtcTransportRequestor.id]);
     expect(cameraChild?.type.clientClusters['webRtcTransportRequestor']).toBe(WebRtcTransportRequestorClient);
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(FixedLabel, 'labelList')).toEqual([{ label: 'composed', value: 'FloodlightCamera' }]);
     expect(light?.getAttribute(OnOff, 'onOff')).toBe(false);
     expect(cameraChild?.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(4_194_304);
@@ -106,7 +106,7 @@ describe('FloodlightCamera', () => {
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new FloodlightCamera('Floodlight Camera Snapshot', 'FLOODLIGHT-CAMERA-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -136,15 +136,35 @@ describe('FloodlightCamera', () => {
         .toSorted(),
     ).toEqual(
       [
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Floodlight Camera Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Floodlight Camera'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='FLOODLIGHT-CAMERA-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='87588fb899284f4befef242969bf42c1'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 324, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 324, revision: 1 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[ 6, 7 ]',
-        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 64 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 57, 64 ]',
         'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
         'fixedLabel(0x40).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
         'fixedLabel(0x40).clusterRevision(0xfffd)=1',
@@ -284,7 +304,7 @@ describe('FloodlightCamera', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 3 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 256, revision: 4 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
@@ -330,7 +350,7 @@ describe('FloodlightCamera', () => {
     const light = device.getChildEndpointById('FrontFloodlight');
     expect(light).toBeDefined();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(light?.getAttribute(OnOff, 'onOff')).toBe(true);
   });
 
@@ -341,7 +361,7 @@ describe('FloodlightCamera', () => {
     const cameraChild = device.getChildEndpointById('Camera');
     expect(cameraChild?.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(cameraChild?.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(cameraChild?.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -354,7 +374,7 @@ describe('FloodlightCamera', () => {
     const device = new FloodlightCamera(`Floodlight Camera ${powerSourceType}`, `FLOODLIGHT-CAMERA-${powerSourceType.toUpperCase()}`, { powerSourceType });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(expectedChargeLevel);
   });
 
@@ -362,17 +382,19 @@ describe('FloodlightCamera', () => {
     const device = new FloodlightCamera('Floodlight Camera None', 'FLOODLIGHT-CAMERA-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should add additional lights with tags and a custom initial state', async () => {
-    const device = new FloodlightCamera('Floodlight Camera Multi Light', 'FLOODLIGHT-CAMERA-MULTI-LIGHT');
+    const device = new FloodlightCamera('Floodlight Camera Multi Light', 'FLOODLIGHT-CAMERA-MULTI-LIGHT', {
+      lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+    });
     const left = device.addLight('Left Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }], onOff: true });
     const right = device.addLight('Right Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftFloodlight');
     expect(right.id).toBe('RightFloodlight');
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(left.getAttribute(OnOff, 'onOff')).toBe(true);
     expect(right.getAttribute(OnOff, 'onOff')).toBe(false);
   });
@@ -388,7 +410,7 @@ describe('FloodlightCamera', () => {
     expect(device.getChildEndpointById('Camera')?.number).toBe(EndpointNumber(16_02_1));
     expect(device.getChildEndpointById('Light')?.number).toBe(EndpointNumber(16_02_2));
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should create the camera child endpoint with a tagList', async () => {
@@ -398,16 +420,18 @@ describe('FloodlightCamera', () => {
     const cameraChild = device.getChildEndpointById('Camera');
     expect(cameraChild).toBeDefined();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }]);
   });
 
   it('should add an additional light with an explicit endpoint number', async () => {
-    const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER');
-    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_3) });
-    expect(light.number).toBe(EndpointNumber(16_02_3));
+    const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER', {
+      lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+    });
+    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_0), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Side' }] });
+    expect(light.number).toBe(EndpointNumber(16_02_0));
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should create a floodlight camera device with custom stream usages on the camera child', async () => {
@@ -419,7 +443,7 @@ describe('FloodlightCamera', () => {
     });
     const cameraChild = device.getChildEndpointById('Camera');
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(cameraChild?.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView]);
     expect(cameraChild?.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView]);
   });
@@ -428,7 +452,7 @@ describe('FloodlightCamera', () => {
     const weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
     const device = new FloodlightCamera('Floodlight Camera Werift', 'FLOODLIGHT-CAMERA-WERIFT', { cameraOptions: { weriftOfferOptions } });
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     const cameraChild = device.getChildEndpointById('Camera');
     expect(cameraChild?.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });

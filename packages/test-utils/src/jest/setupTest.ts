@@ -156,7 +156,7 @@ async function installSpies(debug: boolean): Promise<void> {
  *
  * @example
  * ```typescript
- * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from './jestutils/jestSetupTest.js';
+ * import { consoleDebugSpy, consoleErrorSpy, consoleInfoSpy, consoleLogSpy, consoleWarnSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/jest/setup';
  *
  * // Setup the test environment
  * await setupTest(NAME, false);

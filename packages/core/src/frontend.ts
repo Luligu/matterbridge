@@ -3,7 +3,7 @@
  * @description This file contains the class Frontend.
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.5
+ * @version 1.4.6
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -83,7 +83,7 @@ import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/err
 import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
-import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
+import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
 // Third-party modules
 import type { Express } from 'express';
 import { AnsiLogger, bgHex, CYAN, db, debugStringify, er, GREEN, LogLevel, nf, nt, rs, TimestampFormat, UNDERLINE, UNDERLINEOFF, wr, YELLOW } from 'node-ansi-logger';
@@ -154,15 +154,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   private readonly verbose = hasAnyParameter('verbose', 'verbose-frontend');
   private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-frontend');
 
-  // Frontend settings
-  public readonly readOnly = hasParameter('readonly');
-  /** It indicates whether a restart is required. It can be unset in childbridge mode by restarting the plugin that triggered the restart. */
-  public restartRequired = false;
-  /** It indicates whether a fixed restart is required. It cannot be unset once set. */
-  public fixedRestartRequired = false;
-  /** It indicates whether an update is available. */
-  public updateRequired = false;
-
   /**
    * Creates a frontend server controller.
    *
@@ -218,14 +209,22 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_restartrequired':
+          this.server.request({
+            type: 'matterbridge_apisettings',
+            src: 'frontend',
+            dst: 'matterbridge',
+            params: { restartRequired: true, fixedRestartRequired: msg.params.fixed },
+          });
           this.wssSendRestartRequired(msg.params.snackbar, msg.params.fixed);
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_restartnotrequired':
+          this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: false } });
           this.wssSendRestartNotRequired(msg.params.snackbar);
           this.server.respond({ ...msg, result: { success: true } });
           break;
         case 'frontend_updaterequired':
+          this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { updateRequired: true } });
           this.wssSendUpdateRequired(msg.params.version, msg.params.devVersion);
           this.server.respond({ ...msg, result: { success: true } });
           break;
@@ -284,8 +283,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           if (msg.result?.packageCommand === 'install') {
             this.wssSendCloseSnackbarMessage(`Installing package ${msg.result.packageName}...`);
             if (msg.result.success) {
-              this.restartRequired = true;
-              this.fixedRestartRequired = true;
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true, fixedRestartRequired: true } });
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Installed package ${msg.result.packageName}`, 5, 'success');
               /* v8 ignore next */
@@ -297,8 +295,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           if (msg.result?.packageCommand === 'uninstall') {
             this.wssSendCloseSnackbarMessage(`Uninstalling package ${msg.result.packageName}...`);
             if (msg.result.success) {
-              this.restartRequired = true;
-              this.fixedRestartRequired = true;
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true, fixedRestartRequired: true } });
               this.wssSendRestartRequired(true, true);
               this.wssSendSnackbarMessage(`Uninstalled package ${msg.result.packageName}`, 5, 'success');
               /* v8 ignore next */
@@ -1314,10 +1311,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       matterPort: this.matterbridge.initialPort || 5540,
       matterDiscriminator: this.matterbridge.initialDiscriminator,
       matterPasscode: this.matterbridge.initialPasscode,
-      readOnly: this.readOnly,
-      restartRequired: this.restartRequired,
-      fixedRestartRequired: this.fixedRestartRequired,
-      updateRequired: this.updateRequired,
+      readOnly: this.matterbridge.readOnly,
+      restartRequired: this.matterbridge.restartRequired,
+      fixedRestartRequired: this.matterbridge.fixedRestartRequired,
+      updateRequired: this.matterbridge.updateRequired,
       startupAt: this.matterbridge.startupAt,
       shutdownAt: this.matterbridge.shutdownAt,
       runningTimes: this.matterbridge.runningTimes,
@@ -1453,8 +1450,12 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     if (fs.existsSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE)))
       fs.unlinkSync(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE));
     const diagnosticDestination = LogDestination({ name: 'diagnostic', level: MatterLogLevel.INFO, format: MatterLogFormat.formats.plain });
+    // LogDestination.add() doesn't await write(), so keep the pending writes to await them below
+    const writes: Promise<void>[] = [];
     diagnosticDestination.write = async (text: string, _message: Diagnostic.Message): Promise<void> => {
-      await fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
+      const write = fs.promises.appendFile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_DIAGNOSTIC_FILE), text + '\n', { encoding: 'utf8' });
+      writes.push(write);
+      await write;
     };
     Logger.destinations.diagnostic = diagnosticDestination;
     if (!diagnosticDestination.context) {
@@ -1472,7 +1473,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       ),
     );
     delete Logger.destinations.diagnostic;
-    await wait(500); // Wait for the log to be written
+    await Promise.allSettled(writes); // Wait for the log to be written
   }
 
   /**
@@ -1566,6 +1567,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           this.wssSendCloseSnackbarMessage(`Adding plugin ${data.params.pluginNameOrPath}...`);
           this.wssSendSnackbarMessage(`Added plugin ${data.params.pluginNameOrPath}`, 5, 'success');
           await this.server.fetch({ type: 'plugins_load', src: this.server.name, dst: 'plugins', params: { plugin: plugin.name } }, this.serverFetchTimeout);
+          this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
           this.wssSendRestartRequired();
           this.wssSendRefreshRequired('plugins');
           this.wssSendRefreshRequired('devices');
@@ -1675,7 +1677,11 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         for (const plugin of this.matterbridge.plugins) {
           if (plugin.restartRequired) needRestart++;
         }
-        if (needRestart === 0) this.wssSendRestartNotRequired(true); // Reset global restart required message
+        if (needRestart === 0) {
+          this.wssSendRestartNotRequired(true); // Reset global restart required message
+          this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: false } });
+        }
+
         // Start server nodes
         // @ts-expect-error Accessing private method
         if (plugin.serverNode) await this.matterbridge.startServerNode(plugin.serverNode);
@@ -1699,6 +1705,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         if (plugin) {
           fireAndForget(this.matterbridge.plugins.saveConfigFromJson(plugin, data.params.formData, true), this.log, `Save config for plugin ${plugin.name}`);
           this.wssSendSnackbarMessage(`Saved config for plugin ${data.params.pluginName}`);
+          this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
           this.wssSendRestartRequired();
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
         }
@@ -1956,6 +1963,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           case 'setbridgemode':
             if (isValidString(data.params.value) && ['bridge', 'childbridge'].includes(data.params.value)) {
               await this.matterbridge.nodeContext?.set('bridgeMode', data.params.value);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
             }
@@ -2039,6 +2047,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Matter.js mdns interface: ${data.params.value === '' ? 'all interfaces' : data.params.value}`);
               this.matterbridge.mdnsInterface = data.params.value === '' ? undefined : data.params.value;
               await this.matterbridge.nodeContext?.set('mattermdnsinterface', data.params.value);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Mdns interface changed to ${data.params.value === '' ? 'all interfaces' : data.params.value}`);
@@ -2049,6 +2058,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Matter.js ipv4 address: ${data.params.value === '' ? 'all ipv4 addresses' : data.params.value}`);
               this.matterbridge.ipv4Address = data.params.value === '' ? undefined : data.params.value;
               await this.matterbridge.nodeContext?.set('matteripv4address', data.params.value);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`IPv4 address changed to ${data.params.value === '' ? 'all ipv4 addresses' : data.params.value}`);
@@ -2059,6 +2069,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Matter.js ipv6 address: ${data.params.value === '' ? 'all ipv6 addresses' : data.params.value}`);
               this.matterbridge.ipv6Address = data.params.value === '' ? undefined : data.params.value;
               await this.matterbridge.nodeContext?.set('matteripv6address', data.params.value);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`IPv6 address changed to ${data.params.value === '' ? 'all ipv6 addresses' : data.params.value}`);
@@ -2070,6 +2081,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Set matter commissioning port to ${CYAN}${port}${db}`);
               this.matterbridge.port = this.matterbridge.initialPort = port;
               await this.matterbridge.nodeContext?.set<number>('matterport', port);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter port changed to ${port}`);
@@ -2077,6 +2089,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Reset matter commissioning port to ${CYAN}5540${db}`);
               this.matterbridge.port = this.matterbridge.initialPort = 5540;
               await this.matterbridge.nodeContext?.set<number>('matterport', 5540);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Invalid value: reset matter commissioning port to default 5540' });
               this.wssSendSnackbarMessage(`Matter port reset to default 5540`, undefined, 'error');
@@ -2088,6 +2101,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Set matter commissioning discriminator to ${CYAN}${discriminator}${db}`);
               this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = discriminator;
               await this.matterbridge.nodeContext?.set<number>('matterdiscriminator', discriminator);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter discriminator changed to ${discriminator}`);
@@ -2095,6 +2109,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Reset matter commissioning discriminator to ${CYAN}undefined${db}`);
               this.matterbridge.discriminator = this.matterbridge.initialDiscriminator = undefined;
               await this.matterbridge.nodeContext?.remove('matterdiscriminator');
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({
                 id: data.id,
@@ -2112,6 +2127,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.passcode = this.matterbridge.initialPasscode = passcode;
               this.log.debug(`Set matter commissioning passcode to ${CYAN}${passcode}${db}`);
               await this.matterbridge.nodeContext?.set<number>('matterpasscode', passcode);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
               this.wssSendSnackbarMessage(`Matter passcode changed to ${passcode}`);
@@ -2119,6 +2135,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.log.debug(`Reset matter commissioning passcode to ${CYAN}undefined${db}`);
               this.matterbridge.passcode = this.matterbridge.initialPasscode = undefined;
               await this.matterbridge.nodeContext?.remove('matterpasscode');
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
               sendResponse({
                 id: data.id,
@@ -2135,6 +2152,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               this.matterbridge.virtualMode = data.params.value as 'disabled' | 'light' | 'outlet' | 'switch' | 'mounted_switch';
               this.log.debug(`Set matterbridge virtual mode to ${CYAN}${data.params.value}${db}`);
               await this.matterbridge.nodeContext?.set<string>('virtualmode', data.params.value);
+              this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
               this.wssSendRestartRequired();
             }
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -2185,6 +2203,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             if (plugin.platform) plugin.platform.config = config;
             plugin.configJson = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
+            this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
             this.wssSendRestartRequired(false);
             this.wssSendRefreshRequired('plugins', { lock: plugin.name });
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -2232,6 +2251,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             if (plugin.platform) plugin.platform.config = config;
             plugin.configJson = config;
             await this.matterbridge.plugins.saveConfigFromPlugin(plugin, true);
+            this.server.request({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: { restartRequired: true } });
             this.wssSendRestartRequired(false);
             this.wssSendRefreshRequired('plugins', { lock: plugin.name });
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
@@ -2330,8 +2350,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendRestartRequired(snackbar: boolean = true, fixed: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart required message to all connected clients');
-    this.restartRequired = true;
-    this.fixedRestartRequired = fixed;
     if (snackbar) this.wssSendSnackbarMessage(`Restart required`, 0);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_required', success: true, response: { fixed } });
@@ -2345,7 +2363,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendRestartNotRequired(snackbar: boolean = true): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a restart not required message to all connected clients');
-    this.restartRequired = false;
     if (snackbar) this.wssSendCloseSnackbarMessage(`Restart required`);
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'restart_not_required', success: true });
@@ -2360,7 +2377,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   wssSendUpdateRequired(version: string, devVersion: boolean = false): void {
     if (!this.listening || this.webSocketServer?.clients.size === 0) return;
     this.log.debug('Sending a matterbridge version update required message to all connected clients');
-    this.updateRequired = true;
     // Send the message to all connected clients
     this.wssBroadcastMessage({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'update_required', success: true, response: { version, devVersion } });
   }

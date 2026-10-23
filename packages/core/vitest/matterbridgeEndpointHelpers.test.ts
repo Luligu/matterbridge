@@ -26,7 +26,7 @@ import { WindowCovering } from '@matter/types/clusters/window-covering';
 import { type ClusterId, VendorId } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -40,7 +40,7 @@ import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from '../src/behaviors/doorLockServer.js';
-import { closureController, doorLock, irrigationSystem, temperatureSensor, windowCovering } from '../src/matterbridgeDeviceTypes.js';
+import { bridgedNode, closureController, doorLock, irrigationSystem, temperatureSensor, waterValve, windowCovering } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
@@ -220,7 +220,7 @@ describe('Options helpers', () => {
     );
     device.addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
 
     expect(await internalFor(device, 'UnknownBehavior')).toBeUndefined();
 
@@ -406,7 +406,7 @@ describe('Options helpers', () => {
     expect(cluster0).toBeFalsy();
     expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`setCluster ${hk}TemperatureMeasurement${er} error:`));
 
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
 
     expect(await device.setCluster(TemperatureMeasurementServer, { measuredValue: 1900, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
     const behavior1 = device.getCluster(TemperatureMeasurementServer, log);
@@ -443,27 +443,27 @@ describe('Options helpers', () => {
   });
 
   test('addClusterClients with empty list is a no-op', async () => {
-    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsEmpty' });
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsEmpty' });
     device.addClusterClients([]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toHaveLength(0);
   });
 
   test('addClusterClients with unknown cluster log message', async () => {
-    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsUnknown' });
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsUnknown' });
     device.addClusterClients([0xffff as ClusterId]);
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeTruthy();
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toHaveLength(1);
     expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
   });
 
   test('addClusterClients called twice merges clientList without duplicates', async () => {
-    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsMerge' });
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsMerge' });
     device.addClusterClients([ClosureControl.id]);
     device.addClusterClients([FlowMeasurement.id, ClosureControl.id]);
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     const clientList = device.stateOf(DescriptorServer).clientList;
     expect(clientList).toContain(ClosureControl.id);
     expect(clientList).toContain(FlowMeasurement.id);
@@ -471,10 +471,10 @@ describe('Options helpers', () => {
   });
 
   test('addClusterClients merges into existing options with no clientList', async () => {
-    device = new MatterbridgeEndpoint(doorLock, { id: 'ClusterClientsNoList' });
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsNoList' });
     device.behaviors.require(MatterbridgeBindingServer, {});
     device.addClusterClients([ClosureControl.id]);
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     const clientList = device.stateOf(DescriptorServer).clientList;
     expect(clientList).toContain(ClosureControl.id);
   });
@@ -484,16 +484,18 @@ describe('Options helpers', () => {
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
     device.addRequiredClusterClients();
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toContain(ClosureControl.id);
   });
 
   test('addOptionalClusterClients requires MatterbridgeBindingServer for device types with optional client clusters', async () => {
     device = new MatterbridgeEndpoint(irrigationSystem, { id: 'ClusterClientsOptional' });
+    // The Irrigation System device type requires a Water Valve component
+    device.addChildDeviceType('Valve', waterValve).createDefaultIdentifyClusterServer().createDefaultValveConfigurationAndControlClusterServer();
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
     device.addOptionalClusterClients();
     expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toContain(FlowMeasurement.id);
   });
 
@@ -501,7 +503,7 @@ describe('Options helpers', () => {
     device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandWaiterTrue' });
     device.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 200);
     device.addRequiredClusterServers();
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
 
     // Fake the movement timer and the waiter timers, and advance them until the 200ms movement completes.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
@@ -525,7 +527,7 @@ describe('Options helpers', () => {
     // No simulated movement: the condition never becomes true, only the waiter timeout matters.
     device.createDefaultLiftTiltWindowCoveringClusterServer();
     device.addRequiredClusterServers();
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
 
     // Fake the waiter timers, and advance them until its 1000ms timeout expires.
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval'] });
@@ -541,7 +543,7 @@ describe('Options helpers', () => {
     device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandErrors' });
     device.createDefaultWindowCoveringClusterServer();
     device.addRequiredClusterServers();
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
 
     expect(await invokeBehaviorCommand(device, 'noCluster', 'stopMotion')).toBe(false);
     expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`invokeBehaviorCommand error: command ${hk}stopMotion${er} not found on endpoint`));
@@ -560,7 +562,7 @@ describe('Options helpers', () => {
     device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandLock' });
     device.createDefaultLiftTiltWindowCoveringClusterServer();
     device.addRequiredClusterServers();
-    await addDevice(aggregator, device);
+    await addBridgedDevice(aggregator, device);
 
     // Hold the windowCovering behavior lock in a separate transaction until the test releases it.
     let releaseLock: () => void = () => {};

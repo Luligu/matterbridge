@@ -1,6 +1,6 @@
 ---
 name: verify-version-alignment
-description: Verify that package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version rules. v.1.0.1
+description: Verify that package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version rules. v.1.0.3
 argument-hint: '[optional scope, notes, or expected release tag]'
 ---
 

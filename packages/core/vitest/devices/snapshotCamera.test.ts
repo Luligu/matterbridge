@@ -13,7 +13,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -75,7 +75,7 @@ describe('SnapshotCamera', () => {
     expect(device.hasClusterServer(CameraAvStreamManagement.id)).toBeTruthy();
     expect(device.behaviors.has(MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Snapshot))).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'maxConcurrentEncoders')).toBe(1);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxEncodedPixelRate')).toBe(10000000);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(1024);
@@ -93,7 +93,7 @@ describe('SnapshotCamera', () => {
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new SnapshotCamera('Snapshot Camera Snapshot', 'SNAPSHOT-CAMERA-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -123,6 +123,26 @@ describe('SnapshotCamera', () => {
         .toSorted(),
     ).toEqual(
       [
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Snapshot Camera Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Snapshot Camera'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='SNAPSHOT-CAMERA-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='f18b84bc85f42c25a75cf68fc365bd3d'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'cameraAvStreamManagement(0x551).acceptedCommandList(0xfff9)=[ 7, 10, 11, 12 ]',
         'cameraAvStreamManagement(0x551).allocatedSnapshotStreams(0x11)=[ { snapshotStreamId: 0, imageCodec: 0, frameRate: 10, minResolution: { width: 640, height: 480 }, maxResolution: { width: 1920, height: 1080 }, quality: 90, referenceCount: 0, encodedPixels: false, hardwareEncoder: false, watermarkEnabled: undefined, osdEnabled: undefined } ]',
         'cameraAvStreamManagement(0x551).attributeList(0xfffb)=[ 0, 1, 6, 10, 11, 14, 17, 18, 65528, 65529, 65531, 65532, 65533 ]',
@@ -140,11 +160,11 @@ describe('SnapshotCamera', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[  ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 325, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 325, revision: 1 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 1361 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 47, 57, 1361 ]',
         'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
@@ -163,7 +183,7 @@ describe('SnapshotCamera', () => {
     const device = new SnapshotCamera('Snapshot Camera Identify', 'CAMERA-IDENTIFY', { identifyTime: 5, identifyType: Identify.IdentifyType.VisibleIndicator });
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(device.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -176,7 +196,7 @@ describe('SnapshotCamera', () => {
     const device = new SnapshotCamera(`Snapshot Camera ${powerSourceType}`, `CAMERA-${powerSourceType.toUpperCase()}`, { powerSourceType });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(expectedChargeLevel);
   });
 
@@ -184,7 +204,7 @@ describe('SnapshotCamera', () => {
     const device = new SnapshotCamera('Snapshot Camera None', 'CAMERA-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should create a snapshot camera device with custom stream options', async () => {
@@ -209,7 +229,7 @@ describe('SnapshotCamera', () => {
       snapshotSourceDevice: '/dev/video0',
     });
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     // The device installs the Snapshot-only derivation, so the state must be addressed through that same feature set.
     const snapshotServer = MatterbridgeCameraAvStreamManagementServer.with(CameraAvStreamManagement.Feature.Snapshot);
     expect(device.stateOf(snapshotServer).snapshotSource).toBe('webcam');

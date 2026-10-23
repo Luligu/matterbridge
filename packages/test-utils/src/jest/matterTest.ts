@@ -3,7 +3,7 @@
  * @description This file contains the Jest Matter Test Environment.
  * @author Luca Liguori
  * @created 2026-04-19
- * @version 1.0.1
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -34,13 +34,18 @@ import { DescriptorServer } from '@matter/node/behaviors/descriptor';
 import { OnOffServer } from '@matter/node/behaviors/on-off';
 import { MountedOnOffControlDevice } from '@matter/node/devices/mounted-on-off-control';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
+import { AdministratorCommissioning } from '@matter/types/clusters/administrator-commissioning';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
+import { EcosystemInformation } from '@matter/types/clusters/ecosystem-information';
+import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
-import { MATTER_STORAGE_DIR, type PlatformMatterbridge, type SharedMatterbridge } from '@matterbridge/types';
+import { type BridgeMode, MATTER_STORAGE_DIR, type PlatformMatterbridge, type RestartMode, type SharedMatterbridge, type VirtualMode } from '@matterbridge/types';
 // node-ansi-logger module
 import { er, LogLevel, rs } from 'node-ansi-logger';
 
 // local modules
+import { errorCauseMessages } from '../errorMessages.js';
 import { flushAsync } from '../flushAsync.js';
 import { inspectError } from '../inspectError.js';
 import { getInterfaceName } from '../network.js';
@@ -140,9 +145,12 @@ export async function destroyTestEnvironment(): Promise<void> {
 /**
  * Get a mocked PlatformMatterbridge.
  *
+ * @param {BridgeMode} [bridgeMode] - The bridge mode of the mocked Matterbridge. Default is 'none'.
+ * @param {RestartMode} [restartMode] - The restart mode of the mocked Matterbridge. Default is 'none'.
+ * @param {VirtualMode} [virtualMode] - The virtual mode of the mocked Matterbridge. Default is 'mounted_switch'.
  * @returns {PlatformMatterbridge} An object representing the mocked PlatformMatterbridge.
  */
-export function getMatterbridge(): PlatformMatterbridge {
+export function getMatterbridge(bridgeMode: BridgeMode = 'none', restartMode: RestartMode = 'none', virtualMode: VirtualMode = 'mounted_switch'): PlatformMatterbridge {
   const matterbridge: PlatformMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
@@ -174,13 +182,13 @@ export function getMatterbridge(): PlatformMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.10.14',
-    matterbridgeLatestVersion: '3.10.14',
-    matterbridgeDevVersion: '3.10.14',
-    frontendVersion: '3.6.5',
-    bridgeMode: 'none',
-    restartMode: 'none',
-    virtualMode: 'mounted_switch',
+    matterbridgeVersion: '3.11.0',
+    matterbridgeLatestVersion: '3.11.0',
+    matterbridgeDevVersion: '3.11.0',
+    frontendVersion: '3.11.0',
+    bridgeMode,
+    restartMode,
+    virtualMode,
     aggregatorVendorId: VendorId(0xfff1),
     aggregatorVendorName: 'Matterbridge',
     aggregatorProductId: 0x8000,
@@ -192,9 +200,12 @@ export function getMatterbridge(): PlatformMatterbridge {
 /**
  * Get a mocked SharedMatterbridge.
  *
+ * @param {BridgeMode} [bridgeMode] - The bridge mode of the mocked Matterbridge. Default is 'none'.
+ * @param {RestartMode} [restartMode] - The restart mode of the mocked Matterbridge. Default is 'none'.
+ * @param {VirtualMode} [virtualMode] - The virtual mode of the mocked Matterbridge. Default is 'mounted_switch'.
  * @returns {SharedMatterbridge} An object representing the mocked SharedMatterbridge.
  */
-export function getSharedMatterbridge(): SharedMatterbridge {
+export function getSharedMatterbridge(bridgeMode: BridgeMode = 'none', restartMode: RestartMode = 'none', virtualMode: VirtualMode = 'mounted_switch'): SharedMatterbridge {
   const matterbridge: SharedMatterbridge = {
     systemInformation: {
       interfaceName: 'eth0',
@@ -226,17 +237,17 @@ export function getSharedMatterbridge(): SharedMatterbridge {
     matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
     matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
     globalModulesDirectory: path.join(HOMEDIR, 'node_modules'),
-    matterbridgeVersion: '3.10.14',
-    matterbridgeLatestVersion: '3.10.14',
-    matterbridgeDevVersion: '3.10.14',
-    frontendVersion: '3.6.5',
+    matterbridgeVersion: '3.11.0',
+    matterbridgeLatestVersion: '3.11.0',
+    matterbridgeDevVersion: '3.11.0',
+    frontendVersion: '3.11.0',
     dockerDev: undefined,
     dockerVersion: undefined,
     dockerLatestVersion: undefined,
     dockerDevVersion: undefined,
-    bridgeMode: 'none',
-    restartMode: 'none',
-    virtualMode: 'mounted_switch',
+    bridgeMode,
+    restartMode,
+    virtualMode,
     profile: undefined,
     logLevel: LogLevel.DEBUG,
     fileLogger: false,
@@ -268,7 +279,11 @@ export const addBridgedEndpoint = async (pluginName: string, device: Endpoint): 
     await aggregator.add(device);
     return Promise.resolve(true);
   } catch (error) {
-    return Promise.reject(error);
+    // Error serializers may traverse prototype getters, including the endpoint's entire node graph.
+    // Copy only messages; retaining the original error as a cause also exposes that graph.
+    const message = error instanceof Error ? error.message : String(error);
+    const registrationError = new Error([`Error registering device ${pluginName}.${device.maybeId}: ${message}`, ...errorCauseMessages(error)].join('\n'));
+    return Promise.reject(registrationError);
   }
 };
 
@@ -776,6 +791,108 @@ export async function flushServerNode(rounds: number = 3, ticks: number = 1, mic
   await flushAsync(ticks, microTurns, pause);
 }
 
+/** The BridgedNode device type definition, same as `bridgedNode` in the core matterbridgeDeviceTypes (this package cannot depend on core). */
+const bridgedNode = {
+  name: 'BridgedNode',
+  code: DeviceTypeId(0x0013),
+  deviceClass: 'Utility',
+  deviceScope: 'endpoint',
+  revision: 3,
+  requiredServerClusters: [BridgedDeviceBasicInformation.id],
+  optionalServerClusters: [PowerSource.id, EcosystemInformation.id, AdministratorCommissioning.id],
+  requiredClientClusters: [],
+  optionalClientClusters: [],
+  requiredDeviceTypes: [],
+  requiredServerClustersOneOf: [],
+  composedOf: [],
+};
+
+/** The members of a MatterbridgeEndpoint used by {@link addBridgedDevice}, so this package does not depend on core. */
+interface MatterbridgeEndpoint {
+  deviceTypes: Map<number, unknown>;
+  deviceName?: string;
+  serialNumber?: string;
+  uniqueId?: string;
+  vendorId?: number;
+  vendorName?: string;
+  productName?: string;
+  softwareVersion?: number;
+  softwareVersionString?: string;
+  hardwareVersion?: number;
+  hardwareVersionString?: string;
+  productLabel?: string;
+  productUrl?: string;
+  configurationVersion?: number;
+  productId?: number;
+}
+
+/**
+ * Whether the device is a MatterbridgeEndpoint that {@link addBridgedDevice} can bridge.
+ *
+ * @param {Endpoint} device The device to check.
+ * @returns {boolean} True when the device has the MatterbridgeEndpoint members used by {@link addBridgedDevice}.
+ */
+function isMatterbridgeEndpoint(device: Endpoint): device is Endpoint & MatterbridgeEndpoint {
+  return 'deviceTypes' in device && device.deviceTypes instanceof Map;
+}
+
+/**
+ * Add a device (endpoint) to an aggregator as a bridged device, like `registerDevice()` does in bridge mode.
+ *
+ * For a MatterbridgeEndpoint, adds the BridgedNode device type to the device types and, when the endpoint has none, the
+ * matter.js BridgedDeviceBasicInformationServer with Reachable true and the MatterbridgeEndpoint identity values when present
+ * (matter.js creates the UniqueID when missing). Other endpoints are added unchanged.
+ * Then adds the device with {@link addDevice}.
+ *
+ * Aggregator children with BridgedNode are disambiguated by their NodeLabel, so strict endpoint validation does not require
+ * a TagList on siblings sharing a device type (Matter 1.6.1 Core § 9.2.9, Device Library § 11.2.6).
+ *
+ * @param {Endpoint<AggregatorEndpoint>} owner The aggregator to add the device to.
+ * @param {Endpoint} device The device to bridge and add.
+ * @param {number} rounds The number of rounds to perform after addition (default 1).
+ * @param {number} ticks Number of macrotask (setImmediate) turns to yield in each round (default 1).
+ * @param {number} microTurns Number of microtask drains (Promise.resolve chains) to perform in each round (default 1).
+ * @param {number} pause The pause time in milliseconds after addition (default 10ms).
+ * @returns {Promise<boolean>} The result of {@link addDevice}: true when the device has been added and is ready, false when adding it failed.
+ * @example
+ * ```typescript
+ * expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
+ * ```
+ */
+export async function addBridgedDevice(
+  owner: Endpoint<AggregatorEndpoint>,
+  device: Endpoint,
+  rounds: number = 1,
+  ticks: number = 1,
+  microTurns: number = 1,
+  pause: number = 10,
+): Promise<boolean> {
+  if (isMatterbridgeEndpoint(device)) {
+    if (!device.deviceTypes.has(bridgedNode.code)) device.deviceTypes.set(bridgedNode.code, bridgedNode);
+    if (device.behaviors.supported.bridgedDeviceBasicInformation === undefined) {
+      // Values from the MatterbridgeEndpoint, when present. matter.js creates the UniqueID when missing.
+      device.behaviors.require(BridgedDeviceBasicInformationServer, {
+        vendorId: device.vendorId === undefined ? undefined : VendorId(device.vendorId), // Fixed quality (F)
+        vendorName: device.vendorName?.slice(0, 32), // Fixed quality (F)
+        productId: device.productId, // Fixed quality (F)
+        productName: device.productName?.slice(0, 32), // Fixed quality (F)
+        productLabel: device.productLabel?.slice(0, 64), // Fixed quality (F)
+        productUrl: device.productUrl, // Fixed quality (F)
+        nodeLabel: device.deviceName?.slice(0, 32), // Non-Volatile quality (N)
+        serialNumber: device.serialNumber?.slice(0, 32), // Fixed quality (F)
+        uniqueId: device.uniqueId?.slice(0, 32), // Fixed quality (F) in the specs, made Fixed and Non-Volatile (FN) by matter.js
+        softwareVersion: device.softwareVersion, // Fixed quality (F)
+        softwareVersionString: device.softwareVersionString, // Fixed quality (F)
+        hardwareVersion: device.hardwareVersion, // Fixed quality (F)
+        hardwareVersionString: device.hardwareVersionString, // Fixed quality (F)
+        configurationVersion: device.configurationVersion, // Non-Volatile quality (N)
+        reachable: true, // No quality (volatile)
+      });
+    }
+  }
+  return addDevice(owner, device, rounds, ticks, microTurns, pause);
+}
+
 /**
  * Add a device (endpoint) to a matter server node or an aggregator.
  *
@@ -812,7 +929,12 @@ export async function addDevice(
     await owner.add(device);
   } catch (error) {
     inspectError(log, `Error adding device ${device.maybeId}.${device.maybeNumber}`, error);
-    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}${rs}\n`);
+    // Only the messages: the matter.js validation errors (an AggregateError of violations) reference the endpoint and its node graph
+    const message = error instanceof Error ? error.message : String(error);
+    const causes = errorCauseMessages(error)
+      .map((cause) => `\n${cause}`)
+      .join('');
+    process.stderr.write(`${er}Error adding device ${device.maybeId}.${device.maybeNumber}: ${message}${causes}${rs}\n`);
     return false;
   }
   await device.construction.ready;

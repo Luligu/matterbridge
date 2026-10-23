@@ -1,6 +1,6 @@
 ---
 name: verify-npm-alignment
-description: Verify that matterbridge and all Matterbridge workspace packages are aligned on the npm latest and dev tags. v.1.0.0
+description: Verify that matterbridge and all Matterbridge workspace packages are aligned on the npm latest and dev tags. v.1.0.1
 ---
 
 # Verify npm latest and dev tag alignment for Matterbridge packages
@@ -13,7 +13,6 @@ Scope:
 - Check the root `matterbridge` package and every real workspace package listed in the root `workspaces` array.
 - Read each workspace package name from its `package.json`; do not hard-code the workspace package list.
 - Ignore mock package manifests under `packages/core/src/mock/**`.
-- Exclude [apps/frontend/package.json](../../../apps/frontend/package.json) because `@matterbridge/frontend` is versioned and published independently. Include it only when explicitly requested.
 
 Execution rules:
 

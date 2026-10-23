@@ -12,7 +12,7 @@ import { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm';
 import { Status } from '@matter/types/globals';
 import { TlvOfModel } from '@matter/types/tlv';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -103,7 +103,7 @@ describe('Server clusters and behaviors', () => {
       criticalUnderTemperatureThreshold: -1000,
     });
     sensor.addRequiredClusterServers();
-    expect(await addDevice(aggregator, sensor)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, sensor)).toBeTruthy();
 
     expect(sensor.behaviors.has(MatterbridgeTemperatureAlarmServer)).toBeTruthy();
     expect(sensor.behaviors.elementsOf(MatterbridgeTemperatureAlarmServer).commands.has('reset')).toBeTruthy();
@@ -272,7 +272,7 @@ describe('Server clusters and behaviors', () => {
       criticalUnderTemperatureThreshold: -1000,
     });
     fullSensor.addRequiredClusterServers();
-    expect(await addDevice(aggregator, fullSensor)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, fullSensor)).toBeTruthy();
     expect(fullSensor.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(allAlarms);
 
     const notify = fullSensor.eventsOf(MatterbridgeTemperatureAlarmServer).notify;

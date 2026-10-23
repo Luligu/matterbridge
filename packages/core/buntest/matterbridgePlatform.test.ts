@@ -659,6 +659,7 @@ describe('Matterbridge platform', () => {
     await (platform as any).clearEndpointNumbers();
     const testDevice = new MatterbridgeEndpoint(contactSensor, { id: 'test' }, true);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
+    testDevice.addRequiredClusterServers();
     testDevice.uniqueId = 'test';
     await platform.registerDevice(testDevice);
     testDevice.uniqueId = undefined;
@@ -696,10 +697,10 @@ describe('Matterbridge platform', () => {
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 201;
-    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, undefined, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Humidity' }] }, true);
     child2.addRequiredClusterServers();
     child2.number = 202;
-    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, undefined, true);
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Humidity' }] }, true);
     child3.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await testDevice.construction.ready;
@@ -720,10 +721,10 @@ describe('Matterbridge platform', () => {
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 202;
-    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, undefined, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Humidity' }] }, true);
     child2.addRequiredClusterServers();
     child2.number = 203;
-    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, undefined, true);
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Humidity' }] }, true);
     child3.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await testDevice.construction.ready;
@@ -817,6 +818,7 @@ describe('Matterbridge platform', () => {
     await platform.unregisterAllDevices();
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
+    testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     expect(platform.size()).toBe(1);
     expect(aggregator.parts.has(testDevice)).toBe(true);
@@ -828,6 +830,7 @@ describe('Matterbridge platform', () => {
     platform.type = 'DynamicPlatform';
     const testDevice2 = new MatterbridgeEndpoint(powerSource);
     testDevice2.createDefaultBasicInformationClusterServer('test 2', 'serial0123445678');
+    testDevice2.addRequiredClusterServers();
     await platform.registerDevice(testDevice2);
     expect(platform.size()).toBe(2);
     expect(aggregator.parts.has(testDevice2)).toBe(true);
@@ -842,6 +845,7 @@ describe('Matterbridge platform', () => {
 
     const testDevice = new MatterbridgeEndpoint(powerSource);
     testDevice.createDefaultBasicInformationClusterServer('test', 'serial01234');
+    testDevice.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await platform.unregisterDevice(testDevice);
     expect(platform.size()).toBe(0);
@@ -906,6 +910,7 @@ describe('Matterbridge platform', () => {
     expect(device.uniqueId).toBeDefined();
     expect(device.hasClusterServer('BasicInformation')).toBeFalsy();
     expect(device.hasClusterServer('BridgedDeviceBasicInformation')).toBeFalsy();
+    device.addRequiredClusterServers();
     await platform.registerDevice(device);
     expect(device.deviceTypes.has(bridgedNode.code)).toBeTruthy();
     expect(device.getClusterServerOptions(Descriptor.id)?.deviceTypeList).toEqual([

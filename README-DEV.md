@@ -219,22 +219,6 @@ Matterbridge exports from:
 
 - UDP/datagram helpers exported by Matterbridge.
 
-**"matterbridge/jest-utils"**
-
-- Jest utility exports.
-
-**"matterbridge/jest-utils/matter"**
-
-- Jest Matter test helpers.
-
-**"matterbridge/vitest-utils"**
-
-- Vitest utility exports.
-
-**"matterbridge/vitest-utils/matter"**
-
-- Vitest Matter test helpers.
-
 **"matterbridge/test-utils"**
 
 - Common test utilities shared by all test runners.
@@ -334,10 +318,7 @@ git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbr
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
-cd apps/frontend
-npm install --no-fund --no-audit
-npm run build
-cd ../..
+npm run buildFrontend
 npm link --no-fund --no-audit
 ```
 
@@ -348,10 +329,7 @@ git clone --depth 1 --single-branch --no-tags -b dev https://github.com/Luligu/m
 cd matterbridge
 npm install --no-fund --no-audit
 npm run build
-cd apps/frontend
-npm install --no-fund --no-audit
-npm run build
-cd ../..
+npm run buildFrontend
 npm link --no-fund --no-audit
 ```
 

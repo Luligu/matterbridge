@@ -240,7 +240,7 @@ describe('Backend', () => {
     expect((backend as any).log.logLevel).toBe(LogLevel.DEBUG);
 
     // A request of an unhandled type and a message that is not a request are ignored
-    manager.request({ type: 'matterbridge_apisettings', src: 'manager', dst: 'frontend', params: undefined });
+    manager.request({ type: 'matterbridge_apisettings', src: 'manager', dst: 'frontend', params: {} });
     manager.broadcast({ type: 'get_log_level', src: 'manager', dst: 'frontend', result: { logLevel: LogLevel.INFO } });
     await wait(100);
     expect(loggerErrorSpy).not.toHaveBeenCalled();

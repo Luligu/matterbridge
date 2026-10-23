@@ -1,10 +1,20 @@
-# Matterbridge — Bun config v 1.0.2.
+# Matterbridge — Bun config v 1.0.3.
 
 [install]
-# installation strategy: "hoisted" or "isolated". Default "hoisted".
+
+# Installation strategy: "hoisted" places dependencies in the shared node_modules root;
+# "isolated" keeps each package's dependencies in its own node_modules directory.
+# Default: "hoisted".
 # linker = "isolated"
 # Make @matter/main's transitive @matter/* packages available to all workspaces.
 # publicHoistPattern = ["@matter/*"]
+
+# globalStore (isolated linker only) symlinks packages from a store shared by all projects in
+# ~/.bun/install/cache/links instead of copying them into node_modules/.bun.
+# Their real path is outside the project, so a dependency's undeclared import can't reach the
+# project's fallback node_modules (e.g. bun-types -> undici-types until Bun 1.4.3).
+# Default: false.
+globalStore = false
 
 [test]
 # Optional setup run before any test (env, global mocks):
@@ -12,8 +22,7 @@
 
 # Bun scans root for *.test.{js|jsx|ts|tsx} *_test.{js|jsx|ts|tsx} *.spec.{js|jsx|ts|tsx} *_spec.{js|jsx|ts|tsx}.
 # Directory entries end in /** so they match the directory's contents, the same form the coverage list
-# below needs. A bare trailing slash ('**/dist/') happens to work here, because the runner prunes a
-# matched directory while scanning, but it fails silently in coveragePathIgnorePatterns.
+# below needs.
 pathIgnorePatterns = [
   '**/.cache/**',
   '**/apps/**',
@@ -29,8 +38,6 @@ pathIgnorePatterns = [
   '**/tmp/**',
   '**/test/**',
   '**/vitest/**',
-  '**/jest-utils/**',
-  '**/vitest-utils/**',
   '**/test-utils/**',
 ]
 
@@ -38,8 +45,7 @@ pathIgnorePatterns = [
 # scanned for tests; this one decides which files are measured. Whole paths only: Bun has no
 # line-level ignore, so /* istanbul ignore */, /* c8 ignore */ and /* v8 ignore */ do nothing.
 # Each pattern is matched against every source file path after the run, never against a directory,
-# so a directory entry must end in /** ('**/dist/**'). A bare trailing slash ('**/dist/') matches no
-# file and excludes nothing, without any warning.
+# so a directory entry must end in /** ('**/dist/**').
 coveragePathIgnorePatterns = [
   '**/.cache/**',
   '**/apps/**',
@@ -59,9 +65,7 @@ coveragePathIgnorePatterns = [
   # packages/core: measure only the files that have a buntest (backend, cli, cliEmitter, cliHistory, deviceManager, matterNode, matterNodeHelpers, matterbridge*Platform and runners files)
   '**/packages/core/src/{behaviors,clusters,dgram,matter,utils}/**',
   '**/packages/core/src/{chipTests,demoDevices,export,frontend,helpers,matterbridge,matterbridgeDeviceTypes,matterbridgeEndpoint,matterbridgeEndpointCommandHandler,matterbridgeEndpointHelpers,matterbridgeEndpointTypes,matterbridgeFactory,mb_coap,mb_health,mb_mdns,pluginManager}.ts',
-  '**/packages/jest-utils/**',
   '**/packages/test-utils/**',
-  '**/packages/vitest-utils/**',
   '**/src/**/*.d.ts',
   '**/src/**/*.{spec,test}.{ts,mts,cts}',
 ]

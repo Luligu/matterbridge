@@ -14,7 +14,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { Switch } from '@matter/types/clusters/switch';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -80,14 +80,14 @@ describe('Doorbell', () => {
     expect(clientList).toEqual([Chime.id]);
     expect(device.type.clientClusters['chime']).toBe(ChimeClient);
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(Switch, 'numberOfPositions')).toBe(2);
     expect(device.getAttribute(Switch, 'currentPosition')).toBe(0);
   });
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new Doorbell('Doorbell Snapshot', 'DOORBELL-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -123,15 +123,35 @@ describe('Doorbell', () => {
         'binding(0x1e).clusterRevision(0xfffd)=1',
         'binding(0x1e).featureMap(0xfffc)={  }',
         'binding(0x1e).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Doorbell Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Doorbell'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='DOORBELL-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='a984025d508cd5552215cdbdfd8c67f4'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[ 1366 ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 328, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 328, revision: 2 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 30, 47, 59 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 30, 47, 57, 59 ]',
         'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
         'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
         'identify(0x3).clusterRevision(0xfffd)=6',
@@ -164,7 +184,7 @@ describe('Doorbell', () => {
     const device = new Doorbell('Doorbell Identify', 'DOORBELL-IDENTIFY', { identifyTime: 5, identifyType: Identify.IdentifyType.VisibleIndicator });
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(device.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -173,7 +193,7 @@ describe('Doorbell', () => {
     const device = new Doorbell('Doorbell Rechargeable', 'DOORBELL-RECHARGEABLE', { powerSourceType: 'Rechargeable' });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
   });
 
@@ -181,7 +201,7 @@ describe('Doorbell', () => {
     const device = new Doorbell('Doorbell Replaceable', 'DOORBELL-REPLACEABLE', { powerSourceType: 'Replaceable' });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batReplacementDescription')).toBe('Battery type');
   });
 
@@ -189,7 +209,7 @@ describe('Doorbell', () => {
     const device = new Doorbell('Doorbell Battery', 'DOORBELL-BATTERY', { powerSourceType: 'Battery' });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(PowerSource.BatChargeLevel.Ok);
   });
 
@@ -197,12 +217,12 @@ describe('Doorbell', () => {
     const device = new Doorbell('Doorbell None', 'DOORBELL-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should trigger a single press switch event', async () => {
     const device = new Doorbell('Doorbell Press', 'DOORBELL-PRESS', { powerSourceType: 'None' });
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
 
     expect(await device.triggerSwitchEvent('Single', device.log)).toBeTruthy();
     expect(device.getAttribute(Switch, 'currentPosition')).toBe(0);

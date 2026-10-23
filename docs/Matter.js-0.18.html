@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 id="matterjs-018x">Matter.js 0.18.x</h1>
+<p>This file tracks the matter.js 0.18.0 deltas compared with matter.js 0.17.9 that matter for Matterbridge.</p>
+<p>Released version: <code>0.18.0</code> (published on npm on October 20, 2026), used by Matterbridge on the <code>dev</code> branch.</p>
+<p>Audited dev version: <code>0.18.0-alpha.0-20261015-9c1725759</code> (npm <code>dev</code> verified on October 15, 2026). The findings were first audited on <code>0.18.0-alpha.0-20261008-6066b7499</code> and rechecked on <code>0.18.0-alpha.0-20261013-2e5a97ca3</code>, with the full test suite giving the same results on both historical snapshots. The three upstream validation issues reported on that October 13 snapshot are now resolved as recorded below, and the fixes ship in the 0.18.0 release. The audit sections below record the work done on these dev snapshots before the release. Add newly discovered drifts here as the migration progresses.</p>
+<h2 id="validation-results">Validation results</h2>
+<p>Verified on October 21, 2026, on branch <code>dev</code> with matter.js <code>0.18.0</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Validation</th>
+<th>Result</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Lint, format, type-check</td>
+<td>Passed - root and frontend</td>
+</tr>
+<tr>
+<td>Full matterbridge Vitest with coverage</td>
+<td>3,797 tests passed across 174 files in strict mode</td>
+</tr>
+<tr>
+<td>Full frontend Vitest with coverage</td>
+<td>608 tests passed across 41 files</td>
+</tr>
+<tr>
+<td>Full Bun suite with coverage</td>
+<td>1,958 tests passed across 113 files in strict mode</td>
+</tr>
+<tr>
+<td>Full chip-test suite</td>
+<td>524 conformance tests passed</td>
+</tr>
+</tbody></table>
+<h2 id="renamed-commodity-fields">Renamed commodity fields</h2>
+<p>The generated CommodityMetering and CommodityTariff types now use <code>Ids</code> instead of <code>IDs</code> in property names.</p>
+<table>
+<thead>
+<tr>
+<th>Previous name</th>
+<th>0.18 name</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>dayEntryIDs</code></td>
+<td><code>dayEntryIds</code></td>
+</tr>
+<tr>
+<td><code>dayPatternIDs</code></td>
+<td><code>dayPatternIds</code></td>
+</tr>
+<tr>
+<td><code>tariffComponentIDs</code></td>
+<td><code>tariffComponentIds</code></td>
+</tr>
+</tbody></table>
+<p>This affects metered quantities, tariff periods, days, day patterns, calendar periods, and the GetTariffComponent response. Fixtures, property access, and response expectations must all use the new names.</p>
+<h2 id="inherited-device-cluster-requirements">Inherited device cluster requirements</h2>
+<p>The audited snapshot includes the inherited Base Binding requirement in device definitions. Matterbridge now includes Binding in the affected Simple device definitions with mandatory application clients.</p>
+<ul>
+<li>Binding is required by Matter 1.6.1 Device Library §1.1.7 when <code>Simple &amp; Client</code> is true; §1.1.6 defines Client as having an application client cluster. This is confirmed by <code>chip/1.6.1/xml/device_types/BaseDeviceType.xml</code>.</li>
+<li>On/Off Light Switch is Simple and requires Identify and On/Off clients (§6.1), so its mandatory server requirements include Identify and Binding. The server-behavior mapper now maps Binding to <code>MatterbridgeBindingServer</code>.</li>
+<li>Descriptor appears in the matter.js mandatory server list only for device types that require a Descriptor feature: Closure, Closure Panel and Electrical Energy Tariff require TagList (<code>DescriptorServer.with(&quot;TagList&quot;)</code> in the generated device classes). Other device types get a plain Descriptor implicitly and do not list it. Matterbridge does not add Descriptor to any device definition, since every endpoint has a Descriptor; the requirements test accepts these three mismatches.</li>
+<li>RootNode&#39;s intentionally empty cluster lists remain unchanged; the comparison expectation now includes the upstream optional Groupcast cluster (<code>0x0065</code>).</li>
+</ul>
+<h2 id="open-enums-typed-as-enum-number">Open enums typed as <code>Enum | number</code></h2>
+<p>The audited snapshot types the fields of enums that reserve ranges for derived clusters and manufacturers as a union with <code>number</code>. Examples:</p>
+<ul>
+<li><code>OperationalState</code> <code>operationalState: OperationalStateEnum | number</code>;</li>
+<li><code>RvcOperationalState</code> <code>operationalState: OperationalState | OperationalStateNamespace.OperationalStateEnum | number</code>;</li>
+<li>Mode Base <code>ModeTagStruct.value: ModeTag | number</code>, and in derived clusters <code>ModeTag | ModeBase.ModeTag | number</code> (RVC Run Mode, Dishwasher Mode, …).</li>
+</ul>
+<p>This follows Matter 1.6.1:</p>
+<ul>
+<li><strong>Operational state</strong> (Application Cluster § 1.14.4.1, derived in § 7.4.4.1): 0x00–0x3F general, 0x40–0x7F derived cluster, 0x80–0xBF manufacturer states. ErrorStateEnum uses the same layout.</li>
+<li><strong>Mode Base</strong> (§ 1.10.7.2.1.1 status codes, § 1.10.8 Mode Namespace): mode tags 0x4000–0x7FFF derived cluster and 0x8000–0xBFFF manufacturer.</li>
+</ul>
+<p>A device can therefore report a value that is not a member of the base enum.</p>
+<p>The type-aware lint rule <code>typescript/no-unsafe-enum-comparison</code> now flags every direct comparison of these fields with an enum member, such as <code>state.operationalState === OperationalState.OperationalStateEnum.Paused</code> or <code>tag.value === RvcRunMode.ModeTag.Idle</code>, and the <code>case</code> labels of a <code>switch</code> on them. The rule stays on: the source widens the member to <code>number</code> instead, <code>state.operationalState === (OperationalState.OperationalStateEnum.Paused as number)</code>, which keeps the comparison correct for vendor and derived values.</p>
+<ul>
+<li>Source adapted: <code>behaviors/operationalStateServer.ts</code>, <code>behaviors/deviceEnergyManagementModeServer.ts</code>, <code>devices/roboticVacuumCleaner.ts</code>, <code>devices/oven.ts</code>, <code>devices/microwaveOven.ts</code>, <code>devices/dishwasher.ts</code>, <code>devices/laundryWasher.ts</code>, <code>devices/evse.ts</code>, <code>devices/irrigationSystem.ts</code> and <code>chipTests.ts</code> (41 sites under <code>packages/core/src</code>).</li>
+<li>Plugins that compare these fields with enum members will get the same lint warnings when they move to 0.18, and the same fix applies.</li>
+</ul>
+<h2 id="endpoint-device-type-validation">Endpoint device type validation</h2>
+<p>matter.js 0.18 adds server-side validation of endpoints against their declared device types and the inherited Base requirements (Matter 1.6.1 Core §9.2). It checks mandatory and disallowed clusters, required server-cluster features and elements, component endpoint counts and requirements, singleton placement, and explicitly supplied condition names. Client clusters are checked for presence only; remote <code>ClientNode</code> peers are not validated.</p>
+<p>The <code>endpoint.validation</code> variable, also available as <code>MATTER_ENDPOINT_VALIDATION</code>, selects the mode:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>During construction</th>
+<th>Automatic checks after construction</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>warn</code> (upstream default)</td>
+<td>Reject new misplaced singletons; warn about other new violations.</td>
+<td>Log and record violations without rejecting changes.</td>
+</tr>
+<tr>
+<td><code>strict</code></td>
+<td>Reject any new device type violation.</td>
+<td>Log and record violations without rejecting changes.</td>
+</tr>
+<tr>
+<td><code>off</code></td>
+<td>Only retain the early check for misplaced singletons declared by ancestor endpoints.</td>
+<td>Disabled.</td>
+</tr>
+</tbody></table>
+<p>Matterbridge sets <code>warn</code> in production and <code>strict</code> in the test helpers before creating server nodes:</p>
+<ul>
+<li>Production uses <code>warn</code> so that a non-conformant plugin device is logged instead of refused when added; tests use <code>strict</code> so that non-conformant fixtures and device classes fail.</li>
+<li>The mode is read when the server node&#39;s environment is built. Changing the variable afterward does not change an existing node&#39;s mode.</li>
+<li>Adding an endpoint can invalidate requirements on its parent or siblings, so a strict construction error can name an endpoint other than the one being added. Validation throws <code>DeviceTypeConformanceError</code>, containing individual <code>DeviceTypeViolationError</code> entries.</li>
+<li>Exception to the mode table: violations caused only by conditions asserted at the <code>Root</code> location are flagged <code>assertedAtRoot</code>, log at debug level and never refuse an endpoint, including in <code>strict</code> mode. They remain visible in validation results and, except in <code>off</code> mode, recorded violations. Conditions explicitly stated by the root in <code>deviceConditions</code> and requirements that apply independently remain subject to normal validation.</li>
+<li>Automatic runtime checks follow endpoint removal and Descriptor <code>DeviceTypeList</code> changes. They do not reject those changes, even in <code>strict</code> mode. Adding or removing a server cluster alone does not trigger a device type check.</li>
+<li>The mode also affects cluster implementation validation: a mandatory command using <code>Behavior.unimplemented</code> fails initialization in <code>strict</code> mode, but only logs a warning in <code>warn</code> or <code>off</code>. The command is excluded from <code>AcceptedCommandList</code> in every mode.</li>
+<li>Before behaviors initialize, matter.js automatically adds <code>BindingServer</code> when the configured device types require it under Base&#39;s <code>Simple &amp; Client</code> condition. This happens in every mode. Device types restored later from persistence or added at runtime do not trigger automatic Binding installation.</li>
+</ul>
+<p>For explicit checks, obtain <code>DeviceTypeConformanceService</code> from the node&#39;s environment and call <code>validate()</code> or <code>validateNodeScope()</code>. Use <code>{ refuse: false }</code> to report violations without throwing a conformance error. Explicit validation also works in <code>off</code> mode, but does not record results there.</p>
+<p>Migration implication: endpoint definitions and test fixtures must satisfy their advertised device types, and mandatory command stubs can now prevent initialization. <code>strict</code> is not continuous enforcement of every runtime mutation.</p>
+<p>See the upstream <a href="https://github.com/matter-js/matter.js/blob/main/docs/DEVICE_TYPE_VALIDATION.html">Device Type Validation documentation</a> for the full rules and limitations.</p>
+<h2 id="resolved-upstream-validation-issues">Resolved upstream validation issues</h2>
+<p>All three points reported in <a href="https://github.com/matter-js/matter.js/issues/4744">matter-js/matter.js#4744</a> were fixed by the following PRs, both merged on October 13, 2026. The fixes are present in the 0.18.0 release.</p>
+<table>
+<thead>
+<tr>
+<th>Issue point</th>
+<th>Resolution</th>
+<th>Upstream PR</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1. Utility components on the composing endpoint</td>
+<td>A utility device type listed on the composing endpoint counts as a component instance and is checked against that endpoint&#39;s clusters. This supports the Heat Pump, Solar Power, Battery Storage and Electrical Meter layouts.</td>
+<td><a href="https://github.com/matter-js/matter.js/pull/4745">matter-js/matter.js#4745</a></td>
+</tr>
+<tr>
+<td>2. Root Node conditions blocking strict validation</td>
+<td>Violations caused only by Root assertions are flagged <code>assertedAtRoot</code>, log at debug level and never refuse endpoints. This covers the camera-family, Intercom, meter and Groupcast conditions without weakening other strict checks.</td>
+<td><a href="https://github.com/matter-js/matter.js/pull/4746">matter-js/matter.js#4746</a></td>
+</tr>
+<tr>
+<td>3. Non-serializable conformance errors</td>
+<td><code>DeviceTypeViolationError.endpoint</code> is now a getter backed by a private field, not an own enumerable property, so serializers that copy only own properties no longer traverse the node graph. See the note below.</td>
+<td><a href="https://github.com/matter-js/matter.js/pull/4745">matter-js/matter.js#4745</a></td>
+</tr>
+</tbody></table>
+<p>Point 3 is only partly resolved for tests: Vitest&#39;s error serializer also reads getters on the prototype. A <code>DeviceTypeConformanceError</code> that reaches Vitest, as a rejected promise or a rejected <code>construction.ready</code>, still leads through <code>endpoint</code> into the node and the Matter model, whose getters build new objects on each read, and the worker runs out of memory (<code>SIGABRT</code>, no message). Bun reports the failure instead. The tests avoid it by adding devices with <code>addDevice()</code> / <code>addBridgedDevice()</code>, which catch the error, and by keeping the fixtures valid; a <code>toJSON()</code> on the matter.js validation errors would fix it upstream.</p>
+<p>The Root-assertion fix removes the validation blocker; it does not implement Time Synchronization, TLS Certificate Management or TLS Client Management. All 18 warning-mode workarounds have been removed from the Vitest and Bun device and behavior test setups, which now use the default strict validation. Tests of the validation-mode option still exercise <code>off</code> and <code>warn</code>, then restore <code>strict</code> before creating the server.</p>
+<h2 id="door-lock-validation-and-events">Door lock validation and events</h2>
+<p>Door-lock tests now use a supported user type when schedule features are disabled, send null UserStatus and UserType when adding credentials to existing users (§5.2.10.20), and assert SetCredential response statuses. These test changes also pass with matter.js 0.17.9.</p>
+<p>The audited snapshot reports the user index in LockUserChange.DataIndex for user changes (§5.2.11.5.7), and reports UserIndex <code>0xFFFE</code> when clearing credentials for all users (§5.2.11.5.4). The corresponding event expectations are specific to 0.18; 0.17.9 reports null for these fields.</p>
+<h2 id="level-control-onoff-coupling-corrected">Level control On/Off coupling corrected</h2>
+<p>In 0.17.9, downward MoveWithOnOff supplied an unbounded target (<code>-Infinity</code>) that the coupling logic compared directly with MinLevel, incorrectly taking the turn-on path. The audited 0.18 snapshot clamps the target to the device range and turns the endpoint off when CurrentLevel reaches MinLevel, as required by Matter 1.6.1 Application Cluster §1.6.7.6.</p>
+<p>Ordinary Step then has no effect while off unless ExecuteIfOff permits execution (§1.6.4.1.3). The LevelControl test now checks this no-op, then turns the endpoint on before checking that Step increases the level. This test update applies only to <code>matterdev</code>; no Matterbridge server change is needed.</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

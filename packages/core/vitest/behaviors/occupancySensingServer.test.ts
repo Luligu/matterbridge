@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -66,7 +66,7 @@ describe('HoldTime / PIROccupiedToUnoccupiedDelay backward-compatible sync', () 
     expect(device).toBeDefined();
     device.createDefaultOccupancySensingClusterServer(false, 30, 1, 300);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBeDefined();
+    expect(await addBridgedDevice(aggregator, device)).toBeDefined();
     expect(device.getAttribute(OccupancySensing, 'holdTime')).toBe(30);
     expect(device.getAttribute(OccupancySensing, 'pirOccupiedToUnoccupiedDelay')).toBe(30);
   });

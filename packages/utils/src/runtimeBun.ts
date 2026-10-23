@@ -3,7 +3,7 @@
  * @description This file contains Bun runtime helpers.
  * @author Luca Liguori
  * @created 2026-06-24
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -83,7 +83,7 @@ export function getBunVersion(): string | undefined {
 export async function getBunLatestVersion(): Promise<string | undefined> {
   try {
     const response = await fetch('https://api.github.com/repos/oven-sh/bun/releases/latest', {
-      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'matterbridge' },
+      headers: { 'Accept': 'application/vnd.github+json', 'User-Agent': 'matterbridge', 'X-GitHub-Api-Version': '2026-03-10' },
       signal: AbortSignal.timeout(10_000),
     });
     if (!response.ok) return undefined;

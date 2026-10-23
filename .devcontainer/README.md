@@ -44,7 +44,6 @@ The workspace is bind-mounted from the host, but every directory with heavy or c
 ```
 /workspaces/matterbridge                              → host bind mount (source + .git)
 /workspaces/matterbridge/node_modules                 → volume (ext4)
-/workspaces/matterbridge/apps/frontend/node_modules   → volume (ext4)
 /workspaces/matterbridge/.cache                       → volume (ext4)
 ```
 
@@ -335,7 +334,7 @@ expected.
 
 ## Volumes
 
-Thirteen volumes are declared per variant, plus the external `vscode` volume injected by the Dev
+Twelve volumes are declared per variant, plus the external `vscode` volume injected by the Dev
 Containers extension. `<repo>` below is `${localWorkspaceFolderBasename}`, and `~` is `/home/node`
 or `/home/bun` depending on the variant.
 
@@ -346,11 +345,10 @@ VM's ext4 disk instead of the host file share. **None can be pre-created in the 
 depends on the repository folder name, and the images are shared across repositories — so they are
 the ones `post-create.sh` still has to fix ownership on, on first create.
 
-| Mount point                  | Node volume                         | Bun volume                         | Shared between variants |
-| ---------------------------- | ----------------------------------- | ---------------------------------- | ----------------------- |
-| `node_modules`               | `<repo>-node-node_modules`          | `<repo>-bun-node_modules`          | no                      |
-| `apps/frontend/node_modules` | `<repo>-node-frontend-node_modules` | `<repo>-bun-frontend-node_modules` | no                      |
-| `.cache`                     | `<repo>-cache`                      | `<repo>-cache`                     | **yes**                 |
+| Mount point    | Node volume                | Bun volume                | Shared between variants |
+| -------------- | -------------------------- | ------------------------- | ----------------------- |
+| `node_modules` | `<repo>-node-node_modules` | `<repo>-bun-node_modules` | no                      |
+| `.cache`       | `<repo>-cache`             | `<repo>-cache`            | **yes**                 |
 
 Node and Bun keep separate `node_modules` volumes so the two runtimes never share installed
 dependencies. `.cache` is deliberately not variant-suffixed — both use the same build cache.
