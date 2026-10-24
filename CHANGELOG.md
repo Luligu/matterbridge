@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.1] - Dev branch
 
+### Added
+
+- [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
+
 ### Changed
 
 - [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.

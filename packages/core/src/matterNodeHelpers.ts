@@ -582,6 +582,9 @@ export function getVendorIdName(vendorId: number | undefined): string {
     case 5264:
       vendorName = '(Shelly)';
       break;
+    case 5010:
+      vendorName = '(Tapo)';
+      break;
     case 0x1488:
       vendorName = '(ShortcutLabsFlic)';
       break;
