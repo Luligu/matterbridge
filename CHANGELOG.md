@@ -108,6 +108,12 @@ If you like this project and find it useful, please consider giving it a star on
 
   <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
+## [3.11.1] - Dev branch
+
+### Added
+
+- [WaterHeater]: `createDefaultWaterHeaterManagementClusterServer()` and `WaterHeaterOptions` accept new optional `tankVolume` and `estimatedHeatRequired` parameters, enabling the `EnergyManagement` feature of the `WaterHeaterManagement` cluster (Matter 1.6.1 § 9.5.7.3-4) alongside the existing `TankPercent` feature. Thanks Ludovic BOUÉ.
+
 ## [3.10.14] - 2026-10-16
 
 ### Breaking news

@@ -169,6 +169,12 @@ describe('Matterbridge Water Heater', () => {
         boostState: WaterHeaterManagement.BoostState.Inactive,
       }),
     );
+    // Call with tankVolume set enables the EnergyManagement feature and defaults estimatedHeatRequired to 0
+    device.createDefaultWaterHeaterManagementClusterServer(undefined, undefined, undefined, undefined, 200);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ tankVolume: 200, estimatedHeatRequired: 0 }));
+    // Call with tankVolume and estimatedHeatRequired set
+    device.createDefaultWaterHeaterManagementClusterServer(undefined, undefined, undefined, undefined, 200, 4_650_000);
+    expect(requireSpy).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ tankVolume: 200, estimatedHeatRequired: 4_650_000 }));
     // Chaining
     expect(device.createDefaultWaterHeaterManagementClusterServer()).toBe(device);
     requireSpy.mockRestore();
@@ -560,6 +566,21 @@ describe('Matterbridge Water Heater', () => {
     expect(order.slice(6)).toEqual(['forwarded:changeToMode']);
     expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
     loggerErrorSpy.mockClear();
+  });
+
+  test('create a water heater with the EnergyManagement feature', async () => {
+    const energyDevice = new WaterHeater('Water Heater Energy', 'WH-ENERGY', { tankVolume: 200, estimatedHeatRequired: 4_650_000 });
+    await addBridgedDevice(aggregator, energyDevice);
+    expect(energyDevice.getAttribute(WaterHeaterManagement.id, 'tankVolume', energyDevice.log)).toBe(200);
+    expect(energyDevice.getAttribute(WaterHeaterManagement.id, 'estimatedHeatRequired', energyDevice.log)).toBe(4_650_000);
+    expect(energyDevice.getAttribute(WaterHeaterManagement.id, 'featureMap', energyDevice.log)).toEqual({ energyManagement: true, tankPercent: true });
+  });
+
+  test('create a water heater without tankVolume keeps the EnergyManagement feature disabled', async () => {
+    const noEnergyDevice = new WaterHeater('Water Heater No Energy', 'WH-NOENERGY');
+    await addBridgedDevice(aggregator, noEnergyDevice);
+    expect(noEnergyDevice.getAttribute(WaterHeaterManagement.id, 'tankVolume', noEnergyDevice.log)).toBeUndefined();
+    expect(noEnergyDevice.getAttribute(WaterHeaterManagement.id, 'featureMap', noEnergyDevice.log)).toEqual({ energyManagement: false, tankPercent: true });
   });
 
   test('start the server node', async () => {

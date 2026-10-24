@@ -67,6 +67,8 @@ export interface WaterHeaterOptions {
   maxHeatSetpointLimit?: number;
   heaterTypes?: WaterHeaterTypes;
   tankPercentage?: number;
+  tankVolume?: number;
+  estimatedHeatRequired?: number | bigint;
   voltage?: number | bigint | null;
   current?: number | bigint | null;
   power?: number | bigint | null;
@@ -95,6 +97,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heaterTypes.boiler - Indicates if the water heater has a boiler.
    * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
+   * @param {number} [tankVolume] - The volume of the hot water tank in litres. When provided, enables the EnergyManagement feature of the WaterHeaterManagement cluster. Not set by default.
+   * @param {number | bigint} [estimatedHeatRequired] - The estimated heat energy needed to raise the water temperature to the target setpoint, in mWh. Only used when `tankVolume` is provided. Defaults to `0` if not provided.
    * @param {number} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
    * @param {number} [current] - The current value in milliamperes. Defaults to null if not provided.
    * @param {number} [power] - The power value in milliwatts. Defaults to null if not provided.
@@ -164,7 +168,14 @@ export class WaterHeater extends MatterbridgeEndpoint {
         options.minHeatSetpointLimit ?? 20,
         options.maxHeatSetpointLimit ?? 80,
       )
-      .createDefaultWaterHeaterManagementClusterServer(options.heaterTypes ?? { immersionElement1: true }, {}, options.tankPercentage ?? 90)
+      .createDefaultWaterHeaterManagementClusterServer(
+        options.heaterTypes ?? { immersionElement1: true },
+        {},
+        options.tankPercentage ?? 90,
+        undefined,
+        options.tankVolume,
+        options.estimatedHeatRequired,
+      )
       .createDefaultWaterHeaterModeClusterServer();
     fireAndForget(this.addFixedLabel('composed', 'Water Heater'), this.log, 'WaterHeater addFixedLabel');
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
@@ -202,6 +213,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heatDemand.other - Indicates if the water heater is heating water with other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 100.
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
+   * @param {number} [tankVolume] - The volume of the hot water tank in litres (Matter 1.6.1 § 9.5.7.3). When provided, enables the EnergyManagement feature. Not set by default.
+   * @param {number | bigint} [estimatedHeatRequired] - The estimated heat energy needed to raise the water temperature to the target setpoint, in mWh (Matter 1.6.1 § 9.5.7.4). Only used when `tankVolume` is provided. Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultWaterHeaterManagementClusterServer(
@@ -209,12 +222,18 @@ export class WaterHeater extends MatterbridgeEndpoint {
     heatDemand?: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean },
     tankPercentage?: number,
     boostState?: WaterHeaterManagement.BoostState,
+    tankVolume?: number,
+    estimatedHeatRequired?: number | bigint,
   ): this {
-    this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(WaterHeaterManagement.Feature.TankPercent), {
+    // Matter 1.6.1 § 9.5.4: TankVolume and EstimatedHeatRequired are mandatory together when the EnergyManagement feature is supported.
+    const features =
+      tankVolume === undefined ? [WaterHeaterManagement.Feature.TankPercent] : [WaterHeaterManagement.Feature.TankPercent, WaterHeaterManagement.Feature.EnergyManagement];
+    this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(...features), {
       heaterTypes: heaterTypes ?? { immersionElement1: true }, // Fixed attribute
       heatDemand: heatDemand ?? {},
       tankPercentage: tankPercentage ?? 100,
       boostState: boostState ?? WaterHeaterManagement.BoostState.Inactive,
+      ...(tankVolume === undefined ? {} : { tankVolume, estimatedHeatRequired: estimatedHeatRequired ?? 0 }),
     });
     return this;
   }
