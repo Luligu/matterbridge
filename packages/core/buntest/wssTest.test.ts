@@ -1,5 +1,5 @@
 /**
- * @file buntest/wssTest.test.ts
+ * @file packages/core/buntest/wssTest.test.ts
  * @description This file contains the tests for a raw wss (WebSocket over TLS) server/client pair run under Bun.
  * @author Luca Liguori
  */
