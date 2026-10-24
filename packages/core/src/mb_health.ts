@@ -27,18 +27,25 @@
  * ```dockerfile
  * # After installing the matterbridge package globally (so the `mb_health` bin is on PATH)
  * HEALTHCHECK --interval=60s --timeout=10s --start-period=60s --retries=5 \
- *   CMD mb_health <http://localhost:8283/health> || exit 1
+ *   CMD mb_health || exit 1
  * ```
+ *
+ * When no URL is passed, mb_health resolves the frontend endpoint (port and
+ * http/https protocol) from the configuration stored by the main Matterbridge
+ * process, falling back to http://localhost:8283/health. An explicit URL can
+ * still be passed as the first argument to override the detected endpoint.
  */
 
 import http from 'node:http';
 import https from 'node:https';
 
+import { NODE_STORAGE_DIR } from '@matterbridge/types';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 
 logModuleLoaded('mb-health');
 
 const DEFAULT_MB_HEALTH_URL = 'http://localhost:8283/health';
+const DEFAULT_MB_HEALTH_PORT = 8283;
 
 /**
  * Checks the Matterbridge health endpoint.
@@ -159,13 +166,38 @@ export async function mbHealthCli(url: string, timeoutMs: number, exitFn: (code:
 }
 
 /**
+ * Resolves the frontend health URL when none is provided.
+ *
+ * It reads the frontend port and protocol (http/https) persisted by the main
+ * Matterbridge process in its node storage, so that the health check follows
+ * the configured frontend instead of always probing the default port.
+ *
+ * @returns {Promise<string>} The health URL to probe.
+ */
+async function resolveFrontendHealthUrl(): Promise<string> {
+  try {
+    const { default: os } = await import('node:os');
+    const { default: path } = await import('node:path');
+    const { NodeStorageManager } = await import('node-persist-manager');
+    const nodeStorage = new NodeStorageManager({ dir: path.join(os.homedir(), '.matterbridge', NODE_STORAGE_DIR), writeQueue: false, expiredInterval: undefined, logging: false });
+    const nodeContext = await nodeStorage.createStorage('matterbridge');
+    const port = await nodeContext.get<number>('frontendport', DEFAULT_MB_HEALTH_PORT);
+    const ssl = (await nodeContext.get<boolean>('frontendssl', false)) || (await nodeContext.get<boolean>('frontendmtls', false));
+    return `${ssl ? 'https' : 'http'}://localhost:${port}/health`;
+  } catch {
+    return DEFAULT_MB_HEALTH_URL;
+  }
+}
+
+/**
  * Default CLI entrypoint for `mb_health`.
  *
  * @param {(code: number) => never | void} exitFn Exit function (defaults to process.exit).
- * @param {string} url Optional URL to fetch (defaults to http://localhost:8283/health).
+ * @param {string} url Optional URL to fetch (defaults to the frontend URL resolved from the Matterbridge configuration, falling back to http://localhost:8283/health).
  * @returns {Promise<void>} Resolves when done.
  */
 // oxlint-disable-next-line typescript/unbound-method
-export async function mbHealthMain(exitFn: (code: number) => never | void = process.exit, url: string = DEFAULT_MB_HEALTH_URL): Promise<void> {
-  await mbHealthCli(url, 5000, exitFn);
+export async function mbHealthMain(exitFn: (code: number) => never | void = process.exit, url?: string): Promise<void> {
+  const healthUrl = url ?? (await resolveFrontendHealthUrl());
+  await mbHealthCli(healthUrl, 5000, exitFn);
 }
