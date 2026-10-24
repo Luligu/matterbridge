@@ -1,4 +1,4 @@
-# docker/Dockerfile.bun-dev-container v.2.2.0
+# docker/Dockerfile.bun-dev-container v.2.3.0
 
 # This Dockerfile is used to build a development container for Bun applications.
 # It is based on the official Bun Docker image and includes additional tools and configurations for a better development experience.
@@ -64,6 +64,17 @@ RUN apt-get update \
     echo 'if [ "$1" = "shrinkwrap" ]; then'; \
     echo '  printf "%s\\n" "npm shim: skipping npm $1" >&2'; \
     echo '  exit 0'; \
+    echo 'fi'; \
+    echo '# Drop npm-only flags that Bun rejects (e.g. bun prune/link since Bun 1.4.4).'; \
+    echo '# "run", "exec" and "x" are left alone: their arguments belong to the script or tool.'; \
+    echo 'if [ "$1" != "run" ] && [ "$1" != "exec" ] && [ "$1" != "x" ]; then'; \
+    echo '  for arg do'; \
+    echo '    shift'; \
+    echo '    case "$arg" in'; \
+    echo '      --fund|--no-fund|--audit|--no-audit|--include-workspace-root) ;;'; \
+    echo '      *) set -- "$@" "$arg" ;;'; \
+    echo '    esac'; \
+    echo '  done'; \
     echo 'fi'; \
     echo 'exec bun "$@"'; \
   } > /usr/local/bin/npm \
