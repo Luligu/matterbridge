@@ -1,6 +1,6 @@
 /**
  * update-htmls.mjs
- * Version: 1.0.3
+ * Version: 1.0.4
  *
  * Converts Markdown files to HTML using the marked library.
  *
@@ -87,7 +87,9 @@ const FILES_TO_RENDER = [
   { source: 'CODE_OF_CONDUCT.md', target: 'CODE_OF_CONDUCT.html' },
   { source: 'Matter-1.5.1.md', target: 'Matter-1.5.1.html' },
   { source: 'Matter-1.6.0.md', target: 'Matter-1.6.0.html' },
+  { source: 'Matter-1.6.1.md', target: 'Matter-1.6.1.html' },
   { source: 'Matter.js-0.17.md', target: 'Matter.js-0.17.html' },
+  { source: 'Matter.js-0.18.md', target: 'Matter.js-0.18.html' },
   { source: 'packages/core/src/behaviors/Camera.md', target: 'Camera.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },

@@ -346,13 +346,16 @@ describe('Matterbridge device cluster mappings', () => {
     expect(failures).toEqual([
       // Failures are listed in device-definition order; for each device: server checks then client checks
       'rootNode: required mismatch -> mb=[] md=[31,40,48,51,60,62,63]', // omitted to avoid imports
-      'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,2049,2050]', // omitted to avoid imports
+      'rootNode: optional mismatch -> mb=[] md=[43,44,45,46,49,50,52,53,54,55,56,70,101,2049,2050]', // omitted to avoid imports
       'rootNode: client optional mismatch -> mb=[] md=[56]', // omitted to avoid imports
       'bridgedNode: optional mismatch -> mb=[47,1872,60] md=[46,47,60,1872]', // omitted PowerSourceConfiguration cause is deprecated in matter specs but present in matter.js
       'temperatureControlledCabinetCooler: required mismatch -> mb=[86,82] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetCooler: optional mismatch -> mb=[1026,100] md=[1026,82,73,72,100]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: required mismatch -> mb=[86,73,72] md=[86]', // Double device type to account for heater/cooler and just one in matter.js
       'temperatureControlledCabinetHeater: optional mismatch -> mb=[1026,100] md=[1026,82,73,72,100]', // Double device type to account for heater/cooler and just one in matter.js
+      'closure: required mismatch -> mb=[3,260] md=[29,3,260]', // Descriptor omitted: matter.js lists DescriptorServer.with("TagList"); every endpoint has a Descriptor
+      'closurePanel: required mismatch -> mb=[261] md=[29,261]', // Descriptor omitted: matter.js lists DescriptorServer.with("TagList"); every endpoint has a Descriptor
+      'electricalEnergyTariff: required mismatch -> mb=[] md=[29]', // Descriptor omitted: matter.js lists DescriptorServer.with("TagList"); every endpoint has a Descriptor
     ]);
   });
 });

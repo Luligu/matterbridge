@@ -279,12 +279,14 @@ Both images are `Debian 13 (trixie)` and share an identical package set, install
 |         | Node image                   | Bun image            |
 | ------- | ---------------------------- | -------------------- |
 | Base    | `node:24-trixie-slim`        | `oven/bun:slim`      |
-| Runtime | Node.js 24.20.0, npm 11.19.0 | Bun 1.4.2            |
+| Runtime | Node.js 24.22.1, npm 11.19.1 | Bun 1.4.4            |
 | User    | `node` (uid/gid 1000)        | `bun` (uid/gid 1000) |
 
 The Bun image also ships an `npm` shim at `/usr/local/bin/npm` that forwards to `bun`, and Bun's own Node
 fallback at `/usr/local/bun-node-fallback-bin/node`, so tooling that shells out to `npm` or `node` keeps
-working.
+working. The shim skips `npm shrinkwrap` and drops the npm-only flags `--fund`, `--no-fund`, `--audit`,
+`--no-audit` and `--include-workspace-root`, which `bun prune` and `bun link` reject since Bun 1.4.4. The
+arguments of `npm run`, `npm exec` and `npm x` are passed through unchanged.
 
 ### Packages
 

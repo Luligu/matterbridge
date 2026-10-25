@@ -17,7 +17,9 @@ RUN \
   cd apps/frontend && bun run build && cd ../.. && \
   find /matterbridge/apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} + && \
   bun link && \
-  bun --workspaces --include-workspace-root pm pkg delete devDependencies scripts && \
+  for d in . $(bun -e "console.log(require('./package.json').workspaces.join(' '))"); do \
+  (cd "$d" && bun pm pkg delete devDependencies scripts) || exit 1; \
+  done && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docker docs node_modules reflector screenshots scripts systemd package-lock.json npm-shrinkwrap.json && \
   bun install --omit=dev
 

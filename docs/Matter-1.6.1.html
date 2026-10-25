@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 id="matter-161">Matter 1.6.1</h1>
+<p>This file summarizes the Matter 1.6.1 deltas captured for Matterbridge, compared with Matter 1.6.0.</p>
+<p>IDs below are hexadecimal, matching the official Matter specs.</p>
+<h2 id="new-device-types">New Device Types</h2>
+<p>No new device types were added in Matter 1.6.1.</p>
+<h2 id="changed-device-types">Changed Device Types</h2>
+<table>
+<thead>
+<tr>
+<th>Device Type</th>
+<th>ID</th>
+<th>1.6.0</th>
+<th>1.6.1</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>AirPurifier</td>
+<td>0x002D</td>
+<td>2</td>
+<td>3</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>Chime</td>
+<td>0x0146</td>
+<td>1</td>
+<td>2</td>
+<td>Introduction of speaker device type requirements for volume control</td>
+</tr>
+<tr>
+<td>ClosureController</td>
+<td>0x023E</td>
+<td>1</td>
+<td>2</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>ColorDimmerSwitch</td>
+<td>0x0105</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>ColorTemperatureLight</td>
+<td>0x010C</td>
+<td>4</td>
+<td>5</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>ControlBridge</td>
+<td>0x0840</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>DimmableLight</td>
+<td>0x0101</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>DimmablePlugInUnit</td>
+<td>0x010B</td>
+<td>5</td>
+<td>6</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>DimmerSwitch</td>
+<td>0x0104</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>DoorLockController</td>
+<td>0x000B</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>ExtendedColorLight</td>
+<td>0x010D</td>
+<td>4</td>
+<td>5</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>Fan</td>
+<td>0x002B</td>
+<td>4</td>
+<td>5</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>MountedDimmableLoadControl</td>
+<td>0x0110</td>
+<td>2</td>
+<td>3</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>MountedOnOffControl</td>
+<td>0x010F</td>
+<td>2</td>
+<td>3</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>OnOffLight</td>
+<td>0x0100</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>OnOffLightSwitch</td>
+<td>0x0103</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>OnOffPluginUnit</td>
+<td>0x010A</td>
+<td>4</td>
+<td>5</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>OnOffSensor</td>
+<td>0x0850</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>Pump</td>
+<td>0x0303</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>PumpController</td>
+<td>0x0304</td>
+<td>4</td>
+<td>5</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>RoomAirConditioner</td>
+<td>0x0072</td>
+<td>3</td>
+<td>4</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>RootNode</td>
+<td>0x0016</td>
+<td>4</td>
+<td>5</td>
+<td>Added conditions and cluster requirements for the Groupcast cluster</td>
+</tr>
+<tr>
+<td>SmokeCOAlarm</td>
+<td>0x0076</td>
+<td>1</td>
+<td>2</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>Thermostat</td>
+<td>0x0301</td>
+<td>6</td>
+<td>7</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>ThermostatController</td>
+<td>0x030A</td>
+<td>1</td>
+<td>2</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>WindowCovering</td>
+<td>0x0202</td>
+<td>6</td>
+<td>7</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+<tr>
+<td>WindowCoveringController</td>
+<td>0x0203</td>
+<td>4</td>
+<td>5</td>
+<td>Added Groupcast condition requirement</td>
+</tr>
+</tbody></table>
+<h2 id="new-cluster-types">New Cluster Types</h2>
+<p>No new cluster types were added in Matter 1.6.1.</p>
+<h2 id="changed-cluster-types">Changed Cluster Types</h2>
+<table>
+<thead>
+<tr>
+<th>Cluster Type</th>
+<th>ID</th>
+<th>1.6.0</th>
+<th>1.6.1</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GroupKeyManagement</td>
+<td>0x003F</td>
+<td>3</td>
+<td>4</td>
+<td>Added C quality to GroupKeyMap attribute</td>
+</tr>
+</tbody></table>
+<h3 id="remarks">Remarks</h3>
+<p>Quality C = Changes Omitted: changes to the attribute value are not reported to subscribers.</p>
+<h2 id="clusters-no-longer-provisional">Clusters No Longer Provisional</h2>
+<table>
+<thead>
+<tr>
+<th>Cluster Type</th>
+<th>ID</th>
+<th>1.6.0</th>
+<th>1.6.1</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Groupcast</td>
+<td>0x0065</td>
+<td>1</td>
+<td>1</td>
+<td>Provisional status removed, without a cluster revision bump</td>
+</tr>
+</tbody></table>
+<h3 id="groupcast-remarks">Groupcast remarks</h3>
+<p>Groupcast was introduced in Matter 1.6.0 (it is not present in Matter 1.5.0 and 1.5.1) as a provisional cluster: the cluster ID, the Listener, Sender and PerGroup features, and all attributes and commands were <code>provisionalConform</code>. In Matter 1.6.1 the provisional conformance is removed:</p>
+<ul>
+<li>Features: at least one of Listener (LN) or Sender (SD) is required, PerGroup (PGA) is optional.</li>
+<li>Attributes and commands use their plain mandatory conformance; the ConfigureAuxiliaryACL command is mandatory when Listener is supported.</li>
+<li>The LeaveGroupResponse command is no longer marked fabric scoped.</li>
+</ul>
+<p>The RootNode device type (revision 5) adds Groupcast as a singleton server cluster with two new conditions:</p>
+<ul>
+<li><code>GroupcastListenerCond</code>: SHALL be supported if any endpoint implements the Groups cluster server. It makes Groupcast with the Listener feature mandatory, and also the AUX feature of Access Control.</li>
+<li><code>GroupcastSenderCond</code>: SHALL be supported if any endpoint implements the Binding cluster server. It makes Groupcast with the Sender feature mandatory.</li>
+</ul>
+<p>Otherwise Groupcast is optional. Either condition also makes the GCAST feature of Group Key Management mandatory.</p>
+<h2 id="new-semantic-tag-namespaces">New Semantic Tag Namespaces</h2>
+<p>No new semantic tag namespaces were added in Matter 1.6.1.</p>
+<h2 id="changed-semantic-tag-namespaces">Changed Semantic Tag Namespaces</h2>
+<p>No semantic tag namespaces were changed in Matter 1.6.1.</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

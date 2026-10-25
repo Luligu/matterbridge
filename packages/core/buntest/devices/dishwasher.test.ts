@@ -23,6 +23,7 @@ import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { Status } from '@matter/types/globals';
 import { TlvOfModel } from '@matter/types/tlv';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
@@ -252,7 +253,7 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Normal', mode: 5, modeTags: [{ value: DishwasherMode.ModeTag.Normal }] },
       ],
     });
-    expect(await addDevice(server, custom, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
     expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(1);
     await custom.invokeBehaviorCommand('onOff', 'off', {});
     expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(5);
@@ -263,7 +264,7 @@ describe('Matterbridge ' + NAME, () => {
     await custom.setAttribute(DishwasherMode.id, 'supportedModes', [{ label: 'Light', mode: 1, modeTags: [{ value: DishwasherMode.ModeTag.Light }] }]);
     await custom.invokeBehaviorCommand('onOff', 'off', {});
     expect(custom.getAttribute(DishwasherMode.id, 'currentMode')).toBe(1);
-    expect(await deleteDevice(server, custom, 0, 0, 0, 0)).toBeTruthy();
+    expect(await deleteDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
   });
 
   test('reject SupportedModes without a Normal mode at initialization', async () => {
@@ -332,7 +333,7 @@ describe('Matterbridge ' + NAME, () => {
     );
     alarmDevice.behaviors.require(MatterbridgeDishwasherAlarmServer, { mask: allAlarms, latch: noAlarm, state: noAlarm, supported: allAlarms });
     alarmDevice.addRequiredClusterServers();
-    expect(await addDevice(server, alarmDevice, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, alarmDevice, 0, 0, 0, 0)).toBeTruthy();
     expect(alarmDevice.getAttribute(DishwasherAlarm.id, 'acceptedCommandList')).toEqual([0, 1]);
 
     const notifyEvents: unknown[] = [];

@@ -86,9 +86,8 @@ describe('Matterbridge', () => {
   });
 
   test('Matterbridge.loadInstance(false)', async () => {
-    expect((Matterbridge as any).instance).toBeUndefined();
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
-    expect((Matterbridge as any).instance).toBeDefined();
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded');
     expect((matterbridge as any).initialized).toBeFalsy();
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
@@ -123,7 +122,7 @@ describe('Matterbridge', () => {
 
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
-    expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded'); // Instance is still loaded cause cleanup() is not called when initialized is false
   });
 
   test('Matterbridge getApiSettings', () => {
@@ -186,6 +185,24 @@ describe('Matterbridge', () => {
       // systemInformation is refreshed on every getApiSettings() call (memory, uptime)
       result: { data: { ...apiSettings, systemInformation: expect.objectContaining({ hostname: apiSettings.systemInformation.hostname }) }, success: true },
     });
+    for (const required of [true, false]) {
+      const params = { restartRequired: required, updateRequired: required };
+      await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params });
+      expect(matterbridge).toMatchObject({ ...params, fixedRestartRequired: false });
+    }
+    // A fixed restart cannot be unset once set and it locks restartRequired to true
+    await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_apisettings', src: 'manager', dst: 'matterbridge', params: { fixedRestartRequired: true } });
+    expect(matterbridge).toMatchObject({ restartRequired: true, fixedRestartRequired: true });
+    await (matterbridge as any).msgHandler({
+      id: 123456,
+      type: 'matterbridge_apisettings',
+      src: 'manager',
+      dst: 'matterbridge',
+      params: { restartRequired: false, fixedRestartRequired: false },
+    });
+    expect(matterbridge).toMatchObject({ restartRequired: true, fixedRestartRequired: true });
+    matterbridge.restartRequired = false;
+    matterbridge.fixedRestartRequired = false;
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_stop_plugin_server', src: 'manager', dst: 'matterbridge', params: { pluginName: '' } } as any);
     await (matterbridge as any).msgHandler({ id: 123456, type: 'matterbridge_start_device_server', src: 'manager', dst: 'matterbridge', params: { deviceUniqueId: '' } } as any);
@@ -239,9 +256,8 @@ describe('Matterbridge', () => {
     }
   });
 
-  test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
-    expect((Matterbridge as any).instance).toBeDefined();
-    matterbridge = await Matterbridge.loadInstance(true);
+  test('Matterbridge.loadInstance(true) should throw if already loaded', async () => {
+    await expect(Matterbridge.loadInstance(true)).rejects.toThrow('Matterbridge instance already loaded');
     expect((matterbridge as any).initialized).toBeFalsy();
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
@@ -327,7 +343,6 @@ describe('Matterbridge', () => {
 
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
-    expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
     // await setDebug(false);
   }, 30000);
 
@@ -346,9 +361,8 @@ describe('Matterbridge', () => {
       'Jest',
     ];
 
-    expect((Matterbridge as any).instance).toBeUndefined();
-    matterbridge = await Matterbridge.loadInstance(true);
-    expect((Matterbridge as any).instance).toBeDefined();
+    matterbridge = await Matterbridge.loadInstance(true); // Resolves only cause the previous cleanup() cleared the instance
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded');
     expect((matterbridge as any).initialized).toBeTruthy();
 
     // Clear the timeouts and intervals set by initialize to prevent them from running during tests
@@ -942,6 +956,10 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
 
+    // Shorten the 1000 ms MessageExchange pause of cleanup() to keep the test fast
+    const cleanup = (matterbridge as any).cleanup;
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation((...args: unknown[]) => cleanup.call(matterbridge, args[0], args[1], 10));
+
     const shutdownPromise = new Promise((resolve) => {
       matterbridge.on('shutdown', resolve as () => void);
       const interval = setInterval(() => {
@@ -992,6 +1010,7 @@ describe('Matterbridge', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    cleanupSpy.mockRestore();
   });
 
   test('matterbridge -reset xxx', async () => {
@@ -1044,6 +1063,10 @@ describe('Matterbridge', () => {
     expect((matterbridge as any).hasCleanupStarted).toBe(false);
     expect((matterbridge as any).shutdown).toBe(false);
 
+    // Shorten the 1000 ms MessageExchange pause of cleanup() to keep the test fast
+    const cleanup = (matterbridge as any).cleanup;
+    const cleanupSpy = vi.spyOn(matterbridge as any, 'cleanup').mockImplementation((...args: unknown[]) => cleanup.call(matterbridge, args[0], args[1], 10));
+
     process.argv = [
       ...originalProcessArgv.slice(0, 2),
       '--frontend',
@@ -1087,6 +1110,7 @@ describe('Matterbridge', () => {
     // Destroy the Matterbridge instance
     await destroyInstance(matterbridge);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining('Cleanup completed. Shutting down...'));
+    cleanupSpy.mockRestore();
   });
 
   test('matterbridge cleanup("updating...", true)', async () => {

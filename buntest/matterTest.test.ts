@@ -57,6 +57,7 @@ import {
   environment,
   flushServerNode,
   getMatterbridge,
+  getSharedMatterbridge,
   server,
 } from '@matterbridge/test-utils/buntest/matter';
 import { setupTest } from '@matterbridge/test-utils/buntest/setup';
@@ -94,7 +95,27 @@ describe('bunMatterTest', () => {
     expect(matterbridge.systemInformation.user).toBe('bun');
     expect(matterbridge.aggregatorProductName).toBe('Matterbridge Bun');
     expect(matterbridge.bridgeMode).toBe('none');
+    expect(matterbridge.restartMode).toBe('none');
+    expect(matterbridge.virtualMode).toBe('mounted_switch');
     expect(matterbridge.aggregatorVendorId).toBe(VendorId(0xfff1));
+  });
+
+  test('getMatterbridge sets the bridge, restart and virtual modes', () => {
+    const matterbridge = getMatterbridge('bridge', 'docker', 'disabled');
+    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect(matterbridge.restartMode).toBe('docker');
+    expect(matterbridge.virtualMode).toBe('disabled');
+  });
+
+  test('getSharedMatterbridge defaults and sets the bridge, restart and virtual modes', () => {
+    const defaults = getSharedMatterbridge();
+    expect(defaults.bridgeMode).toBe('none');
+    expect(defaults.restartMode).toBe('none');
+    expect(defaults.virtualMode).toBe('mounted_switch');
+    const matterbridge = getSharedMatterbridge('childbridge', 'service', 'light');
+    expect(matterbridge.bridgeMode).toBe('childbridge');
+    expect(matterbridge.restartMode).toBe('service');
+    expect(matterbridge.virtualMode).toBe('light');
   });
 
   test('adds and deletes a bridged device on the aggregator', async () => {

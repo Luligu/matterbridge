@@ -18,6 +18,7 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { Status } from '@matter/types/globals';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
@@ -32,7 +33,7 @@ import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest 
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeMicrowaveOvenControlServer, MicrowaveOven } from '../../src/devices/microwaveOven.js';
-import { microwaveOven } from '../../src/matterbridgeDeviceTypes.js';
+import { bridgedNode, microwaveOven } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -350,7 +351,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('addMoreTime without an Operational State cluster on the endpoint', async () => {
-    const endpoint = new MatterbridgeEndpoint(microwaveOven, { id: 'MicrowaveOvenNoOperationalState' });
+    const endpoint = new MatterbridgeEndpoint(bridgedNode, { id: 'MicrowaveOvenNoOperationalState' });
     endpoint.behaviors.require(MatterbridgeMicrowaveOvenControlServer.with(MicrowaveOvenControl.Feature.PowerAsNumber, MicrowaveOvenControl.Feature.PowerNumberLimits), {
       powerSetting: 100,
       minPower: 10,
@@ -360,7 +361,7 @@ describe('Matterbridge ' + NAME, () => {
       maxCookTime: 3600,
     });
     expect(endpoint.hasClusterServer(OperationalState.id)).toBeFalsy();
-    expect(await addDevice(server, endpoint)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, endpoint)).toBeTruthy();
 
     const addMoreTimeEmitted: unknown[] = [];
     endpoint.subscribeCommand(MicrowaveOvenControl, 'addMoreTime', (data) => addMoreTimeEmitted.push(data.request));

@@ -22,6 +22,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import { Status } from '@matter/types/globals';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
@@ -385,7 +386,7 @@ describe('Matterbridge ' + NAME, () => {
         { label: 'Normal', mode: 5, modeTags: [{ value: LaundryWasherMode.ModeTag.Normal }] },
       ],
     });
-    expect(await addDevice(server, custom, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
     expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(1);
     await custom.invokeBehaviorCommand('onOff', 'off', {});
     expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(5);
@@ -396,7 +397,7 @@ describe('Matterbridge ' + NAME, () => {
     await custom.setAttribute(LaundryWasherMode.id, 'supportedModes', [{ label: 'Delicate', mode: 1, modeTags: [{ value: LaundryWasherMode.ModeTag.Delicate }] }]);
     await custom.invokeBehaviorCommand('onOff', 'off', {});
     expect(custom.getAttribute(LaundryWasherMode.id, 'currentMode')).toBe(1);
-    expect(await deleteDevice(server, custom, 0, 0, 0, 0)).toBeTruthy();
+    expect(await deleteDevice(aggregator, custom, 0, 0, 0, 0)).toBeTruthy();
   });
 
   test('reject SupportedModes without a Normal mode at initialization', async () => {

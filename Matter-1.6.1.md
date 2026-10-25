@@ -54,6 +54,27 @@ No new cluster types were added in Matter 1.6.1.
 
 Quality C = Changes Omitted: changes to the attribute value are not reported to subscribers.
 
+## Clusters No Longer Provisional
+
+| Cluster Type | ID     | 1.6.0 | 1.6.1 | Difference                                                  |
+| ------------ | ------ | ----- | ----- | ----------------------------------------------------------- |
+| Groupcast    | 0x0065 | 1     | 1     | Provisional status removed, without a cluster revision bump |
+
+### Groupcast remarks
+
+Groupcast was introduced in Matter 1.6.0 (it is not present in Matter 1.5.0 and 1.5.1) as a provisional cluster: the cluster ID, the Listener, Sender and PerGroup features, and all attributes and commands were `provisionalConform`. In Matter 1.6.1 the provisional conformance is removed:
+
+- Features: at least one of Listener (LN) or Sender (SD) is required, PerGroup (PGA) is optional.
+- Attributes and commands use their plain mandatory conformance; the ConfigureAuxiliaryACL command is mandatory when Listener is supported.
+- The LeaveGroupResponse command is no longer marked fabric scoped.
+
+The RootNode device type (revision 5) adds Groupcast as a singleton server cluster with two new conditions:
+
+- `GroupcastListenerCond`: SHALL be supported if any endpoint implements the Groups cluster server. It makes Groupcast with the Listener feature mandatory, and also the AUX feature of Access Control.
+- `GroupcastSenderCond`: SHALL be supported if any endpoint implements the Binding cluster server. It makes Groupcast with the Sender feature mandatory.
+
+Otherwise Groupcast is optional. Either condition also makes the GCAST feature of Group Key Management mandatory.
+
 ## New Semantic Tag Namespaces
 
 No new semantic tag namespaces were added in Matter 1.6.1.

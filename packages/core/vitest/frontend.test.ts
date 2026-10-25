@@ -122,7 +122,7 @@ describe('Matterbridge frontend', () => {
     // oxfmt-ignore
     await waiter('WebSocketServer Initialize done', () => { return (matterbridge as any).frontend.webSocketServer!==undefined; });
 
-    await flushAsync();
+    await flushAsync(undefined, undefined, 0);
 
     expect((matterbridge as any).initialized).toBe(true);
     expect((matterbridge as any).frontend.httpServer).toBeDefined();
@@ -134,29 +134,6 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Initializing the frontend http server on port ${YELLOW}${FRONTEND_PORT}${db}`);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`The frontend http server is listening on`));
   }, 60000);
-
-  test.each([
-    { flag: '', debug: false, verbose: false, diagnostic: false, readOnly: false },
-    { flag: '--debug', debug: true, verbose: false, diagnostic: false, readOnly: false },
-    { flag: '--debug-frontend', debug: true, verbose: false, diagnostic: false, readOnly: false },
-    { flag: '--verbose', debug: true, verbose: true, diagnostic: false, readOnly: false },
-    { flag: '--verbose-frontend', debug: true, verbose: true, diagnostic: false, readOnly: false },
-    { flag: '--diagnostic', debug: false, verbose: false, diagnostic: true, readOnly: false },
-    { flag: '--diagnostic-frontend', debug: false, verbose: false, diagnostic: true, readOnly: false },
-    { flag: '--readonly', debug: false, verbose: false, diagnostic: false, readOnly: true },
-    { flag: '--shelly', debug: false, verbose: false, diagnostic: false, readOnly: false },
-  ])('should configure frontend flags for $flag', ({ flag, ...expected }) => {
-    const savedArgv = process.argv;
-    let instance: FrontendType | undefined;
-    try {
-      process.argv = [...originalProcessArgv.slice(0, 2), ...(flag ? [flag] : [])];
-      instance = new Frontend(matterbridge);
-      expect(instance).toMatchObject(expected);
-    } finally {
-      instance?.destroy();
-      process.argv = savedArgv;
-    }
-  });
 
   test('broadcast handler', async () => {
     startSpy.mockImplementationOnce(async () => Promise.resolve());
@@ -179,7 +156,19 @@ describe('Matterbridge frontend', () => {
     // oxfmt-ignore
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_refreshrequired', src: 'manager', dst: 'frontend', params: { changed: 'matter', matter: {} } } as any);
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartrequired', src: 'manager', dst: 'frontend', params: { snackbar: true, fixed: true } } as any);
+    expect(broadcastServerRequestSpy).toHaveBeenLastCalledWith({
+      type: 'matterbridge_apisettings',
+      src: 'frontend',
+      dst: 'matterbridge',
+      params: { restartRequired: true, fixedRestartRequired: true },
+    });
     await (frontend as any).broadcastMsgHandler({ id: 123456, type: 'frontend_restartnotrequired', src: 'manager', dst: 'frontend', params: { snackbar: true } } as any);
+    expect(broadcastServerRequestSpy).toHaveBeenLastCalledWith({
+      type: 'matterbridge_apisettings',
+      src: 'frontend',
+      dst: 'matterbridge',
+      params: { restartRequired: false },
+    });
     await (frontend as any).broadcastMsgHandler({
       id: 123456,
       type: 'frontend_updaterequired',
@@ -187,6 +176,12 @@ describe('Matterbridge frontend', () => {
       dst: 'frontend',
       params: { version: '3.3.0-dev-1', devVersion: true },
     } as any);
+    expect(broadcastServerRequestSpy).toHaveBeenLastCalledWith({
+      type: 'matterbridge_apisettings',
+      src: 'frontend',
+      dst: 'matterbridge',
+      params: { updateRequired: true },
+    });
     const pluginUpdateSpy = vi.spyOn(frontend, 'wssSendPluginUpdateRequired');
     await (frontend as any).broadcastMsgHandler({
       id: 123456,
@@ -254,6 +249,13 @@ describe('Matterbridge frontend', () => {
 
       await (frontend as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'manager_archive_response', src: 'manager', dst: 'all', result: { success: true, command: 'zip', archivePath: 'test.zip', sourcePaths: ['file1', 'file2'], destinationPath: 'dest' } } as any);
     }
+    expect(broadcastServerRequestSpy).toHaveBeenCalledTimes(5);
+    expect(broadcastServerRequestSpy).toHaveBeenCalledWith({
+      type: 'matterbridge_apisettings',
+      src: 'frontend',
+      dst: 'matterbridge',
+      params: { restartRequired: true, fixedRestartRequired: true },
+    });
   });
 
   test('Frontend validateReq', async () => {
@@ -455,12 +457,10 @@ describe('Matterbridge frontend', () => {
       success: true,
       response: { version: '3.3.0', devVersion: true },
     });
-    expect((frontend as any).updateRequired).toBe(true);
 
     // Restore for next tests
     (frontend as any).webSocketServer = savedWss;
     (frontend as any).listening = false;
-    (frontend as any).updateRequired = false;
     spy.mockRestore();
   });
 
@@ -493,12 +493,12 @@ describe('Matterbridge frontend', () => {
       success: true,
       response: { plugin: 'matterbridge-example', version: '1.2.4', devVersion: true },
     });
-    expect((frontend as any).updateRequired).toBe(false);
+    expect(matterbridge.updateRequired).toBe(false);
 
     // Restore for next tests
     (frontend as any).webSocketServer = savedWss;
     (frontend as any).listening = false;
-    (frontend as any).updateRequired = false;
+    matterbridge.updateRequired = false;
     spy.mockRestore();
   });
 

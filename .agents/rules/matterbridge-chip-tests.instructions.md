@@ -88,7 +88,7 @@ device tree:
   behavior or shutdown depend on them, and don't assume a specific TestEventTrigger/app-pipe case is
   implemented without checking `chipTests.ts` — it currently only implements the SmokeCOAlarm TestEventTrigger
   cases and a handful of app-pipe commands (`SetBooleanState`, `SetBooleanStateSensorFault`,
-  `SimulateConfigurationVersionChange`, `SetOccupancy`, `SetSimulatedSoilMoisture`); anything else falls
+  `SimulateConfigurationVersionChange`, `SetOccupancy`, `SetSimulatedSoilMoisture`, `LongPress`); anything else falls
   through to `GeneralDiagnosticsServer`'s default `InvalidCommand` response or a logged-and-ignored warning.
 
 ### TestEventTrigger (`GeneralDiagnostics.TestEventTrigger`, endpoint 0)
@@ -184,12 +184,13 @@ state, never device identity.
 
 ```shell
 node scripts/run-matterbridge-chip-tests.mjs --start   # docker rm -f any old container, pull the image, create the docker network if missing, run the container, wait for Matterbridge's root server node to come online
+node scripts/run-matterbridge-chip-tests.mjs --start --local  # same as --start, but runs the locally built matterbridge:chip-test image (npm run docker:build:local:chip-test) without pulling
 node scripts/run-matterbridge-chip-tests.mjs           # run every test in chipTests.json's "tests" array against the running container
 node scripts/run-matterbridge-chip-tests.mjs --test X  # run only tests whose "name" or "test" (filename) includes X, case-insensitive substring match
 node scripts/run-matterbridge-chip-tests.mjs --stop    # docker stop the container (left in place, not removed — the next --start does the docker rm -f)
 ```
 
-Exposed as `npm run` shortcuts in `package.json`: `chip:start`, `chip:test`, `chip:stop` (there is currently
+Exposed as `npm run` shortcuts in `package.json`: `chip:start`, `chip:start:local`, `chip:test`, `chip:stop` (there is currently
 no per-cluster `chip:test:<name>` shortcut list in this repo's `package.json` — add one alongside a new
 cluster's tests in `chipTests.json` if that becomes useful).
 

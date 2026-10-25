@@ -12,7 +12,7 @@ import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { getOffWithEffectRequest, getOnWithTimedOffRequest } from '@matterbridge/test-utils/matter';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -23,7 +23,7 @@ import {
 } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, bridgedNode, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -71,7 +71,7 @@ describe('MatterbridgeOnOffServer', () => {
     light.addChildDeviceType('illuminance', lightSensor).addRequiredClusterServers();
     light.addChildDeviceType('motion', occupancySensor).addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, light)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
   });
 
   test('OnOff server', async () => {
@@ -145,7 +145,7 @@ describe('MatterbridgeOnOffServer', () => {
       device.createDefaultBridgedDeviceBasicInformationClusterServer(id, `SN-${id}`);
       device.createDefaultOnOffClusterServer(onOff, false, 0, 0, startUpOnOff);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       return device.getAttribute(OnOff, 'onOff');
     };
 
@@ -170,11 +170,11 @@ describe('MatterbridgeOnOffServer', () => {
     });
 
     it('does not apply without the Lighting feature', async () => {
-      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suOnOffNoLighting' });
+      const device = new MatterbridgeEndpoint([bridgedNode, bridge], { id: 'suOnOffNoLighting' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suOnOffNoLighting', 'SN-suOnOffNoLighting');
       device.createOnOffClusterServer(false);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       expect(device.getAttribute(OnOff, 'onOff')).toBe(false);
     });
   });

@@ -23,7 +23,7 @@ import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transpo
 import { EndpointNumber } from '@matter/types/datatype';
 import { StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -105,7 +105,7 @@ describe('Intercom', () => {
     expect(switchChild?.hasClusterServer(Identify.id)).toBeTruthy();
     expect(switchChild?.hasClusterServer(Switch.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(switchChild?.getAttribute(Switch.id, 'featureMap')).toMatchObject({ momentarySwitch: true, latchingSwitch: false });
     expect(device.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(65_536);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxNetworkBandwidth')).toBe(128_000);
@@ -133,7 +133,7 @@ describe('Intercom', () => {
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new Intercom('Intercom Snapshot', 'INTERCOM-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -169,6 +169,26 @@ describe('Intercom', () => {
         'binding(0x1e).clusterRevision(0xfffd)=1',
         'binding(0x1e).featureMap(0xfffc)={  }',
         'binding(0x1e).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Intercom Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Intercom'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='INTERCOM-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='4fc510a0e92a4702a57c1c970e65296a'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'cameraAvStreamManagement(0x551).acceptedCommandList(0xfff9)=[ 0, 2, 11 ]',
         'cameraAvStreamManagement(0x551).allocatedAudioStreams(0x10)=[ { audioStreamId: 0, streamUsage: 3, audioCodec: 0, channelCount: 1, sampleRate: 48000, bitRate: 32000, bitDepth: 16, referenceCount: 0 } ]',
         'cameraAvStreamManagement(0x551).attributeList(0xfffb)=[ 6, 7, 8, 9, 11, 14, 16, 18, 21, 25, 26, 27, 28, 29, 30, 31, 32, 33, 39, 65528, 65529, 65531, 65532, 65533 ]',
@@ -197,11 +217,11 @@ describe('Intercom', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[ 1363, 1364, 1366 ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 320, revision: 2 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 320, revision: 2 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[ 5 ]',
-        'descriptor(0x1d).serverList(0x1)=[ 29, 30, 47, 1361, 1363, 1364 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 30, 47, 57, 1361, 1363, 1364 ]',
         'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
@@ -232,7 +252,7 @@ describe('Intercom', () => {
     const device = new Intercom('Intercom Identify', 'INTERCOM-IDENTIFY', { identifyTime: 5, identifyType: Identify.IdentifyType.VisibleIndicator });
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(device.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -245,7 +265,7 @@ describe('Intercom', () => {
     const device = new Intercom(`Intercom ${powerSourceType}`, `INTERCOM-${powerSourceType.toUpperCase()}`, { powerSourceType });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(expectedChargeLevel);
   });
 
@@ -253,7 +273,7 @@ describe('Intercom', () => {
     const device = new Intercom('Intercom None', 'INTERCOM-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should create an intercom device with custom stream usages', async () => {
@@ -262,7 +282,7 @@ describe('Intercom', () => {
       streamUsagePriorities: [StreamUsage.LiveView, StreamUsage.Recording],
     });
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
   });
@@ -271,7 +291,7 @@ describe('Intercom', () => {
     const weriftOfferOptions: WeriftOfferOptions = { offerVideo: false, offerAudio: true, videoSource: 'none', audioSource: 'test' };
     const device = new Intercom('Intercom Werift', 'INTERCOM-WERIFT', { weriftOfferOptions });
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });
 
@@ -285,7 +305,7 @@ describe('Intercom', () => {
     expect(switchChild).toBeDefined();
     expect(switchChild?.number).toBe(EndpointNumber(16_04_2));
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(switchChild?.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(switchChild?.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -297,14 +317,14 @@ describe('Intercom', () => {
     expect(left.id).toBe('LeftSwitch');
     expect(left.deviceTypes.has(genericSwitch.code)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(await left.triggerSwitchEvent('Single', left.log)).toBeTruthy();
     expect(left.getAttribute(Switch, 'currentPosition')).toBe(0);
   });
   it.each(['offer', 'answer', 'iceCandidates', 'end'] as const)('should notify %s subscribers only after the inherited handler succeeds', async (command) => {
     const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };
     const device = new Intercom(`Intercom ${command}`, `INTERCOM-${command}`);
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     const listener = vi.fn();
     device.subscribeCommand(WebRtcTransportRequestor.id, command, listener);
     const handler = vi.spyOn(WebRtcTransportRequestorServer.prototype, command).mockImplementation(async () => {

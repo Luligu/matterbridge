@@ -33,6 +33,7 @@ import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
 import { Status, StreamUsage } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { protectPrototype } from '../protectPrototypes.js';
 import { MatterbridgeCameraAvStreamManagementServer } from './cameraAvStreamManagementServer.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 import { type WeriftOfferOptions, WeriftWebRtcSession } from './weriftSession.js';
@@ -1108,6 +1109,9 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
     );
   }
 }
+
+// Freeze the prototype so the methods of this class cannot be patched
+protectPrototype(MatterbridgeWebRtcTransportProviderServer);
 
 /**
  * matter.js's own Behavior subclasses declare Internal/State/Events this way (see e.g. @matter/node's

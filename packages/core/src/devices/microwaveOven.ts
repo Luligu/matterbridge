@@ -3,7 +3,7 @@
  * @description This file contains the MicrowaveOven class.
  * @author Luca Liguori
  * @created 2025-05-25
- * @version 1.2.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -238,7 +238,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     // Matter 1.6.0 § 8.13.6.2.6: Respond with INVALID_IN_STATE, leaving state unchanged, if the Operational State cluster on the same endpoint is not Stopped, since cooking parameters cannot change while the oven is running, paused or in error.
     if (
       this.endpoint.behaviors.has(MatterbridgeOperationalStateServer) &&
-      this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState !== OperationalState.OperationalStateEnum.Stopped
+      this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState !== (OperationalState.OperationalStateEnum.Stopped as number)
     ) {
       throw new StatusResponseError(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called while the operational state is not Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -285,7 +285,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      const normalMode = supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === MicrowaveOvenMode.ModeTag.Normal));
+      const normalMode = supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (MicrowaveOvenMode.ModeTag.Normal as number)));
       // Matter 1.6.0 § 8.13.6.2.1: If CookMode is missing, set CurrentMode to a mode having the Normal mode tag.
       await this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: normalMode?.mode });
     }
@@ -357,7 +357,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     // Matter 1.6.0 § 8.13.6.3.2: Respond with INVALID_IN_STATE if the Operational State cluster on the same endpoint is in an operational state, such as Error, that cannot support the command.
     if (
       this.endpoint.behaviors.has(MatterbridgeOperationalStateServer) &&
-      this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState === OperationalState.OperationalStateEnum.Error
+      this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState === (OperationalState.OperationalStateEnum.Error as number)
     ) {
       throw new StatusResponseError(
         `MatterbridgeMicrowaveOvenControlServer: addMoreTime called while the operational state is Error (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

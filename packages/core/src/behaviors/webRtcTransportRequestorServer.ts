@@ -26,6 +26,7 @@ import { WebRtcTransportRequestorServer } from '@matter/node/behaviors/web-rtc-t
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { protectPrototype } from '../protectPrototypes.js';
 
 /** Notifies command subscribers after the default WebRTC requestor handles signaling. */
 export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportRequestorServer {
@@ -76,6 +77,9 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
     this.endpoint.emitCommand(WebRtcTransportRequestor, 'end', request, this.context);
   }
 }
+
+// Freeze the prototype so the methods of this class cannot be patched
+protectPrototype(MatterbridgeWebRtcTransportRequestorServer);
 
 /**
  * Creates a default WebRtcTransportRequestor cluster server on the given endpoint, using matter.js's own default

@@ -12,7 +12,7 @@ import { LevelControl } from '@matter/types/clusters/level-control';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { getMoveRequest, getMoveToLevelRequest, getStepRequest, getStopRequest } from '@matterbridge/test-utils/matter';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -23,7 +23,7 @@ import {
 } from '@matterbridge/test-utils/vitest/matter';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
-import { bridge, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
+import { bridge, bridgedNode, extendedColorLight, lightSensor, occupancySensor, onOffPlugInUnit, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 import { expectCommand } from '../vitestUtils.js';
 
@@ -71,7 +71,7 @@ describe('MatterbridgeLevelControlServer', () => {
     light.addChildDeviceType('illuminance', lightSensor).addRequiredClusterServers();
     light.addChildDeviceType('motion', occupancySensor).addRequiredClusterServers();
 
-    expect(await addDevice(aggregator, light)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, light)).toBeTruthy();
   });
 
   test('LevelControl server', async () => {
@@ -116,7 +116,15 @@ describe('MatterbridgeLevelControlServer', () => {
     });
     expectCurrentLevel(1);
 
+    // Matter 1.6.1 §1.6.7.6: reaching minimum with MoveWithOnOff turns the light off.
+    expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
     const stepRequest = getStepRequest(LevelControl.StepMode.Up, 10, 3, false);
+    // Ordinary Step cannot execute while off without ExecuteIfOff (§1.6.4.1.3).
+    await light.invokeBehaviorCommand(LevelControl, 'step', stepRequest);
+    expectCurrentLevel(1);
+    expect(light.getAttribute(OnOff, 'onOff')).toBe(false);
+
+    await light.setAttribute(OnOff, 'onOff', true);
     await expectCommand(light, LevelControl, 'LevelControl.step', stepRequest, (data) => {
       expect(data.cluster).toBe('levelControl');
       expect(data.attributes.currentLevel).toBe(1);
@@ -162,7 +170,7 @@ describe('MatterbridgeLevelControlServer', () => {
       device.createDefaultBridgedDeviceBasicInformationClusterServer(id, `SN-${id}`);
       device.createDefaultLevelControlClusterServer(currentLevel, 1, 254, null, startUpCurrentLevel);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       return device.getAttribute(LevelControl, 'currentLevel');
     };
 
@@ -183,12 +191,12 @@ describe('MatterbridgeLevelControlServer', () => {
     });
 
     it('does not apply without the Lighting feature', async () => {
-      const device = new MatterbridgeEndpoint([onOffPlugInUnit, bridge], { id: 'suLevelNoLighting' });
+      const device = new MatterbridgeEndpoint([bridgedNode, bridge], { id: 'suLevelNoLighting' });
       device.createDefaultBridgedDeviceBasicInformationClusterServer('suLevelNoLighting', 'SN-suLevelNoLighting');
       device.createOnOffClusterServer(false);
       device.createLevelControlClusterServer(100);
       device.addRequiredClusterServers();
-      expect(await addDevice(aggregator, device)).toBeTruthy();
+      expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
       expect(device.getAttribute(LevelControl, 'currentLevel')).toBe(100);
     });
   });

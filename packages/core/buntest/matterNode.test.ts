@@ -876,6 +876,46 @@ describe('MatterNode', () => {
     await Promise.all([stopPromise, offlinePromise]);
   });
 
+  test('should log a debug message when a matter.js log message cannot be logged', () => {
+    // @ts-expect-error access private property
+    const matterLogSpy = vi.spyOn(matter.matterLog, 'log').mockImplementationOnce(() => {
+      throw new Error('Matter log failure');
+    });
+    const destinationLogger = matter.createDestinationMatterLogger();
+    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
+    expect(loggerDebugSpy).toHaveBeenCalledWith('Error parsing matter log message facility Jest');
+    matterLogSpy.mockRestore();
+  });
+
+  test('should log an error when the matter storage backup fails', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    // copyDirectory rejects the same source and destination with a plain Error (no ENOENT code)
+    await matter.backupMatterStorage(storageName, storageName);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`Error creating matter node storage backup from ${storageName} to ${storageName}:`, expect.any(Error));
+  });
+
+  test('should log an error when the server node fails to start or to close', async () => {
+    const savedServer = matter.serverNode;
+    // @ts-expect-error -- Minimal server node that fails to start and to close
+    matter.serverNode = {
+      id: 'FailingServerNode',
+      start: async (): Promise<void> => {
+        throw new Error('Start failure');
+      },
+      close: async (): Promise<void> => {
+        throw new Error('Close failure');
+      },
+    };
+    try {
+      await matter.startServerNode();
+      expect(loggerErrorSpy).toHaveBeenCalledWith('Failed to start FailingServerNode server node: Start failure');
+      await matter.stopServerNode();
+      expect(loggerErrorSpy).toHaveBeenCalledWith('Failed to close FailingServerNode server node: Close failure');
+    } finally {
+      matter.serverNode = savedServer;
+    }
+  });
+
   test('Stop matter storage', async () => {
     expect(await matter.stopMatterStorage()).toBeUndefined();
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Closed matter node storage`);

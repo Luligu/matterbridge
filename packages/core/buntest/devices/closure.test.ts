@@ -810,6 +810,29 @@ describe('Matterbridge ' + NAME, () => {
     }
   });
 
+  test('should enable the movement and calibration simulation when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    const chipTestDevice = new Closure('Closure Chip Test Device', 'CLCHIPTEST', { calibration: true });
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    try {
+      expect(await addDevice(server, chipTestDevice, 0, 0, 0, 0)).toBeTruthy();
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+
+    // calibrationDuration is 2000 ms under MATTERBRIDGE_CHIP_TEST (0, i.e. immediate, otherwise).
+    vi.useFakeTimers();
+    try {
+      await chipTestDevice.invokeBehaviorCommand('closureControl', 'ClosureControl.calibrate', {});
+      expect(chipTestDevice.getMainState()).toBe(ClosureControl.MainState.Calibrating);
+      expect(chipTestDevice.getAttribute(ClosureControl.id, 'countdownTime')).toBe(2);
+
+      await advanceTimersByTimeAsync(2000);
+      expect(chipTestDevice.getMainState()).toBe(ClosureControl.MainState.Stopped);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   test('create and add a closure device with two panels', async () => {
     venetianBlind = new Closure('Venetian Blind Test Device', 'CL654321', {
       tagList: [getSemtag(ClosureTag.Covering), getSemtag(ClosureCoveringTag.Venetian)],

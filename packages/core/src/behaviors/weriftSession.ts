@@ -31,6 +31,7 @@ import type { RTCDtlsTransport, RTCIceCandidatePairStats, RTCOutboundRtpStreamSt
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, useOPUS, usePCMU, useVP8 } from 'werift';
 import { navigator } from 'werift/nonstandard';
 
+import { protectPrototype } from '../protectPrototypes.js';
 import { hasFfmpeg, runFfmpeg } from './ffmpeg.js';
 
 type VideoSource = 'none' | 'test' | 'webcam' | 'rtsp';
@@ -1181,3 +1182,6 @@ export class WeriftWebRtcSession {
     this.log.info(`RTCPeerConnection closed (connectionState=${this.peerConnection.connectionState})`);
   }
 }
+
+// Freeze the prototype so the methods of this class cannot be patched
+protectPrototype(WeriftWebRtcSession);

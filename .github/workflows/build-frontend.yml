@@ -3,12 +3,8 @@ name: Node.js CI - Frontend
 on:
   push:
     branches: [main, dev]
-    paths:
-      - 'apps/frontend/**' # any file under frontend
   pull_request:
     branches: [main, dev]
-    paths:
-      - 'apps/frontend/**' # any file under frontend
   workflow_dispatch:
 
 # Cancel previous runs when a new one is triggered (same branch/PR)
@@ -18,6 +14,7 @@ concurrency:
 
 jobs:
   build:
+    name: Build frontend
     runs-on: ubuntu-latest
 
     steps:

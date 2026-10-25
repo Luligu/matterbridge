@@ -5,9 +5,9 @@
 # Installation strategy: "hoisted" places dependencies in the shared node_modules root;
 # "isolated" keeps each package's dependencies in its own node_modules directory.
 # Default: "hoisted".
-# linker = "isolated"
+linker = "isolated"
 # Make @matter/main's transitive @matter/* packages available to all workspaces.
-# publicHoistPattern = ["@matter/*"]
+publicHoistPattern = ["@matter/*"]
 
 # globalStore (isolated linker only) symlinks packages from a store shared by all projects in
 # ~/.bun/install/cache/links instead of copying them into node_modules/.bun.
@@ -38,8 +38,6 @@ pathIgnorePatterns = [
   '**/tmp/**',
   '**/test/**',
   '**/vitest/**',
-  '**/jest-utils/**',
-  '**/vitest-utils/**',
   '**/test-utils/**',
 ]
 
@@ -67,9 +65,7 @@ coveragePathIgnorePatterns = [
   # packages/core: measure only the files that have a buntest (backend, cli, cliEmitter, cliHistory, deviceManager, matterNode, matterNodeHelpers, matterbridge*Platform and runners files)
   '**/packages/core/src/{behaviors,clusters,dgram,matter,utils}/**',
   '**/packages/core/src/{chipTests,demoDevices,export,frontend,helpers,matterbridge,matterbridgeDeviceTypes,matterbridgeEndpoint,matterbridgeEndpointCommandHandler,matterbridgeEndpointHelpers,matterbridgeEndpointTypes,matterbridgeFactory,mb_coap,mb_health,mb_mdns,pluginManager}.ts',
-  '**/packages/jest-utils/**',
   '**/packages/test-utils/**',
-  '**/packages/vitest-utils/**',
   '**/src/**/*.d.ts',
   '**/src/**/*.{spec,test}.{ts,mts,cts}',
 ]

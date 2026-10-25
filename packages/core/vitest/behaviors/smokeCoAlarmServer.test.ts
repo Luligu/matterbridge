@@ -11,7 +11,7 @@ const MATTER_CREATE_ONLY = true;
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Status } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -23,7 +23,7 @@ import {
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { MatterbridgeSmokeCoAlarmServer } from '../../src/behaviors/smokeCoAlarmServer.js';
-import { smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';
+import { powerSource, smokeCoAlarm } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
@@ -61,11 +61,12 @@ describe('MatterbridgeSmokeCoAlarmServer', () => {
   });
 
   test('Device type: smokeSensor', async () => {
-    smoke = new MatterbridgeEndpoint(smokeCoAlarm, { id: 'smokeSensor' });
+    smoke = new MatterbridgeEndpoint([smokeCoAlarm, powerSource], { id: 'smokeSensor' });
     smoke.createDefaultSmokeCOAlarmClusterServer();
+    smoke.createDefaultPowerSourceReplaceableBatteryClusterServer();
     smoke.addRequiredClusterServers();
     expect(smoke).toBeDefined();
-    expect(await addDevice(aggregator, smoke)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, smoke)).toBeTruthy();
   });
 
   test('SmokeCoAlarm server', async () => {

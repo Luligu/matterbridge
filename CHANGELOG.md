@@ -29,20 +29,68 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## [3.10.15] - Dev branch
+## [3.11.1] - Dev branch
+
+### Added
+
+- [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
+- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
+- [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
+
+### Changed
+
+- [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
+- [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.1.
+- [matterbridge]: Bump `@types/bun` to v.1.4.4.
+- [matterbridge]: Bump `oxfmt` to v.0.74.0.
+- [matterbridge]: Bump `oxlint` to v.1.89.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2005.
+- [frontend]: Bump `react-router` to v.8.5.0.
+- [frontend]: Bump `vite` to v.8.3.5.
+- [core]: Bump `multer` to v.2.5.0.
+- [core]: Bump `werift` to v.0.25.1.
+- [tests]: Remove redundant WebSocket error event casts after updating the Bun types.
+
+### Fixed
+
+- [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).
+- [devcontainer]: Fix the Bun dev container `npm` shim: drop the npm-only flags that `bun prune` and `bun link` reject since Bun 1.4.4.
+- [buntest]: Move `wssTest.test.ts` to `packages/core/buntest`, so it resolves `ws` with the Bun isolated linker.
+- [thread]: Spawn `npm --version` instead of `npm list` in the Bun spawn test, which fails on the Bun isolated linker layout.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
+## [3.11.0] - 2026-10-23
+
+### Breaking changes
+
+- [matter]: Bump `matter.js` to v.0.18.0 and Matter to 1.6.1. See [Matter 1.6.1 changes from 1.6.0](Matter-1.6.1.md) and [Matter.js 0.18 changes from 0.17](Matter.js-0.18.md).
+- [matter]: matter.js 0.18 validates every endpoint against its declared device types (Matter 1.6.1 Core § 9.2). Matterbridge uses the `warn` mode in production: a non-conformant plugin device is logged, not refused.
+- [matter]: Update the device types to Matter 1.6.1: Simple device types with mandatory application clients (e.g. On/Off Light Switch) now require the Binding cluster server, mapped to `MatterbridgeBindingServer`.
+
+### Development Breaking changes
+
+- [matter.js]: The CommodityMetering and CommodityTariff fields use `Ids` instead of `IDs`: `dayEntryIds`, `dayPatternIds` and `tariffComponentIds`.
+- [matter.js]: Open enums (OperationalState, RvcOperationalState, Mode Base `ModeTagStruct.value`, ...) are typed as `Enum | number`: comparisons with enum members are flagged by `typescript/no-unsafe-enum-comparison`; widen the member with `as number`.
+- [matter.js]: A mandatory command implemented with `Behavior.unimplemented` fails the endpoint initialization in `strict` validation mode.
+- [test-utils]: `createTestEnvironment()` (vitest, jest and bun) sets the endpoint validation to `'strict'` by default, so non-conformant test devices are refused; pass `'warn'` or `'off'` to relax it. Use `addBridgedDevice()` for test devices that would be bridged.
+- [test-utils]: Remove the `@matterbridge/jest-utils` and `@matterbridge/vitest-utils` packages and the `matterbridge/jest-utils`, `matterbridge/jest-utils/matter`, `matterbridge/vitest-utils` and `matterbridge/vitest-utils/matter` exports. Use `@matterbridge/test-utils` (`matterbridge/test-utils/jest`, `matterbridge/test-utils/vitest` and their `/setup` and `/matter` subpaths) instead.
 
 ### Added
 
 - [frontend]: Add an optional tree view for device clusters with a saved Grid/Tree preference and live attribute updates. Thanks to [@RinDevJunior](https://github.com/RinDevJunior) for [PR #660](https://github.com/Luligu/matterbridge/pull/660).
 - [camera]: Add `closeWebRtcSessions(device)` to `matterbridge/devices/camera` so a plugin closes its own WebRTC sessions in `onShutdown`.
 - [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
+- [test-utils]: Add `addBridgedDevice()` to the test-utils helpers: it adds the Bridged Node device type and, when missing, the `BridgedDeviceBasicInformationServer` to a test device, like `registerDevice()` does in bridge mode.
 - [matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the `subscribeAttribute` listeners are lost. Closes [#657](https://github.com/Luligu/matterbridge/issues/657). Thanks Calvin Che.
+- [chip]: Add `--start --local` (`npm run chip:start:local`) to `run-matterbridge-chip-tests.mjs` to run the locally built `matterbridge:chip-test` image without pulling.
 
 ### Changed
 
 - [workflows]: Pin GitHub workflow dispatch requests to REST API version `2026-03-10` to avoid API retirement warnings.
 - [utils/scripts]: Pin GitHub data-model and Bun release requests to REST API version `2026-03-10`.
-- [matterbridge]: Bump `matterbridge` version to v.3.10.15.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.0.
 - [matterbridge]: Bump `@types/bun` to v.1.4.3.
 - [matterbridge]: Bump `@types/node` to v.26.6.5.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.0.5.
@@ -54,7 +102,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `vitest` to v.5.0.5.
 - [core]: Bump `express` to v.5.3.0.
 - [thread]: Bump `@zip.js/zip.js` to v.2.24.0.
-- [frontend]: Add `apps/frontend` to the npm workspaces: it is now versioned with matterbridge (v.3.10.15) and published by `publish-workspaces`.
+- [frontend]: Add `apps/frontend` to the npm workspaces: it is now versioned with matterbridge (v.3.11.0) and published by `publish-workspaces`.
 - [frontend]: Move all dependencies to devDependencies, since they are bundled by vite into `build`.
 - [scripts]: Fix `pack-workspaces --dry-run` creating a tarball instead of previewing its contents.
 - [scripts]: Add `buildFrontend` and run it after the clean build in `publish-workspaces`, `pack-workspaces`, `pack-monorepo`, `runMeBeforePublish`, `prepublishOnly` and `softReset`; remove `reset:all`, `softReset:all`, `softReset:bun:all` and `runMeBeforePublish:all` (the frontend coverage now runs in `runMeBeforePublish`).
@@ -63,9 +111,21 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Remove duplicated devDependencies (`@types/node`, `@vitest/coverage-v8`, `vitest`, `typescript`, `oxfmt`, `oxlint` and `oxlint-tsgolint`) and use the root tooling; move `jsdom` to the root devDependencies with `vitest`.
 - [docker]: Add the `matterbridge-camera` and `matterbridge-webcam` plugins (dev branch) to the `dev` and `bundev` images.
 - [docs]: Show npm and Docker downloads with 1 decimal in index.html and update plugins downloads to 1.3M+.
+- [chip]: Build the `chip-test` docker image on the CHIP `v1.6.1-branch` and rebase the `TC_DeviceBasicComposition.py` and `Test_TC_OO_2_2.yaml` patches on it.
+- [chip]: Run the SmokeCOAlarm conformance tests with the `TC_SMOKECO_2_x.py` Python tests, since `v1.6.1-branch` removed the YAML ones, on all three SmokeCOAlarm endpoints (709, 7091 and 7092).
+- [chip]: Show the endpoint and the test run duration in each result line of the CHIP test summary log.
 
 ### Fixed
 
+- [test-utils]: Report strict endpoint registration violations, including nested causes, without serializing the Matter node graph in Vitest, Jest and Bun.
+- [frontend]: Update restart and update-required flags through Matterbridge broadcast requests, including plugin restart and update notifications.
+- [chip]: Map the SmokeCOAlarm critical battery, hardware fault and end of service test event triggers sent by the Python tests, and start the self-test from the app-pipe `LongPress` command.
+- [chip]: Patch `TC_SMOKECO_2_1.py` and `TC_SMOKECO_2_5.py` to guard the optional `ContaminationState` and `SmokeSensitivityLevel` attributes and fix misplaced `skip_step` calls.
+- [chip]: Patch `Test_TC_DRLK_2_1.yaml` to restore `OperatingMode` after Step 24c, so `NoRemoteLockUnlock` no longer fails the following DoorLock tests with matter.js 0.18.
+- [chip]: Patch `TC_TSTAT_4_2.py` to give the presets added by Steps 13 and 18 a unique name, as Matter 1.6.1 § 4.3.10.23.3 requires.
+- [chip]: Run `TC_FAN_3_1.py` with `--no-wildcard-subscription`, so the `v1.6.1-branch` subscription check no longer times it out.
+- [chip]: Poll the CHIP test app pipe every 10 ms instead of 50 ms, so `TC_RVCOPSTATE_2_3.py` no longer reads the state before the `Reset` command is applied.
+- [camera]: The PTZ move commands set `MovementState` to Moving, respond, and complete on a short timer (Idle and the new `MPTZPosition`); a move received while moving fails with BUSY (Matter 1.6.1 § 11.3.7.1.4).
 - [camera]: Remove the duplicate BasicInformation setup in `Camera` that briefly named it `Matterbridge Chime`.
 - [camera]: Fix stale JSDoc in `CameraOptions`, `Camera` and `SnapshotCamera` describing the implemented features.
 - [camera]: Remove the unused static `WeriftWebRtcSession.closeAll()`, which would close the sessions of every plugin.
@@ -73,6 +133,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [ffmpeg]: Log the exit of every ffmpeg process, and warn when a WebRTC track generator exits while its track is still attached.
 - [scripts]: Fix the IPv4 and IPv6 lines of `info-debian.sh` and `info-alpine.sh` outside plain Docker bridges: read `src`/`dev` from `ip route get` by keyword (Docker Desktop host networking printed `IPv4: 2`), take IPv6 from the outgoing interface instead of `eth0`, and keep only the matching family in the `hostname` fallback.
 - [thermostat]: Initialize the presets thermostat running state with all outputs off. Thanks Aayush Sharma.
+- [frontend]: Await the diagnostic log writes instead of a fixed 500 ms wait in `generateDiagnostic()`, so view and download of the diagnostic are faster and never read a partial file.
+- [bun]: Update `buntest/wssTest.test.ts` and `README-BUN.md` for Bun 1.4.4: the `ws` client now honors top-level TLS options and `bun test --coverage` counts implicit constructors.
+- [bun]: Fix the `Dockerfile.bundev` build: `bun pm pkg` has no `--workspaces`/`--include-workspace-root` flags (Bun 1.4.3 and earlier silently ignored unknown flags, Bun 1.4.4 rejects them), so strip `devDependencies` and `scripts` in the root and in each workspace.
+- [matterbridge]: Write the server node storage context values in `createServerNodeContext()` only when missing or changed (as in `MatterNode`), avoiding 17 disk writes per server node at every start.
+
   <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.10.14] - 2026-10-16

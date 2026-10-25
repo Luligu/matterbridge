@@ -67,7 +67,7 @@ describe('Matterbridge ' + NAME, () => {
   const explicitCurrentPrice = { periodStart: 1_700_000_000, periodEnd: null, price: 2000 };
   const dayEntries = [{ dayEntryId: 1, startTime: 0 }];
   const tariffComponents = [{ tariffComponentId: 1, price: { priceType: TariffPriceType.Standard, price: 2000 }, threshold: null, label: 'Standard' }];
-  const tariffPeriods = [{ label: 'Standard', dayEntryIDs: [1], tariffComponentIDs: [1] }];
+  const tariffPeriods = [{ label: 'Standard', dayEntryIds: [1], tariffComponentIds: [1] }];
 
   beforeAll(async () => {
     // Setup the Matter test environment
@@ -170,7 +170,7 @@ describe('Matterbridge ' + NAME, () => {
       power: 460_000,
       energyImported: 1_000_000,
       energyExported: 0,
-      meteredQuantity: [{ tariffComponentIDs: [1], quantity: 12.5 }],
+      meteredQuantity: [{ tariffComponentIds: [1], quantity: 12.5 }],
       meteredQuantityTimestamp: 1_700_000_000,
       tariffUnit: TariffUnit.KWh,
       maximumMeteredQuantities: 1,
@@ -188,7 +188,7 @@ describe('Matterbridge ' + NAME, () => {
       cumulativeEnergyExported: { energy: 0 },
     });
     expect(explicitMeter.getClusterServerOptions(CommodityMetering.id)).toMatchObject({
-      meteredQuantity: [{ tariffComponentIDs: [1], quantity: 12.5 }],
+      meteredQuantity: [{ tariffComponentIds: [1], quantity: 12.5 }],
       meteredQuantityTimestamp: 1_700_000_000,
       tariffUnit: TariffUnit.KWh,
       maximumMeteredQuantities: 1,
@@ -294,7 +294,7 @@ describe('Matterbridge ' + NAME, () => {
     // the enabled features, a path construction-time state doesn't hit), and a second require() call on an
     // already-required behavior would not apply new options either. Also exercises
     // MatterbridgeCommodityTariffServer.getTariffComponent/getDayEntry for command coverage.
-    const day: CommodityTariff.Day = { date: 1_700_000_000, dayType: CommodityTariff.DayType.Standard, dayEntryIDs: [1] };
+    const day: CommodityTariff.Day = { date: 1_700_000_000, dayType: CommodityTariff.DayType.Standard, dayEntryIds: [1] };
     commandTariff = device.addElectricalEnergyTariff('Electrical Energy Tariff Commands', {
       tariffLabel: 'Standard',
       providerName: 'Provider',
@@ -303,9 +303,9 @@ describe('Matterbridge ' + NAME, () => {
       startDate: 1_700_000_000,
       dayEntries,
       dayPatterns: [
-        { dayPatternId: 1, daysOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, dayEntryIDs: [1] },
+        { dayPatternId: 1, daysOfWeek: { monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true, sunday: true }, dayEntryIds: [1] },
       ],
-      calendarPeriods: [{ startDate: null, dayPatternIDs: [1] }],
+      calendarPeriods: [{ startDate: null, dayPatternIds: [1] }],
       individualDays: [day],
       currentDay: day,
       nextDay: day,
@@ -321,7 +321,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(commandTariff.getClusterServerOptions(CommodityTariff.id)).toMatchObject({
       startDate: 1_700_000_000,
       dayEntries,
-      calendarPeriods: [{ startDate: null, dayPatternIDs: [1] }],
+      calendarPeriods: [{ startDate: null, dayPatternIds: [1] }],
       individualDays: [day],
       currentDay: day,
       nextDay: day,
@@ -399,7 +399,7 @@ describe('Matterbridge ' + NAME, () => {
         'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 1297, revision: 1 }, { deviceType: 1298, revision: 1 }, { deviceType: 17, revision: 1 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: true }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
-        'descriptor(0x1d).partsList(0x3)=[ 3, 4, 5, 6, 7, 8, 9, 14091, 14092 ]',
+        'descriptor(0x1d).partsList(0x3)=[ 3, 14091, 14092, 14093, 14094, 14095, 14096, 14097, 14098 ]',
         'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 64, 2822 ]',
         'descriptor(0x1d).tagList(0x4)=[ { mfgCode: null, namespaceId: 15, tag: 1, label: undefined } ]',
         'fixedLabel(0x40).acceptedCommandList(0xfff9)=[  ]',
@@ -428,7 +428,7 @@ describe('Matterbridge ' + NAME, () => {
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
         "powerSource(0x2f).description(0x2)='AC Power'",
-        'powerSource(0x2f).endpointList(0x1f)=[ 2, 3, 14091, 4, 5, 6, 14092, 7, 8, 9 ]',
+        'powerSource(0x2f).endpointList(0x1f)=[ 2, 3, 14091, 14093, 14094, 14095, 14092, 14096, 14097, 14098 ]',
         'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
         'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
         'powerSource(0x2f).order(0x1)=0',
@@ -551,7 +551,7 @@ describe('Matterbridge ' + NAME, () => {
         'commodityMetering(0xb07).featureMap(0xfffc)={  }',
         'commodityMetering(0xb07).generatedCommandList(0xfff8)=[  ]',
         'commodityMetering(0xb07).maximumMeteredQuantities(0x3)=1',
-        'commodityMetering(0xb07).meteredQuantity(0x0)=[ { tariffComponentIDs: [ 1 ], quantity: 12.5 } ]',
+        'commodityMetering(0xb07).meteredQuantity(0x0)=[ { tariffComponentIds: [ 1 ], quantity: 12.5 } ]',
         'commodityMetering(0xb07).meteredQuantityTimestamp(0x1)=1700000000',
         'commodityMetering(0xb07).tariffUnit(0x2)=0',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
@@ -988,25 +988,25 @@ describe('Matterbridge ' + NAME, () => {
         'commodityPrice(0x95).tariffUnit(0x0)=0',
         'commodityTariff(0x700).acceptedCommandList(0xfff9)=[ 0, 1 ]',
         'commodityTariff(0x700).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 65528, 65529, 65531, 65532, 65533 ]',
-        'commodityTariff(0x700).calendarPeriods(0x5)=[ { startDate: null, dayPatternIDs: [ 1 ] } ]',
+        'commodityTariff(0x700).calendarPeriods(0x5)=[ { startDate: null, dayPatternIds: [ 1 ] } ]',
         'commodityTariff(0x700).clusterRevision(0xfffd)=1',
-        'commodityTariff(0x700).currentDay(0x7)={ date: 1700000000, dayType: 0, dayEntryIDs: [ 1 ] }',
+        'commodityTariff(0x700).currentDay(0x7)={ date: 1700000000, dayType: 0, dayEntryIds: [ 1 ] }',
         'commodityTariff(0x700).currentDayEntry(0x9)={ dayEntryId: 1, startTime: 0, duration: undefined, randomizationOffset: undefined, randomizationType: undefined }',
         'commodityTariff(0x700).currentDayEntryDate(0xa)=1700000000',
         "commodityTariff(0x700).currentTariffComponents(0xf)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
         'commodityTariff(0x700).dayEntries(0x3)=[ { dayEntryId: 1, startTime: 0, duration: undefined, randomizationOffset: undefined, randomizationType: undefined } ]',
-        'commodityTariff(0x700).dayPatterns(0x4)=[ { dayPatternId: 1, daysOfWeek: { sunday: true, monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true }, dayEntryIDs: [ 1 ] } ]',
+        'commodityTariff(0x700).dayPatterns(0x4)=[ { dayPatternId: 1, daysOfWeek: { sunday: true, monday: true, tuesday: true, wednesday: true, thursday: true, friday: true, saturday: true }, dayEntryIds: [ 1 ] } ]',
         'commodityTariff(0x700).featureMap(0xfffc)={ pricing: true, friendlyCredit: false, auxiliaryLoad: false, peakPeriod: false, powerThreshold: false, randomization: false }',
         'commodityTariff(0x700).generatedCommandList(0xfff8)=[ 0, 1 ]',
-        'commodityTariff(0x700).individualDays(0x6)=[ { date: 1700000000, dayType: 0, dayEntryIDs: [ 1 ] } ]',
-        'commodityTariff(0x700).nextDay(0x8)={ date: 1700000000, dayType: 0, dayEntryIDs: [ 1 ] }',
+        'commodityTariff(0x700).individualDays(0x6)=[ { date: 1700000000, dayType: 0, dayEntryIds: [ 1 ] } ]',
+        'commodityTariff(0x700).nextDay(0x8)={ date: 1700000000, dayType: 0, dayEntryIds: [ 1 ] }',
         'commodityTariff(0x700).nextDayEntry(0xb)={ dayEntryId: 1, startTime: 0, duration: undefined, randomizationOffset: undefined, randomizationType: undefined }',
         'commodityTariff(0x700).nextDayEntryDate(0xc)=1700086400',
         "commodityTariff(0x700).nextTariffComponents(0x10)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
         'commodityTariff(0x700).startDate(0x2)=1700000000',
         "commodityTariff(0x700).tariffComponents(0xd)=[ { tariffComponentId: 1, price: { priceType: 0, price: 2000, priceLevel: undefined }, friendlyCredit: undefined, auxiliaryLoad: undefined, peakPeriod: undefined, powerThreshold: undefined, threshold: null, label: 'Standard', predicted: undefined } ]",
         "commodityTariff(0x700).tariffInfo(0x0)={ tariffLabel: 'Standard', providerName: 'Provider', currency: { currency: 978, decimalPoints: 4 }, blockMode: 0 }",
-        "commodityTariff(0x700).tariffPeriods(0xe)=[ { label: 'Standard', dayEntryIDs: [ 1 ], tariffComponentIDs: [ 1 ] } ]",
+        "commodityTariff(0x700).tariffPeriods(0xe)=[ { label: 'Standard', dayEntryIds: [ 1 ], tariffComponentIds: [ 1 ] } ]",
         'commodityTariff(0x700).tariffUnit(0x1)=0',
         'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 65528, 65529, 65531, 65532, 65533 ]',
@@ -1201,7 +1201,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('MatterbridgeCommodityTariffServer getTariffComponent and getDayEntry', async () => {
     const found = await commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }));
-    expect(plain(found)).toEqual({ label: 'Standard', dayEntryIDs: [1], tariffComponent: tariffComponents[0] });
+    expect(plain(found)).toEqual({ label: 'Standard', dayEntryIds: [1], tariffComponent: tariffComponents[0] });
 
     expect(commandTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 99 }))).rejects.toThrow(
       /no TariffComponent with id 99/,
@@ -1215,7 +1215,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('MatterbridgeCommodityTariffServer getTariffComponent falls back when no owning tariffPeriod exists', async () => {
     const found = await noPeriodTariff.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 }));
-    expect(plain(found)).toEqual({ label: null, dayEntryIDs: [], tariffComponent: tariffComponents[0] });
+    expect(plain(found)).toEqual({ label: null, dayEntryIds: [], tariffComponent: tariffComponents[0] });
   });
 
   test('MatterbridgeCommodityTariffServer getTariffComponent/getDayEntry reject against an unscheduled tariff', async () => {
@@ -1267,7 +1267,7 @@ describe('Matterbridge ' + NAME, () => {
     });
     expect(plain(await observed.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getTariffComponent({ tariffComponentId: 1 })))).toEqual({
       label: 'Standard',
-      dayEntryIDs: [1],
+      dayEntryIds: [1],
       tariffComponent: tariffComponents[0],
     });
     expect(plain(await observed.act(async (agent) => agent.get(MatterbridgeCommodityTariffServer).getDayEntry({ dayEntryId: 1 })))).toEqual({ dayEntry: dayEntries[0] });

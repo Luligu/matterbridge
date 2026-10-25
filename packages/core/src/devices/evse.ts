@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-27
- * @version 1.3.1
+ * @version 1.3.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -755,7 +755,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     this.state.chargingTargetSchedules = [];
     const modeState = this.endpoint.stateOf(EnergyEvseModeServer);
     const isAutomaticMode = modeState.supportedModes.some(
-      (mode) => mode.mode === modeState.currentMode && mode.modeTags.some((tag) => tag.value === EnergyEvseMode.ModeTag.TimeOfUse),
+      (mode) => mode.mode === modeState.currentMode && mode.modeTags.some((tag) => tag.value === (EnergyEvseMode.ModeTag.TimeOfUse as number)),
     );
     // Matter 1.6.0 § 9.3.9.8.1: Stop active charging when clearing the targets used by automatic mode.
     if (isAutomaticMode && this.state.state === EnergyEvse.State.PluggedInCharging) {

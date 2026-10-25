@@ -89,17 +89,19 @@ async function httpsGetJson<T>(url: string, headers: Record<string, string> | un
           clearTimeout(timeoutId);
           res.resume();
 
-          const redirectedUrl = new URL(locationHeader, url).toString();
-          let redirectedHeaders = headers;
+          // The Location header comes from the remote server and may be malformed.
+          let redirectedUrl: string;
           try {
-            const fromHost = new URL(url).host;
-            const toHost = new URL(redirectedUrl).host;
-            if (fromHost !== toHost && redirectedHeaders?.Authorization) {
-              const { Authorization: _authorization, ...rest } = redirectedHeaders;
-              redirectedHeaders = rest;
-            }
+            redirectedUrl = new URL(locationHeader, url).toString();
           } catch {
-            // ignore URL parsing errors
+            reject(new Error(`Invalid redirect location: ${locationHeader}`));
+            return;
+          }
+          let redirectedHeaders = headers;
+          // Both URLs are already parsed, so these cannot throw.
+          if (new URL(url).host !== new URL(redirectedUrl).host && redirectedHeaders?.Authorization) {
+            const { Authorization: _authorization, ...rest } = redirectedHeaders;
+            redirectedHeaders = rest;
           }
 
           httpsGetJson<T>(redirectedUrl, redirectedHeaders, timeoutMs).then(resolve).catch(reject);

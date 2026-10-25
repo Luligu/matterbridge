@@ -13,7 +13,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { OnOff } from '@matter/types/clusters/on-off';
 import type { ClusterId } from '@matter/types/datatype';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -122,7 +122,7 @@ describe('Matterbridge ' + NAME, () => {
     device.addRequiredClusterServers();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'booleanState', 'identify']);
 
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
 
     expect(device.getAttribute(BooleanState.id, 'stateValue')).toBe(false);
     expect(device.getAttribute(Identify.id, 'identifyTime')).toBe(0);
@@ -133,7 +133,7 @@ describe('Matterbridge ' + NAME, () => {
     const device = new MatterbridgeEndpoint(contactSensor, { id: 'FactoryIdentifyCommands' });
     expect(await createClusterServer(device, Identify.id, { attributes: { identifyTime: 0, identifyType: Identify.IdentifyType.None } })).toBe(device);
     device.addRequiredClusterServers();
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
 
     // Proves a real stock IdentifyServer (with command implementation) was required.
     expect(device.getAttribute(Identify.id, 'identifyTime')).toBe(0);
@@ -158,7 +158,7 @@ describe('Matterbridge ' + NAME, () => {
     device.addRequiredClusterServers();
     expect(device.getAllClusterServerNames()).toEqual(['descriptor', 'matterbridge', 'onOff', 'identify', 'groups', 'scenesManagement']);
 
-    expect(await addDevice(aggregator, device)).toBe(true);
+    expect(await addBridgedDevice(aggregator, device)).toBe(true);
 
     // Proves a real stock server (with command implementation) was required, not a plain behavior.
     expect(device.getAttribute(OnOff.id, 'onOff')).toBe(false);

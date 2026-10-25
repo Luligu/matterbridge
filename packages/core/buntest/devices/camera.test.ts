@@ -18,7 +18,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { StreamUsage } from '@matter/types/globals';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -86,7 +86,7 @@ describe('Camera', () => {
     expect(clientList).toEqual([WebRtcTransportRequestor.id]);
     expect(device.type.clientClusters['webRtcTransportRequestor']).toBe(WebRtcTransportRequestorClient);
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'maxContentBufferSize')).toBe(4_194_304);
     expect(device.getAttribute(CameraAvStreamManagement, 'maxNetworkBandwidth')).toBe(10_000_000);
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView, StreamUsage.Recording]);
@@ -99,7 +99,7 @@ describe('Camera', () => {
 
   it('should create the default device for the attribute snapshot', async () => {
     defaultDevice = new Camera('Camera Snapshot', 'CAMERA-SNAPSHOT');
-    expect(await addDevice(aggregator, defaultDevice, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, defaultDevice, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should expose the expected attributes on the device', () => {
@@ -135,6 +135,26 @@ describe('Camera', () => {
         'binding(0x1e).clusterRevision(0xfffd)=1',
         'binding(0x1e).featureMap(0xfffc)={  }',
         'binding(0x1e).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).acceptedCommandList(0xfff9)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).attributeList(0xfffb)=[ 1, 2, 3, 4, 5, 7, 8, 9, 10, 13, 14, 15, 17, 18, 24, 65528, 65529, 65531, 65532, 65533 ]',
+        'bridgedDeviceBasicInformation(0x39).clusterRevision(0xfffd)=6',
+        'bridgedDeviceBasicInformation(0x39).configurationVersion(0x18)=1',
+        'bridgedDeviceBasicInformation(0x39).featureMap(0xfffc)={ bridgedIcdSupport: false }',
+        'bridgedDeviceBasicInformation(0x39).generatedCommandList(0xfff8)=[  ]',
+        'bridgedDeviceBasicInformation(0x39).hardwareVersion(0x7)=1',
+        "bridgedDeviceBasicInformation(0x39).hardwareVersionString(0x8)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).nodeLabel(0x5)='Camera Snapshot'",
+        'bridgedDeviceBasicInformation(0x39).productId(0x4)=32768',
+        "bridgedDeviceBasicInformation(0x39).productLabel(0xe)='Matter Endpoint'",
+        "bridgedDeviceBasicInformation(0x39).productName(0x3)='Matterbridge Camera'",
+        "bridgedDeviceBasicInformation(0x39).productUrl(0xd)='https://matterbridge.io'",
+        'bridgedDeviceBasicInformation(0x39).reachable(0x11)=true',
+        "bridgedDeviceBasicInformation(0x39).serialNumber(0xf)='CAMERA-SNAPSHOT'",
+        'bridgedDeviceBasicInformation(0x39).softwareVersion(0x9)=1',
+        "bridgedDeviceBasicInformation(0x39).softwareVersionString(0xa)='1.0.0'",
+        "bridgedDeviceBasicInformation(0x39).uniqueId(0x12)='aaa9cc4e2c8e655c0009b1bf5f451dca'",
+        'bridgedDeviceBasicInformation(0x39).vendorId(0x2)=65521',
+        "bridgedDeviceBasicInformation(0x39).vendorName(0x1)='Matterbridge'",
         'cameraAvStreamManagement(0x551).acceptedCommandList(0xfff9)=[ 0, 2, 3, 6, 7, 10, 11, 12 ]',
         'cameraAvStreamManagement(0x551).allocatedAudioStreams(0x10)=[ { audioStreamId: 0, streamUsage: 3, audioCodec: 0, channelCount: 1, sampleRate: 48000, bitRate: 32000, bitDepth: 16, referenceCount: 0 } ]',
         'cameraAvStreamManagement(0x551).allocatedSnapshotStreams(0x11)=[ { snapshotStreamId: 0, imageCodec: 0, frameRate: 10, minResolution: { width: 640, height: 480 }, maxResolution: { width: 1920, height: 1080 }, quality: 90, referenceCount: 0, encodedPixels: false, hardwareEncoder: false, watermarkEnabled: undefined, osdEnabled: undefined } ]',
@@ -171,11 +191,11 @@ describe('Camera', () => {
         'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
         'descriptor(0x1d).clientList(0x2)=[ 1364 ]',
         'descriptor(0x1d).clusterRevision(0xfffd)=3',
-        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 322, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 322, revision: 1 }, { deviceType: 17, revision: 1 }, { deviceType: 19, revision: 3 } ]',
         'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
         'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
         'descriptor(0x1d).partsList(0x3)=[  ]',
-        'descriptor(0x1d).serverList(0x1)=[ 29, 30, 47, 1361, 1363 ]',
+        'descriptor(0x1d).serverList(0x1)=[ 29, 30, 47, 57, 1361, 1363 ]',
         'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
         'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
         'powerSource(0x2f).clusterRevision(0xfffd)=3',
@@ -200,7 +220,7 @@ describe('Camera', () => {
     const device = new Camera('Camera Identify', 'CAMERA-IDENTIFY', { identifyTime: 5, identifyType: Identify.IdentifyType.VisibleIndicator });
     expect(device.hasClusterServer(Identify.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(Identify, 'identifyTime')).toBe(5);
     expect(device.getAttribute(Identify, 'identifyType')).toBe(Identify.IdentifyType.VisibleIndicator);
   });
@@ -213,7 +233,7 @@ describe('Camera', () => {
     const device = new Camera(`Camera ${powerSourceType}`, `CAMERA-${powerSourceType.toUpperCase()}`, { powerSourceType });
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(PowerSource, 'batChargeLevel')).toBe(expectedChargeLevel);
   });
 
@@ -221,7 +241,7 @@ describe('Camera', () => {
     const device = new Camera('Camera None', 'CAMERA-NONE', { powerSourceType: 'None' });
     expect(device.hasClusterServer(PowerSource.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should create a camera device with custom stream usages', async () => {
@@ -230,7 +250,7 @@ describe('Camera', () => {
       streamUsagePriorities: [StreamUsage.LiveView],
     });
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'supportedStreamUsages')).toEqual([StreamUsage.LiveView]);
     expect(device.getAttribute(CameraAvStreamManagement, 'streamUsagePriorities')).toEqual([StreamUsage.LiveView]);
   });
@@ -238,7 +258,7 @@ describe('Camera', () => {
   it('should create a camera device with default snapshot capabilities', async () => {
     const device = new Camera('Camera Snapshot Defaults', 'CAMERA-SNAPSHOT-DEFAULTS');
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(CameraAvStreamManagement, 'snapshotCapabilities')).toEqual([
       { resolution: { width: 640, height: 480 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
       { resolution: { width: 1280, height: 720 }, maxFrameRate: 10, imageCodec: CameraAvStreamManagement.ImageCodec.Jpeg, requiresEncodedPixels: false },
@@ -252,7 +272,7 @@ describe('Camera', () => {
     const device = new Camera('Camera Ptz', 'CAMERA-PTZ', { ptz: true });
     expect(device.hasClusterServer(CameraAvSettingsUserLevelManagement.id)).toBeTruthy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'panMin')).toBe(-170);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'panMax')).toBe(170);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'tiltMin')).toBe(-20);
@@ -273,7 +293,7 @@ describe('Camera', () => {
       mptzPosition: { pan: 10, tilt: 5, zoom: 2 },
     });
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'panMin')).toBe(-90);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'panMax')).toBe(90);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'tiltMin')).toBe(-10);
@@ -286,21 +306,21 @@ describe('Camera', () => {
     const device = new Camera('Camera No Ptz', 'CAMERA-NO-PTZ');
     expect(device.hasClusterServer(CameraAvSettingsUserLevelManagement.id)).toBeFalsy();
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
   });
 
   it('should create a camera device with custom werift offer options', async () => {
     const weriftOfferOptions: WeriftOfferOptions = { offerVideo: true, offerAudio: false, videoSource: 'test', audioSource: 'none', videoResolution: '1280x720' };
     const device = new Camera('Camera Werift', 'CAMERA-WERIFT', { weriftOfferOptions });
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual(weriftOfferOptions);
   });
 
   it('should create a camera device with the default werift offer options', async () => {
     const device = new Camera('Camera Werift Defaults', 'CAMERA-WERIFT-DEFAULTS');
 
-    expect(await addDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.stateOf(MatterbridgeWebRtcTransportProviderServer).weriftOfferOptions).toEqual({ offerVideo: true, offerAudio: true, videoSource: 'none', audioSource: 'none' });
   });
 });

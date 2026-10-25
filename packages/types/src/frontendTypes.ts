@@ -32,6 +32,7 @@
  * |                              | /api/select/devices                                         |
  * |                              | /api/select/entities                                        |
  * | Devices                      | /api/plugins                                                |
+ * | DevicesClustersTree          | /api/clusters (via DevicesTable)                            |
  * | DevicesIcons                 | /api/clusters                                               |
  * |                              | /api/devices                                                |
  * | DevicesTable                 | /api/clusters                                               |

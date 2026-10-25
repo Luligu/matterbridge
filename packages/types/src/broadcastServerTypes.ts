@@ -205,10 +205,6 @@ export type WorkerMessageTypes = {
   };
 
   // Matterbridge methods
-  matterbridge_initialize: {
-    request: { params: undefined };
-    response: { result: { success: true } };
-  };
   matterbridge_latest_version: {
     request: { params: { version: string } };
     response: { result: { success: true } };
@@ -246,7 +242,7 @@ export type WorkerMessageTypes = {
     response: { result: { success: true } };
   };
   matterbridge_apisettings: {
-    request: { params: undefined };
+    request: { params: { restartRequired?: boolean; fixedRestartRequired?: boolean; updateRequired?: boolean } };
     response: { result: { data: ApiSettings; success: true } };
   };
   matterbridge_start_plugin_server: {

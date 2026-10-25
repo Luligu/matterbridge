@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { Switch } from '@matter/types/clusters/switch';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -64,7 +64,7 @@ describe('MatterbridgeSwitchServer', () => {
     button = new MatterbridgeEndpoint([genericSwitch, powerSource], { id: 'genericSwitch' });
     button.addRequiredClusterServers();
     expect(button).toBeDefined();
-    expect(await addDevice(aggregator, button)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, button)).toBeTruthy();
 
     // MatterbridgeSwitchServer overrides initialize() to log only and deliberately does not chain to
     // super.initialize(): switch state is driven entirely by the device implementation through triggerSwitchEvent(),

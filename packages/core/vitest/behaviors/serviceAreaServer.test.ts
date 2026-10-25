@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { ServiceArea } from '@matter/types/clusters/service-area';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -62,7 +62,7 @@ describe('MatterbridgeServiceAreaServer', () => {
   test('Device type: roboticVacuumCleaner', async () => {
     rvc = new RoboticVacuumCleaner('RVC Test Device', 'RVC123456');
     expect(rvc).toBeDefined();
-    expect(await addDevice(aggregator, rvc)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, rvc)).toBeTruthy();
   });
 
   test('ServiceArea server', async () => {
@@ -124,7 +124,7 @@ describe('MatterbridgeServiceAreaServer', () => {
   test('ServiceArea server skipArea with progress reporting', async () => {
     const progressServiceAreaServer = MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps, ServiceArea.Feature.ProgressReporting);
     const progressRvc = new RoboticVacuumCleaner('RVC Progress Device', 'RVCProgress123', { progress: [] });
-    expect(await addDevice(aggregator, progressRvc)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, progressRvc)).toBeTruthy();
     expect(progressRvc.getAttribute(ServiceArea.id, 'progress')).toEqual([]);
 
     // SelectedAreas is still empty right after creation, so skipping is refused with InvalidAreaList.

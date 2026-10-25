@@ -10,7 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { Chime as ChimeCluster } from '@matter/types/clusters/chime';
 import {
-  addDevice,
+  addBridgedDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
@@ -73,7 +73,7 @@ describe('MatterbridgeChimeServer', () => {
       enabled: true,
     });
     expect(device.behaviors.has(MatterbridgeChimeServer)).toBeTruthy();
-    expect(await addDevice(aggregator, device)).toBeTruthy();
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
   });
 
   it('should play the selected chime sound when no chimeId is provided', async () => {

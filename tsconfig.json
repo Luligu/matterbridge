@@ -3,8 +3,6 @@
   "references": [
     { "path": "./apps/frontend/tsconfig.json" },
     { "path": "./packages/types/tsconfig.json" },
-    { "path": "./packages/jest-utils/tsconfig.json" },
-    { "path": "./packages/vitest-utils/tsconfig.json" },
     { "path": "./packages/test-utils/tsconfig.json" },
     { "path": "./packages/test-utils/src/jest/tsconfig.json" },
     { "path": "./packages/test-utils/src/vitest/tsconfig.json" },
