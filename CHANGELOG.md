@@ -34,6 +34,9 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
+- [WaterHeater]: Enable the `EnergyManagement` feature alongside `TankPercent` on the `WaterHeaterManagement` cluster (Matter 1.6.1 Device Library § 14.2.6, Application Cluster § 9.5.7.3-4), and add optional `tankVolume` (default `100` L) and `estimatedHeatRequired` (default `0` mWh) parameters to `WaterHeaterOptions`, `WaterHeater`, and `createDefaultWaterHeaterManagementClusterServer()`. Thanks Ludovic BOUÉ.
+- [WaterHeater]: Implement `BoostStarted`/`BoostEnded` events, boost duration timer, `oneShot`, `temporarySetpoint`, `targetPercentage`, `targetReheat`, and `HeatDemand` updates in `MatterbridgeWaterHeaterManagementServer` (Matter 1.6.1 § 9.5.8).
+- [chip]: Add `water-heater.pics`, `WaterHeaterManagement` test event triggers, and the 5 `WaterHeater` conformance tests (`TC_EWATERHTR_2_1`–`2_3`, `TC_WHM_1_2`, `TC_WHM_2_1`) on endpoint `1402` (`npm run chip:test:water-heater`).
 
 ### Changed
 
@@ -138,14 +141,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Write the server node storage context values in `createServerNodeContext()` only when missing or changed (as in `MatterNode`), avoiding 17 disk writes per server node at every start.
 
   <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
-
-## [3.11.1] - Dev branch
-
-### Added
-
-- [WaterHeater]: Enable the `EnergyManagement` feature alongside `TankPercent` on the `WaterHeaterManagement` cluster (Matter 1.6.1 Device Library § 14.2.6, Application Cluster § 9.5.7.3-4), and add optional `tankVolume` (default `100` L) and `estimatedHeatRequired` (default `0` mWh) parameters to `WaterHeaterOptions`, `WaterHeater`, and `createDefaultWaterHeaterManagementClusterServer()`. Thanks Ludovic BOUÉ.
-- [WaterHeater]: Implement `BoostStarted`/`BoostEnded` events, boost duration timer, `oneShot`, `temporarySetpoint`, `targetPercentage`, `targetReheat`, and `HeatDemand` updates in `MatterbridgeWaterHeaterManagementServer` (Matter 1.6.1 § 9.5.8).
-- [chip]: Add `water-heater.pics`, `WaterHeaterManagement` test event triggers, and the 5 `WaterHeater` conformance tests (`TC_EWATERHTR_2_1`–`2_3`, `TC_WHM_1_2`, `TC_WHM_2_1`) on endpoint `1402` (`npm run chip:test:water-heater`).
 
 ## [3.10.14] - 2026-10-16
 
