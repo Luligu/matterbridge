@@ -37,10 +37,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [WaterHeater]: Enable the `EnergyManagement` feature alongside `TankPercent` on the `WaterHeaterManagement` cluster (Matter 1.6.1 Device Library § 14.2.6, Application Cluster § 9.5.7.3-4), and add optional `tankVolume` (default `100` L) and `estimatedHeatRequired` (default `0` mWh) parameters to `WaterHeaterOptions`, `WaterHeater`, and `createDefaultWaterHeaterManagementClusterServer()`. Thanks Ludovic BOUÉ.
 - [WaterHeater]: Implement `BoostStarted`/`BoostEnded` events, boost duration timer, `oneShot`, `temporarySetpoint`, `targetPercentage`, `targetReheat`, and `HeatDemand` updates in `MatterbridgeWaterHeaterManagementServer` (Matter 1.6.1 § 9.5.8).
 - [chip]: Add `water-heater.pics`, `WaterHeaterManagement` test event triggers, and the 5 `WaterHeater` conformance tests (`TC_EWATERHTR_2_1`–`2_3`, `TC_WHM_1_2`, `TC_WHM_2_1`) on endpoint `1402` (`npm run chip:test:water-heater`).
+- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
+- [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
 
 ### Changed
 
-- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
 - [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
 - [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.1.

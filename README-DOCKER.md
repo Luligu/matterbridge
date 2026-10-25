@@ -72,6 +72,14 @@ You can manually check the health status:
 docker exec -it matterbridge mb-health
 ```
 
+If you configured a custom port or HTTPS, pass the full URL to `mb-health`:
+
+```bash
+docker exec -it matterbridge mb-health http://localhost:8585/health
+# or with HTTPS:
+docker exec -it matterbridge mb-health https://localhost:443/health
+```
+
 ### Create the Matterbridge directories first
 
 This creates the required directories in your home directory (if they don't already exist):
@@ -132,7 +140,30 @@ sudo docker run --name matterbridge \
 
 If you override the command, always start it with `matterbridge --docker`.
 
-**If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param**.
+**If you change the frontend port (or enable HTTPS), overriding the default command of the images, Docker will report the container unhealthy unless you disable the health check or override the health check command.**
+
+To disable the health check, add `--no-healthcheck`:
+
+```bash
+sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --network host --restart always --stop-timeout 60 --no-healthcheck -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+```
+
+Alternatively, to keep the health check active with the custom port without disabling it, override the health check command with `--health-cmd`:
+
+```bash
+sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --health-cmd "mb_health http://localhost:8585/health" \
+  --network host --restart always --stop-timeout 60 -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+```
 
 ### How to run a double instance of matterbridge
 
@@ -203,11 +234,27 @@ services:
 
 If you override the command, always start it with `["matterbridge", "--docker"]`.
 
-**If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add:**.
+**If you change the frontend port (or enable HTTPS), overriding the default command of the images, Docker will report the container unhealthy unless you disable the health check or override the health check URL to match the new port and protocol.**
+
+To disable the health check:
 
 ```yaml
 healthcheck:
   disable: true
+```
+
+Alternatively, to keep the health check active with the custom port without disabling it, override `healthcheck.test`:
+
+```yaml
+healthcheck:
+  test: ['CMD-SHELL', 'mb_health http://localhost:8585/health']
+```
+
+Or when running with SSL / HTTPS (e.g. `--ssl --frontend 443`):
+
+```yaml
+healthcheck:
+  test: ['CMD-SHELL', 'mb_health https://localhost:443/health']
 ```
 
 ### Stop with Docker Compose

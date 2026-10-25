@@ -159,10 +159,11 @@
 <li>[WaterHeater]: Enable the <code>EnergyManagement</code> feature alongside <code>TankPercent</code> on the <code>WaterHeaterManagement</code> cluster (Matter 1.6.1 Device Library § 14.2.6, Application Cluster § 9.5.7.3-4), and add optional <code>tankVolume</code> (default <code>100</code> L) and <code>estimatedHeatRequired</code> (default <code>0</code> mWh) parameters to <code>WaterHeaterOptions</code>, <code>WaterHeater</code>, and <code>createDefaultWaterHeaterManagementClusterServer()</code>. Thanks Ludovic BOUÉ.</li>
 <li>[WaterHeater]: Implement <code>BoostStarted</code>/<code>BoostEnded</code> events, boost duration timer, <code>oneShot</code>, <code>temporarySetpoint</code>, <code>targetPercentage</code>, <code>targetReheat</code>, and <code>HeatDemand</code> updates in <code>MatterbridgeWaterHeaterManagementServer</code> (Matter 1.6.1 § 9.5.8).</li>
 <li>[chip]: Add <code>water-heater.pics</code>, <code>WaterHeaterManagement</code> test event triggers, and the 5 <code>WaterHeater</code> conformance tests (<code>TC_EWATERHTR_2_1</code>–<code>2_3</code>, <code>TC_WHM_1_2</code>, <code>TC_WHM_2_1</code>) on endpoint <code>1402</code> (<code>npm run chip:test:water-heater</code>).</li>
+<li>[core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.</li>
+<li>[docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
-<li>[core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.</li>
 <li>[core]: <code>Matterbridge.loadInstance()</code> now throws when an instance is already loaded and the singleton is a true private field.</li>
 <li>[scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.11.1.</li>
