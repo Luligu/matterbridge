@@ -864,12 +864,14 @@
         "--coverage.include=packages/core/src/cli.ts",
         "--coverage.include=packages/core/src/cliEmitter.ts",
         "--coverage.include=packages/core/src/cliHistory.ts",
+        "--coverage.include=packages/core/src/protectPrototypes.ts",
         "--coverage.include=packages/core/src/mb_health.ts",
         "--coverage.include=packages/core/src/mb_coap.ts",
         "--coverage.include=packages/core/src/mb_mdns.ts",
         "packages/core/vitest/cli.test.ts",
         "packages/core/vitest/cliEmitter.test.ts",
         "packages/core/vitest/cliHistory.test.ts",
+        "packages/core/vitest/protectPrototypes.test.ts",
         "packages/core/vitest/mb_health.test.ts",
         "packages/core/vitest/mb_coap.test.ts",
         "packages/core/vitest/mb_mdns.test.ts"
@@ -881,7 +883,15 @@
       "label": "Buntest: Cli",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/cli.test.ts", "packages/core/buntest/cliEmitter.test.ts", "packages/core/buntest/cliHistory.test.ts"],
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/cli.test.ts",
+        "packages/core/buntest/cliEmitter.test.ts",
+        "packages/core/buntest/cliHistory.test.ts",
+        "packages/core/buntest/protectPrototypes.test.ts"
+      ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },

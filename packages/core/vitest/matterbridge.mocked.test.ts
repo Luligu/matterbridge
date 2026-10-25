@@ -123,15 +123,16 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments (no frontend no matter server)
     process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest'];
 
-    // Reset the Matterbridge instance
-    (Matterbridge as any).instance = undefined;
+    // Load a new Matterbridge instance (afterEach cleared the previous one)
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
     plugins = matterbridge.plugins;
     devices = matterbridge.devices;
   });
 
   afterEach(async () => {
-    // Destroy the Matterbridge instance
+    // Destroy the Matterbridge instance, forcing the cleanup so it clears the singleton even when the test did not initialize it
+    (matterbridge as any).initialized = true;
+    (matterbridge as any).hasCleanupStarted = false;
     await destroyInstance(matterbridge, 0, 0);
 
     // Close mDNS instance
@@ -230,7 +231,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterStorageService).toBeUndefined();
     expect(matterbridge.matterbridgeContext).toBeUndefined();
 
-    expect((Matterbridge as any).instance).toBeDefined();
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded');
   });
 
   test('Matterbridge.initialize()', async () => {
@@ -308,7 +309,10 @@ describe('Matterbridge mocked', () => {
     expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.INFO);
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
-    expect((Matterbridge as any).instance).toBeUndefined();
+
+    // The cleanup cleared the singleton, so a new instance can be loaded (afterEach destroys it)
+    matterbridge = await Matterbridge.loadInstance();
+    expect(matterbridge).toBeDefined();
   });
 
   test('Matterbridge.initialize() with pairing.json', async () => {
@@ -1492,15 +1496,12 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).reachabilityTimeout).toBeUndefined();
     expect(plugin.reachabilityTimeout).toBeUndefined();
 
-    const instance = (Matterbridge as any).instance;
     (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
     (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
     await (matterbridge as any).cleanup('updating...', true, 10);
-    (Matterbridge as any).instance = instance; // Restore the instance after cleanup
     (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
     (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
     await (matterbridge as any).cleanup('restarting...', true, 10);
-    (Matterbridge as any).instance = instance; // Restore the instance after cleanup
 
     matterbridge.plugins.clear();
     pluginsShutdownSpy.mockRestore();

@@ -338,3 +338,6 @@ export class ThreadsWrapper extends EventEmitter<ThreadsWrapperEvents> {
     log.debug(`Memory: ${formatBytes(process.memoryUsage().heapTotal)} total, ${formatBytes(process.memoryUsage().heapUsed)} used`);
   }
 }
+
+// Freeze the prototype so the methods of this class cannot be patched. It is frozen when the module loads, since it runs only in the worker threads.
+Object.freeze(ThreadsWrapper.prototype);

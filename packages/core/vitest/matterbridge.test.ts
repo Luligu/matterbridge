@@ -86,9 +86,8 @@ describe('Matterbridge', () => {
   });
 
   test('Matterbridge.loadInstance(false)', async () => {
-    expect((Matterbridge as any).instance).toBeUndefined();
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
-    expect((Matterbridge as any).instance).toBeDefined();
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded');
     expect((matterbridge as any).initialized).toBeFalsy();
     expect(matterbridge).toBeDefined();
     expect(matterbridge.profile).toBe('Jest');
@@ -123,7 +122,7 @@ describe('Matterbridge', () => {
 
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
-    expect((Matterbridge as any).instance).toBeDefined(); // Instance is still defined cause cleanup() is not called when initialized is false
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded'); // Instance is still loaded cause cleanup() is not called when initialized is false
   });
 
   test('Matterbridge getApiSettings', () => {
@@ -257,9 +256,8 @@ describe('Matterbridge', () => {
     }
   });
 
-  test('Matterbridge.loadInstance(true) should not initialize if already loaded', async () => {
-    expect((Matterbridge as any).instance).toBeDefined();
-    matterbridge = await Matterbridge.loadInstance(true);
+  test('Matterbridge.loadInstance(true) should throw if already loaded', async () => {
+    await expect(Matterbridge.loadInstance(true)).rejects.toThrow('Matterbridge instance already loaded');
     expect((matterbridge as any).initialized).toBeFalsy();
     await (matterbridge as any).initialize();
     expect((matterbridge as any).initialized).toBeTruthy();
@@ -345,7 +343,6 @@ describe('Matterbridge', () => {
 
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
-    expect((Matterbridge as any).instance).toBeUndefined(); // Instance is not defined cause cleanup() has been called
     // await setDebug(false);
   }, 30000);
 
@@ -364,9 +361,8 @@ describe('Matterbridge', () => {
       'Jest',
     ];
 
-    expect((Matterbridge as any).instance).toBeUndefined();
-    matterbridge = await Matterbridge.loadInstance(true);
-    expect((Matterbridge as any).instance).toBeDefined();
+    matterbridge = await Matterbridge.loadInstance(true); // Resolves only cause the previous cleanup() cleared the instance
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded');
     expect((matterbridge as any).initialized).toBeTruthy();
 
     // Clear the timeouts and intervals set by initialize to prevent them from running during tests
