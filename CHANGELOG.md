@@ -34,10 +34,11 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
+- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
+- [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
 
 ### Changed
 
-- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
 - [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
 - [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.1.
