@@ -5,9 +5,9 @@
 # Installation strategy: "hoisted" places dependencies in the shared node_modules root;
 # "isolated" keeps each package's dependencies in its own node_modules directory.
 # Default: "hoisted".
-# linker = "isolated"
+linker = "isolated"
 # Make @matter/main's transitive @matter/* packages available to all workspaces.
-# publicHoistPattern = ["@matter/*"]
+publicHoistPattern = ["@matter/*"]
 
 # globalStore (isolated linker only) symlinks packages from a store shared by all projects in
 # ~/.bun/install/cache/links instead of copying them into node_modules/.bun.

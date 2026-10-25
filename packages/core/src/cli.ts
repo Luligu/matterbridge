@@ -243,6 +243,9 @@ export async function main(): Promise<void> {
 
   log.debug(`***Matterbridge.loadInstance(true) called`);
   const { Matterbridge } = await import('./matterbridge.js');
+  // Freeze the prototypes of the core classes before loading the Matterbridge instance
+  const { protectCorePrototypes } = await import('./protectPrototypes.js');
+  await protectCorePrototypes();
   instance = await Matterbridge.loadInstance(true);
   log.debug(`***Matterbridge.loadInstance(true) exited`);
 

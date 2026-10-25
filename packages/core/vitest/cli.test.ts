@@ -21,6 +21,10 @@ import { MockMatterbridge } from '../src/mock/mockMatterbridge.js';
 const loadInstance = vi.hoisted(() => vi.fn<typeof Matterbridge.loadInstance>());
 vi.mock('../src/matterbridge.js', () => ({ Matterbridge: { loadInstance } }));
 
+// Mock the core prototype freeze, so the cli does not load and freeze the real core classes
+const protectCorePrototypes = vi.hoisted(() => vi.fn(async () => {}));
+vi.mock('../src/protectPrototypes.js', async (importOriginal) => ({ ...(await importOriginal<typeof import('../src/protectPrototypes.js')>()), protectCorePrototypes }));
+
 // Keep spied-on classes stable when reloading the CLI for startup error cases.
 vi.mock('@matterbridge/thread/server', async (importOriginal) => importOriginal<typeof import('@matterbridge/thread/server')>());
 vi.mock('@matterbridge/utils/tracker', async (importOriginal) => importOriginal<typeof import('@matterbridge/utils/tracker')>());
@@ -108,6 +112,9 @@ describe('Matterbridge', () => {
     clearInterval((matterbridge as any).checkUpdateInterval);
 
     expect(loadInstance).toHaveBeenCalledTimes(1);
+    // The core prototypes are frozen before loading the Matterbridge instance
+    expect(protectCorePrototypes).toHaveBeenCalledTimes(1);
+    expect(protectCorePrototypes.mock.invocationCallOrder[0]).toBeLessThan(loadInstance.mock.invocationCallOrder[0]);
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cli main() started');
     expect(loggerLogSpy.mock.contexts[0]).toMatchObject({ logLevel: LogLevel.DEBUG });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, 'Cpu memory check starting...');

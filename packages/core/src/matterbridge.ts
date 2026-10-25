@@ -269,7 +269,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public nodeContext: NodeStorage | undefined;
 
   /** The main instance of the Matterbridge class (singleton) */
-  protected static instance: Matterbridge | undefined;
+  static #instance: Matterbridge | undefined;
 
   // Instance properties
   /** Whether the Matterbridge instance has to be shut down */
@@ -672,20 +672,19 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   //* ************************************************************************************************************************************ */
 
   /**
-   * Loads an instance of the Matterbridge class.
-   * If an instance already exists, return that instance.
+   * Loads a new instance of the Matterbridge class.
    *
    * @param {boolean} initialize - Whether to initialize the Matterbridge instance after loading. Defaults to false.
    * @returns {Matterbridge} A promise that resolves to the Matterbridge instance.
+   * @throws {Error} If an instance is already loaded.
    */
   static async loadInstance(initialize: boolean = false): Promise<Matterbridge> {
-    if (!Matterbridge.instance) {
-      // oxlint-disable-next-line no-console
-      if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
-      Matterbridge.instance = new Matterbridge();
-      if (initialize) await Matterbridge.instance.initialize();
-    }
-    return Matterbridge.instance;
+    if (Matterbridge.#instance) throw new Error('Matterbridge instance already loaded');
+    // oxlint-disable-next-line no-console
+    if (hasParameter('debug')) console.log(GREEN + 'Creating a new instance of Matterbridge.', initialize ? 'Initializing...' : 'Not initializing...', rs);
+    Matterbridge.#instance = new Matterbridge();
+    if (initialize) await Matterbridge.#instance.initialize();
+    return Matterbridge.#instance;
   }
 
   /**
@@ -1669,7 +1668,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Host system information
     this.systemInformation.hostname = os.hostname();
-    this.systemInformation.user = os.userInfo().username;
+    try {
+      this.systemInformation.user = os.userInfo().username;
+    } catch {
+      // os.userInfo() throws when the uid has no passwd entry (i.e. docker run --user with an arbitrary uid)
+      this.systemInformation.user = String(process.getuid?.() ?? 'unknown');
+    }
     this.systemInformation.osType = os.type(); // "Windows_NT", "Darwin", etc.
     this.systemInformation.osRelease = os.release(); // Kernel version
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
@@ -2226,16 +2230,16 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (restart) {
         if (message === 'updating...') {
           this.log.info('Cleanup completed. Updating...');
-          Matterbridge.instance = undefined;
+          Matterbridge.#instance = undefined;
           this.emit('update'); // Restart the process but the update has been done before. TODO move all updates to the cli
         } else if (message === 'restarting...') {
           this.log.info('Cleanup completed. Restarting...');
-          Matterbridge.instance = undefined;
+          Matterbridge.#instance = undefined;
           this.emit('restart');
         }
       } else {
         this.log.notice('Cleanup completed. Shutting down...');
-        Matterbridge.instance = undefined;
+        Matterbridge.#instance = undefined;
         this.emit('shutdown');
       }
       this.hasCleanupStarted = false;
