@@ -1077,6 +1077,15 @@ describe('Matterbridge mocked', () => {
     expect(networkInterfacesSpy).toHaveBeenCalled();
   }, 10000);
 
+  test('Matterbridge.logNodeAndSystemInfo() falls back to the uid when os.userInfo() throws', async () => {
+    const userInfoSpy = vi.spyOn(os, 'userInfo').mockImplementationOnce(() => {
+      throw new Error('A system error occurred: uv_os_get_passwd returned ENOENT (no such file or directory)');
+    });
+    await (matterbridge as any).logNodeAndSystemInfo();
+    expect(userInfoSpy).toHaveBeenCalled();
+    expect(matterbridge.systemInformation.user).toBe(String(process.getuid?.() ?? 'unknown'));
+  });
+
   test('matterbridge.initialize() loads the global node modules directory', async () => {
     process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
     await (matterbridge as any).initialize();

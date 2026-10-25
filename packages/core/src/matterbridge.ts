@@ -1669,7 +1669,12 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
     // Host system information
     this.systemInformation.hostname = os.hostname();
-    this.systemInformation.user = os.userInfo().username;
+    try {
+      this.systemInformation.user = os.userInfo().username;
+    } catch {
+      // os.userInfo() throws when the uid has no passwd entry (i.e. docker run --user with an arbitrary uid)
+      this.systemInformation.user = String(process.getuid?.() ?? 'unknown');
+    }
     this.systemInformation.osType = os.type(); // "Windows_NT", "Darwin", etc.
     this.systemInformation.osRelease = os.release(); // Kernel version
     this.systemInformation.osPlatform = os.platform(); // "win32", "linux", "darwin", etc.
