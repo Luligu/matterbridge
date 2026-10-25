@@ -3286,6 +3286,36 @@
       "args": ["--PICS /root/energy-evse-mode.pics"]
     },
     {
+      "name": "WaterHeaterManagement attributes on WaterHeater",
+      "test": "TC_EWATERHTR_2_1.py",
+      "endpoint": 1402,
+      "args": ["--PICS /root/water-heater.pics"]
+    },
+    {
+      "name": "WaterHeaterManagement primary functionality on WaterHeater",
+      "test": "TC_EWATERHTR_2_2.py",
+      "endpoint": 1402,
+      "args": ["--PICS /root/water-heater.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "WaterHeaterManagement tank percentage functionality on WaterHeater",
+      "test": "TC_EWATERHTR_2_3.py",
+      "endpoint": 1402,
+      "args": ["--PICS /root/water-heater.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "WaterHeaterMode attributes on WaterHeater",
+      "test": "TC_WHM_1_2.py",
+      "endpoint": 1402,
+      "args": ["--PICS /root/water-heater.pics"]
+    },
+    {
+      "name": "WaterHeaterMode change mode on WaterHeater",
+      "test": "TC_WHM_2_1.py",
+      "endpoint": 1402,
+      "args": ["--PICS /root/water-heater.pics"]
+    },
+    {
       "name": "MeterIdentification attributes on Electrical Utility Meter",
       "test": "TC_MTRID_2_1.py",
       "endpoint": 1409,
