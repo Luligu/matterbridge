@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.2
+ * @version 1.8.3
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -2947,9 +2947,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     this.log.info('Creating matter node storage backup...');
+    // copyDirectory() throws only on invalid arguments: on a file system error it logs and resolves to false.
+    if (storageName && !fs.existsSync(storageName)) {
+      this.log.info(`No matter node storage found to backup from ${storageName} to ${backupName}`);
+      return;
+    }
     try {
-      await copyDirectory(storageName, backupName);
-      this.log.info('Created matter node storage backup');
+      if (await copyDirectory(storageName, backupName, this.log)) this.log.info('Created matter node storage backup');
+      else this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}`);
     } catch (error) {
       this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}:`, error);
     }

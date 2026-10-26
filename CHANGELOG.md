@@ -41,6 +41,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
 - [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
+- [codex]: Sync `.codex/config.toml` with the mb-run template (v.1.0.6).
 - [matterbridge]: Bump `matterbridge` version to v.3.11.1.
 - [matterbridge]: Bump `@types/bun` to v.1.4.4.
 - [matterbridge]: Bump `oxfmt` to v.0.74.0.
@@ -49,12 +50,14 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `react-router` to v.8.5.0.
 - [frontend]: Bump `vite` to v.8.3.5.
 - [core]: Bump `multer` to v.2.5.0.
-- [core]: Bump `werift` to v.0.25.1.
+- [core]: Bump `werift` to v.0.25.2.
 - [tests]: Remove redundant WebSocket error event casts after updating the Bun types.
+- [buntest]: Reach 100% function and line coverage with the line-precise Bun 1.4.4 coverage report (runtimeBun, tracker, mdns, matterbridgePlatform and matterNode), and make the tracker CPU load test deterministic.
 
 ### Fixed
 
 - [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).
+- [core]: The matter storage backup no longer reports success when the copy fails, and is skipped when there is no matter storage.
 - [devcontainer]: Fix the Bun dev container `npm` shim: drop the npm-only flags that `bun prune` and `bun link` reject since Bun 1.4.4.
 - [buntest]: Move `wssTest.test.ts` to `packages/core/buntest`, so it resolves `ws` with the Bun isolated linker.
 - [thread]: Spawn `npm --version` instead of `npm list` in the Bun spawn test, which fails on the Bun isolated linker layout.

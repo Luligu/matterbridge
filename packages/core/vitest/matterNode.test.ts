@@ -303,6 +303,36 @@ describe('MatterNode', () => {
     expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
   });
 
+  test('should log an error when the matter storage backup fails', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    // copyDirectory throws on the same source and destination
+    await matter.backupMatterStorage(storageName, storageName);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(`Error creating matter node storage backup from ${storageName} to ${storageName}:`, expect.any(Error));
+  });
+
+  test('should log an error when copyDirectory cannot copy the matter storage', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    // A file where the backup parent directory should be: copyDirectory cannot create the destination and resolves to false
+    const blocker = path.join(matterbridge.matterbridgeDirectory, 'backup-blocker');
+    fs.writeFileSync(blocker, '');
+    const backupName = path.join(blocker, MATTER_STORAGE_DIR + '.backup');
+    try {
+      await matter.backupMatterStorage(storageName, backupName);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(`Error creating matter node storage backup from ${storageName} to ${backupName}`);
+      expect(loggerInfoSpy).not.toHaveBeenCalledWith('Created matter node storage backup');
+    } finally {
+      fs.rmSync(blocker, { force: true });
+    }
+  });
+
+  test('should skip the matter storage backup when there is no matter storage', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, 'missing-matter-storage');
+    const backupName = storageName + '.backup';
+    await matter.backupMatterStorage(storageName, backupName);
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`No matter node storage found to backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}`);
+    expect(fs.existsSync(backupName)).toBe(false);
+  });
+
   test('should write missing and changed context values while preserving unchanged values and identity', async () => {
     const setSpy = vi.spyOn(StorageContext.prototype, 'set');
     const createContext = async (name: string, serialNumber?: string, uniqueId?: string): Promise<StorageContext> =>

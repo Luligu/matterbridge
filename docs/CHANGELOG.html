@@ -163,6 +163,7 @@
 <ul>
 <li>[core]: <code>Matterbridge.loadInstance()</code> now throws when an instance is already loaded and the singleton is a true private field.</li>
 <li>[scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.</li>
+<li>[codex]: Sync <code>.codex/config.toml</code> with the mb-run template (v.1.0.6).</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.11.1.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.4.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.74.0.</li>
@@ -171,12 +172,14 @@
 <li>[frontend]: Bump <code>react-router</code> to v.8.5.0.</li>
 <li>[frontend]: Bump <code>vite</code> to v.8.3.5.</li>
 <li>[core]: Bump <code>multer</code> to v.2.5.0.</li>
-<li>[core]: Bump <code>werift</code> to v.0.25.1.</li>
+<li>[core]: Bump <code>werift</code> to v.0.25.2.</li>
 <li>[tests]: Remove redundant WebSocket error event casts after updating the Bun types.</li>
+<li>[buntest]: Reach 100% function and line coverage with the line-precise Bun 1.4.4 coverage report (runtimeBun, tracker, mdns, matterbridgePlatform and matterNode), and make the tracker CPU load test deterministic.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
 <li>[core]: Fall back to the uid when <code>os.userInfo()</code> throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. <code>docker run --user</code>). Closes <a href="https://github.com/Luligu/matterbridge/issues/666">#666</a>.</li>
+<li>[core]: The matter storage backup no longer reports success when the copy fails, and is skipped when there is no matter storage.</li>
 <li>[devcontainer]: Fix the Bun dev container <code>npm</code> shim: drop the npm-only flags that <code>bun prune</code> and <code>bun link</code> reject since Bun 1.4.4.</li>
 <li>[buntest]: Move <code>wssTest.test.ts</code> to <code>packages/core/buntest</code>, so it resolves <code>ws</code> with the Bun isolated linker.</li>
 <li>[thread]: Spawn <code>npm --version</code> instead of <code>npm list</code> in the Bun spawn test, which fails on the Bun isolated linker layout.</li>

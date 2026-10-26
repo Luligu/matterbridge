@@ -3,7 +3,7 @@
  * @description This file contains the class MatterNode.
  * @author Luca Liguori
  * @created 2025-10-01
- * @version 1.1.2
+ * @version 1.1.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -593,16 +593,16 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    */
   async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
     this.log.info(`Creating matter node storage backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}...`);
+    // copyDirectory() throws only on invalid arguments: on a file system error it logs and resolves to false.
+    if (storageName && !fs.existsSync(storageName)) {
+      this.log.info(`No matter node storage found to backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}`);
+      return;
+    }
     try {
-      await copyDirectory(storageName, backupName);
-      this.log.info('Created matter node storage backup');
+      if (await copyDirectory(storageName, backupName, this.log)) this.log.info('Created matter node storage backup');
+      else this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}`);
     } catch (error) {
-      /* v8 ignore next if */
-      if (error instanceof Error && (error as NodeJS.ErrnoException)?.code === 'ENOENT') {
-        this.log.info(`No matter node storage found to backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}`);
-      } else {
-        this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}:`, error);
-      }
+      this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}:`, error);
     }
   }
 

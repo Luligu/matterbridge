@@ -239,7 +239,12 @@ describe('Tracker', () => {
   });
 
   test('gc event runs garbage collector and emits gc_done (major-sync)', async () => {
-    if (process.versions.bun) return;
+    void vi.mock('../src/runtimeBun.js', () => ({
+      gc: vi.fn(),
+      isBun: vi.fn(() => false),
+      memoryFootprint: vi.fn(() => process.memoryUsage().rss),
+      setGcLevel: vi.fn(),
+    }));
     const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester');
 
@@ -258,7 +263,12 @@ describe('Tracker', () => {
   });
 
   test('gc event falls back to minor-async when major call throws', async () => {
-    if (process.versions.bun) return;
+    void vi.mock('../src/runtimeBun.js', () => ({
+      gc: vi.fn(),
+      isBun: vi.fn(() => false),
+      memoryFootprint: vi.fn(() => process.memoryUsage().rss),
+      setGcLevel: vi.fn(),
+    }));
     const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester2');
 
@@ -281,12 +291,22 @@ describe('Tracker', () => {
   });
 
   test('gc not exposed does not throw', async () => {
+    void vi.mock('../src/runtimeBun.js', () => ({
+      gc: vi.fn(),
+      isBun: vi.fn(() => false),
+      memoryFootprint: vi.fn(() => process.memoryUsage().rss),
+      setGcLevel: vi.fn(),
+    }));
     const { Tracker } = await import('../src/tracker.js');
     const tracker = new Tracker('GCTester3');
 
     delete (global as any).gc;
 
+    let gcDoneCount = 0;
+    tracker.on('gc_done', () => gcDoneCount++);
+
     expect(() => tracker.runGarbageCollector()).not.toThrow();
+    expect(gcDoneCount).toBe(0);
   });
 
   test('gc uses Bun garbage collector when running on Bun', async () => {
@@ -389,6 +409,31 @@ describe('Tracker', () => {
     spyCpus.mockRestore();
 
     expect(cpuEvents).toBeGreaterThanOrEqual(2);
+  });
+
+  test('cpu load calc reports the busy share when cpu times advance', async () => {
+    vi.useFakeTimers();
+    const { Tracker } = await import('../src/tracker.js');
+    const tracker = new Tracker('CpuLoadTester');
+
+    // Mock increasing times: the real os.cpus() rarely changes within a fake-timer tick, which made this branch timing-dependent.
+    let sample = 0;
+    track(
+      spyOn(os, 'cpus').mockImplementation(() => {
+        const n = sample++;
+        return [{ model: 'x', speed: 1000, times: { user: 100 * n, nice: 0, sys: 50 * n, idle: 250 * n, irq: 0 } }];
+      }),
+    );
+
+    const osCpus: number[] = [];
+    tracker.on('cpu', (osCpu: number) => osCpus.push(osCpu));
+
+    tracker.start(10);
+    vi.advanceTimersByTime(10);
+    tracker.stop();
+
+    // busy 150 / total 400 per tick
+    expect(osCpus).toEqual([37.5]);
   });
 
   test('start early-return when already running', async () => {
