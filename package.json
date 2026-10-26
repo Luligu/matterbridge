@@ -378,6 +378,7 @@
     "softReset:bun": "bun install && bun prune && bun run build && bun run --cwd apps/frontend build && bun run typecheck && bun run scripts/npm-link.mjs",
     "data-model": "node ./scripts/data-model.mjs",
     "update-htmls": "node ./scripts/update-htmls.mjs",
+    "update-badges": "node ./scripts/badges.mjs",
     "scan-deps": "node ./scripts/scan-deps.mjs",
     "sync-workspaces": "node scripts/sync-workspaces.mjs --scope \"@matterbridge\" && npm run softReset",
     "runMeBeforePublish": "npm run cleanBuild && npm run typecheck && npm run format && npm run lint && npm run update-htmls && npm run test:coverage && npm run test:coverage -w @matterbridge/frontend",
