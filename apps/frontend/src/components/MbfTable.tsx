@@ -21,6 +21,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { useMemo, useState, memo, type ReactNode } from 'react';
 
 import { debug } from '../appState';
+import { LOCAL_STORAGE_PREFIX } from '../utils/localStorage';
 import { ConditionalTooltip } from './ConditionalTooltip';
 import { MbfWindowContent, MbfWindowFooter, MbfWindowFooterText, MbfWindowHeader, MbfWindowHeaderText, MbfWindowIcons } from './MbfWindow';
 
@@ -93,14 +94,20 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     return `rk_${rows.indexOf(row)}`;
   };
 
+  // Local storage keys
+  const storageName = name.replace(/\s+/g, '-').toLowerCase();
+  const storageOrderByKey = `${LOCAL_STORAGE_PREFIX}${storageName}-table-order-by`;
+  const storageOrderKey = `${LOCAL_STORAGE_PREFIX}${storageName}-table-order`;
+  const storageColumnVisibilityKey = `${LOCAL_STORAGE_PREFIX}${storageName}-column-visibility`;
+
   // Local states for column sorting and visibility
-  const [orderBy, setOrderBy] = useState<string | null>(localStorage.getItem(`${name}_table_order_by`) || null);
-  const [order, setOrder] = useState<'asc' | 'desc' | null>((localStorage.getItem(`${name}_table_order`) as 'asc' | 'desc' | null) || null);
+  const [orderBy, setOrderBy] = useState<string | null>(localStorage.getItem(storageOrderByKey) || null);
+  const [order, setOrder] = useState<'asc' | 'desc' | null>((localStorage.getItem(storageOrderKey) as 'asc' | 'desc' | null) || null);
   const [configureVisibilityDialogOpen, setConfigureVisibilityDialogOpen] = useState(false);
   // Visibility overrides stored in localStorage: { [colId]: false } hides a column.
   const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>(() => {
     try {
-      const stored = localStorage.getItem(`${name}_column_visibility`);
+      const stored = localStorage.getItem(storageColumnVisibilityKey);
       if (stored) return JSON.parse(stored) as ColumnVisibility;
     } catch {
       /**/
@@ -150,19 +157,19 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     if (orderBy !== property || !orderBy) {
       setOrderBy(property);
       setOrder('asc');
-      localStorage.setItem(`${name}_table_order_by`, property);
-      localStorage.setItem(`${name}_table_order`, 'asc');
+      localStorage.setItem(storageOrderByKey, property);
+      localStorage.setItem(storageOrderKey, 'asc');
       return;
     }
     if (order === 'asc') {
       setOrder('desc');
-      localStorage.setItem(`${name}_table_order`, 'desc');
+      localStorage.setItem(storageOrderKey, 'desc');
       return;
     }
     setOrderBy(null);
     setOrder(null);
-    localStorage.removeItem(`${name}_table_order_by`);
-    localStorage.removeItem(`${name}_table_order`);
+    localStorage.removeItem(storageOrderByKey);
+    localStorage.removeItem(storageOrderKey);
   };
 
   const toggleConfigureVisibilityDialog = () => {
@@ -183,7 +190,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
         delete next[id]; // restore default (visible)
       }
       try {
-        localStorage.setItem(`${name}_column_visibility`, JSON.stringify(next));
+        localStorage.setItem(storageColumnVisibilityKey, JSON.stringify(next));
       } catch {
         /**/
       }
@@ -195,7 +202,7 @@ function MbfTable<T extends object>({ name, title, columns, rows, getRowKey, foo
     const next: ColumnVisibility = {};
     setColumnVisibility(next);
     try {
-      localStorage.removeItem(`${name}_column_visibility`);
+      localStorage.removeItem(storageColumnVisibilityKey);
     } catch {
       /**/
     }

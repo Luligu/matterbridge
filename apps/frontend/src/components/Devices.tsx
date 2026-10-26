@@ -36,9 +36,9 @@ function Devices(): React.JSX.Element {
   const [plugins, setPlugins] = useState<string[]>(['All plugins']); // Start with 'All plugins' as the only option until we fetch the real list
   // Restored from localStorage during the initial render, so the first paint already shows the saved
   // filters and view mode instead of the defaults.
-  const [filterPlugins, setFilterPlugins] = useState(() => localStorage.getItem(MbfLsk.devicesFilterPlugins) || 'All plugins'); // Default to 'All plugins'
-  const [filterDevices, setFilterDevices] = useState(() => localStorage.getItem(MbfLsk.devicesFilterDevices) || ''); // No filter by default
-  const [viewMode, setViewMode] = useState(() => localStorage.getItem(MbfLsk.devicesViewMode) || 'icon'); // Default to icon view
+  const [filterPlugins, setFilterPlugins] = useState(() => localStorage.getItem(MbfLsk['devices-filter-plugins']) || 'All plugins'); // Default to 'All plugins'
+  const [filterDevices, setFilterDevices] = useState(() => localStorage.getItem(MbfLsk['devices-filter-devices']) || ''); // No filter by default
+  const [viewMode, setViewMode] = useState(() => localStorage.getItem(MbfLsk['devices-view-mode']) || 'icon'); // Default to icon view
 
   // Refs
   const uniqueId = useRef(getUniqueId());
@@ -78,22 +78,22 @@ function Devices(): React.JSX.Element {
   const handleFilterPluginsChange = (event: SelectChangeEvent) => {
     const selected = event.target.value;
     setFilterPlugins(selected);
-    localStorage.setItem(MbfLsk.devicesFilterPlugins, selected);
+    localStorage.setItem(MbfLsk['devices-filter-plugins'], selected);
   };
 
   const handleFilterDevicesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilterDevices(event.target.value);
-    localStorage.setItem(MbfLsk.devicesFilterDevices, event.target.value);
+    localStorage.setItem(MbfLsk['devices-filter-devices'], event.target.value);
   };
 
   const handleClearFilterDevices = () => {
     setFilterDevices('');
-    localStorage.removeItem(MbfLsk.devicesFilterDevices);
+    localStorage.removeItem(MbfLsk['devices-filter-devices']);
   };
 
   const handleViewModeChange = (mode: string) => {
     setViewMode(mode);
-    localStorage.setItem(MbfLsk.devicesViewMode, mode);
+    localStorage.setItem(MbfLsk['devices-view-mode'], mode);
   };
 
   if (debug || localDebug) console.log('Devices rendering...');

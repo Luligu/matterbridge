@@ -67,8 +67,8 @@ export const WebSocketContext = createContext<WebSocketContextType>(null as unkn
 export function WebSocketProvider({ children }: { children: ReactNode }) {
   // States
   const [messages, setMessages] = useState<WsLogMessage[]>([]);
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk['log-filter-level']) ?? 'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk['log-filter-search']) ?? '*');
 
   const [online, setOnline] = useState(false);
   const [retry, setRetry] = useState(1);
@@ -97,8 +97,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const logFilterSearchRef = useRef(logFilterSearch);
   const messagesCounterRef = useRef(0);
   const messagesCounterIntervalRef = useRef<IntervalHandle | null>(null);
-  const logLength = useRef(Number(localStorage.getItem(MbfLsk.logLength) ?? 200));
-  const logAutoScroll = useRef(localStorage.getItem(MbfLsk.logAutoScroll) !== 'false'); // default true
+  const logLength = useRef(Number(localStorage.getItem(MbfLsk['log-length']) ?? 200));
+  const logAutoScroll = useRef(localStorage.getItem(MbfLsk['log-auto-scroll']) !== 'false'); // default true
 
   /*
     logLength and logAutoScroll stay refs on purpose: the WebSocket log handler reads them for every

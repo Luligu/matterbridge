@@ -510,10 +510,21 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     if (debug || localDebug) console.log('handleConfigUrl device:', device.deviceName, 'configUrl:', device.configUrl);
     if (!device.configUrl) return;
     if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
+      // Strip leading '/' or './' (e.g. '/plugins/my-plugin' or './plugins/my-plugin' -> 'plugins/my-plugin') so basePath can be prepended cleanly:
+      // - Standard: '/' + 'plugins/my-plugin' -> '/plugins/my-plugin'
+      // - Ingress:  '/api/hassio_ingress/<token>/' + 'plugins/my-plugin' -> '/api/hassio_ingress/<token>/plugins/my-plugin'
       const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
-      // Add the trailing slash to the path only, leaving any query string and hash untouched.
+      // Parse into a URL object to isolate pathname from search parameters and hash:
+      // - Standard: '/plugins/my-plugin?device=test1' -> pathname: '/plugins/my-plugin', search: '?device=test1'
+      // - Ingress:  '/api/hassio_ingress/<token>/plugins/my-plugin?device=test1' -> pathname: '/api/hassio_ingress/<token>/plugins/my-plugin', search: '?device=test1'
       const pluginFrontendUrl = new URL(pluginFrontendPath, window.location.origin);
+      // Add trailing slash to the pathname if missing:
+      // - Standard: '/plugins/my-plugin' -> '/plugins/my-plugin/'
+      // - Ingress:  '/api/hassio_ingress/<token>/plugins/my-plugin' -> '/api/hassio_ingress/<token>/plugins/my-plugin/'
       if (!pluginFrontendUrl.pathname.endsWith('/')) pluginFrontendUrl.pathname += '/';
+      // Reassemble the path with the trailing slash, leaving query string and hash untouched:
+      // - Standard: '/plugins/my-plugin/' + '?device=test1' -> '/plugins/my-plugin/?device=test1'
+      // - Ingress:  '/api/hassio_ingress/<token>/plugins/my-plugin/' + '?device=test1' -> '/api/hassio_ingress/<token>/plugins/my-plugin/?device=test1'
       const pluginFrontendPathWithTrailingSlash = `${pluginFrontendUrl.pathname}${pluginFrontendUrl.search}${pluginFrontendUrl.hash}`;
       if (debug || localDebug)
         console.log(

@@ -1,22 +1,56 @@
 {
   "files": [],
   "references": [
-    { "path": "./apps/frontend/tsconfig.json" },
-    { "path": "./packages/types/tsconfig.json" },
-    { "path": "./packages/test-utils/tsconfig.json" },
-    { "path": "./packages/test-utils/src/jest/tsconfig.json" },
-    { "path": "./packages/test-utils/src/vitest/tsconfig.json" },
-    { "path": "./packages/test-utils/src/buntest/tsconfig.json" },
-    { "path": "./packages/utils/tsconfig.json" },
-    { "path": "./packages/thread/tsconfig.json" },
-    { "path": "./packages/dgram/tsconfig.json" },
-    { "path": "./packages/core/tsconfig.json" },
-    { "path": "./packages/core/buntest/tsconfig.json" },
-    { "path": "./packages/dgram/buntest/tsconfig.json" },
-    { "path": "./packages/thread/buntest/tsconfig.json" },
-    { "path": "./packages/types/buntest/tsconfig.json" },
-    { "path": "./packages/utils/buntest/tsconfig.json" },
-    { "path": "./tsconfig.root.json" },
-    { "path": "./buntest/tsconfig.json" }
+    {
+      "path": "./apps/frontend/tsconfig.json"
+    },
+    {
+      "path": "./packages/types/tsconfig.json"
+    },
+    {
+      "path": "./packages/test-utils/tsconfig.json"
+    },
+    {
+      "path": "./packages/test-utils/src/jest/tsconfig.json"
+    },
+    {
+      "path": "./packages/test-utils/src/vitest/tsconfig.json"
+    },
+    {
+      "path": "./packages/test-utils/src/buntest/tsconfig.json"
+    },
+    {
+      "path": "./packages/utils/tsconfig.json"
+    },
+    {
+      "path": "./packages/thread/tsconfig.json"
+    },
+    {
+      "path": "./packages/dgram/tsconfig.json"
+    },
+    {
+      "path": "./packages/core/tsconfig.json"
+    },
+    {
+      "path": "./packages/core/buntest/tsconfig.json"
+    },
+    {
+      "path": "./packages/dgram/buntest/tsconfig.json"
+    },
+    {
+      "path": "./packages/thread/buntest/tsconfig.json"
+    },
+    {
+      "path": "./packages/types/buntest/tsconfig.json"
+    },
+    {
+      "path": "./packages/utils/buntest/tsconfig.json"
+    },
+    {
+      "path": "./tsconfig.root.json"
+    },
+    {
+      "path": "./buntest/tsconfig.json"
+    }
   ]
 }

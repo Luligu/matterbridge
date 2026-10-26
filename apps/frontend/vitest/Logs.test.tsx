@@ -116,8 +116,8 @@ describe('Logs', () => {
   });
 
   it('restores the level and the search from localStorage', () => {
-    localStorage.setItem(MbfLsk.logFilterLevel, 'warn');
-    localStorage.setItem(MbfLsk.logFilterSearch, 'matterbridge');
+    localStorage.setItem(MbfLsk['log-filter-level'], 'warn');
+    localStorage.setItem(MbfLsk['log-filter-search'], 'matterbridge');
 
     renderLogs(makeCtx());
 
@@ -127,8 +127,8 @@ describe('Logs', () => {
 
   it('takes the log length and the auto scroll from the context refs, not from localStorage', () => {
     // Stale localStorage values must lose to the refs the provider owns.
-    localStorage.setItem(MbfLsk.logLength, '100');
-    localStorage.setItem(MbfLsk.logAutoScroll, 'true');
+    localStorage.setItem(MbfLsk['log-length'], '100');
+    localStorage.setItem(MbfLsk['log-auto-scroll'], 'true');
 
     renderLogs(makeCtx({ logLength: { current: 1000 }, logAutoScroll: { current: false } }));
 
@@ -144,7 +144,7 @@ describe('Logs', () => {
     expect(ctx.setLogFilterLevel).toHaveBeenCalledWith('error');
     // The current search must be carried through unchanged.
     expect(ctx.filterLogMessages).toHaveBeenCalledWith('error', '*');
-    expect(localStorage.getItem(MbfLsk.logFilterLevel)).toBe('error');
+    expect(localStorage.getItem(MbfLsk['log-filter-level'])).toBe('error');
     await waitFor(() => expect(levelSelect()).toHaveTextContent('Error'));
   });
 
@@ -156,7 +156,7 @@ describe('Logs', () => {
     expect(ctx.setLogFilterSearch).toHaveBeenCalledWith('/warn|error/');
     // The current level must be carried through unchanged.
     expect(ctx.filterLogMessages).toHaveBeenCalledWith('info', '/warn|error/');
-    expect(localStorage.getItem(MbfLsk.logFilterSearch)).toBe('/warn|error/');
+    expect(localStorage.getItem(MbfLsk['log-filter-search'])).toBe('/warn|error/');
     expect(searchInput()).toHaveValue('/warn|error/');
   });
 
@@ -177,7 +177,7 @@ describe('Logs', () => {
 
     expect(ctx.setLogAutoScroll).toHaveBeenCalledWith(false);
     expect(ctx.filterLogMessages).toHaveBeenCalledWith('info', '*');
-    expect(localStorage.getItem(MbfLsk.logAutoScroll)).toBe('false');
+    expect(localStorage.getItem(MbfLsk['log-auto-scroll'])).toBe('false');
     expect(autoScrollCheckbox()).not.toBeChecked();
   });
 
@@ -187,7 +187,7 @@ describe('Logs', () => {
     fireEvent.click(autoScrollCheckbox());
 
     expect(ctx.setLogAutoScroll).toHaveBeenCalledWith(true);
-    expect(localStorage.getItem(MbfLsk.logAutoScroll)).toBe('true');
+    expect(localStorage.getItem(MbfLsk['log-auto-scroll'])).toBe('true');
     expect(autoScrollCheckbox()).toBeChecked();
   });
 
@@ -208,7 +208,7 @@ describe('Logs', () => {
     await pickOption(lengthSelect(), '500');
 
     expect(ctx.setLogLength).toHaveBeenCalledWith(500);
-    expect(localStorage.getItem(MbfLsk.logLength)).toBe('500');
+    expect(localStorage.getItem(MbfLsk['log-length'])).toBe('500');
     await waitFor(() => expect(lengthSelect()).toHaveTextContent('500'));
   });
 

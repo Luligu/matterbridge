@@ -188,15 +188,15 @@ describe('InstallProgressDialog actions', () => {
     const { setInstallAutoExit, rerenderDialog, onClose } = renderDialog();
     const checkbox = screen.getByRole('checkbox', { name: 'Close on success' });
     expect(checkbox).not.toBeChecked();
-    expect(localStorage.getItem(MbfLsk.installAutoExit)).toBeNull();
+    expect(localStorage.getItem(MbfLsk['install-auto-exit'])).toBeNull();
     fireEvent.click(checkbox);
     expect(setInstallAutoExit).toHaveBeenCalledExactlyOnceWith(true);
-    expect(localStorage.getItem(MbfLsk.installAutoExit)).toBe('true');
+    expect(localStorage.getItem(MbfLsk['install-auto-exit'])).toBe('true');
     rerenderDialog({ installAutoExit: true });
     expect(checkbox).toBeChecked();
     fireEvent.click(checkbox);
     expect(setInstallAutoExit).toHaveBeenNthCalledWith(2, false);
-    expect(localStorage.getItem(MbfLsk.installAutoExit)).toBe('false');
+    expect(localStorage.getItem(MbfLsk['install-auto-exit'])).toBe('false');
     rerenderDialog({ installAutoExit: false });
     expect(checkbox).not.toBeChecked();
     expect(onClose).not.toHaveBeenCalled();
@@ -211,10 +211,10 @@ describe('InstallProgressDialog actions', () => {
   });
 
   test('should use context as the checkbox state without overwriting storage on render', () => {
-    localStorage.setItem(MbfLsk.installAutoExit, 'false');
+    localStorage.setItem(MbfLsk['install-auto-exit'], 'false');
     const { setInstallAutoExit } = renderDialog({ installAutoExit: true });
     expect(screen.getByRole('checkbox', { name: 'Close on success' })).toBeChecked();
-    expect(localStorage.getItem(MbfLsk.installAutoExit)).toBe('false');
+    expect(localStorage.getItem(MbfLsk['install-auto-exit'])).toBe('false');
     expect(setInstallAutoExit).not.toHaveBeenCalled();
   });
 });

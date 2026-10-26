@@ -34,8 +34,8 @@ function Logs(): React.JSX.Element {
     filterLogMessages,
   } = useContext(WebSocketContext);
   // States
-  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
-  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
+  const [logFilterLevel, setLogFilterLevel] = useState(localStorage.getItem(MbfLsk['log-filter-level']) ?? 'info');
+  const [logFilterSearch, setLogFilterSearch] = useState(localStorage.getItem(MbfLsk['log-filter-search']) ?? '*');
   const [localLogLength, setLocalLogLength] = useState(logLength.current.toString());
   const [localLogAutoScroll, setLocalLogAutoScroll] = useState(logAutoScroll.current);
 
@@ -44,7 +44,7 @@ function Logs(): React.JSX.Element {
     setLogFilterLevel(newValue);
     setContextLogFilterLevel(newValue);
     filterLogMessages(newValue, logFilterSearch);
-    localStorage.setItem(MbfLsk.logFilterLevel, newValue);
+    localStorage.setItem(MbfLsk['log-filter-level'], newValue);
     if (debug) console.log('handleLogFilterLevelChange called with value:', newValue);
   };
 
@@ -53,7 +53,7 @@ function Logs(): React.JSX.Element {
     setLogFilterSearch(newValue);
     setContextLogFilterSearch(newValue);
     filterLogMessages(logFilterLevel, newValue);
-    localStorage.setItem(MbfLsk.logFilterSearch, newValue);
+    localStorage.setItem(MbfLsk['log-filter-search'], newValue);
     if (debug) console.log('handleLogFilterSearchChange called with value:', newValue);
   };
 
@@ -62,7 +62,7 @@ function Logs(): React.JSX.Element {
     setLocalLogAutoScroll(checked);
     setLogAutoScroll(checked);
     filterLogMessages(logFilterLevel, logFilterSearch);
-    localStorage.setItem(MbfLsk.logAutoScroll, checked ? 'true' : 'false');
+    localStorage.setItem(MbfLsk['log-auto-scroll'], checked ? 'true' : 'false');
     if (debug) console.log('handleAutoScrollChange called with value:', checked);
   };
 
@@ -70,7 +70,7 @@ function Logs(): React.JSX.Element {
     const newValue = event.target.value;
     setLocalLogLength(newValue);
     setLogLength(Number(newValue));
-    localStorage.setItem(MbfLsk.logLength, newValue);
+    localStorage.setItem(MbfLsk['log-length'], newValue);
     if (debug) console.log('handleLogLengthChange called with value:', newValue);
   };
 

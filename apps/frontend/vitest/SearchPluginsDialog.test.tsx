@@ -83,10 +83,10 @@ beforeEach(() => {
   window.localStorage.clear();
   const today = new Date();
   const asOf = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-  window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf, versions: ['latest', '1.0.0'] }]))));
-  window.localStorage.setItem(MbfLsk.searchPluginsTotal, JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf, total: 10 }]))));
+  window.localStorage.setItem(MbfLsk['search-plugins-versions'], JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf, versions: ['latest', '1.0.0'] }]))));
+  window.localStorage.setItem(MbfLsk['search-plugins-total'], JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf, total: 10 }]))));
   window.localStorage.setItem(
-    MbfLsk.searchPluginsMeta,
+    MbfLsk['search-plugins-meta'],
     JSON.stringify(
       Object.fromEntries(
         packageNames.map((name) => [name, { asOf, homepage: 'https://example.com', help: 'https://example.com/help', changelog: 'https://example.com/changelog' }]),
@@ -138,7 +138,7 @@ describe('SearchPluginsDialog', () => {
       { name: 'matterbridge-no-author', maintainers: [{}] },
       { name: 'matterbridge-publisher-bot', publisher: { username: 'ci[bot]' } },
     ];
-    for (const key of [MbfLsk.searchPluginsTotal, MbfLsk.searchPluginsMeta, MbfLsk.searchPluginsVersions]) {
+    for (const key of [MbfLsk['search-plugins-total'], MbfLsk['search-plugins-meta'], MbfLsk['search-plugins-versions']]) {
       const entry = readCache(key)[packageNames[0]];
       window.localStorage.setItem(key, JSON.stringify(Object.fromEntries(packages.map(({ name }) => [name, entry]))));
     }
@@ -175,9 +175,9 @@ describe('SearchPluginsDialog', () => {
   });
 
   test.each([
-    { endpoint: 'latest', key: MbfLsk.searchPluginsMeta },
-    { endpoint: 'versions', key: MbfLsk.searchPluginsVersions },
-    { endpoint: 'downloads', key: MbfLsk.searchPluginsTotal },
+    { endpoint: 'latest', key: MbfLsk['search-plugins-meta'] },
+    { endpoint: 'versions', key: MbfLsk['search-plugins-versions'] },
+    { endpoint: 'downloads', key: MbfLsk['search-plugins-total'] },
   ])('should tolerate HTTP failures in the $endpoint worker', async ({ key }) => {
     vi.useFakeTimers();
     appState.debug = true;
@@ -198,9 +198,9 @@ describe('SearchPluginsDialog', () => {
 
   test.each(
     [
-      { endpoint: 'latest', key: MbfLsk.searchPluginsMeta },
-      { endpoint: 'versions', key: MbfLsk.searchPluginsVersions },
-      { endpoint: 'downloads', key: MbfLsk.searchPluginsTotal },
+      { endpoint: 'latest', key: MbfLsk['search-plugins-meta'] },
+      { endpoint: 'versions', key: MbfLsk['search-plugins-versions'] },
+      { endpoint: 'downloads', key: MbfLsk['search-plugins-total'] },
     ].flatMap((scenario) => [false, true].map((aborted) => ({ endpoint: scenario.endpoint, key: scenario.key, aborted }))),
   )('should handle $endpoint rejection with aborted=$aborted', async ({ endpoint, key, aborted }) => {
     vi.useFakeTimers();
@@ -219,8 +219,11 @@ describe('SearchPluginsDialog', () => {
   });
 
   test.each([false, true])('should handle selection-time version rejection with aborted=%s', async (aborted) => {
-    const cached = readCache(MbfLsk.searchPluginsVersions)[packageNames[0]] as { asOf: string };
-    window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, versions: ['1.0.0'] }]))));
+    const cached = readCache(MbfLsk['search-plugins-versions'])[packageNames[0]] as { asOf: string };
+    window.localStorage.setItem(
+      MbfLsk['search-plugins-versions'],
+      JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, versions: ['1.0.0'] }]))),
+    );
     const log = vi.spyOn(console, 'error').mockImplementation(() => {});
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
     const error = aborted ? new DOMException('Aborted', 'AbortError') : new Error('Version lookup failed');
@@ -239,8 +242,11 @@ describe('SearchPluginsDialog', () => {
   });
 
   test('should ignore additional selection attempts while versions are pending', async () => {
-    const cached = readCache(MbfLsk.searchPluginsVersions)[packageNames[0]] as { asOf: string };
-    window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, versions: ['1.0.0'] }]))));
+    const cached = readCache(MbfLsk['search-plugins-versions'])[packageNames[0]] as { asOf: string };
+    window.localStorage.setItem(
+      MbfLsk['search-plugins-versions'],
+      JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, versions: ['1.0.0'] }]))),
+    );
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
     let resolveVersions!: (response: Response) => void;
     const pending = new Promise<Response>((resolve) => {
@@ -284,8 +290,8 @@ describe('SearchPluginsDialog', () => {
     });
     await finishBackgroundWork();
     expect(fetch).toHaveBeenCalledTimes(4);
-    expect(readCache(MbfLsk.searchPluginsTotal)).toEqual({});
-    expect(readCache(MbfLsk.searchPluginsMeta)).toEqual({});
+    expect(readCache(MbfLsk['search-plugins-total'])).toEqual({});
+    expect(readCache(MbfLsk['search-plugins-meta'])).toEqual({});
   });
 
   test('should stop queued background requests when closed during throttling', async () => {
@@ -322,10 +328,10 @@ describe('SearchPluginsDialog', () => {
     expect(row.getByTestId('total')).toHaveTextContent('10');
     expect(row.getByTestId('downloads')).toHaveTextContent('10');
     expect(row.getByTitle('Open the plugin help')).toBeInTheDocument();
-    expect(readCache(MbfLsk.searchPluginsMeta)[packageNames[0]]).toEqual(
+    expect(readCache(MbfLsk['search-plugins-meta'])[packageNames[0]]).toEqual(
       expect.objectContaining({ homepage: 'https://example.com/plugin', help: 'https://example.com/help', changelog: 'https://example.com/changes' }),
     );
-    expect(readCache(MbfLsk.searchPluginsTotal)[packageNames[0]]).toEqual(expect.objectContaining({ total: 10 }));
+    expect(readCache(MbfLsk['search-plugins-total'])[packageNames[0]]).toEqual(expect.objectContaining({ total: 10 }));
     expect(fetch).toHaveBeenCalledTimes(7);
     fireEvent.click(row.getByRole('button', { name: packageNames[0] }), { detail: 2 });
     await finishBackgroundWork(0);
@@ -348,12 +354,12 @@ describe('SearchPluginsDialog', () => {
     ['file:///plugin', 'https://www.npmjs.com/package/matterbridge-test-alpha'],
   ])('should normalize repository %j and resolve metadata fallbacks', async (repository, homepage) => {
     vi.useFakeTimers();
-    window.localStorage.removeItem(MbfLsk.searchPluginsMeta);
+    window.localStorage.removeItem(MbfLsk['search-plugins-meta']);
     mockRegistry({ latest: { repository, homepage: 42, help: false, changelog: 'file:///changes' } });
     renderDialog();
     await finishBackgroundWork();
     const isRepository = homepage.startsWith('https://github.com/');
-    expect(readCache(MbfLsk.searchPluginsMeta)[packageNames[0]]).toEqual(
+    expect(readCache(MbfLsk['search-plugins-meta'])[packageNames[0]]).toEqual(
       expect.objectContaining({
         homepage,
         help: isRepository ? `${homepage}/blob/main/README.md` : homepage,
@@ -376,12 +382,12 @@ describe('SearchPluginsDialog', () => {
     }),
   ])('should recover from invalid cache data %s', async (raw) => {
     vi.useFakeTimers();
-    for (const key of [MbfLsk.searchPluginsTotal, MbfLsk.searchPluginsMeta, MbfLsk.searchPluginsVersions]) window.localStorage.setItem(key, raw);
+    for (const key of [MbfLsk['search-plugins-total'], MbfLsk['search-plugins-meta'], MbfLsk['search-plugins-versions']]) window.localStorage.setItem(key, raw);
     mockRegistry();
     renderDialog();
     await finishBackgroundWork();
-    expect(readCache(MbfLsk.searchPluginsTotal)[packageNames[0]]).toEqual(expect.objectContaining({ total: 10 }));
-    expect(readCache(MbfLsk.searchPluginsVersions)[packageNames[0]]).toEqual(expect.objectContaining({ versions: ['latest', 'dev', '1.10.0', '1.2.0', '1.0.0'] }));
+    expect(readCache(MbfLsk['search-plugins-total'])[packageNames[0]]).toEqual(expect.objectContaining({ total: 10 }));
+    expect(readCache(MbfLsk['search-plugins-versions'])[packageNames[0]]).toEqual(expect.objectContaining({ versions: ['latest', 'dev', '1.10.0', '1.2.0', '1.0.0'] }));
     expect(screen.getByRole('button', { name: packageNames[0] })).toBeInTheDocument();
   });
 
@@ -406,25 +412,25 @@ describe('SearchPluginsDialog', () => {
     vi.useFakeTimers();
     appState.debug = true;
     vi.spyOn(console, 'log').mockImplementation(() => {});
-    const cachedMeta = readCache(MbfLsk.searchPluginsMeta)[packageNames[0]] as { asOf: string };
+    const cachedMeta = readCache(MbfLsk['search-plugins-meta'])[packageNames[0]] as { asOf: string };
     window.localStorage.setItem(
-      MbfLsk.searchPluginsMeta,
+      MbfLsk['search-plugins-meta'],
       JSON.stringify({
         [packageNames[0]]: { asOf: cachedMeta.asOf, homepage: 42, help: null, changelog: false },
         [packageNames[1]]: { asOf: '2000-01-01', homepage: 'https://stale.example', help: 'https://stale.example', changelog: 'https://stale.example' },
       }),
     );
-    window.localStorage.setItem(MbfLsk.searchPluginsTotal, JSON.stringify({ [packageNames[0]]: { asOf: '2000-01-01', total: 99 } }));
+    window.localStorage.setItem(MbfLsk['search-plugins-total'], JSON.stringify({ [packageNames[0]]: { asOf: '2000-01-01', total: 99 } }));
     window.localStorage.setItem(
-      MbfLsk.searchPluginsVersions,
+      MbfLsk['search-plugins-versions'],
       JSON.stringify({ [packageNames[0]]: { asOf: '2000-01-01', versions: ['latest'] }, [packageNames[1]]: { asOf: cachedMeta.asOf, versions: [42, null] } }),
     );
     mockRegistry();
     renderDialog();
     await finishBackgroundWork();
     expect(fetch).toHaveBeenCalledTimes(7);
-    expect(readCache(MbfLsk.searchPluginsTotal)[packageNames[0]]).toEqual(expect.objectContaining({ total: 10 }));
-    expect(readCache(MbfLsk.searchPluginsMeta)[packageNames[0]]).toEqual(expect.objectContaining({ homepage: 'https://www.npmjs.com/package/matterbridge-test-alpha' }));
+    expect(readCache(MbfLsk['search-plugins-total'])[packageNames[0]]).toEqual(expect.objectContaining({ total: 10 }));
+    expect(readCache(MbfLsk['search-plugins-meta'])[packageNames[0]]).toEqual(expect.objectContaining({ homepage: 'https://www.npmjs.com/package/matterbridge-test-alpha' }));
   });
 
   test.each([{}, { 'versions': {}, 'dist-tags': { dev: '  ' } }, { 'versions': { '1.0.0': {} }, 'dist-tags': { dev: 42 } }])(
@@ -433,7 +439,7 @@ describe('SearchPluginsDialog', () => {
       vi.useFakeTimers();
       appState.debug = true;
       vi.spyOn(console, 'log').mockImplementation(() => {});
-      window.localStorage.removeItem(MbfLsk.searchPluginsVersions);
+      window.localStorage.removeItem(MbfLsk['search-plugins-versions']);
       mockRegistry({ versions });
       const { onVersions } = renderDialog();
       await finishBackgroundWork();
@@ -446,9 +452,9 @@ describe('SearchPluginsDialog', () => {
   test('should replace the old versions cache format and return at most twenty versions', async () => {
     appState.debug = true;
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const cached = readCache(MbfLsk.searchPluginsVersions)[packageNames[0]] as { asOf: string };
+    const cached = readCache(MbfLsk['search-plugins-versions'])[packageNames[0]] as { asOf: string };
     window.localStorage.setItem(
-      MbfLsk.searchPluginsVersions,
+      MbfLsk['search-plugins-versions'],
       JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, versions: ['1.0.0', 42] }]))),
     );
     mockRegistry({ versions: { versions: Object.fromEntries(Array.from({ length: 25 }, (_, index) => [`1.0.${index}`, {}])) } });
@@ -462,7 +468,7 @@ describe('SearchPluginsDialog', () => {
     'should handle empty, invalid, and zero download totals: %j',
     async (downloads) => {
       vi.useFakeTimers();
-      window.localStorage.removeItem(MbfLsk.searchPluginsTotal);
+      window.localStorage.removeItem(MbfLsk['search-plugins-total']);
       mockRegistry({ downloads });
       renderDialog();
       await finishBackgroundWork();
@@ -473,7 +479,7 @@ describe('SearchPluginsDialog', () => {
 
   test.each([404, 500])('should leave downloads blank without retrying HTTP %s', async (status) => {
     vi.useFakeTimers();
-    window.localStorage.removeItem(MbfLsk.searchPluginsTotal);
+    window.localStorage.removeItem(MbfLsk['search-plugins-total']);
     mockRegistry();
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
     vi.mocked(fetch).mockImplementation(async (input, init) => (requestUrl(input).includes('/downloads/range/') ? new Response(null, { status }) : baseFetch(input, init)));
@@ -485,7 +491,7 @@ describe('SearchPluginsDialog', () => {
 
   test.each(['0.01', 'invalid', null])('should retry rate-limited downloads using Retry-After=%s', async (retryAfter) => {
     vi.useFakeTimers();
-    window.localStorage.removeItem(MbfLsk.searchPluginsTotal);
+    window.localStorage.removeItem(MbfLsk['search-plugins-total']);
     mockRegistry();
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
     let attempts = 0;
@@ -502,7 +508,7 @@ describe('SearchPluginsDialog', () => {
 
   test('should stop retrying rate-limited downloads after three attempts per package', async () => {
     vi.useFakeTimers();
-    window.localStorage.removeItem(MbfLsk.searchPluginsTotal);
+    window.localStorage.removeItem(MbfLsk['search-plugins-total']);
     mockRegistry();
     const baseFetch = vi.mocked(fetch).getMockImplementation()!;
     vi.mocked(fetch).mockImplementation(async (input, init) =>
@@ -515,9 +521,9 @@ describe('SearchPluginsDialog', () => {
   });
 
   test.each(['invalid URL', 'javascript:alert(1)', 'http://example.com/plugin'])('should only open valid HTTP links: %s', async (url) => {
-    const cached = readCache(MbfLsk.searchPluginsMeta)[packageNames[0]] as { asOf: string };
+    const cached = readCache(MbfLsk['search-plugins-meta'])[packageNames[0]] as { asOf: string };
     window.localStorage.setItem(
-      MbfLsk.searchPluginsMeta,
+      MbfLsk['search-plugins-meta'],
       JSON.stringify(Object.fromEntries(packageNames.map((name) => [name, { asOf: cached.asOf, homepage: url, help: url, changelog: url }]))),
     );
     const open = vi.spyOn(window, 'open').mockReturnValue(null);

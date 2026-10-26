@@ -168,22 +168,22 @@ describe('Home', () => {
   });
 
   it('prompts for a browser refresh when the frontend version changed', async () => {
-    localStorage.setItem(MbfLsk.frontendVersion, '3.4.17');
+    localStorage.setItem(MbfLsk['frontend-version'], '3.4.17');
     const { emit } = renderHome();
     emit({ method: '/api/settings', id: 17, response: settings });
 
     await waitFor(() => expect(screen.getByText('Browser refresh')).toBeInTheDocument());
-    expect(localStorage.getItem(MbfLsk.frontendVersion)).toBe('3.4.18');
+    expect(localStorage.getItem(MbfLsk['frontend-version'])).toBe('3.4.18');
   });
 
   it('shows the changelog when the matterbridge version changed', async () => {
-    localStorage.setItem(MbfLsk.frontendVersion, '3.4.18');
-    localStorage.setItem(MbfLsk.matterbridgeVersion, '3.9.1');
+    localStorage.setItem(MbfLsk['frontend-version'], '3.4.18');
+    localStorage.setItem(MbfLsk['matterbridge-version'], '3.9.1');
     const { emit } = renderHome();
     emit({ method: '/api/settings', id: 17, response: settings });
 
     await waitFor(() => expect(screen.getByText('Changelog')).toBeInTheDocument());
     expect(screen.queryByText('Browser refresh')).not.toBeInTheDocument();
-    expect(localStorage.getItem(MbfLsk.matterbridgeVersion)).toBe('3.9.2');
+    expect(localStorage.getItem(MbfLsk['matterbridge-version'])).toBe('3.9.2');
   });
 });

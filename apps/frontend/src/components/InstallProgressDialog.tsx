@@ -30,7 +30,7 @@ export const InstallProgressDialog = ({ open, output, title, _command, _packageN
 
   const handleInstallAutoExitChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setInstallAutoExit(event.target.checked);
-    localStorage.setItem(MbfLsk.installAutoExit, event.target.checked ? 'true' : 'false');
+    localStorage.setItem(MbfLsk['install-auto-exit'], event.target.checked ? 'true' : 'false');
     if (debug) console.log('handleInstallAutoExitChange called with value:', event.target.checked);
   };
 

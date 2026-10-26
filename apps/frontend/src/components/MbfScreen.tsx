@@ -42,7 +42,7 @@ export function MbfScreen({ children }: MbfScreenProps): React.JSX.Element {
       const mobile = isMobile();
       if (mobile) {
         setLogAutoScroll(false);
-        localStorage.setItem(MbfLsk.logAutoScroll, 'false');
+        localStorage.setItem(MbfLsk['log-auto-scroll'], 'false');
       }
       setMobile(mobile);
     }

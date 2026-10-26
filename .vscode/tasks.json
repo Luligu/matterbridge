@@ -267,6 +267,33 @@
       "problemMatcher": []
     },
     {
+      "label": "Pack",
+      "detail": "Build and pack the package tarball using mb-run",
+      "type": "shell",
+      "command": "npx",
+      "args": ["--yes", "mb-run", "--pack", "local"],
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pack Minify",
+      "detail": "Build, minify and pack the package tarball using mb-run",
+      "type": "shell",
+      "command": "npx",
+      "args": ["--yes", "mb-run", "--pack", "local", "minify"],
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pack Obfuscate",
+      "detail": "Build, minify, obfuscate and pack the package tarball using mb-run",
+      "type": "shell",
+      "command": "npx",
+      "args": ["--yes", "mb-run", "--pack", "local", "minify", "obfuscate"],
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Docker: Ubuntu Install",
       "detail": "Run an ubuntu:latest container on the host network with Node.js and bun",
       "type": "process",

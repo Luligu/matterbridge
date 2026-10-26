@@ -23,8 +23,8 @@ function Home(): React.JSX.Element {
   const [systemInfo, setSystemInfo] = useState<SystemInformation | null>(null);
   const [matterbridgeInfo, setMatterbridgeInfo] = useState<MatterbridgeInformation | null>(null);
   const [plugins, setPlugins] = useState<ApiPlugin[]>([]);
-  const [homePagePlugins] = useState(localStorage.getItem(MbfLsk.homePagePlugins) !== 'false'); // default true
-  const [homePageMode] = useState(localStorage.getItem(MbfLsk.homePageMode) ?? 'devices'); // default devices
+  const [homePagePlugins] = useState(localStorage.getItem(MbfLsk['home-page-plugins']) !== 'false'); // default true
+  const [homePageMode] = useState(localStorage.getItem(MbfLsk['home-page-mode']) ?? 'devices'); // default devices
   const [changelog, _setChangelog] = useState('https://matterbridge.io/CHANGELOG.html');
   const [showChangelog, setShowChangelog] = useState(false);
   const [browserRefresh, setBrowserRefresh] = useState(false);
@@ -59,17 +59,20 @@ function Home(): React.JSX.Element {
         setSystemInfo(msg.response.systemInformation);
         setMatterbridgeInfo(msg.response.matterbridgeInformation);
 
-        if (localStorage.getItem(MbfLsk.frontendVersion) === null && msg.response.matterbridgeInformation.frontendVersion) {
-          localStorage.setItem(MbfLsk.frontendVersion, msg.response.matterbridgeInformation.frontendVersion);
-        } else if (msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem(MbfLsk.frontendVersion) && msg.response.matterbridgeInformation.frontendVersion) {
-          localStorage.setItem(MbfLsk.frontendVersion, msg.response.matterbridgeInformation.frontendVersion);
+        if (localStorage.getItem(MbfLsk['frontend-version']) === null && msg.response.matterbridgeInformation.frontendVersion) {
+          localStorage.setItem(MbfLsk['frontend-version'], msg.response.matterbridgeInformation.frontendVersion);
+        } else if (
+          msg.response.matterbridgeInformation.frontendVersion !== localStorage.getItem(MbfLsk['frontend-version']) &&
+          msg.response.matterbridgeInformation.frontendVersion
+        ) {
+          localStorage.setItem(MbfLsk['frontend-version'], msg.response.matterbridgeInformation.frontendVersion);
           setBrowserRefresh(true);
         }
 
-        if (localStorage.getItem(MbfLsk.matterbridgeVersion) === null) {
-          localStorage.setItem(MbfLsk.matterbridgeVersion, msg.response.matterbridgeInformation.matterbridgeVersion);
-        } else if (msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem(MbfLsk.matterbridgeVersion)) {
-          localStorage.setItem(MbfLsk.matterbridgeVersion, msg.response.matterbridgeInformation.matterbridgeVersion);
+        if (localStorage.getItem(MbfLsk['matterbridge-version']) === null) {
+          localStorage.setItem(MbfLsk['matterbridge-version'], msg.response.matterbridgeInformation.matterbridgeVersion);
+        } else if (msg.response.matterbridgeInformation.matterbridgeVersion !== localStorage.getItem(MbfLsk['matterbridge-version'])) {
+          localStorage.setItem(MbfLsk['matterbridge-version'], msg.response.matterbridgeInformation.matterbridgeVersion);
           setShowChangelog(true);
         }
       } else if (msg.method === '/api/plugins' && msg.id === uniqueId.current) {

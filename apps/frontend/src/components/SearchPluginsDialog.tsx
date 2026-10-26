@@ -19,19 +19,19 @@
     - URL: https://registry.npmjs.org/<package>/latest
     - Purpose: enrich rows with homepage/help/changelog links.
      If help/changelog are missing, derive from repository URL (e.g. .../blob/main/README.md).
-    - Cache: localStorage key MbfLsk.searchPluginsMeta (per day)
+    - Cache: localStorage key MbfLsk['search-plugins-meta'] (per day)
 
   3) Total downloads (all-time-ish, via downloads range)
     - URL: https://api.npmjs.org/downloads/range/2020-01-01:<today>/<package>
     - Purpose: compute and show "Total" downloads per package.
-    - Cache: localStorage key MbfLsk.searchPluginsTotal (per day)
+    - Cache: localStorage key MbfLsk['search-plugins-total'] (per day)
     - Notes: throttled + basic retry/backoff on 429.
 
   4) Versions list (all published versions)
     - URL: https://registry.npmjs.org/<package>
     - Purpose: get the full version list (the search API only returns the latest version).
      Used to populate the versions selector after selecting a plugin.
-    - Cache: localStorage key MbfLsk.searchPluginsVersions (per day)
+    - Cache: localStorage key MbfLsk['search-plugins-versions'] (per day)
 */
 
 // @mui/icons-material
@@ -89,7 +89,7 @@ const getRepositoryUrl = (repository: unknown): string | null => {
 
 const readTotalsCache = (): TotalsCache => {
   try {
-    const raw = window.localStorage.getItem(MbfLsk.searchPluginsTotal);
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-total']);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
@@ -111,7 +111,7 @@ const readTotalsCache = (): TotalsCache => {
 
 const writeTotalsCache = (cache: TotalsCache) => {
   try {
-    window.localStorage.setItem(MbfLsk.searchPluginsTotal, JSON.stringify(cache));
+    window.localStorage.setItem(MbfLsk['search-plugins-total'], JSON.stringify(cache));
   } catch {
     // Ignore quota/blocked storage errors.
   }
@@ -119,7 +119,7 @@ const writeTotalsCache = (cache: TotalsCache) => {
 
 const readMetaCache = (): MetaCache => {
   try {
-    const raw = window.localStorage.getItem(MbfLsk.searchPluginsMeta);
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-meta']);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
@@ -143,7 +143,7 @@ const readMetaCache = (): MetaCache => {
 
 const writeMetaCache = (cache: MetaCache) => {
   try {
-    window.localStorage.setItem(MbfLsk.searchPluginsMeta, JSON.stringify(cache));
+    window.localStorage.setItem(MbfLsk['search-plugins-meta'], JSON.stringify(cache));
   } catch {
     // Ignore quota/blocked storage errors.
   }
@@ -151,7 +151,7 @@ const writeMetaCache = (cache: MetaCache) => {
 
 const readVersionsCache = (): VersionsCache => {
   try {
-    const raw = window.localStorage.getItem(MbfLsk.searchPluginsVersions);
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-versions']);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
@@ -174,7 +174,7 @@ const readVersionsCache = (): VersionsCache => {
 
 const writeVersionsCache = (cache: VersionsCache) => {
   try {
-    window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(cache));
+    window.localStorage.setItem(MbfLsk['search-plugins-versions'], JSON.stringify(cache));
   } catch {
     // Ignore quota/blocked storage errors.
   }

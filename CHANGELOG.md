@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.1] - Dev branch
 
+### Breaking changes
+
+- [frontend]: Rename all frontend local storage keys to use the `mbf-` prefix and lowercase, hyphen-separated names to avoid possible storage key conflicts when running inside Home Assistant Ingress. As a consequence, all frontend settings will reset to their default values after updating.
+
 ### Added
 
 - [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
@@ -56,6 +60,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [frontend]: Normalize frontend storage keys to lowercase with hyphens and align table preferences with UI reset.
 - [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).
 - [core]: The matter storage backup no longer reports success when the copy fails, and is skipped when there is no matter storage.
 - [devcontainer]: Fix the Bun dev container `npm` shim: drop the npm-only flags that `bun prune` and `bun link` reject since Bun 1.4.4.

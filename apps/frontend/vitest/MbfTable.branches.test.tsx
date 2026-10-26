@@ -5,6 +5,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import MbfTable, { comparator, type MbfTableColumn } from '../src/components/MbfTable';
+import { LOCAL_STORAGE_PREFIX, resetLocalStorage } from '../src/utils/localStorage';
 
 interface SortRow {
   id: string;
@@ -85,18 +86,56 @@ describe('MbfTable branch coverage', () => {
     const bodyRows = screen.getAllByRole('row').slice(1);
     expect(bodyRows.map((row) => within(row).getAllByRole('cell')[0].textContent)).toEqual(['row-1', 'row-2']);
     expect(groupHeader).toHaveAttribute('aria-sort', 'ascending');
-    expect(localStorage.getItem('SortCycle_table_order_by')).toBe('group');
-    expect(localStorage.getItem('SortCycle_table_order')).toBe('asc');
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}sortcycle-table-order-by`)).toBe('group');
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}sortcycle-table-order`)).toBe('asc');
     expect(screen.getByText('Sortable Table')).toBeInTheDocument();
 
     fireEvent.click(groupHeader);
     expect(groupHeader).toHaveAttribute('aria-sort', 'descending');
-    expect(localStorage.getItem('SortCycle_table_order')).toBe('desc');
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}sortcycle-table-order`)).toBe('desc');
 
     fireEvent.click(groupHeader);
     expect(groupHeader).toHaveAttribute('aria-sort', 'none');
-    expect(localStorage.getItem('SortCycle_table_order_by')).toBeNull();
-    expect(localStorage.getItem('SortCycle_table_order')).toBeNull();
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}sortcycle-table-order-by`)).toBeNull();
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}sortcycle-table-order`)).toBeNull();
+  });
+
+  it.each([
+    ['Devices', 'devices'],
+    ['Plugins', 'plugins'],
+    ['Registered devices', 'registered-devices'],
+    ['Clusters', 'clusters'],
+  ])('should clear persisted sorting and visibility when resetting %s', (name, storageName) => {
+    const columns: MbfTableColumn<SortRow>[] = [
+      { id: 'id', label: 'ID', required: true },
+      { id: 'name', label: 'Name' },
+    ];
+    const rows: SortRow[] = [{ id: 'row-1', group: 'same', name: 'Alpha' }];
+    const renderTable = () => <MbfTable name={name} columns={columns} rows={rows} getRowKey="id" />;
+    const { unmount } = render(renderTable());
+    expect(screen.getByRole('table', { name: `${name} table` })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('columnheader', { name: 'Name' }));
+    fireEvent.click(screen.getByLabelText('Configure Columns'));
+    fireEvent.click(screen.getByLabelText('Name'));
+    fireEvent.click(screen.getByText('Close'));
+    unmount();
+
+    const savedTable = render(renderTable());
+    expect(screen.getByRole('columnheader', { name: 'ID' })).toHaveAttribute('aria-sort', 'none');
+    expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${storageName}-table-order-by`)).toBe('name');
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${storageName}-table-order`)).toBe('asc');
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${storageName}-column-visibility`)).toBe('{"name":false}');
+    savedTable.unmount();
+
+    resetLocalStorage();
+    render(renderTable());
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toHaveAttribute('aria-sort', 'none');
+    expect(screen.getByText('Alpha')).toBeInTheDocument();
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${storageName}-table-order-by`)).toBeNull();
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${storageName}-table-order`)).toBeNull();
+    expect(localStorage.getItem(`${LOCAL_STORAGE_PREFIX}${storageName}-column-visibility`)).toBeNull();
   });
 
   it('ignores backdrop and escape dialog closes, then restores a hidden column', () => {
