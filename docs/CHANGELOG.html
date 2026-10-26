@@ -162,12 +162,16 @@
 <li>[core]: Add the Tapo vendor id (5010) to <code>getVendorIdName</code>.</li>
 <li>[core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.</li>
 <li>[docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.</li>
+<li>[frontend]: Double-click the plugin frontend button in the plugins and devices lists to open the plugin frontend in a new tab instead of the dialog.</li>
+<li>[frontend]: Show the web icon on the device config button when its <code>configUrl</code> points to the device&#39;s own plugin frontend.</li>
 <li>[workflows]: Add the daily <code>badges</code> workflow and <code>scripts/badges.mjs</code>, which publish the all-time npm downloads and Docker pulls with one decimal (e.g. 1.1M) as shields.io endpoint badges in a gist; the READMEs use them.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[core]: <code>Matterbridge.loadInstance()</code> now throws when an instance is already loaded and the singleton is a true private field.</li>
 <li>[scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.</li>
+<li>[frontend]: A device <code>configUrl</code> opens in the dialog only when it points to the device&#39;s own plugin frontend. A <code>configUrl</code> pointing to another plugin&#39;s frontend hides the config button.</li>
+<li>[agents]: Explain in the plugin-frontend rule (v.1.0.2) why the plugin frontend must be opened at its directory URL with a trailing slash.</li>
 <li>[codex]: Sync <code>.codex/config.toml</code> with the mb-run template (v.1.0.6).</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.11.1.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.4.</li>

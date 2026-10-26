@@ -140,9 +140,11 @@
 <h2 id="why-it-is-so-fast">Why it is so fast</h2>
 <ul>
 <li>It runs on <strong>JavaScriptCore</strong>, the engine behind Safari, which is tuned for fast startup and low memory use.</li>
-<li>It is written in <strong>Zig</strong>, a low-level systems language, so the core APIs (file system, networking, HTTP, WebSocket) are native code, not JavaScript layers.</li>
+<li>It is written in <strong>Rust</strong> (since v1.4.0; earlier versions were written in Zig), so the core APIs (file system, networking, HTTP, WebSocket) are native code, not JavaScript layers.</li>
 <li>It runs <strong>TypeScript directly</strong>, without a separate compile step.</li>
 <li>Its <strong>package manager</strong> uses a global cache and hard links, so installs are much faster than npm.</li>
+<li>Its <strong>test runner</strong> (<code>bun test</code>) runs TypeScript tests natively with no transpile step, and <code>bun:test</code> provides both the Jest (<code>jest</code>) and the Vitest (<code>vi</code>) mock and timer helpers, so existing suites port with little more than a changed import. Whole suites finish in a fraction of the usual time.</li>
+<li>Its <strong>type checker</strong> (<code>bun check</code>) reports the same errors as <code>tsc</code> but checks in parallel on all CPU cores, so type-checking a whole project is impressively fast, even compared to the native <code>tsc</code> of TypeScript 7.</li>
 </ul>
 <h2 id="why-i-invest-in-bun">Why I invest in Bun</h2>
 <p>I believe Bun is the future of the JavaScript runtime. In December 2025 <a href="https://bun.com/blog/bun-joins-anthropic">Anthropic acquired Bun</a>, and it now powers Claude Code and the Claude Agent SDK. Bun stays open source and MIT-licensed, and now has long-term backing. That is why I spend time making Matterbridge and its plugins run well on Bun.</p>
