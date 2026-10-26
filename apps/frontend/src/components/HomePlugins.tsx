@@ -26,6 +26,7 @@ import { useContext, useEffect, useState, useRef, memo, type SyntheticEvent } fr
 import { basePath, debug, enableMobile } from '../appState';
 import { type BridgeStatus, type ApiPlugin, type MatterbridgeInformation, type SystemInformation, type WsMessageApiResponse } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
+import { useClickOrDoubleClick } from '../utils/useClickOrDoubleClick';
 import { ConfigPluginDialog } from './ConfigPluginDialog';
 import { Connecting } from './Connecting';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
@@ -198,19 +199,19 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             <></>
           )}
           <Tooltip title="Open the plugin help" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleHelpPlugin(plugin)} size="small">
+            <IconButton style={{ margin: '0px 1px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleHelpPlugin(plugin)} size="small">
               <HelpOutlineIcon />
             </IconButton>
           </Tooltip>
           <Tooltip title="Open the plugin version history" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size="small">
+            <IconButton style={{ margin: '0px 1px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleChangelogPlugin(plugin)} size="small">
               <HistoryOutlinedIcon />
             </IconButton>
           </Tooltip>
 
           {plugin.enabled && plugin.frontendPath && (
-            <Tooltip title="Open the plugin frontend" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }} onClick={() => handleFrontendPlugin(plugin)} size="small">
+            <Tooltip title="Open the plugin frontend (double-click for a new tab)" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton style={{ margin: '0px 1px', padding: '0px', width: '19px', height: '19px' }} {...frontendPluginClick(plugin)} size="small">
                 <LanguageIcon />
               </IconButton>
             </Tooltip>
@@ -222,7 +223,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
               slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}
             >
               <IconButton
-                style={{ color: 'var(--primary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }}
+                style={{ color: 'var(--primary-color)', margin: '0px 1px', padding: '0px', width: '19px', height: '19px' }}
                 onClick={() => handleUpdatePlugin(plugin)}
                 size="small"
               >
@@ -241,7 +242,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
                 slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}
               >
                 <IconButton
-                  style={{ color: 'var(--secondary-color)', margin: '0px 2px', padding: '0px', width: '19px', height: '19px' }}
+                  style={{ color: 'var(--secondary-color)', margin: '0px 1px', padding: '0px', width: '19px', height: '19px' }}
                   onClick={() => handleUpdateDevPlugin(plugin)}
                   size="small"
                 >
@@ -251,7 +252,7 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
             )}
           {matterbridgeInfo && !matterbridgeInfo.readOnly && (
             <Tooltip title="Sponsor the plugin" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton style={{ margin: '0', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin)} size="small">
+              <IconButton style={{ margin: '0px 1px', padding: '0', width: '19px', height: '19px', color: '#b6409c' }} onClick={() => handleSponsorPlugin(plugin)} size="small">
                 <Favorite />
               </IconButton>
             </Tooltip>
@@ -470,6 +471,13 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
     console.log('handleFrontendPlugin plugin:', plugin.name, 'basePath:', basePath, 'frontendPath:', plugin.frontendPath, 'computed pluginFrontendPath:', pluginFrontendPath);
     if (plugin.frontendPath) setSelectedPluginFrontend({ name: plugin.name, path: pluginFrontendPath });
   };
+
+  const handleFrontendPluginNewTab = (plugin: ApiPlugin) => {
+    if (plugin.frontendPath) window.open(`${basePath}plugins/${plugin.name}/`, '_blank');
+  };
+
+  // A single click opens the plugin frontend in the dialog iframe, a double click opens it in a new tab
+  const frontendPluginClick = useClickOrDoubleClick(handleFrontendPlugin, handleFrontendPluginNewTab);
 
   const handlePluginFrontendLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
     const iframeDocument = event.currentTarget.contentDocument;

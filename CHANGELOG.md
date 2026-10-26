@@ -40,12 +40,16 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
 - [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
 - [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
+- [frontend]: Double-click the plugin frontend button in the plugins and devices lists to open the plugin frontend in a new tab instead of the dialog.
+- [frontend]: Show the web icon on the device config button when its `configUrl` points to the device's own plugin frontend.
 - [workflows]: Add the daily `badges` workflow and `scripts/badges.mjs`, which publish the all-time npm downloads and Docker pulls with one decimal (e.g. 1.1M) as shields.io endpoint badges in a gist; the READMEs use them.
 
 ### Changed
 
 - [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
 - [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
+- [frontend]: A device `configUrl` opens in the dialog only when it points to the device's own plugin frontend. A `configUrl` pointing to another plugin's frontend hides the config button.
+- [agents]: Explain in the plugin-frontend rule (v.1.0.2) why the plugin frontend must be opened at its directory URL with a trailing slash.
 - [codex]: Sync `.codex/config.toml` with the mb-run template (v.1.0.6).
 - [matterbridge]: Bump `matterbridge` version to v.3.11.1.
 - [matterbridge]: Bump `@types/bun` to v.1.4.4.
