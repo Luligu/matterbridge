@@ -29,6 +29,8 @@ export const MbfLsk = {
   'search-plugins-meta': `${LOCAL_STORAGE_PREFIX}search-plugins-meta`,
   // Search plugins versions cache
   'search-plugins-versions': `${LOCAL_STORAGE_PREFIX}search-plugins-versions`,
+  // Search plugins list cache (last successful npm search)
+  'search-plugins-search': `${LOCAL_STORAGE_PREFIX}search-plugins-search`,
 };
 
 export const LOCAL_STORAGE_TABLE_KEYS = {

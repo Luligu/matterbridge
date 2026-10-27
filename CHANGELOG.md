@@ -66,11 +66,13 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [frontend]: Normalize frontend storage keys to lowercase with hyphens and align table preferences with UI reset.
+- [frontend]: The search plugins dialog shows the cached plugin list at once and keeps it, with the cached totals, links and versions, when npm requests fail, and backs off when npm blocks the downloads API (a 429 reported by the browser as a network error).
 - [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).
 - [core]: The matter storage backup no longer reports success when the copy fails, and is skipped when there is no matter storage.
 - [devcontainer]: Fix the Bun dev container `npm` shim: drop the npm-only flags that `bun prune` and `bun link` reject since Bun 1.4.4.
 - [buntest]: Move `wssTest.test.ts` to `packages/core/buntest`, so it resolves `ws` with the Bun isolated linker.
 - [thread]: Spawn `npm --version` instead of `npm list` in the Bun spawn test, which fails on the Bun isolated linker layout.
+- [scripts]: `downloads.mjs` (v.2.1.0) queries an explicit 30-day date range instead of the npm `last-month` period, which returns stale data.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

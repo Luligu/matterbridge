@@ -30,6 +30,7 @@ describe('localStorage utils', () => {
       'search-plugins-total': `${LOCAL_STORAGE_PREFIX}search-plugins-total`,
       'search-plugins-meta': `${LOCAL_STORAGE_PREFIX}search-plugins-meta`,
       'search-plugins-versions': `${LOCAL_STORAGE_PREFIX}search-plugins-versions`,
+      'search-plugins-search': `${LOCAL_STORAGE_PREFIX}search-plugins-search`,
     });
 
     expect(LOCAL_STORAGE_TABLE_KEYS).toEqual({
