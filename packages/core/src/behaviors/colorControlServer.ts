@@ -74,10 +74,7 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
     if (process.env.MATTERBRIDGE_CHIP_TEST) this.state.managedTransitionTimeHandling = true;
     const result = super.initialize();
     const crop = (mireds: number): number => Math.min(Math.max(mireds, this.minimumColorTemperatureMireds), this.maximumColorTemperatureMireds);
-    if (this.features.colorTemperature) {
-      const restoredMireds = this.state.colorTemperatureMireds;
-      if (crop(restoredMireds) !== restoredMireds) this.state.colorTemperatureMireds = crop(restoredMireds);
-    }
+    if (this.features.colorTemperature) this.state.colorTemperatureMireds = crop(this.state.colorTemperatureMireds);
     if (this.features.colorTemperature && !isSoftwareUpdateBoot(this.env)) {
       const startUpMireds = this.state.startUpColorTemperatureMireds ?? null;
       if (startUpMireds !== null) {
