@@ -543,8 +543,35 @@ describe('SearchPluginsDialog', () => {
     expect(within(screen.getByTestId(packageNames[0])).getByTestId('total')).toBeEmptyDOMElement();
   });
 
+  test('should report versions errors in the prefetch queue and on selection when the versions response is invalid', async () => {
+    vi.useFakeTimers();
+    appState.debug = true;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    window.localStorage.removeItem(MbfLsk['search-plugins-versions']);
+    mockRegistry();
+    const baseFetch = vi.mocked(fetch).getMockImplementation()!;
+    vi.mocked(fetch).mockImplementation(async (input, init) => {
+      const url = requestUrl(input);
+      if (url.includes('/-/v1/search?') || url.endsWith('/latest') || url.includes('/downloads/range/')) return baseFetch(input, init);
+      return new Response('not json');
+    });
+    const { onSelect, onVersions } = renderDialog();
+    await finishBackgroundWork();
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(`versions error for ${packageNames[0]}:`), expect.any(SyntaxError));
+    expect(readCache(MbfLsk['search-plugins-versions'])).toEqual({});
+    fireEvent.click(screen.getByRole('button', { name: packageNames[0] }), { detail: 2 });
+    await finishBackgroundWork(0);
+    expect(error).toHaveBeenCalledWith('[SearchPluginsDialog] npm versions fetch error:', expect.any(SyntaxError));
+    expect(onVersions).toHaveBeenCalledExactlyOnceWith([]);
+    expect(onSelect).toHaveBeenCalledExactlyOnceWith(packageNames[0]);
+    expect(screen.getByRole('button', { name: 'Select' })).toBeEnabled();
+  });
+
   test('should back off on download network errors and stop the queue after three consecutive failures', async () => {
     vi.useFakeTimers();
+    appState.debug = true;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     window.localStorage.removeItem(MbfLsk['search-plugins-total']);
     const names = ['a', 'b', 'c', 'd', 'e'].map((suffix) => `matterbridge-test-${suffix}`);
     mockRegistry({ objects: names.map((name) => ({ package: { name, version: '1.0.0' }, downloads: { monthly: 10 } })) });
@@ -564,6 +591,8 @@ describe('SearchPluginsDialog', () => {
     expect(rangeCalls.some((url) => url.includes(names[3]) || url.includes(names[4]))).toBe(false);
     expect(readCache(MbfLsk['search-plugins-total'])).toEqual({});
     expect(screen.queryByText(/Totals:.*fetched/)).not.toBeInTheDocument();
+    expect(log).toHaveBeenCalledWith(expect.stringContaining(`totals network error for ${names[0]} attempt 1/3, waiting 5000ms:`), expect.any(TypeError));
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('totals queue stopped after 3 consecutive failures (2 left for the next open)'));
   });
 
   test.each([429, 500])('should keep the stale cached total and links when the refresh fails with HTTP %s', async (status) => {
@@ -646,6 +675,27 @@ describe('SearchPluginsDialog', () => {
     expect(cached.asOf).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(cached.rows.map((r) => r.name)).toEqual(packageNames);
     expect(cached.rows[0]).toEqual(expect.objectContaining({ version: '1.0.0', downloads: 10 }));
+  });
+
+  test('should show the cached plugin list at once while the search is pending', async () => {
+    appState.debug = true;
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    window.localStorage.setItem(
+      MbfLsk['search-plugins-search'],
+      JSON.stringify({
+        asOf: '2000-01-01',
+        rows: [{ name: packageNames[0], version: '0.9.0', downloads: 5, description: 'Cached plugin', author: 'someone', official: false, homepage: null }],
+      }),
+    );
+    vi.mocked(fetch).mockReturnValue(new Promise<Response>(() => {}));
+    renderDialog();
+    expect(await screen.findByRole('button', { name: packageNames[0] })).toBeInTheDocument();
+    const row = within(screen.getByTestId(packageNames[0]));
+    expect(row.getByTestId('version')).toHaveTextContent('0.9.0');
+    expect(row.getByTestId('total')).toHaveTextContent('10');
+    expect(row.getByTitle('Open the plugin help')).toBeInTheDocument();
+    expect(screen.queryByText('Loading npm registry...')).not.toBeInTheDocument();
+    expect(log).toHaveBeenCalledWith(expect.stringContaining('showing cached plugin list (1 rows, asOf=2000-01-01)'));
   });
 
   test('should show the stale cached plugin list with a notice when the search fails', async () => {
