@@ -65,6 +65,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [core]: `MatterbridgeColorControlServer` clamps a restored `colorTemperatureMireds` into the current physical min/max range at initialization, so an endpoint whose range narrowed since the value was stored no longer fails to initialize. Refs [matterbridge-hass#257](https://github.com/Luligu/matterbridge-hass/issues/257).
 - [frontend]: Normalize frontend storage keys to lowercase with hyphens and align table preferences with UI reset.
 - [frontend]: The search plugins dialog shows the cached plugin list at once and keeps it, with the cached totals, links and versions, when npm requests fail, and backs off when npm blocks the downloads API (a 429 reported by the browser as a network error).
 - [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).

@@ -61,16 +61,26 @@ export class MatterbridgeColorControlServer extends ColorControlServer.with(
    * written a non-null value. Remove once matter.js applies StartUpColorTemperatureMireds on
    * aggregator-owned endpoints itself.
    *
+   * Also clamps the restored ColorTemperatureMireds into the current physical range. ColorTemperatureMireds is
+   * non-volatile while ColorTempPhysicalMinMireds/ColorTempPhysicalMaxMireds are not, so matter.js restores a value
+   * stored under a previous, wider range (i.e. a plugin that now reports a narrower range) over the new defaults, and
+   * the "colorTempPhysicalMinMireds to colorTempPhysicalMaxMireds" constraint, validated right after initialize(),
+   * fails the whole endpoint (Luligu/matterbridge-hass#257).
+   *
    * @returns {MaybePromise} The result of the base class initialization.
    */
   override initialize(): MaybePromise {
     // v8 ignore next - only enabled under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) this.state.managedTransitionTimeHandling = true;
     const result = super.initialize();
+    const crop = (mireds: number): number => Math.min(Math.max(mireds, this.minimumColorTemperatureMireds), this.maximumColorTemperatureMireds);
+    if (this.features.colorTemperature) {
+      const restoredMireds = this.state.colorTemperatureMireds;
+      if (crop(restoredMireds) !== restoredMireds) this.state.colorTemperatureMireds = crop(restoredMireds);
+    }
     if (this.features.colorTemperature && !isSoftwareUpdateBoot(this.env)) {
       const startUpMireds = this.state.startUpColorTemperatureMireds ?? null;
       if (startUpMireds !== null) {
-        const crop = (mireds: number): number => Math.min(Math.max(mireds, this.minimumColorTemperatureMireds), this.maximumColorTemperatureMireds);
         const targetMireds = crop(startUpMireds);
         // Matter 1.6.0 § 3.2.7.23: the startup value SHALL be reflected in ColorTemperatureMireds and, in addition,
         // ColorMode/EnhancedColorMode SHALL be set to 2 (ColorTemperatureMireds). The mode switch is unconditional:
