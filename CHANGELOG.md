@@ -46,6 +46,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [vscode]: Enable Git sign-off and update commit message instructions to v.1.0.1 so Git adds the trailer at commit time.
 - [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
 - [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
 - [frontend]: A device `configUrl` opens in the dialog only when it points to the device's own plugin frontend. A `configUrl` pointing to another plugin's frontend hides the config button.
