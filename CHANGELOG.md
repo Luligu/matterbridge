@@ -37,6 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [docker]: Include matterbridge-host-health from the dev branch in the dev and bundev images.
 - [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
 - [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
 - [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
