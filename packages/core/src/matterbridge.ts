@@ -949,11 +949,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.uuid = randomUUID();
       await this.nodeContext.set<string>('matterbridgeUuid', this.uuid);
     }
-    this.log.debug(`Matterbridge UUID: ${CYAN}${this.uuid}${db}`);
+    this.log.debug(`Matterbridge UUID: ${CYAN}${this.uuid}${db} pid: ${CYAN}${process.pid}${db}`);
 
     this.log.notice('Matterbridge is starting...');
 
-    this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLoger: ${this.fileLogger}.`);
+    this.log.debug(`Matterbridge logLevel: ${this.log.logLevel} fileLogger: ${this.fileLogger}.`);
 
     if (this.profile !== undefined) this.log.debug(`Matterbridge profile: ${this.profile}.`);
 
@@ -989,7 +989,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.matterFileLogger = true;
     }
     Logger.destinations.default.write = this.createDestinationMatterLogger(this.matterFileLogger);
-    this.log.debug(`Matter logLevel: ${this.matterLogLevel} fileLoger: ${this.matterFileLogger}.`);
+    this.log.debug(`Matter logLevel: ${this.matterLogLevel} fileLogger: ${this.matterFileLogger}.`);
 
     // Log network interfaces
     const networkInterfaces = os.networkInterfaces();
@@ -1338,18 +1338,20 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       await this.frontend.start(getIntParameter('frontend'));
 
     // Start the matter storage and create the matterbridge context
-    try {
-      await this.startMatterStorage();
-      if (this.aggregatorSerialNumber && this.aggregatorUniqueId && this.matterStorageService) {
-        const storageManager = await this.matterStorageService.open('Matterbridge');
-        const storageContext = storageManager?.createContext('persist');
-        await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
-        await storageContext?.set('uniqueId', this.aggregatorUniqueId);
-        await storageManager.close();
+    if (!hasParameter('experimental-node')) {
+      try {
+        await this.startMatterStorage();
+        if (this.aggregatorSerialNumber && this.aggregatorUniqueId && this.matterStorageService) {
+          const storageManager = await this.matterStorageService.open('Matterbridge');
+          const storageContext = storageManager?.createContext('persist');
+          await storageContext?.set('serialNumber', this.aggregatorSerialNumber);
+          await storageContext?.set('uniqueId', this.aggregatorUniqueId);
+          await storageManager.close();
+        }
+      } catch (error) {
+        this.log.fatal(`Fatal error creating matter storage: ${getErrorMessage(error)}`);
+        throw new Error(`Fatal error creating matter storage: ${getErrorMessage(error)}`, { cause: error });
       }
-    } catch (error) {
-      this.log.fatal(`Fatal error creating matter storage: ${getErrorMessage(error)}`);
-      throw new Error(`Fatal error creating matter storage: ${getErrorMessage(error)}`, { cause: error });
     }
 
     // Clear the matterbridge context if the reset parameter is set (bridge mode)
@@ -1470,14 +1472,14 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       /* v8 ignore next - not released yet */
       if (hasParameter('experimental-node')) {
         // The bridge MatterNode runs in the RootNode thread, started by the ThreadsManager, with all the enabled plugins
-        this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
+        this.log.notice(`***Starting experimental MatterNode thread in ${this.bridgeMode} mode...`);
         this.server.request({
           type: 'manager_run',
           src: 'matterbridge',
           dst: 'manager',
           params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge() } },
         });
-        this.log.notice(`***Started experimental MatterNode in ${this.bridgeMode} mode`);
+        this.log.notice(`***Started experimental MatterNode thread in ${this.bridgeMode} mode`);
         return;
       }
       await this.startBridge();
@@ -1491,7 +1493,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       /* v8 ignore next - not released yet */
       if (hasParameter('experimental-node')) {
         // A MatterNode thread, started by the ThreadsManager, is requested for each enabled plugin
-        this.log.notice(`***Starting experimental MatterNode in ${this.bridgeMode} mode...`);
+        this.log.notice(`***Starting experimental MatterNode threads in ${this.bridgeMode} mode...`);
         for (const plugin of this.plugins.array().filter((p) => p.enabled)) {
           this.server.request({
             type: 'manager_run',
@@ -1500,7 +1502,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge(), pluginName: plugin.name } },
           });
         }
-        this.log.notice(`***Started experimental MatterNode in ${this.bridgeMode} mode`);
+        this.log.notice(`***Started experimental MatterNode threads in ${this.bridgeMode} mode`);
         return;
       }
       await this.startChildbridge();

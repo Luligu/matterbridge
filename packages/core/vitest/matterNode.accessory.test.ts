@@ -110,7 +110,7 @@ describe('MatterNode accessory', () => {
     await matter.create();
     expect(nextSettings).toEqual({ port: MATTER_PORT + 1, passcode: PASSCODE + 1, discriminator: DISCRIMINATOR + 1 });
     expect(matter.port).toBe(MATTER_PORT);
-    expect(matter.matterStorageService).toBeDefined();
+    expect(matter.matterStorageManager).toBeDefined();
     expect(matter.serverNode).toBeUndefined(); // In childbridge mode, serverNode is created on start
   });
 
@@ -135,7 +135,7 @@ describe('MatterNode accessory', () => {
 
   test('Start MatterNode in childbridge mode', async () => {
     await matter.start();
-    expect(matter.matterStorageService).toBeDefined();
+    expect(matter.matterStorageManager).toBeDefined();
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(true);
   });
@@ -210,6 +210,6 @@ describe('MatterNode accessory', () => {
   test('Stop MatterNode in childbridge mode', async () => {
     await matter.stop();
     expect(matter.serverNode).toBeUndefined();
-    expect(matter.matterStorageService).toBeUndefined();
+    expect(matter.matterStorageManager).toBeUndefined();
   });
 });

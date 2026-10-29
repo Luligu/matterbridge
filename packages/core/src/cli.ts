@@ -251,9 +251,9 @@ export async function main(): Promise<void> {
 
   // v8 ignore next -- just experimental
   if (hasParameter('experimental-backend')) {
-    log.debug(`***Starting experimental Backend thread...`);
+    log.notice(`***Starting experimental Backend thread...`);
     manager.runThread('Backend');
-    log.debug(`***Started experimental Backend thread`);
+    log.notice(`***Started experimental Backend thread`);
   }
 
   // Check if the instance needs to shut down from parseCommandLine()

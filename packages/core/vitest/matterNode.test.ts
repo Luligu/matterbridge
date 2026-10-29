@@ -12,7 +12,7 @@ const DISCRIMINATOR = 3860;
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
+import { StorageContext } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
@@ -136,16 +136,6 @@ describe('MatterNode', () => {
     expect(matter.server.name).toBe('matter');
     // @ts-expect-error access private property
     expect(matter.server.listenerCount('broadcast_message')).toBe(1);
-
-    Logger.format = MatterLogFormat.PLAIN;
-    let destinationLogger = matter.createDestinationMatterLogger();
-    expect(destinationLogger).toBeDefined();
-    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
-
-    Logger.format = MatterLogFormat.ANSI;
-    destinationLogger = matter.createDestinationMatterLogger();
-    expect(destinationLogger).toBeDefined();
-    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
   test('pluginStatusUpdate should update the plugin manager and broadcast a plugin_status_update message to the frontend', () => {
@@ -274,20 +264,9 @@ describe('MatterNode', () => {
     expect(pluginManager.length).toBe(10);
   });
 
-  test('Matter logger', async () => {
-    await fs.promises.mkdir(matterbridge.matterbridgeDirectory, { recursive: true });
-    expect(Logger.get('Matter')).toBeDefined();
-    Logger.get('Matter').debug('Testing Matter logger debug message');
-    Logger.get('Matter').info('Testing Matter logger info message');
-    Logger.get('Matter').notice('Testing Matter logger notice message');
-    Logger.get('Matter').warn('Testing Matter logger warn message');
-    Logger.get('Matter').error('Testing Matter logger error message');
-    Logger.get('Matter').fatal('Testing Matter logger fatal message');
-  });
-
-  test('Create server node context without matter storage service', async () => {
+  test('Create server node context without matter storage manager', async () => {
     // @ts-expect-error -- Testing without storage
-    await expect(matter.createServerNodeContext()).rejects.toThrow('No storage service initialized');
+    await expect(matter.createServerNodeContext()).rejects.toThrow('No storage manager initialized');
   });
 
   test('Copy fabrics for server node for Matterbridge', async () => {
@@ -300,37 +279,8 @@ describe('MatterNode', () => {
 
   test('Start matter storage', async () => {
     expect(await matter.startMatterStorage()).toBeUndefined();
-    expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
-  });
-
-  test('should log an error when the matter storage backup fails', async () => {
-    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
-    // copyDirectory throws on the same source and destination
-    await matter.backupMatterStorage(storageName, storageName);
-    expect(loggerErrorSpy).toHaveBeenCalledWith(`Error creating matter node storage backup from ${storageName} to ${storageName}:`, expect.any(Error));
-  });
-
-  test('should log an error when copyDirectory cannot copy the matter storage', async () => {
-    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
-    // A file where the backup parent directory should be: copyDirectory cannot create the destination and resolves to false
-    const blocker = path.join(matterbridge.matterbridgeDirectory, 'backup-blocker');
-    fs.writeFileSync(blocker, '');
-    const backupName = path.join(blocker, MATTER_STORAGE_DIR + '.backup');
-    try {
-      await matter.backupMatterStorage(storageName, backupName);
-      expect(loggerErrorSpy).toHaveBeenCalledWith(`Error creating matter node storage backup from ${storageName} to ${backupName}`);
-      expect(loggerInfoSpy).not.toHaveBeenCalledWith('Created matter node storage backup');
-    } finally {
-      fs.rmSync(blocker, { force: true });
-    }
-  });
-
-  test('should skip the matter storage backup when there is no matter storage', async () => {
-    const storageName = path.join(matterbridge.matterbridgeDirectory, 'missing-matter-storage');
-    const backupName = storageName + '.backup';
-    await matter.backupMatterStorage(storageName, backupName);
-    expect(loggerInfoSpy).toHaveBeenCalledWith(`No matter node storage found to backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}`);
-    expect(fs.existsSync(backupName)).toBe(false);
+    expect(matter.matterStorageManager).toBeDefined();
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Opened matter node storage manager with store ID ${CYAN}${matter.storeId}${nf}`);
   });
 
   test('should write missing and changed context values while preserving unchanged values and identity', async () => {

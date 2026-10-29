@@ -22,7 +22,6 @@
  */
 
 /* oxlint-disable unicorn/no-negated-condition */
-/* oxlint-disable no-param-reassign */
 /* oxlint-disable max-lines */
 
 // WARNING: Not released yet and excluded from Vitest coverage
@@ -38,36 +37,23 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 // @matter
-import {
-  Crypto,
-  type Diagnostic,
-  Environment,
-  LogFormat as MatterLogFormat,
-  Logger,
-  LogLevel as MatterLogLevel,
-  type StorageContext,
-  type StorageManager,
-  StorageService,
-  UINT16_MAX,
-  UINT32_MAX,
-} from '@matter/general';
+import { Crypto, Environment, LogFormat as MatterLogFormat, LogLevel as MatterLogLevel, type StorageContext, type StorageManager, UINT16_MAX, UINT32_MAX } from '@matter/general';
 import { Endpoint, ServerNode } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
-import { type DeviceCertification, MdnsService, PaseClient } from '@matter/protocol';
+import { type DeviceCertification, PaseClient } from '@matter/protocol';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { BridgeStatus, PluginName, PluginStatusUpdate, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
-import { dev, MATTER_LOGGER_FILE, MATTER_STORAGE_DIR, MATTERBRIDGE_LOGGER_FILE, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
+import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
-import { copyDirectory } from '@matterbridge/utils/copy-dir';
 import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { isValidInteger, isValidString, parseVersionString } from '@matterbridge/utils/validate';
+import { isValidInteger, isValidObject, isValidString, parseVersionString } from '@matterbridge/utils/validate';
 import { fireAndForget, wait, withTimeout } from '@matterbridge/utils/wait';
 // Ansi Logger module
 import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, nf, or, TimestampFormat, zb } from 'node-ansi-logger';
@@ -80,7 +66,9 @@ import type { Matterbridge } from './matterbridge.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { MatterbridgePlatform } from './matterbridgePlatform.js';
+import { setupLoggers } from './matterLogger.js';
 import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toBaseDevice } from './matterNodeHelpers.js';
+import { startMatterStorage, stopMatterStorage } from './matterStorage.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('MatterNode');
@@ -100,22 +88,18 @@ interface MatterEvents {
  */
 export class MatterNode extends EventEmitter<MatterEvents> {
   /** Matterbridge logger */
-  private readonly log = new AnsiLogger({ logName: 'MatterNode', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  private readonly log = new AnsiLogger({ logName: 'MatterNode', logNameColor: '\x1b[38;5;65m', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
   /** Matter logger */
-  private readonly matterLog = new AnsiLogger({ logName: 'MatterNode', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
+  private readonly matterLog = new AnsiLogger({ logName: 'MatterNode', logNameColor: '\x1b[34m', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.DEBUG });
 
   /** Matter environment default */
   private readonly environment = Environment.default;
 
   /** Matter storage id */
-  storeId: string | undefined;
-  /** Matter mdns service from environment default */
-  matterMdnsService: MdnsService | undefined;
-  /** Matter storage service from environment default */
-  matterStorageService: StorageService | undefined;
-  /** Matter storage manager created with name 'Matterbridge' */
+  storeId: string;
+  /** Matter storage manager opened with the storeId */
   matterStorageManager: StorageManager | undefined;
-  /** Matter storage context created in the storage manager with name 'persist' */
+  /** Matter storage context created in the storage manager with name 'matterbridge' */
   matterStorageContext: StorageContext | undefined;
 
   /** Matter mdns interface name e.g. 'eth0' or 'wlan0' or 'Wi-Fi' */
@@ -170,7 +154,6 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     private readonly device?: MatterbridgeEndpoint,
   ) {
     super();
-    this.log.logNameColor = '\x1b[38;5;65m';
     this.log.logLevel = matterbridge.logLevel;
     this.matterLog.logLevel = matterbridge.matterLogLevel;
     if (this.debug) this.log.debug(`MatterNode ${this.pluginName ? 'for plugin ' + this.pluginName : 'bridge'} loading...`);
@@ -202,7 +185,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.pluginManager = new PluginManager(injectMatterbridge as unknown as Matterbridge);
     // @ts-expect-error access private property
     this.pluginManager.server.close();
-    this.pluginManager.logLevel = this.debug ? LogLevel.DEBUG : LogLevel.INFO;
+    this.pluginManager.logLevel = matterbridge.logLevel;
     if (this.verbose) this.log.debug(`PluginManager is ready`);
 
     // Setup the matter environment
@@ -215,24 +198,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (this.mdnsInterface) this.environment.vars.set('mdns.networkInterface', this.mdnsInterface);
     if (this.verbose) this.log.debug(`Matter Environment is ready`);
 
-    // Ensure MdnsService is registered in the default environment
-    this.matterMdnsService = new MdnsService(this.environment);
-    // oxlint-disable-next-line typescript/no-misused-promises
-    setImmediate(async () => {
-      await this.matterMdnsService?.construction.ready;
-      if (this.verbose) this.log.debug(`Matter MdnsService is ready`);
-    });
-
-    // Setup the matterbridge logger
-    if (this.matterbridge.fileLogger) {
-      AnsiLogger.setGlobalLogfile(path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_LOGGER_FILE), this.matterbridge.logLevel);
-    }
-
-    // Setup the matter logger
-    Logger.destinations.default.write = this.createDestinationMatterLogger();
-    const levels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'] as const;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    if (this.verbose) this.log.debug(`Matter logLevel: ${levels[Logger.level as MatterLogLevel]} fileLogger: ${matterbridge.matterFileLogger}.`);
+    // Setup the matterbridge and matter loggers
+    setupLoggers(matterbridge, this.log, this.matterLog, this.verbose);
 
     if (this.debug) this.log.debug(`MatterNode for ${this.storeId} loaded`);
   }
@@ -269,9 +236,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           if (this.device || msg.params.storeId !== this.storeId) break;
           try {
             await this.stop();
-            // Respond before destroy() closes the broadcast server. Only the bridge MatterNode closes the shared mDNS service.
+            // Respond before destroy() closes the broadcast server
             this.server.respond({ ...msg, result: { storeId: this.storeId, success: true } });
-            await this.destroy(!this.pluginName);
+            await this.destroy();
           } catch (error) {
             inspectError(this.log, `Error stopping MatterNode ${this.storeId}`, error);
           }
@@ -300,20 +267,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
   /**
    * Destroys the Matter instance.
-   * It closes the mDNS service and the broadcast server.
+   * It closes the plugin manager and the broadcast server. The MdnsService is managed by matter.js: it is closed when the last ServerNode using it closes.
    *
-   * @param {boolean} closeMdns - Whether to close the mDNS service. Default is true.
    * @returns {Promise<void>} A promise that resolves when the instance is destroyed.
    */
-  async destroy(closeMdns: boolean = true): Promise<void> {
+  async destroy(): Promise<void> {
     if (this.verbose) this.log.debug(`Destroying MatterNode instance for ${this.storeId}...`);
-
-    // Close mDNS service
-    if (closeMdns) {
-      if (this.verbose) this.log.debug(`Closing Matter MdnsService for ${this.storeId}...`);
-      await this.matterMdnsService?.close();
-      if (this.verbose) this.log.debug(`Closed Matter MdnsService for ${this.storeId}`);
-    }
 
     // Close the plugin manager
     this.pluginManager.destroy();
@@ -339,7 +298,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.passcode = result.passcode;
     this.discriminator = result.discriminator;
     this.log.debug(
-      `Loaded Matter node  parameters for ${this.storeId}: port ${CYAN}${this.port}${db} passcode ${CYAN}${this.passcode}${db} discriminator ${CYAN}${this.discriminator}${db}`,
+      `Loaded Matter node parameters for ${this.storeId}: port ${CYAN}${this.port}${db} passcode ${CYAN}${this.passcode}${db} discriminator ${CYAN}${this.discriminator}${db}`,
     );
 
     // Start matter storage
@@ -493,7 +452,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.serverNode = undefined;
       this.aggregatorNode = undefined;
       await this.stopMatterStorage();
-      await this.destroy(false); // Do not close mDNS since it is shared
+      await this.destroy();
       this.log.debug(`Stopped MatterNode for server device ${this.pluginName}:${this.device.deviceName}`);
       this.log.info(`Stopped MatterNode for ${this.storeId}`);
       await this.yieldToNode();
@@ -536,74 +495,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   }
 
   /**
-   * Creates a MatterLogger function to show the matter.js log messages in AnsiLogger (console and frontend).
-   * It also logs to file (matter.log) if fileLogger is true.
-   *
-   * @returns {(text: string, message: Diagnostic.Message) => void} The MatterLogger function to be used in Logger.destinations.default.write.
-   */
-  createDestinationMatterLogger(): (text: string, message: Diagnostic.Message) => void {
-    this.matterLog.logNameColor = '\x1b[34m'; // Blue matter.js Logger
-    if (this.matterbridge.matterFileLogger) {
-      this.matterLog.logFilePath = path.join(this.matterbridge.matterbridgeDirectory, MATTER_LOGGER_FILE);
-    }
-
-    return (text: string, message: Diagnostic.Message) => {
-      try {
-        let msg: string;
-        if (Logger.format === MatterLogFormat.ANSI) {
-          msg = text.slice(65);
-        } else {
-          msg = text.split(message.facility)[1]?.trim();
-        }
-        this.matterLog.logName = message.facility;
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
-      } catch (_error) {
-        /* v8 ignore next */
-        this.log.debug(`Error parsing matter log message facility ${message.facility}`);
-      }
-    };
-  }
-
-  /**
-   * Starts the matter storage with name Matterbridge and performs a backup.
+   * Starts the matter storage of the storeId: opens its storage manager, performs a backup and migrates the legacy 'persist' context.
    *
    * @returns {Promise<void>} - A promise that resolves when the storage is started.
    */
   async startMatterStorage(): Promise<void> {
-    // Setup Matter storage
-    this.log.info(`Starting matter node storage...`);
-    this.matterStorageService = this.environment.get(StorageService);
-    this.log.info(`Started matter node storage in ${CYAN}${this.matterStorageService.location}${nf}`);
-
-    // Backup matter storage since it is created/opened correctly
-    await this.backupMatterStorage(
-      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR),
-      path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR + '.backup'),
-    );
-  }
-
-  /**
-   * Makes a backup copy of the specified matter storage directory.
-   *
-   * @param {string} storageName - The name of the storage directory to be backed up.
-   * @param {string} backupName - The name of the backup directory to be created.
-   * @private
-   * @returns {Promise<void>} A promise that resolves when the has been done.
-   */
-  async backupMatterStorage(storageName: string, backupName: string): Promise<void> {
-    this.log.info(`Creating matter node storage backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}...`);
-    // copyDirectory() throws only on invalid arguments: on a file system error it logs and resolves to false.
-    if (storageName && !fs.existsSync(storageName)) {
-      this.log.info(`No matter node storage found to backup from ${CYAN}${storageName}${nf} to ${CYAN}${backupName}${nf}`);
-      return;
-    }
-    try {
-      if (await copyDirectory(storageName, backupName, this.log)) this.log.info('Created matter node storage backup');
-      else this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}`);
-    } catch (error) {
-      this.log.error(`Error creating matter node storage backup from ${storageName} to ${backupName}:`, error);
-    }
+    this.matterStorageManager = await startMatterStorage(this.matterbridge, this.storeId, this.log);
   }
 
   /**
@@ -612,12 +509,9 @@ export class MatterNode extends EventEmitter<MatterEvents> {
    * @returns {Promise<void>} A promise that resolves when the storage is stopped.
    */
   async stopMatterStorage(): Promise<void> {
-    this.log.info('Closing matter node storage...');
-    await this.matterStorageManager?.close();
-    this.matterStorageService = undefined;
+    if (this.matterStorageManager) await stopMatterStorage(this.matterStorageManager, this.log);
     this.matterStorageManager = undefined;
     this.matterStorageContext = undefined;
-    this.log.info('Closed matter node storage');
     this.emit('closed');
   }
 
@@ -661,15 +555,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     productUrl: string = 'https://matterbridge.io',
     configurationVersion: number = 1,
   ): Promise<StorageContext> {
-    if (!this.matterStorageService) {
-      throw new Error('No storage service initialized');
+    if (!this.matterStorageManager) {
+      throw new Error('No storage manager initialized');
     }
     const { randomBytes } = await import('node:crypto');
 
-    this.log.info(`Creating server node storage context "${storeId}.persist" for ${storeId}...`);
-    const storageManager = await this.matterStorageService.open(storeId);
-    const storageContext = storageManager.createContext('persist');
+    this.log.info(`Creating server node storage context "${storeId}.matterbridge" for ${storeId}...`);
+    const storageContext = this.matterStorageManager.createContext('matterbridge');
     const random = randomBytes(8).toString('hex');
+
     /**
      * Writes a primitive initialization value only when missing or different.
      *
@@ -701,7 +595,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     await setIfDifferent('hardwareVersionString', isValidString(hardwareVersionString, 1, 64) ? hardwareVersionString : '1.0.0');
     await setIfDifferent('configurationVersion', isValidInteger(configurationVersion, 1, UINT32_MAX) ? configurationVersion : 1);
 
-    this.log.debug(`Created server node storage context "${storeId}.persist" for ${storeId}:`);
+    this.log.debug(`Created server node storage context "${storeId}.matterbridge" for ${storeId}:`);
     this.log.debug(`- storeId: ${await storageContext.get('storeId')}`);
     this.log.debug(`- deviceName: ${await storageContext.get('deviceName')}`);
     this.log.debug(`- deviceType: ${await storageContext.get('deviceType')}(0x${(await storageContext.get('deviceType'))?.toString(16).padStart(4, '0')})`);
@@ -756,15 +650,17 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.debug(`- configurationVersion: ${await this.matterStorageContext.get('configurationVersion')}`);
 
     // Validate the passcode
+    let validPasscode = passcode;
     if (passcode < 0 || passcode > 99999999) {
       this.log.warn(`Invalid passcode ${passcode} for server node ${storeId}. Passcode must be between 0 and 99999999. Generating a random passcode...`);
-      passcode = PaseClient.generateRandomPasscode(this.environment.get(Crypto));
+      validPasscode = PaseClient.generateRandomPasscode(this.environment.get(Crypto));
     }
 
     // Validate the discriminator
+    let validDiscriminator = discriminator;
     if (discriminator < 0 || discriminator > 0xfff) {
       this.log.warn(`Invalid discriminator ${discriminator} for server node ${storeId}. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...`);
-      discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
+      validDiscriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
     let rootEndpoint;
@@ -811,8 +707,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
       // Provide Commissioning relevant settings
       commissioning: {
-        passcode,
-        discriminator,
+        passcode: validPasscode,
+        discriminator: validDiscriminator,
       },
 
       // Provide Node announcement settings
@@ -1073,16 +969,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   /**
    * Creates and configures the server node for an accessory plugin for a given device.
    *
-   * @param {Plugin | PluginName} plugin - The plugin to configure.
+   * @param {Plugin | PluginName} pluginOrName - The plugin, or its name, to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint> | undefined>} A promise that resolves to the server node for the accessory plugin.
    */
-  async createAccessoryPlugin(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode | undefined> {
-    if (typeof plugin === 'string') {
-      const pluginInstance = this.pluginManager.get(plugin);
-      if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
-      plugin = pluginInstance;
-    }
+  async createAccessoryPlugin(pluginOrName: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode | undefined> {
+    const plugin = typeof pluginOrName === 'string' ? this.pluginManager.get(pluginOrName) : pluginOrName;
+    if (!plugin) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
     if (!plugin.locked && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       plugin.locked = true;
       this.log.debug(`Creating accessory plugin ${plg}${plugin.name}${db} server node...`);
@@ -1118,15 +1011,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   /**
    * Creates and configures the server node and the aggregator node for a dynamic plugin.
    *
-   * @param {Plugin | PluginName} plugin - The plugin to configure.
+   * @param {Plugin | PluginName} pluginOrName - The plugin, or its name, to configure.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint> | undefined>} A promise that resolves to the server node for the dynamic plugin.
    */
-  async createDynamicPlugin(plugin: Plugin | PluginName): Promise<ServerNode | undefined> {
-    if (typeof plugin === 'string') {
-      const pluginInstance = this.pluginManager.get(plugin);
-      if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
-      plugin = pluginInstance;
-    }
+  async createDynamicPlugin(pluginOrName: Plugin | PluginName): Promise<ServerNode | undefined> {
+    const plugin = typeof pluginOrName === 'string' ? this.pluginManager.get(pluginOrName) : pluginOrName;
+    if (!plugin) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
     if (!plugin.locked) {
       plugin.locked = true;
       this.log.debug(`Creating dynamic plugin ${plg}${plugin.name}${db} server node...`);
@@ -1164,16 +1054,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   /**
    * Creates and configures the server node for a single not bridged device.
    *
-   * @param {Plugin | PluginName} plugin - The plugin to configure.
+   * @param {Plugin | PluginName} pluginOrName - The plugin, or its name, to configure.
    * @param {MatterbridgeEndpoint} device - The device to associate with the plugin.
    * @returns {Promise<ServerNode<ServerNode.RootEndpoint> | undefined>} A promise that resolves to the server node for the device with mode server.
    */
-  async createDeviceServerNode(plugin: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode | undefined> {
-    if (typeof plugin === 'string') {
-      const pluginInstance = this.pluginManager.get(plugin);
-      if (!pluginInstance) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
-      plugin = pluginInstance;
-    }
+  async createDeviceServerNode(pluginOrName: Plugin | PluginName, device: MatterbridgeEndpoint): Promise<ServerNode | undefined> {
+    const plugin = typeof pluginOrName === 'string' ? this.pluginManager.get(pluginOrName) : pluginOrName;
+    if (!plugin) throw new Error(`Plugin ${BLUE}${this.pluginName}${er} not found`);
     if (device.mode === 'server' && device.deviceType && device.deviceName && device.vendorId && device.vendorName && device.productId && device.productName) {
       this.log.debug(`Creating device ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db} server node...`);
       this.matterStorageContext = await this.createServerNodeContext(
@@ -1309,12 +1196,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     if (!plugin) throw new Error(`Error removing bridged endpoint ${plg}${pluginName}${er}:${dev}${device.deviceName}${er} (${zb}${device.name}${er}): plugin not found`);
 
     if (device.mode === 'server') {
-      // Close and remove the MatterNode managing the device. The MdnsService is shared through Environment.default, so it stays open.
+      // Close and remove the MatterNode managing the device. The MdnsService is managed by matter.js and closed when the last ServerNode closes.
       const matterNode = this.dependantMatterNodes.get(device.id);
       if (matterNode) {
         this.log.debug(`Closing MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})...`);
         await matterNode.stop();
-        await matterNode.destroy(false);
+        await matterNode.destroy();
         this.dependantMatterNodes.delete(device.id);
         this.log.debug(`Closed MatterNode for device ${plg}${pluginName}${db}:${dev}${device.deviceName}${db} (${zb}${device.name}${db})`);
       }
@@ -1473,6 +1360,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       { cluster: 'Thermostat', attribute: 'occupiedCoolingSetpoint' },
       { cluster: 'Thermostat', attribute: 'occupiedHeatingSetpoint' },
       { cluster: 'Thermostat', attribute: 'systemMode' },
+      { cluster: 'Thermostat', attribute: 'thermostatRunningMode' },
+      { cluster: 'Thermostat', attribute: 'thermostatRunningState' },
       { cluster: 'WindowCovering', attribute: 'operationalStatus' },
       { cluster: 'WindowCovering', attribute: 'currentPositionLiftPercent100ths' },
       { cluster: 'DoorLock', attribute: 'lockState' },
@@ -1507,13 +1396,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         device.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
           if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
           this.log.debug(
-            `Bridged endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`,
+            `Bridged endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${device.id}${db}:${or}${device.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
           );
           this.server.request({
             type: 'frontend_attributechanged',
             src: 'matter',
             dst: 'frontend',
-
             params: {
               plugin: device.plugin,
               serialNumber: device.serialNumber,
@@ -1535,13 +1423,12 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           child.subscribeAttribute(sub.cluster, sub.attribute, (value: number | string | boolean | null) => {
             if (!device.plugin || !device.serialNumber || !device.uniqueId) return;
             this.log.debug(
-              `Bridged child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${value}${db}`,
+              `Bridged child endpoint ${plg}${plugin.name}${db}:${dev}${device.deviceName}${db}:${or}${child.id}${db}:${or}${child.number}${db} attribute ${dev}${sub.cluster}${db}.${dev}${sub.attribute}${db} changed to ${CYAN}${isValidObject(value) ? debugStringify(value) : value}${db}`,
             );
             this.server.request({
               type: 'frontend_attributechanged',
               src: 'matter',
               dst: 'frontend',
-
               params: {
                 plugin: device.plugin,
                 serialNumber: device.serialNumber,
@@ -1638,7 +1525,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       setImmediate(resolve);
     });
 
-    // 3. Pause a bit to allow other macrotasks to run
+    // 3. Pause to allow other macrotasks to run
     await new Promise<void>((resolve) => {
       setTimeout(resolve, Math.min(timeout, 10));
     });

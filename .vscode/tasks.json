@@ -845,13 +845,17 @@
         "--maxWorkers=100%",
         "--coverage.include=packages/core/src/matterNode.ts",
         "--coverage.include=packages/core/src/matterNodeHelpers.ts",
+        "--coverage.include=packages/core/src/matterStorage.ts",
+        "--coverage.include=packages/core/src/matterLogger.ts",
         "packages/core/vitest/matterNode.test.ts",
         "packages/core/vitest/matterNode.bridge.test.ts",
         "packages/core/vitest/matterNode.accessory.test.ts",
         "packages/core/vitest/matterNode.dynamic.test.ts",
         "packages/core/vitest/matterNode.server.test.ts",
         "packages/core/vitest/matterNode.quiet.test.ts",
-        "packages/core/vitest/matterNodeHelpers.test.ts"
+        "packages/core/vitest/matterNodeHelpers.test.ts",
+        "packages/core/vitest/matterStorage.test.ts",
+        "packages/core/vitest/matterLogger.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -870,7 +874,9 @@
         "packages/core/buntest/matterNode.dynamic.test.ts",
         "packages/core/buntest/matterNode.server.test.ts",
         "packages/core/buntest/matterNode.quiet.test.ts",
-        "packages/core/buntest/matterNodeHelpers.test.ts"
+        "packages/core/buntest/matterNodeHelpers.test.ts",
+        "packages/core/buntest/matterStorage.test.ts",
+        "packages/core/buntest/matterLogger.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

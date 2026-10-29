@@ -24,6 +24,8 @@ export default defineConfig({
       '**/tmp/',
       '**/vendor/',
       'packages/core/vitest/matterNode.*.ts', // Not released files
+      'packages/core/vitest/matterStorage.*.ts', // Not released files
+      'packages/core/vitest/matterLogger.*.ts', // Not released files
       'packages/core/vitest/backend*.ts', // Not released files
     ],
     globals: true,
@@ -89,6 +91,8 @@ export default defineConfig({
         'packages/types/src/broadcastServerTypes.ts', // Type-only module with no behavior to cover
         'packages/types/src/matterbridgePlatformTypes.ts', // Type-only module with no behavior to cover
         'packages/core/src/matterNode.ts', // Not released files
+        'packages/core/src/matterStorage.ts', // Not released files
+        'packages/core/src/matterLogger.ts', // Not released files
         'packages/core/src/backend*.ts', // Not released files
       ],
       thresholds: {
