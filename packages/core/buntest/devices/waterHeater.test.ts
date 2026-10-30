@@ -42,6 +42,7 @@ import { LogLevel, stringify } from 'node-ansi-logger';
 import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';
 import { MatterbridgeWaterHeaterManagementServer, MatterbridgeWaterHeaterModeServer, WaterHeater } from '../../src/devices/waterHeater.js';
 import { waterHeater } from '../../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
@@ -137,6 +138,20 @@ describe('Matterbridge Water Heater', () => {
     expect(optionsDevice.id).toBe('WaterHeaterOptions');
     expect(optionsDevice.number).toBe(EndpointNumber(14_02));
     expect(optionsDevice.tagList).toEqual(tagList);
+  });
+
+  test('should preserve electrical measurements in the legacy positional constructor', () => {
+    const powerSpy = vi.spyOn(MatterbridgeEndpoint.prototype, 'createDefaultElectricalPowerMeasurementClusterServer');
+    const energySpy = vi.spyOn(MatterbridgeEndpoint.prototype, 'createImportedElectricalEnergyMeasurementClusterServer');
+    const managementSpy = vi.spyOn(MatterbridgeEndpoint.prototype, 'createDefaultDeviceEnergyManagementClusterServer');
+    // oxlint-disable-next-line typescript/no-deprecated -- Verify compatibility with the legacy positional constructor.
+    new WaterHeater('Legacy Water Heater', 'WH-LEGACY', 48, 52, 15, 75, { heatPump: true }, 80, 230_000, 8_000, 1_840_000, 4_000, 500, 2_000_000);
+    expect(powerSpy).toHaveBeenCalledWith(230_000, 8_000, 1_840_000);
+    expect(energySpy).toHaveBeenCalledWith(4_000);
+    expect(managementSpy).toHaveBeenCalledWith(DeviceEnergyManagement.EsaType.WaterHeating, false, DeviceEnergyManagement.EsaState.Online, 500, 2_000_000);
+    powerSpy.mockRestore();
+    energySpy.mockRestore();
+    managementSpy.mockRestore();
   });
 
   test('create a water heater with an empty options object', () => {

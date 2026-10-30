@@ -129,8 +129,6 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heaterTypes.boiler - Indicates if the water heater has a boiler.
    * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
-   * @param {number} [tankVolume] - The volume of the hot water tank in litres (Matter 1.6.1 § 9.5.7.3). Defaults to `100` if not provided.
-   * @param {number | bigint} [estimatedHeatRequired] - The estimated heat energy needed to raise the water temperature to the target setpoint, in mWh (Matter 1.6.1 § 9.5.7.4). Defaults to `0` if not provided.
    * @param {number | bigint | null} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
    * @param {number | bigint | null} [current] - The current value in milliamperes. Defaults to null if not provided.
    * @param {number | bigint | null} [power] - The power value in milliwatts. Defaults to null if not provided.
@@ -148,8 +146,6 @@ export class WaterHeater extends MatterbridgeEndpoint {
     maxHeatSetpointLimit?: number,
     heaterTypes?: WaterHeaterTypes,
     tankPercentage?: number,
-    tankVolume?: number,
-    estimatedHeatRequired?: number | bigint,
     voltage?: number | bigint | null,
     current?: number | bigint | null,
     power?: number | bigint | null,
@@ -167,8 +163,6 @@ export class WaterHeater extends MatterbridgeEndpoint {
     maxHeatSetpointLimit = 80,
     heaterTypes: WaterHeaterTypes = { immersionElement1: true },
     tankPercentage = 90,
-    tankVolume = 100,
-    estimatedHeatRequired: number | bigint = 0,
     voltage: number | bigint | null = null,
     current: number | bigint | null = null,
     power: number | bigint | null = null,
@@ -186,8 +180,6 @@ export class WaterHeater extends MatterbridgeEndpoint {
             maxHeatSetpointLimit,
             heaterTypes,
             tankPercentage,
-            tankVolume,
-            estimatedHeatRequired,
             voltage,
             current,
             power,
