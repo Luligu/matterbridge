@@ -601,15 +601,15 @@
                         <p>Official Plugins</p>
                     </div>
                     <div class="stat-item">
-                        <h3>60+</h3>
+                        <h3>70+</h3>
                         <p>Community Plugins</p>
                     </div>
                     <div class="stat-item">
-                        <h3>1.3M+</h3>
+                        <h3>1.4M+</h3>
                         <p>Plugins downloads</p>
                     </div>
                     <div class="stat-item">
-                        <h3>24/7</h3>
+                        <h3 data-static>24/7</h3>
                         <p>Active Development</p>
                     </div>
                 </div>
@@ -867,7 +867,29 @@ function copyToClipboard(id) {
     });
 }
 
-// Fetch dynamic stats for npm downloads (last week) and GitHub stars
+        let statsVisible = false;
+        const statTimers = new WeakMap();
+
+        function setStatValue(element, value) {
+            if (!element) return;
+            element.dataset.statValue = String(value);
+            if (statsVisible) animateNumber(element);
+            else element.textContent = value;
+        }
+
+        async function updateBadgeStat(filename, elementId) {
+            try {
+                const response = await fetch(`https://gist.githubusercontent.com/Luligu/b21088ab9c9f2b119b42c33f0fef218d/raw/${filename}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (typeof data.message === 'string' && data.message.trim()) {
+                        setStatValue(document.getElementById(elementId), data.message);
+                    }
+                }
+            } catch(e) { /* Keep the placeholder when the badge is unavailable. */ }
+        }
+
+        // Fetch dynamic stats and use the daily badge totals for npm and Docker.
         (async () => {
             try {
                 const npmResp = await fetch('https://api.npmjs.org/downloads/point/last-week/matterbridge');
@@ -876,66 +898,22 @@ function copyToClipboard(id) {
                     const dl = npmData.downloads;
                     const formatted = dl > 1000 ? (dl/1000).toFixed(1) + 'K' : dl.toString();
                     const el = document.getElementById('npm-downloads');
-                    if (el) el.textContent = formatted + '/wk';
+                    setStatValue(el, formatted + '/wk');
                 }
             } catch(e) { /* silent */ }
-            try {
-                // Fetch full range starting from 2023-01-01 (approx project growth) to today for total downloads
-                const today = new Date();
-                const end = today.toISOString().slice(0,10);
-                const rangeResp = await fetch(`https://api.npmjs.org/downloads/range/2023-01-01:${end}/matterbridge`);
-                if (rangeResp.ok) {
-                    const rangeData = await rangeResp.json();
-                    if (Array.isArray(rangeData.downloads)) {
-                        const total = rangeData.downloads.reduce((acc, d) => acc + (d.downloads||0), 0);
-                        const formattedTotal = total >= 1_000_000 ? (total/1_000_000).toFixed(1) + 'M' : total >= 1000 ? (total/1000).toFixed(1) + 'K' : total.toString();
-                        const totalEl = document.getElementById('npm-total-downloads');
-                        if (totalEl) totalEl.textContent = formattedTotal;
-                    }
-                }
-            } catch(e) { /* silent */ }
+            await Promise.all([
+                updateBadgeStat('npm.json', 'npm-total-downloads'),
+                updateBadgeStat('docker.json', 'docker-pulls'),
+            ]);
             try {
                 const ghResp = await fetch('https://api.github.com/repos/Luligu/matterbridge');
                 if (ghResp.ok) {
                     const ghData = await ghResp.json();
                     const stars = ghData.stargazers_count;
                     const el = document.getElementById('github-stars');
-                    if (el) el.textContent = stars;
+                    setStatValue(el, stars);
                 }
             } catch(e) { /* silent */ }
-            async function updateDockerPulls() {
-                const pullsEl = document.getElementById('docker-pulls');
-                if (!pullsEl) return;
-                // Helper formatter
-                const fmt = n => n >= 1_000_000 ? (n/1_000_000).toFixed(1) + 'M' : n >= 1000 ? (n/1000).toFixed(1) + 'K' : n.toString();
-                // 1) Try Docker Hub API (may be blocked by CORS on some browsers)
-                try {
-                    const dockerResp = await fetch('https://hub.docker.com/v2/repositories/luligu/matterbridge');
-                    if (dockerResp.ok) {
-                        const dockerData = await dockerResp.json();
-                        if (typeof dockerData.pull_count === 'number') {
-                            pullsEl.textContent = fmt(dockerData.pull_count);
-                            return;
-                        }
-                    }
-                } catch(_) { /* continue to fallback */ }
-                // 2) Fallback to shields.io JSON badge (always CORS enabled)
-                try {
-                    const shieldResp = await fetch('https://img.shields.io/docker/pulls/luligu/matterbridge.json');
-                    if (shieldResp.ok) {
-                        const shieldData = await shieldResp.json();
-                        if (shieldData && shieldData.value) {
-                            // shieldData.value already formatted (e.g., 1M or 1.2M): normalize to 1 decimal
-                            const m = /^([0-9.]+)([kKM])$/.exec(shieldData.value);
-                            pullsEl.textContent = m ? parseFloat(m[1]).toFixed(1) + m[2].toUpperCase() : shieldData.value;
-                            return;
-                        }
-                    }
-                } catch(_) { /* ignore */ }
-                // 3) Give up
-                pullsEl.textContent = 'n/a';
-            }
-            updateDockerPulls();
         })();
         // Smooth scrolling for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -970,14 +948,9 @@ function copyToClipboard(id) {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
+                    statsVisible = true;
                     const statItems = entry.target.querySelectorAll('.stat-item h3');
-                    statItems.forEach((item, index) => {
-                        const finalValue = item.textContent;
-                        const isNumeric = finalValue.match(/\d+/);
-                        if (isNumeric) {
-                            animateNumber(item, parseInt(isNumeric[0]), finalValue);
-                        }
-                    });
+                    statItems.forEach(item => animateNumber(item));
                     observer.unobserve(entry.target);
                 }
             });
@@ -988,18 +961,30 @@ function copyToClipboard(id) {
             observer.observe(statsSection);
         }
 
-        function animateNumber(element, target, suffix) {
-            let current = 0;
-            const increment = target / 30;
+        function animateNumber(element) {
+            if (element.hasAttribute('data-static')) return;
+            clearInterval(statTimers.get(element));
+            const finalValue = element.dataset.statValue ?? element.textContent;
+            element.dataset.statValue = finalValue;
+            const match = /^(\d+(?:\.\d+)?)(.*)$/.exec(finalValue);
+            if (!match) return;
+            const target = Number(match[1]);
+            const decimals = match[1].split('.')[1]?.length ?? 0;
+            const suffix = match[2];
+            let step = 0;
+            element.textContent = (0).toFixed(decimals) + suffix;
             const timer = setInterval(() => {
-                current += increment;
-                if (current >= target) {
-                    element.textContent = suffix;
+                step += 1;
+                if (step >= 30) {
+                    element.textContent = finalValue;
                     clearInterval(timer);
+                    statTimers.delete(element);
                 } else {
-                    element.textContent = Math.floor(current) + suffix.replace(/\d+/, '');
+                    const current = target * step / 30;
+                    element.textContent = (decimals ? current.toFixed(decimals) : Math.floor(current)) + suffix;
                 }
             }, 50);
+            statTimers.set(element, timer);
         }
     </script>
 </body>

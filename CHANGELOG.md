@@ -35,12 +35,6 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [dgram]: Decoded mDNS questions and records keep only the `DnsClass` in `class` and expose the top bit as `unicastResponse` on questions and `cacheFlush` on records (RFC 6762 §5.4, §10.2).
 
-### Fixed
-
-- [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
-- [core]: Map device classes explicitly to matter.js classifications, including App to Application.
-- [core]: Keep manufacturer-specific operational states across Pause and Resume in `MatterbridgeOperationalStateServer` and `MatterbridgeRvcOperationalStateServer`.
-
 ### Changed
 
 - [utils]: `getEnumDescription()` accepts any number or string `value`; values outside the enum return the fallback.
@@ -55,6 +49,13 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `react-router` to v.8.5.1.
 - [core]: Bump `express-rate-limit` to v.8.7.2.
 - [tests]: Refactor the tests for the `no-unsafe-enum-assignment` rule of oxlint v.1.90.0: use enum members instead of numeric literals and mark the deliberately invalid enum values.
+- [docs]: Read the website's npm and Docker totals from the daily badge gist and animate stats after loading.
+
+### Fixed
+
+- [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
+- [core]: Map device classes explicitly to matter.js classifications, including App to Application.
+- [core]: Keep manufacturer-specific operational states across Pause and Resume in `MatterbridgeOperationalStateServer` and `MatterbridgeRvcOperationalStateServer`.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
