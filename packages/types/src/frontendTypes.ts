@@ -81,6 +81,7 @@
  * | HomePlugins                  | /api/disableplugin                                          |
  * |                              | /api/enableplugin                                           |
  * |                              | /api/install                                                |
+ * |                              | /api/plugin-command                                         |
  * |                              | /api/plugins                                                |
  * |                              | /api/removeplugin                                           |
  * |                              | /api/restartplugin                                          |
@@ -514,6 +515,23 @@ export interface WsMessageApiActionResponse extends WsMessageSuccessApiResponse 
   method: '/api/action';
 }
 
+export interface WsMessageApiPluginCommandRequest extends WsMessageBaseApiRequest {
+  method: '/api/plugin-command';
+  params: {
+    plugin: string;
+    command: string;
+  };
+}
+export interface WsMessageApiPluginCommandResponse extends WsMessageSuccessApiResponse {
+  method: '/api/plugin-command';
+  response: {
+    /** The output returned by the plugin onCommand() or the error message when error is true */
+    output: string;
+    /** True when the plugin command failed */
+    error?: boolean;
+  };
+}
+
 export interface WsMessageApiConfigRequest extends WsMessageBaseApiRequest {
   method: '/api/config';
   params: {
@@ -704,6 +722,7 @@ export type WsMessageApiRequest =
   | WsMessageApiSelectDevicesRequest
   | WsMessageApiSelectEntitiesRequest
   | WsMessageApiActionRequest
+  | WsMessageApiPluginCommandRequest
   | WsMessageApiConfigRequest
   | WsMessageApiCommandRequest;
 
@@ -740,6 +759,7 @@ export type WsMessageApiResponse =
   | WsMessageApiSelectDevicesResponse
   | WsMessageApiSelectEntitiesResponse
   | WsMessageApiActionResponse
+  | WsMessageApiPluginCommandResponse
   | WsMessageApiConfigResponse
   | WsMessageApiCommandResponse
   | WsMessageApiLog

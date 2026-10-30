@@ -677,6 +677,7 @@ describe('matterNodeHelpers', () => {
       [4718, '(Xiaomi)'],
       [4742, '(eWeLink)'],
       [5264, '(Shelly)'],
+      [5010, '(Tapo)'],
       [0x1488, '(ShortcutLabsFlic)'],
       [0xfff1, '(MatterTest)'],
       [1, '(Unknown vendorId)'],

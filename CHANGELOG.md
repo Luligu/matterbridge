@@ -29,6 +29,38 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.1] - Dev branch
+
+### Added
+
+- [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
+- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
+- [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
+
+### Changed
+
+- [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
+- [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.1.
+- [matterbridge]: Bump `@types/bun` to v.1.4.4.
+- [matterbridge]: Bump `oxfmt` to v.0.74.0.
+- [matterbridge]: Bump `oxlint` to v.1.89.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2005.
+- [frontend]: Bump `react-router` to v.8.5.0.
+- [frontend]: Bump `vite` to v.8.3.5.
+- [core]: Bump `multer` to v.2.5.0.
+- [core]: Bump `werift` to v.0.25.1.
+- [tests]: Remove redundant WebSocket error event casts after updating the Bun types.
+
+### Fixed
+
+- [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).
+- [devcontainer]: Fix the Bun dev container `npm` shim: drop the npm-only flags that `bun prune` and `bun link` reject since Bun 1.4.4.
+- [buntest]: Move `wssTest.test.ts` to `packages/core/buntest`, so it resolves `ws` with the Bun isolated linker.
+- [thread]: Spawn `npm --version` instead of `npm list` in the Bun spawn test, which fails on the Bun isolated linker layout.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.0] - 2026-10-23
 
 ### Breaking changes

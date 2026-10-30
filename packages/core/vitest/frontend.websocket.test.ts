@@ -1064,6 +1064,96 @@ describe('Matterbridge frontend', () => {
     expect(data.error).toBeUndefined();
   });
 
+  test('Websocket API /api/plugin-command with wrong parameters', async () => {
+    let data = await waitMessageId(++WS_ID, '/api/plugin-command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/plugin-command',
+      params: { plugin: 'matterbridge-mock2', command: '' },
+    });
+    expect(data.success).toBeUndefined();
+    expect(data.error).toBe('Wrong parameter in /api/plugin-command');
+
+    data = await waitMessageId(++WS_ID, '/api/plugin-command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/plugin-command',
+      params: { plugin: 'matterbridge-notvalid', command: 'test' },
+    });
+    expect(data.success).toBeUndefined();
+    expect(data.error).toBe('Plugin not found in /api/plugin-command');
+  });
+
+  test('Websocket API /api/plugin-command with a plugin that is not running', async () => {
+    const plugin = matterbridge.plugins.get('matterbridge-mock2');
+    expect(plugin?.platform).toBeDefined();
+    if (!plugin?.platform) return;
+    const platform = plugin.platform;
+    plugin.platform = undefined;
+    const data = await waitMessageId(++WS_ID, '/api/plugin-command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/plugin-command',
+      params: { plugin: 'matterbridge-mock2', command: 'test' },
+    });
+    plugin.platform = platform;
+    expect(data.success).toBeTruthy();
+    expect(data.error).toBeUndefined();
+    expect(data.response).toEqual({ output: 'The plugin matterbridge-mock2 is not running.', error: true });
+  });
+
+  test('Websocket API /api/plugin-command', async () => {
+    const plugin = matterbridge.plugins.get('matterbridge-mock2');
+    expect(plugin?.platform).toBeDefined();
+    if (!plugin?.platform) return;
+
+    // Default onCommand
+    let data = await waitMessageId(++WS_ID, '/api/plugin-command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/plugin-command',
+      params: { plugin: 'matterbridge-mock2', command: '--command custom --method get_consumable' },
+    });
+    expect(data.success).toBeTruthy();
+    expect(data.error).toBeUndefined();
+    expect(data.response).toEqual({ output: "The plugin matterbridge-mock2 doesn't support commands." });
+
+    // Overridden onCommand
+    const onCommand = vi.spyOn(plugin.platform, 'onCommand').mockImplementationOnce(async () => 'consumable ok');
+    data = await waitMessageId(++WS_ID, '/api/plugin-command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/plugin-command',
+      params: { plugin: 'matterbridge-mock2', command: '--method get_consumable' },
+    });
+    expect(onCommand).toHaveBeenCalledWith('--method get_consumable');
+    expect(data.response).toEqual({ output: 'consumable ok' });
+  });
+
+  test('Websocket API /api/plugin-command with throw', async () => {
+    const plugin = matterbridge.plugins.get('matterbridge-mock2');
+    expect(plugin?.platform).toBeDefined();
+    if (!plugin?.platform) return;
+    vi.spyOn(plugin.platform, 'onCommand').mockImplementationOnce(async () => {
+      throw new Error('Test error in command');
+    });
+    const data = await waitMessageId(++WS_ID, '/api/plugin-command', {
+      id: WS_ID,
+      dst: 'Matterbridge',
+      src: 'Jest test',
+      method: '/api/plugin-command',
+      params: { plugin: 'matterbridge-mock2', command: 'test' },
+    });
+    expect(data.success).toBeTruthy();
+    expect(data.error).toBeUndefined();
+    expect(data.response).toEqual({ output: 'Error in plugin matterbridge-mock2 command: Test error in command', error: true });
+  });
+
   test('Websocket API /api/config', async () => {
     ws.send(JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/config', params: { name: 'unk', value: 'none' } }));
     let data = await waitMessageId(WS_ID, '/api/config');

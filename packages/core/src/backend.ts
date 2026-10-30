@@ -61,6 +61,7 @@
  * | /api/viewhistorypage /api/downloadhistorypage              | missing                                                    |
  * | /api/select/devices /api/select/entities                   | missing                                                    |
  * | /api/action /api/command /api/config                       | missing                                                    |
+ * | /api/plugin-command                                        | missing                                                    |
  * +------------------------------------------------------------+------------------------------------------------------------+
  */
 

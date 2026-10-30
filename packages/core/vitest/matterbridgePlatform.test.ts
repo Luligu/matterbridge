@@ -784,6 +784,11 @@ describe('Matterbridge platform', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onAction.`), undefined);
   });
 
+  test('onCommand should log a message and return that commands are not supported', async () => {
+    expect(await platform.onCommand('--command custom')).toBe(`The plugin ${platform.name} doesn't support commands.`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`doesn't override onCommand.`));
+  });
+
   test('onFetch should log a message and return undefined when not overridden', async () => {
     expect(await platform.onFetch('GET')).toBeUndefined();
     expect(await platform.onFetch('GET', 'myVar')).toBeUndefined();

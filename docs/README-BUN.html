@@ -284,7 +284,7 @@ top-level shape too), and a failed handshake now closes with code 1006 instead o
 The workaround (pass the TLS fields <strong>both</strong> top-level and nested under <code>tls</code> in the same
 options object) still works on Node and on every Bun release; drop the <code>tls</code> copy only when
 Bun 1.4.3 and older no longer need to be supported.
-Asserted by <a href="./buntest/wssTest.test.ts">buntest/wssTest.test.ts</a>.
+Asserted by <a href="./packages/core/buntest/wssTest.test.ts">packages/core/buntest/wssTest.test.ts</a>.
 Reported upstream: <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a>, fixed by
 <a href="https://github.com/oven-sh/bun/pull/44618">oven-sh/bun#44618</a>, released in Bun 1.4.4.
 </p>

@@ -24,6 +24,16 @@ vi.mock('../src/components/ConfigPluginDialog', () => ({
       </dialog>
     ) : null,
 }));
+vi.mock('../src/components/PluginTerminalDialog', () => ({
+  PluginTerminalDialog: ({ onClose, pluginName }: { onClose: () => void; pluginName: string }) => (
+    <dialog open aria-label="Plugin terminal dialog">
+      <span>{`terminal ${pluginName}`}</span>
+      <button type="button" onClick={onClose}>
+        Close terminal
+      </button>
+    </dialog>
+  ),
+}));
 vi.mock('../src/components/MbfWindow', () => ({ MbfWindow: ({ children }: { children: React.ReactNode }) => <div>{children}</div> }));
 vi.mock('../src/components/MbfTable', () => ({
   default: ({ rows, columns }: { rows: ApiPlugin[]; columns: MbfTableColumn<ApiPlugin>[] }) => (
@@ -272,6 +282,29 @@ describe('HomePlugins', () => {
     expect(actions.queryAllByRole('button', { name: /Update the plugin to the latest version/ })).toHaveLength(latest ? 1 : 0);
     expect(actions.queryAllByRole('button', { name: /Update the plugin to the latest dev version/ })).toHaveLength(dev ? 1 : 0);
     expect(actions.queryByRole('button', { name: 'Open the plugin frontend' })).not.toBeInTheDocument();
+  });
+
+  test.each([
+    { name: 'a running plugin', overrides: {}, bridgeMode: 'bridge', terminal: true },
+    { name: 'a running plugin in childbridge mode', overrides: {}, bridgeMode: 'childbridge', terminal: true },
+    { name: 'a plugin that is not loaded', overrides: { loaded: false }, bridgeMode: 'bridge', terminal: false },
+    { name: 'a disabled plugin', overrides: { enabled: false }, bridgeMode: 'bridge', terminal: false },
+    { name: 'a plugin in error', overrides: { error: true }, bridgeMode: 'bridge', terminal: false },
+  ])('should gate the terminal button for $name', ({ overrides, bridgeMode, terminal }) => {
+    const { load } = renderPlugins();
+    load([createPlugin(overrides)], { bridgeMode, readOnly: false });
+    const actions = within(screen.getByTestId('plugin-one-Actions'));
+    expect(actions.queryAllByRole('button', { name: 'Open the plugin terminal' })).toHaveLength(terminal ? 1 : 0);
+  });
+
+  it('should open and close the plugin terminal dialog', () => {
+    const { load } = renderPlugins();
+    load([createPlugin()], { bridgeMode: 'bridge', readOnly: false });
+    expect(screen.queryByLabelText('Plugin terminal dialog')).not.toBeInTheDocument();
+    fireEvent.click(pluginButton('Open the plugin terminal'));
+    expect(screen.getByText('terminal plugin-one')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Close terminal' }));
+    expect(screen.queryByLabelText('Plugin terminal dialog')).not.toBeInTheDocument();
   });
 
   test.each([false, true])('should dispatch plugin actions and configuration changes with debug=%s', (debug) => {

@@ -424,6 +424,14 @@ It is called when the user changes the logger level in the frontend.
 
 It is called when a plugin config includes an action button or an action button with text field.
 
+**async onCommand(command: string): Promise<string>**
+
+It is called when the user types a command in the plugin terminal of the frontend (the terminal icon in the Plugins table on the Home page).
+
+The command line is passed to the plugin as is: it is never run by a shell, so the plugin decides what it accepts (i.e. `--command custom --duid 123 --method get_consumable`).
+
+Return the text to show in the terminal. If the method throws, the error message is shown as a failed command. The default implementation returns "The plugin ... doesn't support commands."
+
 **async onConfigChanged(config: PlatformConfig)**
 
 It is called when the plugin config has been updated.

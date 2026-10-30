@@ -163,7 +163,7 @@ built and served. See the TODO list below for the known limitations.
       The workaround (pass the TLS fields **both** top-level and nested under `tls` in the same
       options object) still works on Node and on every Bun release; drop the `tls` copy only when
       Bun 1.4.3 and older no longer need to be supported.
-      Asserted by [buntest/wssTest.test.ts](./buntest/wssTest.test.ts).
+      Asserted by [packages/core/buntest/wssTest.test.ts](./packages/core/buntest/wssTest.test.ts).
       Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396), fixed by
       [oven-sh/bun#44618](https://github.com/oven-sh/bun/pull/44618), released in Bun 1.4.4.
 
