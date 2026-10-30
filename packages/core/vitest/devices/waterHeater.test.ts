@@ -34,6 +34,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { wait } from '@matterbridge/utils/wait';
 import { LogLevel, stringify } from 'node-ansi-logger';
 
 import { MatterbridgeThermostatServer } from '../../src/behaviors/thermostatServer.js';
@@ -148,6 +149,8 @@ describe('Matterbridge Water Heater', () => {
       { immersionElement1: false, immersionElement2: true },
       77,
       WaterHeaterManagement.BoostState.Active,
+      200,
+      4_650_000,
     );
     expect(requireSpy).toHaveBeenCalledWith(
       expect.anything(),
@@ -156,6 +159,8 @@ describe('Matterbridge Water Heater', () => {
         heatDemand: { immersionElement1: false, immersionElement2: true },
         tankPercentage: 77,
         boostState: WaterHeaterManagement.BoostState.Active,
+        tankVolume: 200,
+        estimatedHeatRequired: 4_650_000,
       }),
     );
     // Call with defaults
@@ -167,6 +172,8 @@ describe('Matterbridge Water Heater', () => {
         heatDemand: {},
         tankPercentage: 100,
         boostState: WaterHeaterManagement.BoostState.Inactive,
+        tankVolume: 100,
+        estimatedHeatRequired: 0,
       }),
     );
     // Chaining
@@ -241,14 +248,16 @@ describe('Matterbridge Water Heater', () => {
         'thermostat(0x201).systemMode(0x1c)=4',
         'thermostat(0x201).thermostatRunningState(0x29)={ heat: false, cool: false, fan: false, heatStage2: false, coolStage2: false, fanStage2: false, fanStage3: false }',
         'waterHeaterManagement(0x94).acceptedCommandList(0xfff9)=[ 0, 1 ]',
-        'waterHeaterManagement(0x94).attributeList(0xfffb)=[ 0, 1, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
+        'waterHeaterManagement(0x94).attributeList(0xfffb)=[ 0, 1, 2, 3, 4, 5, 65528, 65529, 65531, 65532, 65533 ]',
         'waterHeaterManagement(0x94).boostState(0x5)=0',
         'waterHeaterManagement(0x94).clusterRevision(0xfffd)=2',
-        'waterHeaterManagement(0x94).featureMap(0xfffc)={ energyManagement: false, tankPercent: true }',
+        'waterHeaterManagement(0x94).estimatedHeatRequired(0x3)=0',
+        'waterHeaterManagement(0x94).featureMap(0xfffc)={ energyManagement: true, tankPercent: true }',
         'waterHeaterManagement(0x94).generatedCommandList(0xfff8)=[  ]',
         'waterHeaterManagement(0x94).heatDemand(0x1)={ immersionElement1: false, immersionElement2: false, heatPump: false, boiler: false, other: false }',
         'waterHeaterManagement(0x94).heaterTypes(0x0)={ immersionElement1: true, immersionElement2: false, heatPump: false, boiler: false, other: false }',
         'waterHeaterManagement(0x94).tankPercentage(0x4)=90',
+        'waterHeaterManagement(0x94).tankVolume(0x2)=100',
         'waterHeaterMode(0x9e).acceptedCommandList(0xfff9)=[ 0 ]',
         'waterHeaterMode(0x9e).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
         'waterHeaterMode(0x9e).clusterRevision(0xfffd)=1',
@@ -560,6 +569,116 @@ describe('Matterbridge Water Heater', () => {
     expect(order.slice(6)).toEqual(['forwarded:changeToMode']);
     expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
     loggerErrorSpy.mockClear();
+  });
+
+  test('create a water heater with custom tankVolume and estimatedHeatRequired', async () => {
+    const energyDevice = new WaterHeater('Water Heater Energy', 'WH-ENERGY', { tankVolume: 200, estimatedHeatRequired: 4_650_000 });
+    await addBridgedDevice(aggregator, energyDevice);
+    expect(energyDevice.getAttribute(WaterHeaterManagement.id, 'tankVolume', energyDevice.log)).toBe(200);
+    expect(energyDevice.getAttribute(WaterHeaterManagement.id, 'estimatedHeatRequired', energyDevice.log)).toBe(4_650_000);
+    expect(energyDevice.getAttribute(WaterHeaterManagement.id, 'featureMap', energyDevice.log)).toEqual({ energyManagement: true, tankPercent: true });
+  });
+
+  test('create a water heater with default tankVolume and estimatedHeatRequired', async () => {
+    const defaultEnergyDevice = new WaterHeater('Water Heater Default Energy', 'WH-DEFENERGY');
+    await addBridgedDevice(aggregator, defaultEnergyDevice);
+    expect(defaultEnergyDevice.getAttribute(WaterHeaterManagement.id, 'tankVolume', defaultEnergyDevice.log)).toBe(100);
+    expect(defaultEnergyDevice.getAttribute(WaterHeaterManagement.id, 'estimatedHeatRequired', defaultEnergyDevice.log)).toBe(0);
+    expect(defaultEnergyDevice.getAttribute(WaterHeaterManagement.id, 'featureMap', defaultEnergyDevice.log)).toEqual({ energyManagement: true, tankPercent: true });
+  });
+
+  test('evaluateWaterHeaterState, boost expiry, oneShot, temporarySetpoint, targetPercentage and targetReheat', async () => {
+    const boostDevice = new WaterHeater('Water Heater Boost', 'WH-BOOST', { waterTemperature: 20, targetWaterTemperature: 60, tankPercentage: 0 });
+    await addBridgedDevice(aggregator, boostDevice);
+
+    // CancelBoost when already Inactive is a no-op
+    await boostDevice.invokeBehaviorCommand('waterHeaterManagement', 'cancelBoost', {});
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'boostState')).toBe(WaterHeaterManagement.BoostState.Inactive);
+
+    // Manual mode heating demand when waterTemperature (20°C) < setpoint (60°C), then Off mode clears it
+    await boostDevice.setCluster(WaterHeaterMode, { currentMode: 12 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: true,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+    await boostDevice.setCluster(WaterHeaterMode, { currentMode: 11 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: false,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+
+    // OneShot boost ends automatically when setpoint is reached
+    await boostDevice.invokeBehaviorCommand('waterHeaterManagement', 'boost', { boostInfo: { duration: 60, oneShot: true, emergencyBoost: true } });
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'boostState')).toBe(WaterHeaterManagement.BoostState.Active);
+    await boostDevice.setCluster(Thermostat, { localTemperature: 6100 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'boostState')).toBe(WaterHeaterManagement.BoostState.Inactive);
+
+    // Non-oneShot boost with temporarySetpoint stays Active when temporarySetpoint is reached, then expires by timer
+    await boostDevice.setCluster(Thermostat, { localTemperature: 2000 }, boostDevice.log);
+    await boostDevice.invokeBehaviorCommand('waterHeaterManagement', 'boost', { boostInfo: { duration: 60, temporarySetpoint: 6500 } });
+    await boostDevice.setCluster(Thermostat, { localTemperature: 6600 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'boostState')).toBe(WaterHeaterManagement.BoostState.Active);
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: false,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+
+    // Re-boosting with targetPercentage and targetReheat replaces the previous boost and exercises reheat threshold
+    await boostDevice.setCluster(WaterHeaterManagement, { tankPercentage: 76 }, boostDevice.log);
+    await boostDevice.invokeBehaviorCommand('waterHeaterManagement', 'boost', { boostInfo: { duration: 1, targetPercentage: 100, targetReheat: 65 } });
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: true,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+    // Reach 100% -> targetReached becomes true, heatDemand clears
+    await boostDevice.setCluster(WaterHeaterManagement, { tankPercentage: 100 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: false,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+    // Draw off to 76% (>= targetReheat 65%) -> heatDemand stays off; draw off to 57% (< 65%) -> reheating starts
+    await boostDevice.setCluster(WaterHeaterManagement, { tankPercentage: 76 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: false,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+    await boostDevice.setCluster(WaterHeaterManagement, { tankPercentage: 57 }, boostDevice.log);
+    await boostDevice.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'heatDemand')).toEqual({
+      immersionElement1: true,
+      immersionElement2: false,
+      heatPump: false,
+      boiler: false,
+      other: false,
+    });
+
+    // Wait for the 1s boost timer to expire
+    await wait(1100);
+    expect(boostDevice.getAttribute(WaterHeaterManagement.id, 'boostState')).toBe(WaterHeaterManagement.BoostState.Inactive);
   });
 
   test('start the server node', async () => {

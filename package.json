@@ -544,6 +544,7 @@
     "chip:test:microwave-oven": "node scripts/run-matterbridge-chip-tests.mjs --test MicrowaveOven",
     "chip:test:energy-evse": "node scripts/run-matterbridge-chip-tests.mjs --test TC_EEVSE_",
     "chip:test:energy-evse-mode": "node scripts/run-matterbridge-chip-tests.mjs --test TC_EEVSEM_",
+    "chip:test:water-heater": "node scripts/run-matterbridge-chip-tests.mjs --test WaterHeater",
     "chip:test:meter-identification": "node scripts/run-matterbridge-chip-tests.mjs --test TC_MTRID_",
     "chip:test:commodity-metering": "node scripts/run-matterbridge-chip-tests.mjs --test TC_COMMTR_",
     "chip:test:commodity-price": "node scripts/run-matterbridge-chip-tests.mjs --test TC_SEPR_",
