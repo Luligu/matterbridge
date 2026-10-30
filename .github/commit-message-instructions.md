@@ -1,4 +1,4 @@
-# Commit Message Instructions (v.1.0.0)
+# Commit Message Instructions (v.1.0.1)
 
 Write the commit message following [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/).
 
@@ -8,7 +8,7 @@ Write the commit message following [Conventional Commits](https://www.convention
 - Subject in imperative mood, lowercase, no trailing period, at most 72 characters.
 - For a non-trivial change, add a blank line and a short body explaining what changed and why, wrapped at 100 characters.
 - Mark breaking changes with `!` after the type or scope and a `BREAKING CHANGE:` footer.
-- Do not add any other footer.
+- Do not add any other footer. The VS Code setting `git.alwaysSignOff` is `true`, so Git automatically adds the `Signed-off-by:` trailer at commit time; do not include it in the generated message.
 
 Examples:
 

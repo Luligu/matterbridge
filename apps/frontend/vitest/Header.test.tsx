@@ -302,7 +302,7 @@ describe('Header', () => {
   ])('should gate mobile navigation when mobile=$mobile and enableMobile=$enableMobile', ({ mobile, enableMobile, stored, responsive }) => {
     appSettings.debug = true;
     appSettings.enableMobile = enableMobile;
-    localStorage.setItem(MbfLsk.enableMobile, stored);
+    localStorage.setItem(MbfLsk['enable-mobile'], stored);
     const { load } = renderHeader({ mobile });
     load();
     expect(screen.getByText(`${mobile ? 'Mobile' : 'Desktop'} 1200x800 enabled ${stored !== 'false'}`)).toBeInTheDocument();

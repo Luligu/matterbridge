@@ -528,6 +528,13 @@ describe('Matterbridge platform', () => {
       },
     ]);
     expect(selectEntities).toEqual([{ plugin: platform.name, name: 'name1', description: 'description1', icon: 'hub' }]);
+    // A second device and entity that sort first, so the response comparators run and reorder the lists.
+    platform.setSelectDevice('serial0', 'name0', 'url0', 'hub');
+    platform.setSelectEntity('name0', 'description0', 'hub');
+    const selectDevicesSorted = platform.getSelectDevices().toReversed();
+    const selectEntitiesSorted = platform.getSelectEntities().toReversed();
+    expect(selectDevicesSorted.map((device) => device.deviceName)).toEqual(['name0', 'name1']);
+    expect(selectEntitiesSorted.map((entity) => entity.name)).toEqual(['name0', 'name1']);
     const responseSpy = vi.fn();
     matterbridgeServer.on('broadcast_message', responseSpy);
     try {
@@ -535,8 +542,8 @@ describe('Matterbridge platform', () => {
         matterbridgeServer.fetch({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
         matterbridgeServer.fetch({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
       ]);
-      expect(devices.result.devices).toEqual(selectDevices);
-      expect(entities.result.entities).toEqual(selectEntities);
+      expect(devices.result.devices).toEqual(selectDevicesSorted);
+      expect(entities.result.entities).toEqual(selectEntitiesSorted);
       expect(responseSpy).toHaveBeenCalledTimes(2);
     } finally {
       matterbridgeServer.off('broadcast_message', responseSpy);

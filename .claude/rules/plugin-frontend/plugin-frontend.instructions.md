@@ -1,5 +1,5 @@
 ---
-description: 'How a plugin serves its own frontend SPA and custom REST API via onFetch v.1.0.0'
+description: 'How a plugin serves its own frontend SPA and custom REST API via onFetch v.1.0.2'
 paths:
   - 'apps/frontend/**'
   - 'packages/core/src/frontend.ts'

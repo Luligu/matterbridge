@@ -17,9 +17,10 @@ export default defineConfig(({ mode }) => {
       emptyOutDir: true,
       rolldownOptions: {
         output: {
-          entryFileNames: 'assets/[name].js',
-          chunkFileNames: 'assets/[name].js',
-          assetFileNames: 'assets/[name].[ext]',
+          // Content hashes in the file names, so a browser never mixes chunks from different builds after an update
+          entryFileNames: 'assets/[name]-[hash].js',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]',
           manualChunks(id) {
             if (id.includes('@mdi')) {
               return 'vendor_mdi';

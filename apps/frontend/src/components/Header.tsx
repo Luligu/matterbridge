@@ -392,7 +392,7 @@ function Header() {
           <span className="status-information" style={{ cursor: 'default', backgroundColor: 'green' }}>
             {mobile ? 'Mobile ' : 'Desktop '}
             {`${viewportWidth}x${viewportHeight}`}
-            {` enabled ${localStorage.getItem(MbfLsk.enableMobile) !== 'false'}`}
+            {` enabled ${localStorage.getItem(MbfLsk['enable-mobile']) !== 'false'}`}
           </span>
         )}
       </div>

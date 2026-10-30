@@ -1,12 +1,26 @@
 {
   "files": [],
   "references": [
-    { "path": "./packages/types/tsconfig.build.production.json" },
-    { "path": "./packages/test-utils/tsconfig.build.production.json" },
-    { "path": "./packages/utils/tsconfig.build.production.json" },
-    { "path": "./packages/thread/tsconfig.build.production.json" },
-    { "path": "./packages/dgram/tsconfig.build.production.json" },
-    { "path": "./packages/core/tsconfig.build.production.json" },
-    { "path": "./tsconfig.root.build.production.json" }
+    {
+      "path": "./packages/types/tsconfig.build.production.json"
+    },
+    {
+      "path": "./packages/test-utils/tsconfig.build.production.json"
+    },
+    {
+      "path": "./packages/utils/tsconfig.build.production.json"
+    },
+    {
+      "path": "./packages/thread/tsconfig.build.production.json"
+    },
+    {
+      "path": "./packages/dgram/tsconfig.build.production.json"
+    },
+    {
+      "path": "./packages/core/tsconfig.build.production.json"
+    },
+    {
+      "path": "./tsconfig.root.build.production.json"
+    }
   ]
 }

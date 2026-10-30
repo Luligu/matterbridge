@@ -3,7 +3,7 @@
  * @description This file contains Bun runtime helpers.
  * @author Luca Liguori
  * @created 2026-06-24
- * @version 1.0.3
+ * @version 1.0.4
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -69,8 +69,7 @@ export function bunAvailable(): boolean {
  * @returns {string | undefined} The Bun version string, or `undefined` if not running on Bun.
  */
 export function getBunVersion(): string | undefined {
-  if (HAS_BUN_GLOBAL) return Bun.version;
-  return process?.versions?.bun;
+  return HAS_BUN_GLOBAL ? Bun.version : process?.versions?.bun;
 }
 
 /**
@@ -162,8 +161,7 @@ export function getGlobalBunModules(): string {
  * @returns {number} The high-resolution monotonic time in nanoseconds.
  */
 export function nanoseconds(): number {
-  if (HAS_BUN_GLOBAL) return Bun.nanoseconds();
-  return Number(process.hrtime.bigint());
+  return HAS_BUN_GLOBAL ? Bun.nanoseconds() : Number(process.hrtime.bigint());
 }
 
 /**
@@ -175,8 +173,7 @@ export function nanoseconds(): number {
  * await sleep(1000); // Sleep for 1 second
  */
 export async function sleep(ms: number): Promise<void> {
-  if (HAS_BUN_GLOBAL) return Bun.sleep(ms);
-  return delay(ms);
+  return HAS_BUN_GLOBAL ? Bun.sleep(ms) : delay(ms);
 }
 
 /**

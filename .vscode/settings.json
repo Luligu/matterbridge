@@ -1,4 +1,4 @@
-// VS Code settings native v.1.0.16
+// VS Code settings native v.1.0.17
 {
   "npm.packageManager": "npm",
   // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
@@ -41,6 +41,7 @@
     "**/coverage": true
   },
   "git.autofetch": true,
+  "git.alwaysSignOff": true, // Git adds Signed-off-by using the current committer identity at commit time.
   "git.autoRepositoryDetection": false,
   // VS Code's Copilot Chat extension settings
   "chat.useCustomizationsInParentRepositories": true, // Default false.

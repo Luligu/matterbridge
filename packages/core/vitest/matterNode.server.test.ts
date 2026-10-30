@@ -109,7 +109,7 @@ describe('MatterNode server', () => {
     await matter.create();
     expect(nextSettings).toEqual({ port: MATTER_PORT + 1, passcode: PASSCODE + 1, discriminator: DISCRIMINATOR + 1 });
     expect(matter.serverNode?.state.network.port).toBe(MATTER_PORT);
-    expect(matter.matterStorageService).toBeDefined();
+    expect(matter.matterStorageManager).toBeDefined();
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(false);
     expect(matter.aggregatorNode).toBeDefined();
@@ -154,7 +154,7 @@ describe('MatterNode server', () => {
 
   test('Start MatterNode in bridge mode', async () => {
     await matter.start();
-    expect(matter.matterStorageService).toBeDefined();
+    expect(matter.matterStorageManager).toBeDefined();
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(true);
     expect(matter.aggregatorNode).toBeDefined();
@@ -195,7 +195,7 @@ describe('MatterNode server', () => {
     // Close and drop the MatterNode outside removeBridgedEndpoint()
     const dependantNode = matter.dependantMatterNodes.get(outlet.id);
     await dependantNode?.stop();
-    await dependantNode?.destroy(false);
+    await dependantNode?.destroy();
     matter.dependantMatterNodes.delete(outlet.id);
     expect(await matter.removeBridgedEndpoint('matterbridge-mock1', outlet)).toBe(outlet);
     expect(deviceManager.length).toBe(devices);
@@ -206,6 +206,6 @@ describe('MatterNode server', () => {
     await matter.stop();
     expect(matter.serverNode).toBeUndefined();
     expect(matter.aggregatorNode).toBeUndefined();
-    expect(matter.matterStorageService).toBeUndefined();
+    expect(matter.matterStorageManager).toBeUndefined();
   });
 });

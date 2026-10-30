@@ -25,6 +25,7 @@ await setupTest(NAME, false, []);
 const matterbridge: SharedMatterbridge = {
   ...getSharedMatterbridge(),
   bridgeMode: 'bridge',
+  logLevel: LogLevel.INFO,
   fileLogger: false,
   matterFileLogger: false,
   port: MATTER_PORT,
@@ -66,11 +67,6 @@ describe('MatterNode quiet', () => {
     expect(matter.pluginManager.log.logLevel).toBe(LogLevel.INFO);
     expect(Environment.default.vars.get('log.format')).toBe(MatterLogFormat.PLAIN);
     expect(matter.mdnsInterface).toBeUndefined();
-
-    // Let the MdnsService ready callback run
-    await matter.matterMdnsService?.construction.ready;
-    await new Promise<void>((resolve) => setImmediate(resolve));
-    expect(loggerDebugSpy).not.toHaveBeenCalledWith('Matter MdnsService is ready');
   });
 
   test('should handle broadcast messages without debug logs when verbose is disabled', async () => {
@@ -99,6 +95,48 @@ describe('MatterNode quiet', () => {
       fetchSpy.mockRestore();
       getSpy.mockRestore();
       if (savedTimeout !== undefined) process.env.MATTERBRIDGE_REMOVE_ALL_ENDPOINT_TIMEOUT_MS = savedTimeout;
+    }
+  });
+
+  test('should cover the fallback branches of storage, plugin and endpoint management', async () => {
+    // stopMatterStorage() without an open storage manager
+    expect(matter.matterStorageManager).toBeUndefined();
+    await matter.stopMatterStorage();
+    expect(matter.matterStorageManager).toBeUndefined();
+
+    // createDynamicPlugin() with an already locked plugin does not create the server node
+    const plugin = { name: 'matterbridge-quiet', type: 'AnyPlatform', registeredDevices: 0, locked: true } as unknown as Plugin;
+    expect(await matter.createDynamicPlugin(plugin)).toBeUndefined();
+
+    const device = { deviceName: 'Device', name: 'Device', id: '', construction: { ready: Promise.resolve() } } as unknown as MatterbridgeEndpoint;
+    const getSpy = vi.spyOn(matter.pluginManager, 'get').mockReturnValue(plugin);
+    // @ts-expect-error access private property
+    const fetchSpy = vi.spyOn(matter.server, 'fetch').mockResolvedValue({ result: { devices: [{ id: '', deviceName: 'Device' }] } });
+    try {
+      // Unknown bridge mode: the endpoint is only registered
+      (matterbridge as any).bridgeMode = '';
+      expect(await matter.addBridgedEndpoint('matterbridge-quiet', device)).toBe(device);
+      expect(plugin.registeredDevices).toBe(1);
+      expect(await matter.removeBridgedEndpoint('matterbridge-quiet', device)).toBe(device);
+      expect(plugin.registeredDevices).toBe(0);
+
+      // Childbridge mode with a plugin type that is neither accessory nor dynamic
+      (matterbridge as any).bridgeMode = 'childbridge';
+      expect(await matter.removeBridgedEndpoint('matterbridge-quiet', device)).toBe(device);
+
+      // removeAllBridgedEndpoints() with a device without id is looked up as ''
+      const notFound = { parts: { get: vi.fn() } };
+      matter.aggregatorNode = notFound as any;
+      matter.serverNode = notFound as any;
+      const error = await matter.removeAllBridgedEndpoints('matterbridge-quiet').catch((error: unknown) => error);
+      expect((error as Error).message).toContain('not found removing all endpoints');
+      expect(notFound.parts.get).toHaveBeenCalledWith('');
+    } finally {
+      matter.aggregatorNode = undefined;
+      matter.serverNode = undefined;
+      (matterbridge as any).bridgeMode = 'bridge';
+      getSpy.mockRestore();
+      fetchSpy.mockRestore();
     }
   });
 
@@ -142,6 +180,12 @@ describe('MatterNode quiet', () => {
     const requestSpy = vi.spyOn(matter.server, 'request');
     for (const callback of callbacks) callback(true);
     expect(requestSpy).toHaveBeenCalledTimes(3);
+
+    // Object values (e.g. Thermostat.thermostatRunningState) are sent unchanged by the reachable, device and child callbacks
+    requestSpy.mockClear();
+    const runningState = { heat: true, cool: false, fan: false };
+    for (const callback of callbacks) (callback as unknown as (value: object) => void)(runningState);
+    expect(requestSpy.mock.calls.filter(([msg]) => (msg as { params?: { value?: unknown } }).params?.value === runningState)).toHaveLength(3);
 
     // The device lost its plugin: the callbacks are ignored
     requestSpy.mockClear();

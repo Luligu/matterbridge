@@ -231,7 +231,7 @@ export class Tracker extends EventEmitter<TrackerEvents> {
         const totalDelta = busyDelta + idleDelta;
         /* v8 ignore next */
         if (totalDelta <= 0) return 0;
-        /* v8 ignore next cause is practically impossible to hit this branch */
+        /* v8 ignore next - the normal path, but tests on real cpu times reach it only when a kernel tick lands within the sample */
         return busyDelta / totalDelta;
       });
       this.prevCpus = currentCpus;

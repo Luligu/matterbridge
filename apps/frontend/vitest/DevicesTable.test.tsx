@@ -215,16 +215,16 @@ describe('DevicesTable', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Switch to tree view' }));
     expect(await screen.findByRole('tree')).toBeInTheDocument();
-    expect(localStorage.getItem(MbfLsk.devicesClusterViewMode)).toBe('tree');
+    expect(localStorage.getItem(MbfLsk['devices-cluster-view-mode'])).toBe('tree');
     expect(screen.getByText('Total child endpoints: 0')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Switch to grid view' }));
     await waitFor(() => expect(screen.queryByRole('tree')).toBeNull());
-    expect(localStorage.getItem(MbfLsk.devicesClusterViewMode)).toBe('grid');
+    expect(localStorage.getItem(MbfLsk['devices-cluster-view-mode'])).toBe('grid');
   });
 
   it('should open the clusters in the tree view when the saved choice is the tree', async () => {
-    localStorage.setItem(MbfLsk.devicesClusterViewMode, 'tree');
+    localStorage.setItem(MbfLsk['devices-cluster-view-mode'], 'tree');
     const socket = createSocket();
     const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
 

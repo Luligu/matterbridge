@@ -1,37 +1,28 @@
-// TODO: verify each rule
-// oxlint-disable max-lines-per-function
-// oxlint-disable typescript/promise-function-async
-// oxlint-disable unicorn/no-array-sort
-// oxlint-disable typescript/no-unsafe-type-assertion
-// oxlint-disable typescript/no-unnecessary-type-conversion
-// oxlint-disable typescript/non-nullable-type-assertion-style
-// oxlint-disable typescript/consistent-return
-// oxlint-disable unicorn/no-array-reduce
-
 /*
   NPM fetch map (SearchPluginsDialog)
 
   1) Search packages (list + latest version + basic metadata)
     - URL: https://registry.npmjs.org/-/v1/search?text=matterbridge-&size=...
     - Purpose: populate the table with package name, latest version, description, publisher, npm/homepage links.
+    - Cache: localStorage key MbfLsk['search-plugins-search'] (last successful search, shown at once whatever its date and kept when the search fails)
 
   2) Package "latest" metadata (homepage/help/changelog + repository)
     - URL: https://registry.npmjs.org/<package>/latest
     - Purpose: enrich rows with homepage/help/changelog links.
      If help/changelog are missing, derive from repository URL (e.g. .../blob/main/README.md).
-    - Cache: localStorage key MbfLsk.searchPluginsMeta (per day)
+    - Cache: localStorage key MbfLsk['search-plugins-meta'] (refreshed daily, shown whatever its date)
 
   3) Total downloads (all-time-ish, via downloads range)
     - URL: https://api.npmjs.org/downloads/range/2020-01-01:<today>/<package>
     - Purpose: compute and show "Total" downloads per package.
-    - Cache: localStorage key MbfLsk.searchPluginsTotal (per day)
-    - Notes: throttled + basic retry/backoff on 429.
+    - Cache: localStorage key MbfLsk['search-plugins-total'] (refreshed daily, shown whatever its date)
+    - Notes: throttled + retry/backoff on 429 and on network errors (npm sends 429 without CORS headers); stops after 3 consecutive failures.
 
   4) Versions list (all published versions)
     - URL: https://registry.npmjs.org/<package>
     - Purpose: get the full version list (the search API only returns the latest version).
      Used to populate the versions selector after selecting a plugin.
-    - Cache: localStorage key MbfLsk.searchPluginsVersions (per day)
+    - Cache: localStorage key MbfLsk['search-plugins-versions'] (refreshed daily, used whatever its date when the fetch fails)
 */
 
 // @mui/icons-material
@@ -54,6 +45,12 @@ import { pluginIgnoreList } from '../pluginIgnoreList';
 import { MbfLsk } from '../utils/localStorage';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { UiContext } from './UiContext';
+
+// oxlint-disable max-lines-per-function
+// oxlint-disable typescript/promise-function-async
+// oxlint-disable typescript/no-unsafe-type-assertion
+
+const localDebug = false; // Set to true to enable debug logs only in SearchPluginsDialog component
 
 type TotalsCacheEntry = { total: number; asOf: string };
 type TotalsCache = Record<string, TotalsCacheEntry>;
@@ -89,7 +86,7 @@ const getRepositoryUrl = (repository: unknown): string | null => {
 
 const readTotalsCache = (): TotalsCache => {
   try {
-    const raw = window.localStorage.getItem(MbfLsk.searchPluginsTotal);
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-total']);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
@@ -111,7 +108,7 @@ const readTotalsCache = (): TotalsCache => {
 
 const writeTotalsCache = (cache: TotalsCache) => {
   try {
-    window.localStorage.setItem(MbfLsk.searchPluginsTotal, JSON.stringify(cache));
+    window.localStorage.setItem(MbfLsk['search-plugins-total'], JSON.stringify(cache));
   } catch {
     // Ignore quota/blocked storage errors.
   }
@@ -119,7 +116,7 @@ const writeTotalsCache = (cache: TotalsCache) => {
 
 const readMetaCache = (): MetaCache => {
   try {
-    const raw = window.localStorage.getItem(MbfLsk.searchPluginsMeta);
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-meta']);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
@@ -143,7 +140,7 @@ const readMetaCache = (): MetaCache => {
 
 const writeMetaCache = (cache: MetaCache) => {
   try {
-    window.localStorage.setItem(MbfLsk.searchPluginsMeta, JSON.stringify(cache));
+    window.localStorage.setItem(MbfLsk['search-plugins-meta'], JSON.stringify(cache));
   } catch {
     // Ignore quota/blocked storage errors.
   }
@@ -151,7 +148,7 @@ const writeMetaCache = (cache: MetaCache) => {
 
 const readVersionsCache = (): VersionsCache => {
   try {
-    const raw = window.localStorage.getItem(MbfLsk.searchPluginsVersions);
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-versions']);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== 'object') return {};
@@ -174,7 +171,56 @@ const readVersionsCache = (): VersionsCache => {
 
 const writeVersionsCache = (cache: VersionsCache) => {
   try {
-    window.localStorage.setItem(MbfLsk.searchPluginsVersions, JSON.stringify(cache));
+    window.localStorage.setItem(MbfLsk['search-plugins-versions'], JSON.stringify(cache));
+  } catch {
+    // Ignore quota/blocked storage errors.
+  }
+};
+
+type SearchCacheRow = {
+  name: string;
+  version: string;
+  downloads: number | null;
+  description: string;
+  author: string;
+  official: boolean;
+  homepage: string | null;
+};
+type SearchCache = { rows: SearchCacheRow[]; asOf: string };
+
+const readSearchCache = (): SearchCache | null => {
+  try {
+    const raw = window.localStorage.getItem(MbfLsk['search-plugins-search']);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const p = parsed as Record<string, unknown>;
+    if (typeof p.asOf !== 'string' || !Array.isArray(p.rows)) return null;
+
+    const rows: SearchCacheRow[] = [];
+    for (const entry of p.rows as unknown[]) {
+      if (!entry || typeof entry !== 'object') continue;
+      const e = entry as Record<string, unknown>;
+      if (typeof e.name !== 'string' || !e.name) continue;
+      rows.push({
+        name: e.name,
+        version: typeof e.version === 'string' ? e.version : '',
+        downloads: typeof e.downloads === 'number' ? e.downloads : null,
+        description: typeof e.description === 'string' ? e.description : '',
+        author: typeof e.author === 'string' ? e.author : '',
+        official: e.official === true,
+        homepage: typeof e.homepage === 'string' ? e.homepage : null,
+      });
+    }
+    return rows.length > 0 ? { rows, asOf: p.asOf } : null;
+  } catch {
+    return null;
+  }
+};
+
+const writeSearchCache = (cache: SearchCache) => {
+  try {
+    window.localStorage.setItem(MbfLsk['search-plugins-search'], JSON.stringify(cache));
   } catch {
     // Ignore quota/blocked storage errors.
   }
@@ -206,6 +252,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
   const [totalsLoading, setTotalsLoading] = useState(false);
   const [totalsProgress, setTotalsProgress] = useState<{ done: number; total: number }>({ done: 0, total: 0 });
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const versionsCacheRef = useRef<VersionsCache>({});
 
   const blurActiveElement = () => {
@@ -263,28 +310,39 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       // New format always starts with the literal tag string "latest".
       cached.versions[0] === 'latest';
     if (cacheLooksValid) {
-      if (debug) console.log(`[SearchPluginsDialog] versions cache hit for ${packageName} (${cached.versions.length.toString()})`);
+      if (debug || localDebug) console.log(`[SearchPluginsDialog] versions cache hit for ${packageName} (${cached.versions.length.toString()})`);
       return cached.versions;
     }
     if (cached?.asOf === asOf && cached.versions.length > 0 && cached.versions[0] !== 'latest') {
-      if (debug) console.log(`[SearchPluginsDialog] versions cache ignored (old format) for ${packageName} (asOf=${asOf})`);
+      if (debug || localDebug) console.log(`[SearchPluginsDialog] versions cache ignored (old format) for ${packageName} (asOf=${asOf})`);
     }
 
     const url = `https://registry.npmjs.org/${encodeURIComponent(packageName)}`;
-    if (debug) console.log(`[SearchPluginsDialog] fetching versions for ${packageName} from: ${url}`);
-    const response = await fetch(url, { signal: controllerRef.current?.signal });
+    if (debug || localDebug) console.log(`[SearchPluginsDialog] fetching versions for ${packageName} from: ${url}`);
+    // On failure fall back to the cached list, even from an earlier day.
+    const fallback = cached && cached.versions.length > 0 && cached.versions[0] === 'latest' ? cached.versions : [];
+    let response: Response;
+    try {
+      response = await fetch(url, { signal: controllerRef.current?.signal });
+    } catch (error) {
+      if (error instanceof DOMException && error.name === 'AbortError') throw error;
+      if (debug || localDebug) console.log(`[SearchPluginsDialog] versions fetch error for ${packageName}, using cache (${fallback.length.toString()})`);
+      return fallback;
+    }
     if (!response.ok) {
-      if (debug) console.log(`[SearchPluginsDialog] versions fetch failed for ${packageName}: ${response.status.toString()} ${response.statusText}`);
-      return [];
+      if (debug || localDebug)
+        console.log(
+          `[SearchPluginsDialog] versions fetch failed for ${packageName}: ${String(response.status)} ${response.statusText}, using cache (${fallback.length.toString()})`,
+        );
+      return fallback;
     }
     const json = (await response.json()) as NpmPackageResponse;
-    const versionKeys = Object.keys(json.versions ?? {});
-
     const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-    versionKeys.sort((a, b) => collator.compare(a, b)).reverse();
+    // Newest first.
+    const versionKeys = Object.keys(json.versions ?? {}).toSorted((a, b) => collator.compare(b, a));
 
     const distTags = json['dist-tags'] ?? {};
-    const hasDevTag = typeof distTags?.dev === 'string' && String(distTags.dev).trim().length > 0;
+    const hasDevTag = typeof distTags?.dev === 'string' && distTags.dev.trim().length > 0;
 
     // Versions list format requested by UI:
     // - Always start with the string "latest"
@@ -295,7 +353,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
     if (hasDevTag) list.push('dev');
     list.push(...latestVersions);
 
-    if (debug)
+    if (debug || localDebug)
       console.log(
         `[SearchPluginsDialog] fetched versions for ${packageName} (tags: latest${hasDevTag ? ', dev' : ''}; latestVersions=${latestVersions.length.toString()}; allVersions=${versionKeys.length.toString()}):`,
         list,
@@ -442,6 +500,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       setTotalsLoading(false);
       setTotalsProgress({ done: 0, total: 0 });
       setError(null);
+      setNotice(null);
       setPluginName('');
       return;
     }
@@ -458,6 +517,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       const url = `https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(prefix)}&size=${size}`;
 
       const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+      const startedAt = Date.now();
+      const elapsed = () => `+${((Date.now() - startedAt) / 1000).toFixed(1)}s`;
 
       const sumDownloadsRange = (payload: NpmDownloadsRangeResponse): number | null => {
         if (!Array.isArray(payload.downloads)) return null;
@@ -472,14 +533,41 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         return hasAny ? total : null;
       };
 
+      // Hydrate rows with the cached totals and metadata (whatever their date); the queues refresh them in background.
+      const hydrateRows = (baseRows: PluginSearchRow[]): PluginSearchRow[] => {
+        const totalsCache = readTotalsCache();
+        const metaCache = readMetaCache();
+        return baseRows.map((r) => {
+          const cachedTotal = totalsCache[r.name];
+          const cachedMeta = metaCache[r.name];
+          if ((debug || localDebug) && cachedTotal)
+            console.log(`[SearchPluginsDialog] total downloads loaded from cache for ${r.name} (asOf=${cachedTotal.asOf}):`, cachedTotal.total);
+          if ((debug || localDebug) && cachedMeta) console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cachedMeta.asOf}):`, cachedMeta);
+          return {
+            ...r,
+            total: cachedTotal ? cachedTotal.total : r.total,
+            homepage: cachedMeta ? (cachedMeta.homepage ?? r.homepage) : r.homepage,
+            help: cachedMeta ? cachedMeta.help : r.help,
+            changelog: cachedMeta ? cachedMeta.changelog : r.changelog,
+          };
+        });
+      };
+
+      // Show the last successful search at once, however old, while the npm search runs.
+      const searchCache = readSearchCache();
+      if (searchCache) {
+        if (debug || localDebug)
+          console.log(`[SearchPluginsDialog] ${elapsed()} showing cached plugin list (${searchCache.rows.length.toString()} rows, asOf=${searchCache.asOf})`);
+        setRows(hydrateRows(searchCache.rows.map((r) => ({ ...r, total: null, help: null, changelog: null }))));
+      }
+
       try {
-        setLoading(true);
+        setLoading(!searchCache);
         setError(null);
+        setNotice(null);
 
         const isLikelyBotUser = (username: string): boolean => {
-          const u = String(username ?? '')
-            .trim()
-            .toLowerCase();
+          const u = username.trim().toLowerCase();
           if (!u) return false;
 
           // Common npm publishers when packages are released from CI.
@@ -507,11 +595,17 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           return maintainerUsernames[0] ?? publisherUsername ?? '';
         };
 
+        if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} search request: ${url}`);
         const response = await fetch(url, { signal: controller.signal });
+        if (debug || localDebug)
+          console.log(
+            `[SearchPluginsDialog] ${elapsed()} search response: ${String(response.status)} ${response.statusText} (retry-after=${response.headers?.get('retry-after') ?? 'none'})`,
+          );
         if (!response.ok) {
           throw new Error(`npm registry request failed: ${response.status} ${response.statusText}`);
         }
         const json = (await response.json()) as NpmSearchResponse;
+        if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} search returned ${(json.objects ?? []).length.toString()} objects`);
 
         const officialUsername = 'luligu';
         const isOfficial = (pkg: NpmSearchPackage) =>
@@ -521,7 +615,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           .filter((obj): obj is NpmSearchObject => !!obj?.package && typeof obj.package.name === 'string')
           .filter((obj) => obj.package?.name?.startsWith(prefix))
           .filter((obj) => !pluginIgnoreList.includes(obj.package?.name ?? ''))
-          .sort((a, b) => {
+          .toSorted((a, b) => {
             const aOfficial = isOfficial(a.package ?? {});
             const bOfficial = isOfficial(b.package ?? {});
             if (aOfficial !== bOfficial) return aOfficial ? -1 : 1;
@@ -529,7 +623,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           });
 
         const nextRows: PluginSearchRow[] = objects.map((obj) => {
-          const pkg = obj.package as NpmSearchPackage;
+          const pkg: NpmSearchPackage = obj.package ?? {};
           const name = pkg.name ?? '';
           const author = getDisplayAuthor(pkg);
           const downloads = typeof obj.downloads?.monthly === 'number' ? obj.downloads.monthly : null;
@@ -552,37 +646,27 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           };
         });
 
-        // Hydrate totals + metadata from localStorage immediately, then refresh in background.
+        // Save the list for the next open, then hydrate totals + metadata from localStorage immediately and refresh in background.
         const end = formatYyyyMmDd(new Date());
         const totalsCache = readTotalsCache();
         const metaCache = readMetaCache();
-
-        const nextRowsWithCachedTotals: PluginSearchRow[] = nextRows.map((r) => {
-          const cached = totalsCache[r.name];
-          if (!cached) return r;
-          if (typeof cached.total !== 'number') return r;
-          if (debug) console.log(`[SearchPluginsDialog] total downloads loaded from cache for ${r.name} (asOf=${cached.asOf}):`, cached.total);
-          return { ...r, total: cached.total };
+        writeSearchCache({
+          rows: nextRows.map(({ name, version, downloads, description, author, official, homepage }) => ({ name, version, downloads, description, author, official, homepage })),
+          asOf: end,
         });
+        setRows(hydrateRows(nextRows));
 
-        const nextRowsWithCachedTotalsAndMeta: PluginSearchRow[] = nextRowsWithCachedTotals.map((r) => {
-          const cached = metaCache[r.name];
-          if (!cached) return r;
-          if (cached.asOf !== end) return r;
-          const nextHomepage = cached.homepage ?? r.homepage;
-          const nextHelp = cached.help;
-          const nextChangelog = cached.changelog;
-          if (debug && (nextHelp || nextChangelog || (nextHomepage && nextHomepage !== r.homepage))) {
-            console.log(`[SearchPluginsDialog] metadata loaded from cache for ${r.name} (asOf=${cached.asOf}):`, {
-              homepage: nextHomepage,
-              help: nextHelp,
-              changelog: nextChangelog,
-            });
-          }
-          return { ...r, homepage: nextHomepage, help: nextHelp, changelog: nextChangelog };
-        });
-
-        setRows(nextRowsWithCachedTotalsAndMeta);
+        if (debug || localDebug) {
+          const countCache = (cache: Record<string, { asOf: string }>) => {
+            const fresh = nextRows.filter((r) => cache[r.name]?.asOf === end).length;
+            const stale = nextRows.filter((r) => cache[r.name] && cache[r.name].asOf !== end).length;
+            return `fresh=${fresh.toString()} stale=${stale.toString()} missing=${(nextRows.length - fresh - stale).toString()}`;
+          };
+          console.log(`[SearchPluginsDialog] ${elapsed()} rows=${nextRows.length.toString()} today=${end}`);
+          console.log(`[SearchPluginsDialog] ${elapsed()} totals cache: ${countCache(totalsCache)}`);
+          console.log(`[SearchPluginsDialog] ${elapsed()} meta cache: ${countCache(metaCache)}`);
+          console.log(`[SearchPluginsDialog] ${elapsed()} versions cache: ${countCache(versionsCacheRef.current)}`);
+        }
 
         // Prefetch versions for the visible rows.
         // The npm search API only returns the latest version; we need the package document for the version list.
@@ -594,11 +678,13 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             return !cached || cached.asOf !== end || cached.versions.length === 0;
           });
 
-        if (debug) console.log(`[SearchPluginsDialog] versions prefetch queue (${packagesNeedingVersionsFetchList.length.toString()}):`, packagesNeedingVersionsFetchList);
+        if (debug || localDebug)
+          console.log(`[SearchPluginsDialog] versions prefetch queue (${packagesNeedingVersionsFetchList.length.toString()}):`, packagesNeedingVersionsFetchList);
 
         const versionsConcurrency = 1;
         const versionsDelayBetweenRequestsMs = 200;
         let versionsIndex = 0;
+        const versionsStats = { withVersions: 0, empty: 0, errors: 0 };
 
         const versionsWorker = async () => {
           while (versionsIndex < packagesNeedingVersionsFetchList.length) {
@@ -611,11 +697,15 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
             try {
               const versions = await getPackageVersions(packageName, end);
-              if (debug && versions.length > 0) {
+              if (versions.length > 0) versionsStats.withVersions += 1;
+              else versionsStats.empty += 1;
+              if ((debug || localDebug) && versions.length > 0) {
                 console.log(`[SearchPluginsDialog] versions fetched for ${packageName} (${versions.length.toString()}):`, versions.slice(0, 5));
               }
             } catch (error) {
               if (error instanceof DOMException && error.name === 'AbortError') return;
+              versionsStats.errors += 1;
+              if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} versions error for ${packageName}:`, error);
               // Ignore and keep going.
             } finally {
               if (!controller.signal.aborted) await sleep(versionsDelayBetweenRequestsMs);
@@ -623,7 +713,12 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           }
         };
 
-        void Promise.all(Array.from({ length: Math.min(versionsConcurrency, nextRows.length) }, () => versionsWorker()));
+        void Promise.all(Array.from({ length: Math.min(versionsConcurrency, nextRows.length) }, () => versionsWorker())).finally(() => {
+          if (debug || localDebug)
+            console.log(
+              `[SearchPluginsDialog] ${elapsed()} versions queue done (aborted=${String(controller.signal.aborted)}): withVersions=${versionsStats.withVersions.toString()} empty=${versionsStats.empty.toString()} errors=${versionsStats.errors.toString()}`,
+            );
+        });
 
         // Fetch homepage/help/changelog from package.json (registry /latest).
         // If help/changelog are missing, derive them from repository.url + /blob/main/{README,CHANGELOG}.md.
@@ -634,11 +729,14 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             const cacheFresh = !!cached && cached.asOf === end;
             const cacheComplete = !!cached && !!cached.help && !!cached.changelog;
             const needsFetch = !cacheFresh || !cacheComplete;
-            if (!needsFetch && debug) console.log(`[SearchPluginsDialog] metadata fetch skipped (cache fresh+complete) for ${name} (asOf=${cached.asOf}).`);
-            if (cacheFresh && !cacheComplete && debug) console.log(`[SearchPluginsDialog] metadata fetch forced (cache incomplete) for ${name} (asOf=${cached.asOf}).`);
+            if (!needsFetch && (debug || localDebug)) console.log(`[SearchPluginsDialog] metadata fetch skipped (cache fresh+complete) for ${name} (asOf=${cached.asOf}).`);
+            if (cacheFresh && !cacheComplete && (debug || localDebug))
+              console.log(`[SearchPluginsDialog] metadata fetch forced (cache incomplete) for ${name} (asOf=${cached.asOf}).`);
             return needsFetch;
           });
         const packagesNeedingMetaFetchSet = new Set(packagesNeedingMetaFetchList);
+        const metaStats = { ok: 0, failed: 0, statuses: {} as Record<string, number> };
+        if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} meta fetch queue (${packagesNeedingMetaFetchList.length.toString()})`);
 
         const fetchPackageMeta = async (
           packageName: string,
@@ -647,7 +745,15 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           const latestUrl = `https://registry.npmjs.org/${encodeURIComponent(packageName)}/latest`;
           try {
             const latestResponse = await fetch(latestUrl, { signal: controller.signal });
-            if (!latestResponse.ok) return null;
+            const statusKey = String(latestResponse.status);
+            metaStats.statuses[statusKey] = (metaStats.statuses[statusKey] ?? 0) + 1;
+            if (!latestResponse.ok) {
+              if (debug || localDebug)
+                console.log(
+                  `[SearchPluginsDialog] ${elapsed()} meta fetch failed for ${packageName}: ${statusKey} (retry-after=${latestResponse.headers?.get('retry-after') ?? 'none'}), keeping cache`,
+                );
+              return null;
+            }
             const latestJson = (await latestResponse.json()) as NpmPackageLatestResponse;
 
             const homepageFromPackage = typeof latestJson.homepage === 'string' && latestJson.homepage.includes('http') ? normalizeGitUrl(latestJson.homepage) : null;
@@ -669,6 +775,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             };
           } catch (error) {
             if (error instanceof DOMException && error.name === 'AbortError') return null;
+            if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} meta fetch error for ${packageName}, keeping cache:`, error);
             return null;
           }
         };
@@ -693,6 +800,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             const fallbackHomepage = nextRows.find((r) => r.name === packageName)?.homepage ?? null;
             const meta = await fetchPackageMeta(packageName, fallbackHomepage);
             if (controller.signal.aborted) return;
+            if (meta) metaStats.ok += 1;
+            else metaStats.failed += 1;
             if (meta) {
               setRows((prev) =>
                 prev.map((r) =>
@@ -720,7 +829,12 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           }
         };
 
-        void Promise.all(Array.from({ length: Math.min(metaConcurrency, nextRows.length) }, () => metaWorker()));
+        void Promise.all(Array.from({ length: Math.min(metaConcurrency, nextRows.length) }, () => metaWorker())).finally(() => {
+          if (debug || localDebug)
+            console.log(
+              `[SearchPluginsDialog] ${elapsed()} meta queue done (aborted=${String(controller.signal.aborted)}): ok=${metaStats.ok.toString()} failed=${metaStats.failed.toString()} statuses=${JSON.stringify(metaStats.statuses)}`,
+            );
+        });
 
         // Fetch total downloads for each package using the downloads/range API.
         // This is intentionally throttled to avoid hammering the API.
@@ -731,13 +845,18 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             const cached = totalsCache[name];
             const needsFetch = !cached || cached.asOf !== end;
             if (!needsFetch) {
-              if (debug) console.log(`[SearchPluginsDialog] total downloads fetch skipped (cache fresh) for ${name} (asOf=${cached.asOf}).`);
+              if (debug || localDebug) console.log(`[SearchPluginsDialog] total downloads fetch skipped (cache fresh) for ${name} (asOf=${cached.asOf}).`);
             }
             return needsFetch;
           });
         const packagesNeedingFetchSet = new Set(packagesNeedingFetchList);
 
         const totalToFetch = packagesNeedingFetchList.length;
+        const totalsStats = { ok: 0, failed: 0, retries429: 0, networkRetries: 0, statuses: {} as Record<string, number> };
+        const networkErrorBackoffMs = 5000;
+        const slowDelayBetweenRequestsMs = 2000;
+        const maxConsecutiveFailures = 3;
+        if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} totals fetch queue (${totalToFetch.toString()})`);
         setTotalsProgress({ done: 0, total: totalToFetch });
         setTotalsLoading(totalToFetch > 0);
 
@@ -746,7 +865,29 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
           // Be gentle with the API: basic retry/backoff on 429.
           for (let attempt = 0; attempt < 3; attempt += 1) {
-            const rangeResponse = await fetch(rangeUrl, { signal: controller.signal });
+            let rangeResponse: Response;
+            try {
+              rangeResponse = await fetch(rangeUrl, { signal: controller.signal });
+            } catch (error) {
+              if (error instanceof DOMException && error.name === 'AbortError') throw error;
+              // npm answers 429 without CORS headers, so the browser reports it as a network error (TypeError): back off as for a 429.
+              if (attempt === 2) throw error;
+              const backoffMs = networkErrorBackoffMs * 2 ** attempt;
+              totalsStats.networkRetries += 1;
+              if (debug || localDebug)
+                console.log(
+                  `[SearchPluginsDialog] ${elapsed()} totals network error for ${packageName} attempt ${(attempt + 1).toString()}/3, waiting ${backoffMs.toString()}ms:`,
+                  error,
+                );
+              await sleep(backoffMs);
+              continue;
+            }
+            const statusKey = String(rangeResponse.status);
+            totalsStats.statuses[statusKey] = (totalsStats.statuses[statusKey] ?? 0) + 1;
+            if (!rangeResponse.ok && (debug || localDebug))
+              console.log(
+                `[SearchPluginsDialog] ${elapsed()} totals fetch for ${packageName} attempt ${(attempt + 1).toString()}/3: ${statusKey} (retry-after=${rangeResponse.headers?.get('retry-after') ?? 'none'})`,
+              );
             if (rangeResponse.ok) {
               const rangeJson = (await rangeResponse.json()) as NpmDownloadsRangeResponse;
               return sumDownloadsRange(rangeJson);
@@ -759,6 +900,8 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
               const retryAfterHeader = rangeResponse.headers.get('retry-after');
               const retryAfterSeconds = retryAfterHeader ? Number(retryAfterHeader) : Number.NaN;
               const backoffMs = Number.isFinite(retryAfterSeconds) ? retryAfterSeconds * 1000 : 2000 * (attempt + 1);
+              totalsStats.retries429 += 1;
+              if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} totals 429 for ${packageName}, waiting ${backoffMs.toString()}ms`);
               await sleep(backoffMs);
               continue;
             }
@@ -772,9 +915,10 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
         // Slow down requests to avoid rate limiting.
         const concurrency = 1;
-        const delayBetweenRequestsMs = 500;
+        let delayBetweenRequestsMs = 500;
         let index = 0;
         let done = 0;
+        let consecutiveFailures = 0;
 
         const worker = async () => {
           while (index < packagesNeedingFetchList.length) {
@@ -793,20 +937,42 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
             packagesNeedingFetchSet.delete(packageName);
 
             try {
-              if (debug) console.log(`[SearchPluginsDialog] fetching total downloads for ${packageName} (range ${start}:${end})...`);
+              if (debug || localDebug) console.log(`[SearchPluginsDialog] fetching total downloads for ${packageName} (range ${start}:${end})...`);
               const total = await fetchTotalDownloads(packageName);
               if (controller.signal.aborted) return;
-              if (debug) console.log(`[SearchPluginsDialog] total downloads fetched for ${packageName}:`, total);
-              setRows((prev) => prev.map((r) => (r.name === packageName ? { ...r, total } : r)));
-
+              if (debug || localDebug) console.log(`[SearchPluginsDialog] total downloads fetched for ${packageName}:`, total);
+              // Keep the cached total on failure: update the row and the cache only on success.
               if (typeof total === 'number') {
+                totalsStats.ok += 1;
+                consecutiveFailures = 0;
+              } else {
+                totalsStats.failed += 1;
+                if (debug || localDebug)
+                  console.log(`[SearchPluginsDialog] ${elapsed()} totals failed for ${packageName}, keeping cached total:`, totalsCache[packageName] ?? null);
+              }
+              if (typeof total === 'number') {
+                setRows((prev) => prev.map((r) => (r.name === packageName ? { ...r, total } : r)));
                 totalsCache[packageName] = { total, asOf: end };
                 writeTotalsCache(totalsCache);
-                if (debug) console.log(`[SearchPluginsDialog] total downloads saved to localStorage for ${packageName} (asOf=${end}):`, total);
+                if (debug || localDebug) console.log(`[SearchPluginsDialog] total downloads saved to localStorage for ${packageName} (asOf=${end}):`, total);
               }
             } catch (error) {
               if (error instanceof DOMException && error.name === 'AbortError') return;
-              // Leave total as null on error.
+              totalsStats.failed += 1;
+              consecutiveFailures += 1;
+              // Likely rate limited: slow down the rest of the queue for this session.
+              delayBetweenRequestsMs = slowDelayBetweenRequestsMs;
+              if (debug || localDebug) console.log(`[SearchPluginsDialog] ${elapsed()} totals error for ${packageName}, keeping cached total:`, error);
+              // Keep the cached total on error.
+              if (consecutiveFailures >= maxConsecutiveFailures) {
+                // Stop the queue: the cached totals stay, and the next open fetches what is still missing.
+                if (debug || localDebug)
+                  console.log(
+                    `[SearchPluginsDialog] ${elapsed()} totals queue stopped after ${consecutiveFailures.toString()} consecutive failures (${(packagesNeedingFetchList.length - index).toString()} left for the next open)`,
+                  );
+                index = packagesNeedingFetchList.length;
+                done = totalToFetch - 1;
+              }
             } finally {
               done += 1;
               setTotalsProgress({ done, total: totalToFetch });
@@ -818,19 +984,27 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
         };
 
         void Promise.all(Array.from({ length: Math.min(concurrency, nextRows.length) }, () => worker())).finally(() => {
+          if (debug || localDebug)
+            console.log(
+              `[SearchPluginsDialog] ${elapsed()} totals queue done (aborted=${String(controller.signal.aborted)}): ok=${totalsStats.ok.toString()} failed=${totalsStats.failed.toString()} retries429=${totalsStats.retries429.toString()} networkRetries=${totalsStats.networkRetries.toString()} statuses=${JSON.stringify(totalsStats.statuses)}`,
+            );
           if (!controller.signal.aborted) setTotalsLoading(false);
         });
 
-        if (debug) console.log(`[SearchPluginsDialog] npm packages starting with "${prefix}" (filtered/sorted):`, nextRows);
+        if (debug || localDebug) console.log(`[SearchPluginsDialog] npm packages starting with "${prefix}" (filtered/sorted):`, nextRows);
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
         console.error('[SearchPluginsDialog] npm registry fetch error:', error);
-        setError(error instanceof Error ? error.message : String(error));
+        const message = error instanceof Error ? error.message : String(error);
+        // Keep the cached list when the search fails; show the error only when there is nothing cached.
+        if (searchCache) setNotice(`Showing the cached plugin list from ${searchCache.asOf}: ${message}`);
+        else setError(message);
       } finally {
         setLoading(false);
       }
     })();
 
+    // oxlint-disable-next-line typescript/consistent-return -- React effects return a cleanup only after starting a fetch.
     return () => controller.abort();
   }, [open, getPackageVersions]);
 
@@ -843,7 +1017,7 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
       setSelecting(true);
       const asOf = formatYyyyMmDd(new Date());
       const versions = await getPackageVersions(selectedName, asOf);
-      if (debug) console.log(`[SearchPluginsDialog] passing versions to onVersions() for ${selectedName} (${versions.length.toString()}):`, versions);
+      if (debug || localDebug) console.log(`[SearchPluginsDialog] passing versions to onVersions() for ${selectedName} (${versions.length.toString()}):`, versions);
       onVersions(versions);
       setSelecting(false);
       onSelect(selectedName);
@@ -864,16 +1038,13 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
 
   const totalMonthlyDownloads = rows.reduce((sum, r) => sum + (typeof r.downloads === 'number' ? r.downloads : 0), 0);
 
-  const totalAllTimeDownloads = rows.reduce(
-    (acc, r) => {
-      if (typeof r.total === 'number') {
-        acc.total += r.total;
-        acc.hasAny = true;
-      }
-      return acc;
-    },
-    { total: 0, hasAny: false },
-  );
+  const totalAllTimeDownloads = { total: 0, hasAny: false };
+  for (const r of rows) {
+    if (typeof r.total === 'number') {
+      totalAllTimeDownloads.total += r.total;
+      totalAllTimeDownloads.hasAny = true;
+    }
+  }
 
   const totalsFooter = totalsLoading ? `  Totals: ${totalsProgress.done.toString()}/${totalsProgress.total.toString()} fetched` : '';
   const totalAllTimeText = totalAllTimeDownloads.hasAny ? formatNumber(totalAllTimeDownloads.total) : '...';
@@ -914,19 +1085,22 @@ export const SearchPluginsDialog = ({ open, onClose, onSelect, onVersions }: Sea
           ) : error ? (
             <div style={{ padding: '20px' }}>{error}</div>
           ) : (
-            <MbfTable<PluginSearchRow>
-              name="Search plugins"
-              rows={rows}
-              columns={columns}
-              getRowKey="name"
-              onRowClick={(row, _rowKey, event) => {
-                selectedPluginNameRef.current = row.name;
-                setPluginName(row.name);
-                if (event.detail === 2) void handleSelect();
-              }}
-              footerLeft={`Total packages: ${rows.length.toString()}  Total downloads: ${formatNumber(totalMonthlyDownloads)} / ${totalAllTimeText}${totalsFooter}`}
-              footerRight={pluginName ? `Selected: ${pluginName}` : ''}
-            />
+            <>
+              {notice && <div style={{ padding: '4px 10px', fontSize: '12px', opacity: 0.7 }}>{notice}</div>}
+              <MbfTable<PluginSearchRow>
+                name="Search plugins"
+                rows={rows}
+                columns={columns}
+                getRowKey="name"
+                onRowClick={(row, _rowKey, event) => {
+                  selectedPluginNameRef.current = row.name;
+                  setPluginName(row.name);
+                  if (event.detail === 2) void handleSelect();
+                }}
+                footerLeft={`Total packages: ${rows.length.toString()}  Total downloads: ${formatNumber(totalMonthlyDownloads)} / ${totalAllTimeText}${totalsFooter}`}
+                footerRight={pluginName ? `Selected: ${pluginName}` : ''}
+              />
+            </>
           )}
         </div>
       </DialogContent>

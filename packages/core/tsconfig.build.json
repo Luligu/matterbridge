@@ -8,9 +8,17 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"],
   "references": [
-    { "path": "../types/tsconfig.build.json" },
-    { "path": "../utils/tsconfig.build.json" },
-    { "path": "../thread/tsconfig.build.json" },
-    { "path": "../dgram/tsconfig.build.json" }
+    {
+      "path": "../types/tsconfig.build.json"
+    },
+    {
+      "path": "../utils/tsconfig.build.json"
+    },
+    {
+      "path": "../thread/tsconfig.build.json"
+    },
+    {
+      "path": "../dgram/tsconfig.build.json"
+    }
   ]
 }

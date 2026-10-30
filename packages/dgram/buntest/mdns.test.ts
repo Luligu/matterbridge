@@ -906,6 +906,24 @@ describe('Mdns', () => {
     expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
+  it('should keep logDevices entries whose addresses compare as numerically equal', () => {
+    const dummyMsg: any = { questions: [], answers: [], authorities: [], additionals: [] };
+
+    // Distinct map keys that parse to the same numbers, so both sort comparators reach `return 0`.
+    mdns.deviceQueries.clear();
+    mdns.deviceQueries.set('10.0.0.1', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceQueries.set('10.0.0.01', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceResponses.clear();
+    mdns.deviceResponses.set('fe80::1', { rinfo: mockRinfo, response: dummyMsg, dataPTR: 'x' });
+    mdns.deviceResponses.set('fe80::01', { rinfo: mockRinfo, response: dummyMsg, dataPTR: 'y' });
+
+    mdns.logDevices();
+
+    for (const address of ['10.0.0.1', '10.0.0.01', 'fe80::1', 'fe80::01']) {
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(address));
+    }
+  });
+
   it('should handle response messages in onMessage', () => {
     // Create a response message (QR=1)
     const header = Buffer.alloc(12);

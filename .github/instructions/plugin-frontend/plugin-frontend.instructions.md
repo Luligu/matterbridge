@@ -1,5 +1,5 @@
 ---
-name: 'Matterbridge Plugin Frontend Guide v.1.0.0'
+name: 'Matterbridge Plugin Frontend Guide v.1.0.2'
 description: 'How a plugin serves its own frontend SPA and custom REST API via onFetch'
 applyTo: 'apps/frontend/**, packages/core/src/frontend.ts'
 ---

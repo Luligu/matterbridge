@@ -9,6 +9,7 @@ import Battery5BarIcon from '@mui/icons-material/Battery5Bar';
 import Battery6BarIcon from '@mui/icons-material/Battery6Bar';
 import BatteryFullIcon from '@mui/icons-material/BatteryFull';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
+import LanguageIcon from '@mui/icons-material/Language';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import SettingsIcon from '@mui/icons-material/Settings';
 // @mui/material
@@ -25,6 +26,7 @@ import { useContext, useEffect, useState, useRef, useCallback, memo, type Synthe
 import { basePath, debug, enableMobile } from '../appState';
 import { type ApiSelectDevice, type ApiSettings, type WsMessageApiResponse, type ApiDevice, type ApiMatter, type ApiPlugin, type BridgeStatus } from '../utils/backendShared';
 import { getQRColor } from '../utils/getQRColor';
+import { useClickOrDoubleClick } from '../utils/useClickOrDoubleClick';
 import { Connecting } from './Connecting';
 import MbfTable, { type MbfTableColumn } from './MbfTable';
 import { MbfWindow } from './MbfWindow';
@@ -41,6 +43,17 @@ const localDebug = false; // Set to true to enable debug logs only in HomeDevice
 const getRowKey = (row: MixedApiDevices) => {
   return `${row.plugin}::${row.serialNumber}`;
 };
+
+// A configUrl that points to the frontend of the device's own plugin (/plugins/<pluginName> or ./plugins/<pluginName>, optionally followed by '/', '?' or '#') is shown in the dialog iframe instead of a new tab.
+const isPluginFrontendUrl = (configUrl: string, pluginName: string) => {
+  const prefix = `plugins/${pluginName}`;
+  const path = configUrl.replace(/^\.?\//, '');
+  if (path === configUrl || !path.startsWith(prefix)) return false;
+  return ['', '/', '?', '#'].includes(path.charAt(prefix.length));
+};
+
+// A configUrl that points to the frontend of a different plugin is never opened: a plugin may only open its own frontend.
+const isOtherPluginFrontendUrl = (configUrl: string, pluginName: string) => /^\.?\/plugins\//.test(configUrl) && !isPluginFrontendUrl(configUrl, pluginName);
 
 const getBatteryIcon = (batteryLevel: number | undefined, fallbackIcon: typeof Battery6BarIcon) => {
   if (batteryLevel === undefined) return fallbackIcon;
@@ -226,10 +239,17 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
-          {mixedDevice.configUrl ? (
-            <Tooltip title="Open the configuration page" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-              <IconButton onClick={() => handleConfigUrl(mixedDevice)} aria-label="Open config url" sx={{ margin: 0, padding: 0 }}>
-                <SettingsIcon fontSize="small" />
+          {mixedDevice.configUrl && !isOtherPluginFrontendUrl(mixedDevice.configUrl, mixedDevice.plugin) ? (
+            <Tooltip
+              title={
+                isPluginFrontendUrl(mixedDevice.configUrl, mixedDevice.plugin)
+                  ? 'Open the device page in the plugin frontend (double-click for a new tab)'
+                  : 'Open the configuration page'
+              }
+              slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}
+            >
+              <IconButton {...configUrlClick(mixedDevice)} aria-label="Open config url" sx={{ margin: 0, padding: 0 }}>
+                {isPluginFrontendUrl(mixedDevice.configUrl, mixedDevice.plugin) ? <LanguageIcon fontSize="small" /> : <SettingsIcon fontSize="small" />}
               </IconButton>
             </Tooltip>
           ) : (
@@ -505,15 +525,26 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     }
   };
 
-  // Open the device configuration page. When the configUrl points to a plugin frontend (/plugins/ or ./plugins/), show it in the dialog iframe, otherwise open it in a new tab.
-  const handleConfigUrl = (device: MixedApiDevices) => {
+  // Open the device configuration page. When the configUrl points to the frontend of the device's own plugin (/plugins/<pluginName> or ./plugins/<pluginName>), show it in the dialog iframe (or in a new tab when newTab is true), otherwise open it in a new tab.
+  const handleConfigUrl = (device: MixedApiDevices, newTab = false) => {
     if (debug || localDebug) console.log('handleConfigUrl device:', device.deviceName, 'configUrl:', device.configUrl);
-    if (!device.configUrl) return;
-    if (device.configUrl.startsWith('/plugins/') || device.configUrl.startsWith('./plugins/')) {
+    if (!device.configUrl || isOtherPluginFrontendUrl(device.configUrl, device.plugin)) return;
+    if (isPluginFrontendUrl(device.configUrl, device.plugin)) {
+      // Strip leading '/' or './' (e.g. '/plugins/my-plugin' or './plugins/my-plugin' -> 'plugins/my-plugin') so basePath can be prepended cleanly:
+      // - Standard: '/' + 'plugins/my-plugin' -> '/plugins/my-plugin'
+      // - Ingress:  '/api/hassio_ingress/<token>/' + 'plugins/my-plugin' -> '/api/hassio_ingress/<token>/plugins/my-plugin'
       const pluginFrontendPath = `${basePath}${device.configUrl.replace(/^\.?\//, '')}`;
-      // Add the trailing slash to the path only, leaving any query string and hash untouched.
+      // Parse into a URL object to isolate pathname from search parameters and hash:
+      // - Standard: '/plugins/my-plugin?device=test1' -> pathname: '/plugins/my-plugin', search: '?device=test1'
+      // - Ingress:  '/api/hassio_ingress/<token>/plugins/my-plugin?device=test1' -> pathname: '/api/hassio_ingress/<token>/plugins/my-plugin', search: '?device=test1'
       const pluginFrontendUrl = new URL(pluginFrontendPath, window.location.origin);
+      // Add trailing slash to the pathname if missing:
+      // - Standard: '/plugins/my-plugin' -> '/plugins/my-plugin/'
+      // - Ingress:  '/api/hassio_ingress/<token>/plugins/my-plugin' -> '/api/hassio_ingress/<token>/plugins/my-plugin/'
       if (!pluginFrontendUrl.pathname.endsWith('/')) pluginFrontendUrl.pathname += '/';
+      // Reassemble the path with the trailing slash, leaving query string and hash untouched:
+      // - Standard: '/plugins/my-plugin/' + '?device=test1' -> '/plugins/my-plugin/?device=test1'
+      // - Ingress:  '/api/hassio_ingress/<token>/plugins/my-plugin/' + '?device=test1' -> '/api/hassio_ingress/<token>/plugins/my-plugin/?device=test1'
       const pluginFrontendPathWithTrailingSlash = `${pluginFrontendUrl.pathname}${pluginFrontendUrl.search}${pluginFrontendUrl.hash}`;
       if (debug || localDebug)
         console.log(
@@ -526,11 +557,18 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           'computed pluginFrontendPath:',
           pluginFrontendPathWithTrailingSlash,
         );
-      setSelectedDeviceFrontend({ name: device.deviceName, path: pluginFrontendPathWithTrailingSlash });
+      if (newTab) window.open(pluginFrontendPathWithTrailingSlash, '_blank');
+      else setSelectedDeviceFrontend({ name: device.deviceName, path: pluginFrontendPathWithTrailingSlash });
     } else {
       window.open(device.configUrl, '_blank');
     }
   };
+
+  // A single click opens the plugin frontend in the dialog iframe, a double click opens it in a new tab
+  const configUrlClick = useClickOrDoubleClick(
+    (device: MixedApiDevices) => handleConfigUrl(device),
+    (device: MixedApiDevices) => handleConfigUrl(device, true),
+  );
 
   const handleDeviceFrontendLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
     const iframeDocument = event.currentTarget.contentDocument;

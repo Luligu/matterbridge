@@ -10,8 +10,8 @@ import { WebSocketContext } from './WebSocketProvider';
 
 function HomeLogs(): React.JSX.Element {
   // States
-  const [logFilterLevel, _setLogFilterLevel] = useState(localStorage.getItem(MbfLsk.logFilterLevel) ?? 'info');
-  const [logFilterSearch, _setLogFilterSearch] = useState(localStorage.getItem(MbfLsk.logFilterSearch) ?? '*');
+  const [logFilterLevel, _setLogFilterLevel] = useState(localStorage.getItem(MbfLsk['log-filter-level']) ?? 'info');
+  const [logFilterSearch, _setLogFilterSearch] = useState(localStorage.getItem(MbfLsk['log-filter-search']) ?? '*');
 
   // Contexts
   const { online, logAutoScroll } = useContext(WebSocketContext);

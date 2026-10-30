@@ -244,7 +244,7 @@ describe('UiProvider', () => {
   });
 
   it('respects disabled install auto-exit from localStorage and allows manual hide/toggle', async () => {
-    localStorage.setItem(MbfLsk.installAutoExit, 'false');
+    localStorage.setItem(MbfLsk['install-auto-exit'], 'false');
 
     await renderHarness();
 

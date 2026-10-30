@@ -925,6 +925,24 @@ describe('Matterbridge mocked', () => {
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating matter storage: Test error for startMatterStorage');
   }, 10000);
 
+  test('should reset controller storage and shut down when controller and reset are requested', async () => {
+    process.argv.push('--controller', '--reset');
+    const resetBridgeSpy = vi.spyOn(matterbridge, 'shutdownProcessAndReset').mockResolvedValue();
+
+    try {
+      await matterbridge['initialize']();
+
+      expect(matterbridge.bridgeMode).toBe('controller');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, 'MatterbridgeController storage reset; remote device fabrics are unchanged');
+      expect(matterbridge.matterStorageService).toBeUndefined();
+      expect(matterbridge.controllerStorageManager).toBeUndefined();
+      expect(matterbridge['shutdown']).toBe(true);
+      expect(resetBridgeSpy).not.toHaveBeenCalled();
+    } finally {
+      resetBridgeSpy.mockRestore();
+    }
+  });
+
   test('Matterbridge.initialize() reset', async () => {
     // Reset the process.argv to simulate reset of a registered plugin
     process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
@@ -1374,6 +1392,16 @@ describe('Matterbridge mocked', () => {
     expect(frontendStartSpy).toHaveBeenCalled();
     expect(startBridgeSpy).not.toHaveBeenCalled();
     expect(startChildBridgeSpy).toHaveBeenCalled();
+
+    vi.clearAllMocks();
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-homedir', HOMEDIR, '--controller', '--test', '--frontend', '8283'];
+    await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+    expect(frontendStartSpy).not.toHaveBeenCalled();
+    expect(startBridgeSpy).not.toHaveBeenCalled();
+    expect(startChildBridgeSpy).not.toHaveBeenCalled();
 
     frontendStartSpy.mockRestore();
     startBridgeSpy.mockRestore();

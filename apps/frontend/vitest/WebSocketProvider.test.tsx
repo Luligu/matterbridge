@@ -146,10 +146,10 @@ describe.each([false, true])('WebSocketProvider with debug=%s', (debug) => {
 
   test('should load persisted preferences and encode the password when connecting', () => {
     appState.wssPassword = 'secret &?';
-    localStorage.setItem(MbfLsk.logLength, '10');
-    localStorage.setItem(MbfLsk.logAutoScroll, 'false');
-    localStorage.setItem(MbfLsk.logFilterLevel, 'warn');
-    localStorage.setItem(MbfLsk.logFilterSearch, 'device');
+    localStorage.setItem(MbfLsk['log-length'], '10');
+    localStorage.setItem(MbfLsk['log-auto-scroll'], 'false');
+    localStorage.setItem(MbfLsk['log-filter-level'], 'warn');
+    localStorage.setItem(MbfLsk['log-filter-search'], 'device');
     const { result, unmount } = renderProvider();
     expect(latestSocket().url).toBe(`${window.location.href.replace(/^http/, 'ws')}?password=secret%20%26%3F`);
     expect(result.current.logs.logLength.current).toBe(10);

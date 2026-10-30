@@ -51,6 +51,9 @@ function track<T extends { mockRestore: () => void }>(spy: T): T {
 // deleted or replaced. The `HAS_BUN_GLOBAL` constant in runtimeBun.ts is therefore always true here,
 // and the branches that read it directly (the fallback arms of getBunVersion(), getBunRevision(),
 // getBun(), nanoseconds(), sleep(), which(), gc(), setGcLevel() and memoryFootprint()) cannot be reached from bun:test.
+// Since Bun 1.4.4 the coverage report is line-precise, so those fallbacks are kept on the same line as the
+// HAS_BUN_GLOBAL check (a ternary): a fallback on a line of its own would always be reported as uncovered.
+// Vitest covers the Node.js arms.
 // The branches that go through isBun() are reachable: spying on the exported isBun also intercepts
 // the module's own calls to it, which is how bunAvailable() and getGlobalBunModules() are covered.
 // The module is imported statically: re-importing it with a cache-busting query string yields a module

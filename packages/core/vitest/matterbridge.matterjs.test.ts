@@ -13,12 +13,14 @@
 const MATTER_PORT = 6100;
 const NAME = 'MatterbridgeMatterjs';
 
+import fs from 'node:fs';
 import path from 'node:path';
 
 import { Environment } from '@matter/general';
 import { FabricIndex } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { MATTER_STORAGE_DIR } from '@matterbridge/types';
 import { waiter } from '@matterbridge/utils';
 import { getInterfaceName } from '@matterbridge/utils/network';
 import { LogLevel } from 'node-ansi-logger';
@@ -101,8 +103,33 @@ describe('Matterbridge matterjs', () => {
   });
 
   test('backupMatterStorage fails for same values', async () => {
-    await (matterbridge as any).backupMatterStorage('src', 'src');
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating matter node storage backup`), expect.any(Error));
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    await (matterbridge as any).backupMatterStorage(storageName, storageName);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating matter node storage backup from ${storageName} to ${storageName}:`, expect.any(Error));
+  });
+
+  test('backupMatterStorage fails when copyDirectory cannot copy the matter storage', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    // A file where the backup parent directory should be: copyDirectory cannot create the destination and resolves to false
+    const blocker = path.join(matterbridge.matterbridgeDirectory, 'backup-blocker');
+    fs.writeFileSync(blocker, '');
+    const backupName = path.join(blocker, MATTER_STORAGE_DIR + '.backup');
+    loggerLogSpy.mockClear();
+    try {
+      await (matterbridge as any).backupMatterStorage(storageName, backupName);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating matter node storage backup from ${storageName} to ${backupName}`);
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, 'Created matter node storage backup');
+    } finally {
+      fs.rmSync(blocker, { force: true });
+    }
+  });
+
+  test('backupMatterStorage skips the backup when there is no matter storage', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, 'missing-matter-storage');
+    const backupName = storageName + '.backup';
+    await (matterbridge as any).backupMatterStorage(storageName, backupName);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `No matter node storage found to backup from ${storageName} to ${backupName}`);
+    expect(fs.existsSync(backupName)).toBe(false);
   });
 
   test('backupMatterStorage fails for undefined values', async () => {

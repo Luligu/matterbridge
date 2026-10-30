@@ -2948,7 +2948,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks currentX and currentY persist across restarts.
    * @remarks colorTemperatureMireds persists across restarts.
    * @remarks startUpColorTemperatureMireds persists across restarts.
-   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    *
    * @remarks OptionMasks and OptionOverride fields of color control commands requests
    *
@@ -3015,7 +3014,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks currentX and currentY persist across restarts.
    * @remarks colorTemperatureMireds persists across restarts.
    * @remarks startUpColorTemperatureMireds persists across restarts.
-   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    *
    * @remarks OptionMasks and OptionOverride field
    *
@@ -3086,7 +3084,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks currentX and currentY persist across restarts.
    * @remarks colorTemperatureMireds persists across restarts.
    * @remarks startUpColorTemperatureMireds persists across restarts.
-   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
   createXyColorControlClusterServer(
     currentX: number = 0,
@@ -3131,7 +3128,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks currentHue and currentSaturation persist across restarts.
    * @remarks colorTemperatureMireds persists across restarts.
    * @remarks startUpColorTemperatureMireds persists across restarts.
-   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
   createHsColorControlClusterServer(
     currentHue: number = 0,
@@ -3174,7 +3170,6 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @remarks colorMode and enhancedColorMode persist across restarts.
    * @remarks colorTemperatureMireds persists across restarts.
    * @remarks startUpColorTemperatureMireds persists across restarts.
-   * @remarks coupleColorTempToLevelMinMireds persists across restarts.
    */
   createCtColorControlClusterServer(
     colorTemperatureMireds: number = 250,

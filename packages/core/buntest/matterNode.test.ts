@@ -13,7 +13,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from 'bun
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { Diagnostic, LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel, StorageContext } from '@matter/general';
+import { StorageContext } from '@matter/general';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { Identify, PowerSource, PressureMeasurement, RelativeHumidityMeasurement, TemperatureMeasurement } from '@matter/types/clusters';
@@ -137,16 +137,6 @@ describe('MatterNode', () => {
     expect(matter.server.name).toBe('matter');
     // @ts-expect-error access private property
     expect(matter.server.listenerCount('broadcast_message')).toBe(1);
-
-    Logger.format = MatterLogFormat.PLAIN;
-    let destinationLogger = matter.createDestinationMatterLogger();
-    expect(destinationLogger).toBeDefined();
-    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
-
-    Logger.format = MatterLogFormat.ANSI;
-    destinationLogger = matter.createDestinationMatterLogger();
-    expect(destinationLogger).toBeDefined();
-    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
   });
 
   test('pluginStatusUpdate should update the plugin manager and broadcast a plugin_status_update message to the frontend', () => {
@@ -275,20 +265,9 @@ describe('MatterNode', () => {
     expect(pluginManager.length).toBe(10);
   });
 
-  test('Matter logger', async () => {
-    await fs.promises.mkdir(matterbridge.matterbridgeDirectory, { recursive: true });
-    expect(Logger.get('Matter')).toBeDefined();
-    Logger.get('Matter').debug('Testing Matter logger debug message');
-    Logger.get('Matter').info('Testing Matter logger info message');
-    Logger.get('Matter').notice('Testing Matter logger notice message');
-    Logger.get('Matter').warn('Testing Matter logger warn message');
-    Logger.get('Matter').error('Testing Matter logger error message');
-    Logger.get('Matter').fatal('Testing Matter logger fatal message');
-  });
-
-  test('Create server node context without matter storage service', async () => {
+  test('Create server node context without matter storage manager', async () => {
     // @ts-expect-error -- Testing without storage
-    expect(matter.createServerNodeContext()).rejects.toThrow('No storage service initialized');
+    expect(matter.createServerNodeContext()).rejects.toThrow('No storage manager initialized');
   });
 
   test('Copy fabrics for server node for Matterbridge', async () => {
@@ -301,7 +280,8 @@ describe('MatterNode', () => {
 
   test('Start matter storage', async () => {
     expect(await matter.startMatterStorage()).toBeUndefined();
-    expect(loggerInfoSpy).toHaveBeenCalledWith(`Started matter node storage in ${CYAN}${matter.matterStorageService?.location}${nf}`);
+    expect(matter.matterStorageManager).toBeDefined();
+    expect(loggerInfoSpy).toHaveBeenCalledWith(`Opened matter node storage manager with store ID ${CYAN}${matter.storeId}${nf}`);
   });
 
   test('should write missing and changed context values while preserving unchanged values and identity', async () => {
@@ -395,6 +375,23 @@ describe('MatterNode', () => {
       await chipServerNode.close();
     } finally {
       delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+  });
+
+  test('should add the TestEventTrigger server when MATTERBRIDGE_CHIP_TEST is set and chipTests.js is available', async () => {
+    // From src there is only chipTests.ts: report chipTests.js as present, Bun then resolves the import to the .ts source.
+    const existsSync = fs.existsSync;
+    const existsSyncSpy = vi.spyOn(fs, 'existsSync').mockImplementation((file) => (typeof file === 'string' && path.basename(file) === 'chipTests.js') || existsSync(file));
+    process.env.MATTERBRIDGE_CHIP_TEST = '1';
+    try {
+      const chipServerNode = await matter.createServerNode(MATTER_PORT + 1, PASSCODE, DISCRIMINATOR);
+      expect(loggerWarnSpy).toHaveBeenCalledWith(' * MATTERBRIDGE_CHIP_TEST environment variable is set. Running TestEventTrigger server. *');
+      const { MatterbridgeGeneralDiagnosticsServer } = await import('../src/chipTests.js');
+      expect(chipServerNode.behaviors.has(MatterbridgeGeneralDiagnosticsServer)).toBe(true);
+      await chipServerNode.close();
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+      existsSyncSpy.mockRestore();
     }
   });
 
@@ -874,24 +871,6 @@ describe('MatterNode', () => {
       });
     });
     await Promise.all([stopPromise, offlinePromise]);
-  });
-
-  test('should log a debug message when a matter.js log message cannot be logged', () => {
-    // @ts-expect-error access private property
-    const matterLogSpy = vi.spyOn(matter.matterLog, 'log').mockImplementationOnce(() => {
-      throw new Error('Matter log failure');
-    });
-    const destinationLogger = matter.createDestinationMatterLogger();
-    destinationLogger('2026-03-31 16:02:26.974 DEBUG Jest Message', Diagnostic.message({ now: new Date(), level: MatterLogLevel.DEBUG, facility: 'Jest' }));
-    expect(loggerDebugSpy).toHaveBeenCalledWith('Error parsing matter log message facility Jest');
-    matterLogSpy.mockRestore();
-  });
-
-  test('should log an error when the matter storage backup fails', async () => {
-    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
-    // copyDirectory rejects the same source and destination with a plain Error (no ENOENT code)
-    await matter.backupMatterStorage(storageName, storageName);
-    expect(loggerErrorSpy).toHaveBeenCalledWith(`Error creating matter node storage backup from ${storageName} to ${storageName}:`, expect.any(Error));
   });
 
   test('should log an error when the server node fails to start or to close', async () => {

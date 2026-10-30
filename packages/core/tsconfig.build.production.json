@@ -11,9 +11,17 @@
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"],
   "references": [
-    { "path": "../types/tsconfig.build.production.json" },
-    { "path": "../utils/tsconfig.build.production.json" },
-    { "path": "../thread/tsconfig.build.production.json" },
-    { "path": "../dgram/tsconfig.build.production.json" }
+    {
+      "path": "../types/tsconfig.build.production.json"
+    },
+    {
+      "path": "../utils/tsconfig.build.production.json"
+    },
+    {
+      "path": "../thread/tsconfig.build.production.json"
+    },
+    {
+      "path": "../dgram/tsconfig.build.production.json"
+    }
   ]
 }

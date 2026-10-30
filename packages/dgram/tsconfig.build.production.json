@@ -9,5 +9,9 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["**/*.spec.ts", "**/*.test.ts"],
-  "references": [{ "path": "../utils/tsconfig.build.production.json" }]
+  "references": [
+    {
+      "path": "../utils/tsconfig.build.production.json"
+    }
+  ]
 }
