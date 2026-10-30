@@ -861,6 +861,22 @@
       "problemMatcher": []
     },
     {
+      "label": "Test: MatterController",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "test:controller"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: MatterController",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "test:bun:controller"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Buntest: MatterNode",
       "type": "process",
       "command": "bun",

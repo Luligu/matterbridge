@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.3
+ * @version 1.8.4
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -114,6 +114,7 @@ import { Frontend } from './frontend.js';
 import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './helpers.js';
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
+import { startController } from './matterController.js';
 import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
@@ -334,7 +335,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private serverNodeStorageManagers = new Map<string, StorageManager>();
   /** Matter matterbridge storage context created in the storage manager with name 'persist' */
   matterbridgeContext: StorageContext | undefined;
-  /** Matter controller storage context created in the storage manager with name 'persist' */
+  /** Storage manager for controller metadata, closed separately from bridge storage. */
+  controllerStorageManager: StorageManager | undefined;
+  /** Matter controller metadata context in MatterbridgeController storage. */
   controllerContext: StorageContext | undefined;
 
   /** Matter mdns interface e.g. 'eth0' or 'wlan0' or 'Wi-Fi' */
@@ -1334,8 +1337,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     }
 
     // Initialize frontend
-    if ((getIntParameter('frontend') !== 0 || getIntParameter('frontend') === undefined) && !hasParameter('experimental-backend'))
+    if (!hasParameter('controller') && !hasParameter('experimental-backend') && getIntParameter('frontend') !== 0) {
       await this.frontend.start(getIntParameter('frontend'));
+    }
 
     // Start the matter storage and create the matterbridge context
     if (!hasParameter('experimental-node')) {
@@ -1352,6 +1356,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.fatal(`Fatal error creating matter storage: ${getErrorMessage(error)}`);
         throw new Error(`Fatal error creating matter storage: ${getErrorMessage(error)}`, { cause: error });
       }
+    }
+
+    // Reset only controller storage before the bridge/plugin reset handlers can run.
+    if (hasParameter('controller') && hasParameter('reset')) {
+      this.bridgeMode = 'controller';
+      await startController(this, this.environment);
+      await this.stopMatterStorage();
+      this.shutdown = true;
+      return;
     }
 
     // Clear the matterbridge context if the reset parameter is set (bridge mode)
@@ -1430,7 +1443,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     /* v8 ignore next cause controller is under development and not tested yet */
     if (hasParameter('controller')) {
       this.bridgeMode = 'controller';
-      await this.startController();
+      await startController(this, this.environment);
       return;
     }
 
@@ -2575,324 +2588,6 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
     );
   }
 
-  /**
-   * Starts the Matterbridge controller.
-   *
-   * @private
-   * @returns {Promise<void>} A promise that resolves when the Matterbridge is started.
-   */
-  /* v8 ignore next cause controller is under development and not tested yet */
-  private async startController(): Promise<void> {
-    /*
-    if (!this.matterStorageManager) {
-      this.log.error('No storage manager initialized');
-      await this.cleanup('No storage manager initialized');
-      return;
-    }
-    if (!this.matterStorageService) {
-      this.log.error('No storage service initialized');
-      await this.cleanup('No storage service initialized');
-      return;
-    }
-    await createDirectory(
-      path.join(this.matterbridgeDirectory, MATTER_STORAGE_DIR, 'MatterbridgeController'),
-      `Matter node storage directory for MatterbridgeController`,
-      this.log,
-    );
-    this.matterStorageManager = await this.matterStorageService.open('MatterbridgeController');
-    this.log.info('Matter node storage manager "MatterbridgeController" created');
-
-    this.log.info('Creating context controllerContext...');
-    this.controllerContext = this.matterStorageManager.createContext('controllerContext');
-    if (!this.controllerContext) {
-      this.log.error('No storage context controllerContext initialized');
-      await this.cleanup('No storage context controllerContext initialized');
-      return;
-    }
-
-    const { randomBytes } = await import('node:crypto');
-
-    const storeId = 'MatterbridgeController';
-    const random = randomBytes(8).toString('hex');
-    await this.controllerContext.set('storeId', storeId);
-    await this.controllerContext.set('vendorId', this.controllerVendorId);
-    await this.controllerContext.set('vendorName', this.controllerVendorName.slice(0, 32));
-    await this.controllerContext.set('productId', this.controllerProductId);
-    await this.controllerContext.set('productName', this.controllerProductName.slice(0, 32));
-    await this.controllerContext.set('productLabel', this.controllerProductName.replace(this.controllerVendorName, '').trim().slice(0, 32));
-    await this.controllerContext.set('nodeLabel', storeId.slice(0, 32));
-    await this.controllerContext.set('serialNumber', await this.controllerContext.get('serialNumber', 'SN' + random));
-    await this.controllerContext.set('uniqueId', await this.controllerContext.get('uniqueId', 'UI' + random));
-    await this.controllerContext.set(
-      'softwareVersion',
-      isValidInteger(parseVersionString(this.matterbridgeVersion), 0, UINT32_MAX) ? parseVersionString(this.matterbridgeVersion) : 1,
-    );
-    await this.controllerContext.set('softwareVersionString', isValidString(this.matterbridgeVersion, 5, 64) ? this.matterbridgeVersion : '1.0.0');
-    await this.controllerContext.set(
-      'hardwareVersion',
-      isValidInteger(parseVersionString(this.systemInformation.osRelease), 0, UINT16_MAX) ? parseVersionString(this.systemInformation.osRelease) : 1,
-    );
-    await this.controllerContext.set('hardwareVersionString', isValidString(this.systemInformation.osRelease, 5, 64) ? this.systemInformation.osRelease : '1.0.0');
-
-    this.log.info('Creating matter commissioning controller...');
-    this.controllerNode = await ServerNode.create({
-      id: storeId,
-
-      environment: this.environment,
-
-      network: {
-        listeningAddressIpv4: this.ipv4Address,
-        listeningAddressIpv6: this.ipv6Address,
-        port: this.port,
-      },
-
-      // Provide defaults for the BasicInformation cluster on the Root endpoint
-      basicInformation: {
-        nodeLabel: await this.controllerContext.get<string>('nodeLabel'),
-
-        vendorId: VendorId(await this.controllerContext.get<number>('vendorId')),
-        vendorName: await this.controllerContext.get<string>('vendorName'),
-
-        productId: await this.controllerContext.get<number>('productId'),
-        productName: await this.controllerContext.get<string>('productName'),
-        productLabel: await this.controllerContext.get<string>('productLabel'),
-
-        serialNumber: await this.controllerContext.get<string>('serialNumber'),
-        uniqueId: await this.controllerContext.get<string>('uniqueId'),
-
-        softwareVersion: await this.controllerContext.get<number>('softwareVersion'),
-        softwareVersionString: await this.controllerContext.get<string>('softwareVersionString'),
-        hardwareVersion: await this.controllerContext.get<number>('hardwareVersion'),
-        hardwareVersionString: await this.controllerContext.get<string>('hardwareVersionString'),
-
-        reachable: true,
-      },
-    });
-
-    this.log.info(`Loaded matter commissioning controller with ${this.controllerNode.peers.size} peer nodes.`);
-    const requestedNodeId = getIntParameter('node');
-    const nodeLabel = requestedNodeId !== undefined ? `Node ${requestedNodeId}` : undefined;
-    const peerId = requestedNodeId !== undefined ? `peer${requestedNodeId}` : undefined;
-
-    if (hasParameter('pair')) {
-      // passcode (setupPin) 20242025 longDiscriminator 3840
-      // const shortDiscriminator = (discriminator >> 8) & 0x0f;
-      let options: CommissioningDiscovery.Options;
-      if (hasParameter('pairingcode')) {
-        const pairingCode = getParameter('pairingcode') as string;
-        this.log.info(`Pairing device ${nodeLabel} with pairingcode: ${pairingCode}`);
-        const pairingData = ManualPairingCodeCodec.decode(pairingCode);
-        this.log.info(`- passcode: ${pairingData.passcode}`);
-        this.log.info(`- shortDiscriminator: ${pairingData.shortDiscriminator ?? 'n/a (should never be n/a, short discriminator is encoded in the manual pairing code)'} `);
-        this.log.info(`- longDiscriminator: ${pairingData.discriminator ?? 'n/a (manual pairing code encodes short discriminator only)'}`);
-        this.log.info(`- vendorId: ${pairingData.vendorId ?? 'n/a'}`);
-        this.log.info(`- productId: ${pairingData.productId ?? 'n/a'}`);
-        options = {
-          id: peerId,
-          pairingCode,
-          ...(pairingData.shortDiscriminator !== undefined ? { shortDiscriminator: pairingData.shortDiscriminator } : {}),
-          ...(pairingData.vendorId !== undefined ? { vendorId: pairingData.vendorId } : {}),
-          ...(pairingData.productId !== undefined ? { productId: pairingData.productId } : {}),
-        };
-      } else {
-        const discriminator = getIntParameter('discriminator');
-        const passcode = getIntParameter('passcode') ?? 0;
-        this.log.info(`Pairing device ${nodeLabel} with discriminator: ${discriminator}, passcode: ${passcode}`);
-        options = { id: peerId, discriminator, passcode };
-      }
-      this.log.notice(`Commissioning node ${nodeLabel} with options: ${debugStringify(options)}`);
-      try {
-        const commissionedNode = await this.controllerNode.peers.commission(options);
-        this.log.notice(`Commissioning successfully done for node ${commissionedNode.id}`);
-      } catch (error) {
-        this.log.error(`Commissioning failed for node ${nodeLabel}: ${error instanceof Error ? error.message : error}`);
-      }
-    } else if (hasParameter('discover')) {
-      this.log.info('Discovering commissionable devices...');
-      const discovery = this.controllerNode.peers.discover();
-      discovery.discovered.on((node) => {
-        this.log.info(`Discovered commissionable device: ${node.id}`);
-      });
-    } else if (hasParameter('peers')) {
-      await this.controllerNode.start();
-      const peers = this.controllerNode.peers;
-      this.log.info(`Matter commissioning controller paired nodes: ${peers.size}`);
-      for (const peer of peers) {
-        const match = /^peer(\d+)$/.exec(peer.id);
-        this.log.info(`- ${match ? `Node ${match[1]}` : peer.id}`);
-      }
-    } else if (hasParameter('unpair')) {
-      await this.controllerNode.start();
-      const requestedNodeId = getIntParameter('node');
-      if (requestedNodeId === undefined) {
-        this.log.error('Missing parameter --node for --unpair');
-        return;
-      }
-      const nodeLabel = `Node ${requestedNodeId}`;
-      const peerId = `peer${requestedNodeId}`;
-      this.log.info(`Matter commissioning controller decommissioning node: ${nodeLabel}`);
-      const peers = this.controllerNode.peers;
-      for (const peer of peers) {
-        if (peer.id === peerId) {
-          await peer.decommission();
-          this.log.info(`Matter commissioning controller decommissioned node: ${nodeLabel}`);
-          return;
-        }
-      }
-      this.log.warn(`Matter commissioning controller node not found: ${nodeLabel}`);
-    } else if (hasParameter('unpairall')) {
-      await this.controllerNode.start();
-      this.log.info('Matter commissioning controller decommissioning all nodes...');
-      const nodeIds = this.controllerNode.peers;
-      for (const nodeId of nodeIds) {
-        this.log.info('Matter commissioning controller decommissioning node:', nodeId.id);
-        await nodeId.decommission();
-      }
-      this.log.info('Matter commissioning controller decommissioned all nodes');
-    } else {
-      this.log.info('Starting matter commissioning controller...');
-      await this.controllerNode.start();
-      this.log.info(`Matter commissioning controller started with ${this.controllerNode.peers.size} paired nodes`);
-
-      const tracerSubscriptions = new Map<string, Promise<{ close(): unknown }>>();
-
-      // Matter.js currently restores persisted peers but does not automatically start (connect) them.
-      // Starting a peer triggers discovery + session establishment when the device is reachable.
-      const peersToStart = [];
-      if (peerId) {
-        const peer = this.controllerNode.peers.get(peerId);
-        if (!peer) {
-          this.log.warn(`Matter commissioning controller peer not found: ${nodeLabel ?? peerId}`);
-        } else {
-          peersToStart.push(peer);
-        }
-      } else {
-        for (const peer of this.controllerNode.peers) {
-          peersToStart.push(peer);
-        }
-      }
-
-      for (const peer of peersToStart) {
-        const match = /^peer(\d+)$/.exec(peer.id);
-        const startedLabel = match ? `Node ${match[1]}` : peer.id;
-
-        peer.lifecycle.online.on(() => {
-          this.log.notice(`Matter commissioning controller peer ${startedLabel} is online`);
-          if (peer.stateOf(NetworkClient).autoSubscribe) {
-            this.log.info(`Matter commissioning controller autoSubscribe is enabled for peer ${startedLabel}`);
-          } else {
-            this.log.info(`Matter commissioning controller setting autoSubscribe for peer ${startedLabel}`);
-            peer.setStateOf(NetworkClient, { autoSubscribe: true }).catch((error) => {
-              this.log.error(`Failed to set autoSubscribe for peer ${startedLabel}: ${error instanceof Error ? error.message : error}`);
-            });
-          }
-
-          // Uses a subscription with an updated callback that yields ReadResult reports on every update.
-          if (hasParameter('trace-peer') && !tracerSubscriptions.has(peer.id)) {
-            this.log.info(`Matter commissioning controller enabling trace-peer for ${startedLabel}`);
-
-            const subscribe = Subscribe({
-              fabricFilter: true,
-              keepSubscriptions: false,
-              attributes: [{}],
-              events: [{ isUrgent: true }],
-            });
-
-            const subscriptionPromise = peer.interaction.subscribe({
-              ...subscribe,
-              updated: async (update) => {
-                for await (const chunk of update) {
-                  for (const report of chunk) {
-                    if (report.kind === 'attr-value') {
-                      this.log.info(
-                        `Peer ${startedLabel} attr ${report.path.endpointId}/${report.path.clusterId}/${report.path.attributeId} v${report.version}: ${
-                          typeof report.value === 'object' ? debugStringify(report.value ?? { none: true }) : String(report.value)
-                        }`,
-                      );
-                    } else if (report.kind === 'event-value') {
-                      this.log.info(
-                        `Peer ${startedLabel} event ${report.path.endpointId}/${report.path.clusterId}/${report.path.eventId} #${report.number}: ${
-                          typeof report.value === 'object' ? debugStringify(report.value ?? { none: true }) : String(report.value)
-                        }`,
-                      );
-                    } else if (report.kind === 'attr-status') {
-                      this.log.warn(`Peer ${startedLabel} attr-status ${report.path.endpointId}/${report.path.clusterId}/${report.path.attributeId}: ${String(report.status)}`);
-                    } else if (report.kind === 'event-status') {
-                      this.log.warn(`Peer ${startedLabel} event-status ${report.path.endpointId}/${report.path.clusterId}/${report.path.eventId}: ${String(report.status)}`);
-                    }
-                  }
-                }
-              },
-              closed: () => {
-                this.log.warn(`Matter commissioning controller trace-peer subscription closed for ${startedLabel}`);
-                tracerSubscriptions.delete(peer.id);
-              },
-            });
-
-            tracerSubscriptions.set(peer.id, subscriptionPromise);
-            subscriptionPromise.catch((error) => {
-              tracerSubscriptions.delete(peer.id);
-              this.log.error(`Matter commissioning controller trace-peer subscription failed for ${startedLabel}: ${error instanceof Error ? error.message : error}`);
-            });
-          }
-
-          if (hasParameter('dump-peer')) {
-            void (async () => {
-              try {
-                // Populate local cache for cluster client behaviors (includes BasicInformation on endpoint 0).
-                for await (const _chunk of peer.interaction.read(Read({ fabricFilter: true, attributes: [{}] }))) {
-                  // Intentionally empty: the mutate() side-effect updates local state.
-                }
-
-                // Logger.get(`PeerNode: ${startedLabel}`).info(peer);
-
-                const basicInfo = peer.stateOf(BasicInformationClient);
-                Logger.get(`BasicInformation: ${startedLabel}`).info(basicInfo);
-              } catch (error) {
-                this.log.error(`Matter commissioning controller dump-peer failed for ${startedLabel}: ${error instanceof Error ? error.message : error}`);
-              }
-            })();
-          }
-        });
-
-        peer.lifecycle.offline.on(() => {
-          this.log.warn(`Matter commissioning controller peer ${startedLabel} is offline`);
-        });
-
-        peer.eventsOf(NetworkClient).autoSubscribe$Changed.on((value, oldValue) => {
-          this.log.info(`Matter commissioning controller peer ${startedLabel} autoSubscribe changed from ${oldValue ? 'active' : 'inactive'} to ${value ? 'active' : 'inactive'}`);
-        });
-
-        peer.eventsOf(NetworkClient).defaultSubscription$Changed.on((value, oldValue) => {
-          this.log.info(
-            `Matter commissioning controller peer ${startedLabel} defaultSubscription changed from ${oldValue ? 'active' : 'inactive'} to ${value ? 'active' : 'inactive'}`,
-          );
-        });
-
-        peer.eventsOf(NetworkClient).subscriptionStatusChanged.on((isActive) => {
-          this.log.info(`Matter commissioning controller peer ${startedLabel} subscription is ${isActive ? 'active' : 'inactive'}`);
-        });
-
-        peer.eventsOf(NetworkClient).subscriptionAlive.on(() => {
-          this.log.info(`Matter commissioning controller peer ${startedLabel} subscription alive event received`);
-        });
-
-        // Fire-and-forget: a peer may be offline; don't block controller startup.
-        this.log.notice(`Starting matter commissioning controller peer ${startedLabel}...`);
-        peer
-          .start()
-          .then(() => {
-            this.log.notice(`Matter commissioning controller peer ${startedLabel} started successfully`);
-            return;
-          })
-          .catch((error) => {
-            this.log.error(`Matter commissioning controller failed to start peer ${startedLabel}: ${error instanceof Error ? error.message : error}`);
-          });
-      }
-    }
-    */
-  }
-
   /**                                                                                                                                   */
   /**                                                     Matter.js methods                                                             */
   /**                                                                                                                                   */
@@ -2969,6 +2664,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
    */
   private async stopMatterStorage(): Promise<void> {
     this.log.info('Closing matter node storage...');
+    await this.controllerStorageManager?.close();
+    this.controllerStorageManager = undefined;
+    this.controllerContext = undefined;
     await this.matterStorageManager?.close();
     // Close every server node storage context manager opened by createServerNodeContext() to release its ref-counted lock
     for (const [storeId, storageManager] of this.serverNodeStorageManagers) {

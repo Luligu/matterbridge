@@ -1,6 +1,6 @@
 /**
  * update-htmls.mjs
- * Version: 1.0.4
+ * Version: 1.0.5
  *
  * Converts Markdown files to HTML using the marked library.
  *
@@ -68,6 +68,7 @@ const createMarkdownParser = () => {
 
 // Replicates marked.ps1 targets for cross-platform doc generation.
 const FILES_TO_RENDER = [
+  { source: 'README-CONTROLLER.md', target: 'README-CONTROLLER.html' },
   { source: 'README-DEV.md', target: 'README-DEV.html' },
   { source: 'README-DOCKER.md', target: 'README-DOCKER.html' },
   { source: 'README-MACOS-PLIST.md', target: 'README-MACOS-PLIST.html' },

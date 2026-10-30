@@ -26,6 +26,7 @@ export default defineConfig({
       'packages/core/vitest/matterNode.*.ts', // Not released files
       'packages/core/vitest/matterStorage.*.ts', // Not released files
       'packages/core/vitest/matterLogger.*.ts', // Not released files
+      'packages/core/vitest/matterController.*.ts', // Not released files
       'packages/core/vitest/backend*.ts', // Not released files
     ],
     globals: true,
@@ -93,6 +94,7 @@ export default defineConfig({
         'packages/core/src/matterNode.ts', // Not released files
         'packages/core/src/matterStorage.ts', // Not released files
         'packages/core/src/matterLogger.ts', // Not released files
+        'packages/core/src/matterController.ts', // Not released files
         'packages/core/src/backend*.ts', // Not released files
       ],
       thresholds: {
