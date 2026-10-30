@@ -9,14 +9,14 @@ export const toggleDebug = () => {
 
 export const enableWindows = false;
 
-export let enableMobile = localStorage.getItem(MbfLsk.enableMobile) !== 'false'; // default true
+export let enableMobile = localStorage.getItem(MbfLsk['enable-mobile']) !== 'false'; // default true
 export const setEnableMobile = () => {
   enableMobile = true;
-  localStorage.setItem(MbfLsk.enableMobile, 'true');
+  localStorage.setItem(MbfLsk['enable-mobile'], 'true');
 };
 export const clearEnableMobile = () => {
   enableMobile = false;
-  localStorage.setItem(MbfLsk.enableMobile, 'false');
+  localStorage.setItem(MbfLsk['enable-mobile'], 'false');
 };
 
 export let wssPassword: string | undefined;

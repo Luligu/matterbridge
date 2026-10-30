@@ -448,6 +448,11 @@ describe('MatterbridgeColorControlServer', () => {
       expect((await addLight('suCtCropLow', 250, 1)).mireds).toBe(147);
     });
 
+    it('clamps a restored ColorTemperatureMireds outside the physical range', async () => {
+      expect((await addLight('restoredCtHigh', 600, null)).mireds).toBe(500);
+      expect((await addLight('restoredCtLow', 100, null)).mireds).toBe(147);
+    });
+
     it('keeps the previous value when null', async () => {
       expect((await addLight('suCtNull', 250, null)).mireds).toBe(250);
     });

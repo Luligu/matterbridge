@@ -49,8 +49,8 @@ describe('HomeLogs', () => {
     expect(screen.getByText('Logs')).toBeInTheDocument();
     expect(screen.getByText('Filter: logger level "info" and search "*" Scroll: auto')).toBeInTheDocument();
     expect(screen.getByTestId('log-stream')).toHaveTextContent('Live logs');
-    expect(localStorage.getItem(MbfLsk.logFilterLevel)).toBeNull();
-    expect(localStorage.getItem(MbfLsk.logFilterSearch)).toBeNull();
+    expect(localStorage.getItem(MbfLsk['log-filter-level'])).toBeNull();
+    expect(localStorage.getItem(MbfLsk['log-filter-search'])).toBeNull();
   });
 
   test.each([
@@ -58,23 +58,23 @@ describe('HomeLogs', () => {
     { level: 'warn', search: '', expectedSearch: '*' },
     { level: '', search: '*', expectedSearch: '*' },
   ])('should display stored preferences for level "$level" and search "$search"', ({ level, search, expectedSearch }) => {
-    localStorage.setItem(MbfLsk.logFilterLevel, level);
-    localStorage.setItem(MbfLsk.logFilterSearch, search);
+    localStorage.setItem(MbfLsk['log-filter-level'], level);
+    localStorage.setItem(MbfLsk['log-filter-search'], search);
     renderLogs(true, false);
     expect(screen.getByText(`Filter: logger level "${level}" and search "${expectedSearch}" Scroll: manual`)).toBeInTheDocument();
-    expect(localStorage.getItem(MbfLsk.logFilterSearch)).toBe(search);
+    expect(localStorage.getItem(MbfLsk['log-filter-search'])).toBe(search);
   });
 
   test('should switch connection and scroll displays while retaining initialized filters', () => {
-    localStorage.setItem(MbfLsk.logFilterLevel, 'error');
-    localStorage.setItem(MbfLsk.logFilterSearch, 'initial');
+    localStorage.setItem(MbfLsk['log-filter-level'], 'error');
+    localStorage.setItem(MbfLsk['log-filter-search'], 'initial');
     const { rerenderOnline, logAutoScroll } = renderLogs(false);
     expect(screen.getByRole('status')).toBeInTheDocument();
     rerenderOnline(true);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByTestId('log-stream')).toBeInTheDocument();
-    localStorage.setItem(MbfLsk.logFilterLevel, 'debug');
-    localStorage.setItem(MbfLsk.logFilterSearch, 'new');
+    localStorage.setItem(MbfLsk['log-filter-level'], 'debug');
+    localStorage.setItem(MbfLsk['log-filter-search'], 'new');
     logAutoScroll.current = false;
     rerenderOnline(true);
     expect(screen.getByText('Filter: logger level "error" and search "initial" Scroll: manual')).toBeInTheDocument();

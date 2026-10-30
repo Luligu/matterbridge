@@ -243,14 +243,17 @@ export async function main(): Promise<void> {
 
   log.debug(`***Matterbridge.loadInstance(true) called`);
   const { Matterbridge } = await import('./matterbridge.js');
+  // Freeze the prototypes of the core classes before loading the Matterbridge instance
+  const { protectCorePrototypes } = await import('./protectPrototypes.js');
+  await protectCorePrototypes();
   instance = await Matterbridge.loadInstance(true);
   log.debug(`***Matterbridge.loadInstance(true) exited`);
 
   // v8 ignore next -- just experimental
   if (hasParameter('experimental-backend')) {
-    log.debug(`***Starting experimental Backend thread...`);
+    log.notice(`***Starting experimental Backend thread...`);
     manager.runThread('Backend');
-    log.debug(`***Started experimental Backend thread`);
+    log.notice(`***Started experimental Backend thread`);
   }
 
   // Check if the instance needs to shut down from parseCommandLine()

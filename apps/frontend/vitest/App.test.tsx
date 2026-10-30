@@ -43,6 +43,7 @@ vi.mock('../src/components/muiTheme', () => ({
 
 import App, { LoginForm } from '../src/App';
 import { toggleDebug, debug, enableMobile, setEnableMobile, clearEnableMobile, wssPassword, setWssPassword, basePath } from '../src/appState';
+import { MbfLsk } from '../src/utils/localStorage';
 
 describe('App dynamic import for import.meta.env.PROD coverage', () => {
   afterEach(() => {
@@ -60,7 +61,7 @@ describe('App dynamic import for import.meta.env.PROD coverage', () => {
   });
 
   it('initializes enableMobile from localStorage when disabled', async () => {
-    localStorage.setItem('enableMobile', 'false');
+    localStorage.setItem(MbfLsk['enable-mobile'], 'false');
     vi.resetModules();
 
     const mod = await import('../src/appState');
@@ -115,7 +116,7 @@ describe('App debug/theme/import.meta.env.PROD coverage', () => {
   });
 
   it('covers debug logging and theme logic (savedTheme present)', () => {
-    localStorage.setItem('frontendTheme', 'classic');
+    localStorage.setItem(MbfLsk['frontend-theme'], 'classic');
     render(<App />);
     expect(document.body.getAttribute('frontend-theme')).toBe('classic');
   });
@@ -147,11 +148,11 @@ describe('toggleDebug', () => {
   it('updates the mobile flag and websocket password helpers', () => {
     setEnableMobile();
     expect(enableMobile).toBe(true);
-    expect(localStorage.getItem('enableMobile')).toBe('true');
+    expect(localStorage.getItem(MbfLsk['enable-mobile'])).toBe('true');
 
     clearEnableMobile();
     expect(enableMobile).toBe(false);
-    expect(localStorage.getItem('enableMobile')).toBe('false');
+    expect(localStorage.getItem(MbfLsk['enable-mobile'])).toBe('false');
 
     setWssPassword('secret');
     expect(wssPassword).toBe('secret');

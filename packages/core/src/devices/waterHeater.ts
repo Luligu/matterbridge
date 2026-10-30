@@ -4,7 +4,7 @@
  * @author Luca Liguori
  * @contributor Ludovic BOUÉ
  * @created 2025-05-18
- * @version 1.2.1
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,13 +22,16 @@
  * limitations under the License.
  */
 
+/* oxlint-disable typescript/no-namespace */
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
 // @matter
+import { Seconds, Time, type Timer } from '@matter/general';
 import { WaterHeaterManagementServer } from '@matter/node/behaviors/water-heater-management';
 import { WaterHeaterModeServer } from '@matter/node/behaviors/water-heater-mode';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { ModeBase } from '@matter/types/clusters/mode-base';
+import { Thermostat } from '@matter/types/clusters/thermostat';
 import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import type { EndpointNumber } from '@matter/types/datatype';
@@ -38,16 +41,22 @@ import { fireAndForget } from '@matterbridge/utils/wait';
 
 // Matterbridge
 import { MatterbridgeServer } from '../behaviors/matterbridgeServer.js';
+import { MatterbridgeThermostatServer } from '../behaviors/thermostatServer.js';
 import { deviceEnergyManagement, electricalSensor, powerSource, waterHeater } from '../matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
 
 /** Available heating sources for a water heater. */
 export interface WaterHeaterTypes {
+  /** Indicates if the water heater has an immersion element 1. */
   immersionElement1?: boolean;
+  /** Indicates if the water heater has an immersion element 2. */
   immersionElement2?: boolean;
+  /** Indicates if the water heater has a heat pump. */
   heatPump?: boolean;
+  /** Indicates if the water heater has a boiler. */
   boiler?: boolean;
+  /** Indicates if the water heater has other types of heating sources. */
   other?: boolean;
 }
 
@@ -61,17 +70,33 @@ export interface WaterHeaterOptions {
   number?: EndpointNumber;
   /** Semantic tags for endpoint disambiguation. */
   tagList?: Semtag[];
+  /** Current water temperature in degrees Celsius. Defaults to `50`. */
   waterTemperature?: number;
+  /** Target water temperature in degrees Celsius. Defaults to `55`. */
   targetWaterTemperature?: number;
+  /** Minimum heat setpoint limit in degrees Celsius. Defaults to `20`. */
   minHeatSetpointLimit?: number;
+  /** Maximum heat setpoint limit in degrees Celsius. Defaults to `80`. */
   maxHeatSetpointLimit?: number;
+  /** Available heating sources for the water heater. Defaults to `{ immersionElement1: true }`. */
   heaterTypes?: WaterHeaterTypes;
+  /** Current tank percentage of the WaterHeaterManagement cluster (0-100%). Defaults to `90`. */
   tankPercentage?: number;
+  /** Volume of the hot water tank in litres (Matter 1.6.1 § 9.5.7.3). Defaults to `100`. */
+  tankVolume?: number;
+  /** Estimated heat energy needed to raise the water temperature to the target setpoint in mWh (Matter 1.6.1 § 9.5.7.4). Defaults to `0`. */
+  estimatedHeatRequired?: number | bigint;
+  /** Voltage in millivolts. Defaults to `null`. */
   voltage?: number | bigint | null;
+  /** Current in milliamperes. Defaults to `null`. */
   current?: number | bigint | null;
+  /** Power in milliwatts. Defaults to `null`. */
   power?: number | bigint | null;
+  /** Imported energy in mWh. Defaults to `null`. */
   energy?: number | bigint | null;
+  /** Minimum electrical power in milliwatts that the ESA can consume when switched on. Defaults to `0`. */
   absMinPower?: number;
+  /** Maximum electrical power in milliwatts that the ESA can consume when switched on. Defaults to `0`. */
   absMaxPower?: number;
 }
 
@@ -81,6 +106,15 @@ export interface WaterHeaterOptions {
 export class WaterHeater extends MatterbridgeEndpoint {
   /**
    * Creates an instance of the WaterHeater class.
+   *
+   * @param {string} name - The name of the water heater.
+   * @param {string} serial - The serial number of the water heater.
+   * @param {WaterHeaterOptions} [options] - Endpoint and initial water heater configuration.
+   */
+  constructor(name: string, serial: string, options?: WaterHeaterOptions);
+
+  /**
+   * Creates an instance using the legacy positional configuration.
    *
    * @param {string} name - The name of the water heater.
    * @param {string} serial - The serial number of the water heater.
@@ -95,16 +129,14 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heaterTypes.boiler - Indicates if the water heater has a boiler.
    * @param {boolean} heaterTypes.other - Indicates if the water heater has other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 90.
-   * @param {number} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
-   * @param {number} [current] - The current value in milliamperes. Defaults to null if not provided.
-   * @param {number} [power] - The power value in milliwatts. Defaults to null if not provided.
-   * @param {number} [energy] - The total consumption value in mW/h. Defaults to null if not provided.
+   * @param {number | bigint | null} [voltage] - The voltage value in millivolts. Defaults to null if not provided.
+   * @param {number | bigint | null} [current] - The current value in milliamperes. Defaults to null if not provided.
+   * @param {number | bigint | null} [power] - The power value in milliwatts. Defaults to null if not provided.
+   * @param {number | bigint | null} [energy] - The total consumption value in mW/h. Defaults to null if not provided.
    * @param {number} [absMinPower] - Indicate the minimum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
    * @param {number} [absMaxPower] - Indicate the maximum electrical power in mw that the ESA can consume when switched on. Defaults to `0` if not provided.
+   * @deprecated Pass a {@link WaterHeaterOptions} object as the third argument instead.
    */
-  constructor(name: string, serial: string, options?: WaterHeaterOptions);
-
-  /** @deprecated Pass a {@link WaterHeaterOptions} object as the third argument instead. */
   constructor(
     name: string,
     serial: string,
@@ -164,7 +196,14 @@ export class WaterHeater extends MatterbridgeEndpoint {
         options.minHeatSetpointLimit ?? 20,
         options.maxHeatSetpointLimit ?? 80,
       )
-      .createDefaultWaterHeaterManagementClusterServer(options.heaterTypes ?? { immersionElement1: true }, {}, options.tankPercentage ?? 90)
+      .createDefaultWaterHeaterManagementClusterServer(
+        options.heaterTypes ?? { immersionElement1: true },
+        {},
+        options.tankPercentage ?? 90,
+        undefined,
+        options.tankVolume ?? 100,
+        options.estimatedHeatRequired ?? 0,
+      )
       .createDefaultWaterHeaterModeClusterServer();
     fireAndForget(this.addFixedLabel('composed', 'Water Heater'), this.log, 'WaterHeater addFixedLabel');
     this.addChildDeviceType('PowerSource', powerSource).createDefaultPowerSourceWiredClusterServer().addRequiredClusterServers();
@@ -202,6 +241,8 @@ export class WaterHeater extends MatterbridgeEndpoint {
    * @param {boolean} heatDemand.other - Indicates if the water heater is heating water with other types of heating sources.
    * @param {number} [tankPercentage] - The current tank percentage of the WaterHeaterManagement cluster. Defaults to 100.
    * @param {WaterHeaterManagement.BoostState} [boostState] - The current boost state of the WaterHeaterManagement cluster. Defaults to Inactive.
+   * @param {number} [tankVolume] - The volume of the hot water tank in litres (Matter 1.6.1 § 9.5.7.3). Defaults to `100` if not provided.
+   * @param {number | bigint} [estimatedHeatRequired] - The estimated heat energy needed to raise the water temperature to the target setpoint, in mWh (Matter 1.6.1 § 9.5.7.4). Defaults to `0` if not provided.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    */
   createDefaultWaterHeaterManagementClusterServer(
@@ -209,12 +250,17 @@ export class WaterHeater extends MatterbridgeEndpoint {
     heatDemand?: { immersionElement1?: boolean; immersionElement2?: boolean; heatPump?: boolean; boiler?: boolean; other?: boolean },
     tankPercentage?: number,
     boostState?: WaterHeaterManagement.BoostState,
+    tankVolume?: number,
+    estimatedHeatRequired?: number | bigint,
   ): this {
-    this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(WaterHeaterManagement.Feature.TankPercent), {
+    // Matter 1.6.1 Device Library § 14.2.6: EnergyManagement is mandatory when the DeviceEnergyManagement device type is included.
+    this.behaviors.require(MatterbridgeWaterHeaterManagementServer.with(WaterHeaterManagement.Feature.TankPercent, WaterHeaterManagement.Feature.EnergyManagement), {
       heaterTypes: heaterTypes ?? { immersionElement1: true }, // Fixed attribute
       heatDemand: heatDemand ?? {},
       tankPercentage: tankPercentage ?? 100,
       boostState: boostState ?? WaterHeaterManagement.BoostState.Inactive,
+      tankVolume: tankVolume ?? 100,
+      estimatedHeatRequired: estimatedHeatRequired ?? 0,
     });
     return this;
   }
@@ -257,10 +303,13 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
   /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
   declare readonly endpoint: MatterbridgeEndpoint;
 
+  declare protected internal: MatterbridgeWaterHeaterManagementServer.Internal;
+
   /**
    * Handles the WaterHeaterManagement `Boost` command.
    *
    * @param {WaterHeaterManagement.BoostRequest} request - Boost request payload.
+   * @returns {Promise<void>} Resolves after forwarding the command and updating the boost state.
    */
   override async boost(request: WaterHeaterManagement.BoostRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -274,13 +323,41 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       context: this.context,
     });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer: boost called with: ${JSON.stringify(request)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    this.internal.boostExpiryTimer?.stop();
+    // WaterHeaterBoostInfoStruct's OneShot and EmergencyBoost fields declare a model-level `default: false`
+    // (@matter/model's water-heater-management.element.ts), and ClassForValueModel.initialize() applies those
+    // defaults before overlaying caller-provided keys. Explicitly normalize false/omitted to `undefined` so the
+    // BoostStarted event only carries OneShot/EmergencyBoost when set to true (matching TC_EWATERHTR_2_2/2_3).
+    const boostInfo: WaterHeaterManagement.WaterHeaterBoostInfo = {
+      duration: request.boostInfo.duration,
+      oneShot: request.boostInfo.oneShot === true ? true : undefined,
+      emergencyBoost: request.boostInfo.emergencyBoost === true ? true : undefined,
+      temporarySetpoint: request.boostInfo.temporarySetpoint,
+      targetPercentage: request.boostInfo.targetPercentage,
+      targetReheat: request.boostInfo.targetReheat,
+    };
+    this.internal.activeBoostInfo = boostInfo;
+    this.internal.boostTargetReached = false;
     // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Active when the Boost command succeeds.
     this.state.boostState = WaterHeaterManagement.BoostState.Active;
+    // Matter 1.6.0 § 9.5.8.1.1: Heat the water in the tank while the boost condition is not yet met.
+    this.#updateHeatDemand();
+    // Matter 1.6.0 § 9.5.8.1.1 and § 9.5.9.1: Generate BoostStarted with the field values received in the Boost command.
+    this.events.boostStarted.emit({ boostInfo }, this.context);
+    // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Inactive and generate BoostEnded when the boost duration expires.
+    this.internal.boostExpiryTimer = Time.getTimer(
+      'WaterHeaterManagement boost expiry',
+      Seconds(request.boostInfo.duration),
+      // oxlint-disable-next-line typescript/unbound-method
+      this.callback(this.#expireBoost, { lock: true }),
+    ).start();
     this.endpoint.emitCommand(WaterHeaterManagement, 'boost', request, this.context);
   }
 
   /**
    * Cancels an active boost.
+   *
+   * @returns {Promise<void>} Resolves after forwarding the command and updating the boost state.
    */
   override async cancelBoost(): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -294,11 +371,108 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
       context: this.context,
     });
     device.log.debug(`MatterbridgeWaterHeaterManagementServer: cancelBoost called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 9.5.8.2.1: Transition BoostState to Inactive when CancelBoost is received.
-    this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
+    this.internal.boostExpiryTimer?.stop();
+    this.internal.boostExpiryTimer = undefined;
+    this.internal.activeBoostInfo = undefined;
+    this.internal.boostTargetReached = false;
+    // Matter 1.6.0 § 9.5.8.2.1: If BoostState was Active, transition BoostState to Inactive, generate BoostEnded, and revert heating to the current Water Heater Mode.
+    if (this.state.boostState === WaterHeaterManagement.BoostState.Active) {
+      // Matter 1.6.0 § 9.5.8.2.1: Transition BoostState to Inactive when CancelBoost cancels an active boost.
+      this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
+      // Matter 1.6.0 § 9.5.8.2.1: Revert water heating to the current Water Heater Mode when the boost ends.
+      this.#updateHeatDemand();
+      // Matter 1.6.0 § 9.5.8.2.1 and § 9.5.9.2: Generate BoostEnded when BoostState transitions from Active to Inactive.
+      this.events.boostEnded.emit(undefined, this.context);
+    }
     this.endpoint.emitCommand(WaterHeaterManagement, 'cancelBoost', {}, this.context);
   }
+
+  /**
+   * Re-evaluates boost completion and heat demand after a water temperature, tank percentage, or mode change.
+   */
+  evaluateWaterHeaterState(): void {
+    const boostInfo = this.internal.activeBoostInfo;
+    if (this.state.boostState === WaterHeaterManagement.BoostState.Active && boostInfo && this.#isBoostTargetMet(boostInfo)) {
+      this.internal.boostTargetReached = true;
+      // Matter 1.6.0 § 9.5.6.3.2 and § 9.5.8.1.1: Automatically cancel the boost once the target is reached when OneShot is true.
+      if (boostInfo.oneShot) {
+        this.#expireBoost();
+        return;
+      }
+    }
+    this.#updateHeatDemand();
+  }
+
+  #expireBoost(): void {
+    this.internal.boostExpiryTimer?.stop();
+    this.internal.boostExpiryTimer = undefined;
+    this.internal.activeBoostInfo = undefined;
+    this.internal.boostTargetReached = false;
+    // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Inactive when the boost duration expires or OneShot completes.
+    this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
+    // Matter 1.6.0 § 9.5.8.1.1: Revert water heating to the current Water Heater Mode when the boost ends.
+    this.#updateHeatDemand();
+    // Matter 1.6.0 § 9.5.9.2: Generate BoostEnded when BoostState transitions from Active to Inactive.
+    this.events.boostEnded.emit(undefined, this.context);
+  }
+
+  #isBoostTargetMet(boostInfo: WaterHeaterManagement.WaterHeaterBoostInfo): boolean {
+    const state = this.state as Partial<WaterHeaterManagement.Attributes>;
+    if (boostInfo.targetPercentage !== undefined && state.tankPercentage !== undefined) {
+      return state.tankPercentage >= boostInfo.targetPercentage;
+    }
+    const thermostatState = this.endpoint.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating));
+    /* v8 ignore next */
+    const localTemperature = thermostatState.localTemperature ?? 0;
+    const targetSetpoint = boostInfo.temporarySetpoint ?? thermostatState.occupiedHeatingSetpoint;
+    return localTemperature >= targetSetpoint;
+  }
+
+  #updateHeatDemand(): void {
+    const state = this.state as Partial<WaterHeaterManagement.Attributes>;
+    const thermostatState = this.endpoint.stateOf(MatterbridgeThermostatServer.with(Thermostat.Feature.Heating));
+    /* v8 ignore next */
+    const localTemperature = thermostatState.localTemperature ?? 0;
+    const modeState = this.endpoint.stateOf(MatterbridgeWaterHeaterModeServer);
+    const isManualMode = modeState.supportedModes.some(
+      (mode) => mode.mode === modeState.currentMode && mode.modeTags.some((tag) => tag.value === (WaterHeaterMode.ModeTag.Manual as number)),
+    );
+    let heatingRequired = isManualMode && localTemperature < thermostatState.occupiedHeatingSetpoint;
+    const boostInfo = this.internal.activeBoostInfo;
+    if (this.state.boostState === WaterHeaterManagement.BoostState.Active && boostInfo) {
+      if (boostInfo.targetPercentage !== undefined && state.tankPercentage !== undefined) {
+        const reheatThreshold = this.internal.boostTargetReached && boostInfo.targetReheat !== undefined ? boostInfo.targetReheat : boostInfo.targetPercentage;
+        heatingRequired = heatingRequired || state.tankPercentage < reheatThreshold;
+      } else {
+        const targetSetpoint = boostInfo.temporarySetpoint ?? thermostatState.occupiedHeatingSetpoint;
+        heatingRequired = heatingRequired || localTemperature < targetSetpoint;
+      }
+    }
+    // Matter 1.6.0 § 9.5.7.2: Set HeatDemand to the active heat sources when heating water, or clear all bits when idle.
+    this.state.heatDemand = heatingRequired
+      ? {
+          immersionElement1: this.state.heaterTypes.immersionElement1,
+          immersionElement2: this.state.heaterTypes.immersionElement2,
+          heatPump: this.state.heaterTypes.heatPump,
+          boiler: this.state.heaterTypes.boiler,
+          other: this.state.heaterTypes.other,
+        }
+      : {};
+  }
 }
+
+/* v8 ignore start */
+export namespace MatterbridgeWaterHeaterManagementServer {
+  /**
+   * Internal state for MatterbridgeWaterHeaterManagementServer.
+   */
+  export class Internal {
+    activeBoostInfo: WaterHeaterManagement.WaterHeaterBoostInfo | undefined;
+    boostTargetReached = false;
+    boostExpiryTimer: Timer | undefined;
+  }
+}
+/* v8 ignore stop */
 
 /**
  * WaterHeaterMode server that validates and applies mode changes.
@@ -311,7 +485,7 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
    * Handles the WaterHeaterMode `ChangeToMode` command.
    *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
-   * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
+   * @returns {Promise<ModeBase.ChangeToModeResponse>} Command response with change status.
    */
   override async changeToMode(request: ModeBase.ChangeToModeRequest): Promise<ModeBase.ChangeToModeResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);

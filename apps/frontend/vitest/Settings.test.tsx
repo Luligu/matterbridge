@@ -253,7 +253,7 @@ describe('Settings', () => {
 
     await pickOption('#frontend-theme', 'Light');
 
-    expect(localStorage.getItem(MbfLsk.frontendTheme)).toBe('light');
+    expect(localStorage.getItem(MbfLsk['frontend-theme'])).toBe('light');
     expect(document.body.getAttribute('frontend-theme')).toBe('light');
     // The theme is a frontend-only preference and must not reach the backend.
     expect(sendMessage).not.toHaveBeenCalled();
@@ -265,7 +265,7 @@ describe('Settings', () => {
 
     await pickOption('#frontend-theme', 'Auto');
 
-    expect(localStorage.getItem(MbfLsk.frontendTheme)).toBe('auto');
+    expect(localStorage.getItem(MbfLsk['frontend-theme'])).toBe('auto');
     expect(['dark', 'light']).toContain(document.body.getAttribute('frontend-theme'));
     // Leave no color scheme listener behind for the next tests.
     await pickOption('#frontend-theme', 'Dark');
@@ -277,10 +277,10 @@ describe('Settings', () => {
     sendMessage.mockClear();
 
     fireEvent.click(document.querySelector('input[name="showPlugins"]')!);
-    expect(localStorage.getItem(MbfLsk.homePagePlugins)).toBe('false');
+    expect(localStorage.getItem(MbfLsk['home-page-plugins'])).toBe('false');
 
     await pickOption('#frontend-home', 'Logs');
-    expect(localStorage.getItem(MbfLsk.homePageMode)).toBe('logs');
+    expect(localStorage.getItem(MbfLsk['home-page-mode'])).toBe('logs');
 
     expect(sendMessage).not.toHaveBeenCalled();
   });
@@ -291,7 +291,7 @@ describe('Settings', () => {
 
     await pickOption('#frontend-virtual', 'Switch');
 
-    expect(localStorage.getItem(MbfLsk.virtualMode)).toBe('switch');
+    expect(localStorage.getItem(MbfLsk['virtual-mode'])).toBe('switch');
     expect(sendMessage).toHaveBeenCalledWith(config('setvirtualmode', 'switch'));
   });
 
@@ -316,10 +316,10 @@ describe('Settings', () => {
     const checkbox = document.querySelector('input[name="showPlugins"]')!;
 
     fireEvent.click(checkbox);
-    expect(localStorage.getItem(MbfLsk.homePagePlugins)).toBe('false');
+    expect(localStorage.getItem(MbfLsk['home-page-plugins'])).toBe('false');
 
     fireEvent.click(checkbox);
-    expect(localStorage.getItem(MbfLsk.homePagePlugins)).toBe('true');
+    expect(localStorage.getItem(MbfLsk['home-page-plugins'])).toBe('true');
     expect(checkbox).toBeChecked();
   });
 

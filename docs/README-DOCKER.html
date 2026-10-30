@@ -131,9 +131,9 @@
 <body>
 <h1 id="img-srchttpsmatterbridgeioassetsmatterbridgesvg-altmatterbridge-logo-width64px-height64pxnbspnbspnbspmatterbridge-docker-configuration"><img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge Docker configuration</h1>
 <p><a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/v/matterbridge.svg" alt="npm version"></a>
-<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/npm/dt/matterbridge.svg" alt="npm downloads"></a>
+<a href="https://www.npmjs.com/package/matterbridge"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Luligu/b21088ab9c9f2b119b42c33f0fef218d/raw/npm.json" alt="npm downloads"></a>
 <a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/v/luligu/matterbridge/latest?label=docker%20version" alt="Docker Version"></a>
-<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls" alt="Docker Pulls"></a>
+<a href="https://hub.docker.com/r/luligu/matterbridge"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Luligu/b21088ab9c9f2b119b42c33f0fef218d/raw/docker.json" alt="Docker Pulls"></a>
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg" alt="Node.js CI">
 <img src="https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg" alt="CodeQL">
 <a href="https://codecov.io/gh/Luligu/matterbridge"><img src="https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg" alt="Codecov"></a>
@@ -176,6 +176,11 @@
 <p>You can manually check the health status:</p>
 <pre><code class="language-bash">docker exec -it matterbridge mb-health
 </code></pre>
+<p>If you configured a custom port or HTTPS, pass the full URL to <code>mb-health</code>:</p>
+<pre><code class="language-bash">docker exec -it matterbridge mb-health http://localhost:8585/health
+# or with HTTPS:
+docker exec -it matterbridge mb-health https://localhost:443/health
+</code></pre>
 <h3 id="create-the-matterbridge-directories-first">Create the Matterbridge directories first</h3>
 <p>This creates the required directories in your home directory (if they don&#39;t already exist):</p>
 <pre><code class="language-bash">cd ~
@@ -216,7 +221,24 @@ sudo docker run --name matterbridge \
   matterbridge --docker --frontend 8585
 </code></pre>
 <p>If you override the command, always start it with <code>matterbridge --docker</code>.</p>
-<p><strong>If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add the --no-healthcheck param</strong>.</p>
+<p><strong>If you change the frontend port (or enable HTTPS), overriding the default command of the images, Docker will report the container unhealthy unless you disable the health check or override the health check command.</strong></p>
+<p>To disable the health check, add <code>--no-healthcheck</code>:</p>
+<pre><code class="language-bash">sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --network host --restart always --stop-timeout 60 --no-healthcheck -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+</code></pre>
+<p>Alternatively, to keep the health check active with the custom port without disabling it, override the health check command with <code>--health-cmd</code>:</p>
+<pre><code class="language-bash">sudo docker run --name matterbridge \
+  -v ~/Matterbridge:/root/Matterbridge \
+  -v ~/.matterbridge:/root/.matterbridge \
+  -v ~/.mattercert:/root/.mattercert \
+  --health-cmd &quot;mb_health http://localhost:8585/health&quot; \
+  --network host --restart always --stop-timeout 60 -d luligu/matterbridge:latest \
+  matterbridge --docker --frontend 8585
+</code></pre>
 <h3 id="how-to-run-a-double-instance-of-matterbridge">How to run a double instance of matterbridge</h3>
 <p>In edge cases when you need a double instance of a matterbridge plugin (like for zigbee2mqtt when you have two mqtt brokers), you can run a double instance of matterbridge using the profiles.</p>
 <pre><code class="language-bash">cd ~
@@ -264,9 +286,18 @@ docker compose up -d matterbridge
     command: [&quot;matterbridge&quot;, &quot;--docker&quot;, &quot;--frontend&quot;, &quot;8585&quot;]
 </code></pre>
 <p>If you override the command, always start it with <code>[&quot;matterbridge&quot;, &quot;--docker&quot;]</code>.</p>
-<p><strong>If you change the frontend port (or enable https), overriding the default command of the images, docker will report the container unhealty unless you add:</strong>.</p>
+<p><strong>If you change the frontend port (or enable HTTPS), overriding the default command of the images, Docker will report the container unhealthy unless you disable the health check or override the health check URL to match the new port and protocol.</strong></p>
+<p>To disable the health check:</p>
 <pre><code class="language-yaml">healthcheck:
   disable: true
+</code></pre>
+<p>Alternatively, to keep the health check active with the custom port without disabling it, override <code>healthcheck.test</code>:</p>
+<pre><code class="language-yaml">healthcheck:
+  test: [&#39;CMD-SHELL&#39;, &#39;mb_health http://localhost:8585/health&#39;]
+</code></pre>
+<p>Or when running with SSL / HTTPS (e.g. <code>--ssl --frontend 443</code>):</p>
+<pre><code class="language-yaml">healthcheck:
+  test: [&#39;CMD-SHELL&#39;, &#39;mb_health https://localhost:443/health&#39;]
 </code></pre>
 <h3 id="stop-with-docker-compose">Stop with Docker Compose</h3>
 <pre><code class="language-bash">docker compose down

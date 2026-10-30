@@ -229,19 +229,19 @@ describe('Devices', () => {
     });
 
     await waitFor(() => {
-      expect(localStorage.getItem(MbfLsk.devicesFilterPlugins)).toBe('PluginA');
+      expect(localStorage.getItem(MbfLsk['devices-filter-plugins'])).toBe('PluginA');
     });
 
     // Type in the device filter and ensure it's persisted.
     fireEvent.change(screen.getByPlaceholderText(/enter the device name or serial/i), { target: { value: 'abc' } });
     await waitFor(() => {
-      expect(localStorage.getItem(MbfLsk.devicesFilterDevices)).toBe('abc');
+      expect(localStorage.getItem(MbfLsk['devices-filter-devices'])).toBe('abc');
     });
 
     // Clear button (X) should clear both input and localStorage.
     fireEvent.click(screen.getByRole('button', { name: /clear device filter/i }));
     expect(screen.getByPlaceholderText(/enter the device name or serial/i)).toHaveValue('');
-    expect(localStorage.getItem(MbfLsk.devicesFilterDevices)).toBeNull();
+    expect(localStorage.getItem(MbfLsk['devices-filter-devices'])).toBeNull();
 
     // Switch to table view.
     act(() => {
@@ -249,7 +249,7 @@ describe('Devices', () => {
     });
 
     expect(screen.getByTestId('devices-table')).toBeInTheDocument();
-    expect(localStorage.getItem(MbfLsk.devicesViewMode)).toBe('table');
+    expect(localStorage.getItem(MbfLsk['devices-view-mode'])).toBe('table');
 
     // Sanity: our mocks captured props at least once.
     expect(lastIconsProps).toBeDefined();
@@ -257,9 +257,9 @@ describe('Devices', () => {
   });
 
   it('restores saved filters and saved table view, then switches back to icon view', async () => {
-    localStorage.setItem(MbfLsk.devicesFilterPlugins, 'PluginB');
-    localStorage.setItem(MbfLsk.devicesFilterDevices, 'saved-filter');
-    localStorage.setItem(MbfLsk.devicesViewMode, 'table');
+    localStorage.setItem(MbfLsk['devices-filter-plugins'], 'PluginB');
+    localStorage.setItem(MbfLsk['devices-filter-devices'], 'saved-filter');
+    localStorage.setItem(MbfLsk['devices-view-mode'], 'table');
 
     const sendMessage = vi.fn();
     const removeListener = vi.fn();
@@ -311,7 +311,7 @@ describe('Devices', () => {
     });
 
     expect(screen.getByTestId('devices-icons')).toBeInTheDocument();
-    expect(localStorage.getItem(MbfLsk.devicesViewMode)).toBe('icon');
+    expect(localStorage.getItem(MbfLsk['devices-view-mode'])).toBe('icon');
   });
 
   it('ignores a locked refresh_required for plugins', async () => {

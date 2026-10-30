@@ -1,0 +1,24 @@
+# To run tests on WaterHeaterManagement and WaterHeaterMode --PICS is required
+# Matches createDefaultWaterHeaterManagementClusterServer() and createDefaultWaterHeaterModeClusterServer() on CHIP WaterHeater endpoint 1402
+EWATERHTR.S=1
+EWATERHTR.S.F00=1 # EnergyManagement
+EWATERHTR.S.F01=1 # TankPercent
+EWATERHTR.S.A0000=1 # HeaterTypes
+EWATERHTR.S.A0001=1 # HeatDemand
+EWATERHTR.S.A0002=1 # TankVolume
+EWATERHTR.S.A0003=1 # EstimatedHeatRequired
+EWATERHTR.S.A0004=1 # TankPercentage
+EWATERHTR.S.A0005=1 # BoostState
+EWATERHTR.S.C00.Rsp=1 # Boost
+EWATERHTR.S.C01.Rsp=1 # CancelBoost
+EWATERHTR.S.E00=1 # BoostStarted
+EWATERHTR.S.E01=1 # BoostEnded
+
+WHM.S=1
+WHM.S.F00=0 # OnOff
+WHM.S.A0000=1 # SupportedModes
+WHM.S.A0001=1 # CurrentMode
+WHM.S.C00.Rsp=1 # ChangeToMode
+WHM.S.C01.Tx=1 # ChangeToModeResponse
+WHM.S.M.CAN_TEST_MODE_FAILURE=0
+WHM.S.M.CAN_MANUALLY_CONTROLLED=0

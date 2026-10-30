@@ -11,6 +11,7 @@ import { describe, it, beforeEach, afterEach, vi, expect } from 'vitest';
 import { MbfScreen, isMobile } from '../src/components/MbfScreen';
 import { UiContext, type UiContextType } from '../src/components/UiContext';
 import { WebSocketContext } from '../src/components/WebSocketProvider';
+import { MbfLsk } from '../src/utils/localStorage';
 import { MOBILE_HEIGHT_THRESHOLD, MOBILE_WIDTH_THRESHOLD } from '../src/viewport';
 
 // Mock WebSocketContext used by MbfScreen (logAutoScroll ref)
@@ -256,7 +257,7 @@ describe('MbfScreen', () => {
 
     await waitFor(() => expect(setMobile).toHaveBeenCalledWith(true));
     expect(logAutoScroll.current).toBe(false);
-    expect(localStorage.getItem('logAutoScroll')).toBe('false');
+    expect(localStorage.getItem(MbfLsk['log-auto-scroll'])).toBe('false');
   });
 
   it('keeps log auto scroll enabled when resizing within desktop mode', async () => {
@@ -274,7 +275,7 @@ describe('MbfScreen', () => {
 
     await waitFor(() => expect(setMobile).toHaveBeenCalledWith(false));
     expect(logAutoScroll.current).toBe(true);
-    expect(setItemSpy).not.toHaveBeenCalledWith('logAutoScroll', 'false');
+    expect(setItemSpy).not.toHaveBeenCalledWith(MbfLsk['log-auto-scroll'], 'false');
     setItemSpy.mockRestore();
   });
 });

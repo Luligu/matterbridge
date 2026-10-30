@@ -497,6 +497,13 @@ This endpoint runs the complete `TC_EEVSE_2_1` through `TC_EEVSE_2_10` matrix wi
 `energy-evse-complete.pics`, plus the Energy EVSE Mode tests. Its CHIP test-event-trigger support includes the
 SoC low/high/clear, VehicleID, and RFID stimuli in addition to the shared base EVSE triggers.
 
+## Endpoint 1402
+
+Water Heater clusters:
+
+- Water Heater Management (`EnergyManagement` and `TankPercent`)
+- Water Heater Mode
+
 ## Endpoint 1409
 
 Electrical Utility Meter clusters:

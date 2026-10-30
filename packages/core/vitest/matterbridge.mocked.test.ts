@@ -123,15 +123,16 @@ describe('Matterbridge mocked', () => {
     // Reset the process.argv to simulate command line arguments (no frontend no matter server)
     process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '-test', '-homedir', HOMEDIR, '-profile', 'Jest'];
 
-    // Reset the Matterbridge instance
-    (Matterbridge as any).instance = undefined;
+    // Load a new Matterbridge instance (afterEach cleared the previous one)
     matterbridge = await Matterbridge.loadInstance(); // Default to false if no parameter is provided
     plugins = matterbridge.plugins;
     devices = matterbridge.devices;
   });
 
   afterEach(async () => {
-    // Destroy the Matterbridge instance
+    // Destroy the Matterbridge instance, forcing the cleanup so it clears the singleton even when the test did not initialize it
+    (matterbridge as any).initialized = true;
+    (matterbridge as any).hasCleanupStarted = false;
     await destroyInstance(matterbridge, 0, 0);
 
     // Close mDNS instance
@@ -230,7 +231,7 @@ describe('Matterbridge mocked', () => {
     expect(matterbridge.matterStorageService).toBeUndefined();
     expect(matterbridge.matterbridgeContext).toBeUndefined();
 
-    expect((Matterbridge as any).instance).toBeDefined();
+    await expect(Matterbridge.loadInstance()).rejects.toThrow('Matterbridge instance already loaded');
   });
 
   test('Matterbridge.initialize()', async () => {
@@ -308,7 +309,10 @@ describe('Matterbridge mocked', () => {
     expect(MatterbridgeEndpoint.logLevel).toBe(LogLevel.INFO);
     expect((matterbridge as any).initialized).toBeFalsy();
     expect((matterbridge as any).hasCleanupStarted).toBeFalsy();
-    expect((Matterbridge as any).instance).toBeUndefined();
+
+    // The cleanup cleared the singleton, so a new instance can be loaded (afterEach destroys it)
+    matterbridge = await Matterbridge.loadInstance();
+    expect(matterbridge).toBeDefined();
   });
 
   test('Matterbridge.initialize() with pairing.json', async () => {
@@ -921,6 +925,24 @@ describe('Matterbridge mocked', () => {
     await expect((matterbridge as any).initialize()).rejects.toThrow('Fatal error creating matter storage: Test error for startMatterStorage');
   }, 10000);
 
+  test('should reset controller storage and shut down when controller and reset are requested', async () => {
+    process.argv.push('--controller', '--reset');
+    const resetBridgeSpy = vi.spyOn(matterbridge, 'shutdownProcessAndReset').mockResolvedValue();
+
+    try {
+      await matterbridge['initialize']();
+
+      expect(matterbridge.bridgeMode).toBe('controller');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, 'MatterbridgeController storage reset; remote device fabrics are unchanged');
+      expect(matterbridge.matterStorageService).toBeUndefined();
+      expect(matterbridge.controllerStorageManager).toBeUndefined();
+      expect(matterbridge['shutdown']).toBe(true);
+      expect(resetBridgeSpy).not.toHaveBeenCalled();
+    } finally {
+      resetBridgeSpy.mockRestore();
+    }
+  });
+
   test('Matterbridge.initialize() reset', async () => {
     // Reset the process.argv to simulate reset of a registered plugin
     process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR, '-profile', 'Jest', '-reset', 'matterbridge-mock1'];
@@ -1076,6 +1098,15 @@ describe('Matterbridge mocked', () => {
     await (matterbridge as any).logNodeAndSystemInfo();
     expect(networkInterfacesSpy).toHaveBeenCalled();
   }, 10000);
+
+  test('Matterbridge.logNodeAndSystemInfo() falls back to the uid when os.userInfo() throws', async () => {
+    const userInfoSpy = vi.spyOn(os, 'userInfo').mockImplementationOnce(() => {
+      throw new Error('A system error occurred: uv_os_get_passwd returned ENOENT (no such file or directory)');
+    });
+    await (matterbridge as any).logNodeAndSystemInfo();
+    expect(userInfoSpy).toHaveBeenCalled();
+    expect(matterbridge.systemInformation.user).toBe(String(process.getuid?.() ?? 'unknown'));
+  });
 
   test('matterbridge.initialize() loads the global node modules directory', async () => {
     process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-frontend', '0', '--test', '-homedir', HOMEDIR];
@@ -1362,6 +1393,16 @@ describe('Matterbridge mocked', () => {
     expect(startBridgeSpy).not.toHaveBeenCalled();
     expect(startChildBridgeSpy).toHaveBeenCalled();
 
+    vi.clearAllMocks();
+    process.argv = [...originalProcessArgv.slice(0, 2), '-novirtual', '-homedir', HOMEDIR, '--controller', '--test', '--frontend', '8283'];
+    await (matterbridge as any).parseCommandLine();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+    expect(frontendStartSpy).not.toHaveBeenCalled();
+    expect(startBridgeSpy).not.toHaveBeenCalled();
+    expect(startChildBridgeSpy).not.toHaveBeenCalled();
+
     frontendStartSpy.mockRestore();
     startBridgeSpy.mockRestore();
     startChildBridgeSpy.mockRestore();
@@ -1483,15 +1524,12 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).reachabilityTimeout).toBeUndefined();
     expect(plugin.reachabilityTimeout).toBeUndefined();
 
-    const instance = (Matterbridge as any).instance;
     (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
     (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
     await (matterbridge as any).cleanup('updating...', true, 10);
-    (Matterbridge as any).instance = instance; // Restore the instance after cleanup
     (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
     (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
     await (matterbridge as any).cleanup('restarting...', true, 10);
-    (Matterbridge as any).instance = instance; // Restore the instance after cleanup
 
     matterbridge.plugins.clear();
     pluginsShutdownSpy.mockRestore();

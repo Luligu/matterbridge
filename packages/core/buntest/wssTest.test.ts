@@ -1,5 +1,5 @@
 /**
- * @file buntest/wssTest.test.ts
+ * @file packages/core/buntest/wssTest.test.ts
  * @description This file contains the tests for a raw wss (WebSocket over TLS) server/client pair run under Bun.
  * @author Luca Liguori
  */
@@ -88,7 +88,7 @@ describe('bunWssTest', () => {
 
     await new Promise<void>((resolve, reject) => {
       client.addEventListener('open', () => resolve());
-      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${(event as ErrorEvent).message ?? event.type}`)));
+      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${event.message ?? event.type}`)));
     });
 
     expect(client.readyState).toBe(WebSocket.OPEN);
@@ -203,7 +203,7 @@ describe('bunWssTest', () => {
 
     await new Promise<void>((resolve, reject) => {
       client.addEventListener('open', () => resolve());
-      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${(event as ErrorEvent).message ?? event.type}`)));
+      client.addEventListener('error', (event) => reject(new Error(`WebSocket error: ${event.message ?? event.type}`)));
     });
 
     expect(client.readyState).toBe(WebSocket.OPEN);

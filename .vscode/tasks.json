@@ -267,6 +267,33 @@
       "problemMatcher": []
     },
     {
+      "label": "Pack",
+      "detail": "Build and pack the package tarball using mb-run",
+      "type": "shell",
+      "command": "npx",
+      "args": ["--yes", "mb-run", "--pack", "local"],
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pack Minify",
+      "detail": "Build, minify and pack the package tarball using mb-run",
+      "type": "shell",
+      "command": "npx",
+      "args": ["--yes", "mb-run", "--pack", "local", "minify"],
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Pack Obfuscate",
+      "detail": "Build, minify, obfuscate and pack the package tarball using mb-run",
+      "type": "shell",
+      "command": "npx",
+      "args": ["--yes", "mb-run", "--pack", "local", "minify", "obfuscate"],
+      "group": { "kind": "build", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Docker: Ubuntu Install",
       "detail": "Run an ubuntu:latest container on the host network with Node.js and bun",
       "type": "process",
@@ -818,14 +845,34 @@
         "--maxWorkers=100%",
         "--coverage.include=packages/core/src/matterNode.ts",
         "--coverage.include=packages/core/src/matterNodeHelpers.ts",
+        "--coverage.include=packages/core/src/matterStorage.ts",
+        "--coverage.include=packages/core/src/matterLogger.ts",
         "packages/core/vitest/matterNode.test.ts",
         "packages/core/vitest/matterNode.bridge.test.ts",
         "packages/core/vitest/matterNode.accessory.test.ts",
         "packages/core/vitest/matterNode.dynamic.test.ts",
         "packages/core/vitest/matterNode.server.test.ts",
         "packages/core/vitest/matterNode.quiet.test.ts",
-        "packages/core/vitest/matterNodeHelpers.test.ts"
+        "packages/core/vitest/matterNodeHelpers.test.ts",
+        "packages/core/vitest/matterStorage.test.ts",
+        "packages/core/vitest/matterLogger.test.ts"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: MatterController",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "test:controller"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: MatterController",
+      "type": "process",
+      "command": "npm",
+      "args": ["run", "test:bun:controller"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -843,7 +890,9 @@
         "packages/core/buntest/matterNode.dynamic.test.ts",
         "packages/core/buntest/matterNode.server.test.ts",
         "packages/core/buntest/matterNode.quiet.test.ts",
-        "packages/core/buntest/matterNodeHelpers.test.ts"
+        "packages/core/buntest/matterNodeHelpers.test.ts",
+        "packages/core/buntest/matterStorage.test.ts",
+        "packages/core/buntest/matterLogger.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -864,12 +913,14 @@
         "--coverage.include=packages/core/src/cli.ts",
         "--coverage.include=packages/core/src/cliEmitter.ts",
         "--coverage.include=packages/core/src/cliHistory.ts",
+        "--coverage.include=packages/core/src/protectPrototypes.ts",
         "--coverage.include=packages/core/src/mb_health.ts",
         "--coverage.include=packages/core/src/mb_coap.ts",
         "--coverage.include=packages/core/src/mb_mdns.ts",
         "packages/core/vitest/cli.test.ts",
         "packages/core/vitest/cliEmitter.test.ts",
         "packages/core/vitest/cliHistory.test.ts",
+        "packages/core/vitest/protectPrototypes.test.ts",
         "packages/core/vitest/mb_health.test.ts",
         "packages/core/vitest/mb_coap.test.ts",
         "packages/core/vitest/mb_mdns.test.ts"
@@ -881,7 +932,15 @@
       "label": "Buntest: Cli",
       "type": "process",
       "command": "bun",
-      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/cli.test.ts", "packages/core/buntest/cliEmitter.test.ts", "packages/core/buntest/cliHistory.test.ts"],
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/cli.test.ts",
+        "packages/core/buntest/cliEmitter.test.ts",
+        "packages/core/buntest/cliHistory.test.ts",
+        "packages/core/buntest/protectPrototypes.test.ts"
+      ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },

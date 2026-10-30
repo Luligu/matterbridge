@@ -138,6 +138,19 @@ function renderWithDevice(
   return helpers;
 }
 
+// A single click on a plugin frontend button waits for the double click delay before opening the dialog, so run it with fake timers and let the delay pass.
+function singleClick(element: HTMLElement) {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  try {
+    fireEvent.click(element);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 describe('HomeDevices', () => {
   // HomeDevices logs verbosely with `debug` mocked to true; keep the test output clean by silencing
   // console.log/warn by default and asserting against the spy directly where a test needs to check a log.
@@ -166,7 +179,7 @@ describe('HomeDevices', () => {
   it('opens the plugin frontend without corrupting a configUrl query string', () => {
     renderWithDevice('./plugins/matterbridge-test/?device=test1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
 
     expect(screen.getByTitle('Test Device frontend')).toHaveAttribute('src', '/plugins/matterbridge-test/?device=test1');
   });
@@ -174,7 +187,7 @@ describe('HomeDevices', () => {
   it('adds the trailing slash to the path when the configUrl has a query string but no trailing slash', () => {
     renderWithDevice('./plugins/matterbridge-test?device=test1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
 
     expect(screen.getByTitle('Test Device frontend')).toHaveAttribute('src', '/plugins/matterbridge-test/?device=test1');
   });
@@ -182,7 +195,9 @@ describe('HomeDevices', () => {
   it('adds the trailing slash to a configUrl without a query string', () => {
     renderWithDevice('/plugins/matterbridge-test');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    const configButton = screen.getByRole('button', { name: 'Open config url' });
+    expect(within(configButton).getByTestId('LanguageIcon')).toBeInTheDocument();
+    singleClick(configButton);
 
     expect(screen.getByTitle('Test Device frontend')).toHaveAttribute('src', '/plugins/matterbridge-test/');
   });
@@ -688,7 +703,7 @@ describe('HomeDevices', () => {
 
   it('closes the plugin frontend dialog via the Close button', () => {
     renderWithDevice('/plugins/matterbridge-test');
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
     expect(screen.getByTitle('Test Device frontend')).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
@@ -697,7 +712,7 @@ describe('HomeDevices', () => {
 
   it('closes the plugin frontend dialog on Escape', () => {
     renderWithDevice('/plugins/matterbridge-test');
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
     expect(screen.queryByTitle('Test Device frontend')).not.toBeInTheDocument();
@@ -707,16 +722,38 @@ describe('HomeDevices', () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     renderWithDevice('https://example.com/config');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    const configButton = screen.getByRole('button', { name: 'Open config url' });
+    expect(within(configButton).getByTestId('SettingsIcon')).toBeInTheDocument();
+    singleClick(configButton);
 
     expect(openSpy).toHaveBeenCalledWith('https://example.com/config', '_blank');
     expect(screen.queryByTitle('Test Device frontend')).not.toBeInTheDocument();
     openSpy.mockRestore();
   });
 
+  it('opens the plugin frontend in a new browser tab on double click instead of the dialog', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    renderWithDevice('./plugins/matterbridge-test?device=test1');
+
+    const configButton = screen.getByRole('button', { name: 'Open config url' });
+    fireEvent.click(configButton);
+    fireEvent.click(configButton);
+    fireEvent.doubleClick(configButton);
+
+    expect(openSpy).toHaveBeenCalledWith('/plugins/matterbridge-test/?device=test1', '_blank');
+    expect(screen.queryByTitle('Test Device frontend')).not.toBeInTheDocument();
+    openSpy.mockRestore();
+  });
+
+  it('does not show the config button when the configUrl points to another plugin frontend', () => {
+    renderWithDevice('/plugins/matterbridge-test-other/');
+
+    expect(screen.queryByRole('button', { name: 'Open config url' })).not.toBeInTheDocument();
+  });
+
   it('injects scrollbar styling into the plugin frontend iframe once it loads', () => {
     renderWithDevice('/plugins/matterbridge-test');
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
     const iframe = screen.getByTitle('Test Device frontend') as unknown as HTMLIFrameElement;
     // jsdom's default iframe document has no <head> (unlike a real browser's about:blank), so the
     // component's `!iframeDocument?.head` guard would always short-circuit; write a minimal document
@@ -737,7 +774,7 @@ describe('HomeDevices', () => {
 
   it('replaces a previously injected scrollbar style tag instead of duplicating it', () => {
     renderWithDevice('/plugins/matterbridge-test');
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
     const iframe = screen.getByTitle('Test Device frontend') as unknown as HTMLIFrameElement;
     const iframeDocument = iframe.contentDocument;
     if (iframeDocument) {
@@ -756,7 +793,7 @@ describe('HomeDevices', () => {
 
   it('does nothing on iframe load when the iframe has no accessible document', () => {
     renderWithDevice('/plugins/matterbridge-test');
-    fireEvent.click(screen.getByRole('button', { name: 'Open config url' }));
+    singleClick(screen.getByRole('button', { name: 'Open config url' }));
     const iframe = screen.getByTitle('Test Device frontend') as unknown as HTMLIFrameElement;
     Object.defineProperty(iframe, 'contentDocument', { value: null, configurable: true });
 

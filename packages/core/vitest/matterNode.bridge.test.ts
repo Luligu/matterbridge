@@ -113,7 +113,7 @@ describe('MatterNode bridge', () => {
     await matter.create();
     expect(nextSettings).toEqual({ port: MATTER_PORT + 1, passcode: PASSCODE + 1, discriminator: DISCRIMINATOR + 1 });
     expect(matter.serverNode?.state.network.port).toBe(MATTER_PORT);
-    expect(matter.matterStorageService).toBeDefined();
+    expect(matter.matterStorageManager).toBeDefined();
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(false);
     expect(matter.aggregatorNode).toBeDefined();
@@ -225,7 +225,7 @@ describe('MatterNode bridge', () => {
 
   test('Start MatterNode in bridge mode', async () => {
     await matter.start();
-    expect(matter.matterStorageService).toBeDefined();
+    expect(matter.matterStorageManager).toBeDefined();
     expect(matter.serverNode).toBeDefined();
     expect(matter.serverNode?.lifecycle.isOnline).toBe(true);
     expect(matter.aggregatorNode).toBeDefined();
@@ -270,7 +270,7 @@ describe('MatterNode bridge', () => {
     await matter.stop();
     expect(matter.serverNode).toBeUndefined();
     expect(matter.aggregatorNode).toBeUndefined();
-    expect(matter.matterStorageService).toBeUndefined();
+    expect(matter.matterStorageManager).toBeUndefined();
   });
 
   test('Ignore matter_start and matter_stop for another storeId', async () => {
@@ -327,7 +327,7 @@ describe('MatterNode bridge', () => {
     expect(response.result).toEqual({ storeId: 'Matterbridge', success: true });
     expect(matter.serverNode).toBeUndefined();
     expect(matter.aggregatorNode).toBeUndefined();
-    expect(matter.matterStorageService).toBeUndefined();
+    expect(matter.matterStorageManager).toBeUndefined();
     testServer.close();
   }, 30000);
 });

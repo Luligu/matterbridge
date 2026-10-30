@@ -1,9 +1,9 @@
 # <img src="https://matterbridge.io/assets/matterbridge.svg" alt="Matterbridge Logo" width="64px" height="64px">&nbsp;&nbsp;&nbsp;Matterbridge changelog
 
 [![npm version](https://img.shields.io/npm/v/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
-[![npm downloads](https://img.shields.io/npm/dt/matterbridge.svg)](https://www.npmjs.com/package/matterbridge)
+[![npm downloads](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Luligu/b21088ab9c9f2b119b42c33f0fef218d/raw/npm.json)](https://www.npmjs.com/package/matterbridge)
 [![Docker Version](https://img.shields.io/docker/v/luligu/matterbridge/latest?label=docker%20version)](https://hub.docker.com/r/luligu/matterbridge)
-[![Docker Pulls](https://img.shields.io/docker/pulls/luligu/matterbridge?label=docker%20pulls)](https://hub.docker.com/r/luligu/matterbridge)
+[![Docker Pulls](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/Luligu/b21088ab9c9f2b119b42c33f0fef218d/raw/docker.json)](https://hub.docker.com/r/luligu/matterbridge)
 ![Node.js CI](https://github.com/Luligu/matterbridge/actions/workflows/build.yml/badge.svg)
 ![CodeQL](https://github.com/Luligu/matterbridge/actions/workflows/codeql.yml/badge.svg)
 [![Codecov](https://codecov.io/gh/Luligu/matterbridge/branch/main/graph/badge.svg)](https://codecov.io/gh/Luligu/matterbridge)
@@ -28,6 +28,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 If you like this project and find it useful, please consider giving it a star on [GitHub](https://github.com/Luligu/matterbridge) and sponsoring it.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
+
+## [3.11.1] - 2026-10-30
+
+### Breaking changes
+
+- [frontend]: Rename all frontend local storage keys to use the `mbf-` prefix and lowercase, hyphen-separated names to avoid possible storage key conflicts when running inside Home Assistant Ingress. As a consequence, all frontend settings will reset to their default values after updating.
+
+### Added
+
+- [docker]: Include matterbridge-host-health from the dev branch in the dev and bundev images.
+- [core]: Add the Tapo vendor id (5010) to `getVendorIdName`.
+- [WaterHeater]: Enable the `EnergyManagement` feature alongside `TankPercent` on the `WaterHeaterManagement` cluster (Matter 1.6.1 Device Library § 14.2.6, Application Cluster § 9.5.7.3-4), and add optional `tankVolume` (default `100` L) and `estimatedHeatRequired` (default `0` mWh) parameters to `WaterHeaterOptions`, `WaterHeater`, and `createDefaultWaterHeaterManagementClusterServer()`. Thanks Ludovic BOUÉ.
+- [WaterHeater]: Implement `BoostStarted`/`BoostEnded` events, boost duration timer, `oneShot`, `temporarySetpoint`, `targetPercentage`, `targetReheat`, and `HeatDemand` updates in `MatterbridgeWaterHeaterManagementServer` (Matter 1.6.1 § 9.5.8).
+- [chip]: Add `water-heater.pics`, `WaterHeaterManagement` test event triggers, and the 5 `WaterHeater` conformance tests (`TC_EWATERHTR_2_1`–`2_3`, `TC_WHM_1_2`, `TC_WHM_2_1`) on endpoint `1402` (`npm run chip:test:water-heater`).
+- [core]: Freeze the prototypes of the BroadcastServer, ThreadsManager, Matterbridge, platform, endpoint, command handler and MatterbridgeServer classes from the cli, and of the ThreadsWrapper, WebRTC session and transport classes when their module loads, so their methods cannot be patched.
+- [docker]: Add instructions in README-DOCKER on how to change the health check port and protocol without disabling it.
+- [frontend]: Double-click the plugin frontend button in the plugins and devices lists to open the plugin frontend in a new tab instead of the dialog.
+- [frontend]: Show the web icon on the device config button when its `configUrl` points to the device's own plugin frontend.
+- [workflows]: Add the daily `badges` workflow and `scripts/badges.mjs`, which publish the all-time npm downloads and Docker pulls with one decimal (e.g. 1.1M) as shields.io endpoint badges in a gist; the READMEs use them.
+
+### Changed
+
+- [core]: Skip frontend startup automatically in controller mode.
+- [core]: Use an automatically assigned controller port unless `--port` is explicitly provided.
+- [core]: Restore controller commands using the matter.js 0.18 controller API and separate MatterbridgeController storage.
+- [vscode]: Enable Git sign-off and update commit message instructions to v.1.0.1 so Git adds the trailer at commit time.
+- [core]: `Matterbridge.loadInstance()` now throws when an instance is already loaded and the singleton is a true private field.
+- [scripts]: Sync deep-clean, git-sync-dev, and prepublish-clean with the mb-run templates.
+- [frontend]: A device `configUrl` opens in the dialog only when it points to the device's own plugin frontend. A `configUrl` pointing to another plugin's frontend hides the config button.
+- [agents]: Explain in the plugin-frontend rule (v.1.0.2) why the plugin frontend must be opened at its directory URL with a trailing slash.
+- [codex]: Sync `.codex/config.toml` with the mb-run template (v.1.0.6).
+- [matterbridge]: Bump `matterbridge` version to v.3.11.1.
+- [matterbridge]: Bump `@types/bun` to v.1.4.4.
+- [matterbridge]: Bump `oxfmt` to v.0.74.0.
+- [matterbridge]: Bump `oxlint` to v.1.89.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2005.
+- [frontend]: Bump `react-router` to v.8.5.0.
+- [frontend]: Bump `vite` to v.8.3.5.
+- [core]: Bump `multer` to v.2.5.0.
+- [core]: Bump `werift` to v.0.25.2.
+- [tests]: Remove redundant WebSocket error event casts after updating the Bun types.
+- [buntest]: Reach 100% function and line coverage with the line-precise Bun 1.4.4 coverage report (runtimeBun, tracker, mdns, matterbridgePlatform and matterNode), and make the tracker CPU load test deterministic.
+
+### Fixed
+
+- [WaterHeater]: Preserve legacy positional constructor arguments; configure tank volume and estimated heat required through `WaterHeaterOptions` only.
+- [frontend]: Reset Search Plugins table sorting and column visibility with the other UI preferences.
+- [core]: `MatterbridgeColorControlServer` clamps a restored `colorTemperatureMireds` into the current physical min/max range at initialization, so an endpoint whose range narrowed since the value was stored no longer fails to initialize. Refs [matterbridge-hass#257](https://github.com/Luligu/matterbridge-hass/issues/257).
+- [frontend]: Normalize frontend storage keys to lowercase with hyphens and align table preferences with UI reset.
+- [frontend]: The search plugins dialog shows the cached plugin list at once and keeps it, with the cached totals, links and versions, when npm requests fail, and backs off when npm blocks the downloads API (a 429 reported by the browser as a network error).
+- [core]: Fall back to the uid when `os.userInfo()` throws, so Matterbridge starts when run as a uid without a passwd entry (i.e. `docker run --user`). Closes [#666](https://github.com/Luligu/matterbridge/issues/666).
+- [core]: The matter storage backup no longer reports success when the copy fails, and is skipped when there is no matter storage.
+- [devcontainer]: Fix the Bun dev container `npm` shim: drop the npm-only flags that `bun prune` and `bun link` reject since Bun 1.4.4.
+- [buntest]: Move `wssTest.test.ts` to `packages/core/buntest`, so it resolves `ws` with the Bun isolated linker.
+- [thread]: Spawn `npm --version` instead of `npm list` in the Bun spawn test, which fails on the Bun isolated linker layout.
+- [scripts]: `downloads.mjs` (v.2.1.0) queries an explicit 30-day date range instead of the npm `last-month` period, which returns stale data.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.11.0] - 2026-10-23
 

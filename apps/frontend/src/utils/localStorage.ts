@@ -1,50 +1,55 @@
-export const LOCAL_STORAGE_PREFIX = '';
+export const LOCAL_STORAGE_PREFIX = 'mbf-';
 
 export const MbfLsk = {
   // App
-  enableMobile: `${LOCAL_STORAGE_PREFIX}enableMobile`,
+  'enable-mobile': `${LOCAL_STORAGE_PREFIX}enable-mobile`,
   // Devices page
-  devicesFilterPlugins: `${LOCAL_STORAGE_PREFIX}devicesFilterPlugins`,
-  devicesFilterDevices: `${LOCAL_STORAGE_PREFIX}devicesFilterDevices`,
-  devicesViewMode: `${LOCAL_STORAGE_PREFIX}devicesViewMode`,
-  devicesClusterViewMode: `${LOCAL_STORAGE_PREFIX}devicesClusterViewMode`,
+  'devices-filter-plugins': `${LOCAL_STORAGE_PREFIX}devices-filter-plugins`,
+  'devices-filter-devices': `${LOCAL_STORAGE_PREFIX}devices-filter-devices`,
+  'devices-view-mode': `${LOCAL_STORAGE_PREFIX}devices-view-mode`,
+  'devices-cluster-view-mode': `${LOCAL_STORAGE_PREFIX}devices-cluster-view-mode`,
   // Home page
-  frontendVersion: `${LOCAL_STORAGE_PREFIX}frontendVersion`,
-  matterbridgeVersion: `${LOCAL_STORAGE_PREFIX}matterbridgeVersion`,
-  homePageMode: `${LOCAL_STORAGE_PREFIX}homePageMode`,
+  'frontend-version': `${LOCAL_STORAGE_PREFIX}frontend-version`,
+  'matterbridge-version': `${LOCAL_STORAGE_PREFIX}matterbridge-version`,
+  'home-page-mode': `${LOCAL_STORAGE_PREFIX}home-page-mode`,
   // Logs page
-  logFilterLevel: `${LOCAL_STORAGE_PREFIX}logFilterLevel`,
-  logFilterSearch: `${LOCAL_STORAGE_PREFIX}logFilterSearch`,
-  logAutoScroll: `${LOCAL_STORAGE_PREFIX}logAutoScroll`,
-  logLength: `${LOCAL_STORAGE_PREFIX}logLength`,
+  'log-filter-level': `${LOCAL_STORAGE_PREFIX}log-filter-level`,
+  'log-filter-search': `${LOCAL_STORAGE_PREFIX}log-filter-search`,
+  'log-auto-scroll': `${LOCAL_STORAGE_PREFIX}log-auto-scroll`,
+  'log-length': `${LOCAL_STORAGE_PREFIX}log-length`,
   // Settings page
-  frontendTheme: `${LOCAL_STORAGE_PREFIX}frontendTheme`,
-  homePagePlugins: `${LOCAL_STORAGE_PREFIX}homePagePlugins`,
-  virtualMode: `${LOCAL_STORAGE_PREFIX}virtualMode`,
+  'frontend-theme': `${LOCAL_STORAGE_PREFIX}frontend-theme`,
+  'home-page-plugins': `${LOCAL_STORAGE_PREFIX}home-page-plugins`,
+  'virtual-mode': `${LOCAL_STORAGE_PREFIX}virtual-mode`,
   // Install package dialog
-  installAutoExit: `${LOCAL_STORAGE_PREFIX}installAutoExit`,
+  'install-auto-exit': `${LOCAL_STORAGE_PREFIX}install-auto-exit`,
   // Search plugins total cache
-  searchPluginsTotal: `${LOCAL_STORAGE_PREFIX}searchPluginsTotal`,
+  'search-plugins-total': `${LOCAL_STORAGE_PREFIX}search-plugins-total`,
   // Search plugins metadata cache (homepage/help/changelog)
-  searchPluginsMeta: `${LOCAL_STORAGE_PREFIX}searchPluginsMeta`,
+  'search-plugins-meta': `${LOCAL_STORAGE_PREFIX}search-plugins-meta`,
   // Search plugins versions cache
-  searchPluginsVersions: `${LOCAL_STORAGE_PREFIX}searchPluginsVersions`,
+  'search-plugins-versions': `${LOCAL_STORAGE_PREFIX}search-plugins-versions`,
+  // Search plugins list cache (last successful npm search)
+  'search-plugins-search': `${LOCAL_STORAGE_PREFIX}search-plugins-search`,
 };
 
 export const LOCAL_STORAGE_TABLE_KEYS = {
   // MbfTable component
-  'Devices_table_order_by': `${LOCAL_STORAGE_PREFIX}Devices_table_order_by`,
-  'Devices_table_order': `${LOCAL_STORAGE_PREFIX}Devices_table_order`,
-  'Devices_column_visibility': `${LOCAL_STORAGE_PREFIX}Devices_column_visibility`,
-  'Plugins_table_order_by': `${LOCAL_STORAGE_PREFIX}Plugins_table_order_by`,
-  'Plugins_table_order': `${LOCAL_STORAGE_PREFIX}Plugins_table_order`,
-  'Plugins_column_visibility': `${LOCAL_STORAGE_PREFIX}Plugins_column_visibility`,
-  'Registered devices_table_order_by': `${LOCAL_STORAGE_PREFIX}Registered devices_table_order_by`,
-  'Registered devices_table_order': `${LOCAL_STORAGE_PREFIX}Registered devices_table_order`,
-  'Registered devices_column_visibility': `${LOCAL_STORAGE_PREFIX}Registered devices_column_visibility`,
-  'Clusters_table_order_by': `${LOCAL_STORAGE_PREFIX}Clusters_table_order_by`,
-  'Clusters_table_order': `${LOCAL_STORAGE_PREFIX}Clusters_table_order`,
-  'Clusters_column_visibility': `${LOCAL_STORAGE_PREFIX}Clusters_column_visibility`,
+  'devices-table-order-by': `${LOCAL_STORAGE_PREFIX}devices-table-order-by`,
+  'devices-table-order': `${LOCAL_STORAGE_PREFIX}devices-table-order`,
+  'devices-column-visibility': `${LOCAL_STORAGE_PREFIX}devices-column-visibility`,
+  'plugins-table-order-by': `${LOCAL_STORAGE_PREFIX}plugins-table-order-by`,
+  'plugins-table-order': `${LOCAL_STORAGE_PREFIX}plugins-table-order`,
+  'plugins-column-visibility': `${LOCAL_STORAGE_PREFIX}plugins-column-visibility`,
+  'search-plugins-table-order-by': `${LOCAL_STORAGE_PREFIX}search-plugins-table-order-by`,
+  'search-plugins-table-order': `${LOCAL_STORAGE_PREFIX}search-plugins-table-order`,
+  'search-plugins-column-visibility': `${LOCAL_STORAGE_PREFIX}search-plugins-column-visibility`,
+  'registered-devices-table-order-by': `${LOCAL_STORAGE_PREFIX}registered-devices-table-order-by`,
+  'registered-devices-table-order': `${LOCAL_STORAGE_PREFIX}registered-devices-table-order`,
+  'registered-devices-column-visibility': `${LOCAL_STORAGE_PREFIX}registered-devices-column-visibility`,
+  'clusters-table-order-by': `${LOCAL_STORAGE_PREFIX}clusters-table-order-by`,
+  'clusters-table-order': `${LOCAL_STORAGE_PREFIX}clusters-table-order`,
+  'clusters-column-visibility': `${LOCAL_STORAGE_PREFIX}clusters-column-visibility`,
 };
 
 /**

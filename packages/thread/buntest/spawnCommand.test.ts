@@ -44,7 +44,8 @@ describe('Spawn', () => {
   it('should spawn a command successfully -nosudo', async () => {
     process.argv = [...originalProcessArgv.slice(0, 2), '--verbose', '--nosudo'];
     const command = 'npm';
-    const args = ['list', '--depth=0'];
+    // npm list would fail on the Bun isolated linker layout (ELSPROBLEMS on the hoisted @matter/* packages)
+    const args = ['--version'];
 
     const result = await spawnCommand(command, args, 'install', 'test-package');
 

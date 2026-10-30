@@ -1,8 +1,9 @@
 /**
  * downloads.mjs
- * Version: 2.0.0
+ * Version: 2.1.0
  *
- * Prints daily npm downloads for the last month for the package in ../package.json.
+ * Prints daily npm downloads for the last 30 days and today for the package in ../package.json.
+ * It queries an explicit date range because the npm `last-week` / `last-month` periods can return stale data.
  *
  * Usage:
  *   node scripts/downloads.mjs --version, -v  Show the script version
@@ -23,7 +24,13 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const scriptVersion = '2.0.0';
+const scriptVersion = '2.1.0';
+
+/** Number of days before today to include in the range. */
+const rangeDays = 30;
+
+/** Maximum number of trailing zero days treated as not yet published by npm. */
+const maxPendingDays = 2;
 
 /**
  * @typedef {{ day: string, downloads: number }} DownloadRow
@@ -31,10 +38,6 @@ const scriptVersion = '2.0.0';
 
 /**
  * @typedef {{ start: string, end: string, package: string, downloads: DownloadRow[] }} NpmDownloadsRangeResponse
- */
-
-/**
- * @typedef {{ start: string, end: string, package: string, downloads: number }} NpmDownloadsPointResponse
  */
 
 /**
@@ -46,7 +49,7 @@ function usage() {
   return [
     'Usage: node scripts/downloads.mjs [--dry-run|-n]',
     '',
-    'Print the daily npm downloads of the last month for the package in ../package.json.',
+    'Print the daily npm downloads of the last 30 days and today for the package in ../package.json.',
     '',
     '  --dry-run, -n  Print the package name without querying the npm registry',
     '  --version, -v  Show the script version',
@@ -66,13 +69,25 @@ async function readJson(path) {
 }
 
 /**
- * Fetch npm daily download stats for the last month.
+ * Format a date as YYYY-MM-DD (UTC).
+ *
+ * @param {Date} date - Date to format.
+ * @returns {string} The day key.
+ */
+function dayKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Fetch npm daily download stats for an explicit date range.
  *
  * @param {string} pkgName - NPM package name.
+ * @param {string} start - First day (YYYY-MM-DD).
+ * @param {string} end - Last day (YYYY-MM-DD).
  * @returns {Promise<NpmDownloadsRangeResponse>} Range response.
  */
-async function fetchLastMonthDownloads(pkgName) {
-  const url = `https://api.npmjs.org/downloads/range/last-month/${encodeURIComponent(pkgName)}`;
+async function fetchRangeDownloads(pkgName, start, end) {
+  const url = `https://api.npmjs.org/downloads/range/${start}:${end}/${encodeURIComponent(pkgName)}`;
   const res = await fetch(url, {
     headers: { accept: 'application/json' },
   });
@@ -84,31 +99,6 @@ async function fetchLastMonthDownloads(pkgName) {
 
   const data = /** @type {NpmDownloadsRangeResponse} */ (await res.json());
   if (!data || !Array.isArray(data.downloads)) {
-    throw new Error(`Unexpected response shape from ${url}`);
-  }
-  return data;
-}
-
-/**
- * Fetch npm download stats for the current day.
- *
- * @param {string} pkgName - NPM package name.
- * @returns {Promise<NpmDownloadsPointResponse>} Point response.
- */
-async function fetchCurrentDayDownloads(pkgName) {
-  const today = new Date().toISOString().slice(0, 10);
-  const url = `https://api.npmjs.org/downloads/point/${today}:${today}/${encodeURIComponent(pkgName)}`;
-  const res = await fetch(url, {
-    headers: { accept: 'application/json' },
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`HTTP ${res.status} fetching ${url}\n${text}`);
-  }
-
-  const data = /** @type {NpmDownloadsPointResponse} */ (await res.json());
-  if (!data || typeof data.downloads !== 'number') {
     throw new Error(`Unexpected response shape from ${url}`);
   }
   return data;
@@ -247,17 +237,21 @@ async function printDownloads(pkgPath, dryRun) {
     return;
   }
 
-  const [lastMonthData, currentDayData] = await Promise.all([fetchLastMonthDownloads(name), fetchCurrentDayDownloads(name)]);
+  const today = new Date();
+  const end = dayKey(today);
+  const start = dayKey(new Date(today.getTime() - rangeDays * 24 * 60 * 60 * 1000));
+  const rangeData = await fetchRangeDownloads(name, start, end);
 
-  const rows = lastMonthData.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 }));
-  const currentDayRow = { day: String(currentDayData.end), downloads: Number(currentDayData.downloads) || 0 };
-  const currentDayPending = currentDayRow.day > lastMonthData.end && currentDayRow.downloads === 0;
-  if (!rows.some((r) => r.day === currentDayRow.day)) {
-    rows.push(currentDayRow);
-  }
+  const rows = rangeData.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 }));
   rows.sort((a, b) => a.day.localeCompare(b.day));
 
-  const summaryRows = currentDayPending ? rows.filter((r) => r.day !== currentDayRow.day) : rows;
+  // npm reports 0 for the latest days until it publishes their counts: mark the trailing zero days as pending.
+  const pendingDays = new Set();
+  for (let i = rows.length - 1; i >= 0 && pendingDays.size < maxPendingDays && rows[i].downloads === 0; i -= 1) {
+    pendingDays.add(rows[i].day);
+  }
+
+  const summaryRows = rows.filter((r) => !pendingDays.has(r.day));
   const total = sumDownloads(summaryRows);
   const days = summaryRows.length || 1;
   const avg = Math.round(total / days);
@@ -271,11 +265,11 @@ async function printDownloads(pkgPath, dryRun) {
   const dayWidth = Math.max(3, ...rows.map((r) => r.day.length));
   const downloadStrings = rows.map((r) => formatNumber(r.downloads));
   const downloadsWidth = Math.max('DOWNLOADS'.length, ...downloadStrings.map((s) => s.length));
-  const rangeStart = rows[0]?.day ?? lastMonthData.start;
-  const rangeEnd = rows[rows.length - 1]?.day ?? currentDayData.end;
+  const rangeStart = rows[0]?.day ?? rangeData.start;
+  const rangeEnd = rows[rows.length - 1]?.day ?? rangeData.end;
 
-  console.log(style.bold(style.cyan('npm downloads (last-month + today)')));
-  console.log(`${style.dim('Package:')} ${lastMonthData.package}`);
+  console.log(style.bold(style.cyan(`npm downloads (last ${rangeDays} days + today)`)));
+  console.log(`${style.dim('Package:')} ${rangeData.package}`);
   console.log(`${style.dim('Range:  ')} ${rangeStart} .. ${rangeEnd}`);
   console.log('');
 
@@ -285,14 +279,14 @@ async function printDownloads(pkgPath, dryRun) {
   for (let i = 0; i < rows.length; i += 1) {
     const r = rows[i];
     const downloads = downloadStrings[i];
-    const renderedDownloads = currentDayPending && r.day === currentDayRow.day ? style.dim(padLeft('pending', downloadsWidth)) : padLeft(downloads, downloadsWidth);
+    const renderedDownloads = pendingDays.has(r.day) ? style.dim(padLeft('pending', downloadsWidth)) : padLeft(downloads, downloadsWidth);
     console.log(`${padRight(r.day, dayWidth)} ${renderedDownloads}`);
   }
 
   console.log('');
   console.log(style.dim('Summary'));
-  if (currentDayPending) {
-    console.log(style.dim("Today:    npm has not published today's count yet"));
+  if (pendingDays.size > 0) {
+    console.log(style.dim(`Pending:  npm has not published the count of ${[...pendingDays].sort().join(', ')} yet`));
   }
   console.log(`${style.dim('Total:   ')} ${style.bold(style.green(formatNumber(total)))}`);
   console.log(`${style.dim('Avg/day: ')} ${style.yellow(formatNumber(avg))}`);

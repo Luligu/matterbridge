@@ -131,7 +131,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   const [devices, setDevices] = useState<ApiDevice[]>([]);
   const [clusters, setClusters] = useState<Cluster[]>([]);
   const [subEndpointsCount, setSubEndpointsCount] = useState(0);
-  const [clustersView, setClustersView] = useState<'grid' | 'tree'>(() => (localStorage.getItem(MbfLsk.devicesClusterViewMode) === 'tree' ? 'tree' : 'grid'));
+  const [clustersView, setClustersView] = useState<'grid' | 'tree'>(() => (localStorage.getItem(MbfLsk['devices-cluster-view-mode']) === 'tree' ? 'tree' : 'grid'));
 
   // Selected device for clusters view. handleDeviceClick sets these states based on the clicked device row, and if the same row is clicked again, it resets them to null to go back to the devices view.
   const [pluginName, setPluginName] = useState<string | null>(null);
@@ -292,7 +292,7 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
 
   const handleClustersView = () => {
     const view = clustersView === 'tree' ? 'grid' : 'tree';
-    localStorage.setItem(MbfLsk.devicesClusterViewMode, view);
+    localStorage.setItem(MbfLsk['devices-cluster-view-mode'], view);
     setClustersView(view);
   };
   const clustersViewToggle = (

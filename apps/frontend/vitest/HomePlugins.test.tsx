@@ -137,6 +137,19 @@ function pluginButton(name: string | RegExp, pluginName = 'plugin-one') {
   return within(screen.getByTestId(pluginName)).getByRole('button', { name });
 }
 
+// A single click on a plugin frontend button waits for the double click delay before opening the dialog, so run it with fake timers and let the delay pass.
+function singleClick(element: HTMLElement) {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  try {
+    fireEvent.click(element);
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
 describe('HomePlugins', () => {
   test('should request data on connection, ignore mismatched replies, and clean up its listener', () => {
     settings.debug = false;
@@ -271,7 +284,7 @@ describe('HomePlugins', () => {
     expect(actions.queryAllByRole('button', { name: 'Sponsor the plugin' })).toHaveLength(remove ? 1 : 0);
     expect(actions.queryAllByRole('button', { name: /Update the plugin to the latest version/ })).toHaveLength(latest ? 1 : 0);
     expect(actions.queryAllByRole('button', { name: /Update the plugin to the latest dev version/ })).toHaveLength(dev ? 1 : 0);
-    expect(actions.queryByRole('button', { name: 'Open the plugin frontend' })).not.toBeInTheDocument();
+    expect(actions.queryByRole('button', { name: 'Open the plugin frontend (double-click for a new tab)' })).not.toBeInTheDocument();
   });
 
   test.each([false, true])('should dispatch plugin actions and configuration changes with debug=%s', (debug) => {
@@ -362,7 +375,7 @@ describe('HomePlugins', () => {
     document.body.style.setProperty('--div-bg-color', themed ? '#abcdef' : '');
     const { load } = renderPlugins({ mobile });
     load([createPlugin({ frontendPath: '/disk/plugin/build' })]);
-    fireEvent.click(pluginButton('Open the plugin frontend'));
+    singleClick(pluginButton('Open the plugin frontend (double-click for a new tab)'));
     const iframe = screen.getByTitle<HTMLIFrameElement>('plugin-one frontend');
     expect(iframe).toHaveAttribute('src', '/bridge/plugins/plugin-one/');
     const style = getComputedStyle(screen.getByRole('dialog'));
@@ -379,21 +392,34 @@ describe('HomePlugins', () => {
     expect(iframeDocument.getElementById('matterbridge-plugin-scrollbar-style')).not.toBe(injected);
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     await waitFor(() => expect(screen.queryByTitle('plugin-one frontend')).not.toBeInTheDocument());
-    fireEvent.click(await screen.findByRole('button', { name: 'Open the plugin frontend' }));
+    singleClick(await screen.findByRole('button', { name: 'Open the plugin frontend (double-click for a new tab)' }));
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape', keyCode: 27 });
     await waitFor(() => expect(screen.queryByTitle('plugin-one frontend')).not.toBeInTheDocument());
+  });
+
+  test('should open the plugin frontend in a new browser tab on double click instead of the dialog', () => {
+    const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
+    const { load } = renderPlugins();
+    load([createPlugin({ frontendPath: '/disk/plugin/build' })]);
+    const openButton = pluginButton('Open the plugin frontend (double-click for a new tab)');
+    fireEvent.click(openButton);
+    fireEvent.click(openButton);
+    fireEvent.doubleClick(openButton);
+    expect(openSpy).toHaveBeenCalledWith('/bridge/plugins/plugin-one/', '_blank');
+    expect(screen.queryByTitle('plugin-one frontend')).not.toBeInTheDocument();
+    openSpy.mockRestore();
   });
 
   test('should tolerate unavailable iframe documents and a removed frontend path', () => {
     const { load } = renderPlugins();
     const plugin = createPlugin({ frontendPath: '/frontend' });
     load([plugin]);
-    const openButton = pluginButton('Open the plugin frontend');
+    const openButton = pluginButton('Open the plugin frontend (double-click for a new tab)');
     plugin.frontendPath = undefined;
-    fireEvent.click(openButton);
+    singleClick(openButton);
     expect(screen.queryByTitle('plugin-one frontend')).not.toBeInTheDocument();
     plugin.frontendPath = '/frontend';
-    fireEvent.click(openButton);
+    singleClick(openButton);
     const iframe = screen.getByTitle<HTMLIFrameElement>('plugin-one frontend');
     const documentSpy = vi.spyOn(iframe, 'contentDocument', 'get').mockReturnValue(null);
     expect(() => fireEvent.load(iframe)).not.toThrow();

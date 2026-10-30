@@ -1,9 +1,11 @@
 /**
  * git-sync-dev.mjs
- * Version: 2.0.0
+ * Version: 2.1.0
  *
  * Syncs the dev branch with origin/main via merge or rebase, after creating
  * a timestamped local backup branch and fetching from origin.
+ * It stops before touching anything when origin/dev has commits that the local
+ * dev lacks (pushed from another machine), since the push would drop them.
  *
  * Usage:
  *   node scripts/git-sync-dev.mjs --version, -v  Show the script version
@@ -19,7 +21,7 @@
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
-const scriptVersion = '2.0.0';
+const scriptVersion = '2.1.0';
 
 /**
  * Builds the help text.
@@ -56,6 +58,32 @@ function git(args, dryRun) {
     stdio: 'inherit',
     shell: false,
   });
+}
+
+/**
+ * Checks that the local dev contains every commit of origin/dev, or prints the dry-run commands.
+ *
+ * @param {boolean} dryRun When true, print the check instead of running it.
+ * @returns {boolean} False when origin/dev has commits that the local dev lacks.
+ */
+function includesRemoteDev(dryRun) {
+  const check = ['merge-base', '--is-ancestor', 'refs/remotes/origin/dev', 'dev'];
+  if (dryRun) {
+    console.log(`[dry-run] git ${check.join(' ')}`);
+    return true;
+  }
+  try {
+    execFileSync('git', ['rev-parse', '--verify', '--quiet', 'refs/remotes/origin/dev'], { stdio: 'ignore', shell: false });
+  } catch {
+    // No origin/dev yet: there is nothing on the remote to lose.
+    return true;
+  }
+  try {
+    execFileSync('git', check, { stdio: 'ignore', shell: false });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -107,6 +135,13 @@ export function main(args = process.argv.slice(2)) {
 
   git(['fetch', 'origin'], dryRun);
   git(['switch', 'dev'], dryRun);
+
+  // The fetch refreshes origin/dev, so --force-with-lease alone would always pass and overwrite commits pushed from elsewhere.
+  if (!includesRemoteDev(dryRun)) {
+    console.error('origin/dev has commits that the local dev lacks. Bring them into dev first (git pull origin dev), then run it again.');
+    return 1;
+  }
+
   git(['branch', backupBranch], dryRun);
 
   console.log(`${dryRun ? '[dry-run] Would create' : 'Created'} backup branch: ${backupBranch}`);
@@ -116,7 +151,7 @@ export function main(args = process.argv.slice(2)) {
     git(['push', 'origin', 'dev'], dryRun);
   } else {
     git(['rebase', 'origin/main'], dryRun);
-    git(['push', '--force-with-lease', 'origin', 'dev'], dryRun);
+    git(['push', '--force-with-lease', '--force-if-includes', 'origin', 'dev'], dryRun);
   }
   return 0;
 }

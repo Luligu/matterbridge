@@ -31,6 +31,11 @@ class FakeMatterbridge extends EventEmitter {
 const loadInstance = vi.fn<(initialize?: boolean) => Promise<FakeMatterbridge | undefined>>();
 await mock.module('../src/matterbridge.js', () => ({ Matterbridge: { loadInstance } }));
 
+// Mock the core prototype freeze, so the cli does not load and freeze the real core classes
+const protectPrototypes = await import('../src/protectPrototypes.js');
+const protectCorePrototypes = vi.fn(async () => {});
+await mock.module('../src/protectPrototypes.js', () => ({ ...protectPrototypes, protectCorePrototypes }));
+
 const exitSpy = vi.spyOn(process, 'exit').mockImplementation(() => undefined as never);
 const closeBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'close');
 const requestBroadcastServerSpy = vi.spyOn(BroadcastServer.prototype, 'request');
@@ -108,6 +113,7 @@ describe('Cli', () => {
     expect(runThreadSpy).toHaveBeenCalledWith('Backend');
     expect(cli.instance).toBeUndefined();
     expect(loadInstance).toHaveBeenCalledWith(true);
+    expect(protectCorePrototypes).toHaveBeenCalled();
     expect(stopInspectorSpy).toHaveBeenCalledTimes(1);
     expect(stopTrackerSpy).toHaveBeenCalledTimes(1);
     expect(closeBroadcastServerSpy).toHaveBeenCalled();

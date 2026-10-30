@@ -120,7 +120,7 @@ async function connectWebSocket(url: string, tls: Bun.TLSOptions = {}): Promise<
   const client = new WebSocket(url, { tls });
   return new Promise((resolve, reject) => {
     client.addEventListener('open', () => resolve(client), { once: true });
-    client.addEventListener('error', (event) => reject(new Error((event as ErrorEvent).message || 'WebSocket error')), { once: true });
+    client.addEventListener('error', (event) => reject(new Error(event.message || 'WebSocket error')), { once: true });
   });
 }
 

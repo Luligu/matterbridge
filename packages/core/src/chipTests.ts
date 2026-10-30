@@ -50,6 +50,9 @@ import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-stat
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
 import { Switch } from '@matter/types/clusters/switch';
+import { Thermostat } from '@matter/types/clusters/thermostat';
+import { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
+import { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
 import { StatusResponseError } from '@matter/types/common';
 import { Status, TariffPriceType, TariffUnit } from '@matter/types/globals';
 import { MATTER_EPOCH_OFFSET_S } from '@matter/types/tlv';
@@ -59,6 +62,7 @@ import type { AnsiLogger } from 'node-ansi-logger';
 import { MatterbridgeOccupancySensingServer } from './behaviors/occupancySensingServer.js';
 import { cliEmitter } from './cliEmitter.js';
 import { MatterbridgeRvcOperationalStateServer, MatterbridgeRvcRunModeServer } from './devices/roboticVacuumCleaner.js';
+import { MatterbridgeWaterHeaterManagementServer } from './devices/waterHeater.js';
 import type { Matterbridge } from './matterbridge.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { featuresFor } from './matterbridgeEndpointHelpers.js';
@@ -131,6 +135,15 @@ const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 const electricalPowerMeasurementStartFakeLoadTrigger = 0x0091000000000001n;
 const electricalEnergyMeasurementStartFakeGeneratorTrigger = 0x0091000000000002n;
 const electricalPowerMeasurementStopFakeReadingsTrigger = 0x0091000000000000n;
+// TC_EWATERHTR_2_2/TC_EWATERHTR_2_3's TestEventTrigger constants (src/python_testing/TC_EWATERHTRBase.py).
+const waterHeaterBasicInstallationTrigger = 0x0094000000000000n;
+const waterHeaterBasicInstallationClearTrigger = 0x0094000000000001n;
+const waterHeaterWaterTemperature20CTrigger = 0x0094000000000002n;
+const waterHeaterWaterTemperature61CTrigger = 0x0094000000000003n;
+const waterHeaterWaterTemperature66CTrigger = 0x0094000000000004n;
+const waterHeaterManualModeTrigger = 0x0094000000000005n;
+const waterHeaterOffModeTrigger = 0x0094000000000006n;
+const waterHeaterDrawOffHotWaterTrigger = 0x0094000000000007n;
 // TC_DEM_2_2/TC_DEM_2_9/TC_DEM_2_10's send_test_event_trigger_power_adjustment()/_power_adjustment_clear()/
 // _user_opt_out_local()/_user_opt_out_grid()/_user_opt_out_clear_all()/_forecast()/_forecast_clear()
 // (src/python_testing/TC_DEMTestBase.py). Endpoint 207 only enables the PowerAdjustment and PowerForecastReporting
@@ -521,6 +534,7 @@ async function handleChipTestEventTrigger(eventTrigger: bigint): Promise<boolean
   ) {
     return (
       (await handleElectricalEnergyTestEventTrigger(normalizedEventTrigger)) ||
+      (await handleWaterHeaterManagementTestEventTrigger(normalizedEventTrigger)) ||
       (await handleDeviceEnergyManagementTestEventTrigger(normalizedEventTrigger)) ||
       (await handleEnergyEvseTestEventTrigger(normalizedEventTrigger)) ||
       (await handleMeterIdentificationTestEventTrigger(normalizedEventTrigger)) ||
@@ -1324,6 +1338,104 @@ async function handleCommodityTariffTestEventTrigger(eventTrigger: bigint): Prom
   }
   await endpoint.setCluster(CommodityTariff, buildCommodityTariffFakeValues(commodityTariffDayOffset, commodityTariffEntryIndex), log);
   return true;
+}
+
+// TC_EWATERHTR_2_2/TC_EWATERHTR_2_3's TestEventTriggers (src/python_testing/TC_EWATERHTRBase.py).
+// createDemoDevices() registers only one WaterHeater chip-test endpoint (1402), and every TC_EWATERHTR_*
+// chipTests.json entry pins "endpoint": 1402, so chipTestActiveEndpointId is used directly.
+// The triggers simulate a 100 L water heater tank with 20°C cold water and a 60°C Thermostat setpoint:
+// - 0x0094000000000000 (Basic installation): Off mode (11), 20°C water, 60°C setpoint, 0% tank, Inactive boost
+// - 0x0094000000000001 (Basic installation clear): restores default Auto mode (1), 50°C water, 55°C setpoint, 90% tank
+// - 0x0094000000000002 / 3 / 4: sets water temperature to 20°C (0% tank), 61°C (100% tank), or 66°C (100% tank)
+// - 0x0094000000000005 / 6: sets WaterHeaterMode to Manual (12) or Off (11)
+// - 0x0094000000000007 (Draw off hot water): draws off 25% of the hot water in the tank (100% -> 76% -> 57%)
+async function handleWaterHeaterManagementTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
+  const supportedTriggers = [
+    normalizeTestEventTrigger(waterHeaterBasicInstallationTrigger),
+    normalizeTestEventTrigger(waterHeaterBasicInstallationClearTrigger),
+    normalizeTestEventTrigger(waterHeaterWaterTemperature20CTrigger),
+    normalizeTestEventTrigger(waterHeaterWaterTemperature61CTrigger),
+    normalizeTestEventTrigger(waterHeaterWaterTemperature66CTrigger),
+    normalizeTestEventTrigger(waterHeaterManualModeTrigger),
+    normalizeTestEventTrigger(waterHeaterOffModeTrigger),
+    normalizeTestEventTrigger(waterHeaterDrawOffHotWaterTrigger),
+  ];
+  if (!supportedTriggers.includes(eventTrigger) || !chipTestMatterbridge || chipTestActiveEndpointId === undefined) return false;
+  const endpoint = getChipTestEndpoint(chipTestMatterbridge, chipTestActiveEndpointId);
+  if (!endpoint?.hasClusterServer(WaterHeaterManagement.id)) return false;
+  const log = chipTestMatterbridge.log;
+
+  switch (eventTrigger) {
+    case normalizeTestEventTrigger(waterHeaterBasicInstallationTrigger):
+      if (endpoint.getAttribute(WaterHeaterManagement.id, 'boostState') === WaterHeaterManagement.BoostState.Active) {
+        await endpoint.invokeBehaviorCommand(WaterHeaterManagement.id, 'cancelBoost', {});
+      }
+      await endpoint.setCluster(Thermostat, { localTemperature: 2000, occupiedHeatingSetpoint: 6000 }, log);
+      await endpoint.setCluster(WaterHeaterMode, { currentMode: 11 }, log);
+      await endpoint.setCluster(
+        WaterHeaterManagement,
+        {
+          heatDemand: {},
+          tankVolume: 100,
+          estimatedHeatRequired: 4_646_667,
+          tankPercentage: 0,
+          boostState: WaterHeaterManagement.BoostState.Inactive,
+        },
+        log,
+      );
+      return true;
+    case normalizeTestEventTrigger(waterHeaterBasicInstallationClearTrigger):
+      if (endpoint.getAttribute(WaterHeaterManagement.id, 'boostState') === WaterHeaterManagement.BoostState.Active) {
+        await endpoint.invokeBehaviorCommand(WaterHeaterManagement.id, 'cancelBoost', {});
+      }
+      await endpoint.setCluster(Thermostat, { localTemperature: 5000, occupiedHeatingSetpoint: 5500 }, log);
+      await endpoint.setCluster(WaterHeaterMode, { currentMode: 1 }, log);
+      await endpoint.setCluster(
+        WaterHeaterManagement,
+        {
+          heatDemand: {},
+          tankVolume: 100,
+          estimatedHeatRequired: 0,
+          tankPercentage: 90,
+          boostState: WaterHeaterManagement.BoostState.Inactive,
+        },
+        log,
+      );
+      return true;
+    case normalizeTestEventTrigger(waterHeaterWaterTemperature20CTrigger):
+      await endpoint.setCluster(Thermostat, { localTemperature: 2000 }, log);
+      await endpoint.setCluster(WaterHeaterManagement, { tankPercentage: 0 }, log);
+      await endpoint.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+      return true;
+    case normalizeTestEventTrigger(waterHeaterWaterTemperature61CTrigger):
+      await endpoint.setCluster(Thermostat, { localTemperature: 6100 }, log);
+      await endpoint.setCluster(WaterHeaterManagement, { tankPercentage: 100 }, log);
+      await endpoint.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+      return true;
+    case normalizeTestEventTrigger(waterHeaterWaterTemperature66CTrigger):
+      await endpoint.setCluster(Thermostat, { localTemperature: 6600 }, log);
+      await endpoint.setCluster(WaterHeaterManagement, { tankPercentage: 100 }, log);
+      await endpoint.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+      return true;
+    case normalizeTestEventTrigger(waterHeaterManualModeTrigger):
+      await endpoint.setCluster(WaterHeaterMode, { currentMode: 12 }, log);
+      await endpoint.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+      return true;
+    case normalizeTestEventTrigger(waterHeaterOffModeTrigger):
+      await endpoint.setCluster(WaterHeaterMode, { currentMode: 11 }, log);
+      await endpoint.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+      return true;
+    case normalizeTestEventTrigger(waterHeaterDrawOffHotWaterTrigger): {
+      const currentTankPercentageAttribute = endpoint.getAttribute(WaterHeaterManagement.id, 'tankPercentage');
+      const currentTankPercentage = typeof currentTankPercentageAttribute === 'number' ? currentTankPercentageAttribute : 100;
+      const nextTankPercentage = currentTankPercentage === 100 ? 76 : Math.floor((currentTankPercentage * 75) / 100);
+      await endpoint.setCluster(WaterHeaterManagement, { tankPercentage: nextTankPercentage }, log);
+      await endpoint.act((agent) => agent.get(MatterbridgeWaterHeaterManagementServer).evaluateWaterHeaterState());
+      return true;
+    }
+    default:
+      return false;
+  }
 }
 
 // createChipTestDevices() registers only one DeviceEnergyManagement chip-test endpoint (207, with the

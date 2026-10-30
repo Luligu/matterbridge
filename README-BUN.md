@@ -14,9 +14,11 @@
 ## Why it is so fast
 
 - It runs on **JavaScriptCore**, the engine behind Safari, which is tuned for fast startup and low memory use.
-- It is written in **Zig**, a low-level systems language, so the core APIs (file system, networking, HTTP, WebSocket) are native code, not JavaScript layers.
+- It is written in **Rust** (since v1.4.0; earlier versions were written in Zig), so the core APIs (file system, networking, HTTP, WebSocket) are native code, not JavaScript layers.
 - It runs **TypeScript directly**, without a separate compile step.
 - Its **package manager** uses a global cache and hard links, so installs are much faster than npm.
+- Its **test runner** (`bun test`) runs TypeScript tests natively with no transpile step, and `bun:test` provides both the Jest (`jest`) and the Vitest (`vi`) mock and timer helpers, so existing suites port with little more than a changed import. Whole suites finish in a fraction of the usual time.
+- Its **type checker** (`bun check`) reports the same errors as `tsc` but checks in parallel on all CPU cores, so type-checking a whole project is impressively fast, even compared to the native `tsc` of TypeScript 7.
 
 ## Why I invest in Bun
 
@@ -163,7 +165,7 @@ built and served. See the TODO list below for the known limitations.
       The workaround (pass the TLS fields **both** top-level and nested under `tls` in the same
       options object) still works on Node and on every Bun release; drop the `tls` copy only when
       Bun 1.4.3 and older no longer need to be supported.
-      Asserted by [buntest/wssTest.test.ts](./buntest/wssTest.test.ts).
+      Asserted by [packages/core/buntest/wssTest.test.ts](./packages/core/buntest/wssTest.test.ts).
       Reported upstream: [oven-sh/bun#31396](https://github.com/oven-sh/bun/issues/31396), fixed by
       [oven-sh/bun#44618](https://github.com/oven-sh/bun/pull/44618), released in Bun 1.4.4.
 
