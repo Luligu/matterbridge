@@ -47,8 +47,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Double-click the plugin frontend button in the plugins and devices lists to open the plugin frontend in a new tab instead of the dialog.
 - [frontend]: Show the web icon on the device config button when its `configUrl` points to the device's own plugin frontend.
 - [workflows]: Add the daily `badges` workflow and `scripts/badges.mjs`, which publish the all-time npm downloads and Docker pulls with one decimal (e.g. 1.1M) as shields.io endpoint badges in a gist; the READMEs use them.
-- [core]: Add `--controller --reset` to clear controller storage without resetting bridge or plugin storage.
-- [tests]: Add isolated Vitest and Bun controller command and lifecycle tests with coverage scripts and tasks.
 
 ### Changed
 
@@ -74,10 +72,6 @@ If you like this project and find it useful, please consider giving it a star on
 - [buntest]: Reach 100% function and line coverage with the line-precise Bun 1.4.4 coverage report (runtimeBun, tracker, mdns, matterbridgePlatform and matterNode), and make the tracker CPU load test deterministic.
 
 ### Fixed
-
-- [core]: Clear controller file-storage contexts explicitly so `--reset` removes persisted credentials and peers.
-
-- [core]: Label controller peers as commissioned or discovered and count only commissioned peers as paired.
 
 - [core]: `MatterbridgeColorControlServer` clamps a restored `colorTemperatureMireds` into the current physical min/max range at initialization, so an endpoint whose range narrowed since the value was stored no longer fails to initialize. Refs [matterbridge-hass#257](https://github.com/Luligu/matterbridge-hass/issues/257).
 - [frontend]: Normalize frontend storage keys to lowercase with hyphens and align table preferences with UI reset.
