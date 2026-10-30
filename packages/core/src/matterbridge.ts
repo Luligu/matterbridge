@@ -115,6 +115,7 @@ import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './hel
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { startController } from './matterController.js';
+import { matterToAnsiLogLevel } from './matterLogger.js';
 import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
@@ -984,8 +985,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       Logger.level = (await this.nodeContext.get<number>('matterLogLevel', MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    this.matterLogLevel = MatterLogLevel.names[Logger.level] as LogLevel;
+    this.matterLogLevel = matterToAnsiLogLevel(Logger.level);
 
     // Create the logger for matter.js with file logging (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
@@ -1822,8 +1822,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           msg = text.split(message.facility)[1]?.trim();
         }
         this.matterLog.logName = message.facility;
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+        this.matterLog.log(matterToAnsiLogLevel(message.level), msg);
       } catch (_error) {
         /* v8 ignore next */
         this.log.debug(`Error parsing matter log message facility ${message.facility}`);

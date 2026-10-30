@@ -347,7 +347,7 @@ export namespace MatterbridgeOperationalStateServer {
      * correct state on Resume as required by § 1.14.6.4 Resume Command: "the OperationalState attribute SHALL
      * be set to the most recent non-Error operational state prior to entering the Paused state."
      */
-    operationalStateBeforePause: OperationalState.OperationalStateEnum = OperationalState.OperationalStateEnum.Running;
+    operationalStateBeforePause: OperationalState.OperationalStateEnum | number = OperationalState.OperationalStateEnum.Running;
 
     /**
      * Wall-clock time (`Date.now()`) at which the current operation cycle was started via Start, used to

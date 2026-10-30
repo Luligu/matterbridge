@@ -522,9 +522,11 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       const higher = stepFanModes.filter((fanMode) => fanMode > currentFanMode);
       // v8 ignore next: every FanModeSequenceEnum value includes High (Matter 1.6.0 § 4.4.5.6), so stepFanModes
       // always has at least one entry and Math.min/Math.max never see an empty array.
+      // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
       targetFanMode = higher.length > 0 ? Math.min(...higher) : wrap ? Math.min(...stepFanModes) : Math.max(...stepFanModes);
     } else if (request.direction === FanControl.StepDirection.Decrease) {
       const lower = stepFanModes.filter((fanMode) => fanMode < currentFanMode);
+      // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
       targetFanMode = lower.length > 0 ? Math.max(...lower) : wrap ? Math.max(...stepFanModes) : Math.min(...stepFanModes);
     } else {
       return;

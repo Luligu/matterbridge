@@ -35,14 +35,14 @@ describe('getEnumDescription()', () => {
   });
 
   test('returns Invalid by default for missing or unknown values', () => {
-    expect(getEnumDescription(DoorState, 999 as DoorState)).toBe('Invalid');
+    expect(getEnumDescription(DoorState, 999)).toBe('Invalid');
     expect(getEnumDescription(DoorState, null)).toBe('Invalid');
     // oxlint-disable-next-line unicorn/no-useless-undefined
     expect(getEnumDescription(DoorState, undefined)).toBe('Invalid');
   });
 
   test('returns the fallback when the value is not part of the enum', () => {
-    expect(getEnumDescription(DoorState, 999 as DoorState, { fallback: 'Unknown door state' })).toBe('Unknown door state');
+    expect(getEnumDescription(DoorState, 999, { fallback: 'Unknown door state' })).toBe('Unknown door state');
     expect(getEnumDescription(DoorState, null, { fallback: 'Unknown door state' })).toBe('Unknown door state');
     expect(getEnumDescription(DoorState, undefined, { fallback: 'Unknown door state' })).toBe('Unknown door state');
   });

@@ -18,7 +18,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { Switch } from '@matter/types/clusters/switch';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { EndpointNumber } from '@matter/types/datatype';
-import { StreamUsage } from '@matter/types/globals';
+import { Namespace, StreamUsage } from '@matter/types/globals';
 import {
   addBridgedDevice,
   aggregator,
@@ -346,7 +346,7 @@ describe('VideoDoorbell', () => {
     const device = new VideoDoorbell('Video Doorbell Doorbell Options', 'VIDEO-DOORBELL-DOORBELL-OPTIONS', {
       doorbellOptions: {
         name: 'Front Doorbell',
-        tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }],
+        tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Front' }],
         identifyTime: 5,
         identifyType: Identify.IdentifyType.VisibleIndicator,
       },
@@ -406,20 +406,23 @@ describe('VideoDoorbell', () => {
 
   it('should create the camera child endpoint with a tagList', async () => {
     const device = new VideoDoorbell('Video Doorbell Camera Tags', 'VIDEO-DOORBELL-CAMERA-TAGS', {
-      cameraOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }] },
+      cameraOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Front' }] },
     });
     const cameraChild = device.getChildEndpointById('Camera');
     expect(cameraChild).toBeDefined();
 
     expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
-    expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }]);
+    expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Front' }]);
   });
 
   it('should add an additional doorbell with an explicit endpoint number', async () => {
     const device = new VideoDoorbell('Video Doorbell Doorbell Number', 'VIDEO-DOORBELL-DOORBELL-NUMBER', {
-      doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+      doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 4, label: 'Middle' }] },
     });
-    const doorbellChild = device.addDoorbell('Side Doorbell', { number: EndpointNumber(16_03_0), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Side' }] });
+    const doorbellChild = device.addDoorbell('Side Doorbell', {
+      number: EndpointNumber(16_03_0),
+      tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 1, label: 'Side' }],
+    });
     expect(doorbellChild.number).toBe(EndpointNumber(16_03_0));
 
     expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
@@ -427,10 +430,10 @@ describe('VideoDoorbell', () => {
 
   it('should add additional doorbells with tags and trigger a switch event', async () => {
     const device = new VideoDoorbell('Video Doorbell Multi Doorbell', 'VIDEO-DOORBELL-MULTI-DOORBELL', {
-      doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+      doorbellOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 4, label: 'Middle' }] },
     });
-    const left = device.addDoorbell('Left Doorbell', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }] });
-    const right = device.addDoorbell('Right Doorbell', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
+    const left = device.addDoorbell('Left Doorbell', { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Left' }] });
+    const right = device.addDoorbell('Right Doorbell', { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftDoorbell');
     expect(right.id).toBe('RightDoorbell');
 

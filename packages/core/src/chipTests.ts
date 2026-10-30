@@ -694,8 +694,7 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
 }
 
 async function applyEnergyEvseFault(endpoint: MatterbridgeEndpoint, faultState: EnergyEvse.FaultState, log: AnsiLogger): Promise<void> {
-  const previousFaultStateAttribute = endpoint.getAttribute(EnergyEvse.id, 'faultState');
-  const previousFaultState = typeof previousFaultStateAttribute === 'number' ? previousFaultStateAttribute : EnergyEvse.FaultState.NoError;
+  const previousFaultState = getEnergyEvseFaultState(endpoint.getAttribute(EnergyEvse.id, 'faultState'));
   const state = getEnergyEvseState(endpoint.getAttribute(EnergyEvse.id, 'state'));
   const supplyState = getEnergyEvseSupplyState(endpoint.getAttribute(EnergyEvse.id, 'supplyState'));
   const restoredSupplyState = getEnergyEvseRestoredSupplyState(faultState, supplyState);
@@ -764,6 +763,51 @@ function getEnergyEvseState(value: unknown): EnergyEvse.State {
       return EnergyEvse.State.Fault;
     default:
       return EnergyEvse.State.NotPluggedIn;
+  }
+}
+
+/**
+ * Validates an Energy EVSE FaultState attribute read from the generic endpoint API.
+ *
+ * @param {unknown} value - Attribute value to validate.
+ * @returns {EnergyEvse.FaultState} Valid fault state, or `NoError` when the value is absent or invalid.
+ */
+function getEnergyEvseFaultState(value: unknown): EnergyEvse.FaultState {
+  switch (value) {
+    case EnergyEvse.FaultState.MeterFailure:
+      return EnergyEvse.FaultState.MeterFailure;
+    case EnergyEvse.FaultState.OverVoltage:
+      return EnergyEvse.FaultState.OverVoltage;
+    case EnergyEvse.FaultState.UnderVoltage:
+      return EnergyEvse.FaultState.UnderVoltage;
+    case EnergyEvse.FaultState.OverCurrent:
+      return EnergyEvse.FaultState.OverCurrent;
+    case EnergyEvse.FaultState.ContactWetFailure:
+      return EnergyEvse.FaultState.ContactWetFailure;
+    case EnergyEvse.FaultState.ContactDryFailure:
+      return EnergyEvse.FaultState.ContactDryFailure;
+    case EnergyEvse.FaultState.GroundFault:
+      return EnergyEvse.FaultState.GroundFault;
+    case EnergyEvse.FaultState.PowerLoss:
+      return EnergyEvse.FaultState.PowerLoss;
+    case EnergyEvse.FaultState.PowerQuality:
+      return EnergyEvse.FaultState.PowerQuality;
+    case EnergyEvse.FaultState.PilotShortCircuit:
+      return EnergyEvse.FaultState.PilotShortCircuit;
+    case EnergyEvse.FaultState.EmergencyStop:
+      return EnergyEvse.FaultState.EmergencyStop;
+    case EnergyEvse.FaultState.EvDisconnected:
+      return EnergyEvse.FaultState.EvDisconnected;
+    case EnergyEvse.FaultState.WrongPowerSupply:
+      return EnergyEvse.FaultState.WrongPowerSupply;
+    case EnergyEvse.FaultState.LiveNeutralSwap:
+      return EnergyEvse.FaultState.LiveNeutralSwap;
+    case EnergyEvse.FaultState.OverTemperature:
+      return EnergyEvse.FaultState.OverTemperature;
+    case EnergyEvse.FaultState.Other:
+      return EnergyEvse.FaultState.Other;
+    default:
+      return EnergyEvse.FaultState.NoError;
   }
 }
 
@@ -1717,6 +1761,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
           await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Paused });
           break;
         case 'OnFault': {
+          // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
           const errorStateId: OperationalState.ErrorState = command.Param ?? OperationalState.ErrorState.NoError;
           const isNoError = errorStateId === OperationalState.ErrorState.NoError;
           await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, {

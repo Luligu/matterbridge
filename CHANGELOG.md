@@ -29,6 +29,35 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.2] - Dev branch
+
+### Breaking changes
+
+- [dgram]: Decoded mDNS questions and records keep only the `DnsClass` in `class` and expose the top bit as `unicastResponse` on questions and `cacheFlush` on records (RFC 6762 §5.4, §10.2).
+
+### Fixed
+
+- [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
+- [core]: Map device classes explicitly to matter.js classifications, including App to Application.
+- [core]: Keep manufacturer-specific operational states across Pause and Resume in `MatterbridgeOperationalStateServer` and `MatterbridgeRvcOperationalStateServer`.
+
+### Changed
+
+- [utils]: `getEnumDescription()` accepts any number or string `value`; values outside the enum return the fallback.
+- [dgram]: Add an optional `cacheFlush` / `unicastResponse` flag to `dnsResponseClassToString()` and `dnsQuestionClassToString()`.
+- [core]: Log unknown `EsaState` values as `Invalid` instead of `undefined`.
+- [chip]: Validate the previous EnergyEvse `FaultState` in the fault test event triggers.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.2.
+- [matterbridge]: Bump `@types/node` to v.26.6.6.
+- [matterbridge]: Bump `marked` to v.18.1.2.
+- [matterbridge]: Bump `oxfmt` to v.0.75.0.
+- [matterbridge]: Bump `oxlint` to v.1.90.0.
+- [frontend]: Bump `react-router` to v.8.5.1.
+- [core]: Bump `express-rate-limit` to v.8.7.2.
+- [tests]: Refactor the tests for the `no-unsafe-enum-assignment` rule of oxlint v.1.90.0: use enum members instead of numeric literals and mark the deliberately invalid enum values.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.1] - 2026-10-30
 
 ### Breaking changes

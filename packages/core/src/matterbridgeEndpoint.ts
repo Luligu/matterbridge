@@ -29,6 +29,7 @@
 
 // @matter/general
 import { type AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { DeviceClassification } from '@matter/model';
 // @matter/node
 import { type ActionContext, type Behavior, Endpoint, type EndpointType, MutableEndpoint, type ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter behaviors
@@ -125,7 +126,7 @@ import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import { DeviceClasses, type DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
   CommandHandler,
   type CommandHandlerData,
@@ -186,6 +187,15 @@ import {
 import type { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint, SubscribeCommandListener } from './matterbridgeEndpointTypes.js';
 
 logModuleLoaded('MatterbridgeEndpoint');
+
+// Endpoint conditions such as Client and Composed are not device classifications.
+const deviceClassifications: Partial<Record<DeviceClasses, DeviceClassification>> = {
+  [DeviceClasses.Node]: DeviceClassification.Node,
+  [DeviceClasses.App]: DeviceClassification.Application,
+  [DeviceClasses.Utility]: DeviceClassification.Utility,
+  [DeviceClasses.Simple]: DeviceClassification.Simple,
+  [DeviceClasses.Dynamic]: DeviceClassification.Dynamic,
+};
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
@@ -369,8 +379,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       name: firstDefinition.name,
       deviceType: firstDefinition.code,
       deviceRevision: firstDefinition.revision,
-      // @ts-expect-error we don't import an entire module for DeviceClassification
-      deviceClass: firstDefinition.deviceClass.toLowerCase(),
+      deviceClass: deviceClassifications[firstDefinition.deviceClass],
       requirements: {
         server: {
           mandatory: SupportedBehaviors(...getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),

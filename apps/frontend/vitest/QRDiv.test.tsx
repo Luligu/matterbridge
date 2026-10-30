@@ -32,6 +32,7 @@ function createMatter(overrides: Partial<ApiMatter> = {}): ApiMatter {
     commissioned: false,
     advertising: false,
     advertiseTime: 0,
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
     windowStatus: 0,
     fabricInformations: [],
     sessionInformations: [],
@@ -317,6 +318,7 @@ describe('QRDiv', () => {
       commissioned: nodeState.commissioned,
       advertising: nodeState.advertising,
       advertiseTime: 0,
+      // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
       windowStatus: 0,
       fabricInformations: [],
       sessionInformations: [],

@@ -119,7 +119,7 @@ describe('Matterbridge ' + NAME, () => {
     const explicitDevice = new ElectricalUtilityMeter('Electrical Utility Meter Explicit Device', 'EUM000000', {
       id: 'ElectricalUtilityMeterOptions',
       number: EndpointNumber(14_09),
-      meterType: 0,
+      meterType: MeterIdentification.MeterType.Utility,
       pointOfDelivery: 'POD-0000001',
       meterSerialNumber: 'SN-0000001',
       protocolVersion: '1.0',
@@ -127,7 +127,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(explicitDevice.id).toBe('ElectricalUtilityMeterOptions');
     expect(explicitDevice.number).toBe(EndpointNumber(14_09));
     expect(explicitDevice.getClusterServerOptions(MeterIdentification.id)).toMatchObject({
-      meterType: 0,
+      meterType: MeterIdentification.MeterType.Utility,
       pointOfDelivery: 'POD-0000001',
       meterSerialNumber: 'SN-0000001',
       protocolVersion: '1.0',
@@ -207,7 +207,14 @@ describe('Matterbridge ' + NAME, () => {
         currency: { currency: 978, decimalPoints: 4 },
         currentPrice: explicitCurrentPrice,
         localGenerationAvailable: true,
-        currentConditions: { periodStart: 1_700_000_000, periodEnd: null, gridCarbonIntensity: 100, gridCarbonLevel: 1, localCarbonIntensity: 50, localCarbonLevel: 1 },
+        currentConditions: {
+          periodStart: 1_700_000_000,
+          periodEnd: null,
+          gridCarbonIntensity: 100,
+          gridCarbonLevel: ElectricalGridConditions.ThreeLevel.Medium,
+          localCarbonIntensity: 50,
+          localCarbonLevel: ElectricalGridConditions.ThreeLevel.Medium,
+        },
       },
     });
 
@@ -266,7 +273,14 @@ describe('Matterbridge ' + NAME, () => {
       currency: { currency: 978, decimalPoints: 4 },
       currentPrice: explicitCurrentPrice,
       localGenerationAvailable: true,
-      currentConditions: { periodStart: 1_700_000_000, periodEnd: null, gridCarbonIntensity: 100, gridCarbonLevel: 1, localCarbonIntensity: 50, localCarbonLevel: 1 },
+      currentConditions: {
+        periodStart: 1_700_000_000,
+        periodEnd: null,
+        gridCarbonIntensity: 100,
+        gridCarbonLevel: ElectricalGridConditions.ThreeLevel.Medium,
+        localCarbonIntensity: 50,
+        localCarbonLevel: ElectricalGridConditions.ThreeLevel.Medium,
+      },
     });
     expect(explicitTariff.id).toBe('ElectricalEnergyTariffExplicit');
     expect(explicitTariff.number).toBe(EndpointNumber(14_09_2));

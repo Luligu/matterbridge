@@ -131,7 +131,7 @@ export class LaundryDryer extends MatterbridgeEndpoint {
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
     this.createDefaultLaundryWasherModeClusterServer(options.currentMode, options.supportedModes);
-    this.createDefaultLaundryDryerControlsClusterServer(1);
+    this.createDefaultLaundryDryerControlsClusterServer(LaundryDryerControls.DrynessLevel.Normal);
     if (options.temperatureSetpoint) createNumberTemperatureControlClusterServer(this, options.temperatureSetpoint, options.minTemperature, options.maxTemperature, options.step);
     else createLevelTemperatureControlClusterServer(this, options.selectedTemperatureLevel, options.supportedTemperatureLevels);
     this.createDefaultOperationalStateClusterServer(options.operationalState);

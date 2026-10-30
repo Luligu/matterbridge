@@ -18,10 +18,11 @@ import { Chime } from '@matter/types/clusters/chime';
 import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { Switch } from '@matter/types/clusters/switch';
+import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportProvider } from '@matter/types/clusters/web-rtc-transport-provider';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { EndpointNumber } from '@matter/types/datatype';
-import { StreamUsage } from '@matter/types/globals';
+import { Namespace, StreamUsage } from '@matter/types/globals';
 import {
   addBridgedDevice,
   aggregator,
@@ -312,8 +313,10 @@ describe('Intercom', () => {
 
   it('should add additional switches with tags and trigger a switch event', async () => {
     // Sibling switches share a device type, so each one needs a distinct TagList (Matter 1.6.1 Core § 9.2.9)
-    const device = new Intercom('Intercom Multi Switch', 'INTERCOM-MULTI-SWITCH', { switchOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] } });
-    const left = device.addSwitch('Left Switch', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }] });
+    const device = new Intercom('Intercom Multi Switch', 'INTERCOM-MULTI-SWITCH', {
+      switchOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 4, label: 'Middle' }] },
+    });
+    const left = device.addSwitch('Left Switch', { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Left' }] });
     expect(left.id).toBe('LeftSwitch');
     expect(left.deviceTypes.has(genericSwitch.code)).toBeTruthy();
 
@@ -322,7 +325,12 @@ describe('Intercom', () => {
     expect(left.getAttribute(Switch, 'currentPosition')).toBe(0);
   });
   it.each(['offer', 'answer', 'iceCandidates', 'end'] as const)('should notify %s subscribers only after the inherited handler succeeds', async (command) => {
-    const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };
+    const request = {
+      webRtcSessionId: 1,
+      sdp: 'sdp',
+      iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }],
+      reason: WebRtcTransportDefinitions.WebRtcEndReason.IceFailed,
+    };
     const device = new Intercom(`Intercom ${command}`, `INTERCOM-${command}`);
     expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     const listener = vi.fn();

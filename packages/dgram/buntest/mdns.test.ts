@@ -333,7 +333,7 @@ describe('Mdns', () => {
     // Fallback (unknown type)
     const fallback = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([0, 99, 0, DnsClass.IN, 0, 0, 0, 1, 0, 2]), Buffer.from([0xab, 0xcd])]);
     record = mdns.decodeResourceRecord(fallback, 0).record;
-    expect(record.type).toBe(99);
+    expect(record.type as number).toBe(99);
     expect(record.data).toBe('abcd');
   });
 
@@ -362,13 +362,13 @@ describe('Mdns', () => {
     expect(query.readUInt16BE(8)).toBe(1); // NSCOUNT
     expect(query.readUInt16BE(10)).toBe(1); // ARCOUNT
     const decoded = mdns.decodeMdnsMessage(query);
-    expect(decoded.questions).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
-    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, ttl: 100, data: 'instance._http._tcp.local' }]);
+    expect(decoded.questions).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false }]);
+    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, cacheFlush: false, ttl: 100, data: 'instance._http._tcp.local' }]);
     expect(decoded.authorities).toMatchObject([
       { name: 'instance._http._tcp.local', type: DnsRecordType.SRV, ttl: 120, data: JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }) },
     ]);
-    expect(mdns.dnsResponseClassToString(decoded.authorities?.[0].class ?? 0)).toBe('IN|FLUSH');
-    expect(decoded.additionals).toEqual([{ name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.10' }]);
+    expect(mdns.dnsResponseClassToString(decoded.authorities?.[0].class ?? 0, decoded.authorities?.[0].cacheFlush)).toBe('IN|FLUSH');
+    expect(decoded.additionals).toEqual([{ name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10' }]);
   });
 
   describe('encoding of resource records, queries and responses', () => {
@@ -454,9 +454,9 @@ describe('Mdns', () => {
 
     const recordA = { name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: Buffer.from([192, 168, 1, 10]) };
     const recordB = { name: 'b.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: Buffer.from([192, 168, 1, 11]) };
-    const decodedA = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.10' };
-    const decodedB = { name: 'b.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.11' };
-    const question = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN };
+    const decodedA = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10' };
+    const decodedB = { name: 'b.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.11' };
+    const question = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, unicastResponse: false };
 
     for (const section of ['answers', 'authorities', 'additionals'] as const) {
       it(`should send a query with only ${section} when the other record sections are empty`, () => {
@@ -627,22 +627,23 @@ describe('Mdns', () => {
     expect(responseBuffer.readUInt16BE(8)).toBe(1); // NSCOUNT
     expect(responseBuffer.readUInt16BE(10)).toBe(2); // ARCOUNT
     const decoded = mdns.decodeMdnsMessage(responseBuffer);
-    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, ttl: 120, data: 'instance._http._tcp.local' }]);
+    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: 'instance._http._tcp.local' }]);
     expect(decoded.authorities).toEqual([
       {
         name: 'instance._http._tcp.local',
         type: DnsRecordType.SRV,
         class: DnsClass.IN,
+        cacheFlush: false,
         ttl: 120,
         data: JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }),
       },
     ]);
     expect(decoded.additionals).toMatchObject([
       { name: 'instance._http._tcp.local', type: DnsRecordType.TXT, ttl: 4500, data: 'path=/' },
-      { name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 120, data: '192.168.1.10' },
+      { name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10' },
     ]);
-    expect(mdns.dnsResponseClassToString(decoded.additionals?.[0].class ?? 0)).toBe('IN|FLUSH');
-    expect(mdns.dnsResponseClassToString(decoded.additionals?.[1].class ?? 0)).toBe('IN');
+    expect(mdns.dnsResponseClassToString(decoded.additionals?.[0].class ?? 0, decoded.additionals?.[0].cacheFlush)).toBe('IN|FLUSH');
+    expect(mdns.dnsResponseClassToString(decoded.additionals?.[1].class ?? 0, decoded.additionals?.[1].cacheFlush)).toBe('IN');
   });
 
   it('should throw if sendResponse answers array is empty', () => {
@@ -673,7 +674,7 @@ describe('Mdns', () => {
       anCount: 0,
       nsCount: 0,
       arCount: 0,
-      questions: [{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }],
+      questions: [{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false }],
       answers: [],
       authorities: [],
       additionals: [],
@@ -815,8 +816,8 @@ describe('Mdns', () => {
   it('should set QU bit when sending query with unicastResponse=true', () => {
     const query = mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true }]);
     const decoded = mdns.decodeMdnsMessage(query);
-    // oxlint-disable-next-line no-bitwise
-    expect(decoded.questions?.[0].class).toBe(DnsClass.IN | DnsClassFlag.QU);
+    expect(decoded.questions?.[0].class).toBe(DnsClass.IN);
+    expect(decoded.questions?.[0].unicastResponse).toBe(true);
   });
 
   it('should skip verbose logging in sendQuery/sendResponse when no -v/--verbose flags are present', () => {
@@ -1036,8 +1037,8 @@ describe('Mdns', () => {
       arCount: 1,
       questions: [],
       answers: [],
-      authorities: [{ name: 'auth.local', type: DnsRecordType.NS, class: DnsClass.IN, ttl: 300, data: 'ns.local' }],
-      additionals: [{ name: 'add.local', type: DnsRecordType.A, class: DnsClass.IN, ttl: 60, data: '1.2.3.4' }],
+      authorities: [{ name: 'auth.local', type: DnsRecordType.NS, class: DnsClass.IN, cacheFlush: false, ttl: 300, data: 'ns.local' }],
+      additionals: [{ name: 'add.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 60, data: '1.2.3.4' }],
     };
 
     mdns.logMdnsMessage(msg);

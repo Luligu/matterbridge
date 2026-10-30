@@ -1,6 +1,6 @@
 /**
  * update-htmls.mjs
- * Version: 1.0.5
+ * Version: 1.0.6
  *
  * Converts Markdown files to HTML using the marked library.
  *
@@ -58,6 +58,7 @@ const createMarkdownParser = () => {
     renderer: {
       heading(token) {
         const inlineHtml = this.parser.parseInline(token.tokens);
+        textRenderer.parser = this.parser;
         const plainText = this.parser.parseInline(token.tokens, textRenderer).trim();
         const slug = nextSlug(plainText);
         return `<h${token.depth} id="${slug}">${inlineHtml}</h${token.depth}>\n`;

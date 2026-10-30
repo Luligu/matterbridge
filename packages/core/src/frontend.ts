@@ -92,6 +92,7 @@ import type { WebSocket, WebSocketServer } from 'ws';
 // matterbridge
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
+import { matterToAnsiLogLevel } from './matterLogger.js';
 import {
   deleteAdvertisingNode,
   getBatteryLevel,
@@ -2016,7 +2017,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               } else if (data.params.value === 'Fatal') {
                 Logger.level = MatterLogLevel.FATAL;
               }
-              this.matterbridge.matterLogLevel = MatterLogLevel.names[Logger.level as number] as LogLevel;
+              this.matterbridge.matterLogLevel = matterToAnsiLogLevel(MatterLogLevel(Logger.level));
 
               // Set the global logger callback for the WebSocketServer to the common minimum logLevel
               let callbackLogLevel = LogLevel.NOTICE;

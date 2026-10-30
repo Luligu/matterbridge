@@ -10,6 +10,7 @@ const MATTER_CREATE_ONLY = true;
 
 import { WebRtcTransportRequestorServer } from '@matter/node/behaviors/web-rtc-transport-requestor';
 import { CameraAvStreamManagement } from '@matter/types/clusters/camera-av-stream-management';
+import { WebRtcTransportDefinitions } from '@matter/types/clusters/web-rtc-transport-definitions';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { StreamUsage } from '@matter/types/globals';
 import {
@@ -36,7 +37,12 @@ import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 await setupTest(NAME, false);
 
 /** The payload used for all the signaling commands: each command reads only the fields it needs. */
-const request = { webRtcSessionId: 1, sdp: 'sdp', iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }], reason: 0 };
+const request = {
+  webRtcSessionId: 1,
+  sdp: 'sdp',
+  iceCandidates: [{ candidate: 'candidate', sdpMid: null, sdpmLineIndex: null }],
+  reason: WebRtcTransportDefinitions.WebRtcEndReason.IceFailed,
+};
 
 describe('MatterbridgeWebRtcTransportRequestorServer', () => {
   let device: Intercom;

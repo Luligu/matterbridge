@@ -156,7 +156,7 @@ export enum DnsClass {
 /**
  * mDNS flags carried in the top bit (0x8000) of the 16-bit class field (RFC 6762).
  * The same bit has a different meaning in questions and in resource records.
- * Mask it off (`cls & 0x7fff`) to get the actual {@link DnsClass}.
+ * Mask it off (`cls & 0x7fff`) to get the actual {@link DnsClass}; decoded questions and records already carry it split out as `unicastResponse` and `cacheFlush`.
  */
 export enum DnsClassFlag {
   /**
@@ -293,18 +293,47 @@ export interface MdnsMessage {
 interface DnsQuestion {
   name: string;
   type: DnsRecordType;
+  /** The class, with the unicast-response bit split out into {@link DnsQuestion.unicastResponse}. */
   class: DnsClass;
+  /** True when the question has the unicast-response (QU) bit set (RFC 6762 §5.4). */
+  unicastResponse: boolean;
 }
 
 interface MdnsRecord {
   name: string;
   type: DnsRecordType;
+  /** The class, with the cache-flush bit split out into {@link MdnsRecord.cacheFlush}. */
   class: DnsClass;
+  /** True when the record has the cache-flush bit set (RFC 6762 §10.2). */
+  cacheFlush: boolean;
   ttl: number;
   data: string;
 }
 
 type IpAddress = string;
+
+/**
+ * Converts a record type read from the wire. Unknown types are kept as-is (RFC 3597), so the value may be a type DnsRecordType does not list.
+ *
+ * @param {number} value - The numeric record type read from the message.
+ * @returns {DnsRecordType} The record type.
+ */
+function wireToDnsRecordType(value: number): DnsRecordType {
+  // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+  return value;
+}
+
+/**
+ * Converts a class read from the wire. Unknown classes are kept as-is, so the value may be a class DnsClass does not list.
+ * Callers mask off the cache-flush or unicast-response bit (`value & 0x7fff`) first.
+ *
+ * @param {number} value - The numeric class read from the message.
+ * @returns {DnsClass} The class.
+ */
+function wireToDnsClass(value: number): DnsClass {
+  // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+  return value;
+}
 
 /**
  * Checks if a given message is an mDNS message.
@@ -543,7 +572,7 @@ export class Mdns extends Multicast {
       offset += 2;
       const qclass = msg.readUInt16BE(offset);
       offset += 2;
-      mdnsMessage.questions?.push({ name: qname, type: qtype, class: qclass });
+      mdnsMessage.questions?.push({ name: qname, type: wireToDnsRecordType(qtype), class: wireToDnsClass(qclass & 0x7fff), unicastResponse: (qclass & DnsClassFlag.QU) !== 0 });
     }
 
     // Decode the answer section.
@@ -935,7 +964,7 @@ export class Mdns extends Multicast {
     }
 
     return {
-      record: { name, type, class: rrclass, ttl, data },
+      record: { name, type: wireToDnsRecordType(type), class: wireToDnsClass(rrclass & 0x7fff), cacheFlush: (rrclass & DnsClassFlag.FLUSH) !== 0, ttl, data },
       newOffset: offset,
     };
   }
@@ -1182,12 +1211,13 @@ export class Mdns extends Multicast {
   /**
    * Converts a DNS response class numeric value to its string representation.
    *
-   * @param {number} cls - The numeric DNS class.
+   * @param {number} cls - The numeric DNS class, as read from the wire or as a decoded {@link MdnsRecord.class}.
+   * @param {boolean} [cacheFlush] - The decoded {@link MdnsRecord.cacheFlush} flag (default false); the FLUSH bit in cls is honoured too.
    * @returns {string} The string representation of the DNS class.
    */
-  dnsResponseClassToString(cls: number): string {
-    const isFlush = !!(cls & DnsClassFlag.FLUSH);
-    const baseClass: DnsClass = cls & 0x7fff;
+  dnsResponseClassToString(cls: number, cacheFlush = false): string {
+    const isFlush = cacheFlush || !!(cls & DnsClassFlag.FLUSH);
+    const baseClass = wireToDnsClass(cls & 0x7fff);
 
     let classStr: string;
     switch (baseClass) {
@@ -1215,12 +1245,13 @@ export class Mdns extends Multicast {
    * Converts a DNS question class to a human-readable string.
    * Adds support for mDNS QU (unicast-response) bit.
    *
-   * @param {number} cls - The numeric question class.
+   * @param {number} cls - The numeric question class, as read from the wire or as a decoded {@link DnsQuestion.class}.
+   * @param {boolean} [unicastResponse] - The decoded {@link DnsQuestion.unicastResponse} flag (default false); the QU bit in cls is honoured too.
    * @returns {string} The string representation, e.g. "IN|QU"
    */
-  dnsQuestionClassToString(cls: number): string {
-    const isQU = !!(cls & DnsClassFlag.QU);
-    const baseClass: DnsClass = cls & 0x7fff;
+  dnsQuestionClassToString(cls: number, unicastResponse = false): string {
+    const isQU = unicastResponse || !!(cls & DnsClassFlag.QU);
+    const baseClass = wireToDnsClass(cls & 0x7fff);
 
     let classStr: string;
     switch (baseClass) {
@@ -1257,22 +1288,22 @@ export class Mdns extends Multicast {
     );
     msg.questions?.forEach((question) => {
       log.info(
-        `Question: ${CYAN}${question.name}${nf} type ${idn}${this.dnsTypeToString(question.type)}${rs}${nf} class ${CYAN}${this.dnsQuestionClassToString(question.class)}${nf}`,
+        `Question: ${CYAN}${question.name}${nf} type ${idn}${this.dnsTypeToString(question.type)}${rs}${nf} class ${CYAN}${this.dnsQuestionClassToString(question.class, question.unicastResponse)}${nf}`,
       );
     });
     msg.answers?.forEach((answer) => {
       log.info(
-        `Answer: ${CYAN}${answer.name}${nf} type ${idn}${this.dnsTypeToString(answer.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(answer.class)}${nf} ttl ${CYAN}${answer.ttl}${nf} data ${CYAN}${answer.data}${nf}`,
+        `Answer: ${CYAN}${answer.name}${nf} type ${idn}${this.dnsTypeToString(answer.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(answer.class, answer.cacheFlush)}${nf} ttl ${CYAN}${answer.ttl}${nf} data ${CYAN}${answer.data}${nf}`,
       );
     });
     msg.authorities?.forEach((authority) => {
       log.info(
-        `Authority: ${CYAN}${authority.name}${nf} type ${idn}${this.dnsTypeToString(authority.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(authority.class)}${nf} ttl ${CYAN}${authority.ttl}${nf} data ${CYAN}${authority.data}${nf}`,
+        `Authority: ${CYAN}${authority.name}${nf} type ${idn}${this.dnsTypeToString(authority.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(authority.class, authority.cacheFlush)}${nf} ttl ${CYAN}${authority.ttl}${nf} data ${CYAN}${authority.data}${nf}`,
       );
     });
     msg.additionals?.forEach((additional) => {
       log.info(
-        `Additional: ${CYAN}${additional.name}${nf} type ${idn}${this.dnsTypeToString(additional.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(additional.class)}${nf} ttl ${CYAN}${additional.ttl}${nf} data ${CYAN}${additional.data}${nf}`,
+        `Additional: ${CYAN}${additional.name}${nf} type ${idn}${this.dnsTypeToString(additional.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(additional.class, additional.cacheFlush)}${nf} ttl ${CYAN}${additional.ttl}${nf} data ${CYAN}${additional.data}${nf}`,
       );
     });
     log.info(`---\n`);

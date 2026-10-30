@@ -503,6 +503,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       // An invalid Direction value is malformed input, not a valid Decrease: a safe no-op, not a guess.
       await vent.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Medium);
       await vent.setAttribute(FanControl.id, 'percentCurrent', 30);
+      // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
       await vent.invokeBehaviorCommand('fanControl', 'step', { direction: 99 as FanControl.StepDirection, wrap: false, lowestOff: false });
       expect(stepCalls[7]).toEqual({ cluster: 'fanControl', endpoint: vent, request: { direction: 99, wrap: false, lowestOff: false } });
       expect(vent.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Medium);

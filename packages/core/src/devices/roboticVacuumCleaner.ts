@@ -634,7 +634,7 @@ export namespace MatterbridgeRvcOperationalStateServer {
   /** Internal state retained across RVC operational commands. */
   export class Internal extends MatterbridgeRvcOperationalStateServerBase.Internal {
     /** Most recent non-Error operational state before entering Paused (§1.14.6.4). */
-    operationalStateBeforePause: RvcOperationalState.OperationalState | OperationalState.OperationalStateEnum = RvcOperationalState.OperationalState.Running;
+    operationalStateBeforePause: RvcOperationalState.OperationalState | OperationalState.OperationalStateEnum | number = RvcOperationalState.OperationalState.Running;
     /** Start time used for OperationCompletion.TotalOperationalTime (§1.14.7.2.2). */
     operationStartedAt: number | undefined;
     /** Accumulated paused duration used for OperationCompletion.PausedTime (§1.14.7.2.3). */

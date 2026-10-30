@@ -14,6 +14,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test,
 
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
+import { Namespace } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addBridgedEndpoint,
@@ -704,10 +705,10 @@ describe('Matterbridge platform', () => {
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 201;
-    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Humidity' }] }, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 2, label: 'Humidity' }] }, true);
     child2.addRequiredClusterServers();
     child2.number = 202;
-    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Humidity' }] }, true);
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 3, label: 'Humidity' }] }, true);
     child3.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await testDevice.construction.ready;
@@ -728,10 +729,10 @@ describe('Matterbridge platform', () => {
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 202;
-    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Humidity' }] }, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 2, label: 'Humidity' }] }, true);
     child2.addRequiredClusterServers();
     child2.number = 203;
-    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Humidity' }] }, true);
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 3, label: 'Humidity' }] }, true);
     child3.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await testDevice.construction.ready;

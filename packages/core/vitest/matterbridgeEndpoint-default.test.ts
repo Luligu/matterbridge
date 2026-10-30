@@ -77,7 +77,7 @@ import {
   WindowCovering,
 } from '@matter/types/clusters';
 import { EndpointNumber } from '@matter/types/datatype';
-import { Status } from '@matter/types/globals';
+import { Namespace, Status } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addBridgedDevice,
@@ -257,7 +257,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultIdentifyServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight8', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight8', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     expect(device.hasAttributeServer(Identify, 'identifyTime')).toBe(true);
@@ -268,7 +268,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('createDefaultBasicInformationClusterServer', async () => {
     const productLabel = `Matterbridge ${'P'.repeat(70)}`;
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight9', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight9', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultBasicInformationClusterServer('OnOffLight', '1234', 0xfff1, 'Matterbridge', 0x8000, 'Light', 1.5, '', 1.5, '', productLabel, 'http://matterbridge.io', 1.5);
     expect(device.hasClusterServer(BasicInformation)).toBe(false);
@@ -288,7 +288,7 @@ describe('Matterbridge ' + NAME, () => {
 
   test('createDefaultBridgedDeviceBasicInformationClusterServer', async () => {
     const productLabel = `Matterbridge ${'P'.repeat(70)}`;
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultBridgedDeviceBasicInformationClusterServer(
       'OnOffLight',
@@ -328,7 +328,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultBridgedDeviceBasicInformationClusterServer with a valid productId', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11-productId', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, {
+      id: 'OnOffLight11-productId',
+      tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }],
+    });
     expect(device).toBeDefined();
     device.createDefaultBridgedDeviceBasicInformationClusterServer(
       'OnOffLight',
@@ -352,7 +355,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultBridgedDeviceBasicInformationClusterServer with an out of range productId', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight11-invalidProductId', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, {
+      id: 'OnOffLight11-invalidProductId',
+      tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }],
+    });
     expect(device).toBeDefined();
     device.createDefaultBridgedDeviceBasicInformationClusterServer(
       'OnOffLight',
@@ -376,7 +382,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultGroupsServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight12', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight12', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultGroupsClusterServer();
     expect(device.hasClusterServer(Groups)).toBe(true);
@@ -385,7 +391,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultScenesClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight13', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultScenesManagementClusterServer();
     expect(device.hasClusterServer(ScenesManagement)).toBe(true);
@@ -401,7 +407,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight14', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight14', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -415,7 +421,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(bridgedNode, { id: 'OnOffLight15', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(bridgedNode, { id: 'OnOffLight15', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -426,7 +432,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDeadFrontOnOffClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(bridgedNode, { id: 'OnOffLight16', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(bridgedNode, { id: 'OnOffLight16', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDeadFrontOnOffClusterServer();
     expect(device.hasAttributeServer(OnOff, 'onOff')).toBe(true);
@@ -437,7 +443,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultLevelControlServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight17', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight17', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultLevelControlClusterServer();
     expect(device.hasAttributeServer(LevelControl, 'currentLevel')).toBe(true);
@@ -448,7 +454,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultColorControlClusterServer', async () => {
-    const device = new MatterbridgeEndpoint(onOffLight, { id: 'DefaultLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Light' }] });
+    const device = new MatterbridgeEndpoint(onOffLight, { id: 'DefaultLight', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Light' }] });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
     device.createDefaultGroupsClusterServer();
@@ -3086,7 +3092,9 @@ describe('Matterbridge ' + NAME, () => {
   test('configureColorControlMode and configureEnhancedColorControlMode ignore an out of range mode', async () => {
     const device = new MatterbridgeEndpoint(onOffLight, { id: 'ColorModeOutOfRange' });
     const setAttributeSpy = vi.spyOn(device, 'setAttribute');
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
     await device.configureColorControlMode(3 as ColorControl.ColorMode);
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
     await device.configureEnhancedColorControlMode(4 as ColorControl.EnhancedColorMode);
     expect(setAttributeSpy).not.toHaveBeenCalled();
   });
