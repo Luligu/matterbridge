@@ -32,6 +32,7 @@ import type { EndpointNumber } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema, WorkerMessage } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
+import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget } from '@matterbridge/utils/wait';
@@ -459,6 +460,47 @@ export class MatterbridgePlatform {
   // oxlint-disable-next-line typescript/require-await
   async onConfigChanged(config: PlatformConfig): Promise<void> {
     this.log.debug(`The plugin ${CYAN}${config.name}${db} doesn't override onConfigChanged. Received new config.`);
+    await this.configureNodeLabels();
+  }
+
+  /**
+   * Apply the configured node labels to all registered devices.
+   * Devices are matched by their device name against the `nodeLabels` plugin config entries.
+   * Invalid entries are logged as warnings and skipped.
+   *
+   * @returns {Promise<void>} Resolves after all configured node labels have been processed.
+   */
+  protected async configureNodeLabels(): Promise<void> {
+    const nodeLabels = this.config.nodeLabels as Record<string, { name?: string }> | undefined;
+    if (!nodeLabels) return;
+    for (const [deviceName, { name }] of Object.entries(nodeLabels)) {
+      if (!isValidString(name, 1, 32)) {
+        this.log.warn(`Invalid node label for "${deviceName}": name must be a string between 1 and 32 characters`);
+        continue;
+      }
+      const device = this.getDeviceByName(deviceName);
+      if (!device) {
+        this.log.warn(`Device "${deviceName}" not found while configuring node label`);
+        continue;
+      }
+      await this.applyNodeLabel(device, name);
+    }
+  }
+
+  /**
+   * Apply a single node label to a device.
+   *
+   * @param {MatterbridgeEndpoint} device - The device to update.
+   * @param {string} name - The node label value to set.
+   * @returns {Promise<void>} Resolves when the node label has been applied.
+   */
+  private async applyNodeLabel(device: MatterbridgeEndpoint, name: string): Promise<void> {
+    try {
+      await device.setAttribute(BridgedDeviceBasicInformation, 'nodeLabel', name, this.log);
+      this.log.info(`Set node label for "${device.deviceName}" to "${name}"`);
+    } catch (error) {
+      this.log.warn(`Failed to set node label for "${device.deviceName}": ${getErrorMessage(error)}`);
+    }
   }
 
   /**
@@ -727,6 +769,13 @@ export class MatterbridgePlatform {
 
     await this.#addBridgedEndpoint?.(this.name, device);
     this.#registeredEndpoints.set(device.uniqueId, device);
+
+    // Apply the configured node label to the device, if any
+    const nodeLabels = this.config.nodeLabels as Record<string, { name?: string }> | undefined;
+    const label = nodeLabels?.[device.deviceName ?? ''];
+    if (isValidString(label?.name, 1, 32)) {
+      await this.applyNodeLabel(device, label.name);
+    }
   }
 
   /**
