@@ -34,7 +34,7 @@ import type { Endpoint as EndpointNode, ServerNode } from '@matter/node';
 import type { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
+import type { ApiPlugin, PlatformConfig, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue, PluginName, StoragePlugin, WorkerMessage } from '@matterbridge/types';
 import { plg, typ } from '@matterbridge/types';
 import { isBun } from '@matterbridge/utils/bun';
 import { hasParameter } from '@matterbridge/utils/cli';
@@ -1606,6 +1606,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       const schema = JSON.parse(data) as PlatformSchema;
       schema.title = plugin.description;
       schema.description = plugin.name + ' v. ' + plugin.version + ' by ' + plugin.author;
+      // Inject the standard node labels schema if the plugin does not define one, so all plugins
+      // benefit from the core-level node labels support without any plugin change.
+      this.injectNodeLabelsSchema(schema);
       this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.`);
       // this.log.debug(`Loaded schema file ${schemaFile} for plugin ${plg}${plugin.name}${db}.\nSchema:${rs}\n`, schema);
       return schema;
@@ -1663,6 +1666,57 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
           description: 'Unregister all devices on shutdown (development only)',
           type: 'boolean',
           default: false,
+        },
+        nodeLabels: {
+          title: 'Node Labels',
+          description: 'Configure the device name shown by the controller, like renaming the device in the controller UI. Select the device and enter its name.',
+          type: 'object',
+          selectFrom: 'name',
+          additionalProperties: {
+            type: 'object',
+            properties: {
+              name: {
+                title: 'Name',
+                description: 'Device name shown by the controller, like the name set in the controller UI.',
+                type: 'string',
+                minLength: 1,
+                maxLength: 32,
+              },
+            },
+          },
+        },
+      },
+    };
+  }
+
+  /**
+   * Injects the standard node labels schema property into a plugin schema when it is not already defined.
+   * This allows every plugin to benefit from the core-level node labels support without any plugin change.
+   *
+   * @param {PlatformSchema} schema - The plugin schema to complete in place.
+   * @returns {void}
+   */
+  private injectNodeLabelsSchema(schema: PlatformSchema): void {
+    const properties = schema.properties as PlatformSchema | undefined;
+    if (properties?.nodeLabels) return;
+    if (!properties) {
+      schema.properties = {} as PlatformSchemaValue;
+    }
+    (schema.properties as PlatformSchema).nodeLabels = {
+      title: 'Node Labels',
+      description: 'Configure the device name shown by the controller, like renaming the device in the controller UI. Select the device and enter its name.',
+      type: 'object',
+      selectFrom: 'name',
+      additionalProperties: {
+        type: 'object',
+        properties: {
+          name: {
+            title: 'Name',
+            description: 'Device name shown by the controller, like the name set in the controller UI.',
+            type: 'string',
+            minLength: 1,
+            maxLength: 32,
+          },
         },
       },
     };
