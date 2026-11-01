@@ -160,20 +160,24 @@ function getClosurePositionName(value: unknown): string {
  */
 function getWindowCoveringPositionName(value: unknown): string {
   if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 10_000) return 'N/A';
-  if (value === 0) return closurePositionNames[0]; // Closed
-  if (value === 10_000) return closurePositionNames[1]; // Open
+  // Matter 1.6.1 §5.3.6.1: lift percentages measure closure.
+  if (value === 0) return closurePositionNames[1]; // Open
+  if (value === 10_000) return closurePositionNames[0]; // Closed
   return closurePositionNames[2]; // Partial
 }
 
 /**
- * Gets the ClosureDimension current position name from a CurrentState value.
+ * Gets the ClosureDimension current position percentage from a CurrentState value.
  *
  * @param {unknown} value ClosureDimension CurrentState attribute value.
- * @returns {string} The current position name, or N/A when unavailable or invalid.
+ * @returns {string} The current position percentage, or N/A when unavailable or invalid.
  */
 function getClosureDimensionPositionName(value: unknown): string {
   if (typeof value !== 'object' || value === null || !('position' in value)) return 'N/A';
-  return getWindowCoveringPositionName(value.position);
+  const position = value.position;
+  if (typeof position !== 'number' || !Number.isInteger(position) || position < 0 || position > 10_000) return 'N/A';
+  // Matter 1.6.1 §5.5.5.1: open/closed semantics depend on the dimension.
+  return `${position / 100}%`;
 }
 
 interface RenderProps {
