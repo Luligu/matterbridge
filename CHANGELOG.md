@@ -47,9 +47,14 @@ If you like this project and find it useful, please consider giving it a star on
 - [matterbridge]: Bump `oxfmt` to v.0.75.0.
 - [matterbridge]: Bump `oxlint` to v.1.90.0.
 - [frontend]: Bump `react-router` to v.8.5.1.
+- [frontend]: Bump `globals` to v.17.14.0.
 - [core]: Bump `express-rate-limit` to v.8.7.2.
+- [core]: Bump `werift` to v.0.26.0.
+- [core]: Bump `ws` to v.8.22.1.
+- [core]: Remove the unused `@types/jest` dev dependency and the `jest` types from the core tsconfigs.
 - [tests]: Refactor the tests for the `no-unsafe-enum-assignment` rule of oxlint v.1.90.0: use enum members instead of numeric literals and mark the deliberately invalid enum values.
 - [docs]: Read the website's npm and Docker totals from the daily badge gist and animate stats after loading.
+- [core]: Don't auto-close a WebRTC session when werift 0.26.0 replaces or retires a DTLS transport during SDP negotiation.
 
 ### Fixed
 

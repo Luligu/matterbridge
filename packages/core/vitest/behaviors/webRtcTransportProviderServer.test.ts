@@ -358,7 +358,8 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     expect(loggerInfoSpy).toHaveBeenCalledWith(
       expect.stringContaining(`MatterbridgeWebRtcTransportProviderServer.provideOffer: received an SDP offer for session ${existingSessionId}`),
     );
-    clearExpectedWarnings();
+    // werift rolls back the pending local offer (glare): the video transceiver survives without negotiated codecs.
+    clearExpectedWarnings('No injectable video codec available on negotiated transceivers');
 
     // Kept alive for the "log a non-Error rejection reason" test below; ended there.
     testExistingSessionId = existingSessionId;

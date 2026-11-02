@@ -1312,5 +1312,39 @@ describe('WeriftWebRtcSession', () => {
       // close() a second time via the same onStateChange subscription that drives the auto-close above.
       expect(closeSpy).toHaveBeenCalledTimes(1);
     });
+
+    it('should not auto-close when werift closes a DTLS transport during a description operation', async () => {
+      type DtlsTransportState = { setState(state: string, emitEvent?: boolean): void };
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
+      const closeSpy = vi.spyOn(session, 'close');
+      await session.createOffer();
+      const [dtlsTransport] = session.peerConnection.dtlsTransports;
+      if (!dtlsTransport) throw new Error('no DTLS transport negotiated');
+      // Simulates werift 0.26.0 stopping a transport inside setRemoteDescription (commit / cleanupInitialProvisional).
+      vi.spyOn(session.peerConnection, 'setRemoteDescription').mockImplementationOnce(async () => {
+        (dtlsTransport as unknown as DtlsTransportState).setState('closed');
+      });
+
+      await session.applyAnswer('v=0 o=- answer');
+
+      expect(closeSpy).not.toHaveBeenCalled();
+      await session.close();
+    });
+
+    it('should not auto-close when a DTLS transport no longer in use reaches closed', async () => {
+      type DtlsTransportState = { setState(state: string, emitEvent?: boolean): void };
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
+      const closeSpy = vi.spyOn(session, 'close');
+      await session.createOffer();
+      const [dtlsTransport] = session.peerConnection.dtlsTransports;
+      if (!dtlsTransport) throw new Error('no DTLS transport negotiated');
+      const dtlsTransportsSpy = vi.spyOn(session.peerConnection, 'dtlsTransports', 'get').mockReturnValue([]);
+
+      (dtlsTransport as unknown as DtlsTransportState).setState('closed');
+
+      expect(closeSpy).not.toHaveBeenCalled();
+      dtlsTransportsSpy.mockRestore();
+      await session.close();
+    });
   });
 });

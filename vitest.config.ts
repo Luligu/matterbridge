@@ -1,4 +1,4 @@
-// vitest.config.ts v.2.0.8
+// vitest.config.ts v.2.0.9
 
 // This Vitest configuration is designed for a TypeScript project.
 
@@ -34,8 +34,6 @@ export default defineConfig({
     restoreMocks: false,
     environment: 'node',
     maxWorkers: '100%',
-    // Every run also writes a JUnit XML report with the duration of each test (handy to find slow tests).
-    // A --reporter passed on the command line replaces this list.
     reporters: ['default', 'junit'],
     outputFile: { junit: '.cache/vitest/junit.xml' },
     coverage: {

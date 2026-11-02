@@ -15,9 +15,7 @@
       "read_file(**/secrets/**)",
       "command(git pull)",
       "command(git merge)",
-      "command(git push)",
       "command(git rebase)",
-      "command(git commit)",
       "command(git reset)",
       "command(git filter-branch)",
       "command(git branch -D)",
@@ -38,6 +36,8 @@
       "command(npm run lint:fix)"
     ],
     "ask": [
+      "command(git commit)",
+      "command(git push)",
       "command(npm install)",
       "command(npm i)",
       "command(npm uninstall)",

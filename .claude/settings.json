@@ -10,9 +10,7 @@
       "Read(**/secrets/**)",
       "Bash(git pull:*)",
       "Bash(git merge:*)",
-      "Bash(git push:*)",
       "Bash(git rebase:*)",
-      "Bash(git commit:*)",
       "Bash(git reset:*)",
       "Bash(git filter-branch:*)",
       "Bash(git branch -D:*)",
@@ -33,6 +31,8 @@
       "Bash(tsc:*)"
     ],
     "ask": [
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
       "Bash(npm install:*)",
       "Bash(npm i:*)",
       "Bash(npm uninstall:*)",

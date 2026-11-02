@@ -223,9 +223,9 @@ describe('MatterbridgeThermostatServer', () => {
 
   /*
   test('Thermostat server ignores undefined occupied setpoints', async () => {
-    const executeHandler = jest.fn();
-    const info = jest.fn();
-    const debug = jest.fn();
+    const executeHandler = vi.fn();
+    const info = vi.fn();
+    const debug = vi.fn();
     const thermostatState = { occupiedHeatingSetpoint: undefined, occupiedCoolingSetpoint: undefined };
     const endpoint = {
       maybeId: 'thermostatUndefinedSetpoints',

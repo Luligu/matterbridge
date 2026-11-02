@@ -1,4 +1,4 @@
-# Matterbridge Agents Instructions (v.1.0.6)
+# Matterbridge Agents Instructions (v.1.0.8)
 
 ## Style And Formatting
 
@@ -12,7 +12,7 @@
 - Keep changes minimal and scoped to the request. Avoid unrelated refactors or broad cleanup.
 - Do not modify production code only to make a test pass. If a failing test points to a likely source issue, explain the issue and change behavior only when required by the task.
 - Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.
-- Maintain compatibility with the supported Node.js versions in this repository: 20.19, 22.13, 24 and 26.
+- Maintain compatibility with the supported Node.js versions in this repository: 22.13, 24 and 26.
 
 ## Project Architecture
 
@@ -20,7 +20,7 @@
 
 ## Testing And Validation
 
-- HARD RULE: never invoke `tsc`, `vitest`, `oxlint`, or `oxfmt` directly (via `npx`, `node node_modules/...`, or any other ad hoc form). Always use the matching entry in [package.json](./package.json) `scripts` or [tasks.json](./.vscode/tasks.json) — e.g. `npm run typecheck` (not `npx tsc`), `npm run lint`/`npm run lint:fix` (not `npx oxlint`), `npm run format`/`npm run format:check` (not `npx oxfmt`), `npm run test`/`npm run test:coverage` or a specific `Test: <Area>` task (not `npx vitest`/`node node_modules/vitest/vitest.mjs` typed out by hand). If a touched area has no matching script or task, say so and ask before improvising a raw invocation — do not silently fall back to `npx`.
+- HARD RULE: never invoke `tsc`, `vitest`, `bun test`, `oxlint`, or `oxfmt` directly (via `npx`, `node node_modules/...`, or any other ad hoc form). Always use the matching entry in [package.json](./package.json) `scripts` or [tasks.json](./.vscode/tasks.json) — e.g. `npm run typecheck` (not `npx tsc`), `npm run lint` (not `npx oxlint`; `npm run lint:fix` rewrites files, so run it only when the user asks), `npm run format`/`npm run format:check` (not `npx oxfmt`), `npm run test`/`npm run test:coverage` or a specific `Test: <Area>` task (not `npx vitest`/`node node_modules/vitest/vitest.mjs` typed out by hand), `npm run test:bun` (not `bun test`). If a touched area has no matching script or task, say so and ask before improvising a raw invocation — do not silently fall back to `npx`.
 - Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
 - Some tests are intentionally multi-step flows. State may persist across successive steps within a single test flow, but each test unit must remain isolated from other tests.
 - For validation, run the relevant full test file or the matching suite/task for the touched area rather than assuming arbitrary isolated single-test execution is reliable.
@@ -28,6 +28,11 @@
 ## Documentation
 
 - When behavior changes, update the relevant tests and documentation.
+
+## Git Commits
+
+- Do not manually add a `Signed-off-by:` trailer to commit messages. VS Code’s Git interface adds it through `git.alwaysSignOff`; when committing through a terminal, always use `git commit -s`.
+- Never write a personal email address or any sensitive data into commit messages, trailers, or any generated text.
 
 ## Additional Agent Guidance
 

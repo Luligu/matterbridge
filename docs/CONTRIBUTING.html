@@ -129,7 +129,7 @@
   </style>
 </head>
 <body>
-<h1 id="contributing">Contributing</h1>
+<h1 id="contributing-v101">Contributing (v.1.0.1)</h1>
 <p>Thanks for taking the time to contribute to Matterbridge.</p>
 <p>This guide is intentionally <strong>repository-agnostic</strong> so it can be reused across Matterbridge repositories. Each repository may also include extra instructions in its <code>README*</code> files. When in doubt, follow the repo-specific documentation.</p>
 <h2 id="ways-to-contribute">Ways to Contribute</h2>
@@ -153,7 +153,7 @@
 </ul>
 </li>
 <li>Follow the repo’s setup instructions (usually in <code>README.html</code> / <code>README-DEV.html</code>).</li>
-<li>Run formatting/lint/tests if the repository provides scripts for them (for example: <code>npm run lint</code>, <code>npm run format</code>, <code>npm run test</code>, <code>npm run build</code>).</li>
+<li>Run the repository&#39;s <code>npm run runMeBeforePublish</code> script when available. Its tool order is: <code>npm run cleanBuild</code>, <code>npm run format</code>, <code>npm run lint</code>, <code>npm run build</code>, <code>npm run typecheck</code>, then <code>npm run test:coverage</code>.</li>
 </ul>
 <h2 id="submitting-a-pull-request">Submitting a Pull Request</h2>
 <ul>
@@ -170,6 +170,8 @@
 <li>Add or update tests for any behavior changes when practical.</li>
 <li>Ensure CI passes (or explain why it cannot).</li>
 </ul>
+<h2 id="using-coding-agents">Using Coding Agents</h2>
+<p>Contributions made with coding agents or other AI tools are welcome. In your pull request, state whether you used an agent and, if so, which agent you used and what it helped with. You remain responsible for reviewing the changes and verifying that they work.</p>
 <h2 id="reporting-bugs">Reporting Bugs</h2>
 <p>When filing a bug report, please include:</p>
 <ul>
