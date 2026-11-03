@@ -44,12 +44,14 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
+- [endpoint]: Add `createOnOffValveConfigurationAndControlClusterServer()` to create a `ValveConfigurationAndControl` cluster server without the `Level` feature, for binary (on/off) valves.
 - [chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 `TC_EEM_2_1`–`2_5` conformance tests on them.
 - [tests]: Fail the `matterbridgeEndpoint-default` and `matterbridgeEndpointHelpers` tests on any unexpected warning or error log.
 
 ### Changed
 
 - [utils]: `getEnumDescription()` accepts any number or string `value`; values outside the enum return the fallback.
+- [behaviors]: The Pump Configuration and Control server keeps the `PumpStatus` `Running` bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes).
 - [dgram]: Add an optional `cacheFlush` / `unicastResponse` flag to `dnsResponseClassToString()` and `dnsQuestionClassToString()`.
 - [core]: Log unknown `EsaState` values as `Invalid` instead of `undefined`.
 - [chip]: Validate the previous EnergyEvse `FaultState` in the fault test event triggers.

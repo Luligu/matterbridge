@@ -2330,6 +2330,21 @@ describe('Matterbridge ' + NAME, () => {
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
   });
 
+  test('createOnOffValveConfigurationAndControlClusterServer', async () => {
+    const device = new MatterbridgeEndpoint(waterValve, { id: 'OnOffValve' });
+    expect(device).toBeDefined();
+    device.createDefaultIdentifyClusterServer();
+    device.createOnOffValveConfigurationAndControlClusterServer();
+    expect(device.hasAttributeServer(ValveConfigurationAndControl, 'currentState')).toBe(true);
+    expect(device.hasAttributeServer(ValveConfigurationAndControl, 'targetState')).toBe(true);
+    expect(device.hasAttributeServer(ValveConfigurationAndControl, 'currentLevel')).toBe(false);
+    expect(device.hasAttributeServer(ValveConfigurationAndControl, 'targetLevel')).toBe(false);
+
+    await add(device);
+    expect(device.getAttribute(ValveConfigurationAndControl.id, 'currentState')).toBe(ValveConfigurationAndControl.ValveState.Closed);
+    expect(device.getAttribute(ValveConfigurationAndControl.id, 'featureMap')).toEqual({ timeSync: false, level: false });
+  });
+
   test('createDefaultPumpConfigurationAndControlClusterServer', async () => {
     const device = new MatterbridgeEndpoint(pump, { id: 'Pump' });
     expect(device).toBeDefined();

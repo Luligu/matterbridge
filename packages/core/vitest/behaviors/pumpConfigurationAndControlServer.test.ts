@@ -27,6 +27,7 @@ import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MatterbridgeLevelControlServer } from '../../src/behaviors/levelControlServer.js';
+import { MatterbridgePumpConfigurationAndControlServer } from '../../src/behaviors/pumpConfigurationAndControlServer.js';
 import { bridgedNode, pump } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 
@@ -117,6 +118,7 @@ describe('Server clusters and behaviors', () => {
     await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
+    expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(true);
 
     await levelPump.setAttribute(LevelControl.id, 'currentLevel', 200);
     await flushAsync(undefined, undefined, 0);
@@ -134,6 +136,7 @@ describe('Server clusters and behaviors', () => {
     await flushAsync(undefined, undefined, 0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
+    expect(levelPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(false);
   });
 
   test('should set speed to 0 on OnOff Off, and to the current level setpoint on OnOff On', async () => {
@@ -155,11 +158,13 @@ describe('Server clusters and behaviors', () => {
     await flushAsync(undefined, undefined, 0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(1800);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(12000);
+    expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(true);
 
     await onOffPump.setAttribute(OnOff.id, 'onOff', false);
     await flushAsync(undefined, undefined, 0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(0);
     expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(0);
+    expect(onOffPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(false);
   });
 
   test('should power on to MaxLevel (100%) when LevelControl has no CurrentLevel to restore', async () => {
@@ -176,6 +181,52 @@ describe('Server clusters and behaviors', () => {
     await flushAsync(undefined, undefined, 0);
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
+    expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(true);
+  });
+
+  test('should keep the PumpStatus Running bit in sync with OnOff while preserving the other PumpStatus bits', async () => {
+    const statusPump = new MatterbridgeEndpoint(pump, { id: 'statusPump' });
+    statusPump.createDefaultIdentifyClusterServer();
+    statusPump.createOnOffClusterServer(false);
+    statusPump.createDefaultPumpConfigurationAndControlClusterServer();
+    statusPump.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, statusPump)).toBeTruthy();
+    expect(statusPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(false);
+
+    await statusPump.setAttribute(PumpConfigurationAndControl.id, 'pumpStatus', { running: false, deviceFault: true });
+    await statusPump.setAttribute(OnOff.id, 'onOff', true);
+    await flushAsync(undefined, undefined, 0);
+    expect(statusPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus')).toEqual(expect.objectContaining({ running: true, deviceFault: true }));
+
+    await statusPump.setAttribute(OnOff.id, 'onOff', false);
+    await flushAsync(undefined, undefined, 0);
+    expect(statusPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus')).toEqual(expect.objectContaining({ running: false, deviceFault: true }));
+  });
+
+  test('should leave PumpStatus alone when the attribute is not implemented', async () => {
+    const noStatusPump = new MatterbridgeEndpoint(pump, { id: 'noStatusPump' });
+    noStatusPump.createDefaultIdentifyClusterServer();
+    noStatusPump.createOnOffClusterServer(false);
+    // PumpStatus is optional (§4.2.7.14): require the server without it.
+    noStatusPump.behaviors.require(MatterbridgePumpConfigurationAndControlServer, {
+      maxPressure: null,
+      maxSpeed: null,
+      maxFlow: null,
+      minConstSpeed: null,
+      maxConstSpeed: null,
+      effectiveOperationMode: PumpConfigurationAndControl.OperationMode.Normal,
+      effectiveControlMode: PumpConfigurationAndControl.ControlMode.ConstantSpeed,
+      capacity: null,
+      operationMode: PumpConfigurationAndControl.OperationMode.Normal,
+    });
+    noStatusPump.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, noStatusPump)).toBeTruthy();
+    expect(noStatusPump.hasAttributeServer(PumpConfigurationAndControl.id, 'pumpStatus')).toBe(false);
+
+    await noStatusPump.setAttribute(OnOff.id, 'onOff', true);
+    await flushAsync(undefined, undefined, 0);
+    expect(noStatusPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
+    expect(noStatusPump.hasAttributeServer(PumpConfigurationAndControl.id, 'pumpStatus')).toBe(false);
   });
 
   test('should not react to OnOff when the Pump has no OnOff cluster', async () => {

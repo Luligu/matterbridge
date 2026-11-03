@@ -154,13 +154,30 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
       this.state.speed = speed;
       // Matter 1.6.0 § 4.2.7.17: Capacity indicates the actual capacity as a percentage of the effective maximum setpoint, in units of 0.005%.
       this.state.capacity = capacity;
+      this.#setRunning(speed > 0);
     });
     return { speed, capacity };
   }
 
   /**
-   * Stops the pump: sets Speed and Capacity to 0. Both are Read-only (access "R V", no Write) per the
-   * Matter spec — asLocalActor() authorizes this internal, spec-mandated update.
+   * Keeps the PumpStatus Running bit in sync with the applied speed, preserving the other bits. Must be called
+   * from inside asLocalActor(), since PumpStatus is Read-only (access "R V", no Write) per the Matter spec.
+   * A real device implementation can still set PumpStatus itself to report the physical running state.
+   *
+   * @param {boolean} running - Whether the pump is running.
+   */
+  #setRunning(running: boolean): void {
+    // Matter 1.6.0 § 4.2.7.14: PumpStatus is optional; skip it when the attribute is not implemented.
+    if (this.state.pumpStatus === undefined || this.state.pumpStatus.running === running) return;
+    // Matter 1.6.0 § 4.2.7.14 / § 4.2.6.1: The Running bit SHALL be set to 1 while the pump is running, and to 0 while it is not.
+    const pumpStatus = new PumpConfigurationAndControl.PumpStatus(this.state.pumpStatus);
+    pumpStatus.running = running;
+    this.state.pumpStatus = pumpStatus;
+  }
+
+  /**
+   * Stops the pump: sets Speed and Capacity to 0 and clears the PumpStatus Running bit. All are Read-only
+   * (access "R V", no Write) per the Matter spec — asLocalActor() authorizes this internal, spec-mandated update.
    *
    * @returns {{ speed: number; capacity: number }} The Speed and Capacity values that were applied (always `{ speed: 0, capacity: 0 }`).
    */
@@ -170,6 +187,7 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
       this.state.speed = 0;
       // Matter 1.6.0 § 4.2.7.17 (with § 5.5.5.2, Level 0 stops the pump): Capacity indicates the actual capacity, which is 0% while stopped.
       this.state.capacity = 0;
+      this.#setRunning(false);
     });
     return { speed: 0, capacity: 0 };
   }

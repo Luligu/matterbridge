@@ -4824,6 +4824,39 @@ export class MatterbridgeEndpoint extends Endpoint {
   }
 
   /**
+   * Creates an on/off Valve Configuration And Control cluster server without features (no Level feature).
+   *
+   * Use it to expose a binary valve (e.g. a solenoid valve or a relay) that can only be fully opened or closed.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [movementDuration] - Simulated duration, in milliseconds, that an Open/Close movement takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled).
+   * @param {boolean} [autoClose] - Whether the RemainingDuration countdown timer auto-closes the valve once it reaches 0. Defaults to `false` (disabled), leaving auto-close to the real device implementation.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * Same Open/Close behavior as `createDefaultValveConfigurationAndControlClusterServer()`, without the
+   * CurrentLevel/TargetLevel/DefaultOpenLevel/LevelStep attributes: the TargetLevel field of the Open command is ignored.
+   */
+  createOnOffValveConfigurationAndControlClusterServer(
+    valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed,
+    movementDuration: number = 0,
+    autoClose: boolean = false,
+  ): this {
+    this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(), {
+      currentState: valveState,
+      targetState: valveState,
+      openDuration: null,
+      defaultOpenDuration: null, // Writable and persistent across restarts
+      remainingDuration: null,
+      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
+      // Simulation knobs
+      movementDuration,
+      autoClose,
+    });
+    return this;
+  }
+
+  /**
    * Creates the default PumpConfigurationAndControl cluster server with features ConstantSpeed.
    *
    * @param {PumpConfigurationAndControl.OperationMode} [pumpMode] - The pump mode to set. Defaults to `PumpConfigurationAndControl.OperationMode.Normal`.
