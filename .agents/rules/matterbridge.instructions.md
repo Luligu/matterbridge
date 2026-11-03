@@ -245,7 +245,7 @@ These classes already extend `MatterbridgeEndpoint` and usually do all of the fo
 Current exported single-class devices:
 
 - Media: `BasicVideoPlayer`, `CastingVideoPlayer`, `Speaker`
-- Actuators: `Pump`, `WaterValve`
+- Actuators: `OnOffPlugInUnit`, `DimmablePlugInUnit`, `MountedOnOffControl`, `MountedDimmableLoadControl`, `Pump`, `WaterValve`
 - Matter 1.5 additions: `Closure`, `ClosurePanel`, `IrrigationSystem`, `SoilSensor`
 - Robotic: `RoboticVacuumCleaner`
 - Appliances: `AirConditioner`, `Cooktop`, `Dishwasher`, `ExtractorHood`, `LaundryDryer`, `LaundryWasher`, `MicrowaveOven`, `Oven`, `Refrigerator`

@@ -39,6 +39,11 @@ export * from './irrigationSystem.js';
 export * from './soilSensor.js';
 
 // Chapter 5. Smart plugs/Outlets and other Actuators - Single class device types
+export * from './dimmablePlugInUnit.js';
+export * from './loadControlBase.js';
+export * from './mountedDimmableLoadControl.js';
+export * from './mountedOnOffControl.js';
+export * from './onOffPlugInUnit.js';
 export * from './pump.js';
 export * from './waterValve.js';
 
