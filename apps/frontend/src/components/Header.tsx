@@ -785,7 +785,7 @@ function Header() {
                 handleResetMenuClose();
                 showConfirmCancelDialog(
                   'Reset all devices and shutdown',
-                  'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller and you may loose the controller configuration.',
+                  'Are you sure you want to unregister all devices? This will temporarily remove all devices from the controller and you may lose the controller configuration.',
                   'unregister',
                   handleMenuCloseConfirm,
                   handleMenuCloseCancel,

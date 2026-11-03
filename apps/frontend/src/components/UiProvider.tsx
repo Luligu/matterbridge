@@ -132,15 +132,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   const [confirmCancelInput, setConfirmCancelInput] = useState<ConfirmCancelInputProps | null>(null);
 
   const showConfirmCancelInputDialog = useCallback(
-    (
-      title: string,
-      message: string,
-      command: string,
-      initialValue: string,
-      handleConfirm: (command: string, value: string) => void,
-      handleCancel: (command: string) => void,
-      label = 'Value',
-    ) => {
+    (title: string, message: string, initialValue: string, handleConfirm: (value: string) => void, handleCancel: () => void, label = 'Value') => {
       setConfirmCancelInput({
         open: true,
         title,
@@ -149,11 +141,11 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
         label,
         onConfirm: (value) => {
           setConfirmCancelInput(null);
-          handleConfirm(command, value);
+          handleConfirm(value);
         },
         onCancel: () => {
           setConfirmCancelInput(null);
-          handleCancel(command);
+          handleCancel();
         },
       });
     },

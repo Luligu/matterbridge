@@ -125,10 +125,10 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
           <button type="button" onClick={() => ui.showConfirmCancelDialog('Confirm title', 'Confirm message', 'restart', confirmSpy, cancelSpy)}>
             Show confirm dialog
           </button>
-          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Edit name', 'Enter a new name', 'rename', 'Original', inputConfirmSpy, inputCancelSpy, 'Name')}>
+          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Edit name', 'Enter a new name', 'Original', inputConfirmSpy, inputCancelSpy, 'Name')}>
             Show input dialog
           </button>
-          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Add name', 'Enter a name', 'add', '', inputConfirmSpy, inputCancelSpy)}>
+          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Add name', 'Enter a name', '', inputConfirmSpy, inputCancelSpy)}>
             Show default input dialog
           </button>
           <button type="button" onClick={() => ui.showInstallProgress('Install title', 'npm install matterbridge-test', 'matterbridge-test')}>
@@ -195,7 +195,7 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
     expect(screen.getByRole('alert')).toHaveTextContent('default message');
   });
 
-  it('should pass the command and edited input to confirmation and close the dialog', async () => {
+  it('should pass only the edited input to confirmation and close the dialog', async () => {
     const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -207,7 +207,7 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Updated' } });
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
-    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('rename', 'Updated');
+    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('Updated');
     expect(inputCancelSpy).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
@@ -218,7 +218,7 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
     fireEvent.click(screen.getByText('Show input dialog'));
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Unsaved' } });
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
-    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith('rename');
+    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith();
     expect(inputConfirmSpy).not.toHaveBeenCalled();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
@@ -236,8 +236,8 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
     expect(screen.getByRole('textbox', { name: 'Value' })).toHaveValue('');
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
-    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('add', 'New');
-    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith('rename');
+    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('New');
+    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 

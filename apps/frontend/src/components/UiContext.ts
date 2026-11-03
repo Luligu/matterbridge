@@ -12,16 +12,8 @@ export interface UiContextType {
   closeSnackbarMessage: (message: string) => void;
   closeSnackbar: (key?: SnackbarKey) => void;
   showConfirmCancelDialog: (title: string, message: string, command: string, handleConfirm: (command: string) => void, handleCancel: (command: string) => void) => void;
-  /** Open an input dialog; confirmation receives the command and edited value, cancellation receives the command */
-  showConfirmCancelInputDialog: (
-    title: string,
-    message: string,
-    command: string,
-    initialValue: string,
-    handleConfirm: (command: string, value: string) => void,
-    handleCancel: (command: string) => void,
-    label?: string,
-  ) => void;
+  /** Open an input dialog; confirmation receives only the edited value, cancellation receives no arguments */
+  showConfirmCancelInputDialog: (title: string, message: string, initialValue: string, handleConfirm: (value: string) => void, handleCancel: () => void, label?: string) => void;
   showInstallProgress: (title: string, command: string, packageName: string) => void;
   exitInstallProgressSuccess: () => void;
   exitInstallProgressError: () => void;

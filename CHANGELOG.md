@@ -43,6 +43,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [frontend]: Add a device actions menu opening "Unregister device" and "Controller name".
 - [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
 - [devices]: Add the `OnOffPlugInUnit`, `DimmablePlugInUnit`, `MountedOnOffControl` and `MountedDimmableLoadControl` single-class devices (Matter 1.6.1 § 5.1 - 5.4) with Identify, Groups, Scenes Management, OnOff (Lighting) and LevelControl (OnOff, Lighting, levels 1..254; optional through `levelControl` for the on/off device types) clusters, configured through an options object. The mounted device types also list their plug-in unit subset device type for older controllers (RECOMMENDED by the spec), unless `plugInUnitDeviceType` is `false`.
 - [chip]: Create the OnOffPlugInUnit (501), DimmablePlugInUnit (502), MountedOnOffControl (503) and MountedDimmableLoadControl (504) demo devices with the new device classes.

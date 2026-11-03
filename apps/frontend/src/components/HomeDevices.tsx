@@ -10,6 +10,7 @@ import Battery6BarIcon from '@mui/icons-material/Battery6Bar';
 import BatteryFullIcon from '@mui/icons-material/BatteryFull';
 import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
 import LanguageIcon from '@mui/icons-material/Language';
+import MoreHoriz from '@mui/icons-material/MoreHoriz';
 import QrCode2 from '@mui/icons-material/QrCode2';
 import SettingsIcon from '@mui/icons-material/Settings';
 // @mui/material
@@ -19,6 +20,8 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import IconButton from '@mui/material/IconButton';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
 // React
 import { useContext, useEffect, useState, useRef, useCallback, memo, type SyntheticEvent } from 'react';
@@ -120,6 +123,7 @@ interface HomeDevicesProps {
  * The user can select/unselect devices using checkboxes. This sends api/command to selectdevice/unselectdevice.
  * The user can open the configuration page of a device if configUrl is set.
  * The user can open a QR code dialog if the device has matter information.
+ * The device actions menu opens confirmation dialogs for unregistering a device or editing its controller name; actions currently only log.
  * The user can configure the columns to display in the table.
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
@@ -129,7 +133,7 @@ interface HomeDevicesProps {
 function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
-  const { mobile } = useContext(UiContext);
+  const { mobile, showConfirmCancelDialog, showConfirmCancelInputDialog } = useContext(UiContext);
 
   // States: `Registered devices: ${registeredCount.toString()}/${mixedDevices.length.toString()}`
   const [footerLeft, setFooterLeft] = useState('Waiting for the plugins to fully load...'); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
@@ -138,6 +142,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   const [plugins, setPlugins] = useState<ExtendedBaseRegisteredPlugin[]>([]);
   const [mixedDevices, setMixedDevices] = useState<MixedApiDevices[]>([]); // The table shows these: registered devices plus not-yet-registered selectable ones.
   const [selectedDeviceFrontend, setSelectedDeviceFrontend] = useState<{ name: string; path: string } | null>(null); // The device config page shown in the dialog iframe
+  const [deviceMenu, setDeviceMenu] = useState<{ anchorEl: HTMLElement; device: MixedApiDevices } | null>(null);
   const [_status, setStatus] = useState<BridgeStatus>('inactive');
 
   // Refs
@@ -255,12 +260,24 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
+          <Tooltip title="Device actions" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+            <IconButton
+              onClick={(event) => setDeviceMenu({ anchorEl: event.currentTarget, device: mixedDevice })}
+              aria-label="Device actions"
+              aria-haspopup="menu"
+              aria-controls={deviceMenu && getRowKey(deviceMenu.device) === rowKey ? 'device-actions-menu' : undefined}
+              aria-expanded={deviceMenu && getRowKey(deviceMenu.device) === rowKey ? true : undefined}
+              sx={{ margin: 0, padding: 0 }}
+            >
+              <MoreHoriz fontSize="small" />
+            </IconButton>
+          </Tooltip>
           {mixedDevice.selected !== undefined ? (
             <Tooltip title="Select/unselect the device" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <Checkbox
                 checked={mixedDevice.selected}
                 onChange={(event) => handleCheckboxChange(event, mixedDevice)}
-                sx={{ margin: '0', marginLeft: '8px', padding: '0' }}
+                sx={{ margin: '0', marginLeft: '5px', padding: '0' }}
                 size="small"
               />
             </Tooltip>
@@ -564,6 +581,31 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     }
   };
 
+  const handleUnregisterDevice = (device: MixedApiDevices) => {
+    setDeviceMenu(null);
+    console.log(`handleUnregisterDevice: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
+    showConfirmCancelDialog(
+      'Unregister device and restart',
+      `Unregister "${device.deviceName}" from plugin "${device.plugin}"? This will temporarily remove the device from the controller and you may lose the controller configuration.`,
+      'unregister-device',
+      () => console.log(`handleUnregisterDevice confirmed: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`),
+      () => console.log(`handleUnregisterDevice canceled: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`),
+    );
+  };
+
+  const handleControllerName = (device: MixedApiDevices) => {
+    setDeviceMenu(null);
+    console.log(`handleControllerName: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
+    showConfirmCancelInputDialog(
+      'Rename the device on the controller',
+      `Enter a controller name for the device "${device.deviceName}" from plugin "${device.plugin}".`,
+      device.deviceName,
+      (value) => console.log(`handleControllerName confirmed: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber} to controller name ${value}`),
+      () => console.log(`handleControllerName canceled: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`),
+      'Controller name',
+    );
+  };
+
   // A single click opens the plugin frontend in the dialog iframe, a double click opens it in a new tab
   const configUrlClick = useClickOrDoubleClick(
     (device: MixedApiDevices) => handleConfigUrl(device),
@@ -614,6 +656,17 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       <MbfWindow style={{ flex: '1 1 auto' }}>
         <MbfTable name="Devices" getRowKey={getRowKey} rows={mixedDevices} columns={devicesColumns} footerLeft={displayFooterLeft} footerRight={footerRight} />
       </MbfWindow>
+      <Menu
+        id="device-actions-menu"
+        anchorEl={deviceMenu?.anchorEl}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        open={deviceMenu !== null}
+        onClose={() => setDeviceMenu(null)}
+      >
+        <MenuItem onClick={() => deviceMenu && handleUnregisterDevice(deviceMenu.device)}>Unregister device...</MenuItem>
+        <MenuItem onClick={() => deviceMenu && handleControllerName(deviceMenu.device)}>Controller name...</MenuItem>
+      </Menu>
       <Dialog
         open={selectedDeviceFrontend !== null}
         onClose={() => setSelectedDeviceFrontend(null)}
