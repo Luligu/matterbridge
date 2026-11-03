@@ -188,6 +188,20 @@ Aggregator clusters:
 
 - Descriptor
 
+## Endpoints 2064, 2065 and 2066
+
+Electrical Sensor clusters with the optional PeriodicEnergy feature (ElectricalSensorPeriodic,
+ElectricalSensorPeriodicImported and ElectricalSensorPeriodicExported):
+
+- PowerTopology (NodeTopology feature)
+- ElectricalPowerMeasurement
+- ElectricalEnergyMeasurement: ImportedEnergy, ExportedEnergy, CumulativeEnergy and PeriodicEnergy (2064), ImportedEnergy,
+  CumulativeEnergy and PeriodicEnergy (2065), ExportedEnergy, CumulativeEnergy and PeriodicEnergy (2066)
+
+The TC_EEM_2_2/2_3 fake load and fake generator TestEventTriggers also update PeriodicEnergyImported/Exported every
+second and fire PeriodicEnergyMeasured, which is what TC_EEM_2_4/2_5 assert on. Each endpoint has its own PICS file
+(`electrical-energy-measurement.periodic.pics`, `.periodic-imported.pics` and `.periodic-exported.pics`).
+
 ## Endpoint 803
 
 Window Covering Lift clusters:

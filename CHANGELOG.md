@@ -31,9 +31,21 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.2] - Dev branch
 
+### Development News
+
+- [chip]: ElectricalSensorPeriodic endpoint 2064 CHIP conformance is green ✅ for all automated harness tests covering the `ElectricalEnergyMeasurement` cluster, including the optional `PeriodicEnergy` feature (`TC_EEM_2_4.py` and `TC_EEM_2_5.py`), with its own `electrical-energy-measurement.periodic.pics`.
+- [chip]: ElectricalSensorPeriodicImported endpoint 2065 CHIP conformance is green ✅ for all applicable automated harness tests covering the `ElectricalEnergyMeasurement` cluster `ImportedEnergy`, `CumulativeEnergy` and `PeriodicEnergy` features, with its own `electrical-energy-measurement.periodic-imported.pics`.
+- [chip]: ElectricalSensorPeriodicExported endpoint 2066 CHIP conformance is green ✅ for all applicable automated harness tests covering the `ElectricalEnergyMeasurement` cluster `ExportedEnergy`, `CumulativeEnergy` and `PeriodicEnergy` features, with its own `electrical-energy-measurement.periodic-exported.pics`.
+
 ### Breaking changes
 
 - [dgram]: Decoded mDNS questions and records keep only the `DnsClass` in `class` and expose the top bit as `unicastResponse` on questions and `cacheFlush` on records (RFC 6762 §5.4, §10.2).
+
+### Added
+
+- [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
+- [chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 `TC_EEM_2_1`–`2_5` conformance tests on them.
+- [tests]: Fail the `matterbridgeEndpoint-default` and `matterbridgeEndpointHelpers` tests on any unexpected warning or error log.
 
 ### Changed
 

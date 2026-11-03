@@ -90,7 +90,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
-import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BLUE, db, er, hk, LogLevel, or } from 'node-ansi-logger';
 
 import { MatterbridgeOccupancySensingServer } from '../src/behaviors/occupancySensingServer.js';
@@ -151,6 +151,12 @@ describe('Matterbridge ' + NAME, () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {
@@ -552,6 +558,23 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasAttributeServer(ColorControl, 'startUpColorTemperatureMireds')).toBe(true);
     expect(device.getAttribute(ColorControl.id, 'currentX')).toBe(500);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(3);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining(
+        `updateAttribute ${hk}colorControl.colorTemperatureMireds${er} error: Endpoint ${or}DefaultLight${er}:${or}undefined${er} is in the ${BLUE}inactive${er} state`,
+      ),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining(`updateAttribute ${hk}colorTemperatureMireds${er} error: cluster not found on endpoint ${or}DefaultLight${er}`),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining(`updateAttribute error: Attribute ${hk}colorTemperature${er} not found on cluster 0x0300:colorControl on endpoint ${or}DefaultLight${er}`),
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('createEnhancedColorControlClusterServer', async () => {
@@ -2400,6 +2423,22 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerSwitchEvent('Long', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(4);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('triggerSwitchEvent Single error: Endpoint number not assigned on endpoint SwitchMomentary:undefined'),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('triggerSwitchEvent Double error: Endpoint number not assigned on endpoint SwitchMomentary:undefined'),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(3, expect.stringContaining('triggerSwitchEvent Long error: Endpoint number not assigned on endpoint SwitchMomentary:undefined'));
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      4,
+      expect.stringContaining('triggerSwitchEvent Press error: Switch cluster with LatchingSwitch not found on endpoint SwitchMomentary:'),
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('createDefaultMomentarySwitchClusterServer', async () => {
@@ -2433,6 +2472,21 @@ describe('Matterbridge ' + NAME, () => {
       expect.stringContaining(`${db}Trigger endpoint ${or}${device.id}:${device.number}${db} event ${hk}Switch.SinglePress${db}`),
     );
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(3);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining('triggerSwitchEvent Single error: Endpoint number not assigned on endpoint SwitchMomentarySingle:undefined'),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('triggerSwitchEvent Double error: Endpoint number not assigned on endpoint SwitchMomentarySingle:undefined'),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('triggerSwitchEvent Long error: Endpoint number not assigned on endpoint SwitchMomentarySingle:undefined'),
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('createDefaultLatchingSwitchClusterServer', async () => {
@@ -2461,6 +2515,18 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerSwitchEvent('Release', device.log);
     expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Endpoint number not assigned on endpoint'));
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(3);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(1, expect.stringContaining('triggerSwitchEvent Press error: Endpoint number not assigned on endpoint SwitchLatching:undefined'));
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('triggerSwitchEvent Release error: Endpoint number not assigned on endpoint SwitchLatching:undefined'),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('triggerSwitchEvent Single error: Switch cluster with MomentarySwitch not found on endpoint SwitchLatching:'),
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('createDefaultBooleanStateServer', async () => {
@@ -2579,6 +2645,13 @@ describe('Matterbridge ' + NAME, () => {
     await device.triggerEvent(BooleanState.id, 'state', { stateValue: true });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`triggerEvent ${hk}state${er} error: cluster booleanState not found on endpoint`));
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining(`triggerEvent ${hk}state${er} error: cluster booleanState not found on endpoint ${or}ContactSensor${er}`),
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('createDefaultBooleanStateConfigurationClusterServer for waterFreezeDetector', async () => {
@@ -2851,6 +2924,89 @@ describe('Matterbridge ' + NAME, () => {
     deviceNull.createExportedElectricalEnergyMeasurementClusterServer();
     await add(deviceNull);
     expect(deviceNull.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toBe(null);
+  });
+
+  test('createDefaultElectricalEnergyMeasurementClusterServer with PeriodicEnergy', async () => {
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const startTimestamp = endTimestamp - 15 * 60;
+    const periodicImported = { energy: 1500, startTimestamp, endTimestamp };
+    const periodicExported = { energy: 500, startTimestamp, endTimestamp };
+
+    const noPeriodic = new MatterbridgeEndpoint([electricalSensor], { id: 'NoPeriodicElectricalSensor' });
+    noPeriodic.createDefaultElectricalEnergyMeasurementClusterServer(1000, 2000);
+    expect(featuresFor(noPeriodic, ElectricalEnergyMeasurement)).toMatchObject({ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: false });
+    expect(noPeriodic.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toBe(false);
+    expect(noPeriodic.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(false);
+    await add(noPeriodic);
+
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'PeriodicElectricalSensor' });
+    expect(device.createDefaultElectricalEnergyMeasurementClusterServer(1000, 2000, periodicImported, null)).toBe(device);
+    expect(featuresFor(device, ElectricalEnergyMeasurement)).toMatchObject({ importedEnergy: true, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: true });
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(true);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toEqual({ energy: 1000 });
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyExported')).toEqual({ energy: 2000 });
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toEqual(periodicImported);
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(null);
+
+    // Update the values and fire the events as documented in the remarks
+    const cumulativeImported = { energy: 2500, endTimestamp };
+    const cumulativeExported = { energy: 2500, endTimestamp };
+    expect(await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyImported', cumulativeImported, device.log)).toBe(true);
+    expect(await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyExported', cumulativeExported, device.log)).toBe(true);
+    expect(
+      await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported: cumulativeImported, energyExported: cumulativeExported }, device.log),
+    ).toBe(true);
+    expect(await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyImported', periodicImported, device.log)).toBe(true);
+    expect(await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyExported', periodicExported, device.log)).toBe(true);
+    expect(
+      await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported: periodicImported, energyExported: periodicExported }, device.log),
+    ).toBe(true);
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'cumulativeEnergyImported')).toEqual(cumulativeImported);
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toEqual(periodicExported);
+
+    // Only one periodic value given: the other one is not set
+    const onlyImported = new MatterbridgeEndpoint([electricalSensor], { id: 'PeriodicOnlyImportedElectricalSensor' });
+    onlyImported.createDefaultElectricalEnergyMeasurementClusterServer(1000, 2000, periodicImported);
+    expect(featuresFor(onlyImported, ElectricalEnergyMeasurement)).toMatchObject({ periodicEnergy: true });
+    await add(onlyImported);
+    expect(onlyImported.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toEqual(periodicImported);
+    expect(onlyImported.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(null);
+  });
+
+  test('createImportedElectricalEnergyMeasurementClusterServer with PeriodicEnergy', async () => {
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const periodicImported = { energy: 1500, startTimestamp: endTimestamp - 15 * 60, endTimestamp };
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'PeriodicImportedElectricalSensor' });
+    expect(device.createImportedElectricalEnergyMeasurementClusterServer(1000, periodicImported)).toBe(device);
+    expect(featuresFor(device, ElectricalEnergyMeasurement)).toMatchObject({ importedEnergy: true, exportedEnergy: false, cumulativeEnergy: true, periodicEnergy: true });
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(false);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toEqual(periodicImported);
+    expect(await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported: periodicImported }, device.log)).toBe(true);
+  });
+
+  test('createExportedElectricalEnergyMeasurementClusterServer with PeriodicEnergy', async () => {
+    const device = new MatterbridgeEndpoint([electricalSensor], { id: 'PeriodicExportedElectricalSensor' });
+    expect(device.createExportedElectricalEnergyMeasurementClusterServer(2000, null)).toBe(device);
+    expect(featuresFor(device, ElectricalEnergyMeasurement)).toMatchObject({ importedEnergy: false, exportedEnergy: true, cumulativeEnergy: true, periodicEnergy: true });
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(true);
+    expect(device.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')).toBe(false);
+
+    await add(device);
+
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toBe(null);
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const periodicExported = { energy: 500, startTimestamp: endTimestamp - 15 * 60, endTimestamp };
+    expect(await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyExported', periodicExported, device.log)).toBe(true);
+    expect(await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyExported: periodicExported }, device.log)).toBe(true);
+    expect(device.getAttribute(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')).toEqual(periodicExported);
   });
 
   test('createDefaultTemperatureMeasurementClusterServer', async () => {

@@ -131,7 +131,7 @@ const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 // TC_EPM_2_2/TC_EEM_2_2/TC_EEM_2_3's send_test_event_trigger_start_fake_1kw_load_2s()/
 // send_test_event_trigger_start_fake_3kw_generator_5s()/send_test_event_trigger_stop_fake_readings()
 // (src/python_testing/TC_EnergyReporting_Utils.py). TC_EEM_2_4/TC_EEM_2_5's PeriodicEnergy (imported/exported)
-// accumulation is not implemented — endpoint 206 doesn't enable that optional feature.
+// readings are simulated on the endpoints that enable that optional feature (2064, 2065 and 2066).
 const electricalPowerMeasurementStartFakeLoadTrigger = 0x0091000000000001n;
 const electricalEnergyMeasurementStartFakeGeneratorTrigger = 0x0091000000000002n;
 const electricalPowerMeasurementStopFakeReadingsTrigger = 0x0091000000000000n;
@@ -1026,7 +1026,7 @@ async function applyClosureControlTestEventTrigger(endpoint: MatterbridgeEndpoin
 }
 
 // The fake-load/fake-generator trigger carries no endpoint field on the wire, but every TC_EPM_*/TC_EEM_*/
-// TC_DEM_* chipTests.json entry that uses it sets "endpoint": 206 (ElectricalSensor) — see
+// TC_DEM_* chipTests.json entry that uses it pins its own endpoint (206, or 2064/2065/2066 for PeriodicEnergy) — see
 // chipTestActiveEndpointId — so this never needs to guess or broadcast across createChipTestDevices()'s other
 // ElectricalPowerMeasurement/ElectricalEnergyMeasurement endpoints (the imported/exported variants).
 
@@ -1099,6 +1099,25 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
         { cumulativeEnergyExported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementExportedEnergyPerTick } },
         log,
       );
+    }
+    // TC_EEM_2_4/2_5 read PeriodicEnergyImported/Exported twice, 3 seconds apart, and assert the energy differs,
+    // so each tick reports the energy of the last 1 second period with a small random variation, then fires
+    // PeriodicEnergyMeasured as the spec requires at the end of each measurement period.
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const periodic = (energyPerTick: number): ElectricalEnergyMeasurement.EnergyMeasurement => ({
+      energy: energyPerTick + Math.floor(Math.random() * 51),
+      startTimestamp: endTimestamp - 1,
+      endTimestamp,
+    });
+    if (isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')) {
+      const energyImported = periodic(electricalEnergyMeasurementImportedEnergyPerTick);
+      await endpoint.setCluster(ElectricalEnergyMeasurement, { periodicEnergyImported: energyImported }, log);
+      await endpoint.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported }, log);
+    }
+    if (!isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')) {
+      const energyExported = periodic(electricalEnergyMeasurementExportedEnergyPerTick);
+      await endpoint.setCluster(ElectricalEnergyMeasurement, { periodicEnergyExported: energyExported }, log);
+      await endpoint.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyExported }, log);
     }
   };
 

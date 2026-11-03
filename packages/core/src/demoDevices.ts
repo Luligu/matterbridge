@@ -265,6 +265,37 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
   await registerDevice(ep, 'Electrical Sensor Dynamic', 'UTILITY-02-06-3');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorPeriodic', number: EndpointNumber(2_06_4) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  const endTimestamp = Math.floor(Date.now() / 1000);
+  const startTimestamp = endTimestamp - 15 * 60;
+  ep.createDefaultElectricalEnergyMeasurementClusterServer(
+    100_000_000,
+    10_000_000,
+    { energy: 55_000, startTimestamp, endTimestamp },
+    { energy: 5_500, startTimestamp, endTimestamp },
+  );
+  await registerDevice(ep, 'Electrical Sensor Periodic', 'UTILITY-02-06-4');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], {
+    id: 'ElectricalSensorPeriodicImported',
+    number: EndpointNumber(2_06_5),
+  });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createImportedElectricalEnergyMeasurementClusterServer(200_000_000, { energy: 55_000, startTimestamp, endTimestamp });
+  await registerDevice(ep, 'Electrical Sensor Periodic Imported', 'UTILITY-02-06-5');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], {
+    id: 'ElectricalSensorPeriodicExported',
+    number: EndpointNumber(2_06_6),
+  });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createExportedElectricalEnergyMeasurementClusterServer(50_000_000, { energy: 5_500, startTimestamp, endTimestamp });
+  await registerDevice(ep, 'Electrical Sensor Periodic Exported', 'UTILITY-02-06-6');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DeviceEnergyManagement')!, bridgedNode, powerSource], { id: 'DeviceEnergyManagement', number: EndpointNumber(2_07) });
   ep.createDefaultDeviceEnergyManagementClusterServer();
   ep.createDefaultDeviceEnergyManagementModeClusterServer();

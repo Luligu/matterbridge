@@ -35,7 +35,7 @@ import {
   startServerNode,
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
-import { log, loggerErrorSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { log, loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
@@ -60,6 +60,7 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getExportedElectricalEnergyMeasurementClusterServer,
   getImportedElectricalEnergyMeasurementClusterServer,
   getSemtag,
   getSnapshot,
@@ -119,6 +120,12 @@ describe('Options helpers', () => {
   beforeEach(() => {
     // Clear all mocks
     vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
   });
 
   afterAll(async () => {
@@ -188,6 +195,20 @@ describe('Options helpers', () => {
     expect(getDefaultElectricalEnergyMeasurementClusterServer(-1, -1)).toMatchObject({ cumulativeEnergyImported: null, cumulativeEnergyExported: null });
     expect(getImportedElectricalEnergyMeasurementClusterServer(1000)).toMatchObject({ cumulativeEnergyImported: { energy: 1000 } });
     expect(getImportedElectricalEnergyMeasurementClusterServer(-1)).toMatchObject({ cumulativeEnergyImported: null });
+    // PeriodicEnergy feature: periodic attributes only when the periodic params are not undefined
+    const periodic = { energy: 1500, startTimestamp: 1730000000, endTimestamp: 1730000900 };
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).not.toHaveProperty('periodicEnergyImported');
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).not.toHaveProperty('periodicEnergyExported');
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000, periodic, null)).toMatchObject({ periodicEnergyImported: periodic, periodicEnergyExported: null });
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000, undefined, periodic)).toMatchObject({ periodicEnergyExported: periodic });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000)).not.toHaveProperty('periodicEnergyImported');
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000, periodic)).toMatchObject({ cumulativeEnergyImported: { energy: 1000 }, periodicEnergyImported: periodic });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000, null)).toMatchObject({ periodicEnergyImported: null });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000)).toMatchObject({ cumulativeEnergyExported: { energy: 2000 } });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(-1)).toMatchObject({ cumulativeEnergyExported: null });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000)).not.toHaveProperty('periodicEnergyExported');
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000, periodic)).toMatchObject({ cumulativeEnergyExported: { energy: 2000 }, periodicEnergyExported: periodic });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000, null)).toMatchObject({ periodicEnergyExported: null });
     expect(getDefaultElectricalPowerMeasurementClusterServer()).toBeDefined();
     expect(getApparentElectricalPowerMeasurementClusterServer()).toBeDefined();
     expect(getDefaultDeviceEnergyManagementClusterServer()).toBeDefined();
@@ -246,6 +267,10 @@ describe('Options helpers', () => {
     expect((await internalFor(device, DoorLock.id))?.enableTimeout).toBe(false);
     expect((await internalFor(device, 'DoorLock'))?.enableTimeout).toBe(false);
     */
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(1, expect.stringContaining(`internalFor error: cluster not found on endpoint ${or}DoorLockHelper${er}:`));
+    loggerErrorSpy.mockClear();
   });
 
   test('getSnapshot returns non-object values unchanged', () => {
@@ -440,6 +465,11 @@ describe('Options helpers', () => {
     const cluster5 = getCluster(device, 'TemperatureMeasurement', log);
     expect(cluster5).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
     expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Get endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(1, expect.stringContaining(`getCluster error: cluster not found on endpoint ${or}TestEndpoint${er}:`));
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(2, expect.stringContaining(`setCluster error: cluster not found on endpoint ${or}TestEndpoint${er}:`));
+    loggerErrorSpy.mockClear();
   });
 
   test('addClusterClients with empty list is a no-op', async () => {
@@ -457,6 +487,10 @@ describe('Options helpers', () => {
     await addBridgedDevice(aggregator, device);
     expect(device.stateOf(DescriptorServer).clientList).toHaveLength(1);
     expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
+    // Warnings logged on purpose by this test
+    expect(loggerWarnSpy).toHaveBeenCalledTimes(1);
+    expect(loggerWarnSpy).toHaveBeenNthCalledWith(1, expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
+    loggerWarnSpy.mockClear();
   });
 
   test('addClusterClients called twice merges clientList without duplicates', async () => {
@@ -553,6 +587,17 @@ describe('Options helpers', () => {
 
     expect(await invokeBehaviorCommand(device, WindowCovering, 'WindowCovering.goToLiftPercentage', { liftPercent100thsValue: 5000 })).toBe(true);
     expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining(`invokeBehaviorCommand error: command ${hk}stopMotion${er} not found on endpoint ${or}InvokeBehaviorCommandErrors${er}:`),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint ${or}InvokeBehaviorCommandErrors${er}:`),
+    );
+    loggerErrorSpy.mockClear();
   });
 
   test('invokeBehaviorCommand waits for the behavior lock held by another transaction instead of failing', async () => {
