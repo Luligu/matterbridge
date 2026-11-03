@@ -184,6 +184,21 @@ describe('Server clusters and behaviors', () => {
     expect(noLevelPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(true);
   });
 
+  test('should start at MaxLevel (100%) when the Pump is created already on without LevelControl', async () => {
+    const onNoLevelPump = new MatterbridgeEndpoint(pump, { id: 'onNoLevelPump' });
+    onNoLevelPump.createDefaultIdentifyClusterServer();
+    onNoLevelPump.createOnOffClusterServer(true);
+    // No LevelControl cluster on this endpoint: initialize() has no stored level and falls back to MaxLevel/254.
+    onNoLevelPump.createDefaultPumpConfigurationAndControlClusterServer(PumpConfigurationAndControl.OperationMode.Normal, null, 3000, null, 1000, 3000);
+    onNoLevelPump.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, onNoLevelPump)).toBeTruthy();
+    expect(onNoLevelPump.hasAttributeServer(LevelControl.id, 'currentLevel')).toBe(false);
+
+    expect(onNoLevelPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
+    expect(onNoLevelPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
+    expect(onNoLevelPump.getAttribute(PumpConfigurationAndControl.id, 'pumpStatus').running).toBe(true);
+  });
+
   test('should keep the PumpStatus Running bit in sync with OnOff while preserving the other PumpStatus bits', async () => {
     const statusPump = new MatterbridgeEndpoint(pump, { id: 'statusPump' });
     statusPump.createDefaultIdentifyClusterServer();
