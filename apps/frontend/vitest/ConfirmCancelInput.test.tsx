@@ -11,10 +11,16 @@ import { afterEach, describe, expect, test, vi } from 'vitest';
 
 import { ConfirmCancelInput } from '../src/components/ConfirmCancelInput';
 
-vi.mock('../src/appState', () => ({ debug: false }));
+const appState = vi.hoisted(() => ({ debug: false }));
+
+vi.mock('../src/appState', () => appState);
 
 describe('ConfirmCancelInput', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    appState.debug = false;
+    vi.restoreAllMocks();
+  });
 
   test('should not render when closed', () => {
     render(<ConfirmCancelInput open={false} title="Edit name" message="Enter a new name" onConfirm={vi.fn()} onCancel={vi.fn()} />);
@@ -65,6 +71,25 @@ describe('ConfirmCancelInput', () => {
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith('New');
+  });
+
+  test.each([
+    { debug: false, expectedLogs: [] },
+    { debug: true, expectedLogs: [['Confirmed'], ['Canceled']] },
+  ])('should log confirm and cancel actions only when debug is enabled (debug=$debug)', ({ debug, expectedLogs }) => {
+    appState.debug = debug;
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const onConfirm = vi.fn();
+    const onCancel = vi.fn();
+    render(<ConfirmCancelInput open title="Edit" message="Message" onConfirm={onConfirm} onCancel={onCancel} />);
+
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Updated' } });
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    expect(onConfirm).toHaveBeenCalledExactlyOnceWith('Updated');
+    expect(onCancel).toHaveBeenCalledTimes(1);
+    expect(consoleSpy.mock.calls).toEqual(expectedLogs);
   });
 
   test('should reset edits when reopened or given a different initial value', () => {
