@@ -84,6 +84,7 @@ import { LaundryDryer } from './devices/laundryDryer.js';
 import { LaundryWasher } from './devices/laundryWasher.js';
 import { MicrowaveOven } from './devices/microwaveOven.js';
 import { Oven } from './devices/oven.js';
+import { Pump } from './devices/pump.js';
 import { Refrigerator } from './devices/refrigerator.js';
 import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { SnapshotCamera } from './devices/snapshotCamera.js';
@@ -92,6 +93,7 @@ import { Speaker } from './devices/speaker.js';
 import { VideoDoorbell } from './devices/videoDoorbell.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
 import { WaterHeater } from './devices/waterHeater.js';
+import { WaterValve } from './devices/waterValve.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -355,20 +357,14 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultPowerSourceWiredClusterServer();
   await registerDevice(ep, 'Mounted Dimmable Load Control', 'ACTUATOR-05-04');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Pump')!, bridgedNode, powerSource], { id: 'Pump', number: EndpointNumber(5_05) });
-  ep.createDefaultPowerSourceWiredClusterServer();
-  // Pump has no Element Requirement for OnOff Feature Lighting (unlike the plug-in/lighting device types above),
-  // so the addRequiredClusters() default (Lighting feature) would be non-conformant here — override with the
-  // plain, featureless OnOff cluster server instead.
-  ep.createOnOffClusterServer(false);
-  ep.createLevelControlClusterServer(0);
+  // Pump has a single device class.
+  ep = new Pump('Pump', 'ACTUATOR-05-05', { id: 'Pump', number: EndpointNumber(5_05) });
   await registerDevice(ep, 'Pump', 'ACTUATOR-05-05');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterValve')!, bridgedNode, powerSource], { id: 'WaterValve', number: EndpointNumber(5_06) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // WaterValve has a single device class.
   // No plugin manages this demo endpoint's physical valve, so enable the built-in Open/Close movement and
   // auto-close simulation directly here (rather than relying on MATTERBRIDGE_CHIP_TEST's initialize() default).
-  ep.createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, 5000, true);
+  ep = new WaterValve('Water Valve', 'ACTUATOR-05-06', { id: 'WaterValve', number: EndpointNumber(5_06), movementDuration: 5000, autoClose: true });
   await registerDevice(ep, 'Water Valve', 'ACTUATOR-05-06');
 
   // IrrigationSystem has a single device class.

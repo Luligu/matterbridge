@@ -57,6 +57,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [dgram]: Add an optional `cacheFlush` / `unicastResponse` flag to `dnsResponseClassToString()` and `dnsQuestionClassToString()`.
 - [core]: Log unknown `EsaState` values as `Invalid` instead of `undefined`.
 - [chip]: Validate the previous EnergyEvse `FaultState` in the fault test event triggers.
+- [chip]: Create the Pump (505) and WaterValve (506) demo devices with the `Pump` and `WaterValve` device classes, so the demo pump starts at level 254 and runs on `On`, and enable `PumpStatus` and `Speed` in the pump PICS.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.2.
 - [matterbridge]: Bump `@types/node` to v.26.6.6.
 - [matterbridge]: Bump `marked` to v.18.1.2.
