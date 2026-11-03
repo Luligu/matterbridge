@@ -44,6 +44,8 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
+- [devices]: Add the `Pump` single-class device (Matter 1.6.1 § 5.5) with OnOff, optional LevelControl, PumpConfigurationAndControl (ConstantSpeed) and optional Temperature/Pressure/Flow Measurement clusters, configured through a `PumpOptions` object.
+- [devices]: Add the `WaterValve` single-class device (Matter 1.6.1 § 5.6) with ValveConfigurationAndControl (with or without the `Level` feature) and optional FlowMeasurement clusters, configured through a `WaterValveOptions` object, with `openValve()`/`closeValve()` helpers.
 - [endpoint]: Add `createOnOffValveConfigurationAndControlClusterServer()` to create a `ValveConfigurationAndControl` cluster server without the `Level` feature, for binary (on/off) valves.
 - [chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 `TC_EEM_2_1`–`2_5` conformance tests on them.
 - [tests]: Fail the `matterbridgeEndpoint-default` and `matterbridgeEndpointHelpers` tests on any unexpected warning or error log.

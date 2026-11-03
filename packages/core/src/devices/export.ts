@@ -38,6 +38,10 @@ export * from './closurePanel.js';
 export * from './irrigationSystem.js';
 export * from './soilSensor.js';
 
+// Chapter 5. Smart plugs/Outlets and other Actuators - Single class device types
+export * from './pump.js';
+export * from './waterValve.js';
+
 // Chapter 12. Robotic Device Types - Single class device types
 export * from './roboticVacuumCleaner.js';
 
