@@ -143,8 +143,8 @@ describe('Matterbridge ' + NAME, () => {
           `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
       )
       .toSorted();
-    // TODO: replace with the full forEachAttribute snapshot (it needs a run on a host with IPv6).
-    expect(list.length).toBeGreaterThan(0);
+    // TEMPORARY: fail on purpose so the CI diff prints the full forEachAttribute snapshot.
+    expect(list).toEqual([]);
   });
 
   test('setOnOff and getOnOff', async () => {
