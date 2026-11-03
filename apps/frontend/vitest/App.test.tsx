@@ -343,6 +343,7 @@ describe('App', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('renders login form when not logged in', () => {
@@ -421,5 +422,34 @@ describe('App', () => {
     });
 
     expect(setLoggedIn).not.toHaveBeenCalled();
+  });
+
+  it('should ignore an aborted auto login rejection after the form unmounts', async () => {
+    let rejectFetch!: (reason: Error) => void;
+    const fetchMock = vi.fn<typeof fetch>().mockImplementation(
+      async () =>
+        new Promise<Response>((_resolve, reject) => {
+          rejectFetch = reject;
+        }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const consoleSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => {})
+      .mockClear();
+    const setLoggedIn = vi.fn();
+    const { unmount } = render(<LoginForm setLoggedIn={setLoggedIn} />);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const signal = fetchMock.mock.calls[0][1]?.signal;
+    expect(signal?.aborted).toBe(false);
+
+    unmount();
+    expect(signal?.aborted).toBe(true);
+    await act(async () => {
+      rejectFetch(new DOMException('The operation was aborted', 'AbortError'));
+    });
+
+    expect(setLoggedIn).not.toHaveBeenCalled();
+    expect(consoleSpy).not.toHaveBeenCalled();
   });
 });

@@ -2,11 +2,12 @@ import '@testing-library/jest-dom';
 
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { MbfLsk, resetLocalStorage } from '../src/utils/localStorage';
 
-vi.mock('../src/appState', () => ({ debug: false }));
+const appState = vi.hoisted(() => ({ debug: false }));
+vi.mock('../src/appState', () => appState);
 
 // Tooltip renders a Popper that warns about anchorEl in JSDOM.
 vi.mock('@mui/material/Tooltip', () => ({
@@ -86,10 +87,16 @@ const pickOption = async (combobox: HTMLElement, name: string) => {
   });
 };
 
-describe('Logs', () => {
+describe.each([false, true])('Logs with debug=%s', (debug) => {
   beforeEach(() => {
     resetLocalStorage();
     vi.clearAllMocks();
+    appState.debug = debug;
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   it('renders Connecting and no toolbar while offline', () => {

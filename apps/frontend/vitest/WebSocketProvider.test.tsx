@@ -10,6 +10,15 @@ import { MbfLsk } from '../src/utils/localStorage';
 const appState = vi.hoisted(() => ({ debug: false, isIngress: false, wssPassword: '' }));
 vi.mock('../src/appState', () => appState);
 
+const reactState = vi.hoisted(() => ({ initialOnline: false }));
+vi.mock('react', async (importOriginal) => {
+  const original = await importOriginal<typeof import('react')>();
+  return {
+    ...original,
+    useState: (initialState: unknown) => original.useState(initialState === false && reactState.initialOnline ? true : initialState),
+  };
+});
+
 class MockWebSocket {
   public static readonly OPEN = 1;
   public static instances: MockWebSocket[] = [];
@@ -96,6 +105,7 @@ beforeEach(() => {
   appState.debug = false;
   appState.isIngress = false;
   appState.wssPassword = '';
+  reactState.initialOnline = false;
   MockWebSocket.instances = [];
   vi.stubGlobal('WebSocket', MockWebSocket);
   vi.spyOn(Math, 'random').mockReturnValue(0);
@@ -115,6 +125,31 @@ afterEach(() => {
 describe.each([false, true])('WebSocketProvider with debug=%s', (debug) => {
   beforeEach(() => {
     appState.debug = debug;
+  });
+
+  test('should preserve an already-online state when receiving a message', () => {
+    reactState.initialOnline = true;
+    const { result } = renderProvider();
+    const listener = vi.fn();
+    expect(result.current.socket.online).toBe(true);
+
+    result.current.socket.addListener(listener, 42);
+    act(() => latestSocket().receive(response('update', {})));
+
+    expect(listener).toHaveBeenCalledExactlyOnceWith(response('update', {}));
+    expect(result.current.socket.online).toBe(true);
+  });
+
+  test('should skip clearing the message counter when no interval handle was returned', () => {
+    const setInterval = vi.spyOn(globalThis, 'setInterval').mockImplementationOnce(vi.fn<typeof globalThis.setInterval>());
+    const clearInterval = vi.spyOn(globalThis, 'clearInterval');
+    const { unmount } = renderProvider();
+    expect(setInterval).toHaveBeenCalledExactlyOnceWith(expect.any(Function), 10_000);
+
+    unmount();
+
+    expect(clearInterval).not.toHaveBeenCalled();
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   test('should expose defaults and shared log controls when mounted', () => {
