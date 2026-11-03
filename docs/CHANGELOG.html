@@ -166,6 +166,8 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[endpoint]: Add optional <code>periodicEnergyImported</code>/<code>periodicEnergyExported</code> parameters to <code>createDefaultElectricalEnergyMeasurementClusterServer()</code>, <code>createImportedElectricalEnergyMeasurementClusterServer()</code> and <code>createExportedElectricalEnergyMeasurementClusterServer()</code> that enable the <code>PeriodicEnergy</code> feature (Matter 1.6.1 § 2.12.4.4), and document firing the <code>CumulativeEnergyMeasured</code>/<code>PeriodicEnergyMeasured</code> events.</li>
+<li>[devices]: Add the <code>OnOffPlugInUnit</code>, <code>DimmablePlugInUnit</code>, <code>MountedOnOffControl</code> and <code>MountedDimmableLoadControl</code> single-class devices (Matter 1.6.1 § 5.1 - 5.4) with Identify, Groups, Scenes Management, OnOff (Lighting) and LevelControl (OnOff, Lighting, levels 1..254; optional through <code>levelControl</code> for the on/off device types) clusters, configured through an options object. The mounted device types also list their plug-in unit subset device type for older controllers (RECOMMENDED by the spec), unless <code>plugInUnitDeviceType</code> is <code>false</code>.</li>
+<li>[chip]: Create the OnOffPlugInUnit (501), DimmablePlugInUnit (502), MountedOnOffControl (503) and MountedDimmableLoadControl (504) demo devices with the new device classes.</li>
 <li>[devices]: Add the <code>Pump</code> single-class device (Matter 1.6.1 § 5.5) with OnOff, optional LevelControl, PumpConfigurationAndControl (ConstantSpeed) and optional Temperature/Pressure/Flow Measurement clusters, configured through a <code>PumpOptions</code> object.</li>
 <li>[devices]: Add the <code>WaterValve</code> single-class device (Matter 1.6.1 § 5.6) with ValveConfigurationAndControl (with or without the <code>Level</code> feature) and optional FlowMeasurement clusters, configured through a <code>WaterValveOptions</code> object, with <code>openValve()</code>/<code>closeValve()</code> helpers.</li>
 <li>[endpoint]: Add <code>createOnOffValveConfigurationAndControlClusterServer()</code> to create a <code>ValveConfigurationAndControl</code> cluster server without the <code>Level</code> feature, for binary (on/off) valves.</li>
@@ -197,6 +199,7 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[devices]: Remove the unreachable <code>undefined</code> fallback of <code>WaterValve.getCurrentLevel()</code> with the <code>Level</code> feature, restoring the 100% branch coverage of <code>waterValve.ts</code>.</li>
 <li>[frontend]: Correct inverted WindowCovering Open/Closed labels and display ClosureDimension positions as percentages. Closes <a href="https://github.com/Luligu/matterbridge/issues/671">#671</a>. Thanks to <a href="https://github.com/peteroettl">@peteroettl</a>.</li>
 <li>[docs]: Bind the heading text renderer to the parser for marked 18.1.2.</li>
 <li>[core]: Map device classes explicitly to matter.js classifications, including App to Application.</li>

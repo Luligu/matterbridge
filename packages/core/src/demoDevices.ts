@@ -71,6 +71,7 @@ import { Chime } from './devices/chime.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
 import { Cooktop } from './devices/cooktop.js';
+import { DimmablePlugInUnit } from './devices/dimmablePlugInUnit.js';
 import { Dishwasher } from './devices/dishwasher.js';
 import { Doorbell } from './devices/doorbell.js';
 import { ElectricalUtilityMeter } from './devices/electricalUtilityMeter.js';
@@ -83,6 +84,9 @@ import { IrrigationSystem } from './devices/irrigationSystem.js';
 import { LaundryDryer } from './devices/laundryDryer.js';
 import { LaundryWasher } from './devices/laundryWasher.js';
 import { MicrowaveOven } from './devices/microwaveOven.js';
+import { MountedDimmableLoadControl } from './devices/mountedDimmableLoadControl.js';
+import { MountedOnOffControl } from './devices/mountedOnOffControl.js';
+import { OnOffPlugInUnit } from './devices/onOffPlugInUnit.js';
 import { Oven } from './devices/oven.js';
 import { Pump } from './devices/pump.js';
 import { Refrigerator } from './devices/refrigerator.js';
@@ -338,23 +342,20 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   // Chapter 5 - Smart Plugs/Outlets and other Actuators
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffPlugInUnit')!, bridgedNode, powerSource], { id: 'OnOffPlugInUnit', number: EndpointNumber(5_01) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // OnOffPlugInUnit has a single device class.
+  ep = new OnOffPlugInUnit('On/Off Plug-in Unit', 'ACTUATOR-05-01', { id: 'OnOffPlugInUnit', number: EndpointNumber(5_01) });
   await registerDevice(ep, 'On/Off Plug-in Unit', 'ACTUATOR-05-01');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DimmablePlugInUnit')!, bridgedNode, powerSource], { id: 'DimmablePlugInUnit', number: EndpointNumber(5_02) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // DimmablePlugInUnit has a single device class.
+  ep = new DimmablePlugInUnit('Dimmable Plug-in Unit', 'ACTUATOR-05-02', { id: 'DimmablePlugInUnit', number: EndpointNumber(5_02) });
   await registerDevice(ep, 'Dimmable Plug-in Unit', 'ACTUATOR-05-02');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('MountedOnOffControl')!, bridgedNode, powerSource], { id: 'MountedOnOffControl', number: EndpointNumber(5_03) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // MountedOnOffControl has a single device class.
+  ep = new MountedOnOffControl('Mounted On/Off Control', 'ACTUATOR-05-03', { id: 'MountedOnOffControl', number: EndpointNumber(5_03) });
   await registerDevice(ep, 'Mounted On/Off Control', 'ACTUATOR-05-03');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('MountedDimmableLoadControl')!, bridgedNode, powerSource], {
-    id: 'MountedDimmableLoadControl',
-    number: EndpointNumber(5_04),
-  });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // MountedDimmableLoadControl has a single device class.
+  ep = new MountedDimmableLoadControl('Mounted Dimmable Load Control', 'ACTUATOR-05-04', { id: 'MountedDimmableLoadControl', number: EndpointNumber(5_04) });
   await registerDevice(ep, 'Mounted Dimmable Load Control', 'ACTUATOR-05-04');
 
   // Pump has a single device class.
