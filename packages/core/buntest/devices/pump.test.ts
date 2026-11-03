@@ -32,6 +32,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/buntest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { stringify } from 'node-ansi-logger';
 
 import { Pump } from '../../src/devices/pump.js';
 import { pump } from '../../src/matterbridgeDeviceTypes.js';
@@ -155,6 +156,95 @@ describe('Matterbridge ' + NAME, () => {
     // Defaults filled in by MatterbridgePumpConfigurationAndControlServer.initialize()
     expect(device.getAttribute(PumpConfigurationAndControl, 'maxConstSpeed')).toBe(3000);
     expect(device.getAttribute(PumpConfigurationAndControl, 'minConstSpeed')).toBe(600);
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 771, revision: 4 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 6, 8, 29, 47, 512 ]',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'levelControl(0x8).acceptedCommandList(0xfff9)=[ 0, 1, 2, 3, 4, 5, 6, 7 ]',
+        'levelControl(0x8).attributeList(0xfffb)=[ 0, 2, 3, 15, 17, 65528, 65529, 65531, 65532, 65533 ]',
+        'levelControl(0x8).clusterRevision(0xfffd)=7',
+        'levelControl(0x8).currentLevel(0x0)=254',
+        'levelControl(0x8).featureMap(0xfffc)={ onOff: false, lighting: false, frequency: false }',
+        'levelControl(0x8).generatedCommandList(0xfff8)=[  ]',
+        'levelControl(0x8).maxLevel(0x3)=254',
+        'levelControl(0x8).minLevel(0x2)=0',
+        'levelControl(0x8).onLevel(0x11)=null',
+        'levelControl(0x8).options(0xf)={ executeIfOff: false, coupleColorTempToLevel: false }',
+        'onOff(0x6).acceptedCommandList(0xfff9)=[ 0, 1, 2 ]',
+        'onOff(0x6).attributeList(0xfffb)=[ 0, 65528, 65529, 65531, 65532, 65533 ]',
+        'onOff(0x6).clusterRevision(0xfffd)=6',
+        'onOff(0x6).featureMap(0xfffc)={ lighting: false, deadFrontBehavior: false, offOnly: false }',
+        'onOff(0x6).generatedCommandList(0xfff8)=[  ]',
+        'onOff(0x6).onOff(0x0)=false',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+        'pumpConfigurationAndControl(0x200).acceptedCommandList(0xfff9)=[  ]',
+        'pumpConfigurationAndControl(0x200).attributeList(0xfffb)=[ 0, 1, 2, 7, 8, 16, 17, 18, 19, 20, 32, 33, 65528, 65529, 65531, 65532, 65533 ]',
+        'pumpConfigurationAndControl(0x200).capacity(0x13)=null',
+        'pumpConfigurationAndControl(0x200).clusterRevision(0xfffd)=5',
+        'pumpConfigurationAndControl(0x200).controlMode(0x21)=0',
+        'pumpConfigurationAndControl(0x200).effectiveControlMode(0x12)=0',
+        'pumpConfigurationAndControl(0x200).effectiveOperationMode(0x11)=0',
+        'pumpConfigurationAndControl(0x200).featureMap(0xfffc)={ constantPressure: false, compensatedPressure: false, constantFlow: false, constantSpeed: true, constantTemperature: false, automatic: false, localOperation: false }',
+        'pumpConfigurationAndControl(0x200).generatedCommandList(0xfff8)=[  ]',
+        'pumpConfigurationAndControl(0x200).maxConstSpeed(0x8)=3000',
+        'pumpConfigurationAndControl(0x200).maxFlow(0x2)=100',
+        'pumpConfigurationAndControl(0x200).maxPressure(0x0)=6000',
+        'pumpConfigurationAndControl(0x200).maxSpeed(0x1)=3000',
+        'pumpConfigurationAndControl(0x200).minConstSpeed(0x7)=600',
+        'pumpConfigurationAndControl(0x200).operationMode(0x20)=0',
+        'pumpConfigurationAndControl(0x200).pumpStatus(0x10)={ deviceFault: false, supplyFault: false, speedLow: false, speedHigh: false, localOverride: false, running: false, remotePressure: false, remoteFlow: false, remoteTemperature: false }',
+        'pumpConfigurationAndControl(0x200).speed(0x14)=null',
+      ].toSorted(),
+    );
   });
 
   test('setOnOff starts and stops the pump', async () => {

@@ -26,6 +26,7 @@ import {
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
 import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { stringify } from 'node-ansi-logger';
 
 import { WaterValve } from '../../src/devices/waterValve.js';
 import { waterValve } from '../../src/matterbridgeDeviceTypes.js';
@@ -130,6 +131,77 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getCurrentLevel()).toBe(0);
     expect(onOffDevice.getCurrentState()).toBe(ValveConfigurationAndControl.ValveState.Closed);
     expect(onOffDevice.getCurrentLevel()).toBeUndefined();
+  });
+
+  test('device forEachAttribute', () => {
+    const attributes: {
+      clusterName: string;
+      clusterId: number;
+      attributeName: string;
+      attributeId: number;
+      attributeValue: string | number | bigint | boolean | object | null | undefined;
+    }[] = [];
+    device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
+      if (attributeValue === undefined) return;
+      if (['serverList', 'clientList', 'partsList', 'attributeList', 'acceptedCommandList', 'generatedCommandList'].includes(attributeName)) {
+        const sortedAttributeValue = (attributeValue as number[]).toSorted((a, b) => a - b);
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue: sortedAttributeValue });
+      } else {
+        attributes.push({ clusterName, clusterId, attributeName, attributeId, attributeValue });
+      }
+    });
+    expect(
+      attributes
+        .map(
+          ({ clusterName, clusterId, attributeName, attributeId, attributeValue }) =>
+            `${clusterName}(0x${clusterId.toString(16)}).${attributeName}(0x${attributeId.toString(16)})=${stringify(attributeValue, false)}`,
+        )
+        .toSorted(),
+    ).toEqual(
+      [
+        'descriptor(0x1d).acceptedCommandList(0xfff9)=[  ]',
+        'descriptor(0x1d).attributeList(0xfffb)=[ 0, 1, 2, 3, 65528, 65529, 65531, 65532, 65533 ]',
+        'descriptor(0x1d).clientList(0x2)=[  ]',
+        'descriptor(0x1d).clusterRevision(0xfffd)=3',
+        'descriptor(0x1d).deviceTypeList(0x0)=[ { deviceType: 66, revision: 1 }, { deviceType: 17, revision: 1 } ]',
+        'descriptor(0x1d).featureMap(0xfffc)={ tagList: false }',
+        'descriptor(0x1d).generatedCommandList(0xfff8)=[  ]',
+        'descriptor(0x1d).partsList(0x3)=[  ]',
+        'descriptor(0x1d).serverList(0x1)=[ 3, 29, 47, 129 ]',
+        'identify(0x3).acceptedCommandList(0xfff9)=[ 0, 64 ]',
+        'identify(0x3).attributeList(0xfffb)=[ 0, 1, 65528, 65529, 65531, 65532, 65533 ]',
+        'identify(0x3).clusterRevision(0xfffd)=6',
+        'identify(0x3).featureMap(0xfffc)={  }',
+        'identify(0x3).generatedCommandList(0xfff8)=[  ]',
+        'identify(0x3).identifyTime(0x0)=0',
+        'identify(0x3).identifyType(0x1)=0',
+        'powerSource(0x2f).acceptedCommandList(0xfff9)=[  ]',
+        'powerSource(0x2f).attributeList(0xfffb)=[ 0, 1, 2, 5, 31, 65528, 65529, 65531, 65532, 65533 ]',
+        'powerSource(0x2f).clusterRevision(0xfffd)=3',
+        "powerSource(0x2f).description(0x2)='AC Power'",
+        'powerSource(0x2f).endpointList(0x1f)=[ 2 ]',
+        'powerSource(0x2f).featureMap(0xfffc)={ wired: true, battery: false, rechargeable: false, replaceable: false }',
+        'powerSource(0x2f).generatedCommandList(0xfff8)=[  ]',
+        'powerSource(0x2f).order(0x1)=0',
+        'powerSource(0x2f).status(0x0)=1',
+        'powerSource(0x2f).wiredCurrentType(0x5)=0',
+        'valveConfigurationAndControl(0x81).acceptedCommandList(0xfff9)=[ 0, 1 ]',
+        'valveConfigurationAndControl(0x81).attributeList(0xfffb)=[ 0, 1, 3, 4, 5, 6, 7, 8, 9, 10, 65528, 65529, 65531, 65532, 65533 ]',
+        'valveConfigurationAndControl(0x81).clusterRevision(0xfffd)=1',
+        'valveConfigurationAndControl(0x81).currentLevel(0x6)=0',
+        'valveConfigurationAndControl(0x81).currentState(0x4)=0',
+        'valveConfigurationAndControl(0x81).defaultOpenDuration(0x1)=null',
+        'valveConfigurationAndControl(0x81).defaultOpenLevel(0x8)=100',
+        'valveConfigurationAndControl(0x81).featureMap(0xfffc)={ timeSync: false, level: true }',
+        'valveConfigurationAndControl(0x81).generatedCommandList(0xfff8)=[  ]',
+        'valveConfigurationAndControl(0x81).levelStep(0xa)=1',
+        'valveConfigurationAndControl(0x81).openDuration(0x0)=null',
+        'valveConfigurationAndControl(0x81).remainingDuration(0x3)=null',
+        'valveConfigurationAndControl(0x81).targetLevel(0x7)=0',
+        'valveConfigurationAndControl(0x81).targetState(0x5)=0',
+        'valveConfigurationAndControl(0x81).valveFault(0x9)={ generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false }',
+      ].toSorted(),
+    );
   });
 
   test('openValve and closeValve run the Open/Close command logic', async () => {
