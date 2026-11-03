@@ -166,12 +166,14 @@
 <h3 id="added">Added</h3>
 <ul>
 <li>[endpoint]: Add optional <code>periodicEnergyImported</code>/<code>periodicEnergyExported</code> parameters to <code>createDefaultElectricalEnergyMeasurementClusterServer()</code>, <code>createImportedElectricalEnergyMeasurementClusterServer()</code> and <code>createExportedElectricalEnergyMeasurementClusterServer()</code> that enable the <code>PeriodicEnergy</code> feature (Matter 1.6.1 § 2.12.4.4), and document firing the <code>CumulativeEnergyMeasured</code>/<code>PeriodicEnergyMeasured</code> events.</li>
+<li>[endpoint]: Add <code>createOnOffValveConfigurationAndControlClusterServer()</code> to create a <code>ValveConfigurationAndControl</code> cluster server without the <code>Level</code> feature, for binary (on/off) valves.</li>
 <li>[chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 <code>TC_EEM_2_1</code>–<code>2_5</code> conformance tests on them.</li>
 <li>[tests]: Fail the <code>matterbridgeEndpoint-default</code> and <code>matterbridgeEndpointHelpers</code> tests on any unexpected warning or error log.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[utils]: <code>getEnumDescription()</code> accepts any number or string <code>value</code>; values outside the enum return the fallback.</li>
+<li>[behaviors]: The Pump Configuration and Control server keeps the <code>PumpStatus</code> <code>Running</code> bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes).</li>
 <li>[dgram]: Add an optional <code>cacheFlush</code> / <code>unicastResponse</code> flag to <code>dnsResponseClassToString()</code> and <code>dnsQuestionClassToString()</code>.</li>
 <li>[core]: Log unknown <code>EsaState</code> values as <code>Invalid</code> instead of <code>undefined</code>.</li>
 <li>[chip]: Validate the previous EnergyEvse <code>FaultState</code> in the fault test event triggers.</li>
