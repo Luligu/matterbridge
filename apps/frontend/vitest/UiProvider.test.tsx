@@ -83,6 +83,8 @@ describe('UiProvider', () => {
 
     const confirmSpy = vi.fn();
     const cancelSpy = vi.fn();
+    const inputConfirmSpy = vi.fn();
+    const inputCancelSpy = vi.fn();
 
     function Harness() {
       const ui = useContext(UiContext);
@@ -113,6 +115,12 @@ describe('UiProvider', () => {
           <button type="button" onClick={() => ui.showConfirmCancelDialog('Confirm title', 'Confirm message', 'restart', confirmSpy, cancelSpy)}>
             Show confirm dialog
           </button>
+          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Edit name', 'Enter a new name', 'rename', 'Original', inputConfirmSpy, inputCancelSpy, 'Name')}>
+            Show input dialog
+          </button>
+          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Add name', 'Enter a name', 'add', '', inputConfirmSpy, inputCancelSpy)}>
+            Show default input dialog
+          </button>
           <button type="button" onClick={() => ui.showInstallProgress('Install title', 'npm install matterbridge-test', 'matterbridge-test')}>
             Show install progress
           </button>
@@ -141,8 +149,54 @@ describe('UiProvider', () => {
       </UiProvider>,
     );
 
-    return { confirmSpy, cancelSpy };
+    return { confirmSpy, cancelSpy, inputConfirmSpy, inputCancelSpy };
   }
+
+  it('should pass the command and edited input to confirmation and close the dialog', async () => {
+    const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Show input dialog'));
+    expect(screen.getByText('Edit name')).toBeInTheDocument();
+    expect(screen.getByText('Enter a new name')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Original');
+    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Updated' } });
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('rename', 'Updated');
+    expect(inputCancelSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('should cancel without confirming and restore the initial value when reopened', async () => {
+    const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
+
+    fireEvent.click(screen.getByText('Show input dialog'));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Unsaved' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith('rename');
+    expect(inputConfirmSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Show input dialog'));
+    expect(screen.getByRole('textbox')).toHaveValue('Original');
+    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+  });
+
+  it('should use the default input label and callbacks from the latest request', async () => {
+    const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
+
+    fireEvent.click(screen.getByText('Show input dialog'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByText('Show default input dialog'));
+    expect(screen.getByRole('textbox', { name: 'Value' })).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('add', 'New');
+    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith('rename');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 
   it('covers snackbar handling, confirm cancel dialog, and auto-exit install flow', async () => {
     const { confirmSpy, cancelSpy } = await renderHarness();

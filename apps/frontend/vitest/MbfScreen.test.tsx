@@ -48,6 +48,7 @@ describe('MbfScreen', () => {
     closeSnackbarMessage: vi.fn(),
     closeSnackbar: vi.fn(),
     showConfirmCancelDialog: vi.fn(),
+    showConfirmCancelInputDialog: vi.fn(),
     showInstallProgress: vi.fn(),
     exitInstallProgressSuccess: vi.fn(),
     exitInstallProgressError: vi.fn(),
