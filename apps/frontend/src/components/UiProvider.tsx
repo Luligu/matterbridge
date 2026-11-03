@@ -11,6 +11,7 @@ import React, { useState, useCallback, useMemo, useRef, type ReactNode } from 'r
 import { debug } from '../appState';
 import { MbfLsk } from '../utils/localStorage';
 import { ConfirmCancelForm } from './ConfirmCancelForm';
+import { ConfirmCancelInput, type ConfirmCancelInputProps } from './ConfirmCancelInput';
 import { InstallProgressDialog } from './InstallProgressDialog';
 import { UiContext } from './UiContext';
 
@@ -127,6 +128,38 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     [],
   );
 
+  // ******************************** ConfirmCancelInput ********************************
+  const [confirmCancelInput, setConfirmCancelInput] = useState<ConfirmCancelInputProps | null>(null);
+
+  const showConfirmCancelInputDialog = useCallback(
+    (
+      title: string,
+      message: string,
+      command: string,
+      initialValue: string,
+      handleConfirm: (command: string, value: string) => void,
+      handleCancel: (command: string) => void,
+      label = 'Value',
+    ) => {
+      setConfirmCancelInput({
+        open: true,
+        title,
+        message,
+        initialValue,
+        label,
+        onConfirm: (value) => {
+          setConfirmCancelInput(null);
+          handleConfirm(command, value);
+        },
+        onCancel: () => {
+          setConfirmCancelInput(null);
+          handleCancel(command);
+        },
+      });
+    },
+    [],
+  );
+
   // ******************************** InstallProgressDialog ********************************
   const [installDialogOpen, setInstallDialogOpen] = useState(false);
   const [installTitle, setInstallTitle] = useState('');
@@ -185,6 +218,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
       closeSnackbarMessage,
       closeSnackbar,
       showConfirmCancelDialog,
+      showConfirmCancelInputDialog,
       showInstallProgress,
       exitInstallProgressSuccess,
       exitInstallProgressError,
@@ -202,6 +236,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
       closeSnackbarMessage,
       closeSnackbar,
       showConfirmCancelDialog,
+      showConfirmCancelInputDialog,
       showInstallProgress,
       exitInstallProgressSuccess,
       exitInstallProgressError,
@@ -215,6 +250,7 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
   return (
     <UiContext.Provider value={contextValue}>
       <ConfirmCancelForm open={showConfirmCancelForm} title={confirmCancelFormTitle} message={confirmCancelFormMessage} onConfirm={handleConfirm} onCancel={handleCancel} />
+      {confirmCancelInput && <ConfirmCancelInput {...confirmCancelInput} />}
       <InstallProgressDialog
         open={installDialogOpen}
         title={installTitle}

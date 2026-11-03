@@ -1,17 +1,18 @@
 import '@testing-library/jest-dom';
 
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react';
 import { useContext } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { ConfirmCancelFormProps } from '../src/components/ConfirmCancelForm';
 import { MbfLsk } from '../src/utils/localStorage';
 
 const mockEnqueueSnackbar = vi.fn();
 const mockCloseSnackbar = vi.fn();
+const mockConfirmCancelForm = vi.fn<(props: ConfirmCancelFormProps) => void>();
 
-vi.mock('../src/appState', () => ({
-  debug: false,
-}));
+const appState = vi.hoisted(() => ({ debug: false }));
+vi.mock('../src/appState', () => appState);
 
 vi.mock('notistack', () => ({
   useSnackbar: () => ({
@@ -21,8 +22,10 @@ vi.mock('notistack', () => ({
 }));
 
 vi.mock('../src/components/ConfirmCancelForm', () => ({
-  ConfirmCancelForm: ({ open, title, message, onConfirm, onCancel }: { open: boolean; title: string; message: string; onConfirm: () => void; onCancel: () => void }) =>
-    open ? (
+  ConfirmCancelForm: (props: ConfirmCancelFormProps) => {
+    mockConfirmCancelForm(props);
+    const { open, title, message, onConfirm, onCancel } = props;
+    return open ? (
       <div data-testid="confirm-cancel-form">
         <div>{title}</div>
         <div>{message}</div>
@@ -33,7 +36,8 @@ vi.mock('../src/components/ConfirmCancelForm', () => ({
           Cancel action
         </button>
       </div>
-    ) : null,
+    ) : null;
+  },
 }));
 
 vi.mock('../src/components/InstallProgressDialog', () => ({
@@ -65,12 +69,18 @@ vi.mock('../src/components/InstallProgressDialog', () => ({
     ) : null,
 }));
 
-describe('UiProvider', () => {
+describe.each([false, true])('UiProvider with debug=%s', (debug) => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
     localStorage.clear();
+    appState.debug = debug;
+    vi.spyOn(console, 'log').mockImplementation(() => {});
     mockEnqueueSnackbar.mockImplementation((_message: string, _options: unknown) => 'snackbar-key');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
   async function loadUiProvider() {
@@ -83,6 +93,8 @@ describe('UiProvider', () => {
 
     const confirmSpy = vi.fn();
     const cancelSpy = vi.fn();
+    const inputConfirmSpy = vi.fn();
+    const inputCancelSpy = vi.fn();
 
     function Harness() {
       const ui = useContext(UiContext);
@@ -113,6 +125,12 @@ describe('UiProvider', () => {
           <button type="button" onClick={() => ui.showConfirmCancelDialog('Confirm title', 'Confirm message', 'restart', confirmSpy, cancelSpy)}>
             Show confirm dialog
           </button>
+          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Edit name', 'Enter a new name', 'rename', 'Original', inputConfirmSpy, inputCancelSpy, 'Name')}>
+            Show input dialog
+          </button>
+          <button type="button" onClick={() => ui.showConfirmCancelInputDialog('Add name', 'Enter a name', 'add', '', inputConfirmSpy, inputCancelSpy)}>
+            Show default input dialog
+          </button>
           <button type="button" onClick={() => ui.showInstallProgress('Install title', 'npm install matterbridge-test', 'matterbridge-test')}>
             Show install progress
           </button>
@@ -141,8 +159,87 @@ describe('UiProvider', () => {
       </UiProvider>,
     );
 
-    return { confirmSpy, cancelSpy };
+    return { confirmSpy, cancelSpy, inputConfirmSpy, inputCancelSpy };
   }
+
+  it('should ignore confirmation and cancellation before callbacks are registered', async () => {
+    const { confirmSpy, cancelSpy } = await renderHarness();
+    const [dialog] = mockConfirmCancelForm.mock.lastCall!;
+
+    act(() => {
+      dialog.onConfirm();
+      dialog.onCancel();
+    });
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(cancelSpy).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('confirm-cancel-form')).not.toBeInTheDocument();
+  });
+
+  it.each([
+    { timeout: undefined, autoHideDuration: 5000 },
+    { timeout: -1, autoHideDuration: null },
+  ])('should apply snackbar defaults with timeout=$timeout and ignore unknown messages', async ({ timeout, autoHideDuration }) => {
+    const { UiProvider, UiContext } = await loadUiProvider();
+    const { result } = renderHook(() => useContext(UiContext), { wrapper: UiProvider });
+
+    act(() => {
+      result.current.showSnackbarMessage('default message', timeout);
+      result.current.closeSnackbarMessage('unknown message');
+    });
+
+    expect(mockEnqueueSnackbar).toHaveBeenCalledExactlyOnceWith('default message', expect.objectContaining({ autoHideDuration, persist: false }));
+    expect(mockCloseSnackbar).not.toHaveBeenCalled();
+    const content = mockEnqueueSnackbar.mock.lastCall![1].content('default-key');
+    render(<>{content}</>);
+    expect(screen.getByRole('alert')).toHaveTextContent('default message');
+  });
+
+  it('should pass the command and edited input to confirmation and close the dialog', async () => {
+    const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('Show input dialog'));
+    expect(screen.getByText('Edit name')).toBeInTheDocument();
+    expect(screen.getByText('Enter a new name')).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Original');
+    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Updated' } });
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('rename', 'Updated');
+    expect(inputCancelSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('should cancel without confirming and restore the initial value when reopened', async () => {
+    const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
+
+    fireEvent.click(screen.getByText('Show input dialog'));
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Unsaved' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith('rename');
+    expect(inputConfirmSpy).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('Show input dialog'));
+    expect(screen.getByRole('textbox')).toHaveValue('Original');
+    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+  });
+
+  it('should use the default input label and callbacks from the latest request', async () => {
+    const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
+
+    fireEvent.click(screen.getByText('Show input dialog'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByText('Show default input dialog'));
+    expect(screen.getByRole('textbox', { name: 'Value' })).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
+    fireEvent.click(screen.getByRole('button', { name: 'OK' }));
+    expect(inputConfirmSpy).toHaveBeenCalledExactlyOnceWith('add', 'New');
+    expect(inputCancelSpy).toHaveBeenCalledExactlyOnceWith('rename');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
 
   it('covers snackbar handling, confirm cancel dialog, and auto-exit install flow', async () => {
     const { confirmSpy, cancelSpy } = await renderHarness();
