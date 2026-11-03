@@ -77,6 +77,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [devices]: Remove the unreachable `undefined` fallback of `WaterValve.getCurrentLevel()` with the `Level` feature, restoring the 100% branch coverage of `waterValve.ts`.
 - [frontend]: Correct inverted WindowCovering Open/Closed labels and display ClosureDimension positions as percentages. Closes [#671](https://github.com/Luligu/matterbridge/issues/671). Thanks to [@peteroettl](https://github.com/peteroettl).
 - [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
 - [core]: Map device classes explicitly to matter.js classifications, including App to Application.
