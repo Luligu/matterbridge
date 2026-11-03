@@ -13,10 +13,12 @@ import { Identify } from '@matter/types/clusters/identify';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
+  deleteDevice,
   destroyTestEnvironment,
   flushServerNode,
   server,
@@ -117,7 +119,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add the water valve devices', async () => {
     expect(await addDevice(server, device)).toBe(true);
-    expect(await addDevice(server, onOffDevice)).toBe(true);
+    // Sibling endpoints with the same device type need a Descriptor TagList: add the on/off valve under the aggregator
+    expect(await addBridgedDevice(aggregator, onOffDevice)).toBe(true);
   });
 
   test('check attributes after adding the devices', () => {
@@ -187,6 +190,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.hasClusterServer(FlowMeasurement.id)).toBe(false);
     await onOffDevice.setFlowMeasuredValue(30);
     expect(onOffDevice.getAttribute(FlowMeasurement, 'measuredValue')).toBe(30);
+  });
+
+  test('remove the on/off water valve device', async () => {
+    expect(await deleteDevice(aggregator, onOffDevice)).toBe(true);
   });
 
   test('start the server node', async () => {

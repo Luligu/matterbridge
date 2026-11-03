@@ -17,10 +17,12 @@ import { PressureMeasurement } from '@matter/types/clusters/pressure-measurement
 import { PumpConfigurationAndControl } from '@matter/types/clusters/pump-configuration-and-control';
 import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
 import {
+  addBridgedDevice,
   addDevice,
   aggregator,
   createServerNode,
   createTestEnvironment,
+  deleteDevice,
   destroyTestEnvironment,
   flushServerNode,
   server,
@@ -139,7 +141,8 @@ describe('Matterbridge ' + NAME, () => {
 
   test('add the pump devices', async () => {
     expect(await addDevice(server, device)).toBe(true);
-    expect(await addDevice(server, noLevelDevice)).toBe(true);
+    // Sibling endpoints with the same device type need a Descriptor TagList: add the other pumps under the aggregator, one at a time
+    expect(await addBridgedDevice(aggregator, noLevelDevice)).toBe(true);
   });
 
   test('check attributes after adding the device', () => {
@@ -203,6 +206,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(noLevelDevice.getOnOff()).toBe(true);
     await noLevelDevice.setOnOff(false);
     expect(noLevelDevice.getOnOff()).toBe(false);
+    expect(await deleteDevice(aggregator, noLevelDevice)).toBe(true);
   });
 
   test('measurement setters are ignored without the measurement clusters', async () => {
@@ -216,13 +220,24 @@ describe('Matterbridge ' + NAME, () => {
 
   test('measurement setters update the measurement clusters', async () => {
     const sensorDevice = new Pump('Pump Sensor Device', 'PU000003', { temperatureMeasuredValue: null, pressureMeasuredValue: null, flowMeasuredValue: null });
-    expect(await addDevice(server, sensorDevice)).toBe(true);
+    expect(await addBridgedDevice(aggregator, sensorDevice)).toBe(true);
     await sensorDevice.setTemperatureMeasuredValue(2500);
     await sensorDevice.setPressureMeasuredValue(1200);
     await sensorDevice.setFlowMeasuredValue(50);
     expect(sensorDevice.getAttribute(TemperatureMeasurement, 'measuredValue')).toBe(2500);
     expect(sensorDevice.getAttribute(PressureMeasurement, 'measuredValue')).toBe(1200);
     expect(sensorDevice.getAttribute(FlowMeasurement, 'measuredValue')).toBe(50);
+    expect(await deleteDevice(aggregator, sensorDevice)).toBe(true);
+  });
+
+  test('a pump created already on starts running at the stored level', async () => {
+    const onDevice = new Pump('Pump On Device', 'PU000004', { onOff: true, currentLevel: 100 });
+    expect(await addBridgedDevice(aggregator, onDevice)).toBe(true);
+    expect(onDevice.getOnOff()).toBe(true);
+    expect(onDevice.getSpeed()).toBe(1500);
+    expect(onDevice.getCapacity()).toBe(10000);
+    expect(onDevice.getAttribute(PumpConfigurationAndControl, 'pumpStatus')?.running).toBe(true);
+    expect(await deleteDevice(aggregator, onDevice)).toBe(true);
   });
 
   test('start the server node', async () => {

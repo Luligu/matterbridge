@@ -53,7 +53,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Changed
 
 - [utils]: `getEnumDescription()` accepts any number or string `value`; values outside the enum return the fallback.
-- [behaviors]: The Pump Configuration and Control server keeps the `PumpStatus` `Running` bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes).
+- [behaviors]: The Pump Configuration and Control server keeps the `PumpStatus` `Running` bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes, and at startup when the pump is already on).
 - [dgram]: Add an optional `cacheFlush` / `unicastResponse` flag to `dnsResponseClassToString()` and `dnsQuestionClassToString()`.
 - [core]: Log unknown `EsaState` values as `Invalid` instead of `undefined`.
 - [chip]: Validate the previous EnergyEvse `FaultState` in the fault test event triggers.
