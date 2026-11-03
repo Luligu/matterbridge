@@ -117,7 +117,8 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getOnOff()).toBe(false);
     expect(device.getLevel()).toBeUndefined();
     expect(fullDevice.getOnOff()).toBe(true);
-    expect(fullDevice.getLevel()).toBe(254);
+    // StartUpCurrentLevel (50) is applied to CurrentLevel when the endpoint starts
+    expect(fullDevice.getLevel()).toBe(50);
   });
 
   test('device forEachAttribute', () => {
