@@ -151,7 +151,8 @@ export class WaterValve extends MatterbridgeEndpoint {
   getCurrentLevel(): number | null | undefined {
     if (!this.hasAttributeServer(ValveConfigurationAndControl, 'currentLevel')) return undefined;
     const currentLevel: unknown = this.getAttribute(ValveConfigurationAndControl.id, 'currentLevel');
-    return typeof currentLevel === 'number' || currentLevel === null ? currentLevel : undefined;
+    // The guard above ensures the Level feature, so CurrentLevel is a number or null (unknown).
+    return typeof currentLevel === 'number' ? currentLevel : null;
   }
 
   /**
