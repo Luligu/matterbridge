@@ -188,6 +188,8 @@ export function UiProvider({ children }: UiProviderProps): React.JSX.Element {
     const installAutoExitLocal = localStorage.getItem(MbfLsk['install-auto-exit']) !== 'false'; // default true
     if (installAutoExitLocal) {
       setInstallDialogOpen(false);
+      setInstallPackageName('');
+      setInstallOutput('');
     }
   }, [installPackageName]);
 
