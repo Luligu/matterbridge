@@ -54,23 +54,9 @@ import {
   invokeBehaviorCommand,
   setCluster,
 } from '../src/matterbridgeEndpointHelpers.js';
-import { advanceTimersByTimeAsync, useServerNode } from './bunUtils.js';
+import { useServerNode } from './bunUtils.js';
 
 await setupTest(NAME, false);
-
-/**
- * Advances the fake timers in 50 ms steps until the promise settles, failing after 100 steps.
- *
- * @param {Promise<T>} promise The promise to settle.
- * @returns {Promise<T>} The settled value of the promise.
- */
-async function advanceUntilSettled<T>(promise: Promise<T>): Promise<T> {
-  const status = { settled: false };
-  void promise.finally(() => (status.settled = true));
-  for (let step = 0; step < 100 && !status.settled; step++) await advanceTimersByTimeAsync(50, 10);
-  expect(status.settled).toBe(true);
-  return promise;
-}
 
 describe('Options helpers without a server node', () => {
   class ManagedValue {
@@ -312,7 +298,6 @@ describe('Endpoint helpers', () => {
   useServerNode(MATTER_PORT);
 
   afterEach(() => {
-    vi.useRealTimers();
     expect(loggerWarnSpy).not.toHaveBeenCalled();
     expect(loggerErrorSpy).not.toHaveBeenCalled();
     expect(loggerFatalSpy).not.toHaveBeenCalled();
@@ -496,20 +481,15 @@ describe('Endpoint helpers', () => {
     device.addRequiredClusterServers();
     await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
 
-    // Fake the movement timer and the waiter timers, and advance them until the 200ms movement completes.
-    vi.useFakeTimers();
-    try {
-      const invoked = invokeBehaviorCommand(
-        device,
-        WindowCovering,
-        'goToLiftPercentage',
-        { liftPercent100thsValue: 10000 },
-        () => device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000,
-      );
-      expect(await advanceUntilSettled(invoked)).toBe(true);
-    } finally {
-      vi.useRealTimers();
-    }
+    // Real timers: bun's fake timers do not drive the endpoint transaction, which also waits on real I/O.
+    const invoked = invokeBehaviorCommand(
+      device,
+      WindowCovering,
+      'goToLiftPercentage',
+      { liftPercent100thsValue: 10000 },
+      () => device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000,
+    );
+    expect(await invoked).toBe(true);
     expect(device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
   });
 
@@ -520,14 +500,8 @@ describe('Endpoint helpers', () => {
     device.addRequiredClusterServers();
     await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
 
-    // Fake the waiter timers, and advance them until its 1000ms timeout expires.
-    vi.useFakeTimers();
-    try {
-      const invoked = invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 10000 }, () => false);
-      expect(await advanceUntilSettled(invoked)).toBe(false);
-    } finally {
-      vi.useRealTimers();
-    }
+    // Real timers: the waiter gives up after its 1000 ms timeout.
+    expect(await invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 10000 }, () => false)).toBe(false);
   });
 
   test('invokeBehaviorCommand logs and returns false for an unknown cluster or command, and accepts a qualified command name', async () => {
