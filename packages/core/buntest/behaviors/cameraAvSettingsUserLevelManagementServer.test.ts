@@ -223,6 +223,8 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
     }
     expect(device.getAttribute(PTZ, 'movementState')).toBe(Idle);
     expect(position()).toEqual({ pan: 30, tilt: 80, zoom: 1 });
+    // Only the accepted move is announced.
+    expect(emitted.splice(0)).toEqual(['mptzSetPosition']);
   });
 
   test('dptzSetViewport and dptzRelativeMove validate and update the stream viewport (§ 11.3.7.6, § 11.3.7.7)', async () => {
