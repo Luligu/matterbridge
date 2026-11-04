@@ -34,7 +34,7 @@ import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from './snapshot.js';
 import type { WeriftOfferOptions } from './weriftSession.js';
 
 /**
- * Valid AudioStreamAllocate BitDepth values per Matter 1.6 Application Cluster spec §11.2.8.1 ("8, 16, 24, 32").
+ * Valid AudioStreamAllocate BitDepth values per Matter 1.6.1 Application Cluster spec §11.2.8.1 ("8, 16, 24, 32").
  * This is a discrete set rather than a simple min/max range, so matter.js does not enforce it automatically.
  */
 const AUDIO_STREAM_BIT_DEPTHS = [8, 16, 24, 32];
@@ -109,7 +109,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
   /**
    * Self-allocates a default video/audio/snapshot stream for any feature this endpoint supports that has none
    * allocated yet, so `AllocatedVideoStreams`/`AllocatedAudioStreams`/`AllocatedSnapshotStreams` are never
-   * unexpectedly empty for a client that assumes the Matter 1.6/1.5.1 §11.2.1.1 "Stream Lifecycle" recommendation
+   * unexpectedly empty for a client that assumes the Matter 1.6.1/1.5.1 §11.2.1.1 "Stream Lifecycle" recommendation
    * holds (a Commissioner allocates once at commissioning time, and the resulting streams then have very long
    * lifetimes) but never actually calls `VideoStreamAllocate`/`AudioStreamAllocate`/`SnapshotStreamAllocate` itself
    * (e.g. SmartThings, observed in production only ever sending `ProvideOffer` with a guessed stream id and no prior
@@ -147,7 +147,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
           minResolution: this.state.minViewportResolution,
           maxResolution: resolution,
           minBitRate,
-          // RateDistortionTradeOffPointsStruct (Matter 1.6 §11.2.6.9) only carries a floor MinBitRate, no
+          // RateDistortionTradeOffPointsStruct (Matter 1.6.1 §11.2.6.9) only carries a floor MinBitRate, no
           // matching max — MaxBitRate must be synthesized. 4x is a typical H.264 VBR peak-to-floor ratio for
           // camera streams; MaxBitRate === MinBitRate would leave the stream no room to vary at all.
           maxBitRate: minBitRate * 4,
@@ -185,7 +185,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       const { snapshotCapabilities } = this.state;
       // Span the full supported resolution range (smallest to largest capability) rather than a single fixed point, so
       // that a real client's request for any of the device's own advertised snapshotCapabilities entries (not just the
-      // smallest one) dedup-matches this default stream in snapshotStreamAllocate (Matter 1.6 §11.2.8.8.8) instead of
+      // smallest one) dedup-matches this default stream in snapshotStreamAllocate (Matter 1.6.1 §11.2.8.8.8) instead of
       // spawning an unwanted duplicate allocation. Mirrors how the video default stream spans minViewportResolution to
       // its top rateDistortionTradeOffPoints resolution, above.
       let smallestCapability = snapshotCapabilities[0];
@@ -575,7 +575,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         Status.DynamicConstraintError,
       );
     }
-    // A request "matches" an existing stream (Matter 1.6 §11.2.8.8.8) when its non-resolution parameters are identical and its
+    // A request "matches" an existing stream (Matter 1.6.1 §11.2.8.8.8) when its non-resolution parameters are identical and its
     // requested resolution range overlaps the existing stream's range; the existing entry is narrowed to the new range on reuse.
     const existingStream = this.state.allocatedSnapshotStreams.find(
       (stream) =>

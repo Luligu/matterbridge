@@ -2024,7 +2024,7 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).step).toBe(false);
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).multiSpeed).toBe(false);
     expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
-    // The featureless MatterbridgeFanControlServer applies the Fan Control attribute rules (Matter 1.6.0 § 4.4.6).
+    // The featureless MatterbridgeFanControlServer applies the Fan Control attribute rules (Matter 1.6.1 § 4.4.6).
     await device.setAttribute(FanControl.id, 'percentSetting', 50);
     expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Medium);
     await device.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Off);
@@ -2110,10 +2110,10 @@ describe('Matterbridge ' + NAME, () => {
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).wind).toBe(false);
     expect((device.getAttribute(FanControl.id, 'featureMap') as Record<string, boolean>).airflowDirection).toBe(false);
     expect(device.getAttribute(FanControl.id, 'fanMode')).toBe(FanControl.FanMode.Off);
-    // The featureless MatterbridgeFanControlServer rejects a FanMode outside the OffHigh FanModeSequence (Matter 1.6.0 § 4.4.6.1).
+    // The featureless MatterbridgeFanControlServer rejects a FanMode outside the OffHigh FanModeSequence (Matter 1.6.1 § 4.4.6.1).
     await expect(device.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.Low)).rejects.toMatchObject({ code: Status.ConstraintError });
     await device.setAttribute(FanControl.id, 'fanMode', FanControl.FanMode.High);
-    // Matter 1.6.0 § 4.4.6.3.1: FanMode High moves PercentSetting into the High range, which spans 1-100 for the OffHigh sequence.
+    // Matter 1.6.1 § 4.4.6.3.1: FanMode High moves PercentSetting into the High range, which spans 1-100 for the OffHigh sequence.
     expect(device.getAttribute(FanControl.id, 'percentSetting')).toBeGreaterThan(0);
     // (matterbridge as any).frontend.getClusterTextFromDevice(device);
     // (matterbridge.frontend as any).getClusterTextFromDevice(device);
@@ -2151,7 +2151,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('createDefaultTemperatureAlarmClusterServer', async () => {
-    // Temperature Alarm is provisional in Matter 1.6.0 (§ 2.17.3) and no device type lists it yet, so temperatureSensor
+    // Temperature Alarm is provisional in Matter 1.6.1 (§ 2.17.3) and no device type lists it yet, so temperatureSensor
     // is used here as a plain scaffold for the cluster server itself.
     const device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TempAlarm' });
     expect(device).toBeDefined();
@@ -2179,7 +2179,7 @@ describe('Matterbridge ' + NAME, () => {
     const criticalAlarms = { ...noAlarm, criticalOverTemperatureAlarm: true, criticalUnderTemperatureAlarm: true };
     expect(device.getAttribute(TemperatureAlarm.id, 'criticalOverTemperatureThreshold')).toBe(6000);
     expect(device.getAttribute(TemperatureAlarm.id, 'criticalUnderTemperatureThreshold')).toBe(-1000);
-    // Matter 1.6.0 § 1.15.6.4: the Mask, Latch and State bits of an unsupported alarm are false.
+    // Matter 1.6.1 § 1.15.6.4: the Mask, Latch and State bits of an unsupported alarm are false.
     expect(device.getAttribute(TemperatureAlarm.id, 'supported')).toEqual(criticalAlarms);
     expect(device.getAttribute(TemperatureAlarm.id, 'mask')).toEqual(criticalAlarms);
     expect(device.getAttribute(TemperatureAlarm.id, 'latch')).toEqual(noAlarm);

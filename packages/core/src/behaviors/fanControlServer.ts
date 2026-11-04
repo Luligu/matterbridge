@@ -38,7 +38,7 @@ import { MatterbridgeServer } from './matterbridgeServer.js';
 const lookupStepDirection = ['Increase', 'Decrease'];
 const lookupFanMode = ['Off', 'Low', 'Medium', 'High', 'On', 'Auto', 'Auto', 'Smart'];
 
-/** The FanMode values supported by each FanModeSequence (Matter 1.6 Application Cluster Spec § 4.4.5.6). */
+/** The FanMode values supported by each FanModeSequence (Matter 1.6.1 Application Cluster Spec § 4.4.5.6). */
 const supportedFanModesBySequence: Record<FanControl.FanModeSequence, ReadonlySet<FanControl.FanMode>> = {
   [FanControl.FanModeSequence.OffLowMedHigh]: new Set([FanControl.FanMode.Off, FanControl.FanMode.Low, FanControl.FanMode.Medium, FanControl.FanMode.High]),
   [FanControl.FanModeSequence.OffLowHigh]: new Set([FanControl.FanMode.Off, FanControl.FanMode.Low, FanControl.FanMode.High]),
@@ -65,7 +65,7 @@ interface PercentRange {
 }
 
 /**
- * Computes the PercentSetting ranges for the FanMode values a FanModeSequence supports (Matter 1.6 Application
+ * Computes the PercentSetting ranges for the FanMode values a FanModeSequence supports (Matter 1.6.1 Application
  * Cluster Spec § 4.4.6.3.1 Percent Rules).
  *
  * @param {FanControl.FanModeSequence} sequence - The FanModeSequence currently in effect.
@@ -115,7 +115,7 @@ function percentToFanMode(percent: number, sequence: FanControl.FanModeSequence)
 }
 
 /**
- * Resolves the PercentSetting value a FanMode change to `fanMode` settles on (Matter 1.6 Application Cluster
+ * Resolves the PercentSetting value a FanMode change to `fanMode` settles on (Matter 1.6.1 Application Cluster
  * Spec § 4.4.6.1.1 Off Value / § 4.4.6.3.1 Percent Rules), given `currentPercentSetting` (the settled value
  * before the change). Off always resolves to 0; Low/Medium/High keep the current value when it already falls in
  * the target range (so a PercentSetting-driven FanMode change isn't snapped to an arbitrary point in its own
@@ -143,7 +143,7 @@ function resolvePercentSettingForFanMode(fanMode: FanControl.FanMode, currentPer
 }
 
 /**
- * Resolves the PercentSetting value a Step command's FanMode transition lands on (Matter 1.6 Application
+ * Resolves the PercentSetting value a Step command's FanMode transition lands on (Matter 1.6.1 Application
  * Cluster Spec § 4.4.7.1.5), given the direction just stepped. Unlike a direct FanMode attribute write (any
  * value within the target range is spec-legal there, so resolvePercentSettingForFanMode() picks the range's
  * midpoint), the Step command's "lowest/highest step value" wording implies a minimal, discrete increment past
@@ -175,7 +175,7 @@ function resolveStepPercentSettingForFanMode(
 }
 
 /**
- * Computes the SpeedSetting value a PercentSetting write maps to (Matter 1.6 Application Cluster Spec §
+ * Computes the SpeedSetting value a PercentSetting write maps to (Matter 1.6.1 Application Cluster Spec §
  * 4.4.6.3.1 / § 4.4.6.6.1: `speed = ceil( SpeedMax * (percent * 0.01) )`), written as `(speedMax * percent) /
  * 100` rather than `speedMax * (percent * 0.01)` — the latter is exact for some inputs but not others (e.g.
  * `70 * 0.01` is `0.7000000000000001` in IEEE 754 double precision, so `Math.ceil(10 * (70 * 0.01))` evaluates
@@ -192,7 +192,7 @@ function speedSettingForPercent(speedMax: number, percent: number): number {
 
 /**
  * FanControl server (auto + step) that forwards step commands to the Matterbridge command handler and enforces the
- * FanMode and PercentSetting attribute rules of Matter 1.6 Application Cluster Spec § 4.4.6.1 and § 4.4.6.3.
+ * FanMode and PercentSetting attribute rules of Matter 1.6.1 Application Cluster Spec § 4.4.6.1 and § 4.4.6.3.
  *
  * @remarks
  * matter.js's base FanControlServer only defaults FanMode to Off on startup; it does not validate writes against
@@ -235,7 +235,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
   }
 
   /**
-   * Enforces the FanMode attribute write rules (Matter 1.6 Application Cluster Spec § 4.4.6.1).
+   * Enforces the FanMode attribute write rules (Matter 1.6.1 Application Cluster Spec § 4.4.6.1).
    *
    * @param {FanControl.FanMode} fanMode - The FanMode value being written.
    */
@@ -328,7 +328,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
   }
 
   /**
-   * Enforces the PercentSetting attribute write rules (Matter 1.6 Application Cluster Spec § 4.4.6.3).
+   * Enforces the PercentSetting attribute write rules (Matter 1.6.1 Application Cluster Spec § 4.4.6.3).
    *
    * @param {number | null} percentSetting - The PercentSetting value being written.
    * @param {number | null} oldPercentSetting - The PercentSetting value before this write.
@@ -371,7 +371,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
   }
 
   /**
-   * Enforces the SpeedSetting attribute write rules (Matter 1.6 Application Cluster Spec § 4.4.6.6.1 Speed
+   * Enforces the SpeedSetting attribute write rules (Matter 1.6.1 Application Cluster Spec § 4.4.6.6.1 Speed
    * Rules) — the reciprocal of #handlePercentSettingChanging, for a client that writes SpeedSetting directly
    * instead of going through PercentSetting/FanMode. Only registered when the MultiSpeed feature is present (see
    * #initialize()).
@@ -446,7 +446,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
   }
 
   /**
-   * Forwards Step requests to the Matterbridge command handler, then applies the Matter 1.6 Application Cluster
+   * Forwards Step requests to the Matterbridge command handler, then applies the Matter 1.6.1 Application Cluster
    * Spec Sec 4.4.7.1.5 (Effect Upon Receipt) step rules to the FanMode/PercentSetting/SpeedSetting attributes.
    *
    * @param {FanControl.StepRequest} request - Step request payload.

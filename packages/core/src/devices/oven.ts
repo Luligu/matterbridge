@@ -240,7 +240,7 @@ export class Oven extends MatterbridgeEndpoint {
    * @remarks
    * For this derived cluster, only these pre-defined strings may be used in the PhaseList attribute:
    * "pre-heating", "pre-heated", and "cooling down".
-   * Matter 1.6 Application Cluster Specification §1.14.4.1 defines Stopped, Running, Paused, and Error as
+   * Matter 1.6.1 Application Cluster Specification §1.14.4.1 defines Stopped, Running, Paused, and Error as
    * mandatory OperationalStateEnum values. Device Library Specification §13.4.5 requires the Temperature
    * Controlled Cabinet device type's OperationalStateList to be fully populated.
    */
@@ -340,7 +340,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
    * Handles the OvenCavityOperationalState `Stop` command.
    *
    * @remarks
-   * Matter 1.6 Device Library Specification §13.4.5 makes `OperationCompletion` mandatory when a Temperature
+   * Matter 1.6.1 Device Library Specification §13.4.5 makes `OperationCompletion` mandatory when a Temperature
    * Controlled Cabinet exposes Oven Cavity Operational State. A successful Stop ends the operation started by the
    * initial Start command, so this method emits the event once and clears the stored start time.
    *

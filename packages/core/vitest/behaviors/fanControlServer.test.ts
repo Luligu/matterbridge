@@ -29,7 +29,7 @@ import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
 // Setup the test environment
 await setupTest(NAME, false);
 
-describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.1)', () => {
+describe('FanMode attribute rules (Matter 1.6.1 Application Cluster Spec § 4.4.6.1)', () => {
   let device: MatterbridgeEndpoint;
 
   beforeAll(async () => {
@@ -161,7 +161,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
 
   // Nested inside this describe's beforeAll/afterAll (server node lifecycle), not a sibling describe: a sibling
   // describe's tests would run after the afterAll above has already flushed/stopped the server node.
-  describe('PercentSetting attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.3)', () => {
+  describe('PercentSetting attribute rules (Matter 1.6.1 Application Cluster Spec § 4.4.6.3)', () => {
     let percentDevice: MatterbridgeEndpoint;
 
     test('Create fan device with default OffLowMedHighAuto sequence', async () => {
@@ -346,7 +346,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
 
   // Nested inside this describe's beforeAll/afterAll (server node lifecycle), not a sibling describe: a sibling
   // describe's tests would run after the afterAll above has already flushed/stopped the server node.
-  describe('Step command (Matter 1.6 Application Cluster Spec § 4.4.7.1)', () => {
+  describe('Step command (Matter 1.6.1 Application Cluster Spec § 4.4.7.1)', () => {
     let stepDevice: MatterbridgeEndpoint;
 
     test('Create fan device with default OffLowMedHighAuto sequence', async () => {
@@ -443,7 +443,7 @@ describe('FanMode attribute rules (Matter 1.6 Application Cluster Spec § 4.4.6.
       vent.subscribeCommand(FanControl, 'step', (data) => emitted.push(data.request));
       // vent uses createDefaultFanControlClusterServer() (Auto + Step, FanModeSequence OffLowMedHighAuto), whose
       // 1-100 PercentSetting domain splits into Low 1-33 / Medium 34-66 / High 67-100 (see fanControlServer.ts's
-      // computePercentRanges()). Step (Matter 1.6 Application Cluster Spec § 4.4.7.1.5) moves FanMode across that
+      // computePercentRanges()). Step (Matter 1.6.1 Application Cluster Spec § 4.4.7.1.5) moves FanMode across that
       // step sequence and lands PercentSetting/PercentCurrent on the boundary of the newly-entered range, so
       // positioning between calls is done via FanMode (not PercentCurrent directly, which Step itself derives).
       const stepCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];

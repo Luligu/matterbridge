@@ -34,7 +34,7 @@ import type { CommandHandler } from '../matterbridgeEndpointCommandHandler.js';
 /**
  * Returns whether the node booted because a software update completed.
  *
- * The Matter 1.6 specification excludes OTA reboots from the StartUpOnOff / StartUpCurrentLevel /
+ * The Matter 1.6.1 specification excludes OTA reboots from the StartUpOnOff / StartUpCurrentLevel /
  * StartUpColorTemperatureMireds behavior ("This behavior does not apply to reboots associated with OTA. After
  * an OTA restart, the ... attribute SHALL return to its value prior to the restart"), so the
  * MATTERBRIDGE_CHIP_TEST-only startup overrides in MatterbridgeOnOffServer, MatterbridgeLevelControlServer

@@ -305,10 +305,10 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
    * Handles the RvcRunMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §7.2.4.1 (DIRECTMODECH): while CurrentMode has no Idle mode tag,
+   * Matter 1.6.1 Application Cluster spec §7.2.4.1 (DIRECTMODECH): while CurrentMode has no Idle mode tag,
    * changing directly to another non-Idle mode SHALL return InvalidInMode unless DirectModeChange is enabled.
    * Changing to an Idle-tagged mode remains allowed because that is how the RVC device type stops an operation
-   * (Matter 1.6 Device Library spec §12.1.6.4.2).
+   * (Matter 1.6.1 Device Library spec §12.1.6.4.2).
    *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
@@ -390,7 +390,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
    * Handles the RvcCleanMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §7.3.4.1 (DIRECTMODECH): if RVC Run Mode CurrentMode has no Idle
+   * Matter 1.6.1 Application Cluster spec §7.3.4.1 (DIRECTMODECH): if RVC Run Mode CurrentMode has no Idle
    * mode tag, a clean-mode change SHALL return InvalidInMode unless DirectModeChange is enabled.
    *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
@@ -461,8 +461,8 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Emits the mandatory RVC OperationCompletion event when an active operation ends.
    *
    * @remarks
-   * Matter 1.6 Device Library spec §12.1.4 requires the RVC Operational State OperationCompletion event.
-   * Matter 1.6 Application Cluster spec §1.14.7.2 defines TotalOperationalTime and PausedTime.
+   * Matter 1.6.1 Device Library spec §12.1.4 requires the RVC Operational State OperationCompletion event.
+   * Matter 1.6.1 Application Cluster spec §1.14.7.2 defines TotalOperationalTime and PausedTime.
    */
   completeOperation(): void {
     if (this.internal.operationStartedAt === undefined) return;
@@ -481,7 +481,7 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Handles the RvcOperationalState `Pause` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §1.14.6.1 requires Paused to be an idempotent success, incompatible
+   * Matter 1.6.1 Application Cluster spec §1.14.6.1 requires Paused to be an idempotent success, incompatible
    * states to return CommandInvalidInState without side effects, and successful requests to set Paused.
    * The RVC state compatibility table additionally makes SeekingCharger Pause-compatible.
    *
@@ -530,7 +530,7 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Handles the RvcOperationalState `Resume` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §1.14.6.4 requires Running to be an idempotent success, incompatible
+   * Matter 1.6.1 Application Cluster spec §1.14.6.4 requires Running to be an idempotent success, incompatible
    * states to return CommandInvalidInState without side effects, and a successful Resume to restore the most
    * recent non-Error operational state that preceded Paused.
    *
@@ -579,7 +579,7 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Handles the RvcOperationalState `GoHome` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §7.4.5.1 requires SeekingCharger to be an idempotent success; states
+   * Matter 1.6.1 Application Cluster spec §7.4.5.1 requires SeekingCharger to be an idempotent success; states
    * that cannot seek the charger, including Charging and Docked, return CommandInvalidInState without side
    * effects; and every successful request sets OperationalState to SeekingCharger. Run Mode changes to Idle
    * only after docking completes, not when GoHome is accepted.

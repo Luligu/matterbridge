@@ -2912,7 +2912,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               status: PowerSource.PowerSourceStatus.Active,
               order: 0,
               description: 'AC Power',
-              // Matter 1.6.0 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
+              // Matter 1.6.1 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
               // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
               endpointList: [EndpointNumber(0)],
               wiredCurrentType: PowerSource.WiredCurrentType.Ac,

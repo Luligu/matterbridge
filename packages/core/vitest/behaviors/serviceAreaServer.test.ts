@@ -83,7 +83,7 @@ describe('MatterbridgeServiceAreaServer', () => {
     });
 
     // The command is invoked through act() rather than invokeBehaviorCommand() because SelectAreas answers with a
-    // SelectAreasResponse (Matter 1.6 Application Cluster Spec Sec 17.4.7.1) that invokeBehaviorCommand() discards,
+    // SelectAreasResponse (Matter 1.6.1 Application Cluster Spec § 1.17.7.1) that invokeBehaviorCommand() discards,
     // and the response status is the observable outcome of the validation.
     const acceptedResponse = await rvc.act(async (agent) => agent.get(serviceAreaServer).selectAreas({ newAreas: [1, 2] }));
     expect(acceptedResponse).toEqual({ status: ServiceArea.SelectAreasStatus.Success, statusText: '' });

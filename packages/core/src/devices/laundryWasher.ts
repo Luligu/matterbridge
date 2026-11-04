@@ -231,7 +231,7 @@ export class MatterbridgeLaundryWasherControlsServer extends LaundryWasherContro
    * Validates a requested spin-speed index.
    *
    * @remarks
-   * Matter 1.6 Application Cluster Specification §8.6.6.2: `SpinSpeedCurrent` is an index into `SpinSpeeds`.
+   * Matter 1.6.1 Application Cluster Specification §8.6.6.2: `SpinSpeedCurrent` is an index into `SpinSpeeds`.
    * A write that does not match a valid index SHALL receive `CONSTRAINT_ERROR`. A null value remains valid and
    * indicates that the selected cycle has no spin speed.
    *
@@ -292,7 +292,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
    * Handles the LaundryWasherMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
+   * Matter 1.6.1 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
    * any `SupportedModes` entry, `ChangeToModeResponse.Status` SHALL indicate `UnsupportedMode` and the
    * `StatusText` field SHALL be included, either with a human readable string or an empty string.
    *

@@ -59,7 +59,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
   /**
    * Handles the Pause command.
    *
-   * Effect on receipt (Matter 1.6 Application Cluster spec § 1.14.6.1 Pause Command):
+   * Effect on receipt (Matter 1.6.1 Application Cluster spec § 1.14.6.1 Pause Command):
    * "On receipt of this command, the device SHALL pause its operation if it is possible based on the current
    * function of the server. For example, if it is at a point where it is safe to do so and/or permitted, but
    * can be restarted from the point at which pause occurred. If this command is received when already in the
@@ -125,7 +125,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
   /**
    * Handles the Stop command.
    *
-   * Effect on receipt (Matter 1.6 Application Cluster spec § 1.14.6.2 Stop Command):
+   * Effect on receipt (Matter 1.6.1 Application Cluster spec § 1.14.6.2 Stop Command):
    * "On receipt of this command, the device SHALL stop its operation if it is at a position where it is safe
    * to do so and/or permitted. Restart of the device following the receipt of the Stop command SHALL require
    * attended operation unless remote start is allowed by the device type and any jurisdiction governing remote
@@ -136,7 +136,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
    * action. Otherwise, on success: the OperationalState attribute SHALL be set to Stopped. The device SHALL
    * respond with an OperationalCommandResponse command with an ErrorStateID of NoError."
    *
-   * Effect on receipt (Matter 1.6 Application Cluster spec § 1.14.7.2 OperationCompletion Event): "This event
+   * Effect on receipt (Matter 1.6.1 Application Cluster spec § 1.14.7.2 OperationCompletion Event): "This event
    * SHOULD be generated when the overall operation ends, successfully or otherwise. [...] TotalOperationalTime
    * [is] the total operational time, in seconds, from when the operation was started via an initial Start
    * command [...] until the operation completed. This includes any time spent while paused. [...] PausedTime
@@ -196,7 +196,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
   /**
    * Handles the Start command.
    *
-   * Effect on receipt (Matter 1.6 Application Cluster spec § 1.14.6.3 Start Command):
+   * Effect on receipt (Matter 1.6.1 Application Cluster spec § 1.14.6.3 Start Command):
    * "On receipt of this command, the device SHALL start its operation if it is safe to do so and the device is
    * in an operational state from which it can be started. There may be either regulatory or manufacturer-imposed
    * safety and security requirements that first necessitate some specific action at the device before a Start
@@ -267,7 +267,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
   /**
    * Handles the Resume command.
    *
-   * Effect on receipt (Matter 1.6 Application Cluster spec § 1.14.6.4 Resume Command):
+   * Effect on receipt (Matter 1.6.1 Application Cluster spec § 1.14.6.4 Resume Command):
    * "On receipt of this command, the device SHALL resume its operation from the point it was at when it
    * received the Pause command, or from the point when it was paused by means outside of this cluster (for
    * example by manual button press). If this command is received when already in the Running state the device

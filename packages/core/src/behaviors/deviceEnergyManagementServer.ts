@@ -34,7 +34,7 @@ import { Status } from '@matter/types/globals';
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
-/** The PowerAdjustmentCapability attribute's PowerAdjustStruct entry shape (Matter 1.6 Application Cluster Spec § 9.2.7.1). */
+/** The PowerAdjustmentCapability attribute's PowerAdjustStruct entry shape (Matter 1.6.1 Application Cluster Spec § 9.2.7.1). */
 type PowerAdjustEntry = { minPower: number; maxPower: number; minDuration: number; maxDuration: number };
 
 /**
@@ -45,7 +45,7 @@ type PowerAdjustEntry = { minPower: number; maxPower: number; minDuration: numbe
  * forwards to the command handler before delegating to `super`), so this class implements PowerAdjustRequest and
  * CancelPowerAdjustRequest itself: validating against PowerAdjustmentCapability and OptOutState, driving ESAState
  * and PowerAdjustmentCapability.Cause, emitting PowerAdjustStart/PowerAdjustEnd, and reacting to OptOutState changes
- * that must cancel an active session (Matter 1.6 Application Cluster Spec § 9.2.9.1, § 9.2.9.2, § 9.2.8.8).
+ * that must cancel an active session (Matter 1.6.1 Application Cluster Spec § 9.2.9.1, § 9.2.9.2, § 9.2.8.8).
  */
 export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManagementServer.with(
   DeviceEnergyManagement.Feature.PowerForecastReporting,
@@ -70,7 +70,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
   /**
    * Forwards the PowerAdjustRequest to the Matterbridge command handler first (the established Matterbridge
    * contract — see e.g. onOffServer.ts — is to notify the plugin before any validation), then validates and
-   * applies it (Matter 1.6 Application Cluster Spec § 9.2.9.1).
+   * applies it (Matter 1.6.1 Application Cluster Spec § 9.2.9.1).
    *
    * @param {DeviceEnergyManagement.PowerAdjustRequest} request - Power-adjust request payload.
    */
@@ -152,7 +152,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
 
   /**
    * Forwards CancelPowerAdjustRequest to the Matterbridge command handler first (same contract as
-   * powerAdjustRequest), then cancels the in-progress power adjustment (Matter 1.6 Application Cluster Spec
+   * powerAdjustRequest), then cancels the in-progress power adjustment (Matter 1.6.1 Application Cluster Spec
    * § 9.2.9.2).
    */
   override async cancelPowerAdjustRequest(): Promise<void> {

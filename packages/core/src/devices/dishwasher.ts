@@ -227,7 +227,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
    * Handles the DishwasherMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
+   * Matter 1.6.1 Application Cluster Specification §1.10.7.1.1: if `NewMode` does not match the `Mode` field of
    * any `SupportedModes` entry, `ChangeToModeResponse.Status` SHALL indicate `UnsupportedMode` and the
    * `StatusText` field SHALL be included, either with a human readable string or an empty string.
    *

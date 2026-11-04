@@ -218,7 +218,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
    * `movementDuration` has elapsed: CurrentState is set to `finalState`, CurrentLevel (if the Level feature is
    * supported) is set to `finalLevel`, and TargetState/TargetLevel revert to null.
    *
-   * Matter 1.6 Application Cluster Specification, 4.6.7.6 TargetState Attribute / 4.6.7.8 TargetLevel Attribute:
+   * Matter 1.6.1 Application Cluster Specification, 4.6.7.6 TargetState Attribute / 4.6.7.8 TargetLevel Attribute:
    * a value of null indicates that no target is set, since the change in state/level is done (or failed).
    * 4.6.8.1.3/4.6.8.2.1: when the movement is complete, the device SHALL set the CurrentState attribute to the
    * Open/Closed value.
@@ -259,7 +259,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
    * Schedules the RemainingDuration countdown for the OpenDuration set by the current Open command, ticking once
    * per second. When it reaches 0, closes the valve exactly as if a Close command had been received.
    *
-   * Matter 1.6 Application Cluster Specification, 4.6.7.4 RemainingDuration Attribute: when the value of this
+   * Matter 1.6.1 Application Cluster Specification, 4.6.7.4 RemainingDuration Attribute: when the value of this
    * attribute counts down to 0, the valve SHALL automatically transition to its closed position, and the
    * behavior of transitioning to the closed position SHALL match the behavior described in the Close command.
    */

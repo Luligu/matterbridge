@@ -71,7 +71,7 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
    *
    * @remarks
    * matter.js does not yet provide a default implementation of the ThermostatSuggestions feature, so this cascade,
-   * required by the Presets attribute's "Effect on Receipt" (Matter 1.6 Application Cluster Spec § 4.3.11.50), is
+   * required by the Presets attribute's "Effect on Receipt" (Matter 1.6.1 Application Cluster Spec § 4.3.11.50), is
    * done here.
    */
   private removeThermostatSuggestionsForRemovedPresets(newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]): void {

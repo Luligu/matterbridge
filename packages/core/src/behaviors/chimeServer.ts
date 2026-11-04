@@ -76,7 +76,7 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
   /**
    * Handles the PlayChimeSound command.
    * Plays the chime sound passed in the request or, if none is passed, the currently selected chime, and generates the ChimeStartedPlaying event.
-   * Per Matter 1.6 Application Cluster spec §11.8.6.1.2, if Enabled is false, the command SHALL succeed with no other side effects.
+   * Per Matter 1.6.1 Application Cluster spec §11.8.6.1.2, if Enabled is false, the command SHALL succeed with no other side effects.
    *
    * The PlayChimeSound command observable added by `subscribeCommand()` is emitted last, after the validation and the state update.
    *

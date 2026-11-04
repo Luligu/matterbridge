@@ -292,7 +292,7 @@ export class Evse extends MatterbridgeEndpoint {
 
 /**
  * Energy EVSE server that forwards charging commands and applies the validation and state-update mandates from
- * Matter 1.6 Application Cluster Specification §§ 9.3.8 and 9.3.9.
+ * Matter 1.6.1 Application Cluster Specification §§ 9.3.8 and 9.3.9.
  *
  * Only `ChargingPreferences` is declared here, matching the default {@link Evse} instance, so
  * `behaviors.has(MatterbridgeEnergyEvseServer)` keeps matching every instance regardless of which additional
@@ -362,7 +362,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Forwards an EnergyEvse `EnableCharging` request and updates the effective charging limits.
    *
-   * Matter 1.6 Application Cluster Specification § 9.3.8.8 requires `MaximumChargeCurrent` to represent the
+   * Matter 1.6.1 Application Cluster Specification § 9.3.8.8 requires `MaximumChargeCurrent` to represent the
    * actual offered maximum and to be the minimum of the circuit/installation limit, cable limit, command field,
    * and `UserMaximumChargeCurrent`. This implementation has no separate cable or installer limit, so it applies
    * the minimum of `CircuitCapacity`, the request, and `UserMaximumChargeCurrent`.
@@ -431,7 +431,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Forwards an EnergyEvse `EnableDischarging` request and updates the effective discharging limits.
    *
-   * Matter 1.6 Application Cluster Specification § 9.3.9.3 mirrors § 9.3.8.8's `EnableCharging` behavior for the
+   * Matter 1.6.1 Application Cluster Specification § 9.3.9.3 mirrors § 9.3.8.8's `EnableCharging` behavior for the
    * discharge direction: `MaximumDischargeCurrent` represents the actual offered maximum and this implementation
    * derives it as the minimum of `CircuitCapacity` and the request.
    *
@@ -567,7 +567,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Recomputes the actual offered current when the consumer changes `UserMaximumChargeCurrent`.
    *
-   * Matter 1.6 Application Cluster Specification § 9.3.8.10 defines this writable attribute as a consumer
+   * Matter 1.6.1 Application Cluster Specification § 9.3.8.10 defines this writable attribute as a consumer
    * preference that further reduces the charging rate. Section 9.3.8.8 therefore requires the resulting
    * `MaximumChargeCurrent` state to remain the minimum of that preference and all other applicable limits.
    */
@@ -583,13 +583,13 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     ).start();
   }
 
-  /** Applies the Matter 1.6 § 9.3.8.8 effective-current state-update mandate. */
+  /** Applies the Matter 1.6.1 § 9.3.8.8 effective-current state-update mandate. */
   #updateMaximumChargeCurrent(): void {
     // Matter 1.6.1 § 9.3.8.8: Set MaximumChargeCurrent to the minimum of every applicable charging limit.
     this.state.maximumChargeCurrent = Math.min(Number(this.state.circuitCapacity), Number(this.state.requestedMaximumChargeCurrent), Number(this.state.userMaximumChargeCurrent));
   }
 
-  /** Applies the Matter 1.6 § 9.3.9.3.2 effective-current state-update mandate for the discharge direction. */
+  /** Applies the Matter 1.6.1 § 9.3.9.3.2 effective-current state-update mandate for the discharge direction. */
   #updateMaximumDischargeCurrent(): void {
     // Matter 1.6.1 § 9.3.8.9: Set MaximumDischargeCurrent to the minimum of every applicable discharging limit.
     this.state.maximumDischargeCurrent = Math.min(Number(this.state.circuitCapacity), Number(this.state.requestedMaximumDischargeCurrent));
@@ -654,7 +654,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Stores the user-specified weekly charging targets.
    *
-   * Matter 1.6 Application Cluster Specification § 9.3.9.5.2 requires every day to occur in at most one
+   * Matter 1.6.1 Application Cluster Specification § 9.3.9.5.2 requires every day to occur in at most one
    * schedule and requires an update to replace only the days selected by its bitmap. An empty target list is
    * retained as an explicit cleared-day entry so `GetTargets` reports the resulting weekly schedule.
    *
@@ -713,7 +713,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Returns the currently stored weekly charging targets.
    *
-   * Matter 1.6 Application Cluster Specification §§ 9.3.9.6.1 and 9.3.9.7 require `GetTargets` to return a
+   * Matter 1.6.1 Application Cluster Specification §§ 9.3.9.6.1 and 9.3.9.7 require `GetTargets` to return a
    * `GetTargetsResponse` containing the current schedule.
    *
    * @returns {EnergyEvse.GetTargetsResponse} Stored charging target schedules.
@@ -736,7 +736,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   /**
    * Clears all stored weekly charging targets and their derived attributes.
    *
-   * Matter 1.6 Application Cluster Specification § 9.3.9.8.1 requires all targets to be cleared, the four
+   * Matter 1.6.1 Application Cluster Specification § 9.3.9.8.1 requires all targets to be cleared, the four
    * `NextCharge*` attributes to no longer describe a scheduled charge, and automatic charging to stop.
    *
    * @returns {void} No return value; this command always succeeds.
@@ -841,7 +841,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
   }
 }
 
-// Matter 1.6 § 9.3.9.5.2 mandates RESOURCE_EXHAUSTED when a command contains more targets than the EVSE
+// Matter 1.6.1 § 9.3.9.5.2 mandates RESOURCE_EXHAUSTED when a command contains more targets than the EVSE
 // supports. Disable only the nested list-size constraint so setTargets can return that status; matter.js continues
 // to validate the outer schedule-list limit and every ChargingTargetStruct field.
 Supervision(MatterbridgeEnergyEvseServer.prototype.constructor, 'setTargets', 'chargingTargetSchedules', 'entry', 'chargingTargets').constraint = false;

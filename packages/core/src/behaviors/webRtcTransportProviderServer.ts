@@ -60,7 +60,7 @@ const MAX_WEB_RTC_SESSION_ID = 0xfffe;
 
 /**
  * Maximum number of concurrent WebRTC sessions this implementation sustains at once (see
- * {@link MatterbridgeWebRtcTransportProviderServer.#evictIfOverCapacity}). Matter 1.6 §11.4.5.2's
+ * {@link MatterbridgeWebRtcTransportProviderServer.#evictIfOverCapacity}). Matter 1.6.1 §11.4.5.2's
  * WebRTCEndReasonEnum.OutOfResources exists precisely for a provider that can accept a session request but can't
  * actually sustain it; a real camera's concurrent-stream capacity is finite (encoder/CPU/bandwidth), so this caps
  * it rather than accepting unbounded sessions.
@@ -299,7 +299,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
   /**
    * Validates that a SolicitOffer/ProvideOffer request does not present both the deprecated `videoStreamId`/
    * `audioStreamId` fields and their modern `videoStreams`/`audioStreams` list counterparts for the same stream
-   * type, per Matter 1.6/1.5.1 Application Cluster Specification §11.5.6.1.10/§11.5.6.3.5: "If the VideoStreams or
+   * type, per Matter 1.6.1/1.5.1 Application Cluster Specification §11.5.6.1.10/§11.5.6.3.5: "If the VideoStreams or
    * AudioStreams fields are present, and the VideoStreamID or AudioStreamID fields are present: Fail the command
    * with InvalidCommand." Applied unconditionally (independent of {@link #isStrictWebRtcTransport}): this is a
    * basic request-shape check, not a semantic behavior change, and no real controller (SmartThings,
@@ -363,7 +363,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
   /**
    * Selects an already allocated video stream id matching the request's stream usage, falling back to the
    * endpoint's first allocated video stream, without allocating a new one. Used to auto-select from an existing
-   * `AllocatedVideoStreams` entry when a request's `VideoStreamID` is present and `null` (Matter 1.6/1.5.1
+   * `AllocatedVideoStreams` entry when a request's `VideoStreamID` is present and `null` (Matter 1.6.1/1.5.1
    * Application Cluster Specification §11.5.6.1.10: "Automatically select an existing video stream").
    *
    * Both call sites already guarantee a CameraAvStreamManagement cluster is bound before calling this:
@@ -466,7 +466,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
 
   /**
    * Validates a resolved `videoStreams`/`audioStreams` id list against the endpoint's `AllocatedVideoStreams`/
-   * `AllocatedAudioStreams` attribute, per Matter 1.6/1.5.1 Application Cluster Specification §11.5.6.1.10 (mirrored
+   * `AllocatedAudioStreams` attribute, per Matter 1.6.1/1.5.1 Application Cluster Specification §11.5.6.1.10 (mirrored
    * for ProvideOffer at §11.5.6.3.5): "If VideoStreams is present: If AllocatedVideoStreams is empty, fail with
    * InvalidInState; if there are duplicate entries, fail with AlreadyExists; for each entry, if not found in
    * AllocatedVideoStreams, fail with DynamicConstraintError" (identically for AudioStreams/AllocatedAudioStreams).
@@ -612,7 +612,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
    * Enforces {@link MAX_CONCURRENT_SESSIONS} for SolicitOffer: if `webRtcSessionId` (just added to `currentSessions`
    * by the caller, before any werift peer connection exists for it) pushed the session count past the cap, evicts it
    * immediately — removes it from `currentSessions` and invokes End on the peer's WebRtcTransportRequestor with
-   * reason `OutOfResources` (Matter 1.6 §11.4.5.2). The session is still accepted normally up to this point (a real
+   * reason `OutOfResources` (Matter 1.6.1 §11.4.5.2). The session is still accepted normally up to this point (a real
    * SolicitOfferResponse with a valid session id), per Matter 1.6.1 § 11.5.6.1: "unable to provide another WebRTC
    * session: Invoke End with Reason set to OutOfResources, and end processing with no other side effects".
    *
@@ -727,7 +727,7 @@ export class MatterbridgeWebRtcTransportProviderServer extends WebRtcTransportPr
         metadataEnabled: request.metadataEnabled ?? false,
         videoStreams,
         audioStreams,
-        // Deprecated but still optionally-present per Matter 1.6 §11.4.5.5 (fields 4/5 of WebRTCSessionStruct),
+        // Deprecated but still optionally-present per Matter 1.6.1 §11.4.5.5 (fields 4/5 of WebRTCSessionStruct),
         // distinct from the VideoStreams/AudioStreams lists above; a legacy client reading CurrentSessions
         // through these fields (rather than the modern lists) should still see the resolved stream.
         videoStreamId: videoStreams?.[0] ?? null,
