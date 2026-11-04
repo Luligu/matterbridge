@@ -545,7 +545,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(targets).toEqual({ chargingTargetSchedules: [{ dayOfWeekForSequence: allDays, chargingTargets: [weekdayTarget] }] });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`getTargets`));
 
-    // Matter 1.6.0 § 9.3.9.5.2 replaces only the days selected by the update, preserving the other days.
+    // Matter 1.6.1 § 9.3.9.5.2 replaces only the days selected by the update, preserving the other days.
     await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
       chargingTargetSchedules: [{ dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(0x40), chargingTargets: [] }],
     });
@@ -604,10 +604,10 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `MatterbridgeEnergyEvseServer: startDiagnostics called (endpoint ${device.id}.${device.number})`);
 
-    // Matter 1.6.0 § 9.3.9.4.1: StartDiagnostics is only valid while charging is disabled.
+    // Matter 1.6.1 § 9.3.9.4.1: StartDiagnostics is only valid while charging is disabled.
     expect(device.invokeBehaviorCommand(EnergyEvseServer, 'startDiagnostics')).rejects.toThrow('diagnostics can only start while charging is disabled');
 
-    // Matter 1.6.0 § 9.3.9.2.4: EnableCharging is rejected while diagnostics are active.
+    // Matter 1.6.1 § 9.3.9.2.4: EnableCharging is rejected while diagnostics are active.
     expect(
       device.invokeBehaviorCommand(EnergyEvseServer, 'enableCharging', { chargingEnabledUntil: null, minimumChargeCurrent: 6_000, maximumChargeCurrent: 32_000 }),
     ).rejects.toThrow('cannot enable charging while an error or diagnostics are active');
@@ -642,7 +642,7 @@ describe('Matterbridge ' + NAME, () => {
       expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBe(25_000_000);
       expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
 
-      // Matter 1.6.0 §§ 9.3.8.14-15 make the energy and SoC attributes mutually descriptive for the next target.
+      // Matter 1.6.1 §§ 9.3.8.14-15 make the energy and SoC attributes mutually descriptive for the next target.
       await device.invokeBehaviorCommand(EnergyEvseServer.with(EnergyEvse.Feature.ChargingPreferences), 'setTargets', {
         chargingTargetSchedules: [
           {
@@ -790,7 +790,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(featureDevice.getAttribute(EnergyEvseMode.id, 'supportedModes')).toEqual(
       expect.arrayContaining([expect.objectContaining({ mode: 4, modeTags: [{ mfgCode: undefined, value: EnergyEvseMode.ModeTag.V2X }] })]),
     );
-    // Matter 1.6.0 § 9.3.6: EnableDischarging (command id 3) is only in AcceptedCommandList when V2X is supported.
+    // Matter 1.6.1 § 9.3.6: EnableDischarging (command id 3) is only in AcceptedCommandList when V2X is supported.
     expect(featureDevice.getAttribute(EnergyEvse.id, 'acceptedCommandList')).toEqual([1, 2, 3, 4, 5, 6, 7]);
 
     const dem = featureDevice.getChildEndpointById('DeviceEnergyManagement');

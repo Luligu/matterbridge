@@ -114,7 +114,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'movementState')).toBe(CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'maxPresets')).toBe(5);
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'mptzPresets')).toEqual([]);
-    // Matter 1.6.0 § 11.3.6.4: the entry is seeded by initialize() for the video stream that MatterbridgeCameraAvStreamManagementServer self-allocates, with the global Viewport.
+    // Matter 1.6.1 § 11.3.6.4: the entry is seeded by initialize() for the video stream that MatterbridgeCameraAvStreamManagementServer self-allocates, with the global Viewport.
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'dptzStreams')).toEqual([{ videoStreamId: 0, viewport: { x1: 0, y1: 0, x2: 1920, y2: 1080 } }]);
   });
 
@@ -397,7 +397,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should reject a viewport smaller than the minimum viewport resolution', async () => {
-    // Matter 1.6.0 § 11.3.7.6.3: outside the defined allowed range is DYNAMIC_CONSTRAINT_ERROR (0x8b), not CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 11.3.7.6.3: outside the defined allowed range is DYNAMIC_CONSTRAINT_ERROR (0x8b), not CONSTRAINT_ERROR.
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', { videoStreamId: 0, viewport: { x1: 1, y1: 10, x2: 1, y2: 10 } }),
     ).rejects.toMatchObject({ code: Status.DynamicConstraintError, message: expect.stringContaining('viewport 0x0 is smaller than the minimum viewport resolution 640x360') });
@@ -463,7 +463,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should keep a relative move inside the sensor Cartesian plane', async () => {
-    // Matter 1.6.0 § 11.3.7.7.5: the upper left corner moves to the nearest point that keeps the viewport on the sensor.
+    // Matter 1.6.1 § 11.3.7.7.5: the upper left corner moves to the nearest point that keeps the viewport on the sensor.
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzRelativeMove', { videoStreamId: 0, deltaX: -5000, deltaY: -5000 }),
     ).resolves.toBeUndefined();
@@ -472,7 +472,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should clamp a shrinking zoom to the minimum viewport resolution', async () => {
-    // Matter 1.6.0 § 11.3.7.7.4: a positive ZoomDelta makes the viewport smaller; the result bottoms out at MinViewportResolution.
+    // Matter 1.6.1 § 11.3.7.7.4: a positive ZoomDelta makes the viewport smaller; the result bottoms out at MinViewportResolution.
     // The 640x360 rectangle scales to 0x0 anchored at the centre of the old one, (320, 180), and is grown back to the minimum from there.
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzRelativeMove', { videoStreamId: 0, zoomDelta: 100 })).resolves.toBeUndefined();
 
@@ -480,7 +480,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should clamp an enlarging zoom to the sensor size', async () => {
-    // Matter 1.6.0 § 11.3.7.7.4: a negative ZoomDelta makes the viewport larger; the result tops out at the sensor size.
+    // Matter 1.6.1 § 11.3.7.7.4: a negative ZoomDelta makes the viewport larger; the result tops out at the sensor size.
     await expect(device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzRelativeMove', { videoStreamId: 0, zoomDelta: -100 })).resolves.toBeUndefined();
 
     expect(device.getAttribute(CameraAvSettingsUserLevelManagement, 'dptzStreams')).toEqual([{ videoStreamId: 0, viewport: { x1: 0, y1: 0, x2: 1280, y2: 720 } }]);
@@ -507,7 +507,7 @@ describe('MatterbridgeCameraAvSettingsUserLevelManagementServer', () => {
   });
 
   it('should re-base every dptzStreams entry when the global viewport changes', async () => {
-    // Matter 1.6.0 § 11.2.7.25: when Viewport is changed, all Viewport values in DPTZStreams SHALL be updated to it.
+    // Matter 1.6.1 § 11.2.7.25: when Viewport is changed, all Viewport values in DPTZStreams SHALL be updated to it.
     await expect(
       device.invokeBehaviorCommand(CameraAvSettingsUserLevelManagement, 'dptzSetViewport', { videoStreamId: 0, viewport: { x1: 640, y1: 360, x2: 1280, y2: 720 } }),
     ).resolves.toBeUndefined();

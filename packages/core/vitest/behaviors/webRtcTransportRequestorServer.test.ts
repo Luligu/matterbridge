@@ -23,7 +23,8 @@ import {
   startServerNode,
   stopServerNode,
 } from '@matterbridge/test-utils/vitest/matter';
-import { loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { loggerErrorSpy, loggerFatalSpy, loggerLogSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { LogLevel } from 'node-ansi-logger';
 
 import { createDefaultIntercomCameraAvStreamManagementClusterServer } from '../../src/behaviors/cameraAvStreamManagementServer.js';
 import { addWebRtcTransportProviderClient, addWebRtcTransportRequestorClient } from '../../src/behaviors/clients.js';
@@ -127,6 +128,10 @@ describe('MatterbridgeWebRtcTransportRequestorServer', () => {
       await device.act(async (agent) => agent.get(MatterbridgeWebRtcTransportRequestorServer)[command](request));
 
       expect(handler).toHaveBeenCalledWith(request);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.INFO,
+        expect.stringMatching(new RegExp(`^MatterbridgeWebRtcTransportRequestorServer: .* \\(endpoint ${device.id}\\.${device.number}\\)$`)),
+      );
       expect(listener).toHaveBeenCalledTimes(1);
       expect(listener).toHaveBeenCalledWith({ command, cluster: 'webRtcTransportRequestor', request, endpoint: device, context: expect.anything() });
 

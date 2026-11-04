@@ -338,13 +338,13 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     };
     this.internal.activeBoostInfo = boostInfo;
     this.internal.boostTargetReached = false;
-    // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Active when the Boost command succeeds.
+    // Matter 1.6.1 § 9.5.8.1.1: Transition BoostState to Active when the Boost command succeeds.
     this.state.boostState = WaterHeaterManagement.BoostState.Active;
-    // Matter 1.6.0 § 9.5.8.1.1: Heat the water in the tank while the boost condition is not yet met.
+    // Matter 1.6.1 § 9.5.8.1.1: Heat the water in the tank while the boost condition is not yet met.
     this.#updateHeatDemand();
-    // Matter 1.6.0 § 9.5.8.1.1 and § 9.5.9.1: Generate BoostStarted with the field values received in the Boost command.
+    // Matter 1.6.1 § 9.5.8.1.1 and § 9.5.9.1: Generate BoostStarted with the field values received in the Boost command.
     this.events.boostStarted.emit({ boostInfo }, this.context);
-    // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Inactive and generate BoostEnded when the boost duration expires.
+    // Matter 1.6.1 § 9.5.8.1.1: Transition BoostState to Inactive and generate BoostEnded when the boost duration expires.
     this.internal.boostExpiryTimer = Time.getTimer(
       'WaterHeaterManagement boost expiry',
       Seconds(request.boostInfo.duration),
@@ -375,13 +375,13 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     this.internal.boostExpiryTimer = undefined;
     this.internal.activeBoostInfo = undefined;
     this.internal.boostTargetReached = false;
-    // Matter 1.6.0 § 9.5.8.2.1: If BoostState was Active, transition BoostState to Inactive, generate BoostEnded, and revert heating to the current Water Heater Mode.
+    // Matter 1.6.1 § 9.5.8.2.1: If BoostState was Active, transition BoostState to Inactive, generate BoostEnded, and revert heating to the current Water Heater Mode.
     if (this.state.boostState === WaterHeaterManagement.BoostState.Active) {
-      // Matter 1.6.0 § 9.5.8.2.1: Transition BoostState to Inactive when CancelBoost cancels an active boost.
+      // Matter 1.6.1 § 9.5.8.2.1: Transition BoostState to Inactive when CancelBoost cancels an active boost.
       this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
-      // Matter 1.6.0 § 9.5.8.2.1: Revert water heating to the current Water Heater Mode when the boost ends.
+      // Matter 1.6.1 § 9.5.8.2.1: Revert water heating to the current Water Heater Mode when the boost ends.
       this.#updateHeatDemand();
-      // Matter 1.6.0 § 9.5.8.2.1 and § 9.5.9.2: Generate BoostEnded when BoostState transitions from Active to Inactive.
+      // Matter 1.6.1 § 9.5.8.2.1 and § 9.5.9.2: Generate BoostEnded when BoostState transitions from Active to Inactive.
       this.events.boostEnded.emit(undefined, this.context);
     }
     this.endpoint.emitCommand(WaterHeaterManagement, 'cancelBoost', {}, this.context);
@@ -394,7 +394,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     const boostInfo = this.internal.activeBoostInfo;
     if (this.state.boostState === WaterHeaterManagement.BoostState.Active && boostInfo && this.#isBoostTargetMet(boostInfo)) {
       this.internal.boostTargetReached = true;
-      // Matter 1.6.0 § 9.5.6.3.2 and § 9.5.8.1.1: Automatically cancel the boost once the target is reached when OneShot is true.
+      // Matter 1.6.1 § 9.5.6.3.2 and § 9.5.8.1.1: Automatically cancel the boost once the target is reached when OneShot is true.
       if (boostInfo.oneShot) {
         this.#expireBoost();
         return;
@@ -408,11 +408,11 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
     this.internal.boostExpiryTimer = undefined;
     this.internal.activeBoostInfo = undefined;
     this.internal.boostTargetReached = false;
-    // Matter 1.6.0 § 9.5.8.1.1: Transition BoostState to Inactive when the boost duration expires or OneShot completes.
+    // Matter 1.6.1 § 9.5.8.1.1: Transition BoostState to Inactive when the boost duration expires or OneShot completes.
     this.state.boostState = WaterHeaterManagement.BoostState.Inactive;
-    // Matter 1.6.0 § 9.5.8.1.1: Revert water heating to the current Water Heater Mode when the boost ends.
+    // Matter 1.6.1 § 9.5.8.1.1: Revert water heating to the current Water Heater Mode when the boost ends.
     this.#updateHeatDemand();
-    // Matter 1.6.0 § 9.5.9.2: Generate BoostEnded when BoostState transitions from Active to Inactive.
+    // Matter 1.6.1 § 9.5.9.2: Generate BoostEnded when BoostState transitions from Active to Inactive.
     this.events.boostEnded.emit(undefined, this.context);
   }
 
@@ -448,7 +448,7 @@ export class MatterbridgeWaterHeaterManagementServer extends WaterHeaterManageme
         heatingRequired = heatingRequired || localTemperature < targetSetpoint;
       }
     }
-    // Matter 1.6.0 § 9.5.7.2: Set HeatDemand to the active heat sources when heating water, or clear all bits when idle.
+    // Matter 1.6.1 § 9.5.7.2: Set HeatDemand to the active heat sources when heating water, or clear all bits when idle.
     this.state.heatDemand = heatingRequired
       ? {
           immersionElement1: this.state.heaterTypes.immersionElement1,
@@ -499,14 +499,14 @@ export class MatterbridgeWaterHeaterModeServer extends WaterHeaterModeServer {
       context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
     if (!supported) {
       device.log.error(
         `MatterbridgeWaterHeaterModeServer: changeToMode called with unsupported newMode: ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
+    // Matter 1.6.1 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
     this.state.currentMode = request.newMode;
     device.log.debug(
       `MatterbridgeWaterHeaterModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

@@ -76,7 +76,7 @@ describe('CameraController', () => {
     expect(device.id).toBe('CameraControllerDefault-CAMERACONTROLLER-DEFAULT');
     expect(device.hasClusterServer(Identify.id)).toBeFalsy();
     expect(device.hasClusterServer(PowerSource.id)).toBeTruthy();
-    // The WebRtcTransportRequestor server cluster is required for this device type (Matter 1.6.0 § 16.8.3).
+    // The WebRtcTransportRequestor server cluster is required for this device type (Matter 1.6.1 § 16.8.3).
     expect(device.hasClusterServer(WebRtcTransportRequestor.id)).toBeTruthy();
     expect(device.hasClusterServer(WebRtcTransportProvider.id)).toBeFalsy();
 

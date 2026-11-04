@@ -90,7 +90,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
   }
 
   protected handleOnOffChange(_onOff: boolean): void {
-    // Matter 1.6.0 § 6.10.6.1: CurrentState indicates the current playback state of the media.
+    // Matter 1.6.1 § 6.10.6.1: CurrentState indicates the current playback state of the media.
     this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
   }
 
@@ -110,7 +110,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 6.10.7.1: Reflect successful play in CurrentState when media is powered on.
+    // Matter 1.6.1 § 6.10.7.1: Reflect successful play in CurrentState when media is powered on.
     if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Playing;
     this.endpoint.emitCommand(MediaPlayback, 'play', {}, this.context);
     return { status: MediaPlayback.Status.Success };
@@ -132,7 +132,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 6.10.7.2: Reflect successful pause in CurrentState when media is powered on.
+    // Matter 1.6.1 § 6.10.7.2: Reflect successful pause in CurrentState when media is powered on.
     if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.Paused;
     this.endpoint.emitCommand(MediaPlayback, 'pause', {}, this.context);
     return { status: MediaPlayback.Status.Success };
@@ -154,7 +154,7 @@ export class MatterbridgeMediaPlaybackServer extends MediaPlaybackServer {
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 6.10.7.3: Reflect successful stop in CurrentState when media is powered on.
+    // Matter 1.6.1 § 6.10.7.3: Reflect successful stop in CurrentState when media is powered on.
     if (this.endpoint.stateOf(MatterbridgeOnOffServer.with()).onOff) this.state.currentState = MediaPlayback.PlaybackState.NotPlaying;
     this.endpoint.emitCommand(MediaPlayback, 'stop', {}, this.context);
     return { status: MediaPlayback.Status.Success };

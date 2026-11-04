@@ -34,7 +34,7 @@ import { captureSnapshot, TEST_SNAPSHOT_SOURCE } from './snapshot.js';
 import type { WeriftOfferOptions } from './weriftSession.js';
 
 /**
- * Valid AudioStreamAllocate BitDepth values per Matter 1.6 Application Cluster spec §11.2.8.1 ("8, 16, 24, 32").
+ * Valid AudioStreamAllocate BitDepth values per Matter 1.6.1 Application Cluster spec §11.2.8.1 ("8, 16, 24, 32").
  * This is a discrete set rather than a simple min/max range, so matter.js does not enforce it automatically.
  */
 const AUDIO_STREAM_BIT_DEPTHS = [8, 16, 24, 32];
@@ -109,7 +109,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
   /**
    * Self-allocates a default video/audio/snapshot stream for any feature this endpoint supports that has none
    * allocated yet, so `AllocatedVideoStreams`/`AllocatedAudioStreams`/`AllocatedSnapshotStreams` are never
-   * unexpectedly empty for a client that assumes the Matter 1.6/1.5.1 §11.2.1.1 "Stream Lifecycle" recommendation
+   * unexpectedly empty for a client that assumes the Matter 1.6.1/1.5.1 §11.2.1.1 "Stream Lifecycle" recommendation
    * holds (a Commissioner allocates once at commissioning time, and the resulting streams then have very long
    * lifetimes) but never actually calls `VideoStreamAllocate`/`AudioStreamAllocate`/`SnapshotStreamAllocate` itself
    * (e.g. SmartThings, observed in production only ever sending `ProvideOffer` with a guessed stream id and no prior
@@ -147,7 +147,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
           minResolution: this.state.minViewportResolution,
           maxResolution: resolution,
           minBitRate,
-          // RateDistortionTradeOffPointsStruct (Matter 1.6 §11.2.6.9) only carries a floor MinBitRate, no
+          // RateDistortionTradeOffPointsStruct (Matter 1.6.1 §11.2.6.9) only carries a floor MinBitRate, no
           // matching max — MaxBitRate must be synthesized. 4x is a typical H.264 VBR peak-to-floor ratio for
           // camera streams; MaxBitRate === MinBitRate would leave the stream no room to vary at all.
           maxBitRate: minBitRate * 4,
@@ -185,7 +185,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       const { snapshotCapabilities } = this.state;
       // Span the full supported resolution range (smallest to largest capability) rather than a single fixed point, so
       // that a real client's request for any of the device's own advertised snapshotCapabilities entries (not just the
-      // smallest one) dedup-matches this default stream in snapshotStreamAllocate (Matter 1.6 §11.2.8.8.8) instead of
+      // smallest one) dedup-matches this default stream in snapshotStreamAllocate (Matter 1.6.1 §11.2.8.8.8) instead of
       // spawning an unwanted duplicate allocation. Mirrors how the video default stream spans minViewportResolution to
       // its top rateDistortionTradeOffPoints resolution, above.
       let smallestCapability = snapshotCapabilities[0];
@@ -225,7 +225,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    */
   override setStreamPriorities(request: CameraAvStreamManagement.SetStreamPrioritiesRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.2.8.12.2: Fail SetStreamPriorities with INVALID_IN_STATE if any entry exists in AllocatedSnapshotStreams, AllocatedVideoStreams or AllocatedAudioStreams.
+    // Matter 1.6.1 § 11.2.8.12.2: Fail SetStreamPriorities with INVALID_IN_STATE if any entry exists in AllocatedSnapshotStreams, AllocatedVideoStreams or AllocatedAudioStreams.
     if (
       (this.features.snapshot && this.state.allocatedSnapshotStreams.length > 0) ||
       (this.features.video && this.state.allocatedVideoStreams.length > 0) ||
@@ -236,14 +236,14 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         Status.InvalidInState,
       );
     }
-    // Matter 1.6.0 § 11.2.8.12.2: Fail SetStreamPriorities with DYNAMIC_CONSTRAINT_ERROR if a requested StreamPriorities value is not found in SupportedStreamUsages.
+    // Matter 1.6.1 § 11.2.8.12.2: Fail SetStreamPriorities with DYNAMIC_CONSTRAINT_ERROR if a requested StreamPriorities value is not found in SupportedStreamUsages.
     if (!request.streamPriorities.every((usage) => this.state.supportedStreamUsages.includes(usage))) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: streamPriorities shall only contain entries found in supportedStreamUsages (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.DynamicConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.2.8.12.2: Fail SetStreamPriorities with ALREADY_EXISTS if StreamPriorities contains duplicate stream usages.
+    // Matter 1.6.1 § 11.2.8.12.2: Fail SetStreamPriorities with ALREADY_EXISTS if StreamPriorities contains duplicate stream usages.
     if (new Set(request.streamPriorities).size !== request.streamPriorities.length) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: streamPriorities shall not contain duplicate values (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -253,7 +253,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: setting stream priorities to [${request.streamPriorities.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 11.2.8.12.2: Update the StreamUsagePriorities attribute with the contents of StreamPriorities.
+    // Matter 1.6.1 § 11.2.8.12.2: Update the StreamUsagePriorities attribute with the contents of StreamPriorities.
     this.state.streamUsagePriorities = request.streamPriorities;
     this.endpoint.emitCommand(CameraAvStreamManagement, 'setStreamPriorities', request, this.context);
   }
@@ -272,21 +272,21 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    */
   override videoStreamAllocate(request: CameraAvStreamManagement.VideoStreamAllocateRequest): CameraAvStreamManagement.VideoStreamAllocateResponse {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the VideoStreamAllocate StreamUsage field is constrained to Recording, Analysis and LiveView, so Internal is out of range.
+    // Matter 1.6.1 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the VideoStreamAllocate StreamUsage field is constrained to Recording, Analysis and LiveView, so Internal is out of range.
     if (request.streamUsage === StreamUsage.Internal) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: stream usage Internal is not allowed for VideoStreamAllocate (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.2.8.4.12: Fail VideoStreamAllocate with INVALID_IN_STATE if the requested StreamUsage is not found in StreamUsagePriorities.
+    // Matter 1.6.1 § 11.2.8.4.12: Fail VideoStreamAllocate with INVALID_IN_STATE if the requested StreamUsage is not found in StreamUsagePriorities.
     if (!this.state.streamUsagePriorities.includes(request.streamUsage)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: stream usage ${request.streamUsage} is not present in streamUsagePriorities (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidInState,
       );
     }
-    // Matter 1.6.0 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the VideoCodec field is constrained to the VideoCodecEnum values.
+    // Matter 1.6.1 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the VideoCodec field is constrained to the VideoCodecEnum values.
     if (!VIDEO_CODECS.includes(request.videoCodec)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: videoCodec ${request.videoCodec} is not a valid VideoCodecEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -294,14 +294,14 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       );
     }
     // These two are cross-field bounds, which matter.js does not auto-enforce from the cluster definition.
-    // Matter 1.6.0 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the MinFrameRate field is constrained to "1 to MaxFrameRate".
+    // Matter 1.6.1 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the MinFrameRate field is constrained to "1 to MaxFrameRate".
     if (request.minFrameRate > request.maxFrameRate) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: minFrameRate ${request.minFrameRate} must not be greater than MaxFrameRate ${request.maxFrameRate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the MinBitRate field is constrained to "1 to MaxBitRate".
+    // Matter 1.6.1 § 11.2.8.4: Reject with CONSTRAINT_ERROR; the MinBitRate field is constrained to "1 to MaxBitRate".
     if (request.minBitRate > request.maxBitRate) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: minBitRate ${request.minBitRate} must not be greater than MaxBitRate ${request.maxBitRate} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -317,7 +317,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         point.resolution.height <= request.maxResolution.height &&
         point.minBitRate <= request.maxBitRate,
     );
-    // Matter 1.6.0 § 11.2.8.4.12: Fail VideoStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported codec, frame rate, resolution or bit rate is requested.
+    // Matter 1.6.1 § 11.2.8.4.12: Fail VideoStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported codec, frame rate, resolution or bit rate is requested.
     if (!matchesTradeOffPoint || request.maxFrameRate > this.state.videoSensorParams.maxFps) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: videoStreamAllocate requested parameters do not match any entry in rateDistortionTradeOffPoints or exceed videoSensorParams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -339,7 +339,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         stream.maxBitRate === request.maxBitRate &&
         stream.keyFrameInterval === request.keyFrameInterval,
     );
-    // Matter 1.6.0 § 11.2.8.4.12: Return the existing VideoStreamID when an entry in AllocatedVideoStreams matches the request, with no other side effects.
+    // Matter 1.6.1 § 11.2.8.4.12: Return the existing VideoStreamID when an entry in AllocatedVideoStreams matches the request, with no other side effects.
     if (existingStream) {
       device.log.info(
         `MatterbridgeCameraAvStreamManagementServer: reused video stream ${existingStream.videoStreamId} for usage ${request.streamUsage} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -347,7 +347,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       this.endpoint.emitCommand(CameraAvStreamManagement, 'videoStreamAllocate', request, this.context);
       return { videoStreamId: existingStream.videoStreamId };
     }
-    // Matter 1.6.0 § 11.2.8.4.12: Fail VideoStreamAllocate with RESOURCE_EXHAUSTED if there are not enough resources to allocate a new video stream.
+    // Matter 1.6.1 § 11.2.8.4.12: Fail VideoStreamAllocate with RESOURCE_EXHAUSTED if there are not enough resources to allocate a new video stream.
     if (this.state.allocatedVideoStreams.length >= this.state.maxConcurrentEncoders) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: videoStreamAllocate would exceed maxConcurrentEncoders (${this.state.maxConcurrentEncoders}) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -359,7 +359,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
     for (const stream of this.state.allocatedVideoStreams) {
       videoStreamId = Math.max(videoStreamId, stream.videoStreamId + 1);
     }
-    // Matter 1.6.0 § 11.2.8.4.12: Allocate a new VideoStreamID and append its VideoStreamStruct to AllocatedVideoStreams.
+    // Matter 1.6.1 § 11.2.8.4.12: Allocate a new VideoStreamID and append its VideoStreamStruct to AllocatedVideoStreams.
     this.state.allocatedVideoStreams = [
       ...this.state.allocatedVideoStreams,
       {
@@ -395,21 +395,21 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    */
   override videoStreamDeallocate(request: CameraAvStreamManagement.VideoStreamDeallocateRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.2.8.7.2: Fail VideoStreamDeallocate with NOT_FOUND if VideoStreamID does not match an entry in AllocatedVideoStreams.
+    // Matter 1.6.1 § 11.2.8.7.2: Fail VideoStreamDeallocate with NOT_FOUND if VideoStreamID does not match an entry in AllocatedVideoStreams.
     if (!this.state.allocatedVideoStreams.some((stream) => stream.videoStreamId === request.videoStreamId)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: video stream ${request.videoStreamId} is not present in allocatedVideoStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
-    // Matter 1.6.0 § 11.2.8.7.2: Fail with INVALID_IN_STATE while the stream is referenced.
+    // Matter 1.6.1 § 11.2.8.7.2: Fail with INVALID_IN_STATE while the stream is referenced.
     if (this.state.allocatedVideoStreams.some((stream) => stream.videoStreamId === request.videoStreamId && stream.referenceCount > 0)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: video stream ${request.videoStreamId} is in use (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidInState,
       );
     }
-    // Matter 1.6.0 § 11.2.8.7.2: Deallocate the stream and remove its VideoStreamID entry from AllocatedVideoStreams.
+    // Matter 1.6.1 § 11.2.8.7.2: Deallocate the stream and remove its VideoStreamID entry from AllocatedVideoStreams.
     this.state.allocatedVideoStreams = this.state.allocatedVideoStreams.filter((stream) => stream.videoStreamId !== request.videoStreamId);
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: deallocated video stream ${request.videoStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -431,28 +431,28 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    */
   override audioStreamAllocate(request: CameraAvStreamManagement.AudioStreamAllocateRequest): CameraAvStreamManagement.AudioStreamAllocateResponse {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.2.8.1: Reject with CONSTRAINT_ERROR; the AudioStreamAllocate StreamUsage field is constrained to Recording, Analysis and LiveView, so Internal is out of range.
+    // Matter 1.6.1 § 11.2.8.1: Reject with CONSTRAINT_ERROR; the AudioStreamAllocate StreamUsage field is constrained to Recording, Analysis and LiveView, so Internal is out of range.
     if (request.streamUsage === StreamUsage.Internal) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: stream usage Internal is not allowed for AudioStreamAllocate (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.2.8.1.7: Fail AudioStreamAllocate with INVALID_IN_STATE if the requested StreamUsage is not found in StreamUsagePriorities.
+    // Matter 1.6.1 § 11.2.8.1.7: Fail AudioStreamAllocate with INVALID_IN_STATE if the requested StreamUsage is not found in StreamUsagePriorities.
     if (!this.state.streamUsagePriorities.includes(request.streamUsage)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: stream usage ${request.streamUsage} is not present in streamUsagePriorities (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidInState,
       );
     }
-    // Matter 1.6.0 § 11.2.8.1: Reject with CONSTRAINT_ERROR; the AudioCodec field is constrained to the AudioCodecEnum values.
+    // Matter 1.6.1 § 11.2.8.1: Reject with CONSTRAINT_ERROR; the AudioCodec field is constrained to the AudioCodecEnum values.
     if (!AUDIO_CODECS.includes(request.audioCodec)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: audioCodec ${request.audioCodec} is not a valid AudioCodecEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.2.8.1.6: Reject with CONSTRAINT_ERROR; BitDepth SHALL be one of 8, 16, 24 or 32 bits.
+    // Matter 1.6.1 § 11.2.8.1.6: Reject with CONSTRAINT_ERROR; BitDepth SHALL be one of 8, 16, 24 or 32 bits.
     if (!AUDIO_STREAM_BIT_DEPTHS.includes(request.bitDepth)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: bitDepth ${request.bitDepth} is not one of ${AUDIO_STREAM_BIT_DEPTHS.join(', ')} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -460,7 +460,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
       );
     }
     const { microphoneCapabilities } = this.state;
-    // Matter 1.6.0 § 11.2.8.1.7: Fail AudioStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported AudioCodec, ChannelCount, SampleRate or BitDepth is requested.
+    // Matter 1.6.1 § 11.2.8.1.7: Fail AudioStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported AudioCodec, ChannelCount, SampleRate or BitDepth is requested.
     if (
       !microphoneCapabilities.supportedCodecs.includes(request.audioCodec) ||
       request.channelCount < 1 ||
@@ -483,7 +483,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         stream.bitRate === request.bitRate &&
         stream.bitDepth === request.bitDepth,
     );
-    // Matter 1.6.0 § 11.2.8.1.7: Return the existing AudioStreamID when an entry in AllocatedAudioStreams matches the request, with no other side effects.
+    // Matter 1.6.1 § 11.2.8.1.7: Return the existing AudioStreamID when an entry in AllocatedAudioStreams matches the request, with no other side effects.
     if (existingStream) {
       device.log.info(
         `MatterbridgeCameraAvStreamManagementServer: reused audio stream ${existingStream.audioStreamId} for usage ${request.streamUsage} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -496,7 +496,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
     for (const stream of this.state.allocatedAudioStreams) {
       audioStreamId = Math.max(audioStreamId, stream.audioStreamId + 1);
     }
-    // Matter 1.6.0 § 11.2.8.1.7: Allocate a new AudioStreamID and append its AudioStreamStruct to AllocatedAudioStreams.
+    // Matter 1.6.1 § 11.2.8.1.7: Allocate a new AudioStreamID and append its AudioStreamStruct to AllocatedAudioStreams.
     this.state.allocatedAudioStreams = [
       ...this.state.allocatedAudioStreams,
       {
@@ -527,21 +527,21 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
    */
   override audioStreamDeallocate(request: CameraAvStreamManagement.AudioStreamDeallocateRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.2.8.3.2: Fail AudioStreamDeallocate with NOT_FOUND if AudioStreamID does not match an entry in AllocatedAudioStreams.
+    // Matter 1.6.1 § 11.2.8.3.2: Fail AudioStreamDeallocate with NOT_FOUND if AudioStreamID does not match an entry in AllocatedAudioStreams.
     if (!this.state.allocatedAudioStreams.some((stream) => stream.audioStreamId === request.audioStreamId)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: audio stream ${request.audioStreamId} is not present in allocatedAudioStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
-    // Matter 1.6.0 § 11.2.8.3.2: Fail with INVALID_IN_STATE while the stream is referenced.
+    // Matter 1.6.1 § 11.2.8.3.2: Fail with INVALID_IN_STATE while the stream is referenced.
     if (this.state.allocatedAudioStreams.some((stream) => stream.audioStreamId === request.audioStreamId && stream.referenceCount > 0)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: audio stream ${request.audioStreamId} is in use (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidInState,
       );
     }
-    // Matter 1.6.0 § 11.2.8.3.2: Deallocate the stream and remove its AudioStreamID entry from AllocatedAudioStreams.
+    // Matter 1.6.1 § 11.2.8.3.2: Deallocate the stream and remove its AudioStreamID entry from AllocatedAudioStreams.
     this.state.allocatedAudioStreams = this.state.allocatedAudioStreams.filter((stream) => stream.audioStreamId !== request.audioStreamId);
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: deallocated audio stream ${request.audioStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -568,14 +568,14 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         capability.resolution.height >= minResolution.height &&
         capability.resolution.height <= maxResolution.height,
     );
-    // Matter 1.6.0 § 11.2.8.8.8: Fail SnapshotStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported ImageCodec, MaxFrameRate, MinResolution, MaxResolution or Quality is requested.
+    // Matter 1.6.1 § 11.2.8.8.8: Fail SnapshotStreamAllocate with DYNAMIC_CONSTRAINT_ERROR if an unsupported ImageCodec, MaxFrameRate, MinResolution, MaxResolution or Quality is requested.
     if (!matchesCapability) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: snapshotStreamAllocate requested minResolution/maxResolution range does not match any entry in snapshotCapabilities (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.DynamicConstraintError,
       );
     }
-    // A request "matches" an existing stream (Matter 1.6 §11.2.8.8.8) when its non-resolution parameters are identical and its
+    // A request "matches" an existing stream (Matter 1.6.1 §11.2.8.8.8) when its non-resolution parameters are identical and its
     // requested resolution range overlaps the existing stream's range; the existing entry is narrowed to the new range on reuse.
     const existingStream = this.state.allocatedSnapshotStreams.find(
       (stream) =>
@@ -589,7 +589,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
         stream.minResolution.height <= request.maxResolution.height &&
         stream.maxResolution.height >= request.minResolution.height,
     );
-    // Matter 1.6.0 § 11.2.8.8.8: Return the existing SnapshotStreamID when an entry in AllocatedSnapshotStreams matches the request, with no other side effects.
+    // Matter 1.6.1 § 11.2.8.8.8: Return the existing SnapshotStreamID when an entry in AllocatedSnapshotStreams matches the request, with no other side effects.
     if (existingStream) {
       this.state.allocatedSnapshotStreams = this.state.allocatedSnapshotStreams.map((stream) =>
         stream.snapshotStreamId === existingStream.snapshotStreamId
@@ -618,7 +618,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
     for (const stream of this.state.allocatedSnapshotStreams) {
       snapshotStreamId = Math.max(snapshotStreamId, stream.snapshotStreamId + 1);
     }
-    // Matter 1.6.0 § 11.2.8.8.8: Allocate a new SnapshotStreamID and append its SnapshotStreamStruct to AllocatedSnapshotStreams.
+    // Matter 1.6.1 § 11.2.8.8.8: Allocate a new SnapshotStreamID and append its SnapshotStreamStruct to AllocatedSnapshotStreams.
     this.state.allocatedSnapshotStreams = [
       ...this.state.allocatedSnapshotStreams,
       {
@@ -650,14 +650,14 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
   // oxlint-disable-next-line typescript/require-await
   override async snapshotStreamDeallocate(request: CameraAvStreamManagement.SnapshotStreamDeallocateRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.2.8.10.2: Fail SnapshotStreamDeallocate with NOT_FOUND if SnapshotStreamID does not match an entry in AllocatedSnapshotStreams.
+    // Matter 1.6.1 § 11.2.8.10.2: Fail SnapshotStreamDeallocate with NOT_FOUND if SnapshotStreamID does not match an entry in AllocatedSnapshotStreams.
     if (!this.state.allocatedSnapshotStreams.some((stream) => stream.snapshotStreamId === request.snapshotStreamId)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: snapshot stream ${request.snapshotStreamId} is not present in allocatedSnapshotStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
-    // Matter 1.6.0 § 11.2.8.10.2: Deallocate the stream and remove its SnapshotStreamID entry from AllocatedSnapshotStreams.
+    // Matter 1.6.1 § 11.2.8.10.2: Deallocate the stream and remove its SnapshotStreamID entry from AllocatedSnapshotStreams.
     this.state.allocatedSnapshotStreams = this.state.allocatedSnapshotStreams.filter((stream) => stream.snapshotStreamId !== request.snapshotStreamId);
     device.log.info(
       `MatterbridgeCameraAvStreamManagementServer: deallocated snapshot stream ${request.snapshotStreamId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -723,7 +723,7 @@ export class MatterbridgeCameraAvStreamManagementServer extends MatterbridgeCame
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { snapshotStreamId } = request;
     const stream = this.state.allocatedSnapshotStreams.find((s) => snapshotStreamId === null || s.snapshotStreamId === snapshotStreamId);
-    // Matter 1.6.0 § 11.2.8.13.3: Fail CaptureSnapshot with NOT_FOUND if AllocatedSnapshotStreams is empty, or if a non-null SnapshotStreamID does not match an entry in it.
+    // Matter 1.6.1 § 11.2.8.13.3: Fail CaptureSnapshot with NOT_FOUND if AllocatedSnapshotStreams is empty, or if a non-null SnapshotStreamID does not match an entry in it.
     if (!stream) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvStreamManagementServer: snapshot stream ${snapshotStreamId ?? 'auto'} is not present in allocatedSnapshotStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

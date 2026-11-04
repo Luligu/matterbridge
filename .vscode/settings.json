@@ -120,5 +120,6 @@
     "git show": true,
     "git branch -vv": true,
     "git ls-files": true
-  }
+  },
+  "lmstudioCode.minContextLength": 262144
 }

@@ -148,7 +148,7 @@ describe('WeriftWebRtcSession', () => {
     expect(session.localIceCandidates).toEqual([]);
 
     // werift always reports these two, but they are optional on its RTCIceCandidate and the Matter ICECandidateStruct
-    // spells "no association" as null (Matter 1.6.0 § 11.4.5.4.2/§ 11.4.5.4.3), so both shapes are normalized here.
+    // spells "no association" as null (Matter 1.6.1 § 11.4.5.4.2/§ 11.4.5.4.3), so both shapes are normalized here.
     session.peerConnection.onIceCandidate.execute({ candidate: 'candidate:1 1 udp 2130706431 192.0.2.1 5000 typ host', sdpMid: '0', sdpMLineIndex: 0 } as never);
     session.peerConnection.onIceCandidate.execute({ candidate: 'candidate:2 1 udp 2130706431 192.0.2.2 5001 typ host' } as never);
     // The end-of-candidates signal carries no candidate and must not be added to the list. The explicit undefined is

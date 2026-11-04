@@ -83,7 +83,7 @@ describe('MatterbridgeSmokeCoAlarmServer', () => {
       selfTestCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
     });
 
-    // Matter 1.6 Application Cluster Specification, 2.11.9.1.1 SelfTestRequest: a request is rejected with BUSY
+    // Matter 1.6.1 Application Cluster Specification, 2.11.7.1 SelfTestRequest: a request is rejected with BUSY
     // when ExpressedState is not Normal (here forced via testInProgress).
     //
     // This also pins down the forwarding contract shared by every Matterbridge cluster server: the plugin command

@@ -289,7 +289,7 @@ describe('Client clusters and behaviors', () => {
       expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'absMaxPower')).toBe(2000);
       expect(energyManagement.getAttribute(DeviceEnergyManagement.id, 'optOutState')).toBe(DeviceEnergyManagement.OptOutState.NoOptOut);
 
-      // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6 Application
+      // PowerAdjustRequest now validates Power/Duration against PowerAdjustmentCapability (Matter 1.6.1 Application
       // Cluster Spec § 9.2.9.1.1/§ 9.2.9.1.2), so a capability entry covering the request must exist first.
       await energyManagement.setAttribute(DeviceEnergyManagement.id, 'powerAdjustmentCapability', {
         powerAdjustCapability: [{ minPower: 0, maxPower: 1000, minDuration: 10, maxDuration: 120 }],

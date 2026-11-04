@@ -64,7 +64,7 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
    * @throws {StatusResponseError} With status NotFound if chimeId is not present in installedChimeSounds.
    */
   #assertSelectedChime(chimeId: number): void {
-    // Matter 1.6.0 § 11.8.5.2: Fail a write of SelectedChime with NOT_FOUND if the value is not contained within InstalledChimeSounds.
+    // Matter 1.6.1 § 11.8.5.2: Fail a write of SelectedChime with NOT_FOUND if the value is not contained within InstalledChimeSounds.
     if (!this.state.installedChimeSounds.some((chimeSound) => chimeSound.chimeId === chimeId)) {
       throw new StatusResponseError(
         `MatterbridgeChimeServer: chime sound ${chimeId} is not present in installedChimeSounds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -76,7 +76,7 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
   /**
    * Handles the PlayChimeSound command.
    * Plays the chime sound passed in the request or, if none is passed, the currently selected chime, and generates the ChimeStartedPlaying event.
-   * Per Matter 1.6 Application Cluster spec §11.8.6.1.2, if Enabled is false, the command SHALL succeed with no other side effects.
+   * Per Matter 1.6.1 Application Cluster spec §11.8.6.1.2, if Enabled is false, the command SHALL succeed with no other side effects.
    *
    * The PlayChimeSound command observable added by `subscribeCommand()` is emitted last, after the validation and the state update.
    *
@@ -86,13 +86,13 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
   // oxlint-disable-next-line typescript/require-await
   override async playChimeSound(request: Chime.PlayChimeSoundRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.8.6.1.2: Respond to PlayChimeSound with SUCCESS and no other side effects while Enabled is false.
+    // Matter 1.6.1 § 11.8.6.1.2: Respond to PlayChimeSound with SUCCESS and no other side effects while Enabled is false.
     if (!this.state.enabled) {
       device.log.debug(`MatterbridgeChimeServer: playChimeSound called but chime is disabled (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
     const chimeId = request.chimeId ?? this.state.selectedChime;
-    // Matter 1.6.0 § 11.8.6.1.2: Respond to PlayChimeSound with NOT_FOUND if the passed in ChimeID has no entry in InstalledChimeSounds.
+    // Matter 1.6.1 § 11.8.6.1.2: Respond to PlayChimeSound with NOT_FOUND if the passed in ChimeID has no entry in InstalledChimeSounds.
     if (!this.state.installedChimeSounds.some((chimeSound) => chimeSound.chimeId === chimeId)) {
       throw new StatusResponseError(
         `MatterbridgeChimeServer: chime sound ${chimeId} is not present in installedChimeSounds (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -100,7 +100,7 @@ export class MatterbridgeChimeServer extends ChimeServerBase {
       );
     }
     device.log.info(`MatterbridgeChimeServer: playing chime sound with chimeId ${chimeId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 11.8.7.1: Generate the ChimeStartedPlaying event when the chime sound starts playing.
+    // Matter 1.6.1 § 11.8.7.1: Generate the ChimeStartedPlaying event when the chime sound starts playing.
     this.events.chimeStartedPlaying.emit({ chimeId }, this.context);
     this.endpoint.emitCommand(Chime, 'playChimeSound', request, this.context);
   }

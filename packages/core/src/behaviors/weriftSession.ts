@@ -191,10 +191,10 @@ export class WeriftWebRtcSession {
    *
    * {@link createOffer} / {@link createAnswer} gather every candidate into the SDP they return (see the comments
    * there), so this list is already complete by the time that SDP is sent. It is kept so the provider can also
-   * trickle the same candidates to the peer's WebRtcTransportRequestor via ICECandidates, which Matter 1.6.0
+   * trickle the same candidates to the peer's WebRtcTransportRequestor via ICECandidates, which Matter 1.6.1
    * § 11.4.3.2 expects the camera to send — see {@link localIceCandidates}.
    *
-   * Matter 1.6.0 § 11.4.5.4.1 requires sdpMid/sdpMLineIndex to travel as named struct fields rather than being
+   * Matter 1.6.1 § 11.4.5.4.1 requires sdpMid/sdpMLineIndex to travel as named struct fields rather than being
    * serialized into the candidate string, so all three are kept separately here. werift leaves either undefined when
    * the candidate has no such association; the Matter struct spells that case as null.
    */
