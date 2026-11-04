@@ -1,9 +1,9 @@
 ---
 name: verify-server-endpoint-context
-description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates. v.1.1.4
+description: Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.1 comments on validation and state updates. v.1.1.5
 ---
 
-# Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.0 comments on validation and state updates
+# Verify server message endpoint context, endpoint type narrowing, plugin forwarding order, command observable emission, and Matter 1.6.1 comments on validation and state updates
 
 Verify endpoint context in Matterbridge behavior server implementations.
 
@@ -97,16 +97,16 @@ Matter specification comments:
 - Verify every validation branch or guard and every state update that enforces Matter behavior has an immediately preceding single-line comment in this form:
 
   ```typescript
-  // Matter 1.6.0 § <paragraph>: <short description of the normative rule enforced by this code>.
+  // Matter 1.6.1 § <paragraph>: <short description of the normative rule enforced by this code>.
   ```
 
-- Use the applicable paragraph from the authoritative Matter 1.6.0 specifications under [chip/1.6.0/specs](../../../chip/1.6.0/specs). Do not guess a paragraph number or copy a reference from unrelated code.
-- Read only the Markdown specifications (`Matter-1.6-*-Specification.md`, mainly `Matter-1.6-Application-Cluster-Specification.md`). Never open the `.html`, `.pdf` or `_files` copies. Locate a section with `grep -n` on its heading, for example `grep -n '^#\+ 1\.5\.7\.4\.3\. ' chip/1.6.0/specs/Matter-1.6-Application-Cluster-Specification.md` or `grep -n '^#\+ .*Effect on Receipt' ...`, then read only the lines of that section instead of the whole file.
+- Use the applicable paragraph from the authoritative Matter 1.6.1 specifications under [chip/1.6.1/specs](../../../chip/1.6.1/specs). Do not guess a paragraph number or copy a reference from unrelated code.
+- Read only the Markdown specifications (`Matter-1.6.1-*-Specification.md`, mainly `Matter-1.6.1-Application-Cluster-Specification.md`). Never open the `.html`, `.pdf` or `_files` copies. Locate a section with `grep -n` on its heading, for example `grep -n '^#\+ 1\.5\.7\.4\.3\. ' chip/1.6.1/specs/Matter-1.6.1-Application-Cluster-Specification.md` or `grep -n '^#\+ .*Effect on Receipt' ...`, then read only the lines of that section instead of the whole file.
 - Keep each comment concise and specific to the validation or state update immediately below it. State the observable requirement, including the required status code for validation failures when the specification defines one.
 - Add separate comments when adjacent state assignments enforce different normative requirements. Do not use one generic comment to cover multiple assignments with distinct effects.
 - Place validation and state-update comments both where the rule is implemented and immediately before each call to a helper that performs the validation or state update. At each call site, use the paragraph for that specific command rather than a combined reference covering other callers.
 - Accept a combined paragraph reference only when the same validation or state update implements the same rule for multiple commands, for example `§ 1.8.7.1.2 and § 1.8.7.2.2`.
-- Do not accept method-level JSDoc, a distant block comment, a bare paragraph number, a comment without `Matter 1.6.0`, or a comment that describes implementation mechanics without explaining the specification rule.
+- Do not accept method-level JSDoc, a distant block comment, a bare paragraph number, a comment without `Matter 1.6.1`, or a comment that describes implementation mechanics without explaining the specification rule.
 - Report a missing, misplaced, inaccurate, or incomplete specification comment as a Matter specification comment violation.
 
 Compliant example from [onOffServer.ts](../../../packages/core/src/behaviors/onOffServer.ts), showing the narrowed endpoint, the forwarding order and the trailing emission:
@@ -130,7 +130,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
       context: this.context,
     });
     device.log.debug(`MatterbridgeOnOffServer: offWithEffect called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.5.7.4.3: On receipt of OffWithEffect, when GlobalSceneControl is TRUE the server SHALL store its settings in the global scene, set GlobalSceneControl to FALSE, set OnOff to FALSE and OnTime to 0; otherwise it SHALL only set OnOff to FALSE.
+    // Matter 1.6.1 § 1.5.7.4.3: On receipt of OffWithEffect, when GlobalSceneControl is TRUE the server SHALL store its settings in the global scene, set GlobalSceneControl to FALSE, set OnOff to FALSE and OnTime to 0; otherwise it SHALL only set OnOff to FALSE.
     await super.offWithEffect(request);
     this.endpoint.emitCommand(OnOff, 'offWithEffect', request, this.context);
   }
@@ -140,7 +140,7 @@ export class MatterbridgeOnOffServer extends OnOffServer.with(OnOff.Feature.Ligh
 Compliant validation and state update shape, adapted from [booleanStateConfigurationServer.ts](../../../packages/core/src/behaviors/booleanStateConfigurationServer.ts):
 
 ```typescript
-// Matter 1.6.0 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
+// Matter 1.6.1 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
 if ([Boolean(alarms.visual && !this.state.alarmsSupported.visual), Boolean(alarms.audible && !this.state.alarmsSupported.audible)].some(Boolean)) {
   throw new StatusResponseError(
     `MatterbridgeBooleanStateConfigurationServer: requested alarm mode is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -161,11 +161,11 @@ override async suppressAlarm(request: BooleanStateConfiguration.SuppressAlarmReq
     endpoint: this.endpoint,
     context: this.context,
   });
-  // Matter 1.6.0 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
+  // Matter 1.6.1 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
   this.#assertAlarmModesSupported(request.alarmsToSuppress);
-  // Matter 1.6.0 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
+  // Matter 1.6.1 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
   this.#assertSuppressAlarmAllowed(request.alarmsToSuppress);
-  // Matter 1.6.0 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
+  // Matter 1.6.1 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
   this.state.alarmsSuppressed = this.#mergeAlarmsSuppressed(request.alarmsToSuppress);
   this.endpoint.emitCommand(BooleanStateConfiguration, 'suppressAlarm', request, this.context);
 }
@@ -178,11 +178,11 @@ Output requirements:
 - List each plugin forwarding contract violation with the command handler, the invalid operation or ordering, and whether the command-entry log is missing or uses the wrong level, the forwarding call is missing, or forwarding is not awaited.
 - List each endpoint type narrowing violation with the server class and whether the declaration is missing, an `as MatterbridgeEndpoint` assertion remains, the import is not type-only, or an assertion suppression is now obsolete.
 - List each command observable emission violation with the command handler and whether the emission is missing, misplaced, or passes the cluster, command name, payload, or context in the wrong form.
-- List each Matter specification comment violation with the validation or state update, whether the comment is missing, misplaced, inaccurate, or incomplete, and the applicable Matter 1.6.0 paragraph when it can be determined.
+- List each Matter specification comment violation with the validation or state update, whether the comment is missing, misplaced, inaccurate, or incomplete, and the applicable Matter 1.6.1 paragraph when it can be determined.
 - Group results by `behaviors` and `devices`.
-- If no violations are found, explicitly state that every in-scope log and thrown error starts with the enclosing server name and ends with the required endpoint fragment, every server class narrows `endpoint` with the `declare` declaration and contains no `as MatterbridgeEndpoint` assertion, every command handler respects the plugin forwarding contract, every command handler emits its command observable as its last call using the `ClusterType`, and every Matter validation and state update has an accurate Matter 1.6.0 paragraph comment.
+- If no violations are found, explicitly state that every in-scope log and thrown error starts with the enclosing server name and ends with the required endpoint fragment, every server class narrows `endpoint` with the `declare` declaration and contains no `as MatterbridgeEndpoint` assertion, every command handler respects the plugin forwarding contract, every command handler emits its command observable as its last call using the `ClusterType`, and every Matter validation and state update has an accurate Matter 1.6.1 paragraph comment.
 - Do not modify files unless explicitly asked to fix the violations.
-- If fixes are requested, preserve each existing message where practical, prepend the exact enclosing server class name and `: `, append the exact endpoint fragment as the final message content, move awaited plugin forwarding before validation and state changes, add the `declare readonly endpoint: MatterbridgeEndpoint;` declaration and remove every `as MatterbridgeEndpoint` assertion and any assertion suppression it makes obsolete, add or move the `this.endpoint.emitCommand(<ClusterType>, '<command>', <request>, this.context)` call to the end of each command handler, add or correct concise Matter 1.6.0 paragraph comments immediately before validations and state updates, then re-run the full verification and report any remaining violations.
+- If fixes are requested, preserve each existing message where practical, prepend the exact enclosing server class name and `: `, append the exact endpoint fragment as the final message content, move awaited plugin forwarding before validation and state changes, add the `declare readonly endpoint: MatterbridgeEndpoint;` declaration and remove every `as MatterbridgeEndpoint` assertion and any assertion suppression it makes obsolete, add or move the `this.endpoint.emitCommand(<ClusterType>, '<command>', <request>, this.context)` call to the end of each command handler, add or correct concise Matter 1.6.1 paragraph comments immediately before validations and state updates, then re-run the full verification and report any remaining violations.
 
 Post-edit validation:
 
