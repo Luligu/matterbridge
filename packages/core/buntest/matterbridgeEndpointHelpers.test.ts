@@ -1,0 +1,594 @@
+/**
+ * @file packages/core/buntest/matterbridgeEndpointHelpers.test.ts
+ * @description This file contains the bun tests for matterbridgeEndpointHelpers.
+ * @author Luca Liguori
+ */
+
+const NAME = 'MatterbridgeEndpointHelpers';
+const MATTER_PORT = 11300;
+
+import { afterEach, describe, expect, test, vi } from 'bun:test';
+
+import { CommonNumberTag, PowerSourceTag } from '@matter/node';
+import { DescriptorServer } from '@matter/node/behaviors/descriptor';
+import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ClosureControl } from '@matter/types/clusters/closure-control';
+import { DoorLock } from '@matter/types/clusters/door-lock';
+import { FlowMeasurement } from '@matter/types/clusters/flow-measurement';
+import { PowerSource } from '@matter/types/clusters/power-source';
+import { TemperatureMeasurement } from '@matter/types/clusters/temperature-measurement';
+import { WindowCovering } from '@matter/types/clusters/window-covering';
+import { type ClusterId, VendorId } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
+import { addBridgedDevice, aggregator } from '@matterbridge/test-utils/buntest/matter';
+import { log, loggerErrorSpy, loggerFatalSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { db, er, hk, or, wr } from 'node-ansi-logger';
+
+import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
+import { MatterbridgeDoorLockServer } from '../src/behaviors/doorLockServer.js';
+import { bridgedNode, closureController, doorLock, irrigationSystem, temperatureSensor, waterValve, windowCovering } from '../src/matterbridgeDeviceTypes.js';
+import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import {
+  getApparentElectricalPowerMeasurementClusterServer,
+  getCluster,
+  getDefaultDeviceEnergyManagementClusterServer,
+  getDefaultDeviceEnergyManagementModeClusterServer,
+  getDefaultElectricalEnergyMeasurementClusterServer,
+  getDefaultElectricalPowerMeasurementClusterServer,
+  getDefaultFlowMeasurementClusterServer,
+  getDefaultIlluminanceMeasurementClusterServer,
+  getDefaultOccupancySensingClusterServer,
+  getDefaultOperationalStateClusterServer,
+  getDefaultPowerSourceBatteryClusterServer,
+  getDefaultPowerSourceRechargeableBatteryClusterServer,
+  getDefaultPowerSourceReplaceableBatteryClusterServer,
+  getDefaultPressureMeasurementClusterServer,
+  getDefaultRelativeHumidityMeasurementClusterServer,
+  getDefaultSoilMeasurementClusterServer,
+  getDefaultTemperatureMeasurementClusterServer,
+  getExportedElectricalEnergyMeasurementClusterServer,
+  getImportedElectricalEnergyMeasurementClusterServer,
+  getSemtag,
+  getSnapshot,
+  internalFor,
+  invokeBehaviorCommand,
+  setCluster,
+} from '../src/matterbridgeEndpointHelpers.js';
+import { advanceTimersByTimeAsync, useServerNode } from './bunUtils.js';
+
+await setupTest(NAME, false);
+
+/**
+ * Advances the fake timers in 50 ms steps until the promise settles, failing after 100 steps.
+ *
+ * @param {Promise<T>} promise The promise to settle.
+ * @returns {Promise<T>} The settled value of the promise.
+ */
+async function advanceUntilSettled<T>(promise: Promise<T>): Promise<T> {
+  const status = { settled: false };
+  void promise.finally(() => (status.settled = true));
+  for (let step = 0; step < 100 && !status.settled; step++) await advanceTimersByTimeAsync(50, 10);
+  expect(status.settled).toBe(true);
+  return promise;
+}
+
+describe('Options helpers without a server node', () => {
+  class ManagedValue {
+    constructor(
+      public label: string,
+      public nested: unknown,
+    ) {}
+
+    get upperLabel(): string {
+      return this.label.toUpperCase();
+    }
+  }
+
+  test('getSemtag helper', () => {
+    expect(getSemtag(PowerSourceTag.Solar)).toEqual({ mfgCode: null, namespaceId: PowerSourceTag.Solar.namespaceId, tag: PowerSourceTag.Solar.tag });
+    expect(getSemtag(CommonNumberTag.TwentyFour, 'My Label')).toEqual({
+      label: 'My Label',
+      mfgCode: null,
+      namespaceId: CommonNumberTag.TwentyFour.namespaceId,
+      tag: CommonNumberTag.TwentyFour.tag,
+    });
+    expect(getSemtag(CommonNumberTag.One, 'My Label', VendorId(12)) as unknown).toEqual({
+      label: 'My Label',
+      mfgCode: 12,
+      namespaceId: 7,
+      tag: 1,
+    });
+    expect(getSemtag(CommonNumberTag.One, '   0123456789012345678901234567890123456789012345678901234567890123456789   ', VendorId(12)) as unknown).toEqual({
+      label: '0123456789012345678901234567890123456789012345678901234567890123', // Label should be trimmed to 64 characters
+      mfgCode: 12,
+      namespaceId: 7,
+      tag: 1,
+    });
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+    expect(CommonNumberTag.Two).toEqual({ label: 'Two', mfgCode: null, namespaceId: 7, tag: 2 });
+  });
+
+  test('options helpers', () => {
+    expect(getDefaultPowerSourceBatteryClusterServer()).toBeDefined();
+    expect(getDefaultPowerSourceReplaceableBatteryClusterServer()).toBeDefined();
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).toBeDefined();
+    expect(getDefaultPowerSourceBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    expect(getDefaultPowerSourceReplaceableBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer(null).batPercentRemaining).toBe(null);
+    // The optional rechargeable battery attributes are omitted unless provided
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batCapacity');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batTimeToFullCharge');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('batChargingCurrent');
+    expect(getDefaultPowerSourceRechargeableBatteryClusterServer()).not.toHaveProperty('activeBatChargeFaults');
+    expect(
+      getDefaultPowerSourceRechargeableBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, 3600, 1500, [
+        PowerSource.BatChargeFault.AmbientTooHot,
+      ]),
+    ).toMatchObject({ batCapacity: 200_000, batTimeToFullCharge: 3600, batChargingCurrent: 1500, activeBatChargeFaults: [PowerSource.BatChargeFault.AmbientTooHot] });
+    expect(
+      getDefaultPowerSourceRechargeableBatteryClusterServer(50, PowerSource.BatChargeLevel.Ok, 24_000, PowerSource.BatReplaceability.Unspecified, 200_000, null, null, []),
+    ).toMatchObject({
+      batTimeToFullCharge: null,
+      batChargingCurrent: null,
+      activeBatChargeFaults: [],
+    });
+    expect(getDefaultElectricalEnergyMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).toMatchObject({
+      cumulativeEnergyImported: { energy: 1000 },
+      cumulativeEnergyExported: { energy: 2000 },
+    });
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(-1, -1)).toMatchObject({ cumulativeEnergyImported: null, cumulativeEnergyExported: null });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000)).toMatchObject({ cumulativeEnergyImported: { energy: 1000 } });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(-1)).toMatchObject({ cumulativeEnergyImported: null });
+    // PeriodicEnergy feature: periodic attributes only when the periodic params are not undefined
+    const periodic = { energy: 1500, startTimestamp: 1730000000, endTimestamp: 1730000900 };
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).not.toHaveProperty('periodicEnergyImported');
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000)).not.toHaveProperty('periodicEnergyExported');
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000, periodic, null)).toMatchObject({ periodicEnergyImported: periodic, periodicEnergyExported: null });
+    expect(getDefaultElectricalEnergyMeasurementClusterServer(1000, 2000, undefined, periodic)).toMatchObject({ periodicEnergyExported: periodic });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000)).not.toHaveProperty('periodicEnergyImported');
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000, periodic)).toMatchObject({ cumulativeEnergyImported: { energy: 1000 }, periodicEnergyImported: periodic });
+    expect(getImportedElectricalEnergyMeasurementClusterServer(1000, null)).toMatchObject({ periodicEnergyImported: null });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000)).toMatchObject({ cumulativeEnergyExported: { energy: 2000 } });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(-1)).toMatchObject({ cumulativeEnergyExported: null });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000)).not.toHaveProperty('periodicEnergyExported');
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000, periodic)).toMatchObject({ cumulativeEnergyExported: { energy: 2000 }, periodicEnergyExported: periodic });
+    expect(getExportedElectricalEnergyMeasurementClusterServer(2000, null)).toMatchObject({ periodicEnergyExported: null });
+    expect(getDefaultElectricalPowerMeasurementClusterServer()).toBeDefined();
+    expect(getApparentElectricalPowerMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultDeviceEnergyManagementClusterServer()).toBeDefined();
+    expect(getDefaultDeviceEnergyManagementModeClusterServer()).toBeDefined();
+    expect(getDefaultOperationalStateClusterServer()).toBeDefined();
+    expect(getDefaultTemperatureMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultRelativeHumidityMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultPressureMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultIlluminanceMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultFlowMeasurementClusterServer()).toBeDefined();
+    expect(getDefaultOccupancySensingClusterServer()).toBeDefined();
+    expect(getDefaultSoilMeasurementClusterServer()).toBeDefined();
+  });
+
+  test('getSnapshot returns non-object values unchanged', () => {
+    const symbolValue = Symbol('plain-cluster-symbol');
+    const functionValue = (): string => 'plain-cluster-function';
+
+    // @ts-expect-error: Testing getSnapshot with various types, including null and undefined
+    expect(getSnapshot()).toBeUndefined();
+    expect(getSnapshot(null)).toBeNull();
+    expect(getSnapshot(true)).toBe(true);
+    expect(getSnapshot(false)).toBe(false);
+    expect(getSnapshot(123)).toBe(123);
+    expect(getSnapshot(123n)).toBe(123n);
+    expect(getSnapshot('value')).toBe('value');
+    expect(getSnapshot(symbolValue)).toBe(symbolValue);
+    expect(getSnapshot(functionValue)).toBe(functionValue);
+  });
+
+  test('getSnapshot recursively detaches every supported container type', () => {
+    const dateValue = new Date('2026-03-16T10:11:12.000Z');
+    const regexValue = /preset-(cool|heat)/giu;
+    const bufferValue = Buffer.from([1, 2, 3, 4]);
+    const uint8Value = new Uint8Array([5, 6, 7, 8]);
+    const mapKey = { room: 'kitchen', info: { zone: 1 } };
+    const setObject = { stage: 'sleep', payload: { buffer: bufferValue, uint8: uint8Value } };
+    const mapValue = {
+      buffer: bufferValue,
+      uint8: uint8Value,
+      date: dateValue,
+      regex: regexValue,
+      set: new Set([setObject, new Map([[{ slot: 'nested-key' }, new Set([bufferValue, uint8Value, { deep: true }])]])]),
+    };
+    const source = {
+      nil: null,
+      bool: true,
+      number: 42,
+      bigint: 99n,
+      string: 'plain snapshot',
+      buffer: bufferValue,
+      uint8: uint8Value,
+      date: dateValue,
+      regex: regexValue,
+      map: new Map([[mapKey, mapValue]]),
+      set: new Set([bufferValue, uint8Value, { regex: regexValue, nested: [dateValue, { copy: true }] }]),
+      array: [bufferValue, uint8Value, dateValue, regexValue, new Map([['inner', new Set([{ label: 'deep-object' }, bufferValue, uint8Value])]])],
+      managed: new ManagedValue('managed', {
+        map: new Map([[{ level: 1 }, new Set([{ detail: 'value' }])]]),
+        array: [new ManagedValue('inner', { enabled: true })],
+      }),
+    };
+
+    const snapshot = getSnapshot(source);
+
+    expect(snapshot).not.toBe(source);
+    expect(snapshot as unknown).toEqual({
+      nil: null,
+      bool: true,
+      number: 42,
+      bigint: 99n,
+      string: 'plain snapshot',
+      buffer: Buffer.from([1, 2, 3, 4]),
+      uint8: new Uint8Array([5, 6, 7, 8]),
+      date: new Date('2026-03-16T10:11:12.000Z'),
+      regex: /preset-(cool|heat)/giu,
+      map: new Map([
+        [
+          { room: 'kitchen', info: { zone: 1 } },
+          {
+            buffer: Buffer.from([1, 2, 3, 4]),
+            uint8: new Uint8Array([5, 6, 7, 8]),
+            date: new Date('2026-03-16T10:11:12.000Z'),
+            regex: /preset-(cool|heat)/giu,
+            set: new Set([
+              { stage: 'sleep', payload: { buffer: Buffer.from([1, 2, 3, 4]), uint8: new Uint8Array([5, 6, 7, 8]) } },
+              new Map([[{ slot: 'nested-key' }, new Set([Buffer.from([1, 2, 3, 4]), new Uint8Array([5, 6, 7, 8]), { deep: true }])]]),
+            ]),
+          },
+        ],
+      ]),
+      set: new Set([Buffer.from([1, 2, 3, 4]), new Uint8Array([5, 6, 7, 8]), { regex: /preset-(cool|heat)/giu, nested: [new Date('2026-03-16T10:11:12.000Z'), { copy: true }] }]),
+      array: [
+        Buffer.from([1, 2, 3, 4]),
+        new Uint8Array([5, 6, 7, 8]),
+        new Date('2026-03-16T10:11:12.000Z'),
+        /preset-(cool|heat)/giu,
+        new Map([['inner', new Set([{ label: 'deep-object' }, Buffer.from([1, 2, 3, 4]), new Uint8Array([5, 6, 7, 8])])]]),
+      ],
+      managed: {
+        label: 'managed',
+        nested: {
+          map: new Map([[{ level: 1 }, new Set([{ detail: 'value' }])]]),
+          array: [{ label: 'inner', nested: { enabled: true } }],
+        },
+      },
+    });
+
+    expect(Buffer.isBuffer(snapshot.buffer)).toBe(true);
+    expect(snapshot.buffer).not.toBe(bufferValue);
+    expect(snapshot.buffer.equals(bufferValue)).toBe(true);
+    expect(snapshot.uint8).toBeInstanceOf(Uint8Array);
+    expect(snapshot.uint8).not.toBe(uint8Value);
+    expect(Array.from(snapshot.uint8)).toEqual(Array.from(uint8Value));
+    expect(snapshot.date).toBeInstanceOf(Date);
+    expect(snapshot.date).not.toBe(dateValue);
+    expect(snapshot.date.getTime()).toBe(dateValue.getTime());
+    expect(snapshot.regex).toBeInstanceOf(RegExp);
+    expect(snapshot.regex).not.toBe(regexValue);
+    expect(snapshot.regex.source).toBe(regexValue.source);
+    expect(snapshot.regex.flags).toBe(regexValue.flags);
+
+    expect(snapshot.map).toBeInstanceOf(Map);
+    expect(snapshot.map).not.toBe(source.map);
+    const [[snapshotMapKey, snapshotMapValue]] = Array.from(snapshot.map.entries()) as [Record<string, unknown>, Record<string, unknown>][];
+    expect(snapshotMapKey).not.toBe(mapKey);
+    expect(Object.getPrototypeOf(snapshotMapKey)).toBe(Object.prototype);
+    expect(snapshotMapValue).not.toBe(mapValue);
+
+    const snapshotMapSet = snapshotMapValue.set as Set<unknown>;
+    expect(snapshotMapSet).toBeInstanceOf(Set);
+    const [snapshotSetObject, snapshotNestedMap] = Array.from(snapshotMapSet);
+    expect(snapshotSetObject).not.toBe(setObject);
+    expect(snapshotNestedMap).toBeInstanceOf(Map);
+    const [[snapshotNestedMapKey, snapshotNestedMapSet]] = Array.from((snapshotNestedMap as Map<unknown, unknown>).entries());
+    expect(Object.getPrototypeOf(snapshotNestedMapKey as object)).toBe(Object.prototype);
+    expect(snapshotNestedMapSet).toBeInstanceOf(Set);
+
+    expect(snapshot.set).toBeInstanceOf(Set);
+    expect(snapshot.set).not.toBe(source.set);
+    expect(snapshot.array).toBeInstanceOf(Array);
+    expect(snapshot.array).not.toBe(source.array);
+
+    expect(snapshot.managed).not.toBeInstanceOf(ManagedValue);
+    expect(Object.getPrototypeOf(snapshot.managed)).toBe(Object.prototype);
+    expect((snapshot.managed as unknown as Record<string, unknown>).upperLabel).toBeUndefined();
+
+    const snapshotManaged = snapshot.managed as { label: string; nested: { array: Array<Record<string, unknown>> } };
+    expect(snapshotManaged.nested.array[0]).not.toBeInstanceOf(ManagedValue);
+    expect(Object.getPrototypeOf(snapshotManaged.nested.array[0])).toBe(Object.prototype);
+  });
+});
+
+describe('Endpoint helpers', () => {
+  let device: MatterbridgeEndpoint;
+  useServerNode(MATTER_PORT);
+
+  afterEach(() => {
+    vi.useRealTimers();
+    expect(loggerWarnSpy).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
+    expect(loggerFatalSpy).not.toHaveBeenCalled();
+  });
+
+  test('internalFor returns the live behavior internal state for every overload shape', async () => {
+    device = new MatterbridgeEndpoint(doorLock, { id: 'DoorLockHelper' });
+    device.behaviors.require(
+      MatterbridgeDoorLockServer.with().enable({
+        events: { doorLockAlarm: true, lockOperation: true, lockOperationError: true },
+        commands: { lockDoor: true, unlockDoor: true, unlockWithTimeout: true },
+      }),
+      {
+        lockState: DoorLock.LockState.Locked,
+        lockType: DoorLock.LockType.DeadBolt,
+        actuatorEnabled: true,
+        operatingMode: DoorLock.OperatingMode.Normal,
+        supportedOperatingModes: { normal: false, vacation: true, privacy: true, noRemoteLockUnlock: false, passage: true, alwaysSet: 2047 },
+        autoRelockTime: 0,
+      },
+    );
+    device.addRequiredClusterServers();
+
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeDefined();
+
+    expect(await internalFor(device, 'UnknownBehavior')).toBeUndefined();
+
+    const internalFromBehavior = await internalFor(device, MatterbridgeDoorLockServer);
+    expect(internalFromBehavior).toBeDefined();
+    if (!internalFromBehavior) throw new Error('MatterbridgeDoorLockServer internal state not found');
+
+    // expect(internalFromBehavior.enableTimeout).toBe(true);
+
+    const internalFromCluster = await internalFor(device, DoorLock);
+    const internalFromClusterId = await internalFor(device, DoorLock.id);
+    const internalFromString = await internalFor(device, 'DoorLock');
+
+    expect(internalFromCluster as unknown).toBe(internalFromBehavior);
+    expect(internalFromClusterId as unknown).toBe(internalFromBehavior);
+    expect(internalFromString as unknown).toBe(internalFromBehavior);
+
+    /*
+    internalFromBehavior.enableTimeout = false;
+
+    expect((await internalFor(device, MatterbridgeDoorLockServer))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, DoorLock.id))?.enableTimeout).toBe(false);
+    expect((await internalFor(device, 'DoorLock'))?.enableTimeout).toBe(false);
+    */
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(1);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(1, expect.stringContaining(`internalFor error: cluster not found on endpoint ${or}DoorLockHelper${er}:`));
+    loggerErrorSpy.mockClear();
+  });
+
+  test('getCluster setCluster helper', async () => {
+    device = new MatterbridgeEndpoint(temperatureSensor, { id: 'TestEndpoint' });
+    device.createDefaultTemperatureMeasurementClusterServer(2200, 1000, 5000);
+    device.addRequiredClusterServers();
+    expect(device.hasClusterServer('TemperatureMeasurement')).toBe(true);
+
+    const cluster = getCluster(device, 'TemperatureMeasurement', log);
+    expect(cluster).toBeUndefined();
+    expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`getCluster ${hk}TemperatureMeasurement${er} error:`));
+    vi.clearAllMocks();
+
+    const behavior = device.getCluster(TemperatureMeasurementServer, log);
+    expect(behavior).toBeUndefined();
+    expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`getCluster ${hk}TemperatureMeasurement${er} error:`));
+    vi.clearAllMocks();
+
+    const cluster0 = await device.setCluster('TemperatureMeasurement', { measuredValue: 2000 }, log);
+    expect(cluster0).toBeFalsy();
+    expect(device.log.error).toHaveBeenCalledWith(expect.stringContaining(`setCluster ${hk}TemperatureMeasurement${er} error:`));
+
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+
+    expect(await device.setCluster(TemperatureMeasurementServer, { measuredValue: 1900, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
+    const behavior1 = device.getCluster(TemperatureMeasurementServer, log);
+    expect(behavior1?.measuredValue).toBe(1900);
+    expect(behavior1).toMatchObject({ measuredValue: 1900, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    vi.clearAllMocks();
+
+    expect(await device.setCluster(TemperatureMeasurement, { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log)).toBe(true);
+    const clustertype = device.getCluster(TemperatureMeasurement, log);
+    expect(clustertype?.measuredValue).toBe(2000);
+    expect(clustertype).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    vi.clearAllMocks();
+
+    const cluster1 = getCluster(device, 'NonExistentCluster', log);
+    expect(cluster1).toBeUndefined();
+    expect(device.log.error).toHaveBeenCalledWith(`getCluster error: cluster not found on endpoint ${or}${device.maybeId}${er}:${or}${device.maybeNumber}${er}`);
+
+    const cluster2 = await setCluster(device, 'NonExistentCluster', { measuredValue: 2000 }, log);
+    expect(cluster2).toBeFalsy();
+    expect(device.log.error).toHaveBeenCalledWith(`setCluster error: cluster not found on endpoint ${or}${device.maybeId}${er}:${or}${device.maybeNumber}${er}`);
+
+    const cluster3 = device.getCluster('TemperatureMeasurement', log);
+    expect(cluster3).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    expect(Object.getPrototypeOf(cluster3)).toBe(Object.prototype);
+    expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Get endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
+
+    const cluster4 = await device.setCluster('TemperatureMeasurement', { measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 }, log);
+    expect(cluster4).toBeTruthy();
+    expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Set endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
+
+    const cluster5 = getCluster(device, 'TemperatureMeasurement', log);
+    expect(cluster5).toMatchObject({ measuredValue: 2000, minMeasuredValue: 0, maxMeasuredValue: 6000, tolerance: 100 });
+    expect(device.log.info).toHaveBeenCalledWith(expect.stringContaining(`${db}Get endpoint ${or}${device.id}${db}:${or}${device.number}${db} cluster`));
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(1, expect.stringContaining(`getCluster error: cluster not found on endpoint ${or}TestEndpoint${er}:`));
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(2, expect.stringContaining(`setCluster error: cluster not found on endpoint ${or}TestEndpoint${er}:`));
+    loggerErrorSpy.mockClear();
+  });
+
+  test('addClusterClients with empty list is a no-op', async () => {
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsEmpty' });
+    device.addClusterClients([]);
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+    expect(device.stateOf(DescriptorServer).clientList).toHaveLength(0);
+  });
+
+  test('addClusterClients with unknown cluster log message', async () => {
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsUnknown' });
+    device.addClusterClients([0xffff as ClusterId]);
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeTruthy();
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+    expect(device.stateOf(DescriptorServer).clientList).toHaveLength(1);
+    expect(loggerWarnSpy).toHaveBeenCalledWith(expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
+    // Warnings logged on purpose by this test
+    expect(loggerWarnSpy).toHaveBeenCalledTimes(1);
+    expect(loggerWarnSpy).toHaveBeenNthCalledWith(1, expect.stringContaining(`addClusterClients: no client behavior found for clusterId ${hk}0xffff${wr}`));
+    loggerWarnSpy.mockClear();
+  });
+
+  test('addClusterClients called twice merges clientList without duplicates', async () => {
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsMerge' });
+    device.addClusterClients([ClosureControl.id]);
+    device.addClusterClients([FlowMeasurement.id, ClosureControl.id]);
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+    const clientList = device.stateOf(DescriptorServer).clientList;
+    expect(clientList).toContain(ClosureControl.id);
+    expect(clientList).toContain(FlowMeasurement.id);
+    expect(clientList.filter((id) => id === ClosureControl.id)).toHaveLength(1);
+  });
+
+  test('addClusterClients merges into existing options with no clientList', async () => {
+    device = new MatterbridgeEndpoint(bridgedNode, { id: 'ClusterClientsNoList' });
+    device.behaviors.require(MatterbridgeBindingServer, {});
+    device.addClusterClients([ClosureControl.id]);
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+    const clientList = device.stateOf(DescriptorServer).clientList;
+    expect(clientList).toContain(ClosureControl.id);
+  });
+
+  test('addRequiredClusterClients requires MatterbridgeBindingServer for device types with required client clusters', async () => {
+    device = new MatterbridgeEndpoint(closureController, { id: 'ClusterClientsRequired' });
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    device.addRequiredClusterClients();
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(ClosureControl.id);
+  });
+
+  test('addOptionalClusterClients requires MatterbridgeBindingServer for device types with optional client clusters', async () => {
+    device = new MatterbridgeEndpoint(irrigationSystem, { id: 'ClusterClientsOptional' });
+    // The Irrigation System device type requires a Water Valve component
+    device.addChildDeviceType('Valve', waterValve).createDefaultIdentifyClusterServer().createDefaultValveConfigurationAndControlClusterServer();
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBeFalsy();
+    device.addOptionalClusterClients();
+    expect(device.behaviors.has(MatterbridgeBindingServer)).toBe(true);
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+    expect(device.stateOf(DescriptorServer).clientList).toContain(FlowMeasurement.id);
+  });
+
+  test('invokeBehaviorCommand with a waiterCondition resolves true once the condition becomes true', async () => {
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandWaiterTrue' });
+    device.createDefaultLiftTiltWindowCoveringClusterServer(0, 0, undefined, undefined, 200);
+    device.addRequiredClusterServers();
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+
+    // Fake the movement timer and the waiter timers, and advance them until the 200ms movement completes.
+    vi.useFakeTimers();
+    try {
+      const invoked = invokeBehaviorCommand(
+        device,
+        WindowCovering,
+        'goToLiftPercentage',
+        { liftPercent100thsValue: 10000 },
+        () => device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths') === 10000,
+      );
+      expect(await advanceUntilSettled(invoked)).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(device.getAttribute(WindowCovering, 'currentPositionLiftPercent100ths')).toBe(10000);
+  });
+
+  test('invokeBehaviorCommand with a waiterCondition resolves false if the condition never becomes true', async () => {
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandWaiterFalse' });
+    // No simulated movement: the condition never becomes true, only the waiter timeout matters.
+    device.createDefaultLiftTiltWindowCoveringClusterServer();
+    device.addRequiredClusterServers();
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+
+    // Fake the waiter timers, and advance them until its 1000ms timeout expires.
+    vi.useFakeTimers();
+    try {
+      const invoked = invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 10000 }, () => false);
+      expect(await advanceUntilSettled(invoked)).toBe(false);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  test('invokeBehaviorCommand logs and returns false for an unknown cluster or command, and accepts a qualified command name', async () => {
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandErrors' });
+    device.createDefaultWindowCoveringClusterServer();
+    device.addRequiredClusterServers();
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+
+    expect(await invokeBehaviorCommand(device, 'noCluster', 'stopMotion')).toBe(false);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`invokeBehaviorCommand error: command ${hk}stopMotion${er} not found on endpoint`));
+
+    expect(await invokeBehaviorCommand(device, WindowCovering, 'noCommand' as never)).toBe(false);
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint`));
+
+    expect(await invokeBehaviorCommand(device, WindowCovering, 'WindowCovering.goToLiftPercentage', { liftPercent100thsValue: 5000 })).toBe(true);
+    expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
+    // Errors logged on purpose by this test
+    expect(loggerErrorSpy).toHaveBeenCalledTimes(2);
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      1,
+      expect.stringContaining(`invokeBehaviorCommand error: command ${hk}stopMotion${er} not found on endpoint ${or}InvokeBehaviorCommandErrors${er}:`),
+    );
+    expect(loggerErrorSpy).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining(`invokeBehaviorCommand error: command ${hk}noCommand${er} not found on agent for endpoint ${or}InvokeBehaviorCommandErrors${er}:`),
+    );
+    loggerErrorSpy.mockClear();
+  });
+
+  test('invokeBehaviorCommand waits for the behavior lock held by another transaction instead of failing', async () => {
+    // The movement simulation completes in a timer callback that runs with `{ lock: true }`, so a command can
+    // legitimately arrive while another transaction holds the behavior lock. invokeBehaviorCommand mirrors the real
+    // invoke path and takes the lock asynchronously, so this waits instead of throwing a synchronous-transaction-conflict.
+    device = new MatterbridgeEndpoint(windowCovering, { id: 'InvokeBehaviorCommandLock' });
+    device.createDefaultLiftTiltWindowCoveringClusterServer();
+    device.addRequiredClusterServers();
+    await addBridgedDevice(aggregator, device, 0, 0, 0, 0);
+
+    // Hold the windowCovering behavior lock in a separate transaction until the test releases it.
+    let releaseLock: () => void = () => {};
+    const lockReleased = new Promise<void>((resolve) => (releaseLock = resolve));
+    const holder = device.act(async (agent) => {
+      const transaction = agent.context.transaction;
+      transaction.addResourcesSync((agent as unknown as Record<string, object>)['windowCovering']);
+      transaction.beginSync();
+      await lockReleased;
+    });
+    await flushAsync(3, 10, 0);
+
+    // The command is blocked on the lock: it has not settled and has not written the target yet.
+    const status = { settled: false };
+    const invoked = invokeBehaviorCommand(device, WindowCovering, 'goToLiftPercentage', { liftPercent100thsValue: 5000 });
+    void invoked.finally(() => (status.settled = true));
+    await flushAsync(3, 10, 0);
+    expect(status.settled).toBe(false);
+    expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(0);
+
+    // Once the lock is released the command completes.
+    releaseLock();
+    await holder;
+    expect(await invoked).toBe(true);
+    expect(device.getAttribute(WindowCovering, 'targetPositionLiftPercent100ths')).toBe(5000);
+  });
+});
