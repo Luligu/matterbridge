@@ -82,7 +82,7 @@ export class MatterbridgeCommodityPriceServer extends CommodityPriceServer.enabl
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 9.9.7.2.1: Return the current price, or null when it is unknown.
+    // Matter 1.6.1 § 9.9.7.2.1: Return the current price, or null when it is unknown.
     const response = { currentPrice: this.state.currentPrice };
     this.endpoint.emitCommand(CommodityPrice, 'getDetailedPriceRequest', request, this.context);
     return response;
@@ -122,14 +122,14 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
       context: this.context,
     });
     const tariffComponent = (this.state.tariffComponents ?? []).find((component) => component.tariffComponentId === request.tariffComponentId);
-    // Matter 1.6.0 § 9.12.7.1.2: Reject GetTariffComponent with NOT_FOUND if the requested TariffComponentID is unavailable.
+    // Matter 1.6.1 § 9.12.7.1.2: Reject GetTariffComponent with NOT_FOUND if the requested TariffComponentID is unavailable.
     if (!tariffComponent) {
       throw new StatusResponse.NotFoundError(
         `MatterbridgeCommodityTariffServer: no TariffComponent with id ${request.tariffComponentId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
     const period = (this.state.tariffPeriods ?? []).find((p) => p.tariffComponentIds.includes(request.tariffComponentId));
-    // Matter 1.6.0 § 9.12.7.1.2: Return information about the available requested tariff component.
+    // Matter 1.6.1 § 9.12.7.1.2: Return information about the available requested tariff component.
     const response = { label: period?.label ?? null, dayEntryIds: period?.dayEntryIds ?? [], tariffComponent };
     this.endpoint.emitCommand(CommodityTariff, 'getTariffComponent', request, this.context);
     return response;
@@ -155,13 +155,13 @@ export class MatterbridgeCommodityTariffServer extends CommodityTariffServer.wit
       context: this.context,
     });
     const dayEntry = (this.state.dayEntries ?? []).find((entry) => entry.dayEntryId === request.dayEntryId);
-    // Matter 1.6.0 § 9.12.7.3.2: Reject GetDayEntry with NOT_FOUND if the requested DayEntryID is unavailable.
+    // Matter 1.6.1 § 9.12.7.3.2: Reject GetDayEntry with NOT_FOUND if the requested DayEntryID is unavailable.
     if (!dayEntry) {
       throw new StatusResponse.NotFoundError(
         `MatterbridgeCommodityTariffServer: no DayEntry with id ${request.dayEntryId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    // Matter 1.6.0 § 9.12.7.3.2: Return the available requested day entry.
+    // Matter 1.6.1 § 9.12.7.3.2: Return the available requested day entry.
     const response = { dayEntry };
     this.endpoint.emitCommand(CommodityTariff, 'getDayEntry', request, this.context);
     return response;

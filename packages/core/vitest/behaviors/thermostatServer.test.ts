@@ -580,7 +580,7 @@ describe('MatterbridgeThermostatServer', () => {
     // earlier scenarios, rather than the try/finally-scoped flow above). The first, being immediately effective,
     // becomes CurrentThermostatSuggestion as part of the add command's own re-evaluation. Removing preset 0 via a
     // Presets atomic write deletes the referencing entries and, since CurrentThermostatSuggestion references that
-    // preset, nulls it (Matter 1.6 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires
+    // preset, nulls it (Matter 1.6.1 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires
     // `presets$AtomicChanged` through a committed atomic write (AtomicWriteHandler), which local-actor/command-context
     // test writes bypass entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite()
     // does it.
@@ -612,7 +612,7 @@ describe('MatterbridgeThermostatServer', () => {
 
     // Regression test: CurrentThermostatSuggestion must be nulled whenever its own PresetHandle was removed, even
     // when the ThermostatSuggestions list itself is unaffected (already empty here, so its length doesn't change).
-    // Matter 1.6 Application Cluster Spec § 4.3.11.50 point 1 applies to CurrentThermostatSuggestion independently
+    // Matter 1.6.1 Application Cluster Spec § 4.3.11.50 point 1 applies to CurrentThermostatSuggestion independently
     // of point 2 (which only covers ThermostatSuggestions entries).
     await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', {
       uniqueId: 5,

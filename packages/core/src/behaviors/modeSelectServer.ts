@@ -54,7 +54,7 @@ export class MatterbridgeModeSelectServer extends ModeSelectServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeModeSelectServer: changeToMode called with mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.9.7.1: Set CurrentMode to NewMode when it is a valid mode in SupportedModes, otherwise respond with INVALID_COMMAND.
+    // Matter 1.6.1 § 1.9.7.1: Set CurrentMode to NewMode when it is a valid mode in SupportedModes, otherwise respond with INVALID_COMMAND.
     await super.changeToMode(request);
     this.endpoint.emitCommand(ModeSelect, 'changeToMode', request, this.context);
   }

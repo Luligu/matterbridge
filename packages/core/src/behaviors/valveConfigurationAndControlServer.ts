@@ -101,7 +101,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
       `MatterbridgeValveConfigurationAndControlServer: open called with openDuration: ${request.openDuration} targetLevel: ${request.targetLevel} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
 
-    // Matter 1.6.0 § 4.6.8.1.3: Ignore the command and return FailureDueToFault when the device has registered a fault that prevents the requested action.
+    // Matter 1.6.1 § 4.6.8.1.3: Ignore the command and return FailureDueToFault when the device has registered a fault that prevents the requested action.
     if (this.#hasFault()) {
       throw new ValveConfigurationAndControl.FailureDueToFaultError(
         `MatterbridgeValveConfigurationAndControlServer: open ignored, the valve has a registered fault (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -112,24 +112,24 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     this.#stopMovementTimer();
     this.#stopAutoCloseTimer();
 
-    // Matter 1.6.0 § 4.6.8.1.3: Set the TargetState attribute to Open and the CurrentState attribute to Transitioning.
+    // Matter 1.6.1 § 4.6.8.1.3: Set the TargetState attribute to Open and the CurrentState attribute to Transitioning.
     this.state.targetState = ValveConfigurationAndControl.ValveState.Open;
     this.state.currentState = ValveConfigurationAndControl.ValveState.Transitioning;
 
-    // Matter 1.6.0 § 4.6.8.1.3: Set the OpenDuration attribute to the OpenDuration field when present, otherwise to the DefaultOpenDuration attribute.
+    // Matter 1.6.1 § 4.6.8.1.3: Set the OpenDuration attribute to the OpenDuration field when present, otherwise to the DefaultOpenDuration attribute.
     this.state.openDuration = request.openDuration === undefined ? this.state.defaultOpenDuration : request.openDuration;
-    // Matter 1.6.0 § 4.6.8.1.3: Set RemainingDuration to null when OpenDuration is null (no auto close defined), otherwise to the value of OpenDuration. The TimeSync feature is not supported, so AutoCloseTime never applies.
+    // Matter 1.6.1 § 4.6.8.1.3: Set RemainingDuration to null when OpenDuration is null (no auto close defined), otherwise to the value of OpenDuration. The TimeSync feature is not supported, so AutoCloseTime never applies.
     this.state.remainingDuration = this.state.openDuration;
 
     if (this.features.level) {
-      // Matter 1.6.0 § 4.6.8.1.3: Return CONSTRAINT_ERROR when LevelStep and the TargetLevel field are both present, TargetLevel is not 100, and (TargetLevel % LevelStep) is not 0.
+      // Matter 1.6.1 § 4.6.8.1.3: Return CONSTRAINT_ERROR when LevelStep and the TargetLevel field are both present, TargetLevel is not 100, and (TargetLevel % LevelStep) is not 0.
       if (request.targetLevel !== undefined && request.targetLevel !== 100 && this.state.levelStep !== undefined && request.targetLevel % this.state.levelStep !== 0) {
         throw new StatusResponseError(
           `MatterbridgeValveConfigurationAndControlServer: open targetLevel ${request.targetLevel} is not a multiple of levelStep ${this.state.levelStep} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
           Status.ConstraintError,
         );
       }
-      // Matter 1.6.0 § 4.6.8.1.3: With the Level feature, set the TargetLevel attribute to the TargetLevel field when present, otherwise to DefaultOpenLevel when implemented, otherwise to 100.
+      // Matter 1.6.1 § 4.6.8.1.3: With the Level feature, set the TargetLevel attribute to the TargetLevel field when present, otherwise to DefaultOpenLevel when implemented, otherwise to 100.
       // v8 ignore next - defensive fallback: DefaultOpenLevel's own schema default is already 100
       this.state.targetLevel = request.targetLevel ?? this.state.defaultOpenLevel ?? 100;
     }
@@ -137,9 +137,9 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     // A non-positive movementDuration disables the built-in movement simulation, leaving completion to the real
     // device implementation. If autoClose is false, Close is likewise left entirely to the real device
     // implementation: no countdown timer is started, so RemainingDuration is set (above) but never ticks down.
-    // Matter 1.6.0 § 4.6.8.1.3: Once the target and duration attributes are set, start the movement towards the target value, setting CurrentState to Open when the movement completes.
+    // Matter 1.6.1 § 4.6.8.1.3: Once the target and duration attributes are set, start the movement towards the target value, setting CurrentState to Open when the movement completes.
     if (this.state.movementDuration > 0) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Open, this.state.targetLevel ?? 100);
-    // Matter 1.6.0 § 4.6.8.1.3: Once the target and duration attributes are set, start the countdown of the RemainingDuration attribute.
+    // Matter 1.6.1 § 4.6.8.1.3: Once the target and duration attributes are set, start the countdown of the RemainingDuration attribute.
     if (this.state.autoClose && this.state.remainingDuration !== null) this.#scheduleAutoClose();
     this.endpoint.emitCommand(ValveConfigurationAndControl, 'open', request, this.context);
   }
@@ -160,7 +160,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     });
     device.log.debug(`MatterbridgeValveConfigurationAndControlServer: close called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
 
-    // Matter 1.6.0 § 4.6.8.2.1: Ignore the command and return FailureDueToFault when the device has registered a fault that prevents the requested action.
+    // Matter 1.6.1 § 4.6.8.2.1: Ignore the command and return FailureDueToFault when the device has registered a fault that prevents the requested action.
     if (this.#hasFault()) {
       throw new ValveConfigurationAndControl.FailureDueToFaultError(
         `MatterbridgeValveConfigurationAndControlServer: close ignored, the valve has a registered fault (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -171,18 +171,18 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
     this.#stopMovementTimer();
     this.#stopAutoCloseTimer();
 
-    // Matter 1.6.0 § 4.6.8.2.1: Set the OpenDuration and RemainingDuration attributes to null.
+    // Matter 1.6.1 § 4.6.8.2.1: Set the OpenDuration and RemainingDuration attributes to null.
     this.state.openDuration = null;
     this.state.remainingDuration = null;
-    // Matter 1.6.0 § 4.6.8.2.1: Set the TargetState attribute to Closed and the CurrentState attribute to Transitioning.
+    // Matter 1.6.1 § 4.6.8.2.1: Set the TargetState attribute to Closed and the CurrentState attribute to Transitioning.
     this.state.targetState = ValveConfigurationAndControl.ValveState.Closed;
     this.state.currentState = ValveConfigurationAndControl.ValveState.Transitioning;
-    // Matter 1.6.0 § 4.6.8.2.1: With the Level feature, set the TargetLevel attribute to 0.
+    // Matter 1.6.1 § 4.6.8.2.1: With the Level feature, set the TargetLevel attribute to 0.
     if (this.features.level) this.state.targetLevel = 0;
 
     // A non-positive movementDuration disables the built-in movement simulation, leaving completion to the real
     // device implementation.
-    // Matter 1.6.0 § 4.6.8.2.1: Once the target attributes are set, start the movement towards the target value, setting CurrentState to Closed when the movement completes.
+    // Matter 1.6.1 § 4.6.8.2.1: Once the target attributes are set, start the movement towards the target value, setting CurrentState to Closed when the movement completes.
     if (this.state.movementDuration > 0) this.#scheduleMovementComplete(ValveConfigurationAndControl.ValveState.Closed, 0);
     this.endpoint.emitCommand(ValveConfigurationAndControl, 'close', {}, this.context);
   }
@@ -218,7 +218,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
    * `movementDuration` has elapsed: CurrentState is set to `finalState`, CurrentLevel (if the Level feature is
    * supported) is set to `finalLevel`, and TargetState/TargetLevel revert to null.
    *
-   * Matter 1.6 Application Cluster Specification, 4.6.7.6 TargetState Attribute / 4.6.7.8 TargetLevel Attribute:
+   * Matter 1.6.1 Application Cluster Specification, 4.6.7.6 TargetState Attribute / 4.6.7.8 TargetLevel Attribute:
    * a value of null indicates that no target is set, since the change in state/level is done (or failed).
    * 4.6.8.1.3/4.6.8.2.1: when the movement is complete, the device SHALL set the CurrentState attribute to the
    * Open/Closed value.
@@ -245,13 +245,13 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
    */
   #completeMovement(): void {
     this.internal.movementTimer = undefined;
-    // Matter 1.6.0 § 4.6.8.1.3 and § 4.6.8.2.1: When the movement is complete, set the CurrentState attribute to the Open or Closed value reached.
+    // Matter 1.6.1 § 4.6.8.1.3 and § 4.6.8.2.1: When the movement is complete, set the CurrentState attribute to the Open or Closed value reached.
     this.state.currentState = this.internal.movementFinalState;
-    // Matter 1.6.0 § 4.6.7.7: With the Level feature, CurrentLevel indicates the level of the valve reached at the end of the movement.
+    // Matter 1.6.1 § 4.6.7.7: With the Level feature, CurrentLevel indicates the level of the valve reached at the end of the movement.
     if (this.features.level) this.state.currentLevel = this.internal.movementFinalLevel;
-    // Matter 1.6.0 § 4.6.7.6: A null TargetState indicates that no target position is set, since the change in state is done.
+    // Matter 1.6.1 § 4.6.7.6: A null TargetState indicates that no target position is set, since the change in state is done.
     this.state.targetState = null;
-    // Matter 1.6.0 § 4.6.7.8: A null TargetLevel indicates that no target position is set, since the change of level is done.
+    // Matter 1.6.1 § 4.6.7.8: A null TargetLevel indicates that no target position is set, since the change of level is done.
     if (this.features.level) this.state.targetLevel = null;
   }
 
@@ -259,7 +259,7 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
    * Schedules the RemainingDuration countdown for the OpenDuration set by the current Open command, ticking once
    * per second. When it reaches 0, closes the valve exactly as if a Close command had been received.
    *
-   * Matter 1.6 Application Cluster Specification, 4.6.7.4 RemainingDuration Attribute: when the value of this
+   * Matter 1.6.1 Application Cluster Specification, 4.6.7.4 RemainingDuration Attribute: when the value of this
    * attribute counts down to 0, the valve SHALL automatically transition to its closed position, and the
    * behavior of transitioning to the closed position SHALL match the behavior described in the Close command.
    */
@@ -279,9 +279,9 @@ export class MatterbridgeValveConfigurationAndControlServer extends Matterbridge
   #tickAutoClose(): void {
     if (this.state.remainingDuration === null) return;
     const remaining = Math.max(0, this.state.remainingDuration - 1);
-    // Matter 1.6.0 § 4.6.7.4: RemainingDuration indicates the remaining duration, in seconds, until the valve closes.
+    // Matter 1.6.1 § 4.6.7.4: RemainingDuration indicates the remaining duration, in seconds, until the valve closes.
     this.state.remainingDuration = remaining;
-    // Matter 1.6.0 § 4.6.7.4: When RemainingDuration counts down to 0, the valve automatically transitions to its closed position, matching the behavior of the Close command.
+    // Matter 1.6.1 § 4.6.7.4: When RemainingDuration counts down to 0, the valve automatically transitions to its closed position, matching the behavior of the Close command.
     if (remaining === 0) {
       this.#stopAutoCloseTimer();
       void this.close();

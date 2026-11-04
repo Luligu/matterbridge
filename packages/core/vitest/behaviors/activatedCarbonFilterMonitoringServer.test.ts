@@ -112,7 +112,7 @@ describe('MatterbridgeActivatedCarbonFilterMonitoringServer', () => {
 
     await endpoint.invokeBehaviorCommand(ActivatedCarbonFilterMonitoring, 'resetCondition');
 
-    // Matter 1.6.0 § 2.8.6.2: with DegradationDirection Up, full resource availability is the lowest Condition value.
+    // Matter 1.6.1 § 2.8.6.2: with DegradationDirection Up, full resource availability is the lowest Condition value.
     expect(endpoint.getAttribute(ActivatedCarbonFilterMonitoring.id, 'condition')).toBe(0);
     expect(endpoint.getAttribute(ActivatedCarbonFilterMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
   });

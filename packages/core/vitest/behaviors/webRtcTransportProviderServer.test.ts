@@ -576,7 +576,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     });
 
     try {
-      // maxResolution must bracket the device's default rateDistortionTradeOffPoints entry (1920x1080, Matter 1.6 §11.2.8.4.8).
+      // maxResolution must bracket the device's default rateDistortionTradeOffPoints entry (1920x1080, Matter 1.6.1 §11.2.8.4.8).
       await device.invokeBehaviorCommand(CameraAvStreamManagement, 'videoStreamAllocate', {
         streamUsage: StreamUsage.LiveView,
         videoCodec: CameraAvStreamManagement.VideoCodec.H264,
@@ -724,7 +724,7 @@ describe('MatterbridgeWebRtcTransportProviderServer', () => {
     }
     expect(endpoint.getAttribute(WebRtcTransportProvider, 'currentSessions')).toHaveLength(5);
 
-    // Matter 1.6.0 § 11.5.6.3: unlike solicitOffer above, the 6th provideOffer is rejected outright with
+    // Matter 1.6.1 § 11.5.6.3: unlike solicitOffer above, the 6th provideOffer is rejected outright with
     // RESOURCE_EXHAUSTED rather than accepted and ended afterwards, and the rolled-back session leaves
     // currentSessions capped at 5.
     await expect(endpoint.invokeBehaviorCommand(WebRtcTransportProvider, 'provideOffer', { webRtcSessionId: null, sdp: 'v=0 o=- offer', audioStreams: [0] })).rejects.toThrow(

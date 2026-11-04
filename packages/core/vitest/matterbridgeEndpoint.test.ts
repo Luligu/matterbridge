@@ -1170,7 +1170,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(events.on$executed).toBeDefined();
     expect(events.toggle$executed).toBeDefined();
 
-    // Matter 1.6.0 § 1.5.6: with the OffOnly feature the On (0x01) and Toggle (0x02) commands are not supported, so AcceptedCommandList only contains Off (0x00).
+    // Matter 1.6.1 § 1.5.6: with the OffOnly feature the On (0x01) and Toggle (0x02) commands are not supported, so AcceptedCommandList only contains Off (0x00).
     expect(device.getAttribute('onOff', 'featureMap')).toEqual({ lighting: false, deadFrontBehavior: false, offOnly: true });
     expect(device.getAttribute('onOff', 'acceptedCommandList')).toEqual([0]);
 

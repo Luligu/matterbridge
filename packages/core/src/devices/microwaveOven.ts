@@ -235,7 +235,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       context: this.context,
     });
 
-    // Matter 1.6.0 § 8.13.6.2.6: Respond with INVALID_IN_STATE, leaving state unchanged, if the Operational State cluster on the same endpoint is not Stopped, since cooking parameters cannot change while the oven is running, paused or in error.
+    // Matter 1.6.1 § 8.13.6.2.6: Respond with INVALID_IN_STATE, leaving state unchanged, if the Operational State cluster on the same endpoint is not Stopped, since cooking parameters cannot change while the oven is running, paused or in error.
     if (
       this.endpoint.behaviors.has(MatterbridgeOperationalStateServer) &&
       this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState !== (OperationalState.OperationalStateEnum.Stopped as number)
@@ -248,7 +248,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
 
     const supportedModes = this.endpoint.stateOf(MicrowaveOvenModeServer).supportedModes;
 
-    // Matter 1.6.0 § 8.13.6.2.1 and § 8.13.6.2.6: Reject the command with CONSTRAINT_ERROR, leaving state unchanged, if CookMode is not one of the SupportedModes of the Microwave Oven Mode cluster.
+    // Matter 1.6.1 § 8.13.6.2.1 and § 8.13.6.2.6: Reject the command with CONSTRAINT_ERROR, leaving state unchanged, if CookMode is not one of the SupportedModes of the Microwave Oven Mode cluster.
     if (request.cookMode !== undefined && !supportedModes.some((mode) => mode.mode === request.cookMode)) {
       throw new StatusResponseError(
         `MatterbridgeMicrowaveOvenControlServer: cookMode ${request.cookMode} is not a supported mode (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -256,7 +256,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       );
     }
 
-    // Matter 1.6.0 § 8.13.6.2.2 and § 8.13.6.2.6: Reject the command with CONSTRAINT_ERROR, leaving state unchanged, if CookTime is outside 1 to MaxCookTime.
+    // Matter 1.6.1 § 8.13.6.2.2 and § 8.13.6.2.6: Reject the command with CONSTRAINT_ERROR, leaving state unchanged, if CookTime is outside 1 to MaxCookTime.
     if (request.cookTime !== undefined && (request.cookTime < 1 || request.cookTime > this.state.maxCookTime)) {
       throw new StatusResponseError(
         `MatterbridgeMicrowaveOvenControlServer: cookTime ${request.cookTime} must be between 1 and maxCookTime ${this.state.maxCookTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -264,7 +264,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       );
     }
 
-    // Matter 1.6.0 § 8.13.6.2.3: Reject the command with CONSTRAINT_ERROR if PowerSetting is outside MinPower to MaxPower or (PowerSetting - MinPower) is not a multiple of PowerStep.
+    // Matter 1.6.1 § 8.13.6.2.3: Reject the command with CONSTRAINT_ERROR if PowerSetting is outside MinPower to MaxPower or (PowerSetting - MinPower) is not a multiple of PowerStep.
     if (
       request.powerSetting !== undefined &&
       (request.powerSetting < this.state.minPower || request.powerSetting > this.state.maxPower || (request.powerSetting - this.state.minPower) % this.state.powerStep !== 0)
@@ -279,14 +279,14 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookMode to ${request.cookMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 8.13.6.2.1: Set the CurrentMode attribute of the Microwave Oven Mode cluster to the CookMode field.
+      // Matter 1.6.1 § 8.13.6.2.1: Set the CurrentMode attribute of the Microwave Oven Mode cluster to the CookMode field.
       await this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: request.cookMode });
     } else {
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookMode so set to Normal (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       const normalMode = supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (MicrowaveOvenMode.ModeTag.Normal as number)));
-      // Matter 1.6.0 § 8.13.6.2.1: If CookMode is missing, set CurrentMode to a mode having the Normal mode tag.
+      // Matter 1.6.1 § 8.13.6.2.1: If CookMode is missing, set CurrentMode to a mode having the Normal mode tag.
       await this.endpoint.setStateOf(MicrowaveOvenModeServer, { currentMode: normalMode?.mode });
     }
 
@@ -294,13 +294,13 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting cookTime to ${request.cookTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 8.13.6.2.6: Set the CookTime attribute to the included CookTime field.
+      // Matter 1.6.1 § 8.13.6.2.6: Set the CookTime attribute to the included CookTime field.
       this.state.cookTime = request.cookTime;
     } else {
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no cookTime so set to 30sec. (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 8.13.6.2.2: If CookTime is missing, set the CookTime attribute to 30 seconds.
+      // Matter 1.6.1 § 8.13.6.2.2: If CookTime is missing, set the CookTime attribute to 30 seconds.
       this.state.cookTime = 30;
     }
 
@@ -308,13 +308,13 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting powerSetting to ${request.powerSetting} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 8.13.6.2.6: Set the PowerSetting attribute to the included PowerSetting field.
+      // Matter 1.6.1 § 8.13.6.2.6: Set the PowerSetting attribute to the included PowerSetting field.
       this.state.powerSetting = request.powerSetting;
     } else {
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called with no powerSetting so set to maxPower (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 8.13.6.2.3: If PowerSetting is missing and MaxPower is supported, set the PowerSetting attribute to MaxPower.
+      // Matter 1.6.1 § 8.13.6.2.3: If PowerSetting is missing and MaxPower is supported, set the PowerSetting attribute to MaxPower.
       this.state.powerSetting = this.state.maxPower;
     }
 
@@ -322,7 +322,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       device.log.info(
         `MatterbridgeMicrowaveOvenControlServer: setCookingParameters called setting startAfterSetting = true (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 8.13.6.2.6: If StartAfterSetting is TRUE, oven operation SHALL start.
+      // Matter 1.6.1 § 8.13.6.2.6: If StartAfterSetting is TRUE, oven operation SHALL start.
       await this.endpoint.setStateOf(MatterbridgeOperationalStateServer, { operationalState: OperationalState.OperationalStateEnum.Running });
     }
     this.endpoint.emitCommand(MicrowaveOvenControl, 'setCookingParameters', request, this.context);
@@ -346,7 +346,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       context: this.context,
     });
 
-    // Matter 1.6.0 § 8.13.6.3 and § 8.13.6.3.2: Reject the command with CONSTRAINT_ERROR, and ignore it, if TimeToAdd is below 1 or CookTime plus TimeToAdd exceeds MaxCookTime.
+    // Matter 1.6.1 § 8.13.6.3 and § 8.13.6.3.2: Reject the command with CONSTRAINT_ERROR, and ignore it, if TimeToAdd is below 1 or CookTime plus TimeToAdd exceeds MaxCookTime.
     if (request.timeToAdd < 1 || this.state.cookTime + request.timeToAdd > this.state.maxCookTime) {
       throw new StatusResponseError(
         `MatterbridgeMicrowaveOvenControlServer: addMoreTime called with invalid timeToAdd ${request.timeToAdd} for cookTime ${this.state.cookTime} and maxCookTime ${this.state.maxCookTime} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -354,7 +354,7 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
       );
     }
 
-    // Matter 1.6.0 § 8.13.6.3.2: Respond with INVALID_IN_STATE if the Operational State cluster on the same endpoint is in an operational state, such as Error, that cannot support the command.
+    // Matter 1.6.1 § 8.13.6.3.2: Respond with INVALID_IN_STATE if the Operational State cluster on the same endpoint is in an operational state, such as Error, that cannot support the command.
     if (
       this.endpoint.behaviors.has(MatterbridgeOperationalStateServer) &&
       this.endpoint.stateOf(MatterbridgeOperationalStateServer).operationalState === (OperationalState.OperationalStateEnum.Error as number)
@@ -368,13 +368,13 @@ export class MatterbridgeMicrowaveOvenControlServer extends MicrowaveOvenControl
     device.log.info(
       `MatterbridgeMicrowaveOvenControlServer: addMoreTime called setting cookTime to ${this.state.cookTime + request.timeToAdd} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 8.13.6.3.2: Add TimeToAdd to the CookTime attribute.
+    // Matter 1.6.1 § 8.13.6.3.2: Add TimeToAdd to the CookTime attribute.
     this.state.cookTime += request.timeToAdd;
 
     if (this.endpoint.behaviors.has(MatterbridgeOperationalStateServer)) {
       const countdownTime = this.endpoint.stateOf(MatterbridgeOperationalStateServer).countdownTime;
       if (countdownTime !== null && countdownTime !== undefined) {
-        // Matter 1.6.0 § 8.13.6.3.2: Add TimeToAdd to the CountdownTime attribute of the Operational State cluster on the same endpoint.
+        // Matter 1.6.1 § 8.13.6.3.2: Add TimeToAdd to the CountdownTime attribute of the Operational State cluster on the same endpoint.
         await this.endpoint.setStateOf(MatterbridgeOperationalStateServer, { countdownTime: countdownTime + request.timeToAdd });
       }
     }

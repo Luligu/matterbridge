@@ -56,11 +56,11 @@ export class MatterbridgeHepaFilterMonitoringServer extends HepaFilterMonitoring
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 2.8.7.1 and § 2.8.6.2: Reset Condition to full resource availability, which is 100 when DegradationDirection is Down and 0 when it is Up.
+    // Matter 1.6.1 § 2.8.7.1 and § 2.8.6.2: Reset Condition to full resource availability, which is 100 when DegradationDirection is Down and 0 when it is Up.
     this.state.condition = this.state.degradationDirection === ResourceMonitoring.DegradationDirection.Up ? 0 : 100;
-    // Matter 1.6.0 § 2.8.7.1: Reset ChangeIndication to OK, indicating readiness for use.
+    // Matter 1.6.1 § 2.8.7.1: Reset ChangeIndication to OK, indicating readiness for use.
     this.state.changeIndication = ResourceMonitoring.ChangeIndication.Ok;
-    // Matter 1.6.0 § 2.8.7.1: Invocation of this command may update LastChangedTime based on the server's clock.
+    // Matter 1.6.1 § 2.8.7.1: Invocation of this command may update LastChangedTime based on the server's clock.
     this.state.lastChangedTime = Math.floor(new Date().getTime() / 1000);
     device.log.debug(`MatterbridgeHepaFilterMonitoringServer: resetCondition called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.endpoint.emitCommand(HepaFilterMonitoring, 'resetCondition', {}, this.context);

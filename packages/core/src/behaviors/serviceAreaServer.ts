@@ -55,7 +55,7 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(Servic
       context: this.context,
     });
     device.log.debug(`MatterbridgeServiceAreaServer: selectAreas called with [${request.newAreas.join(', ')}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.17.7.1.2: Reject the request with UnsupportedArea, InvalidSet or InvalidInMode as applicable, otherwise respond Success and set SelectedAreas to the NewAreas value.
+    // Matter 1.6.1 § 1.17.7.1.2: Reject the request with UnsupportedArea, InvalidSet or InvalidInMode as applicable, otherwise respond Success and set SelectedAreas to the NewAreas value.
     const response = await super.selectAreas(request);
     // matter.js reports a rejected SelectAreas through the response status, so only a successful one is emitted.
     if (response.status === ServiceArea.SelectAreasStatus.Success) this.endpoint.emitCommand(ServiceArea, 'selectAreas', request, this.context);
@@ -83,16 +83,19 @@ export class MatterbridgeServiceAreaServer extends ServiceAreaServer.with(Servic
       context: this.context,
     });
     device.log.debug(`MatterbridgeServiceAreaServer: skipArea called with ${request.skippedArea} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.17.7.3: Reject the request with InvalidAreaList or InvalidSkippedArea as applicable, otherwise respond Success.
+    // Matter 1.6.1 § 1.17.7.3.2: Reject the request with InvalidAreaList or InvalidSkippedArea as applicable, otherwise respond Success.
     const response = this.assertSkipServiceArea(request);
     // ProgressReporting may not be enabled on this instance, so progress can be undefined.
     if (response.status === ServiceArea.SkipAreaStatus.Success && this.state.progress !== undefined) {
+      // Matter 1.6.1 § 1.17.7.3.2: If the Progress attribute is implemented, update the entry corresponding to SkippedArea to indicate that the area was skipped.
       this.state.progress = this.state.progress.map((area) =>
         area.areaId === request.skippedArea
           ? { areaId: area.areaId, status: ServiceArea.OperationalStatus.Skipped, totalOperationalTime: area.totalOperationalTime, estimatedTime: area.estimatedTime }
           : area,
       );
     }
+    // A rejected SkipArea is reported through the response status, so only a successful one is emitted.
+    if (response.status === ServiceArea.SkipAreaStatus.Success) this.endpoint.emitCommand(ServiceArea, 'skipArea', request, this.context);
     return response;
   }
 }

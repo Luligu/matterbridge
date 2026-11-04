@@ -3338,14 +3338,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       configStatus: {
         // persisted
         operational: true,
-        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+        // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: true,
         tiltPositionAware: false,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      // No tilt field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
+      // No tilt field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support feature Lift
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
@@ -3392,7 +3392,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         configStatus: {
           // persisted
           operational: true,
-          // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+          // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
           liftMovementReversed: false,
           liftPositionAware: true,
           tiltPositionAware: true,
@@ -3439,14 +3439,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       configStatus: {
         // persisted
         operational: true,
-        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+        // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: false,
         tiltPositionAware: true,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      // No lift field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
+      // No lift field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support features Lift and Tilt
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
@@ -3478,7 +3478,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
-    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.1 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -3511,7 +3511,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', current, this.log);
       await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', target, this.log);
     }
-    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.1 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -3532,7 +3532,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus): Promise<void> {
     const { lift, tilt } = featuresFor(this, WindowCovering);
-    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.1 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -4217,7 +4217,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * percentSetting is writable.
    */
   createOnOffFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off): this {
-    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply here.
+    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.1 § 4.4.6) also apply here.
     this.behaviors.require(MatterbridgeFanControlServer.with(), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
@@ -4248,7 +4248,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     percentSetting: number = 0,
     percentCurrent: number = 0,
   ): this {
-    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply here.
+    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.1 § 4.4.6) also apply here.
     this.behaviors.require(MatterbridgeFanControlServer.with(), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
@@ -4493,10 +4493,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * Matter 1.6.0 § 2.17.4 gives OverTemperature and UnderTemperature the choice conformance `O.a+`, so at least one of the
+   * Matter 1.6.1 § 2.17.4 gives OverTemperature and UnderTemperature the choice conformance `O.a+`, so at least one of the
    * two SHALL be supported. Both are enabled here, which is why the two critical thresholds are always present.
    * The MajorThreshold and MinorThreshold features are not enabled, so the four major/minor alarm bits are always false:
-   * Matter 1.6.0 § 1.15.6.4 requires the Mask, Latch, and State bits of an unsupported alarm to be false.
+   * Matter 1.6.1 § 1.15.6.4 requires the Mask, Latch, and State bits of an unsupported alarm to be false.
    * The Notify event is emitted automatically whenever the State attribute changes, so a plugin that raises or clears an
    * alarm only has to update State. The thresholds are read-only over the wire: the plugin owns the temperature evaluation.
    */
@@ -4510,7 +4510,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ): this {
     const bitmap = (alarm: TemperatureAlarm.Alarm): Required<TemperatureAlarm.Alarm> => ({
       criticalOverTemperatureAlarm: Boolean(alarm.criticalOverTemperatureAlarm),
-      // Matter 1.6.0 § 1.15.6.4: The bits of an unsupported alarm are false, and MajorThreshold/MinorThreshold are not enabled.
+      // Matter 1.6.1 § 1.15.6.4: The bits of an unsupported alarm are false, and MajorThreshold/MinorThreshold are not enabled.
       majorOverTemperatureAlarm: false,
       minorOverTemperatureAlarm: false,
       minorUnderTemperatureAlarm: false,
@@ -4736,7 +4736,7 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Indicates the number of minutes a PIN, RFID, Fingerprint, or other credential associated with a user of
          * type ExpiringUser shall remain valid after its first use before expiring. When the credential expires,
          * the UserStatus for the corresponding user record shall be set to OccupiedDisabled.
-         * Matter 1.6.0 § 5.2.9.36. Constraint 1 to 2880 minutes.
+         * Matter 1.6.1 § 5.2.9.36. Constraint 1 to 2880 minutes.
          */
         ...(expiringUserTimeout !== undefined ? { expiringUserTimeout } : {}),
         // WeekDayAccessSchedules feature attributes

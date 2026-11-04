@@ -37,7 +37,7 @@ import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandl
 import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /**
- * A Temperature Alarm `AlarmBitmap` with every bit of Matter 1.6.0 § 2.17.5.1 set to an explicit value.
+ * A Temperature Alarm `AlarmBitmap` with every bit of Matter 1.6.1 § 2.17.5.1 set to an explicit value.
  *
  * @remarks
  * Every bit of {@link TemperatureAlarm.Alarm} is optional, so a bitmap literal that forgets one still compiles and
@@ -49,7 +49,7 @@ type AlarmBitmap = Required<TemperatureAlarm.Alarm>;
  * The schema of the Temperature Alarm cluster with the inherited Alarm Base elements bound to the Temperature Alarm `AlarmBitmap`.
  *
  * @remarks
- * Matter 1.6.0 § 2.17.5.1 defines the six Temperature Alarm bits carried by the `Mask`, `Latch`, `State` and `Supported`
+ * Matter 1.6.1 § 2.17.5.1 defines the six Temperature Alarm bits carried by the `Mask`, `Latch`, `State` and `Supported`
  * attributes (§ 1.15.6.1 to § 1.15.6.4), by the `Reset` and `ModifyEnabledAlarms` command fields (§ 1.15.7.1.1 and
  * § 1.15.7.2.1) and by the `Notify` event fields (§ 1.15.8.1). matter.js resolves those inherited elements in the scope of
  * the Alarm Base cluster, whose `AlarmBitmap` is empty, so every bit would be dropped on the wire. Redeclaring the elements
@@ -97,8 +97,8 @@ class TemperatureAlarmBaseServer extends TemperatureAlarmServer {
  * matter.js ships no implementation for the Alarm Base cluster and only a bare behavior for the derived Temperature Alarm
  * cluster, so the `Reset` and `ModifyEnabledAlarms` commands and the mandatory `Notify` event are implemented here.
  *
- * Matter 1.6.0 § 2.17.4 gives `OverTemperature` and `UnderTemperature` the choice conformance `O.a+`, and they are the only
- * two rows of that table in choice set `a`. Per Matter 1.6.0 Core § 7.3.14 this reads: neither feature is mandatory on its
+ * Matter 1.6.1 § 2.17.4 gives `OverTemperature` and `UnderTemperature` the choice conformance `O.a+`, and they are the only
+ * two rows of that table in choice set `a`. Per Matter 1.6.1 Core § 7.3.14 this reads: neither feature is mandatory on its
  * own, but a conformant server SHALL support at least one of them. Both is fine, neither is not. This server enables both,
  * which is why it carries `CriticalOverTemperatureThreshold` (conformance `OVER`) and `CriticalUnderTemperatureThreshold`
  * (conformance `UNDER`). Enabling neither would leave the cluster non-conformant even though every row says "optional".
@@ -107,7 +107,7 @@ class TemperatureAlarmBaseServer extends TemperatureAlarmServer {
  * alarm only has to update `State`. `CriticalOverTemperatureThreshold` and `CriticalUnderTemperatureThreshold` are
  * read-only over the wire: the plugin owns the temperature evaluation and updates `State` accordingly.
  *
- * `ModifyEnabledAlarms` is optional (Matter 1.6.0 § 1.15.7), but it does not need `enable({ commands: ... })`: matter.js
+ * `ModifyEnabledAlarms` is optional (Matter 1.6.1 § 1.15.7), but it does not need `enable({ commands: ... })`: matter.js
  * adds an optional command to `AcceptedCommandList` when the behavior provides a real implementation, and this server
  * overrides it. `enable()` is only needed for optional elements matter.js cannot detect that way, such as optional events.
  */
@@ -136,7 +136,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
    * @returns {void}
    */
   #emitNotify(state: TemperatureAlarm.Alarm, oldState: TemperatureAlarm.Alarm): void {
-    // Matter 1.6.0 § 1.15.8.1.1: Active indicates those alarms that have become active.
+    // Matter 1.6.1 § 1.15.8.1.1: Active indicates those alarms that have become active.
     const active: AlarmBitmap = {
       criticalOverTemperatureAlarm: Boolean(state.criticalOverTemperatureAlarm && !oldState.criticalOverTemperatureAlarm),
       majorOverTemperatureAlarm: Boolean(state.majorOverTemperatureAlarm && !oldState.majorOverTemperatureAlarm),
@@ -145,7 +145,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       majorUnderTemperatureAlarm: Boolean(state.majorUnderTemperatureAlarm && !oldState.majorUnderTemperatureAlarm),
       criticalUnderTemperatureAlarm: Boolean(state.criticalUnderTemperatureAlarm && !oldState.criticalUnderTemperatureAlarm),
     };
-    // Matter 1.6.0 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
+    // Matter 1.6.1 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
     const inactive: AlarmBitmap = {
       criticalOverTemperatureAlarm: Boolean(!state.criticalOverTemperatureAlarm && oldState.criticalOverTemperatureAlarm),
       majorOverTemperatureAlarm: Boolean(!state.majorOverTemperatureAlarm && oldState.majorOverTemperatureAlarm),
@@ -154,7 +154,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       majorUnderTemperatureAlarm: Boolean(!state.majorUnderTemperatureAlarm && oldState.majorUnderTemperatureAlarm),
       criticalUnderTemperatureAlarm: Boolean(!state.criticalUnderTemperatureAlarm && oldState.criticalUnderTemperatureAlarm),
     };
-    // Matter 1.6.0 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
+    // Matter 1.6.1 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
     this.events.notify.emit({ active, inactive, state, mask: this.state.mask }, this.context);
   }
 
@@ -175,7 +175,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       majorUnderTemperatureAlarm: Boolean(alarms.majorUnderTemperatureAlarm && !this.state.supported.majorUnderTemperatureAlarm),
       criticalUnderTemperatureAlarm: Boolean(alarms.criticalUnderTemperatureAlarm && !this.state.supported.criticalUnderTemperatureAlarm),
     };
-    // Matter 1.6.0 § 1.15.7.1.1 and § 1.15.7.2.1: Reject the command when it sets a bit of an alarm the Supported attribute does not report, with FAILURE for Reset and INVALID_COMMAND for ModifyEnabledAlarms.
+    // Matter 1.6.1 § 1.15.7.1.1 and § 1.15.7.2.1: Reject the command when it sets a bit of an alarm the Supported attribute does not report, with FAILURE for Reset and INVALID_COMMAND for ModifyEnabledAlarms.
     if (Object.values(unsupported).some(Boolean)) {
       throw new StatusResponseError(
         `MatterbridgeTemperatureAlarmServer: requested alarm is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -191,7 +191,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
    * @returns {AlarmBitmap} The resulting State bitmap.
    */
   #clearAlarms(alarms: TemperatureAlarm.Alarm): AlarmBitmap {
-    // Matter 1.6.0 § 1.15.7.1.1: Reset every alarm set in the Alarms field to inactive in the State attribute and leave the other alarms untouched.
+    // Matter 1.6.1 § 1.15.7.1.1: Reset every alarm set in the Alarms field to inactive in the State attribute and leave the other alarms untouched.
     return {
       criticalOverTemperatureAlarm: Boolean(this.state.state.criticalOverTemperatureAlarm && !alarms.criticalOverTemperatureAlarm),
       majorOverTemperatureAlarm: Boolean(this.state.state.majorOverTemperatureAlarm && !alarms.majorOverTemperatureAlarm),
@@ -209,7 +209,7 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
    * @returns {AlarmBitmap} The resulting State bitmap.
    */
   #applyMaskToState(mask: TemperatureAlarm.Alarm): AlarmBitmap {
-    // Matter 1.6.0 § 1.15.7.2.1: Update the State attribute to reflect the alarm set enabled by the new Mask value, so an alarm that is no longer enabled becomes inactive.
+    // Matter 1.6.1 § 1.15.7.2.1: Update the State attribute to reflect the alarm set enabled by the new Mask value, so an alarm that is no longer enabled becomes inactive.
     return {
       criticalOverTemperatureAlarm: Boolean(this.state.state.criticalOverTemperatureAlarm && mask.criticalOverTemperatureAlarm),
       majorOverTemperatureAlarm: Boolean(this.state.state.majorOverTemperatureAlarm && mask.majorOverTemperatureAlarm),
@@ -237,9 +237,9 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.15.7.1.1: Respond with FAILURE when a requested alarm cannot be reset because it is not supported.
+    // Matter 1.6.1 § 1.15.7.1.1: Respond with FAILURE when a requested alarm cannot be reset because it is not supported.
     this.#assertAlarmsSupported(request.alarms, Status.Failure);
-    // Matter 1.6.0 § 1.15.7.1.1: Reset every requested alarm to inactive in the State attribute.
+    // Matter 1.6.1 § 1.15.7.1.1: Reset every requested alarm to inactive in the State attribute.
     this.state.state = this.#clearAlarms(request.alarms);
     this.endpoint.emitCommand(TemperatureAlarm, 'reset', request, this.context);
   }
@@ -263,11 +263,11 @@ export class MatterbridgeTemperatureAlarmServer extends TemperatureAlarmBaseServ
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.15.7.2.1: Reject the command with INVALID_COMMAND when the Mask sets a bit of an alarm that is not supported.
+    // Matter 1.6.1 § 1.15.7.2.1: Reject the command with INVALID_COMMAND when the Mask sets a bit of an alarm that is not supported.
     this.#assertAlarmsSupported(request.mask, Status.InvalidCommand);
-    // Matter 1.6.0 § 1.15.7.2.1: On success set the Mask attribute to the Mask field of the command.
+    // Matter 1.6.1 § 1.15.7.2.1: On success set the Mask attribute to the Mask field of the command.
     this.state.mask = request.mask;
-    // Matter 1.6.0 § 1.15.7.2.1: Then update the State attribute to reflect the alarm set enabled by the new Mask value.
+    // Matter 1.6.1 § 1.15.7.2.1: Then update the State attribute to reflect the alarm set enabled by the new Mask value.
     this.state.state = this.#applyMaskToState(request.mask);
     this.endpoint.emitCommand(TemperatureAlarm, 'modifyEnabledAlarms', request, this.context);
   }

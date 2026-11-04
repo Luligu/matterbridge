@@ -105,7 +105,7 @@ describe('MatterbridgeHepaFilterMonitoringServer', () => {
 
     await endpoint.invokeBehaviorCommand(HepaFilterMonitoring, 'resetCondition');
 
-    // Matter 1.6.0 § 2.8.6.2: with DegradationDirection Up, full resource availability is the lowest Condition value.
+    // Matter 1.6.1 § 2.8.6.2: with DegradationDirection Up, full resource availability is the lowest Condition value.
     expect(endpoint.getAttribute(HepaFilterMonitoring.id, 'condition')).toBe(0);
     expect(endpoint.getAttribute(HepaFilterMonitoring.id, 'changeIndication')).toBe(ResourceMonitoring.ChangeIndication.Ok);
   });

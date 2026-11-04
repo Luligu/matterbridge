@@ -280,7 +280,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('should validate, store, replace and clear WeekDay schedules when the feature is enabled', async () => {
-    // Matter 1.6.0 § 5.2.10.4–7: schedule constraints, response fields and clear-all semantics.
+    // Matter 1.6.1 § 5.2.10.4–7: schedule constraints, response fields and clear-all semantics.
     const device = new MatterbridgeEndpoint(doorLock, { id: 'WeekDayScheduleCompliance' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, 2);
     device.addRequiredClusterServers();
@@ -358,7 +358,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('should validate, store, replace and clear YearDay schedules when the feature is enabled', async () => {
-    // Matter 1.6.0 § 5.2.10.8–11: schedule constraints, response fields and clear-all semantics.
+    // Matter 1.6.1 § 5.2.10.8–11: schedule constraints, response fields and clear-all semantics.
     const device = new MatterbridgeEndpoint(doorLock, { id: 'YearDayScheduleCompliance' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, 2);
     device.addRequiredClusterServers();
@@ -424,7 +424,7 @@ describe('Client clusters and behaviors', () => {
   });
 
   test('should validate, store, replace and clear Holiday schedules when the feature is enabled', async () => {
-    // Matter 1.6.0 § 5.2.10.12–15: schedule constraints, response fields and clear-all semantics.
+    // Matter 1.6.1 § 5.2.10.12–15: schedule constraints, response fields and clear-all semantics.
     const device = new MatterbridgeEndpoint(doorLock, { id: 'HolidayScheduleCompliance' });
     device.createDefaultDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, undefined, undefined, 2);
     device.addRequiredClusterServers();
@@ -471,7 +471,7 @@ describe('Client clusters and behaviors', () => {
   // Currently fails because the user remains OccupiedEnabled after expiry: https://github.com/matter-js/matter.js/pull/4402
   /*
   test('should disable an expiring user when expiringUserTimeout elapses after first credential use', async () => {
-    // Matter 1.6.0 § 5.2.6.18.8 and § 5.2.9.36: expiry starts at first use and disables the user.
+    // Matter 1.6.1 § 5.2.6.18.8 and § 5.2.9.36: expiry starts at first use and disables the user.
     const device = new MatterbridgeEndpoint(doorLock, { id: 'expiringUserDoorLock' });
     device.createUserPinDoorLockClusterServer(DoorLock.LockState.Locked, DoorLock.LockType.DeadBolt, 0, 4, 10, undefined, undefined, undefined, 1);
     device.addRequiredClusterServers();

@@ -58,7 +58,7 @@ export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.w
     const state = this.endpoint.agentFor(context).get(MatterbridgeOccupancySensingServer).state;
     if (this.#syncingHoldTime || holdTime === undefined || state.pirOccupiedToUnoccupiedDelay === holdTime) return;
     this.#syncingHoldTime = true;
-    // Matter 1.6.0 § 2.7.6.5: A legacy *OccupiedToUnoccupiedDelay attribute provided alongside HoldTime SHALL follow HoldTime when it is updated, maintaining equality.
+    // Matter 1.6.1 § 2.7.6.5: A legacy *OccupiedToUnoccupiedDelay attribute provided alongside HoldTime SHALL follow HoldTime when it is updated, maintaining equality.
     state.pirOccupiedToUnoccupiedDelay = holdTime;
     this.#syncingHoldTime = false;
   };
@@ -67,7 +67,7 @@ export class MatterbridgeOccupancySensingServer extends OccupancySensingServer.w
     const state = this.endpoint.agentFor(context).get(MatterbridgeOccupancySensingServer).state;
     if (this.#syncingHoldTime || pirOccupiedToUnoccupiedDelay === undefined || state.holdTime === pirOccupiedToUnoccupiedDelay) return;
     this.#syncingHoldTime = true;
-    // Matter 1.6.0 § 2.7.6.5: HoldTime SHALL follow an updated legacy *OccupiedToUnoccupiedDelay attribute, maintaining equality in the reverse direction.
+    // Matter 1.6.1 § 2.7.6.5: HoldTime SHALL follow an updated legacy *OccupiedToUnoccupiedDelay attribute, maintaining equality in the reverse direction.
     state.holdTime = pirOccupiedToUnoccupiedDelay;
     this.#syncingHoldTime = false;
   };

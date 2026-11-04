@@ -27,6 +27,7 @@ import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transpo
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import { protectPrototype } from '../protectPrototypes.js';
+import { MatterbridgeServer } from './matterbridgeServer.js';
 
 /** Notifies command subscribers after the default WebRTC requestor handles signaling. */
 export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportRequestorServer {
@@ -40,6 +41,10 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    * @returns {Promise<void>} Resolves after processing and notifying subscribers.
    */
   override async offer(request: WebRtcTransportRequestor.OfferRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeWebRtcTransportRequestorServer: received an SDP offer for session ${request.webRtcSessionId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.offer(request);
     this.endpoint.emitCommand(WebRtcTransportRequestor, 'offer', request, this.context);
   }
@@ -51,6 +56,10 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    * @returns {Promise<void>} Resolves after processing and notifying subscribers.
    */
   override async answer(request: WebRtcTransportRequestor.AnswerRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeWebRtcTransportRequestorServer: received an SDP answer for session ${request.webRtcSessionId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.answer(request);
     this.endpoint.emitCommand(WebRtcTransportRequestor, 'answer', request, this.context);
   }
@@ -62,6 +71,10 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    * @returns {Promise<void>} Resolves after processing and notifying subscribers.
    */
   override async iceCandidates(request: WebRtcTransportRequestor.IceCandidatesRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeWebRtcTransportRequestorServer: received ${request.iceCandidates.length} ICE candidate(s) for session ${request.webRtcSessionId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.iceCandidates(request);
     this.endpoint.emitCommand(WebRtcTransportRequestor, 'iceCandidates', request, this.context);
   }
@@ -73,6 +86,10 @@ export class MatterbridgeWebRtcTransportRequestorServer extends WebRtcTransportR
    * @returns {Promise<void>} Resolves after processing and notifying subscribers.
    */
   override async end(request: WebRtcTransportRequestor.EndRequest): Promise<void> {
+    const device = this.endpoint.stateOf(MatterbridgeServer);
+    device.log.info(
+      `MatterbridgeWebRtcTransportRequestorServer: ending session ${request.webRtcSessionId} with reason ${request.reason} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     await super.end(request);
     this.endpoint.emitCommand(WebRtcTransportRequestor, 'end', request, this.context);
   }

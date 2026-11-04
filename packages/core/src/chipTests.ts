@@ -1507,7 +1507,7 @@ async function handleWaterHeaterManagementTestEventTrigger(eventTrigger: bigint)
 // directly rather than broadcasting or guessing. Command validation, ESAState transitions, and
 // PowerAdjustStart/PowerAdjustEnd events are implemented spec-compliantly by
 // MatterbridgeDeviceEnergyManagementServer itself (behaviors/deviceEnergyManagementServer.ts), including
-// reacting to OptOutState changes that must cancel an active session (Matter 1.6 Application Cluster Spec
+// reacting to OptOutState changes that must cancel an active session (Matter 1.6.1 Application Cluster Spec
 // § 9.2.8.8) — these handlers only need to set the attributes each trigger populates or clears.
 async function handleDeviceEnergyManagementTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
   if (
@@ -1814,7 +1814,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       return;
     case 'SimulateLatchPosition': {
       // TC_SWTCH.py's _send_latching_switch_named_pipe_command(): move a latching switch to a new position.
-      // Matter 1.6.0 § 1.13.7.1: SwitchLatched is generated when the switch is moved to a NEW position, so a
+      // Matter 1.6.1 § 1.13.7.1: SwitchLatched is generated when the switch is moved to a NEW position, so a
       // command that re-states the position the switch is already in must stay silent. TC_SWTCH_2_2 relies on
       // that: it parks the switch at position 0 (usually already the current value) and resets its event
       // listener, so a spurious SwitchLatched(0) here would be read as the answer to its next position change.
@@ -1869,7 +1869,7 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
   await endpoint.triggerEvent(Switch.id, 'initialPress', { newPosition }, matterbridge.log);
   matterbridge.log.info(`CHIP test app pipe pressed Switch position ${newPosition} on endpoint ${endpointId} for ${durationMs}ms`);
 
-  // Matter 1.6.0 § 1.13.7.3: LongPress is generated once the press has been held past the long-press threshold,
+  // Matter 1.6.1 § 1.13.7.3: LongPress is generated once the press has been held past the long-press threshold,
   // i.e. LongPressDelayMillis into the LongPressDurationMillis the command asks us to hold for.
   if (features.momentarySwitchLongPress) {
     await wait(Math.min(delayMs, durationMs));
@@ -1880,7 +1880,7 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
   }
 
   await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
-  // Matter 1.6.0 § 1.13.7.5/1.13.7.4: a release after a long press reports LongRelease when MSL is supported,
+  // Matter 1.6.1 § 1.13.6.5/1.13.6.4: a release after a long press reports LongRelease when MSL is supported,
   // and ShortRelease when only MSR is. With neither feature the position simply returns to 0 silently.
   if (features.momentarySwitchLongPress) {
     await endpoint.triggerEvent(Switch.id, 'longRelease', { previousPosition: newPosition }, matterbridge.log);
@@ -1894,14 +1894,14 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
  * Simulates a rapid sequence of press/release cycles on a Switch endpoint, for TC_SWTCH.py's SimulateMultiPress
  * app pipe command (_send_multi_press_named_pipe_command(), used by TC_SWTCH_2_5).
  *
- * Matter 1.6.0 § 1.13.7: a multi-press sequence reports InitialPress on every press, MultiPressOngoing from the
+ * Matter 1.6.1 § 1.13.7: a multi-press sequence reports InitialPress on every press, MultiPressOngoing from the
  * second press onwards, ShortRelease after each release when MSR is supported, and a single MultiPressComplete
  * once the sequence ends. MultiPressComplete is emitted here rather than on a following SimulateSwitchIdle,
  * because TC_SWTCH_2_5 calls _ask_for_switch_idle(omit_for_simulator=True) — which sends nothing at all under
  * the button simulator — and then waits for the event.
  *
  * Both press counts are capped at MultiPressMax, whose constraint on CurrentNumberOfPressesCounted and
- * TotalNumberOfPressesCounted is `max MultiPressMax` (Matter 1.6.0 § 1.13.7.6/1.13.7.7).
+ * TotalNumberOfPressesCounted is `max MultiPressMax` (Matter 1.6.1 § 1.13.6.6/1.13.6.7).
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {MatterbridgeEndpoint} endpoint - The endpoint hosting the Switch cluster server.

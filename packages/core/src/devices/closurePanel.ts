@@ -112,13 +112,13 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
       context: this.context,
     });
 
-    // Matter 1.6.0 § 5.5.8.1: Reject commands without any choice field with INVALID_COMMAND.
+    // Matter 1.6.1 § 5.5.8.1: Reject commands without any choice field with INVALID_COMMAND.
     if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
       throw new StatusResponse.InvalidCommandError(
         `MatterbridgeClosureDimensionServer.setTarget: requires at least one of position, latch, or speed to be present (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    // Matter 1.6.0 § 5.5.8.1.1: percent100ths is constrained to the range 0-10000: a Position field outside that range SHALL return CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.5.8.1.1: percent100ths is constrained to the range 0-10000: a Position field outside that range SHALL return CONSTRAINT_ERROR.
     if (request.position !== undefined && (request.position < 0 || request.position > 10000)) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureDimensionServer.setTarget: position must be between 0 and 10000 (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -126,11 +126,11 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     }
     const hasSupportedField =
       request.position !== undefined || (this.features.motionLatching && request.latch !== undefined) || (this.features.speed && request.speed !== undefined);
-    // Matter 1.6.0 § 5.5.8.1.4: Ignore unsupported fields without changing state.
+    // Matter 1.6.1 § 5.5.8.1.4: Ignore unsupported fields without changing state.
     if (!hasSupportedField) return;
 
     const latchControlModes = this.state.latchControlModes;
-    // Matter 1.6.0 § 5.5.8.1.2: Reject latch requests requiring manual intervention with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.5.8.1.2: Reject latch requests requiring manual intervention with INVALID_IN_STATE.
     if (
       this.features.motionLatching &&
       request.latch !== undefined &&
@@ -141,7 +141,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
       );
     }
 
-    // Matter 1.6.0 § 5.5.8.1.3: ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.5.8.1.3: ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
     if (this.features.speed && request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureDimensionServer.setTarget: speed must be a valid ThreeLevelAutoEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -149,7 +149,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     }
 
     const associatedMainState = this.endpoint.owner?.maybeStateOf(ClosureControlServer)?.mainState;
-    // Matter 1.6.0 § 5.5.8.1.4: Reject commands while the associated closure is Disengaged, Protected, Calibrating, SetupRequired or Error with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.5.8.1.4: Reject commands while the associated closure is Disengaged, Protected, Calibrating, SetupRequired or Error with INVALID_IN_STATE.
     if (
       associatedMainState !== undefined &&
       (
@@ -168,7 +168,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     }
 
     const currentState = this.state.currentState;
-    // Matter 1.6.0 § 5.5.8.1.4: Reject position changes while latched unless unlatching is requested with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.5.8.1.4: Reject position changes while latched unless unlatching is requested with INVALID_IN_STATE.
     if (this.features.motionLatching && request.position !== undefined && currentState?.latch === true && request.latch !== false) {
       throw new StatusResponse.InvalidInStateError(
         `MatterbridgeClosureDimensionServer.setTarget: position changes require latch false while the closure is latched (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -179,11 +179,11 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     const resolution: number = this.state.resolution;
     const nextTarget = {
       ...previousTarget,
-      // Matter 1.6.0 § 5.5.8.1.1: Round the requested position to the nearest multiple of Resolution.
+      // Matter 1.6.1 § 5.5.8.1.1: Round the requested position to the nearest multiple of Resolution.
       ...(request?.position !== undefined ? { position: Math.round(request.position / resolution) * resolution } : null),
-      // Matter 1.6.0 § 5.5.8.1.2: Apply the requested latch, retaining the prior target when omitted.
+      // Matter 1.6.1 § 5.5.8.1.2: Apply the requested latch, retaining the prior target when omitted.
       ...(this.features.motionLatching && request?.latch !== undefined ? { latch: request.latch } : null),
-      // Matter 1.6.0 § 5.5.8.1.3: Apply the requested speed with the command fallback Auto.
+      // Matter 1.6.1 § 5.5.8.1.3: Apply the requested speed with the command fallback Auto.
       ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
 
@@ -192,12 +192,12 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
       (!this.features.motionLatching || nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
       (!this.features.speed || nextTarget.speed === currentState.speed);
-    // Matter 1.6.0 § 5.5.8.1.4: Take no action when all requested fields match CurrentState.
+    // Matter 1.6.1 § 5.5.8.1.4: Take no action when all requested fields match CurrentState.
     if (matchesCurrentState) return;
 
-    // Matter 1.6.0 § 5.5.8.1.4: Update TargetState with the accepted position, latch and speed values.
+    // Matter 1.6.1 § 5.5.8.1.4: Update TargetState with the accepted position, latch and speed values.
     this.state.targetState = nextTarget;
-    // Matter 1.6.0 § 5.5.8.1.4: Initiate the requested movement toward TargetState.
+    // Matter 1.6.1 § 5.5.8.1.4: Initiate the requested movement toward TargetState.
     this.#scheduleMovement(nextTarget, currentState);
     this.endpoint.emitCommand(ClosureDimension, 'setTarget', request, this.context);
   };
@@ -215,21 +215,21 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
       context: this.context,
     });
 
-    // Matter 1.6.0 § 5.5.8.2.1: StepDirectionEnum only defines Decrease and Increase: a Direction field outside that range SHALL return CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.5.8.2.1: StepDirectionEnum only defines Decrease and Increase: a Direction field outside that range SHALL return CONSTRAINT_ERROR.
     if (request.direction < ClosureDimension.StepDirection.Decrease || request.direction > ClosureDimension.StepDirection.Increase) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureDimensionServer.step: direction must be a valid StepDirectionEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.5.8.2.2: NumberOfSteps is constrained to be at least 1: a NumberOfSteps of 0 SHALL return CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.5.8.2.2: NumberOfSteps is constrained to be at least 1: a NumberOfSteps of 0 SHALL return CONSTRAINT_ERROR.
     if (request.numberOfSteps < 1) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureDimensionServer.step: numberOfSteps must be at least 1 (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.5.8.2.3: ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.5.8.2.3: ThreeLevelAutoEnum only defines Auto, Low, Medium and High: a Speed field outside that range SHALL return CONSTRAINT_ERROR.
     if (this.features.speed && request.speed !== undefined && (request.speed < ThreeLevelAuto.Auto || request.speed > ThreeLevelAuto.High)) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureDimensionServer.step: speed must be a valid ThreeLevelAutoEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -237,7 +237,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     }
 
     const currentState = this.state.currentState;
-    // Matter 1.6.0 § 5.5.8.2.4: Reject Step while latched with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.5.8.2.4: Reject Step while latched with INVALID_IN_STATE.
     if (this.features.motionLatching && currentState?.latch === true) {
       throw new StatusResponse.InvalidInStateError(
         `MatterbridgeClosureDimensionServer.step: is not allowed while the closure is latched (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -245,7 +245,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     }
 
     const associatedMainState = this.endpoint.owner?.maybeStateOf(ClosureControlServer)?.mainState;
-    // Matter 1.6.0 § 5.5.8.2.4: Reject commands while the associated closure is Disengaged, Protected, Calibrating, SetupRequired or Error with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.5.8.2.4: Reject commands while the associated closure is Disengaged, Protected, Calibrating, SetupRequired or Error with INVALID_IN_STATE.
     if (
       associatedMainState !== undefined &&
       (
@@ -275,20 +275,20 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     const currentPosition = typeof currentState?.position === 'number' ? currentState.position : 0;
 
     let nextPosition = isIncrease ? currentPosition + delta : currentPosition - delta;
-    // Matter 1.6.0 § 5.5.8.2.4: Clamp the requested step position to zero through 100 percent without Limitation.
+    // Matter 1.6.1 § 5.5.8.2.4: Clamp the requested step position to zero through 100 percent without Limitation.
     nextPosition = Math.max(0, Math.min(10000, nextPosition));
 
     const previousTarget = this.state.targetState ?? {};
     const nextTarget = {
       ...previousTarget,
-      // Matter 1.6.0 § 5.5.8.2.4: Set the target position to the clamped step from CurrentState.Position.
+      // Matter 1.6.1 § 5.5.8.2.4: Set the target position to the clamped step from CurrentState.Position.
       position: nextPosition,
-      // Matter 1.6.0 § 5.5.8.2.4: Change target speed only when Speed is present.
+      // Matter 1.6.1 § 5.5.8.2.4: Change target speed only when Speed is present.
       ...(this.features.speed && request.speed !== undefined ? { speed: request.speed } : null),
     };
-    // Matter 1.6.0 § 5.5.8.2.4: Update TargetState with the accepted position, latch and speed values.
+    // Matter 1.6.1 § 5.5.8.2.4: Update TargetState with the accepted position, latch and speed values.
     this.state.targetState = nextTarget;
-    // Matter 1.6.0 § 5.5.8.2.4: Initiate the requested movement toward TargetState.
+    // Matter 1.6.1 § 5.5.8.2.4: Initiate the requested movement toward TargetState.
     this.#scheduleMovement(nextTarget, currentState);
     this.endpoint.emitCommand(ClosureDimension, 'step', request, this.context);
   };
@@ -311,7 +311,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
    */
   #scheduleMovement(targetState: ClosureDimension.DimensionState, currentState: ClosureDimension.DimensionState | null): void {
     // Cancel any movement still in flight from a previous command before (re)scheduling.
-    // Matter 1.6.0 § 5.5.8.1.1 and § 5.5.8.2.4: Replace the simulated movement with movement toward the latest requested target.
+    // Matter 1.6.1 § 5.5.8.1.1 and § 5.5.8.2.4: Replace the simulated movement with movement toward the latest requested target.
     this.internal.movementTimer?.stop();
     this.internal.movementTimer = undefined;
     if (currentState === null || this.state.movementDuration <= 0) return;
@@ -346,7 +346,7 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     const position = targetState.position ?? previousState.position;
     const latch = targetState.latch ?? previousState.latch;
     const speed = targetState.speed ?? previousState.speed;
-    // Matter 1.6.0 § 5.5.7.1: Report the current position, latch and speed after simulated movement completes.
+    // Matter 1.6.1 § 5.5.7.1: Report the current position, latch and speed after simulated movement completes.
     this.state.currentState = {
       position,
       ...(this.features.motionLatching ? { latch } : null),
