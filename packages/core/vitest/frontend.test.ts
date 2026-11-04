@@ -282,13 +282,6 @@ describe('Matterbridge frontend', () => {
     (frontend as any).authClients.clear();
   });
 
-  test('Frontend getApiSettings', async () => {
-    const apiSetting = await (frontend as any).getApiSettings();
-    expect(apiSetting).toBeDefined();
-    expect(apiSetting.systemInformation).toBeDefined();
-    expect(apiSetting.matterbridgeInformation).toBeDefined();
-  });
-
   test('Frontend getPlugins', () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
     expect(frontend.getApiPlugins()).toEqual([]);

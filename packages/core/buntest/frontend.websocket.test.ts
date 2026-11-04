@@ -562,11 +562,11 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/settings', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/settings', params: {} });
     expect(msg.response.matterbridgeInformation).toBeDefined();
     expect(msg.response.systemInformation).toBeDefined();
-    expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }));
+    expect(fetchBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }), expect.any(Number));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('should preserve Matterbridge flags and initial Matter settings in local settings responses', async () => {
+  test('should preserve Matterbridge flags and initial Matter settings in settings responses', async () => {
     const flags = {
       restartRequired: matterbridge.restartRequired,
       fixedRestartRequired: matterbridge.fixedRestartRequired,
@@ -586,7 +586,7 @@ describe('Matterbridge frontend', () => {
         matterPasscode: 123456,
         matterDiscriminator: 3860,
       });
-      expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }));
+      expect(fetchBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }), expect.any(Number));
     } finally {
       Object.assign(matterbridge, flags);
     }

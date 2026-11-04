@@ -56,9 +56,7 @@ import type {
   ApiDevice,
   ApiMatter,
   ApiPlugin,
-  ApiSettings,
   BridgeStatus,
-  MatterbridgeInformation,
   PluginStatusUpdate,
   RefreshRequiredChanged,
   WorkerMessage,
@@ -76,11 +74,11 @@ import {
   NODE_STORAGE_DIR,
   plg,
 } from '@matterbridge/types';
-import { constrainedMemory, isBun, memoryFootprint } from '@matterbridge/utils/bun';
+import { isBun } from '@matterbridge/utils/bun';
 import { getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
 import { getErrorMessage, inspectError, logError } from '@matterbridge/utils/error';
-import { formatBytes, formatPercent, formatUptime } from '@matterbridge/utils/format';
+import { formatBytes } from '@matterbridge/utils/format';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidBoolean, isValidNumber, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
@@ -766,10 +764,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to provide settings (debug only reasons - not used in production)
-    this.expressApp.get('/api/settings', (req, res) => {
+    this.expressApp.get('/api/settings', async (req, res) => {
       this.log.debug('The frontend sent /api/settings');
       if (!this.validateReq(req, res)) return;
-      res.json(this.getApiSettings());
+      try {
+        res.json((await this.server.fetch({ type: 'matterbridge_apisettings', src: this.server.name, dst: 'matterbridge', params: {} }, this.serverFetchTimeout)).result.data);
+      } catch (error) {
+        logError(this.log, 'Error in /api/settings fetching the settings from matterbridge', error);
+        res.status(500).send('Error fetching the settings.');
+      }
     });
 
     // Endpoint to provide plugins (debug only reasons - not used in production)
@@ -1261,68 +1264,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       this.log.debug('Frontend https server closed successfully');
     }
     this.log.debug('Frontend stopped successfully');
-  }
-
-  /**
-   * Retrieves the api settings data.
-   *
-   * @returns {ApiSettings} The api settings object.
-   */
-  getApiSettings(): ApiSettings {
-    // Update the variable system information properties
-    this.matterbridge.systemInformation.totalMemory = formatBytes(os.totalmem());
-    this.matterbridge.systemInformation.constrainedMemory = formatBytes(constrainedMemory());
-    this.matterbridge.systemInformation.freeMemory = formatBytes(os.freemem());
-    this.matterbridge.systemInformation.systemUptime = formatUptime(os.uptime());
-    this.matterbridge.systemInformation.processUptime = formatUptime(Math.floor(process.uptime()));
-    this.matterbridge.systemInformation.cpuUsage = formatPercent(0);
-    this.matterbridge.systemInformation.processCpuUsage = formatPercent(0);
-    this.matterbridge.systemInformation.rss = formatBytes(memoryFootprint());
-    this.matterbridge.systemInformation.heapTotal = formatBytes(process.memoryUsage().heapTotal);
-    this.matterbridge.systemInformation.heapUsed = formatBytes(process.memoryUsage().heapUsed);
-
-    // Create the matterbridge information
-    const info: MatterbridgeInformation = {
-      homeDirectory: this.matterbridge.homeDirectory,
-      rootDirectory: this.matterbridge.rootDirectory,
-      matterbridgeDirectory: this.matterbridge.matterbridgeDirectory,
-      matterbridgePluginDirectory: this.matterbridge.matterbridgePluginDirectory,
-      matterbridgeCertDirectory: this.matterbridge.matterbridgeCertDirectory,
-      globalModulesDirectory: this.matterbridge.globalModulesDirectory,
-      matterbridgeVersion: this.matterbridge.matterbridgeVersion,
-      matterbridgeLatestVersion: this.matterbridge.matterbridgeLatestVersion,
-      matterbridgeDevVersion: this.matterbridge.matterbridgeDevVersion,
-      frontendVersion: this.matterbridge.frontendVersion,
-      dockerDev: this.matterbridge.dockerDev,
-      dockerVersion: this.matterbridge.dockerVersion,
-      dockerLatestVersion: this.matterbridge.dockerLatestVersion,
-      dockerDevVersion: this.matterbridge.dockerDevVersion,
-      bridgeMode: this.matterbridge.bridgeMode,
-      restartMode: this.matterbridge.restartMode,
-      virtualMode: this.matterbridge.virtualMode,
-      bridgeStatus: this.matterbridge.bridgeStatus,
-      profile: this.matterbridge.profile,
-      loggerLevel: this.matterbridge.logLevel,
-      fileLogger: this.matterbridge.fileLogger,
-      matterLoggerLevel: this.matterbridge.matterLogLevel,
-      matterFileLogger: this.matterbridge.matterFileLogger,
-      matterMdnsInterface: this.matterbridge.mdnsInterface,
-      matterIpv4Address: this.matterbridge.ipv4Address,
-      matterIpv6Address: this.matterbridge.ipv6Address,
-      matterPort: this.matterbridge.initialPort || 5540,
-      matterDiscriminator: this.matterbridge.initialDiscriminator,
-      matterPasscode: this.matterbridge.initialPasscode,
-      readOnly: this.matterbridge.readOnly,
-      restartRequired: this.matterbridge.restartRequired,
-      fixedRestartRequired: this.matterbridge.fixedRestartRequired,
-      updateRequired: this.matterbridge.updateRequired,
-      startupAt: this.matterbridge.startupAt,
-      shutdownAt: this.matterbridge.shutdownAt,
-      runningTimes: this.matterbridge.runningTimes,
-      runningDays: this.matterbridge.runningDays,
-    };
-
-    return { systemInformation: this.matterbridge.systemInformation, matterbridgeInformation: info };
   }
 
   /**
@@ -1836,8 +1777,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
       } else if (data.method === '/api/settings') {
         const start = performance.now();
-        const settings = this.getApiSettings();
-        // const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: undefined });
+        // oxfmt-ignore
+        const settings = (await this.server.fetch({ type: 'matterbridge_apisettings', src: this.server.name, dst: 'matterbridge', params: {} }, this.serverFetchTimeout)).result.data;
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });

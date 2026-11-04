@@ -81,6 +81,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [tests]: Refactor the tests for the `no-unsafe-enum-assignment` rule of oxlint v.1.90.0: use enum members instead of numeric literals and mark the deliberately invalid enum values.
 - [docs]: Read the website's npm and Docker totals from the daily badge gist and animate stats after loading.
 - [core]: Don't auto-close a WebRTC session when werift 0.26.0 replaces or retires a DTLS transport during SDP negotiation.
+- [frontend]: Serve the WebSocket and HTTP `/api/settings` from Matterbridge through the `matterbridge_apisettings` broadcast request instead of building the settings locally.
 
 ### Fixed
 

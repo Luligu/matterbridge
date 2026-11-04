@@ -302,7 +302,9 @@ describe('Matterbridge frontend express with http', () => {
     await makeRequest('/api/settings', 'GET');
     frontend.authClients.add(savedAuthClients);
 
+    broadcastServerFetchSpy.mockImplementationOnce((async () => ({ result: { data: matterbridge.getApiSettings(), success: true } })) as any);
     const response = await makeRequest('/api/settings', 'GET');
+    expect(broadcastServerFetchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }), expect.any(Number));
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('systemInformation');
@@ -328,6 +330,16 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body.matterbridgeInformation).toHaveProperty('matterLoggerLevel');
     expect(response.body.matterbridgeInformation).toHaveProperty('matterPort');
     expect(response.body.matterbridgeInformation).not.toHaveProperty('profile');
+  }, 30000);
+
+  test('GET /api/settings error', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce(async () => {
+      throw new Error('Fetch timeout');
+    });
+    const response = await makeRequest('/api/settings', 'GET');
+
+    expect(response.status).toBe(500);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error in /api/settings fetching the settings from matterbridge'));
   }, 30000);
 
   test('GET /api/plugins', async () => {
