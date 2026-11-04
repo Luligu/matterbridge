@@ -708,7 +708,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('File test.zip uploaded successfully');
     expect(broadcastServerRequestSpy).not.toHaveBeenCalled();
-    expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/test.zip'))).resolves.toBeUndefined();
+    expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/test.zip'))).resolves.toBeNil(); // Bun's fs.promises.access resolves to null
   }, 30000);
 
   test('POST /api/uploadpackage with matterbridge-plugin-template.tgz', async () => {
@@ -719,7 +719,7 @@ describe('Matterbridge frontend express with http', () => {
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('File matterbridge-plugin-template.tgz uploaded successfully');
     expect(broadcastServerRequestSpy).toHaveBeenCalled();
-    expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeUndefined();
+    expect(fs.access(path.join(matterbridge.matterbridgeDirectory, 'uploads/matterbridge-plugin-template.tgz'))).resolves.toBeNil(); // Bun's fs.promises.access resolves to null
   }, 30000);
 
   test('POST /api/uploadpackage with matterbridge-plugin-template.tgz throw error', async () => {

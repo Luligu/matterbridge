@@ -19,7 +19,7 @@ const NPM_CONFIG_CACHE = path.resolve(path.join('.cache', '.npm-cache'));
 
 import { afterAll, beforeEach, describe, expect, spyOn, test, vi } from 'bun:test';
 import { execSync } from 'node:child_process';
-import { promises as fs, unlinkSync } from 'node:fs';
+import { promises as fs, realpathSync, unlinkSync } from 'node:fs';
 import path from 'node:path';
 
 import { HOMEDIR, loggerErrorSpy, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/buntest/setup';
@@ -1663,6 +1663,9 @@ describe('PluginManager', () => {
     expect(plugin.started).toBeFalsy();
     expect(plugin.configured).toBeFalsy();
     expect(plugin.error).toBeFalsy();
+    // npm installs the local plugin as a symlink. Node imports it from the real path (src/mock/plugin4), where its
+    // relative imports ('../../matterbridgeAccessoryPlatform.js') resolve; Bun keeps the symlinked path, so use the real one.
+    plugin.path = realpathSync(plugin.path);
     await plugins.shutdown(plugin, 'Test with Jest', true, true);
     const platform = await plugins.load(plugin);
     expect(platform).toBeDefined();
