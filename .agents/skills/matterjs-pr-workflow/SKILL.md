@@ -54,7 +54,7 @@ Branch from the freshly synced `main`, not from whatever branch happened to be c
 - Match the target file's existing comment/casting conventions (matter.js source files do **not** use the
   `Matter 1.6.1 § x.y.z` comment style that matterbridge's own CLAUDE.md mandates — that's a matterbridge-only
   convention). Plain, spec-referencing comments (e.g. `// Per § 5.2.10.21.1, ...`) match existing matter.js style.
-- Cite the authoritative spec text from `chip/1.6.1/specs/*.html` in the matterbridge repo when verifying the
+- Cite the authoritative spec text from `chip/1.6.1/specs/*.md` in the matterbridge repo when verifying the
   correct behavior, the correct field/attribute semantics, or that a new feature matches how the spec actually
   defines it — don't guess status codes, constraint bounds, or field semantics either way.
 
