@@ -1,0 +1,323 @@
+/**
+ * @file packages/core/buntest/matterbridge.device.server.test.ts
+ * @description This file contains the bun tests for Matterbridge devices in server mode.
+ * @author Luca Liguori
+ */
+
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
+const MATTER_PORT = 6200;
+const NAME = 'MatterbridgeDeviceServer';
+
+import { afterAll, beforeEach, describe, expect, spyOn, test, vi } from 'bun:test';
+import path from 'node:path';
+
+import { Environment } from '@matter/general';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { dev, plg } from '@matterbridge/types';
+import { getInterfaceName } from '@matterbridge/utils/network';
+import { db, LogLevel } from 'node-ansi-logger';
+
+import { Matterbridge } from '../src/matterbridge.js';
+import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
+import { closeMdnsInstance, destroyInstance } from './bunUtils.js';
+
+// Setup the test environment
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
+process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
+
+describe('Matterbridge Device serverMode=server', () => {
+  let matterbridge: Matterbridge;
+  let serverDevice: MatterbridgeEndpoint;
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
+    // Restore all mocks
+    vi.restoreAllMocks();
+
+    // logKeepAlives();
+  });
+
+  test('Matterbridge.loadInstance(true)', async () => {
+    // Load Matterbridge instance and initialize it
+    matterbridge = await Matterbridge.loadInstance(true);
+    expect(matterbridge).toBeDefined();
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+
+    expect(matterbridge.profile).toBeUndefined();
+    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(HOMEDIR, '.matterbridge', 'matterstorage'));
+
+    expect((matterbridge as any).initialized).toBeTruthy();
+    expect((matterbridge as any).log).toBeDefined();
+    expect((matterbridge as any).homeDirectory).toBe(HOMEDIR);
+    expect((matterbridge as any).matterbridgeDirectory).toBe(path.join(HOMEDIR, '.matterbridge'));
+    expect((matterbridge as any).matterbridgePluginDirectory).toBe(path.join(HOMEDIR, 'Matterbridge'));
+    expect((matterbridge as any).plugins).toBeDefined();
+    expect((matterbridge as any).plugins.size).toBe(0);
+    expect((matterbridge as any).devices).toBeDefined();
+    expect((matterbridge as any).devices.size).toBe(0);
+
+    expect((matterbridge as any).frontend.httpServer).toBeUndefined();
+    expect((matterbridge as any).frontend.httpsServer).toBeUndefined();
+    expect((matterbridge as any).frontend.expressApp).toBeUndefined();
+    expect((matterbridge as any).frontend.webSocketServer).toBeUndefined();
+
+    expect((matterbridge as any).nodeStorage).toBeDefined();
+    expect((matterbridge as any).nodeContext).toBeDefined();
+
+    expect((matterbridge as any).matterStorageService).toBeDefined();
+    expect((matterbridge as any).matterStorageManager).toBeDefined();
+    expect((matterbridge as any).matterbridgeContext).toBeDefined();
+    expect((matterbridge as any).mattercontrollerContext).toBeUndefined();
+
+    expect((matterbridge as any).serverNode).toBeDefined();
+    expect((matterbridge as any).aggregatorNode).toBeDefined();
+
+    expect((matterbridge as any).mdnsInterface).toBe(mdnsInterface);
+    expect((matterbridge as any).port).toBe(MATTER_PORT + 1);
+    expect((matterbridge as any).passcode).toBeDefined();
+    expect((matterbridge as any).discriminator).toBeDefined();
+
+    await new Promise<void>((resolve) => {
+      matterbridge.once('online', (name) => {
+        if (name === 'Matterbridge') resolve();
+      });
+    });
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in bridge mode`);
+  }, 60000);
+
+  test('add mocked plugin pluginserverdevice', async () => {
+    expect(matterbridge.plugins.length).toBe(0);
+
+    await new Promise<void>((resolve) => {
+      matterbridge.plugins.once('added', (name) => {
+        if (name === 'serverdevicetest') resolve();
+      });
+      void matterbridge.plugins.add('./packages/core/src/mock/pluginserverdevice');
+    });
+
+    expect(matterbridge.plugins.length).toBe(1);
+    expect(matterbridge.plugins.get('serverdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('serverdevicetest')?.type).toBe('AnyPlatform');
+  });
+
+  test('load mocked plugin serverdevicetest', async () => {
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+
+    await new Promise<void>((resolve) => {
+      matterbridge.plugins.once('loaded', (name) => {
+        if (name === 'serverdevicetest') resolve();
+      });
+      const plugin = matterbridge.plugins.get('serverdevicetest');
+      expect(plugin).toBeDefined();
+      if (plugin) void matterbridge.plugins.load(plugin);
+    });
+
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+    expect(matterbridge.plugins.get('serverdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('serverdevicetest')?.type).toBe('AccessoryPlatform');
+  });
+
+  test('shutdown mocked plugin serverdevicetest', async () => {
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+
+    await new Promise<void>((resolve) => {
+      matterbridge.plugins.once('shutdown', (name) => {
+        if (name === 'serverdevicetest') resolve();
+      });
+      const plugin = matterbridge.plugins.get('serverdevicetest');
+      expect(plugin).toBeDefined();
+      if (plugin) void matterbridge.plugins.shutdown(plugin, 'shutdown', false, true);
+    });
+
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(0);
+    expect(matterbridge.plugins.get('serverdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('serverdevicetest')?.type).toBe('AccessoryPlatform');
+  });
+
+  test('Matterbridge.destroyInstance()', async () => {
+    const stopServerNodeSpy = spyOn(matterbridge as any, 'stopServerNode');
+
+    // Destroy the Matterbridge instance
+    process.argv.push('--reset-sessions');
+    await destroyInstance(matterbridge, 0, 0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(stopServerNodeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test('Restart initialize()', async () => {
+    const startServerNodeSpy = spyOn(matterbridge as any, 'startServerNode');
+
+    expect((matterbridge as any).initialized).toBeFalsy();
+    const linkLocalPlugins = process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
+    process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = 'false';
+    try {
+      await (matterbridge as any).initialize();
+    } finally {
+      if (linkLocalPlugins === undefined) delete process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS;
+      else process.env.MATTERBRIDGE_LINK_LOCAL_PLUGINS = linkLocalPlugins;
+    }
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+    expect((matterbridge as any).initialized).toBeTruthy();
+
+    expect(matterbridge.plugins.length).toBe(1);
+
+    const online = new Promise<void>((resolve) => {
+      matterbridge.on('online', (name) => {
+        if (name === 'Matterbridge') resolve();
+      });
+    });
+
+    const deviceOnline = new Promise<void>((resolve) => {
+      matterbridge.on('online', (name) => {
+        if (name === 'Servernodedevice') resolve();
+      });
+    });
+
+    const started = new Promise<void>((resolve) => {
+      matterbridge.plugins.on('started', (name) => {
+        if (name === 'serverdevicetest') resolve();
+      });
+    });
+
+    await Promise.all([online, deviceOnline, started]);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(
+      LogLevel.DEBUG,
+      expect.stringContaining(`Creating server node for device ${dev}Server node device${db} of plugin ${plg}serverdevicetest${db}...`),
+    );
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Creating device ${plg}serverdevicetest${db}:${dev}Server node device${db} server node...`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Adding ${plg}serverdevicetest${db}:${dev}Server node device${db} to server node...`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Added ${plg}serverdevicetest${db}:${dev}Server node device${db} to server node`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Starting server node for device ${dev}Server node device${db} in server mode...`));
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating server node for device`));
+
+    expect(startServerNodeSpy).toHaveBeenCalledTimes(2);
+
+    expect(matterbridge.plugins.get('serverdevicetest')).toBeDefined();
+    expect(matterbridge.plugins.get('serverdevicetest')?.serverNode).toBeUndefined();
+    expect(matterbridge.plugins.get('serverdevicetest')?.aggregatorNode).toBeUndefined();
+
+    expect(matterbridge.serverNode?.lifecycle.isReady).toBeTruthy();
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBeTruthy();
+    expect(matterbridge.serverNode?.lifecycle.isCommissioned).toBeFalsy();
+    expect(matterbridge.plugins.size).toBe(1);
+    expect(matterbridge.devices.size).toBe(1);
+
+    for (const device of matterbridge.devices) {
+      expect(device.uniqueId).toBeDefined();
+      expect(device.mode).toBe('server');
+      expect(device.serverNode).toBeDefined();
+      serverDevice = device;
+    }
+  }, 60000);
+
+  test('Check device server node online', () => {
+    expect(serverDevice.serverNode).toBeDefined();
+    expect(serverDevice.serverNode?.lifecycle.isReady).toBeTruthy();
+    expect(serverDevice.serverNode?.lifecycle.isOnline).toBeTruthy();
+    expect(serverDevice.serverNode?.lifecycle.isCommissioned).toBeFalsy();
+    expect(serverDevice.softwareVersion).toBe(234);
+    expect(serverDevice.softwareVersionString).toBe('2.3.4');
+    expect(serverDevice.hardwareVersion).toBe(567);
+    expect(serverDevice.hardwareVersionString).toBe('5.6.7');
+    expect(serverDevice.productLabel).toBe('Server Sensor');
+    expect(serverDevice.productUrl).toBe('https://matterbridge.io/server');
+    expect(serverDevice.configurationVersion).toBe(3);
+    expect(serverDevice.serverNode?.state.basicInformation.softwareVersion).toBe(234);
+    expect(serverDevice.serverNode?.state.basicInformation.softwareVersionString).toBe('2.3.4');
+    expect(serverDevice.serverNode?.state.basicInformation.hardwareVersion).toBe(567);
+    expect(serverDevice.serverNode?.state.basicInformation.hardwareVersionString).toBe('5.6.7');
+    expect(serverDevice.serverNode?.state.basicInformation.productLabel).toBe('Server Sensor');
+    expect(serverDevice.serverNode?.state.basicInformation.productUrl).toBe('https://matterbridge.io/server');
+    expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(3);
+  });
+
+  test('unregisterAndShutdownProcess increments the configuration version of the server nodes', async () => {
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const cleanupSpy = spyOn(matterbridge as any, 'cleanup').mockResolvedValue(undefined);
+    // oxlint-disable-next-line unicorn/no-useless-undefined
+    const shutdownSpy = spyOn(matterbridge.plugins, 'shutdown').mockResolvedValue(undefined);
+    // Record the configuration version when removeAllBridgedEndpoints() is called: in production it removes the devices from the DeviceManager,
+    // so the device server nodes must already be incremented at this point
+    let configurationVersionOnRemove: number | undefined;
+    const removeAllBridgedEndpointsSpy = spyOn(matterbridge as any, 'removeAllBridgedEndpoints').mockImplementation(async () => {
+      configurationVersionOnRemove = serverDevice.serverNode?.state.basicInformation.configurationVersion;
+      return Promise.resolve();
+    });
+    try {
+      const matterbridgeConfigurationVersion = matterbridge.serverNode?.state.basicInformation.configurationVersion ?? 0;
+      expect(matterbridgeConfigurationVersion).toBeGreaterThan(0);
+      expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(3);
+
+      await matterbridge.unregisterAndShutdownProcess(0);
+
+      expect(matterbridge.serverNode?.state.basicInformation.configurationVersion).toBe(matterbridgeConfigurationVersion + 1);
+      expect(serverDevice.serverNode?.state.basicInformation.configurationVersion).toBe(4);
+      expect(configurationVersionOnRemove).toBe(4);
+      expect(shutdownSpy).toHaveBeenCalled();
+      expect(removeAllBridgedEndpointsSpy).toHaveBeenCalledWith('serverdevicetest', 100);
+      expect(cleanupSpy).toHaveBeenCalledWith('unregistered all devices and shutting down...', false, 0);
+    } finally {
+      // Restore the mocks here so that a failure does not leak into the following tests
+      cleanupSpy.mockRestore();
+      shutdownSpy.mockRestore();
+      removeAllBridgedEndpointsSpy.mockRestore();
+    }
+  });
+
+  test('Should log error if createDeviceServerNode fails', async () => {
+    spyOn(Matterbridge.prototype as any, 'createDeviceServerNode').mockImplementationOnce(() => {
+      throw new Error('Test error creating server node');
+    });
+    await matterbridge.addBridgedEndpoint('serverdevicetest', { mode: 'server' } as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating server node for device`));
+  });
+
+  test('Finally Matterbridge.destroyInstance() with -bridge', async () => {
+    const stopServerNodeSpy = spyOn(matterbridge as any, 'stopServerNode');
+
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+    expect(stopServerNodeSpy).toHaveBeenCalledTimes(2);
+  });
+});

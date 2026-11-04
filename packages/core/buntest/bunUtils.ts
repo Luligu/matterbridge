@@ -8,10 +8,13 @@
 
 import { afterAll, beforeAll, beforeEach, expect, vi } from 'bun:test';
 
+import { type Environment, RuntimeService } from '@matter/general';
+import { MdnsService } from '@matter/protocol';
 import type { DeviceTypeId } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode } from '@matterbridge/test-utils/buntest/matter';
 
+import type { Matterbridge } from '../src/matterbridge.js';
 import type { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import type { CommandHandlers } from '../src/matterbridgeEndpointCommandHandler.js';
 
@@ -137,4 +140,49 @@ export async function advanceTimersByTimeAsync(ms: number, step: number = 1, mic
     vi.advanceTimersByTime(elapsed === 0 ? 0 : step);
     for (let turn = 0; turn < microTurns; turn++) await Promise.resolve();
   }
+}
+
+/**
+ * Destroy the Matterbridge instance.
+ *
+ * @param {Matterbridge} matterbridge The matterbridge instance.
+ * @param {number} cleanupPause The pause passed to cleanup.
+ * @param {number} destroyPause The pause to flush after cleanup.
+ * @returns {Promise<void>} A promise that resolves when the instance is destroyed.
+ */
+export async function destroyInstance(matterbridge: Matterbridge, cleanupPause: number = 10, destroyPause: number = 10): Promise<void> {
+  // Cleanup the Matterbridge instance
+  // @ts-expect-error - accessing private member for testing
+  await matterbridge.cleanup('destroying instance...', false, cleanupPause);
+
+  // Pause before destroying the instance
+  if (destroyPause > 0) await flushAsync(undefined, undefined, destroyPause);
+}
+
+/**
+ * Close the mDNS instance in the matterbridge environment.
+ *
+ * @param {Matterbridge} matterbridge The matterbridge instance.
+ * @returns {Promise<void>} A promise that resolves when the mDNS instance is closed.
+ */
+export async function closeMdnsInstance(matterbridge: Matterbridge): Promise<void> {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  const environment = (matterbridge as unknown as { environment: Environment }).environment;
+  const mdns = environment.maybeGet(MdnsService);
+  if (!mdns) return;
+  await mdns.close();
+  environment.delete(MdnsService, mdns);
+}
+
+/**
+ * Close the runtime instance in the matterbridge environment.
+ *
+ * @param {Matterbridge} matterbridge The matterbridge instance.
+ * @returns {Promise<void>} A promise that resolves when the runtime instance is closed.
+ */
+export async function closeRuntimeInstance(matterbridge: Matterbridge): Promise<void> {
+  // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+  const environment = (matterbridge as unknown as { environment: Environment }).environment;
+  const runtime = environment.maybeGet(RuntimeService);
+  await runtime?.close();
 }
