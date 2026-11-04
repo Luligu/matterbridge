@@ -121,3 +121,20 @@ export async function waitFor(condition: () => boolean, timeout: number = 2000):
     await flushAsync(1, 1, 5);
   }
 }
+
+/**
+ * Bun has no `vi.advanceTimersByTimeAsync`: advances the fake clock `step` ms at a time and drains the microtask
+ * queue between steps, so promise chains started by a timer callback settle (and may schedule further timers) before
+ * the next step fires. The same approach as the device suites, proven on the matter.js timers.
+ *
+ * @param {number} ms The time in milliseconds to advance the fake clock.
+ * @param {number} [step] The size of each step in milliseconds (default 1).
+ * @param {number} [microTurns] The number of microtask turns drained after each step (default 10).
+ * @returns {Promise<void>} Resolves once the clock has advanced and the microtasks have been drained.
+ */
+export async function advanceTimersByTimeAsync(ms: number, step: number = 1, microTurns: number = 10): Promise<void> {
+  for (let elapsed = 0; elapsed <= ms; elapsed += step) {
+    vi.advanceTimersByTime(elapsed === 0 ? 0 : step);
+    for (let turn = 0; turn < microTurns; turn++) await Promise.resolve();
+  }
+}
