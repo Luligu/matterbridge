@@ -98,7 +98,7 @@ function computePercentRanges(sequence: FanControl.FanModeSequence): PercentRang
 }
 
 /**
- * Maps a non-zero PercentSetting/PercentCurrent value to the FanMode value whose range contains it (Matter 1.6
+ * Maps a non-zero PercentSetting/PercentCurrent value to the FanMode value whose range contains it (Matter 1.6.1
  * Application Cluster Spec § 4.4.6.3.1 Percent Rules).
  *
  * @param {number} percent - A value from 1 to 100 (0 always maps to Off and is handled by the caller).

@@ -252,8 +252,8 @@ describe('MatterbridgeColorControlServer', () => {
   test('The Matterbridge command handler runs before matter.js validates the command', async () => {
     // Every Matterbridge cluster server forwards to the plugin command handler first and only then calls super,
     // deliberately performing no pre-validation of its own: a plugin must see the command even when matter.js goes
-    // on to reject it. StepHue with StepSize 0 is rejected by matter.js with INVALID_COMMAND (Matter 1.6
-    // Application Cluster Spec Sec 3.2.11.5), so it pins the ordering down from both sides.
+    // on to reject it. StepHue with StepSize 0 is rejected by matter.js with INVALID_COMMAND (Matter 1.6.1
+    // Application Cluster Spec § 3.2.8.6.5), so it pins the ordering down from both sides.
     //
     // A dedicated endpoint is used because only the first handler registered for a command name is executed, and
     // the tests above already registered one for every ColorControl command on `light`.
