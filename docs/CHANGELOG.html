@@ -165,18 +165,30 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[types]: Add <code>/api/unregister-device</code> and <code>/api/rename-device</code> request/response contracts with device identifiers and a required rename <code>label</code>.</li>
+<li>[types]: Add the <code>PlatformSelectDevice</code>, <code>PlatformSelectEntity</code> and <code>PlatformNodeLabel</code> types, also re-exported by <code>MatterbridgePlatform</code>.</li>
+<li>[frontend]: Add a device actions menu on registered devices opening <code>Reset device</code> and <code>Change controller name</code>.</li>
+<li>[core]: Handle <code>/api/unregister-device</code> and <code>/api/rename-device</code> in the frontend and backend WebSocket servers, forwarding them to the plugin platform.</li>
+<li>[platform]: Reset (unregister) a device or set its controller name (<code>nodeLabel</code>) on request from the frontend; renaming back to the device name removes the custom label.</li>
+<li>[platform]: Persist the controller names in the new <code>nodeLabels</code> plugin storage and apply them in <code>registerDevice()</code>.</li>
 <li>[endpoint]: Add optional <code>periodicEnergyImported</code>/<code>periodicEnergyExported</code> parameters to <code>createDefaultElectricalEnergyMeasurementClusterServer()</code>, <code>createImportedElectricalEnergyMeasurementClusterServer()</code> and <code>createExportedElectricalEnergyMeasurementClusterServer()</code> that enable the <code>PeriodicEnergy</code> feature (Matter 1.6.1 § 2.12.4.4), and document firing the <code>CumulativeEnergyMeasured</code>/<code>PeriodicEnergyMeasured</code> events.</li>
+<li>[devices]: Add the <code>OnOffPlugInUnit</code>, <code>DimmablePlugInUnit</code>, <code>MountedOnOffControl</code> and <code>MountedDimmableLoadControl</code> single-class devices (Matter 1.6.1 § 5.1 - 5.4) with Identify, Groups, Scenes Management, OnOff (Lighting) and LevelControl (OnOff, Lighting, levels 1..254; optional through <code>levelControl</code> for the on/off device types) clusters, configured through an options object. The mounted device types also list their plug-in unit subset device type for older controllers (RECOMMENDED by the spec), unless <code>plugInUnitDeviceType</code> is <code>false</code>.</li>
+<li>[chip]: Create the OnOffPlugInUnit (501), DimmablePlugInUnit (502), MountedOnOffControl (503) and MountedDimmableLoadControl (504) demo devices with the new device classes.</li>
+<li>[devices]: Add the <code>Pump</code> single-class device (Matter 1.6.1 § 5.5) with OnOff, optional LevelControl, PumpConfigurationAndControl (ConstantSpeed) and optional Temperature/Pressure/Flow Measurement clusters, configured through a <code>PumpOptions</code> object.</li>
+<li>[devices]: Add the <code>WaterValve</code> single-class device (Matter 1.6.1 § 5.6) with ValveConfigurationAndControl (with or without the <code>Level</code> feature) and optional FlowMeasurement clusters, configured through a <code>WaterValveOptions</code> object, with <code>openValve()</code>/<code>closeValve()</code> helpers.</li>
 <li>[endpoint]: Add <code>createOnOffValveConfigurationAndControlClusterServer()</code> to create a <code>ValveConfigurationAndControl</code> cluster server without the <code>Level</code> feature, for binary (on/off) valves.</li>
 <li>[chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 <code>TC_EEM_2_1</code>–<code>2_5</code> conformance tests on them.</li>
-<li>[tests]: Fail the <code>matterbridgeEndpoint-default</code> and <code>matterbridgeEndpointHelpers</code> tests on any unexpected warning or error log.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
 <li>[utils]: <code>getEnumDescription()</code> accepts any number or string <code>value</code>; values outside the enum return the fallback.</li>
-<li>[behaviors]: The Pump Configuration and Control server keeps the <code>PumpStatus</code> <code>Running</code> bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes).</li>
+<li>[behaviors]: The Pump Configuration and Control server keeps the <code>PumpStatus</code> <code>Running</code> bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes, and at startup when the pump is already on).</li>
 <li>[dgram]: Add an optional <code>cacheFlush</code> / <code>unicastResponse</code> flag to <code>dnsResponseClassToString()</code> and <code>dnsQuestionClassToString()</code>.</li>
+<li>[platform]: <code>--debug-platform</code> and <code>--verbose-platform</code> also enable the platform debug and verbose logs.</li>
+<li>[platform]: <code>ready</code> also waits for the <code>nodeLabels</code> storage to load.</li>
 <li>[core]: Log unknown <code>EsaState</code> values as <code>Invalid</code> instead of <code>undefined</code>.</li>
 <li>[chip]: Validate the previous EnergyEvse <code>FaultState</code> in the fault test event triggers.</li>
+<li>[chip]: Create the Pump (505) and WaterValve (506) demo devices with the <code>Pump</code> and <code>WaterValve</code> device classes, so the demo pump starts at level 254 and runs on <code>On</code>, and enable <code>PumpStatus</code> and <code>Speed</code> in the pump PICS.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.11.2.</li>
 <li>[matterbridge]: Bump <code>@types/node</code> to v.26.6.6.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.1.2.</li>
@@ -194,6 +206,7 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[devices]: Remove the unreachable <code>undefined</code> fallback of <code>WaterValve.getCurrentLevel()</code> with the <code>Level</code> feature, restoring the 100% branch coverage of <code>waterValve.ts</code>.</li>
 <li>[frontend]: Correct inverted WindowCovering Open/Closed labels and display ClosureDimension positions as percentages. Closes <a href="https://github.com/Luligu/matterbridge/issues/671">#671</a>. Thanks to <a href="https://github.com/peteroettl">@peteroettl</a>.</li>
 <li>[docs]: Bind the heading text renderer to the parser for marked 18.1.2.</li>
 <li>[core]: Map device classes explicitly to matter.js classifications, including App to Application.</li>

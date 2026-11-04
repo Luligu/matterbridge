@@ -43,18 +43,30 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [types]: Add `/api/unregister-device` and `/api/rename-device` request/response contracts with device identifiers and a required rename `label`.
+- [types]: Add the `PlatformSelectDevice`, `PlatformSelectEntity` and `PlatformNodeLabel` types, also re-exported by `MatterbridgePlatform`.
+- [frontend]: Add a device actions menu on registered devices opening `Reset device` and `Change controller name`.
+- [core]: Handle `/api/unregister-device` and `/api/rename-device` in the frontend and backend WebSocket servers, forwarding them to the plugin platform.
+- [platform]: Reset (unregister) a device or set its controller name (`nodeLabel`) on request from the frontend; renaming back to the device name removes the custom label.
+- [platform]: Persist the controller names in the new `nodeLabels` plugin storage and apply them in `registerDevice()`.
 - [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
+- [devices]: Add the `OnOffPlugInUnit`, `DimmablePlugInUnit`, `MountedOnOffControl` and `MountedDimmableLoadControl` single-class devices (Matter 1.6.1 § 5.1 - 5.4) with Identify, Groups, Scenes Management, OnOff (Lighting) and LevelControl (OnOff, Lighting, levels 1..254; optional through `levelControl` for the on/off device types) clusters, configured through an options object. The mounted device types also list their plug-in unit subset device type for older controllers (RECOMMENDED by the spec), unless `plugInUnitDeviceType` is `false`.
+- [chip]: Create the OnOffPlugInUnit (501), DimmablePlugInUnit (502), MountedOnOffControl (503) and MountedDimmableLoadControl (504) demo devices with the new device classes.
+- [devices]: Add the `Pump` single-class device (Matter 1.6.1 § 5.5) with OnOff, optional LevelControl, PumpConfigurationAndControl (ConstantSpeed) and optional Temperature/Pressure/Flow Measurement clusters, configured through a `PumpOptions` object.
+- [devices]: Add the `WaterValve` single-class device (Matter 1.6.1 § 5.6) with ValveConfigurationAndControl (with or without the `Level` feature) and optional FlowMeasurement clusters, configured through a `WaterValveOptions` object, with `openValve()`/`closeValve()` helpers.
 - [endpoint]: Add `createOnOffValveConfigurationAndControlClusterServer()` to create a `ValveConfigurationAndControl` cluster server without the `Level` feature, for binary (on/off) valves.
 - [chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 `TC_EEM_2_1`–`2_5` conformance tests on them.
-- [tests]: Fail the `matterbridgeEndpoint-default` and `matterbridgeEndpointHelpers` tests on any unexpected warning or error log.
 
 ### Changed
 
 - [utils]: `getEnumDescription()` accepts any number or string `value`; values outside the enum return the fallback.
-- [behaviors]: The Pump Configuration and Control server keeps the `PumpStatus` `Running` bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes).
+- [behaviors]: The Pump Configuration and Control server keeps the `PumpStatus` `Running` bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes, and at startup when the pump is already on).
 - [dgram]: Add an optional `cacheFlush` / `unicastResponse` flag to `dnsResponseClassToString()` and `dnsQuestionClassToString()`.
+- [platform]: `--debug-platform` and `--verbose-platform` also enable the platform debug and verbose logs.
+- [platform]: `ready` also waits for the `nodeLabels` storage to load.
 - [core]: Log unknown `EsaState` values as `Invalid` instead of `undefined`.
 - [chip]: Validate the previous EnergyEvse `FaultState` in the fault test event triggers.
+- [chip]: Create the Pump (505) and WaterValve (506) demo devices with the `Pump` and `WaterValve` device classes, so the demo pump starts at level 254 and runs on `On`, and enable `PumpStatus` and `Speed` in the pump PICS.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.2.
 - [matterbridge]: Bump `@types/node` to v.26.6.6.
 - [matterbridge]: Bump `marked` to v.18.1.2.
@@ -72,6 +84,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [devices]: Remove the unreachable `undefined` fallback of `WaterValve.getCurrentLevel()` with the `Level` feature, restoring the 100% branch coverage of `waterValve.ts`.
 - [frontend]: Correct inverted WindowCovering Open/Closed labels and display ClosureDimension positions as percentages. Closes [#671](https://github.com/Luligu/matterbridge/issues/671). Thanks to [@peteroettl](https://github.com/peteroettl).
 - [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
 - [core]: Map device classes explicitly to matter.js classifications, including App to Application.

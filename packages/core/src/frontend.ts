@@ -1771,6 +1771,16 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendSnackbarMessage('Factory reset of matterbridge...', 10);
         await this.matterbridge.shutdownProcessAndFactoryReset();
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/unregister-device') {
+        this.wssSendSnackbarMessage('Resetting the device...');
+        const { pluginName, serialNumber, uniqueId } = data.params;
+        this.server.request({ type: 'platform_unregister_device', src: this.server.name, dst: 'platform', params: { pluginName, serialNumber, uniqueId } });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
+      } else if (data.method === '/api/rename-device') {
+        this.wssSendSnackbarMessage('Renaming the device...');
+        const { pluginName, serialNumber, uniqueId, label } = data.params;
+        this.server.request({ type: 'platform_rename_device', src: this.server.name, dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
       } else if (data.method === '/api/viewhistorypage') {
         generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });

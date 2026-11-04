@@ -477,6 +477,48 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
   });
 
+  test('should send the reset snackbar and a success response when receiving /api/unregister-device', async () => {
+    const id = ++WS_ID;
+    const msg = await waitMessageId(id, '/api/unregister-device', {
+      id,
+      dst: 'Matterbridge',
+      src: 'Frontend',
+      method: '/api/unregister-device',
+      params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id' },
+    });
+
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledExactlyOnceWith('Resetting the device...');
+    expect(msg).toEqual({ id, method: '/api/unregister-device', src: 'Matterbridge', dst: 'Frontend', success: true });
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'platform_unregister_device',
+        dst: 'platform',
+        params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id' },
+      }),
+    );
+  });
+
+  test('should send the rename snackbar and a success response when receiving /api/rename-device', async () => {
+    const id = ++WS_ID;
+    const msg = await waitMessageId(id, '/api/rename-device', {
+      id,
+      dst: 'Matterbridge',
+      src: 'Frontend',
+      method: '/api/rename-device',
+      params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id', label: 'New controller name' },
+    });
+
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledExactlyOnceWith('Renaming the device...');
+    expect(msg).toEqual({ id, method: '/api/rename-device', src: 'Matterbridge', dst: 'Frontend', success: true });
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'platform_rename_device',
+        dst: 'platform',
+        params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id', label: 'New controller name' },
+      }),
+    );
+  });
+
   test('Websocket API send /api/viewhistorypage', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/viewhistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/viewhistorypage', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));

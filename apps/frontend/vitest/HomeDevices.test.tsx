@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { SnackbarProvider } from 'notistack';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -61,6 +62,7 @@ vi.mock('../src/components/MbfTable', () => ({
 
 import HomeDevices from '../src/components/HomeDevices';
 import { UiContext, type UiContextType } from '../src/components/UiContext';
+import { UiProvider } from '../src/components/UiProvider';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
 
 const plugins = [
@@ -91,7 +93,7 @@ const selectablePlugin = [
 
 const uiContext = { mobile: false } as UiContextType;
 
-function renderComponent(options: { online?: boolean; setStoreId?: (id: string | null) => void; storeId?: string | null } = {}) {
+function renderComponent(options: { online?: boolean; setStoreId?: (id: string | null) => void; storeId?: string | null; useUiProvider?: boolean } = {}) {
   let listener: ((message: unknown) => void) | undefined;
   const addListener = vi.fn((callback: (message: unknown) => void) => {
     listener = callback;
@@ -105,11 +107,16 @@ function renderComponent(options: { online?: boolean; setStoreId?: (id: string |
     getUniqueId: () => 7,
   } as unknown as WebSocketContextType;
 
+  const component = <HomeDevices storeId={options.storeId ?? null} setStoreId={options.setStoreId ?? vi.fn()} />;
   render(
     <WebSocketContext.Provider value={webSocketContext}>
-      <UiContext.Provider value={uiContext}>
-        <HomeDevices storeId={options.storeId ?? null} setStoreId={options.setStoreId ?? vi.fn()} />
-      </UiContext.Provider>
+      {options.useUiProvider ? (
+        <SnackbarProvider>
+          <UiProvider>{component}</UiProvider>
+        </SnackbarProvider>
+      ) : (
+        <UiContext.Provider value={uiContext}>{component}</UiContext.Provider>
+      )}
     </WebSocketContext.Provider>,
   );
 
@@ -126,7 +133,7 @@ function renderComponent(options: { online?: boolean; setStoreId?: (id: string |
 function renderWithDevice(
   configUrl: string,
   deviceOverrides: Record<string, unknown> = {},
-  options: { plugins?: unknown[]; setStoreId?: (id: string | null) => void; storeId?: string | null } = {},
+  options: { plugins?: unknown[]; setStoreId?: (id: string | null) => void; storeId?: string | null; useUiProvider?: boolean } = {},
 ) {
   const helpers = renderComponent(options);
   helpers.sendWebSocketMessage({ id: 7, method: '/api/plugins', response: options.plugins ?? plugins });
@@ -174,6 +181,184 @@ describe('HomeDevices', () => {
     consoleWarnSpy.mockRestore();
     consoleErrorSpy.mockRestore();
     consoleDebugSpy.mockRestore();
+  });
+
+  it('should open the device actions menu from the button immediately after the config button', () => {
+    renderWithDevice('https://example.com/config');
+
+    const configButton = screen.getByRole('button', { name: 'Open config url' });
+    const actionsButton = screen.getByRole('button', { name: 'Device actions' });
+    expect(configButton.nextElementSibling).toBe(actionsButton);
+    expect(within(actionsButton).getByTestId('MoreHorizIcon')).toBeInTheDocument();
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+    fireEvent.click(actionsButton);
+
+    expect(actionsButton).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Reset device...', 'Change controller name...']);
+  });
+
+  it('should replace the actions placeholder with a menu button when a selectable device becomes registered', () => {
+    const { sendWebSocketMessage } = renderWithDevice('');
+    const device = { plugin: 'matterbridge-test', deviceName: 'Select Only Device', serialNumber: 'select-only', configUrl: 'https://example.com/config' };
+    sendWebSocketMessage({ id: 7, method: '/api/select/devices', response: [device] });
+    const row = screen.getByTestId('row-matterbridge-test::select-only');
+
+    expect(within(row).queryByRole('button', { name: 'Device actions' })).not.toBeInTheDocument();
+    expect(within(row).queryByTestId('MoreHorizIcon')).not.toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Open config url' }).nextElementSibling).toHaveStyle({ width: '20px', height: '20px' });
+    expect(screen.getAllByRole('button', { name: 'Device actions' })).toHaveLength(1);
+
+    sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ ...device, uniqueId: 'newly-registered-device' }] });
+
+    expect(within(screen.getByTestId('row-matterbridge-test::select-only')).getByRole('button', { name: 'Device actions' })).toBeInTheDocument();
+  });
+
+  it('should extend the device actions menu left from the button with their right edges aligned', () => {
+    renderWithDevice('');
+    const actionsButton = screen.getByRole('button', { name: 'Device actions' });
+    const anchorRectSpy = vi.spyOn(actionsButton, 'getBoundingClientRect').mockReturnValue(new DOMRect(400, 100, 20, 20));
+    const widthSpy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(200);
+    const heightSpy = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(100);
+    try {
+      fireEvent.click(actionsButton);
+
+      expect(screen.getByRole('menu').parentElement).toHaveStyle({ left: '220px', top: '120px', transformOrigin: '200px 0px' });
+    } finally {
+      anchorRectSpy.mockRestore();
+      widthSpy.mockRestore();
+      heightSpy.mockRestore();
+    }
+  });
+
+  it.each([
+    ['Reset device...', 'handleUnregisterDevice', 'Reset device and restart'],
+    ['Change controller name...', 'handleControllerName', 'Rename the device on the controller'],
+  ])('should only log the selected device when choosing %s', async (label, logMessage, title) => {
+    const { sendMessage, sendWebSocketMessage } = renderWithDevice('https://example.com/config', {}, { useUiProvider: true });
+    const device = { plugin: 'matterbridge-test', deviceName: 'Second Device', serialNumber: 'test2' };
+    sendWebSocketMessage({
+      id: 7,
+      method: '/api/devices',
+      response: [{ plugin: 'matterbridge-test', deviceName: 'Test Device', serialNumber: 'test1', configUrl: 'https://example.com/config' }, device],
+    });
+    sendMessage.mockClear();
+    consoleLogSpy.mockClear();
+    const row = screen.getByTestId('row-matterbridge-test::test2');
+    fireEvent.click(within(row).getByRole('button', { name: 'Device actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: label }));
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(`${logMessage}: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(row).toBeInTheDocument();
+    const dialog = screen.getByRole('dialog', { name: `Matterbridge Logo ${title}` });
+    expect(dialog).toHaveTextContent(device.plugin);
+    expect(dialog).toHaveTextContent(device.deviceName);
+    await vi.waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+  });
+
+  it.each(['Confirm', 'Cancel'])('should send an unregister request only when confirmed, choosing %s', async (action) => {
+    const { sendMessage } = renderWithDevice('', { uniqueId: 'device-unique-1' }, { useUiProvider: true });
+    sendMessage.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset device...' }));
+
+    const dialog = screen.getByRole('dialog', { name: /Reset device and restart/ });
+    expect(dialog).toHaveTextContent(
+      'Reset device "Test Device" from plugin "matterbridge-test"? This will temporarily remove the device from the controller and you may lose the controller configuration.',
+    );
+    expect(within(dialog).queryByRole('textbox')).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: 'Confirm' })).toBeEnabled();
+    fireEvent.click(within(dialog).getByRole('button', { name: action }));
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(`handleUnregisterDevice ${action === 'Confirm' ? 'confirmed' : 'canceled'}: plugin matterbridge-test name Test Device serial test1`);
+    expect(sendMessage.mock.calls).toEqual(
+      action === 'Confirm'
+        ? [
+            [
+              {
+                id: 7,
+                sender: 'HomeDevices',
+                method: '/api/unregister-device',
+                src: 'Frontend',
+                dst: 'Matterbridge',
+                params: { pluginName: 'matterbridge-test', serialNumber: 'test1', uniqueId: 'device-unique-1' },
+              },
+            ],
+          ]
+        : [],
+    );
+    expect(screen.getByTestId('row-matterbridge-test::test1')).toBeInTheDocument();
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it.each(['OK', 'Cancel'])('should send the edited controller name only when confirmed, choosing %s', async (action) => {
+    const { sendMessage } = renderWithDevice('', { uniqueId: 'device-unique-1' }, { useUiProvider: true });
+    sendMessage.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Change controller name...' }));
+    const dialog = screen.getByRole('dialog', { name: /Rename the device on the controller/ });
+    expect(within(dialog).getByRole('textbox', { name: 'Controller name' })).toHaveValue('Test Device');
+    expect(within(dialog).getByRole('button', { name: 'OK' })).toBeEnabled();
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'Controller name' }), { target: { value: 'New controller name' } });
+
+    fireEvent.click(within(dialog).getByRole('button', { name: action }));
+
+    expect(consoleLogSpy).toHaveBeenCalledWith(
+      action === 'OK'
+        ? 'handleControllerName confirmed: plugin matterbridge-test name Test Device serial test1 to controller name New controller name'
+        : 'handleControllerName canceled: plugin matterbridge-test name Test Device serial test1',
+    );
+    expect(sendMessage.mock.calls).toEqual(
+      action === 'OK'
+        ? [
+            [
+              {
+                id: 7,
+                sender: 'HomeDevices',
+                method: '/api/rename-device',
+                src: 'Frontend',
+                dst: 'Matterbridge',
+                params: { pluginName: 'matterbridge-test', serialNumber: 'test1', uniqueId: 'device-unique-1', label: 'New controller name' },
+              },
+            ],
+          ]
+        : [],
+    );
+    expect(screen.getByTestId('row-matterbridge-test::test1')).toHaveTextContent('Test Device');
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it.each([
+    ['Reset device...', 'Confirm', 'handleUnregisterDevice', 'Cannot reset device: missing unique ID.'],
+    ['Change controller name...', 'OK', 'handleControllerName', 'Cannot rename device: missing unique ID.'],
+  ])('should report a missing unique ID without sending an API request for %s', (label, action, handler, message) => {
+    const { sendMessage } = renderWithDevice('', {}, { useUiProvider: true });
+    sendMessage.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: label }));
+    const dialog = screen.getByRole('dialog');
+    const input = within(dialog).queryByRole('textbox');
+    if (input) fireEvent.change(input, { target: { value: 'New name' } });
+
+    fireEvent.click(within(dialog).getByRole('button', { name: action }));
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(`${handler}: missing uniqueId for plugin matterbridge-test name Test Device serial test1`);
+    expect(screen.getByText(message)).toBeInTheDocument();
+  });
+
+  it('should dismiss the device actions menu without invoking an action when Escape is pressed', async () => {
+    renderWithDevice('');
+    expect(screen.queryByRole('button', { name: 'Open config url' })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
+    consoleLogSpy.mockClear();
+
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' });
+
+    await vi.waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+    expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('handleUnregisterDevice:'));
+    expect(consoleLogSpy).not.toHaveBeenCalledWith(expect.stringContaining('handleControllerName:'));
   });
 
   it('opens the plugin frontend without corrupting a configUrl query string', () => {

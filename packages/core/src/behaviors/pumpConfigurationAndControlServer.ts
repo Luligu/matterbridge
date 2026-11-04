@@ -74,6 +74,9 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
     this.reactTo(this.events.operationMode$Changing, this.#handleOperationModeChanging);
     // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.events.operationMode$Changed, this.#handleOperationModeChanged);
+
+    // Matter 1.6.0 § 5.5.5.1: A pump that starts powered on runs at the setpoint of the stored level, so sync Speed, Capacity and the PumpStatus Running bit now instead of waiting for the first change.
+    if (this.endpoint.behaviors.has(OnOffServer.id) && this.agent.get(OnOffServer).state.onOff) this.#applySetpoint(this.internal.lastLevel ?? 254);
   }
 
   /**
