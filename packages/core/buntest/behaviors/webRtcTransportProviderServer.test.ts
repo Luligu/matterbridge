@@ -58,7 +58,10 @@ function clearExpectedWarnings(...expected: string[]): void {
  * @param {MatterbridgeEndpoint} endpoint - The endpoint.
  * @returns {SessionFields[]} The sessions.
  */
-const sessions = (endpoint: MatterbridgeEndpoint): SessionFields[] => JSON.parse(JSON.stringify(endpoint.getAttribute(WEBRTC, 'currentSessions') ?? [])) as SessionFields[];
+const sessions = (endpoint: MatterbridgeEndpoint): SessionFields[] =>
+  JSON.parse(
+    JSON.stringify(endpoint.getAttribute(WEBRTC, 'currentSessions') ?? [], (_key, value: unknown) => (typeof value === 'bigint' ? value.toString() : value)),
+  ) as SessionFields[];
 const lastSession = (endpoint: MatterbridgeEndpoint): SessionFields => sessions(endpoint).toReversed()[0];
 const referenceCount = (endpoint: MatterbridgeEndpoint, name: 'allocatedVideoStreams' | 'allocatedAudioStreams'): unknown =>
   (endpoint.getAttribute(AV, name)?.[0] as { referenceCount?: number } | undefined)?.referenceCount;
