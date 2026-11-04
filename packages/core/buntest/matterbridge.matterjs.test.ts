@@ -1,0 +1,279 @@
+/**
+ * @file packages/core/buntest/matterbridge.matterjs.test.ts
+ * @description This file contains the bun tests for Matterbridge with matter.js.
+ * @author Luca Liguori
+ */
+
+/**
+ * WARNING!!!
+ * The tests in this unit are supposed to run sequentially because they depend on the Matterbridge/Matter state.
+ * Is not possible for timing reasons to create and destroy a Matter node each test to keep isolation.
+ */
+
+const MATTER_PORT = 6100;
+const NAME = 'MatterbridgeMatterjs';
+
+import { afterAll, beforeEach, describe, expect, spyOn, test, vi } from 'bun:test';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { Environment } from '@matter/general';
+import { FabricIndex } from '@matter/types/datatype';
+import { flushAsync } from '@matterbridge/test-utils';
+import { HOMEDIR, loggerLogSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { MATTER_STORAGE_DIR } from '@matterbridge/types';
+import { waiter } from '@matterbridge/utils';
+import { getInterfaceName } from '@matterbridge/utils/network';
+import { LogLevel } from 'node-ansi-logger';
+
+import { Matterbridge } from '../src/matterbridge.js';
+import { closeMdnsInstance, destroyInstance } from './bunUtils.js';
+
+// Setup the test environment
+await setupTest(NAME, false, ['--novirtual', '--logger', 'debug', '--matterlogger', 'debug', '--bridge', '--frontend', '0', '--port', MATTER_PORT.toString()], {
+  MATTERBRIDGE_START_MATTER_INTERVAL_MS: '10',
+  MATTERBRIDGE_PAUSE_MATTER_INTERVAL_MS: '10',
+});
+process.argv.push('--homedir', HOMEDIR);
+// Limit mDNS to the first external interface: on all interfaces (VPN tunnels included) the parallel test server nodes overload the kernel with multicast traffic
+const mdnsInterface = getInterfaceName();
+if (mdnsInterface) process.argv.push('--mdnsinterface', mdnsInterface);
+
+describe('Matterbridge matterjs', () => {
+  let matterbridge: Matterbridge;
+
+  beforeEach(() => {
+    // Clear all mocks
+    vi.clearAllMocks();
+  });
+
+  afterAll(async () => {
+    // Close mDNS instance
+    await closeMdnsInstance(matterbridge);
+    // Restore all mocks
+    vi.restoreAllMocks();
+  });
+
+  test('Matterbridge.loadInstance(true) -bridge mode', async () => {
+    // Load Matterbridge instance and initialize it
+    matterbridge = await Matterbridge.loadInstance(true);
+
+    // Clear the timeouts and intervals set by initialize to prevent them from running during tests
+    expect((matterbridge as any).systemCheckTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateTimeout).toBeDefined();
+    expect((matterbridge as any).checkUpdateInterval).toBeDefined();
+    clearTimeout((matterbridge as any).systemCheckTimeout);
+    clearTimeout((matterbridge as any).checkUpdateTimeout);
+    clearInterval((matterbridge as any).checkUpdateInterval);
+
+    expect(matterbridge).toBeDefined();
+    expect(matterbridge.profile).toBe(undefined);
+    expect(matterbridge.bridgeMode).toBe('bridge');
+    expect(Environment.default.vars.get('path.root')).toBe(path.join(matterbridge.matterbridgeDirectory, 'matterstorage'));
+    expect((matterbridge as any).initialized).toBeTruthy();
+    expect((matterbridge as any).serverNode).toBeDefined();
+    expect((matterbridge as any).aggregatorNode).toBeDefined();
+
+    await new Promise((resolve) => {
+      matterbridge.once('online', resolve);
+    });
+    // await Promise.resolve();
+
+    // Check the starts the matter storage
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Starting matter node storage...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Matter node storage started`);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Creating matter node storage backup...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Created matter node storage backup`);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Creating server node storage context "Matterbridge.persist" for Matterbridge...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Created server node storage context "Matterbridge.persist" for Matterbridge:`);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Creating server node for Matterbridge on port ${MATTER_PORT}`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Created server node for Matterbridge`);
+
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Starting Matterbridge server node`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge is online`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Starting start matter interval in bridge mode...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Cleared startMatterInterval interval in bridge mode`);
+  }, 60000);
+
+  test('backupMatterStorage fails for empty values', async () => {
+    await (matterbridge as any).backupMatterStorage('', '');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating matter node storage backup`), expect.any(Error));
+  });
+
+  test('backupMatterStorage fails for same values', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    await (matterbridge as any).backupMatterStorage(storageName, storageName);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating matter node storage backup from ${storageName} to ${storageName}:`, expect.any(Error));
+  });
+
+  test('backupMatterStorage fails when copyDirectory cannot copy the matter storage', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR);
+    // A file where the backup parent directory should be: copyDirectory cannot create the destination and resolves to false
+    const blocker = path.join(matterbridge.matterbridgeDirectory, 'backup-blocker');
+    fs.writeFileSync(blocker, '');
+    const backupName = path.join(blocker, MATTER_STORAGE_DIR + '.backup');
+    loggerLogSpy.mockClear();
+    try {
+      await (matterbridge as any).backupMatterStorage(storageName, backupName);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, `Error creating matter node storage backup from ${storageName} to ${backupName}`);
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, 'Created matter node storage backup');
+    } finally {
+      fs.rmSync(blocker, { force: true });
+    }
+  });
+
+  test('backupMatterStorage skips the backup when there is no matter storage', async () => {
+    const storageName = path.join(matterbridge.matterbridgeDirectory, 'missing-matter-storage');
+    const backupName = storageName + '.backup';
+    await (matterbridge as any).backupMatterStorage(storageName, backupName);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `No matter node storage found to backup from ${storageName} to ${backupName}`);
+    expect(fs.existsSync(backupName)).toBe(false);
+  });
+
+  test('backupMatterStorage fails for undefined values', async () => {
+    await (matterbridge as any).backupMatterStorage();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Error creating matter node storage backup`), expect.any(Error));
+  });
+
+  test('createServerNodeContext fails for empty values', async () => {
+    const matterStorageService = (matterbridge as any).matterStorageService;
+    (matterbridge as any).matterStorageService = undefined;
+    expect((matterbridge as any).createServerNodeContext()).rejects.toThrow('No storage service initialized');
+    (matterbridge as any).matterStorageService = matterStorageService;
+  });
+
+  test('validates Basic Information values before creating a Matter node', async () => {
+    const context = await (matterbridge as any).createServerNodeContext(
+      'InvalidBasicInformation',
+      'Invalid Basic Information',
+      matterbridge.aggregatorDeviceType,
+      matterbridge.aggregatorVendorId,
+      matterbridge.aggregatorVendorName,
+      matterbridge.aggregatorProductId,
+      matterbridge.aggregatorProductName,
+      'INVALID1234567890',
+      'INVALID1234567890',
+      1.5,
+      '',
+      1.5,
+      '',
+      `Matterbridge ${'P'.repeat(70)}`,
+      'http://matterbridge.io/device',
+      1.5,
+    );
+    const serverNode = await (matterbridge as any).createServerNode(context, MATTER_PORT + 1);
+
+    expect(serverNode.state.basicInformation.softwareVersion).toBe(1);
+    expect(serverNode.state.basicInformation.softwareVersionString).toBe('1.0.0');
+    expect(serverNode.state.basicInformation.hardwareVersion).toBe(1);
+    expect(serverNode.state.basicInformation.hardwareVersionString).toBe('1.0.0');
+    expect(serverNode.state.basicInformation.productLabel).toBe('P'.repeat(64));
+    expect(serverNode.state.basicInformation.productUrl).toBe('https://matterbridge.io');
+    expect(serverNode.state.basicInformation.configurationVersion).toBe(1);
+
+    await serverNode.close();
+  });
+
+  test('serverNode online sets the configuration version with -configuration-version', async () => {
+    const argv = process.argv;
+    // The configuration version of a new server node is always 1
+    const cases = [
+      { storeId: 'ConfigurationVersionSet', parameters: ['--configuration-version', '5'], configurationVersion: 5 },
+      { storeId: 'ConfigurationVersionIncremented', parameters: ['--configuration-version'], configurationVersion: 2 },
+      { storeId: 'ConfigurationVersionClamped', parameters: ['--configuration-version', '0'], configurationVersion: 1 },
+    ];
+    let port = MATTER_PORT + 2;
+    try {
+      for (const { storeId, parameters, configurationVersion } of cases) {
+        process.argv = [...argv, ...parameters];
+        const context = await (matterbridge as any).createServerNodeContext(
+          storeId,
+          'Configuration Version',
+          matterbridge.aggregatorDeviceType,
+          matterbridge.aggregatorVendorId,
+          matterbridge.aggregatorVendorName,
+          matterbridge.aggregatorProductId,
+          matterbridge.aggregatorProductName,
+        );
+        const serverNode = await (matterbridge as any).createServerNode(context, port++);
+        expect(serverNode.state.basicInformation.configurationVersion).toBe(1);
+
+        // The configuration version is set when the server node goes online
+        await (matterbridge as any).startServerNode(serverNode);
+        expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Configuration version for server node ${storeId} is now ${configurationVersion}`);
+        await waiter(`configuration version of ${storeId}`, () => serverNode.state.basicInformation.configurationVersion === configurationVersion, false, 5000, 100, false);
+
+        await (matterbridge as any).stopServerNode(serverNode);
+      }
+    } finally {
+      // Restore the command line here so that a failure does not leak into the following tests
+      process.argv = argv;
+    }
+  }, 60000);
+
+  test('serverNode commissioned', () => {
+    matterbridge.serverNode?.lifecycle.commissioned.emit(undefined as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge commissioned successfully!`);
+  });
+
+  test('serverNode decommissioned', () => {
+    matterbridge.serverNode?.lifecycle.decommissioned.emit(undefined as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge fully decommissioned successfully!`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Server node for Matterbridge was reset to factory defaults: restart Matterbridge before pairing it again`);
+  });
+
+  test('serverNode fabricsChanged', () => {
+    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'added');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} added on server node`));
+    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'deleted');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} removed on server node`));
+    matterbridge.serverNode?.events.commissioning.fabricsChanged.emit(FabricIndex(1), 'updated');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Commissioned fabric index ${FabricIndex(1)} updated on server node`));
+  });
+
+  test('serverNode sessions.opened', () => {
+    matterbridge.serverNode?.events.sessions.opened.emit({} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Session opened on server node for Matterbridge`));
+  });
+
+  test('serverNode sessions.closed', () => {
+    matterbridge.serverNode?.events.sessions.closed.emit({} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Session closed on server node for Matterbridge`));
+  });
+
+  test('serverNode sessions.subscriptionsChanged', () => {
+    matterbridge.serverNode?.events.sessions.subscriptionsChanged.emit({} as any);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Session subscriptions changed on server node for Matterbridge`));
+  });
+
+  test('startServerNode undefined', async () => {
+    await (matterbridge as any).startServerNode();
+    expect(loggerLogSpy).toHaveBeenCalledTimes(0);
+  });
+
+  test('stopServerNode undefined', async () => {
+    await (matterbridge as any).stopServerNode();
+    expect(loggerLogSpy).toHaveBeenCalledTimes(0);
+  });
+
+  test('Matterbridge.destroyInstance() -bridge mode', async () => {
+    expect(matterbridge.serverNode?.lifecycle.isOnline).toBe(true);
+
+    spyOn(matterbridge.serverNode as any, 'close').mockImplementationOnce(() => {
+      throw new Error('Test error closing server node');
+    });
+    await (matterbridge as any).stopServerNode(matterbridge.serverNode, 100);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, expect.stringContaining(`Closing Matterbridge server node`));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining(`Failed to close Matterbridge server node`));
+    await flushAsync(undefined, undefined, 100);
+
+    // Destroy the Matterbridge instance
+    await destroyInstance(matterbridge, 0, 0);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Closing matter node storage...`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, `Matter node storage closed`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.NOTICE, `Cleanup completed. Shutting down...`);
+  }, 60000);
+});
