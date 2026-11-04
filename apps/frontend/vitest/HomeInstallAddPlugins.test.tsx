@@ -49,11 +49,13 @@ vi.mock('../src/components/SearchPluginsDialog', () => ({
   ),
 }));
 
-// Silence debug logs and keep enableMobile stable.
-vi.mock('../src/appState', () => ({
+const appStateMock = vi.hoisted(() => ({
   debug: false,
   enableMobile: false,
 }));
+
+// Silence debug logs and keep enableMobile stable.
+vi.mock('../src/appState', () => appStateMock);
 
 describe('HomeInstallAddPlugins', () => {
   let originalGetBoundingClientRect: (() => DOMRect) | undefined;
@@ -361,5 +363,82 @@ describe('HomeInstallAddPlugins', () => {
         params: { packageName: '@scope/matterbridge-example@latest', restart: false },
       }),
     );
+  });
+
+  it('covers debug branches, scoped without slash, empty file drop/change, and mobile gap', async () => {
+    appStateMock.debug = true;
+    appStateMock.enableMobile = true;
+    const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const { container, showSnackbarMessage, sendMessage } = renderWithCtx();
+    expect(consoleLogSpy).toHaveBeenCalledWith('HomeInstallAddPlugins rendering...');
+
+    // Context menu with debug true
+    fireEvent.contextMenu(screen.getByRole('button', { name: /^upload$/i }));
+    expect(consoleLogSpy).toHaveBeenCalledWith('Right-clicked Upload button');
+
+    fireEvent.contextMenu(screen.getByRole('button', { name: /^add$/i }));
+    expect(consoleLogSpy).toHaveBeenCalledWith('Right-clicked Add button');
+
+    // Scoped package without slash (e.g. '@invalid@1.0.0') -> before.includes('/') is false
+    fireEvent.change(screen.getByLabelText(/plugin name or plugin path/i), { target: { value: '@invalid@1.0.0' } });
+    fireEvent.click(screen.getByRole('button', { name: /^install$/i }));
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: '/api/install',
+        params: { packageName: '@invalid@1.0.0@latest', restart: false },
+      }),
+    );
+
+    // Drop and change without files (empty file list)
+    const content = screen.getByTestId('window-content');
+    fireEvent.drop(content, {
+      dataTransfer: { files: [] },
+    });
+
+    const input = document.getElementById('file-upload') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [] } });
+
+    // Open and select search dialog with debug true
+    const searchIconButton = Array.from(container.querySelectorAll('button')).find((b) => (b.textContent ?? '').trim() === '');
+    expect(searchIconButton).toBeDefined();
+    fireEvent.click(searchIconButton!);
+    expect(consoleLogSpy).toHaveBeenCalledWith('Dialog opened for selection');
+
+    fireEvent.click(screen.getByText('choose'));
+    expect(consoleLogSpy).toHaveBeenCalledWith('Select plugin:', 'matterbridge-example');
+
+    fireEvent.click(screen.getByText('versions'));
+    expect(consoleLogSpy).toHaveBeenCalledWith('Select plugin versions:', ['latest', '1.2.3']);
+
+    // Cancel dialog with debug true
+    fireEvent.click(searchIconButton!);
+    fireEvent.click(screen.getByText('cancel'));
+    expect(consoleLogSpy).toHaveBeenCalledWith('Dialog closed without selection');
+
+    // Add plugin happy path (not in ignore list)
+    fireEvent.change(screen.getByLabelText(/plugin name or plugin path/i), { target: { value: 'matterbridge-valid-plugin' } });
+    fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+    expect(sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        method: '/api/addplugin',
+        params: { pluginNameOrPath: 'matterbridge-valid-plugin' },
+      }),
+    );
+
+    // Verify mobile style gap branch
+    // Render with mobile: true
+    const uiValue = { mobile: true, showSnackbarMessage } as any;
+    const wsValue = { logMessage: vi.fn(), sendMessage, getUniqueId: () => 'uid-mobile' } as any;
+    render(
+      <UiContext.Provider value={uiValue}>
+        <WebSocketContext.Provider value={wsValue}>
+          <HomeInstallAddPlugins />
+        </WebSocketContext.Provider>
+      </UiContext.Provider>,
+    );
+
+    appStateMock.debug = false;
+    appStateMock.enableMobile = false;
   });
 });

@@ -43,7 +43,7 @@ export interface ConfirmCancelInputProps {
 }
 
 /**
- * Render a confirmation dialog with OK enabled only for a changed value
+ * Render a confirmation dialog with an editable text value
  *
  * @param {ConfirmCancelInputProps} props Dialog content, initial input value and action callbacks
  * @returns {React.JSX.Element} Confirmation dialog with a text field between the message and buttons
@@ -93,7 +93,7 @@ export function ConfirmCancelInput({ open, title, message, initialValue = '', la
         </div>
         <TextField label={label} value={value} onChange={(event) => setInput({ ...input, value: event.target.value })} fullWidth size="small" sx={{ marginBottom: '20px' }} />
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }}>
-          <Button onClick={handleConfirm} disabled={value === initialValue} variant="contained" color="primary" size="small">
+          <Button onClick={handleConfirm} variant="contained" color="primary" size="small">
             OK
           </Button>
           <Button onClick={handleCancel} variant="contained" color="primary" size="small">

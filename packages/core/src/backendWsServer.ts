@@ -359,6 +359,16 @@ export class BackendWsServer {
         }
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
         this.wssSendRefreshRequired('matter', { matter });
+      } else if (data.method === '/api/unregister-device') {
+        this.wssSendSnackbarMessage('Resetting the device...');
+        const { pluginName, serialNumber, uniqueId } = data.params;
+        this.server.request({ type: 'platform_unregister_device', src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, uniqueId } });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
+      } else if (data.method === '/api/rename-device') {
+        this.wssSendSnackbarMessage('Renaming the device...');
+        const { pluginName, serialNumber, uniqueId, label } = data.params;
+        this.server.request({ type: 'platform_rename_device', src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
       }
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);

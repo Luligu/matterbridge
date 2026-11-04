@@ -25,7 +25,7 @@ describe('Device API message types', () => {
   });
 
   test('should additionally require the new name for rename requests', () => {
-    expectTypeOf<WsMessageApiRenameDeviceRequest['params']>().toEqualTypeOf<{ pluginName: string; serialNumber: string; uniqueId: string; name: string }>();
+    expectTypeOf<WsMessageApiRenameDeviceRequest['params']>().toEqualTypeOf<{ pluginName: string; serialNumber: string; uniqueId: string; label: string }>();
     expectTypeOf<Extract<WsMessageApiRequest, { method: '/api/rename-device' }>>().toEqualTypeOf<WsMessageApiRenameDeviceRequest>();
     expectTypeOf<Extract<WsMessageApiResponse, { method: '/api/rename-device' }>>().toEqualTypeOf<WsMessageApiRenameDeviceResponse>();
   });

@@ -195,7 +195,7 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
     expect(screen.getByRole('alert')).toHaveTextContent('default message');
   });
 
-  it('should pass only the edited input to confirmation and close the dialog', async () => {
+  it('should pass the edited input to confirmation and close the dialog', async () => {
     const { inputConfirmSpy, inputCancelSpy } = await renderHarness();
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
@@ -203,7 +203,7 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
     expect(screen.getByText('Edit name')).toBeInTheDocument();
     expect(screen.getByText('Enter a new name')).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Original');
-    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'OK' })).toBeEnabled();
 
     fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Updated' } });
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
@@ -224,7 +224,7 @@ describe.each([false, true])('UiProvider with debug=%s', (debug) => {
 
     fireEvent.click(screen.getByText('Show input dialog'));
     expect(screen.getByRole('textbox')).toHaveValue('Original');
-    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'OK' })).toBeEnabled();
   });
 
   it('should use the default input label and callbacks from the latest request', async () => {

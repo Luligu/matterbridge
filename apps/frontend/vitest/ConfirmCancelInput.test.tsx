@@ -28,7 +28,7 @@ describe('ConfirmCancelInput', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
-  test('should enable OK only while the text differs from its initial value', () => {
+  test('should confirm the initial value or the edited value', () => {
     const onConfirm = vi.fn();
     render(<ConfirmCancelInput open title="Edit name" message="Enter a new name" initialValue="Original" label="Name" onConfirm={onConfirm} onCancel={vi.fn()} />);
 
@@ -37,17 +37,15 @@ describe('ConfirmCancelInput', () => {
     expect(screen.getByText('Edit name')).toBeInTheDocument();
     expect(screen.getByText('Enter a new name')).toBeInTheDocument();
     expect(input).toHaveValue('Original');
-    expect(button).toBeDisabled();
+    expect(button).toBeEnabled();
     fireEvent.click(button);
-    expect(onConfirm).not.toHaveBeenCalled();
+    expect(onConfirm).toHaveBeenLastCalledWith('Original');
 
     fireEvent.change(input, { target: { value: 'Updated' } });
     expect(button).toBeEnabled();
     fireEvent.click(button);
-    expect(onConfirm).toHaveBeenCalledExactlyOnceWith('Updated');
-
-    fireEvent.change(input, { target: { value: 'Original' } });
-    expect(button).toBeDisabled();
+    expect(onConfirm).toHaveBeenLastCalledWith('Updated');
+    expect(onConfirm).toHaveBeenCalledTimes(2);
   });
 
   test('should allow clearing an existing value and cancel without confirming', () => {
@@ -67,7 +65,7 @@ describe('ConfirmCancelInput', () => {
     render(<ConfirmCancelInput open title="Edit" message="Message" onConfirm={onConfirm} onCancel={vi.fn()} />);
 
     expect(screen.getByRole('textbox', { name: 'Value' })).toHaveValue('');
-    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'OK' })).toBeEnabled();
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New' } });
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
     expect(onConfirm).toHaveBeenCalledExactlyOnceWith('New');
@@ -100,11 +98,9 @@ describe('ConfirmCancelInput', () => {
     rerender(<ConfirmCancelInput {...props} open={false} />);
     rerender(<ConfirmCancelInput {...props} open />);
     expect(screen.getByRole('textbox')).toHaveValue('Original');
-    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
 
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Unsaved' } });
     rerender(<ConfirmCancelInput {...props} initialValue="Another" open />);
     expect(screen.getByRole('textbox')).toHaveValue('Another');
-    expect(screen.getByRole('button', { name: 'OK' })).toBeDisabled();
   });
 });

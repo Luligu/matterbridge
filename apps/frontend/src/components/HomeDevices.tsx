@@ -123,17 +123,18 @@ interface HomeDevicesProps {
  * The user can select/unselect devices using checkboxes. This sends api/command to selectdevice/unselectdevice.
  * The user can open the configuration page of a device if configUrl is set.
  * The user can open a QR code dialog if the device has matter information.
- * The device actions menu opens confirmation dialogs for unregistering a device or editing its controller name; actions currently only log.
+ * Registered devices have an actions menu that opens confirmation dialogs before sending unregister or controller-name requests.
  * The user can configure the columns to display in the table.
  * The user can sort the table by clicking on the column headers. The sort state is saved in localStorage.
  * The user can see a footer with the number of registered devices, a loading message if plugins are not fully loaded, and a restart required message if needed.
  * @param {HomeDevicesProps} props - The component props (storeId and setStoreId).
  * @returns {React.JSX.Element} The rendered devices table.
  */
+// oxlint-disable-next-line max-lines-per-function -- Keep the device table and its action handlers together.
 function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
   // Contexts
   const { online, sendMessage, addListener, removeListener, getUniqueId } = useContext(WebSocketContext);
-  const { mobile, showConfirmCancelDialog, showConfirmCancelInputDialog } = useContext(UiContext);
+  const { mobile, showConfirmCancelDialog, showConfirmCancelInputDialog, showSnackbarMessage } = useContext(UiContext);
 
   // States: `Registered devices: ${registeredCount.toString()}/${mixedDevices.length.toString()}`
   const [footerLeft, setFooterLeft] = useState('Waiting for the plugins to fully load...'); // Restart required state, used in the footer dx. Set by /api/settings response and restart_required and restart_not_required messages.
@@ -260,18 +261,22 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           ) : (
             <div style={{ width: '20px', height: '20px' }}></div>
           )}
-          <Tooltip title="Device actions" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
-            <IconButton
-              onClick={(event) => setDeviceMenu({ anchorEl: event.currentTarget, device: mixedDevice })}
-              aria-label="Device actions"
-              aria-haspopup="menu"
-              aria-controls={deviceMenu && getRowKey(deviceMenu.device) === rowKey ? 'device-actions-menu' : undefined}
-              aria-expanded={deviceMenu && getRowKey(deviceMenu.device) === rowKey ? true : undefined}
-              sx={{ margin: 0, padding: 0 }}
-            >
-              <MoreHoriz fontSize="small" />
-            </IconButton>
-          </Tooltip>
+          {mixedDevice.origin === 'device' ? (
+            <Tooltip title="Device actions" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
+              <IconButton
+                onClick={(event) => setDeviceMenu({ anchorEl: event.currentTarget, device: mixedDevice })}
+                aria-label="Device actions"
+                aria-haspopup="menu"
+                aria-controls={deviceMenu && getRowKey(deviceMenu.device) === rowKey ? 'device-actions-menu' : undefined}
+                aria-expanded={deviceMenu && getRowKey(deviceMenu.device) === rowKey ? true : undefined}
+                sx={{ margin: 0, padding: 0 }}
+              >
+                <MoreHoriz fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          ) : (
+            <div style={{ width: '20px', height: '20px' }}></div>
+          )}
           {mixedDevice.selected !== undefined ? (
             <Tooltip title="Select/unselect the device" slotProps={{ popper: { modifiers: [{ name: 'offset', options: { offset: [30, 15] } }] } }}>
               <Checkbox
@@ -585,10 +590,25 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
     setDeviceMenu(null);
     console.log(`handleUnregisterDevice: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
     showConfirmCancelDialog(
-      'Unregister device and restart',
-      `Unregister "${device.deviceName}" from plugin "${device.plugin}"? This will temporarily remove the device from the controller and you may lose the controller configuration.`,
+      'Reset device and restart',
+      `Reset device "${device.deviceName}" from plugin "${device.plugin}"? This will temporarily remove the device from the controller and you may lose the controller configuration.`,
       'unregister-device',
-      () => console.log(`handleUnregisterDevice confirmed: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`),
+      () => {
+        console.log(`handleUnregisterDevice confirmed: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
+        if (!device.uniqueId) {
+          console.error(`handleUnregisterDevice: missing uniqueId for plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
+          showSnackbarMessage('Cannot reset device: missing unique ID.', 5, 'error');
+          return;
+        }
+        sendMessage({
+          id: uniqueId.current,
+          sender: 'HomeDevices',
+          method: '/api/unregister-device',
+          src: 'Frontend',
+          dst: 'Matterbridge',
+          params: { pluginName: device.plugin, serialNumber: device.serialNumber, uniqueId: device.uniqueId },
+        });
+      },
       () => console.log(`handleUnregisterDevice canceled: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`),
     );
   };
@@ -600,7 +620,22 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       'Rename the device on the controller',
       `Enter a controller name for the device "${device.deviceName}" from plugin "${device.plugin}".`,
       device.deviceName,
-      (value) => console.log(`handleControllerName confirmed: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber} to controller name ${value}`),
+      (value) => {
+        console.log(`handleControllerName confirmed: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber} to controller name ${value}`);
+        if (!device.uniqueId) {
+          console.error(`handleControllerName: missing uniqueId for plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`);
+          showSnackbarMessage('Cannot rename device: missing unique ID.', 5, 'error');
+          return;
+        }
+        sendMessage({
+          id: uniqueId.current,
+          sender: 'HomeDevices',
+          method: '/api/rename-device',
+          src: 'Frontend',
+          dst: 'Matterbridge',
+          params: { pluginName: device.plugin, serialNumber: device.serialNumber, uniqueId: device.uniqueId, label: value },
+        });
+      },
       () => console.log(`handleControllerName canceled: plugin ${device.plugin} name ${device.deviceName} serial ${device.serialNumber}`),
       'Controller name',
     );
@@ -664,8 +699,8 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
         open={deviceMenu !== null}
         onClose={() => setDeviceMenu(null)}
       >
-        <MenuItem onClick={() => deviceMenu && handleUnregisterDevice(deviceMenu.device)}>Unregister device...</MenuItem>
-        <MenuItem onClick={() => deviceMenu && handleControllerName(deviceMenu.device)}>Controller name...</MenuItem>
+        <MenuItem onClick={() => deviceMenu && handleUnregisterDevice(deviceMenu.device)}>Reset device...</MenuItem>
+        <MenuItem onClick={() => deviceMenu && handleControllerName(deviceMenu.device)}>Change controller name...</MenuItem>
       </Menu>
       <Dialog
         open={selectedDeviceFrontend !== null}

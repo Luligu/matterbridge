@@ -352,6 +352,34 @@ describe('BackendWsServer', () => {
     expect(loggerErrorSpy).not.toHaveBeenCalled();
   });
 
+  test.each([
+    {
+      method: '/api/unregister-device',
+      type: 'platform_unregister_device',
+      snackbar: 'Resetting the device...',
+      params: { pluginName: 'matterbridge-test', serialNumber: 'SN1', uniqueId: 'UID1' },
+    },
+    {
+      method: '/api/rename-device',
+      type: 'platform_rename_device',
+      snackbar: 'Renaming the device...',
+      params: { pluginName: 'matterbridge-test', serialNumber: 'SN1', uniqueId: 'UID1', label: 'New name' },
+    },
+  ] as const)('should forward $method to the platform and acknowledge the request', async ({ method, type, snackbar, params }) => {
+    const client = new FakeClient();
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementationOnce(() => {});
+    const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
+    try {
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 13, src: 'Frontend', dst: 'Matterbridge', method, params })));
+      expect(requestSpy).toHaveBeenCalledExactlyOnceWith({ type, src: 'frontend', dst: 'platform', params });
+      expect(snackbarSpy).toHaveBeenCalledWith(snackbar);
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 13, method, src: 'Matterbridge', dst: 'Frontend', success: true });
+    } finally {
+      requestSpy.mockRestore();
+      snackbarSpy.mockRestore();
+    }
+  });
+
   test.each(['/api/restart', '/api/shutdown'] as const)('should forward %s to the main thread and acknowledge the request', async (method) => {
     const client = new FakeClient();
     const fetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockResolvedValueOnce({ result: { success: true } } as never);

@@ -486,8 +486,8 @@ export interface WsMessageApiRenameDeviceRequest extends WsMessageBaseApiRequest
     pluginName: string;
     serialNumber: string;
     uniqueId: string;
-    /** New device name to use on the controller. */
-    name: string;
+    /** New device label (nodeLabel) to use on the controller. */
+    label: string;
   };
 }
 /** Success response for renaming an individual device on the controller. */

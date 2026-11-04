@@ -195,7 +195,23 @@ describe('HomeDevices', () => {
     fireEvent.click(actionsButton);
 
     expect(actionsButton).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Unregister device...', 'Controller name...']);
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Reset device...', 'Change controller name...']);
+  });
+
+  it('should replace the actions placeholder with a menu button when a selectable device becomes registered', () => {
+    const { sendWebSocketMessage } = renderWithDevice('');
+    const device = { plugin: 'matterbridge-test', deviceName: 'Select Only Device', serialNumber: 'select-only', configUrl: 'https://example.com/config' };
+    sendWebSocketMessage({ id: 7, method: '/api/select/devices', response: [device] });
+    const row = screen.getByTestId('row-matterbridge-test::select-only');
+
+    expect(within(row).queryByRole('button', { name: 'Device actions' })).not.toBeInTheDocument();
+    expect(within(row).queryByTestId('MoreHorizIcon')).not.toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Open config url' }).nextElementSibling).toHaveStyle({ width: '20px', height: '20px' });
+    expect(screen.getAllByRole('button', { name: 'Device actions' })).toHaveLength(1);
+
+    sendWebSocketMessage({ id: 7, method: '/api/devices', response: [{ ...device, uniqueId: 'newly-registered-device' }] });
+
+    expect(within(screen.getByTestId('row-matterbridge-test::select-only')).getByRole('button', { name: 'Device actions' })).toBeInTheDocument();
   });
 
   it('should extend the device actions menu left from the button with their right edges aligned', () => {
@@ -216,8 +232,8 @@ describe('HomeDevices', () => {
   });
 
   it.each([
-    ['Unregister device...', 'handleUnregisterDevice', 'Unregister device and restart'],
-    ['Controller name...', 'handleControllerName', 'Rename the device on the controller'],
+    ['Reset device...', 'handleUnregisterDevice', 'Reset device and restart'],
+    ['Change controller name...', 'handleControllerName', 'Rename the device on the controller'],
   ])('should only log the selected device when choosing %s', async (label, logMessage, title) => {
     const { sendMessage, sendWebSocketMessage } = renderWithDevice('https://example.com/config', {}, { useUiProvider: true });
     const device = { plugin: 'matterbridge-test', deviceName: 'Second Device', serialNumber: 'test2' };
@@ -241,31 +257,49 @@ describe('HomeDevices', () => {
     await vi.waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
   });
 
-  it.each(['Confirm', 'Cancel'])('should only log when choosing %s in the unregister confirmation form', async (action) => {
-    const { sendMessage } = renderWithDevice('', {}, { useUiProvider: true });
+  it.each(['Confirm', 'Cancel'])('should send an unregister request only when confirmed, choosing %s', async (action) => {
+    const { sendMessage } = renderWithDevice('', { uniqueId: 'device-unique-1' }, { useUiProvider: true });
     sendMessage.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Unregister device...' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset device...' }));
 
-    const dialog = screen.getByRole('dialog', { name: /Unregister device/ });
+    const dialog = screen.getByRole('dialog', { name: /Reset device and restart/ });
+    expect(dialog).toHaveTextContent(
+      'Reset device "Test Device" from plugin "matterbridge-test"? This will temporarily remove the device from the controller and you may lose the controller configuration.',
+    );
     expect(within(dialog).queryByRole('textbox')).not.toBeInTheDocument();
     expect(within(dialog).getByRole('button', { name: 'Confirm' })).toBeEnabled();
     fireEvent.click(within(dialog).getByRole('button', { name: action }));
 
     expect(consoleLogSpy).toHaveBeenCalledWith(`handleUnregisterDevice ${action === 'Confirm' ? 'confirmed' : 'canceled'}: plugin matterbridge-test name Test Device serial test1`);
-    expect(sendMessage).not.toHaveBeenCalled();
+    expect(sendMessage.mock.calls).toEqual(
+      action === 'Confirm'
+        ? [
+            [
+              {
+                id: 7,
+                sender: 'HomeDevices',
+                method: '/api/unregister-device',
+                src: 'Frontend',
+                dst: 'Matterbridge',
+                params: { pluginName: 'matterbridge-test', serialNumber: 'test1', uniqueId: 'device-unique-1' },
+              },
+            ],
+          ]
+        : [],
+    );
     expect(screen.getByTestId('row-matterbridge-test::test1')).toBeInTheDocument();
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
-  it.each(['OK', 'Cancel'])('should only log when choosing %s after editing the controller name', async (action) => {
-    const { sendMessage } = renderWithDevice('', {}, { useUiProvider: true });
+  it.each(['OK', 'Cancel'])('should send the edited controller name only when confirmed, choosing %s', async (action) => {
+    const { sendMessage } = renderWithDevice('', { uniqueId: 'device-unique-1' }, { useUiProvider: true });
     sendMessage.mockClear();
     fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Controller name...' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Change controller name...' }));
     const dialog = screen.getByRole('dialog', { name: /Rename the device on the controller/ });
     expect(within(dialog).getByRole('textbox', { name: 'Controller name' })).toHaveValue('Test Device');
-    expect(within(dialog).getByRole('button', { name: 'OK' })).toBeDisabled();
+    expect(within(dialog).getByRole('button', { name: 'OK' })).toBeEnabled();
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'Controller name' }), { target: { value: 'New controller name' } });
 
     fireEvent.click(within(dialog).getByRole('button', { name: action }));
@@ -275,9 +309,43 @@ describe('HomeDevices', () => {
         ? 'handleControllerName confirmed: plugin matterbridge-test name Test Device serial test1 to controller name New controller name'
         : 'handleControllerName canceled: plugin matterbridge-test name Test Device serial test1',
     );
-    expect(sendMessage).not.toHaveBeenCalled();
+    expect(sendMessage.mock.calls).toEqual(
+      action === 'OK'
+        ? [
+            [
+              {
+                id: 7,
+                sender: 'HomeDevices',
+                method: '/api/rename-device',
+                src: 'Frontend',
+                dst: 'Matterbridge',
+                params: { pluginName: 'matterbridge-test', serialNumber: 'test1', uniqueId: 'device-unique-1', label: 'New controller name' },
+              },
+            ],
+          ]
+        : [],
+    );
     expect(screen.getByTestId('row-matterbridge-test::test1')).toHaveTextContent('Test Device');
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it.each([
+    ['Reset device...', 'Confirm', 'handleUnregisterDevice', 'Cannot reset device: missing unique ID.'],
+    ['Change controller name...', 'OK', 'handleControllerName', 'Cannot rename device: missing unique ID.'],
+  ])('should report a missing unique ID without sending an API request for %s', (label, action, handler, message) => {
+    const { sendMessage } = renderWithDevice('', {}, { useUiProvider: true });
+    sendMessage.mockClear();
+    fireEvent.click(screen.getByRole('button', { name: 'Device actions' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: label }));
+    const dialog = screen.getByRole('dialog');
+    const input = within(dialog).queryByRole('textbox');
+    if (input) fireEvent.change(input, { target: { value: 'New name' } });
+
+    fireEvent.click(within(dialog).getByRole('button', { name: action }));
+
+    expect(sendMessage).not.toHaveBeenCalled();
+    expect(consoleErrorSpy).toHaveBeenCalledWith(`${handler}: missing uniqueId for plugin matterbridge-test name Test Device serial test1`);
+    expect(screen.getByText(message)).toBeInTheDocument();
   });
 
   it('should dismiss the device actions menu without invoking an action when Escape is pressed', async () => {
