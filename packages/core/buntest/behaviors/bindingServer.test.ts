@@ -95,7 +95,8 @@ describe('MatterbridgeBindingServer', () => {
     expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     for (const behavior of [MatterbridgeBindingServer, MatterbridgeIdentifyServer, MatterbridgeOnOffServer]) expect(device.behaviors.has(behavior)).toBe(true);
     expect(device.stateOf(MatterbridgeIdentifyServer).identifyTime).toBe(5);
-    expect(device.stateOf(DescriptorServer).clientList).toEqual(expect.arrayContaining([Identify.id, OnOff.id]));
+    // A live state array: copy it, bun's asymmetric matchers do not accept it as an array.
+    expect([...device.stateOf(DescriptorServer).clientList]).toEqual(expect.arrayContaining([Identify.id, OnOff.id]));
     await device.setStateOf(MatterbridgeBindingServer, { binding: [{ node: NodeId(1), endpoint: EndpointNumber(1), fabricIndex: FabricIndex(1) }] });
     const events = device.eventsOf(MatterbridgeBindingServer);
 
