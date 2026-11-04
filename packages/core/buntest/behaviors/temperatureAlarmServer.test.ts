@@ -67,9 +67,10 @@ async function addSensor(id: string, supported: AlarmBits): Promise<{ sensor: Ma
   });
   sensor.addRequiredClusterServers();
   expect(await addBridgedDevice(aggregator, sensor, 0, 0, 0, 0)).toBeTruthy();
+  // The payloads are live matter.js state views: bun's toEqual also compares their getters and symbols, so copy them.
   const notifications: unknown[] = [];
   sensor.eventsOf(MatterbridgeTemperatureAlarmServer).notify.on((event) => {
-    notifications.push(event);
+    notifications.push(JSON.parse(JSON.stringify(event)));
   });
   return { sensor, notifications };
 }
@@ -133,7 +134,7 @@ describe('MatterbridgeTemperatureAlarmServer', () => {
     const resetRequest = { alarms: alarms('criticalOverTemperatureAlarm') };
     const resetSeen: unknown[] = [];
     const resetHandler = (data: { request: unknown; attributes: { state: unknown } }): void => {
-      resetSeen.push([data.request, data.attributes.state]);
+      resetSeen.push(JSON.parse(JSON.stringify([data.request, data.attributes.state])));
     };
     sensor.addCommandHandler('TemperatureAlarm.reset', resetHandler);
     await sensor.invokeBehaviorCommand(TemperatureAlarm, 'reset', resetRequest);
@@ -151,7 +152,7 @@ describe('MatterbridgeTemperatureAlarmServer', () => {
     const maskRequest = { mask: alarms('criticalOverTemperatureAlarm') };
     const maskSeen: unknown[] = [];
     const maskHandler = (data: { request: unknown; attributes: { mask: unknown } }): void => {
-      maskSeen.push([data.request, data.attributes.mask]);
+      maskSeen.push(JSON.parse(JSON.stringify([data.request, data.attributes.mask])));
     };
     sensor.addCommandHandler('TemperatureAlarm.modifyEnabledAlarms', maskHandler);
     await sensor.invokeBehaviorCommand(TemperatureAlarm, 'modifyEnabledAlarms', maskRequest);

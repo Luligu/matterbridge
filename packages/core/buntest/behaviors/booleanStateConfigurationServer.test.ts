@@ -57,12 +57,13 @@ describe('MatterbridgeBooleanStateConfigurationServer', () => {
 
     // AlarmsStateChanged fires on AlarmsActive and AlarmsSuppressed changes, SensorFault on SensorFault changes.
     await contact.setAttribute('booleanStateConfiguration', 'alarmsSuppressed', { audible: false, visual: false });
+    // The payloads are live matter.js state views: bun's toEqual also compares their getters and symbols, so copy them.
     const events: unknown[] = [];
     contact.eventsOf('booleanStateConfiguration').alarmsStateChanged?.on((event) => {
-      events.push(event);
+      events.push(JSON.parse(JSON.stringify(event)));
     });
     contact.eventsOf('booleanStateConfiguration').sensorFault?.on((event) => {
-      events.push(event);
+      events.push(JSON.parse(JSON.stringify(event)));
     });
     await contact.setAttribute('booleanStateConfiguration', 'alarmsActive', { audible: true, visual: false });
     await contact.setAttribute('booleanStateConfiguration', 'alarmsSuppressed', { audible: true, visual: true });
