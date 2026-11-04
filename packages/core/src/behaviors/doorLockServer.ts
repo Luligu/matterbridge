@@ -56,7 +56,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
   override initialize(): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeDoorLockServer: initializing server (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.9.25: In SupportedOperatingModes a zero bit means the mode is supported and every not-yet-defined bit SHALL be set to 1, so the reserved bit range must be fully set.
+    // Matter 1.6.1 § 5.2.9.25: In SupportedOperatingModes a zero bit means the mode is supported and every not-yet-defined bit SHALL be set to 1, so the reserved bit range must be fully set.
     super.initialize();
   }
 
@@ -77,13 +77,13 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 5.2.9.3 and § 5.2.10.1: Do not process a remote LockDoor command while the actuator is disabled.
+    // Matter 1.6.1 § 5.2.9.3 and § 5.2.10.1: Do not process a remote LockDoor command while the actuator is disabled.
     if (!this.state.actuatorEnabled) {
       device.log.warn(`MatterbridgeDoorLockServer: actuator disabled, cannot lock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
     device.log.debug(`MatterbridgeDoorLockServer: lockDoor called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.1: Validate any supplied PIN and set LockState to Locked when LockDoor succeeds.
+    // Matter 1.6.1 § 5.2.10.1: Validate any supplied PIN and set LockState to Locked when LockDoor succeeds.
     await super.lockDoor(request);
     this.endpoint.emitCommand(DoorLock, 'lockDoor', request, this.context);
   }
@@ -105,7 +105,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 5.2.9.3 and § 5.2.10.2: Do not process a remote UnlockDoor command while the actuator is disabled.
+    // Matter 1.6.1 § 5.2.9.3 and § 5.2.10.2: Do not process a remote UnlockDoor command while the actuator is disabled.
     if (!this.state.actuatorEnabled) {
       device.log.warn(`MatterbridgeDoorLockServer: actuator disabled, cannot unlock door (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
@@ -113,7 +113,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     device.log.debug(
       `MatterbridgeDoorLockServer: unlockDoor called ${this.state.autoRelockTime ? 'with ' + this.state.autoRelockTime + ' seconds' : 'without'} autoRelockTime (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 5.2.10.2: Validate any supplied PIN, set LockState to Unlocked, and apply AutoRelockTime when UnlockDoor succeeds.
+    // Matter 1.6.1 § 5.2.10.2: Validate any supplied PIN, set LockState to Unlocked, and apply AutoRelockTime when UnlockDoor succeeds.
     await super.unlockDoor(request);
     this.endpoint.emitCommand(DoorLock, 'unlockDoor', request, this.context);
   }
@@ -136,13 +136,13 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 5.2.9.3 and § 5.2.10.3: Do not process a remote UnlockWithTimeout command while the actuator is disabled.
+    // Matter 1.6.1 § 5.2.9.3 and § 5.2.10.3: Do not process a remote UnlockWithTimeout command while the actuator is disabled.
     if (!this.state.actuatorEnabled) {
       device.log.warn(`MatterbridgeDoorLockServer: actuator disabled, cannot unlock door with timeout (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return;
     }
     device.log.debug(`MatterbridgeDoorLockServer: unlockWithTimeout called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.3: Validate any supplied PIN, set LockState to Unlocked, and relock after the requested timeout.
+    // Matter 1.6.1 § 5.2.10.3: Validate any supplied PIN, set LockState to Unlocked, and relock after the requested timeout.
     await super.unlockWithTimeout(request);
     this.endpoint.emitCommand(DoorLock, 'unlockWithTimeout', request, this.context);
   }
@@ -168,7 +168,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: setUser called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.16: Validate SetUser fields and add or modify the specified user record with the required status semantics.
+    // Matter 1.6.1 § 5.2.10.16: Validate SetUser fields and add or modify the specified user record with the required status semantics.
     await super.setUser(request);
     this.endpoint.emitCommand(DoorLock, 'setUser', request, this.context);
   }
@@ -196,7 +196,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       return response;
     }
     device.log.debug(`MatterbridgeDoorLockServer: getUser called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.17 and § 5.2.10.18: Validate UserIndex and return the matching user record or the required not-found response.
+    // Matter 1.6.1 § 5.2.10.17 and § 5.2.10.18: Validate UserIndex and return the matching user record or the required not-found response.
     const result = await super.getUser(request);
     this.endpoint.emitCommand(DoorLock, 'getUser', request, this.context);
     return result;
@@ -223,7 +223,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: clearUser called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.19: Validate UserIndex and clear the specified user or all users when UserIndex is 0xFFFE.
+    // Matter 1.6.1 § 5.2.10.19: Validate UserIndex and clear the specified user or all users when UserIndex is 0xFFFE.
     await super.clearUser(request);
     this.endpoint.emitCommand(DoorLock, 'clearUser', request, this.context);
   }
@@ -251,20 +251,20 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     });
     device.log.debug(`MatterbridgeDoorLockServer: setCredential called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
 
-    // Matter 1.6.0 § 5.2.10.21.1: Return DUPLICATE if CredentialData duplicates another credential of the same CredentialType.
+    // Matter 1.6.1 § 5.2.10.21.1: Return DUPLICATE if CredentialData duplicates another credential of the same CredentialType.
     if (this.auth.isDuplicateCredential(request.credential.credentialType, request.credentialData, request.credential.credentialIndex)) {
       throw new DoorLock.DuplicateError(
         `MatterbridgeDoorLockServer: credential data duplicates another credential of the same type (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    // Matter 1.6.0 § 5.2.10.21.1: Return OCCUPIED if an Add operation targets an occupied CredentialIndex.
+    // Matter 1.6.1 § 5.2.10.21.1: Return OCCUPIED if an Add operation targets an occupied CredentialIndex.
     if (request.operationType === DoorLock.DataOperationType.Add && this.auth.findCredential(request.credential.credentialType, request.credential.credentialIndex)) {
       throw new DoorLock.OccupiedError(
         `MatterbridgeDoorLockServer: add operation targets an occupied credential index (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.2.10.20 and § 5.2.10.21: Validate SetCredential fields and add or modify the credential with the required response status.
+    // Matter 1.6.1 § 5.2.10.20 and § 5.2.10.21: Validate SetCredential fields and add or modify the credential with the required response status.
     const result = await super.setCredential(request);
     this.endpoint.emitCommand(DoorLock, 'setCredential', request, this.context);
     return result;
@@ -290,7 +290,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: getCredentialStatus called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.22 and § 5.2.10.23: Validate the credential index and return its association status and next occupied index.
+    // Matter 1.6.1 § 5.2.10.22 and § 5.2.10.23: Validate the credential index and return its association status and next occupied index.
     const result = await super.getCredentialStatus(request);
     this.endpoint.emitCommand(DoorLock, 'getCredentialStatus', request, this.context);
     return result;
@@ -318,7 +318,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: clearCredential called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.24: Validate the credential selector and clear the specified credential or requested credential set.
+    // Matter 1.6.1 § 5.2.10.24: Validate the credential selector and clear the specified credential or requested credential set.
     await super.clearCredential(request);
     this.endpoint.emitCommand(DoorLock, 'clearCredential', request, this.context);
   }
@@ -342,7 +342,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: setWeekDaySchedule called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.4: Validate and store the specified week day schedule for the user.
+    // Matter 1.6.1 § 5.2.10.4: Validate and store the specified week day schedule for the user.
     await super.setWeekDaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'setWeekDaySchedule', request, this.context);
   }
@@ -372,7 +372,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       return response;
     }
     device.log.debug(`MatterbridgeDoorLockServer: getWeekDaySchedule called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.5 and § 5.2.10.6: Validate the indexes and return the matching week day schedule or required status.
+    // Matter 1.6.1 § 5.2.10.5 and § 5.2.10.6: Validate the indexes and return the matching week day schedule or required status.
     const result = await super.getWeekDaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'getWeekDaySchedule', request, this.context);
     return result;
@@ -397,7 +397,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: clearWeekDaySchedule called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.7: Validate the indexes and clear the specified or all week day schedules for the user.
+    // Matter 1.6.1 § 5.2.10.7: Validate the indexes and clear the specified or all week day schedules for the user.
     await super.clearWeekDaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'clearWeekDaySchedule', request, this.context);
   }
@@ -421,7 +421,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: setYearDaySchedule called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.8: Validate and store the specified year day schedule for the user.
+    // Matter 1.6.1 § 5.2.10.8: Validate and store the specified year day schedule for the user.
     await super.setYearDaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'setYearDaySchedule', request, this.context);
   }
@@ -451,7 +451,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       return response;
     }
     device.log.debug(`MatterbridgeDoorLockServer: getYearDaySchedule called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.9 and § 5.2.10.10: Validate the indexes and return the matching year day schedule or required status.
+    // Matter 1.6.1 § 5.2.10.9 and § 5.2.10.10: Validate the indexes and return the matching year day schedule or required status.
     const result = await super.getYearDaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'getYearDaySchedule', request, this.context);
     return result;
@@ -476,7 +476,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
       context: this.context,
     });
     device.log.debug(`MatterbridgeDoorLockServer: clearYearDaySchedule called for userIndex ${request.userIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 5.2.10.11: Validate the indexes and clear the specified or all year day schedules for the user.
+    // Matter 1.6.1 § 5.2.10.11: Validate the indexes and clear the specified or all year day schedules for the user.
     await super.clearYearDaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'clearYearDaySchedule', request, this.context);
   }
@@ -500,7 +500,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     device.log.debug(
       `MatterbridgeDoorLockServer: setHolidaySchedule called for holidayIndex ${request.holidayIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 5.2.10.12: Validate and store the specified holiday schedule and operating mode.
+    // Matter 1.6.1 § 5.2.10.12: Validate and store the specified holiday schedule and operating mode.
     await super.setHolidaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'setHolidaySchedule', request, this.context);
   }
@@ -530,7 +530,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     device.log.debug(
       `MatterbridgeDoorLockServer: getHolidaySchedule called for holidayIndex ${request.holidayIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 5.2.10.13 and § 5.2.10.14: Validate HolidayIndex and return the matching holiday schedule or required status.
+    // Matter 1.6.1 § 5.2.10.13 and § 5.2.10.14: Validate HolidayIndex and return the matching holiday schedule or required status.
     const result = await super.getHolidaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'getHolidaySchedule', request, this.context);
     return result;
@@ -555,7 +555,7 @@ export class MatterbridgeDoorLockServer extends DoorLockServer.with(
     device.log.debug(
       `MatterbridgeDoorLockServer: clearHolidaySchedule called for holidayIndex ${request.holidayIndex} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 5.2.10.15: Validate HolidayIndex and clear the specified holiday schedule or all schedules for 0xFE.
+    // Matter 1.6.1 § 5.2.10.15: Validate HolidayIndex and clear the specified holiday schedule or all schedules for 0xFE.
     await super.clearHolidaySchedule(request);
     this.endpoint.emitCommand(DoorLock, 'clearHolidaySchedule', request, this.context);
   }

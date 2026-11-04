@@ -90,7 +90,7 @@ function sameAspectRatio(width: number, height: number, referenceWidth: number, 
 /**
  * Builds a viewport of the given size anchored at the given upper left corner, shifting the corner back inside the
  * sensor Cartesian plane when the rectangle would otherwise fall partly outside it.
- * Matter 1.6.0 § 11.3.7.7.5: "If any portion of requested viewport falls outside the sensor Cartesian plane: Change
+ * Matter 1.6.1 § 11.3.7.7.5: "If any portion of requested viewport falls outside the sensor Cartesian plane: Change
  * the upper left of the requested viewport to the nearest point allowing the viewport to be within the sensor
  * Cartesian plane."
  *
@@ -135,8 +135,8 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
 
   /**
    * Initializes the server and keeps DPTZStreams in step with the CameraAvStreamManagement cluster of this endpoint.
-   * Matter 1.6.0 § 11.3.6.4: a video stream listed in DPTZStreams is one that supports digital movement, and each
-   * entry's Viewport starts from the global Viewport. Matter 1.6.0 § 11.2.7.25: when the global Viewport changes, all
+   * Matter 1.6.1 § 11.3.6.4: a video stream listed in DPTZStreams is one that supports digital movement, and each
+   * entry's Viewport starts from the global Viewport. Matter 1.6.1 § 11.2.7.25: when the global Viewport changes, all
    * Viewport values in DPTZStreams SHALL be updated to the new value.
    *
    * The two reactors watch AllocatedVideoStreams and Viewport rather than hooking VideoStreamAllocate and
@@ -166,20 +166,20 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     const currentIds = this.state.dptzStreams.map((entry) => entry.videoStreamId);
     if (allocatedIds.length === currentIds.length && allocatedIds.every((id, index) => id === currentIds[index])) return;
     const viewport = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state.viewport;
-    // Matter 1.6.0 § 11.3.6.4: The initial values for each Viewport entry SHALL be the values found in the global Viewport.
+    // Matter 1.6.1 § 11.3.6.4: The initial values for each Viewport entry SHALL be the values found in the global Viewport.
     this.state.dptzStreams = allocatedIds.map((videoStreamId) => this.state.dptzStreams.find((entry) => entry.videoStreamId === videoStreamId) ?? { videoStreamId, viewport });
   }
 
   /**
    * Applies a change of the global Viewport to every DPTZStreams entry.
-   * Matter 1.6.0 § 11.2.7.25: when the Viewport attribute is changed, all Viewport values found in DPTZStreams SHALL
+   * Matter 1.6.1 § 11.2.7.25: when the Viewport attribute is changed, all Viewport values found in DPTZStreams SHALL
    * be updated to the new values set there.
    *
    * @param {Viewport} viewport - The new value of the global Viewport attribute.
    */
   protected syncDptzViewport(viewport: Viewport): void {
     if (this.state.dptzStreams.length === 0) return;
-    // Matter 1.6.0 § 11.2.7.25: When the Viewport attribute is changed, all Viewport values found in DPTZStreams SHALL be updated to the new values.
+    // Matter 1.6.1 § 11.2.7.25: When the Viewport attribute is changed, all Viewport values found in DPTZStreams SHALL be updated to the new values.
     this.state.dptzStreams = this.state.dptzStreams.map((entry) => ({ videoStreamId: entry.videoStreamId, viewport }));
   }
 
@@ -195,28 +195,28 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override mptzSetPosition(request: CameraAvSettingsUserLevelManagement.MptzSetPositionRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { pan, tilt, zoom } = request;
-    // Matter 1.6.0 § 11.3.7.1: Reject with INVALID_COMMAND; the Pan, Tilt and Zoom fields carry a choice conformance, so at least one of them SHALL be present.
+    // Matter 1.6.1 § 11.3.7.1: Reject with INVALID_COMMAND; the Pan, Tilt and Zoom fields carry a choice conformance, so at least one of them SHALL be present.
     if (pan === undefined && tilt === undefined && zoom === undefined) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: mptzSetPosition requires at least one of pan, tilt or zoom to be present (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidCommand,
       );
     }
-    // Matter 1.6.0 § 11.3.7.1: Reject with CONSTRAINT_ERROR; the Pan field is constrained to "PanMin to PanMax".
+    // Matter 1.6.1 § 11.3.7.1: Reject with CONSTRAINT_ERROR; the Pan field is constrained to "PanMin to PanMax".
     if (pan !== undefined && (pan < this.state.panMin || pan > this.state.panMax)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: pan ${pan} is outside of the supported range [${this.state.panMin}, ${this.state.panMax}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.1: Reject with CONSTRAINT_ERROR; the Tilt field is constrained to "TiltMin to TiltMax".
+    // Matter 1.6.1 § 11.3.7.1: Reject with CONSTRAINT_ERROR; the Tilt field is constrained to "TiltMin to TiltMax".
     if (tilt !== undefined && (tilt < this.state.tiltMin || tilt > this.state.tiltMax)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: tilt ${tilt} is outside of the supported range [${this.state.tiltMin}, ${this.state.tiltMax}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.1: Reject with CONSTRAINT_ERROR; the Zoom field is constrained to "1 to ZoomMax".
+    // Matter 1.6.1 § 11.3.7.1: Reject with CONSTRAINT_ERROR; the Zoom field is constrained to "1 to ZoomMax".
     if (zoom !== undefined && (zoom < 1 || zoom > this.state.zoomMax)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: zoom ${zoom} is outside of the supported range [1, ${this.state.zoomMax}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -249,7 +249,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    */
   override mptzRelativeMove(request: CameraAvSettingsUserLevelManagement.MptzRelativeMoveRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
-    // Matter 1.6.0 § 11.3.7.2: Reject with INVALID_COMMAND; the PanDelta, TiltDelta and ZoomDelta fields carry a choice conformance, so at least one of them SHALL be present.
+    // Matter 1.6.1 § 11.3.7.2: Reject with INVALID_COMMAND; the PanDelta, TiltDelta and ZoomDelta fields carry a choice conformance, so at least one of them SHALL be present.
     if (request.panDelta === undefined && request.tiltDelta === undefined && request.zoomDelta === undefined) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: mptzRelativeMove requires at least one of panDelta, tiltDelta or zoomDelta to be present (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -259,15 +259,15 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
     // Matter 1.6.1 § 11.3.7.2.4: Fail with BUSY while the camera is already engaged in a physical move.
     this.#assertNotMoving('mptzRelativeMove');
     const current = this.state.mptzPosition;
-    // Matter 1.6.0 § 11.3.7.2.4: Add PanDelta to the Pan value in MPTZPosition and clip the result to PanMin..PanMax inclusive.
+    // Matter 1.6.1 § 11.3.7.2.4: Add PanDelta to the Pan value in MPTZPosition and clip the result to PanMin..PanMax inclusive.
     /* v8 ignore next -- pan/tilt/zoom are conformance-mandatory once MechanicalPan/MechanicalTilt/MechanicalZoom are
      * enabled, which this class's fixed feature set always does (see the class declaration), so mptzPosition always
      * has all three fields defined and the `?? 0`/`?? 1` fallbacks can never trigger through the public API. */
     const pan = request.panDelta === undefined ? current.pan : clamp((current.pan ?? 0) + request.panDelta, this.state.panMin, this.state.panMax);
-    // Matter 1.6.0 § 11.3.7.2.4: Add TiltDelta to the Tilt value in MPTZPosition and clip the result to TiltMin..TiltMax inclusive.
+    // Matter 1.6.1 § 11.3.7.2.4: Add TiltDelta to the Tilt value in MPTZPosition and clip the result to TiltMin..TiltMax inclusive.
     // v8 ignore next -- same as above, for tilt.
     const tilt = request.tiltDelta === undefined ? current.tilt : clamp((current.tilt ?? 0) + request.tiltDelta, this.state.tiltMin, this.state.tiltMax);
-    // Matter 1.6.0 § 11.3.7.2.4: Add ZoomDelta to the Zoom value in MPTZPosition and clip the result to 1..ZoomMax inclusive.
+    // Matter 1.6.1 § 11.3.7.2.4: Add ZoomDelta to the Zoom value in MPTZPosition and clip the result to 1..ZoomMax inclusive.
     // v8 ignore next -- same as above, for zoom.
     const zoom = request.zoomDelta === undefined ? current.zoom : clamp((current.zoom ?? 1) + request.zoomDelta, 1, this.state.zoomMax);
     device.log.info(
@@ -289,7 +289,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override mptzMoveToPreset(request: CameraAvSettingsUserLevelManagement.MptzMoveToPresetRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { presetId } = request;
-    // Matter 1.6.0 § 11.3.7.3: Reject with CONSTRAINT_ERROR; the PresetID field is constrained to "1 to MaxPresets".
+    // Matter 1.6.1 § 11.3.7.3: Reject with CONSTRAINT_ERROR; the PresetID field is constrained to "1 to MaxPresets".
     if (presetId < 1 || presetId > this.state.maxPresets) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: presetId ${presetId} is outside of the supported range [1, ${this.state.maxPresets}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -297,7 +297,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
       );
     }
     const preset = this.state.mptzPresets.find((entry) => entry.presetId === presetId);
-    // Matter 1.6.0 § 11.3.7.3.2: Reject with NOT_FOUND; the provided PresetID SHALL match an entry in MPTZPresets.
+    // Matter 1.6.1 § 11.3.7.3.2: Reject with NOT_FOUND; the provided PresetID SHALL match an entry in MPTZPresets.
     if (preset === undefined) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: presetId ${presetId} is not present in mptzPresets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -321,6 +321,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    * @throws {StatusResponseError} With status Busy if MovementState is Moving.
    */
   #assertNotMoving(command: string): void {
+    // Matter 1.6.1 § 11.3.7.1.4, § 11.3.7.2.4 and § 11.3.7.3.2: Fail with BUSY, with no other side effects, while the camera is already engaged in a physical move.
     if (this.state.movementState === CameraAvSettingsUserLevelManagement.PhysicalMovement.Moving) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: ${command} rejected, the camera is already moving (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -374,21 +375,21 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override mptzSavePreset(request: CameraAvSettingsUserLevelManagement.MptzSavePresetRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { presetId, name } = request;
-    // Matter 1.6.0 § 11.3.7.4: Reject with CONSTRAINT_ERROR; the Name field is constrained to "max 32".
+    // Matter 1.6.1 § 11.3.7.4: Reject with CONSTRAINT_ERROR; the Name field is constrained to "max 32".
     if (name.length > 32) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: name "${name}" exceeds the maximum length of 32 characters (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.4: Reject with CONSTRAINT_ERROR; the PresetID field is constrained to "1 to MaxPresets".
+    // Matter 1.6.1 § 11.3.7.4: Reject with CONSTRAINT_ERROR; the PresetID field is constrained to "1 to MaxPresets".
     if (presetId !== undefined && (presetId < 1 || presetId > this.state.maxPresets)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: presetId ${presetId} is outside of the supported range [1, ${this.state.maxPresets}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.4.2: When the PresetID field is present and matches an existing entry, update that entry with the provided Name and the current values of MPTZPosition.
+    // Matter 1.6.1 § 11.3.7.4.2: When the PresetID field is present and matches an existing entry, update that entry with the provided Name and the current values of MPTZPosition.
     if (presetId !== undefined && this.state.mptzPresets.some((entry) => entry.presetId === presetId)) {
       this.state.mptzPresets = this.state.mptzPresets.map((entry) => (entry.presetId === presetId ? { presetId, name, settings: this.state.mptzPosition } : entry));
       device.log.info(
@@ -397,14 +398,14 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
       this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzSavePreset', request, this.context);
       return;
     }
-    // Matter 1.6.0 § 11.3.7.4.2: Reject with RESOURCE_EXHAUSTED; a new entry is required but the size of MPTZPresets is greater than or equal to MaxPresets.
+    // Matter 1.6.1 § 11.3.7.4.2: Reject with RESOURCE_EXHAUSTED; a new entry is required but the size of MPTZPresets is greater than or equal to MaxPresets.
     if (this.state.mptzPresets.length >= this.state.maxPresets) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: mptzPresets already holds the maximum of ${this.state.maxPresets} presets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ResourceExhausted,
       );
     }
-    // Matter 1.6.0 § 11.3.7.4.2: Create a new entry using the provided PresetID, or a generated one when the field is absent, the provided Name and the current values of MPTZPosition.
+    // Matter 1.6.1 § 11.3.7.4.2: Create a new entry using the provided PresetID, or a generated one when the field is absent, the provided Name and the current values of MPTZPosition.
     const newPresetId = presetId ?? this.generatePresetId();
     this.state.mptzPresets = [...this.state.mptzPresets, { presetId: newPresetId, name, settings: this.state.mptzPosition }];
     device.log.info(
@@ -424,21 +425,21 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override mptzRemovePreset(request: CameraAvSettingsUserLevelManagement.MptzRemovePresetRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { presetId } = request;
-    // Matter 1.6.0 § 11.3.7.5: Reject with CONSTRAINT_ERROR; the PresetID field is constrained to "1 to MaxPresets".
+    // Matter 1.6.1 § 11.3.7.5: Reject with CONSTRAINT_ERROR; the PresetID field is constrained to "1 to MaxPresets".
     if (presetId < 1 || presetId > this.state.maxPresets) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: presetId ${presetId} is outside of the supported range [1, ${this.state.maxPresets}] (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.ConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.5.2: Reject with NOT_FOUND; the provided PresetID SHALL exist in MPTZPresets.
+    // Matter 1.6.1 § 11.3.7.5.2: Reject with NOT_FOUND; the provided PresetID SHALL exist in MPTZPresets.
     if (!this.state.mptzPresets.some((entry) => entry.presetId === presetId)) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: presetId ${presetId} is not present in mptzPresets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.NotFound,
       );
     }
-    // Matter 1.6.0 § 11.3.7.5.2: Remove the entry for the provided PresetID from MPTZPresets.
+    // Matter 1.6.1 § 11.3.7.5.2: Remove the entry for the provided PresetID from MPTZPresets.
     this.state.mptzPresets = this.state.mptzPresets.filter((entry) => entry.presetId !== presetId);
     device.log.info(`MatterbridgeCameraAvSettingsUserLevelManagementServer: removed preset ${presetId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.endpoint.emitCommand(CameraAvSettingsUserLevelManagement, 'mptzRemovePreset', request, this.context);
@@ -446,7 +447,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
 
   /**
    * Generates the preset id used when MPTZSavePreset is invoked without a PresetID field.
-   * Matter 1.6.0 § 11.3.7.4.2: the value starts at 1 and monotonically increases by 1 with each new saved preset,
+   * Matter 1.6.1 § 11.3.7.4.2: the value starts at 1 and monotonically increases by 1 with each new saved preset,
    * wrapping to 1 once it is incremented past MaxPresets, and is incremented further whenever it collides with an
    * id already present in MPTZPresets. Only called once the caller has established that MPTZPresets holds fewer
    * than MaxPresets entries, so a free id always exists and the collision loop always terminates.
@@ -464,7 +465,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
 
   /**
    * Returns the DPTZStreams entry for the given video stream id.
-   * Matter 1.6.0 § 11.3.7.6.3 and § 11.3.7.7.5: both digital commands SHALL fail with NOT_FOUND when a VideoStreamID
+   * Matter 1.6.1 § 11.3.7.6.3 and § 11.3.7.7.5: both digital commands SHALL fail with NOT_FOUND when a VideoStreamID
    * entry does not exist in DPTZStreams.
    *
    * @param {number} videoStreamId - The video stream id carried by the command.
@@ -473,7 +474,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    */
   private dptzStreamEntry(videoStreamId: number): CameraAvSettingsUserLevelManagement.Dptz {
     const entry = this.state.dptzStreams.find((stream) => stream.videoStreamId === videoStreamId);
-    // Matter 1.6.0 § 11.3.7.6.3 and § 11.3.7.7.5: Fail DPTZSetViewport and DPTZRelativeMove with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
+    // Matter 1.6.1 § 11.3.7.6.3 and § 11.3.7.7.5: Fail DPTZSetViewport and DPTZRelativeMove with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
     if (entry === undefined) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: video stream ${videoStreamId} is not present in dptzStreams (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -490,7 +491,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
    * @param {Viewport} viewport - The viewport to apply to that stream.
    */
   private applyDptzViewport(videoStreamId: number, viewport: Viewport): void {
-    // Matter 1.6.0 § 11.3.7.6.3 and § 11.3.7.7.5: Update the entry in DPTZStreams with the new viewport values.
+    // Matter 1.6.1 § 11.3.7.6.3 and § 11.3.7.7.5: Update the entry in DPTZStreams with the new viewport values.
     this.state.dptzStreams = this.state.dptzStreams.map((entry) => (entry.videoStreamId === videoStreamId ? { videoStreamId, viewport } : entry));
   }
 
@@ -505,19 +506,19 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override dptzSetViewport(request: CameraAvSettingsUserLevelManagement.DptzSetViewportRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { videoStreamId, viewport } = request;
-    // Matter 1.6.0 § 11.3.7.6.3: Fail DPTZSetViewport with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
+    // Matter 1.6.1 § 11.3.7.6.3: Fail DPTZSetViewport with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
     const entry = this.dptzStreamEntry(videoStreamId);
     const { videoSensorParams, minViewportResolution } = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state;
     const width = viewportWidth(viewport);
     const height = viewportHeight(viewport);
-    // Matter 1.6.0 § 11.3.7.6.3: Reject with DYNAMIC_CONSTRAINT_ERROR when the requested viewport is outside of the defined allowed range, the lower bound of which is MinViewportResolution.
+    // Matter 1.6.1 § 11.3.7.6.3: Reject with DYNAMIC_CONSTRAINT_ERROR when the requested viewport is outside of the defined allowed range, the lower bound of which is MinViewportResolution.
     if (width < minViewportResolution.width || height < minViewportResolution.height) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: viewport ${width}x${height} is smaller than the minimum viewport resolution ${minViewportResolution.width}x${minViewportResolution.height} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.DynamicConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.6.3: The upper bound of that same allowed range is the sensor Cartesian plane, of size SensorWidth by SensorHeight.
+    // Matter 1.6.1 § 11.3.7.6.3: The upper bound of that same allowed range is the sensor Cartesian plane, of size SensorWidth by SensorHeight.
     if (
       viewport.x2 > videoSensorParams.sensorWidth ||
       viewport.y2 > videoSensorParams.sensorHeight ||
@@ -529,14 +530,14 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
         Status.DynamicConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.6.2: The aspect ratio of the viewport SHALL match the aspect ratio of the stream requested. § 11.3.7.6.3 lists only NOT_FOUND and DYNAMIC_CONSTRAINT_ERROR as failures, so a viewport failing this SHALL is also outside the defined allowed range.
+    // Matter 1.6.1 § 11.3.7.6.2: The aspect ratio of the viewport SHALL match the aspect ratio of the stream requested. § 11.3.7.6.3 lists only NOT_FOUND and DYNAMIC_CONSTRAINT_ERROR as failures, so a viewport failing this SHALL is also outside the defined allowed range.
     if (!sameAspectRatio(width, height, viewportWidth(entry.viewport), viewportHeight(entry.viewport))) {
       throw new StatusResponseError(
         `MatterbridgeCameraAvSettingsUserLevelManagementServer: viewport ${width}x${height} does not match the aspect ratio of video stream ${videoStreamId} (${viewportWidth(entry.viewport)}x${viewportHeight(entry.viewport)}) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.DynamicConstraintError,
       );
     }
-    // Matter 1.6.0 § 11.3.7.6.3: Update the entry in DPTZStreams with the requested Viewport and apply it to the requested video stream.
+    // Matter 1.6.1 § 11.3.7.6.3: Update the entry in DPTZStreams with the requested Viewport and apply it to the requested video stream.
     this.applyDptzViewport(videoStreamId, viewport);
     device.log.info(
       `MatterbridgeCameraAvSettingsUserLevelManagementServer: set the viewport of video stream ${videoStreamId} to (${viewport.x1}, ${viewport.y1})-(${viewport.x2}, ${viewport.y2}) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -556,17 +557,17 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
   override dptzRelativeMove(request: CameraAvSettingsUserLevelManagement.DptzRelativeMoveRequest): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     const { videoStreamId, deltaX, deltaY, zoomDelta } = request;
-    // Matter 1.6.0 § 11.3.7.7.5: Fail DPTZRelativeMove with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
+    // Matter 1.6.1 § 11.3.7.7.5: Fail DPTZRelativeMove with NOT_FOUND if a VideoStreamID entry does not exist in DPTZStreams.
     const entry = this.dptzStreamEntry(videoStreamId);
     const { videoSensorParams, minViewportResolution } = this.agent.get(MatterbridgeCameraAvStreamManagementServer).state;
     const { sensorWidth, sensorHeight } = videoSensorParams;
     const current = entry.viewport;
-    // Matter 1.6.0 § 11.3.7.7.5: Add DeltaX to the X1 and X2 fields, and DeltaY to the Y1 and Y2 fields, of the viewport bounding rectangle.
+    // Matter 1.6.1 § 11.3.7.7.5: Add DeltaX to the X1 and X2 fields, and DeltaY to the Y1 and Y2 fields, of the viewport bounding rectangle.
     let x1 = current.x1 + (deltaX ?? 0);
     let y1 = current.y1 + (deltaY ?? 0);
     let width = viewportWidth(current);
     let height = viewportHeight(current);
-    // Matter 1.6.0 § 11.3.7.7.5: Scale the viewport bounding rectangle by the percentage value, anchoring the re-scaled rectangle at the center point of the existing viewport. A positive value makes the viewport smaller, a negative one larger.
+    // Matter 1.6.1 § 11.3.7.7.5: Scale the viewport bounding rectangle by the percentage value, anchoring the re-scaled rectangle at the center point of the existing viewport. A positive value makes the viewport smaller, a negative one larger.
     if (zoomDelta !== undefined && zoomDelta !== 0) {
       const scaledWidth = Math.round((width * (100 - zoomDelta)) / 100);
       const scaledHeight = Math.round((height * (100 - zoomDelta)) / 100);
@@ -575,7 +576,7 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
       width = scaledWidth;
       height = scaledHeight;
     }
-    // Matter 1.6.0 § 11.3.7.7.5: If the aspect ratio following application of the delta values does not match the aspect ratio of the video stream, clip the viewport to the aspect ratio of the video stream while maintaining the upper left location.
+    // Matter 1.6.1 § 11.3.7.7.5: If the aspect ratio following application of the delta values does not match the aspect ratio of the video stream, clip the viewport to the aspect ratio of the video stream while maintaining the upper left location.
     const streamWidth = viewportWidth(current);
     const streamHeight = viewportHeight(current);
     if (!sameAspectRatio(width, height, streamWidth, streamHeight)) {
@@ -583,15 +584,15 @@ export class MatterbridgeCameraAvSettingsUserLevelManagementServer extends Camer
       if (clippedHeight <= height) height = clippedHeight;
       else width = Math.round((height * streamWidth) / streamHeight);
     }
-    // Matter 1.6.0 § 11.3.7.7.5: If the resultant requested viewport is smaller than the MinViewportResolution, use the size in MinViewportResolution while preserving the upper left location if possible.
+    // Matter 1.6.1 § 11.3.7.7.5: If the resultant requested viewport is smaller than the MinViewportResolution, use the size in MinViewportResolution while preserving the upper left location if possible.
     width = Math.max(width, minViewportResolution.width);
     height = Math.max(height, minViewportResolution.height);
-    // Matter 1.6.0 § 11.3.7.7.5: If the requested viewport is larger than SensorWidth or SensorHeight in the VideoSensorParams, use the sensor size values.
+    // Matter 1.6.1 § 11.3.7.7.5: If the requested viewport is larger than SensorWidth or SensorHeight in the VideoSensorParams, use the sensor size values.
     width = Math.min(width, sensorWidth);
     height = Math.min(height, sensorHeight);
-    // Matter 1.6.0 § 11.3.7.7.5: If any portion of the requested viewport falls outside the sensor Cartesian plane, change the upper left of the requested viewport to the nearest point allowing the viewport to be within the sensor Cartesian plane.
+    // Matter 1.6.1 § 11.3.7.7.5: If any portion of the requested viewport falls outside the sensor Cartesian plane, change the upper left of the requested viewport to the nearest point allowing the viewport to be within the sensor Cartesian plane.
     const viewport = viewportAt(x1, y1, width, height, sensorWidth, sensorHeight);
-    // Matter 1.6.0 § 11.3.7.7.5: Apply the new viewport values to the video stream and update the entry in DPTZStreams.
+    // Matter 1.6.1 § 11.3.7.7.5: Apply the new viewport values to the video stream and update the entry in DPTZStreams.
     this.applyDptzViewport(videoStreamId, viewport);
     device.log.info(
       `MatterbridgeCameraAvSettingsUserLevelManagementServer: moved the viewport of video stream ${videoStreamId} by deltaX ${deltaX ?? 0}, deltaY ${deltaY ?? 0}, zoomDelta ${zoomDelta ?? 0} to (${viewport.x1}, ${viewport.y1})-(${viewport.x2}, ${viewport.y2}) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -678,9 +679,9 @@ export function createDefaultCameraAvSettingsUserLevelManagementClusterServer(
     {
       ...options,
       movementState: CameraAvSettingsUserLevelManagement.PhysicalMovement.Idle,
-      // Matter 1.6.0 § 11.3.6.3: MPTZPresets is a nonVolatile list, so it starts empty and is populated by MPTZSavePreset.
+      // Matter 1.6.1 § 11.3.6.3: MPTZPresets is a nonVolatile list, so it starts empty and is populated by MPTZSavePreset.
       mptzPresets: [],
-      // Matter 1.6.0 § 11.3.6.4: DPTZStreams lists the allocated video streams, so it starts empty and is kept in step with AllocatedVideoStreams by initialize().
+      // Matter 1.6.1 § 11.3.6.4: DPTZStreams lists the allocated video streams, so it starts empty and is kept in step with AllocatedVideoStreams by initialize().
       dptzStreams: [],
     },
   );

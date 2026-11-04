@@ -298,7 +298,7 @@ export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer e
    * Initializes the server.
    */
   override initialize(): void {
-    // Validates SupportedModes (Matter 1.6.0 § 8.7.6.1 requires an Auto mode) and CurrentMode.
+    // Validates SupportedModes (Matter 1.6.1 § 8.7.6.1 requires an Auto mode) and CurrentMode.
     super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: initialized (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -329,7 +329,7 @@ export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer e
       context: this.context,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
     if (!supportedMode) {
       device.log.error(
         `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with unsupported mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -339,7 +339,7 @@ export class MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer e
     device.log.debug(
       `MatterbridgeRefrigeratorAndTemperatureControlledCabinetModeServer: changeToMode called with mode ${supportedMode.mode} = ${supportedMode.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
+    // Matter 1.6.1 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
     this.state.currentMode = request.newMode;
     this.endpoint.emitCommand(RefrigeratorAndTemperatureControlledCabinetMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
@@ -361,7 +361,7 @@ const MatterbridgeRefrigeratorAlarmSchema = RefrigeratorAlarmServer.schema.exten
 );
 
 /**
- * A Refrigerator Alarm `AlarmBitmap` with every bit of Matter 1.6.0 § 8.8.5.1 set to an explicit value.
+ * A Refrigerator Alarm `AlarmBitmap` with every bit of Matter 1.6.1 § 8.8.5.1 set to an explicit value.
  *
  * @remarks
  * The `doorOpen` bit of {@link RefrigeratorAlarm.Alarm} is optional, so a bitmap literal that forgets it still compiles and
@@ -373,11 +373,11 @@ type RefrigeratorAlarmBitmap = Required<RefrigeratorAlarm.Alarm>;
  * Refrigerator Alarm server with the inherited alarm attributes bound to the Refrigerator-specific AlarmBitmap.
  *
  * @remarks
- * Matter 1.6.0 § 8.8.5.1 and Alarm Base § 1.15.6.3, § 1.15.6.4, and § 1.15.8.1 define `DoorOpen` as bit 0 of `Mask`,
+ * Matter 1.6.1 § 8.8.5.1 and Alarm Base § 1.15.6.3, § 1.15.6.4, and § 1.15.8.1 define `DoorOpen` as bit 0 of `Mask`,
  * `State`, `Supported`, and the `Notify` event's bitmap fields. Redeclaring these inherited elements makes their wire
  * schema resolve the Refrigerator Alarm cluster's `AlarmBitmap`, rather than the empty base-cluster bitmap.
  *
- * Unlike {@link MatterbridgeDishwasherAlarmServer}, this cluster exposes no commands at all: Matter 1.6.0 § 8.8.4 marks the
+ * Unlike {@link MatterbridgeDishwasherAlarmServer}, this cluster exposes no commands at all: Matter 1.6.1 § 8.8.4 marks the
  * Alarm Base `RESET` feature as disallowed (`X`), which also removes the `Reset` command and the `Latch` attribute, and
  * § 8.8.7 marks `ModifyEnabledAlarms` as disallowed (`X`). Only the mandatory `Notify` event remains to be implemented,
  * since matter.js ships no implementation for the Alarm Base cluster.
@@ -410,11 +410,11 @@ export class MatterbridgeRefrigeratorAlarmServer extends RefrigeratorAlarmServer
    * @returns {void}
    */
   #emitNotify(state: RefrigeratorAlarm.Alarm, oldState: RefrigeratorAlarm.Alarm): void {
-    // Matter 1.6.0 § 1.15.8.1.1: Active indicates those alarms that have become active.
+    // Matter 1.6.1 § 1.15.8.1.1: Active indicates those alarms that have become active.
     const active: RefrigeratorAlarmBitmap = { doorOpen: Boolean(state.doorOpen && !oldState.doorOpen) };
-    // Matter 1.6.0 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
+    // Matter 1.6.1 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
     const inactive: RefrigeratorAlarmBitmap = { doorOpen: Boolean(!state.doorOpen && oldState.doorOpen) };
-    // Matter 1.6.0 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
+    // Matter 1.6.1 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
     this.events.notify.emit({ active, inactive, state, mask: this.state.mask }, this.context);
   }
 }

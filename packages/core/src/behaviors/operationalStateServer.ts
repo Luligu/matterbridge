@@ -49,9 +49,9 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.debug(`MatterbridgeOperationalStateServer: initialized, setting operational state to Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // OperationalState and OperationalError have no "N" (nonvolatile) quality in the spec, so they are not persisted and are reset to their defaults on every restart.
-    // Matter 1.6.0 § 1.14.5.5: OperationalState SHALL be populated with a valid OperationalStateID from the OperationalStateList attribute.
+    // Matter 1.6.1 § 1.14.5.5: OperationalState SHALL be populated with a valid OperationalStateID from the OperationalStateList attribute.
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError SHALL have an ErrorStateID of NoError when no error is detected.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError SHALL have an ErrorStateID of NoError when no error is detected.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     super.initialize();
   }
@@ -88,7 +88,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       context: this.context,
     });
 
-    // Matter 1.6.0 § 1.14.6.1: Respond with ErrorStateID NoError and take no further action if Pause is received while already Paused.
+    // Matter 1.6.1 § 1.14.6.1: Respond with ErrorStateID NoError and take no further action if Pause is received while already Paused.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Paused as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: pause received while already Paused, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -98,7 +98,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       };
     }
 
-    // Matter 1.6.0 § 1.14.6.1: Reject Pause with ErrorStateID CommandInvalidInState when the current state is not Pause-compatible (Table 3: only Running and Paused are compatible).
+    // Matter 1.6.1 § 1.14.6.1: Reject Pause with ErrorStateID CommandInvalidInState when the current state is not Pause-compatible (Table 3: only Running and Paused are compatible).
     if (this.state.operationalState !== (OperationalState.OperationalStateEnum.Running as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: pause received in state ${this.state.operationalState} which is not Pause-compatible (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -109,12 +109,12 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     }
 
     device.log.debug(`MatterbridgeOperationalStateServer: pause called setting operational state to Paused (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.14.6.4 and § 1.14.7.2.3: Record the pre-pause state for Resume and start timing the paused segment for OperationCompletion's PausedTime.
+    // Matter 1.6.1 § 1.14.6.4 and § 1.14.7.2.3: Record the pre-pause state for Resume and start timing the paused segment for OperationCompletion's PausedTime.
     this.internal.operationalStateBeforePause = this.state.operationalState;
     this.internal.pausedSinceMs = Date.now();
-    // Matter 1.6.0 § 1.14.6.1: On success, set OperationalState to Paused.
+    // Matter 1.6.1 § 1.14.6.1: On success, set OperationalState to Paused.
     this.state.operationalState = OperationalState.OperationalStateEnum.Paused;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(OperationalState, 'pause', {}, this.context);
     return {
@@ -160,7 +160,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       context: this.context,
     });
 
-    // Matter 1.6.0 § 1.14.6.2: Respond with ErrorStateID NoError and take no further action if Stop is received while already Stopped.
+    // Matter 1.6.1 § 1.14.6.2: Respond with ErrorStateID NoError and take no further action if Stop is received while already Stopped.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Stopped as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: stop received while already Stopped, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -172,7 +172,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
 
     device.log.debug(`MatterbridgeOperationalStateServer: stop called setting operational state to Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // If Stop arrives while Paused, close out the in-progress paused segment before computing PausedTime.
-    // Matter 1.6.0 § 1.14.7.2.3: PausedTime reports the total time spent in the paused state, so a still-open paused segment counts toward it.
+    // Matter 1.6.1 § 1.14.7.2.3: PausedTime reports the total time spent in the paused state, so a still-open paused segment counts toward it.
     if (this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;
@@ -181,11 +181,11 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     const pausedTime = this.internal.operationStartedAt === undefined ? null : Math.round(this.internal.pausedAccumulatedMs / 1000);
     this.internal.operationStartedAt = undefined;
     this.internal.pausedAccumulatedMs = 0;
-    // Matter 1.6.0 § 1.14.7.2: Generate OperationCompletion when the overall operation ends, reporting CompletionErrorCode, TotalOperationalTime and PausedTime.
+    // Matter 1.6.1 § 1.14.7.2: Generate OperationCompletion when the overall operation ends, reporting CompletionErrorCode, TotalOperationalTime and PausedTime.
     this.events.operationCompletion.emit({ completionErrorCode: OperationalState.ErrorState.NoError, totalOperationalTime, pausedTime }, this.context);
-    // Matter 1.6.0 § 1.14.6.2: On success, set OperationalState to Stopped.
+    // Matter 1.6.1 § 1.14.6.2: On success, set OperationalState to Stopped.
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(OperationalState, 'stop', {}, this.context);
     return {
@@ -225,7 +225,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       context: this.context,
     });
 
-    // Matter 1.6.0 § 1.14.6.3: Respond with ErrorStateID NoError and take no further action if Start is received while already Running.
+    // Matter 1.6.1 § 1.14.6.3: Respond with ErrorStateID NoError and take no further action if Start is received while already Running.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Running as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: start received while already Running, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -235,7 +235,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       };
     }
 
-    // Matter 1.6.0 § 1.14.6.3: Reject Start with ErrorStateID UnableToStartOrResume while in the Error state, since the error must be cleared (e.g. via Stop) before Start can be honored again.
+    // Matter 1.6.1 § 1.14.6.3: Reject Start with ErrorStateID UnableToStartOrResume while in the Error state, since the error must be cleared (e.g. via Stop) before Start can be honored again.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Error as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: start received while in the Error state, unable to honor (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -246,7 +246,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
     }
 
     device.log.debug(`MatterbridgeOperationalStateServer: start called setting operational state to Running (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.14.7.2.2: Begin timing a fresh operation cycle for TotalOperationalTime; starting directly from Paused closes out that paused segment without resetting the cycle's start time.
+    // Matter 1.6.1 § 1.14.7.2.2: Begin timing a fresh operation cycle for TotalOperationalTime; starting directly from Paused closes out that paused segment without resetting the cycle's start time.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Paused as number) && this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;
@@ -254,9 +254,9 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       this.internal.operationStartedAt = Date.now();
       this.internal.pausedAccumulatedMs = 0;
     }
-    // Matter 1.6.0 § 1.14.6.3: On success, set OperationalState to Running.
+    // Matter 1.6.1 § 1.14.6.3: On success, set OperationalState to Running.
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(OperationalState, 'start', {}, this.context);
     return {
@@ -297,7 +297,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       context: this.context,
     });
 
-    // Matter 1.6.0 § 1.14.6.4: Respond with ErrorStateID NoError and take no further action if Resume is received while already Running.
+    // Matter 1.6.1 § 1.14.6.4: Respond with ErrorStateID NoError and take no further action if Resume is received while already Running.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Running as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: resume received while already Running, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -307,7 +307,7 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
       };
     }
 
-    // Matter 1.6.0 § 1.14.6.4: Reject Resume with ErrorStateID CommandInvalidInState when the current state is not Resume-compatible (Table 4: only Running and Paused are compatible).
+    // Matter 1.6.1 § 1.14.6.4: Reject Resume with ErrorStateID CommandInvalidInState when the current state is not Resume-compatible (Table 4: only Running and Paused are compatible).
     if (this.state.operationalState !== (OperationalState.OperationalStateEnum.Paused as number)) {
       device.log.debug(
         `MatterbridgeOperationalStateServer: resume received in state ${this.state.operationalState} which is not Resume-compatible (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -319,14 +319,14 @@ export class MatterbridgeOperationalStateServer extends MatterbridgeOperationalS
 
     device.log.debug(`MatterbridgeOperationalStateServer: resume called setting operational state to Running (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     // Close out the paused segment started in pause().
-    // Matter 1.6.0 § 1.14.7.2.3: PausedTime reports the total time spent in the paused state, accumulated across every Pause/Resume pair.
+    // Matter 1.6.1 § 1.14.7.2.3: PausedTime reports the total time spent in the paused state, accumulated across every Pause/Resume pair.
     if (this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;
     }
-    // Matter 1.6.0 § 1.14.6.4: On success, restore OperationalState to the most recent non-Error state prior to entering Paused.
+    // Matter 1.6.1 § 1.14.6.4: On success, restore OperationalState to the most recent non-Error state prior to entering Paused.
     this.state.operationalState = this.internal.operationalStateBeforePause;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(OperationalState, 'resume', {}, this.context);
     return {

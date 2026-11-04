@@ -62,7 +62,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
 
   override async initialize(): Promise<void> {
     await super.initialize();
-    // Matter 1.6.0 § 9.2.8.8: When the user opts out of the cause a PowerAdjustActive session is running under, the ESA behaves as if it had received a CancelPowerAdjustRequest command.
+    // Matter 1.6.1 § 9.2.8.8: When the user opts out of the cause a PowerAdjustActive session is running under, the ESA behaves as if it had received a CancelPowerAdjustRequest command.
     // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.events.optOutState$Changed, this.#handleOptOutStateChanged);
   }
@@ -93,7 +93,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     );
 
     const entries = (this.state.powerAdjustmentCapability?.powerAdjustCapability ?? []) as PowerAdjustEntry[];
-    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR when the advertised PowerAdjustmentCapability holds no PowerAdjustStruct entry to validate Power and Duration against.
+    // Matter 1.6.1 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR when the advertised PowerAdjustmentCapability holds no PowerAdjustStruct entry to validate Power and Duration against.
     if (entries.length === 0) {
       throw new StatusResponseError(
         `MatterbridgeDeviceEnergyManagementServer: no power adjustment capability available (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -104,7 +104,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     const maxPower = Math.max(...entries.map((entry) => entry.maxPower));
     const minDuration = Math.min(...entries.map((entry) => entry.minDuration));
     const maxDuration = Math.max(...entries.map((entry) => entry.maxDuration));
-    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if Power or Duration is outside the advertised PowerAdjustmentCapability limits.
+    // Matter 1.6.1 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if Power or Duration is outside the advertised PowerAdjustmentCapability limits.
     if (power < minPower || power > maxPower || duration < minDuration || duration > maxDuration) {
       throw new StatusResponseError(
         `MatterbridgeDeviceEnergyManagementServer: power or duration out of range (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -113,7 +113,7 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     }
     const optOutBit =
       cause === DeviceEnergyManagement.AdjustmentCause.LocalOptimization ? DeviceEnergyManagement.OptOutState.LocalOptOut : DeviceEnergyManagement.OptOutState.GridOptOut;
-    // Matter 1.6.0 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if OptOutState does not permit the requested AdjustmentCauseEnum.
+    // Matter 1.6.1 § 9.2.9.1.4: Reject the command with CONSTRAINT_ERROR if OptOutState does not permit the requested AdjustmentCauseEnum.
     if ((this.state.optOutState & optOutBit) !== 0) {
       throw new StatusResponseError(
         `MatterbridgeDeviceEnergyManagementServer: user has opted out of this adjustment cause (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -129,18 +129,18 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
 
     this.internal.powerAdjustCompletionTimer?.stop();
     this.internal.powerAdjustPowerMw = Number(power);
-    // Matter 1.6.0 § 9.2.9.1.4: On acceptance, set ESAState to PowerAdjustActive and update PowerAdjustmentCapability's Cause to the requested value.
+    // Matter 1.6.1 § 9.2.9.1.4: On acceptance, set ESAState to PowerAdjustActive and update PowerAdjustmentCapability's Cause to the requested value.
     this.state.esaState = DeviceEnergyManagement.EsaState.PowerAdjustActive;
     this.state.powerAdjustmentCapability = { powerAdjustCapability: entries, cause: adjustReason };
     // Only the transition out of Online starts a new session and emits PowerAdjustStart — a cause-only update
     // while already active (e.g. switching from LocalOptimization to GridOptimization) must not restart it, so a
     // later PowerAdjustEnd still reports the duration elapsed since the original activation.
     if (!wasActive) {
-      // Matter 1.6.0 § 9.2.9.1.4: Generate PowerAdjustStart when the ESA begins to adjust its power.
+      // Matter 1.6.1 § 9.2.9.1.4: Generate PowerAdjustStart when the ESA begins to adjust its power.
       this.internal.powerAdjustActivationTimeMs = Time.nowMs;
       this.events.powerAdjustStart.emit(undefined, this.context);
     }
-    // Matter 1.6.0 § 9.2.9.1.4: After the elapsed Duration the ESA reverts to normal power levels and ends the session with a Normal completion PowerAdjustEnd.
+    // Matter 1.6.1 § 9.2.9.1.4: After the elapsed Duration the ESA reverts to normal power levels and ends the session with a Normal completion PowerAdjustEnd.
     this.internal.powerAdjustCompletionTimer = Time.getTimer(
       'DeviceEnergyManagement power adjust completion',
       Seconds(duration),
@@ -168,33 +168,33 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     });
     device.log.debug(`MatterbridgeDeviceEnergyManagementServer: cancelPowerAdjustRequest called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
 
-    // Matter 1.6.0 § 9.2.9.2.1: Reject the command with INVALID_IN_STATE when the ESAState is not PowerAdjustActive.
+    // Matter 1.6.1 § 9.2.9.2.1: Reject the command with INVALID_IN_STATE when the ESAState is not PowerAdjustActive.
     if (this.state.esaState !== DeviceEnergyManagement.EsaState.PowerAdjustActive) {
       throw new StatusResponseError(
         `MatterbridgeDeviceEnergyManagementServer: no power adjustment is currently active (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         Status.InvalidInState,
       );
     }
-    // Matter 1.6.0 § 9.2.9.2.1: End the active session, generating PowerAdjustEnd, restoring ESAState to Online and setting the PowerAdjustmentCapability Cause to NoAdjustment.
+    // Matter 1.6.1 § 9.2.9.2.1: End the active session, generating PowerAdjustEnd, restoring ESAState to Online and setting the PowerAdjustmentCapability Cause to NoAdjustment.
     this.#endPowerAdjustment(DeviceEnergyManagement.Cause.Cancelled);
     this.endpoint.emitCommand(DeviceEnergyManagement, 'cancelPowerAdjustRequest', {}, this.context);
   }
 
   #handleOptOutStateChanged(optOutState: DeviceEnergyManagement.OptOutState): void {
-    // Matter 1.6.0 § 9.2.8.8: Only an ESA whose ESAStateEnum is PowerAdjustActive due to a previous PowerAdjustRequest is affected by an Opt-Out state change.
+    // Matter 1.6.1 § 9.2.8.8: Only an ESA whose ESAStateEnum is PowerAdjustActive due to a previous PowerAdjustRequest is affected by an Opt-Out state change.
     if (this.state.esaState !== DeviceEnergyManagement.EsaState.PowerAdjustActive) return;
     const activeCause = this.state.powerAdjustmentCapability?.cause;
     const optedOutOfActiveCause =
       (activeCause === DeviceEnergyManagement.PowerAdjustReason.LocalOptimizationAdjustment && (optOutState & DeviceEnergyManagement.OptOutState.LocalOptOut) !== 0) ||
       (activeCause === DeviceEnergyManagement.PowerAdjustReason.GridOptimizationAdjustment && (optOutState & DeviceEnergyManagement.OptOutState.GridOptOut) !== 0);
     if (!optedOutOfActiveCause) return;
-    // Matter 1.6.0 § 9.2.8.8: When the new Opt-Out state no longer permits the running cause, the ESA behaves as if it had received a CancelPowerAdjustRequest command.
+    // Matter 1.6.1 § 9.2.8.8: When the new Opt-Out state no longer permits the running cause, the ESA behaves as if it had received a CancelPowerAdjustRequest command.
     this.#endPowerAdjustment(DeviceEnergyManagement.Cause.UserOptOut);
   }
 
   #completePowerAdjustmentOnTimeout(): void {
     this.internal.powerAdjustCompletionTimer = undefined;
-    // Matter 1.6.0 § 9.2.9.1.4: After the elapsed Duration, end the session with a PowerAdjustEnd carrying a Normal completion cause code.
+    // Matter 1.6.1 § 9.2.9.1.4: After the elapsed Duration, end the session with a PowerAdjustEnd carrying a Normal completion cause code.
     this.#endPowerAdjustment(DeviceEnergyManagement.Cause.NormalCompletion);
   }
 
@@ -211,20 +211,20 @@ export class MatterbridgeDeviceEnergyManagementServer extends DeviceEnergyManage
     // both check it, and the completion timer only exists after activation) — the fallbacks below are defensive.
     /* v8 ignore next */
     const activationTimeMs = this.internal.powerAdjustActivationTimeMs ?? Time.nowMs;
-    // Matter 1.6.0 § 9.2.10.2.2: The Duration field reports the number of seconds the power adjustment session lasted before ending.
+    // Matter 1.6.1 § 9.2.10.2.2: The Duration field reports the number of seconds the power adjustment session lasted before ending.
     const elapsedSeconds = Math.max(1, Math.round((Time.nowMs - activationTimeMs) / 1000));
     /* v8 ignore next */
     const powerMw = Math.abs(this.internal.powerAdjustPowerMw ?? 0);
-    // Matter 1.6.0 § 9.2.10.2.3: approximate energy used during the session, derived from power(mW) * duration(h).
+    // Matter 1.6.1 § 9.2.10.2.3: approximate energy used during the session, derived from power(mW) * duration(h).
     const energyUse = Math.max(1, Math.round((powerMw * elapsedSeconds) / 3600));
     this.internal.powerAdjustActivationTimeMs = undefined;
     this.internal.powerAdjustPowerMw = undefined;
     const entries = (this.state.powerAdjustmentCapability?.powerAdjustCapability ?? []) as PowerAdjustEntry[];
-    // Matter 1.6.0 § 9.2.9.1.4 and § 9.2.9.2.1: When the session ends, ESAState is restored to Online.
+    // Matter 1.6.1 § 9.2.9.1.4 and § 9.2.9.2.1: When the session ends, ESAState is restored to Online.
     this.state.esaState = DeviceEnergyManagement.EsaState.Online;
-    // Matter 1.6.0 § 9.2.9.1.4 and § 9.2.9.2.1: When the session ends, the PowerAdjustmentCapability attribute is updated to set the Cause value to NoAdjustment.
+    // Matter 1.6.1 § 9.2.9.1.4 and § 9.2.9.2.1: When the session ends, the PowerAdjustmentCapability attribute is updated to set the Cause value to NoAdjustment.
     this.state.powerAdjustmentCapability = { powerAdjustCapability: entries, cause: DeviceEnergyManagement.PowerAdjustReason.NoAdjustment };
-    // Matter 1.6.0 § 9.2.10.2: Generate PowerAdjustEnd when the power adjustment session ends, with the cause code for why it ended.
+    // Matter 1.6.1 § 9.2.10.2: Generate PowerAdjustEnd when the power adjustment session ends, with the cause code for why it ended.
     this.events.powerAdjustEnd.emit({ cause, duration: elapsedSeconds, energyUse }, this.context);
   }
 }

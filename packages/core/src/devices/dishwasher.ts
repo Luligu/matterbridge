@@ -194,7 +194,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
    * Initializes the server and hooks on/off changes.
    */
   override initialize(): void {
-    // Validates SupportedModes (Matter 1.6.0 § 8.3.6.1 requires a Normal mode) and CurrentMode.
+    // Validates SupportedModes (Matter 1.6.1 § 8.3.6.1 requires a Normal mode) and CurrentMode.
     super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeDishwasherModeServer: initialized: currentMode is ${this.state.currentMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -210,15 +210,15 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
   protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeDishwasherModeServer: handling on/off change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.5.4.2: Begin dead front behavior when OnOff becomes FALSE.
+    // Matter 1.6.1 § 1.5.4.2: Begin dead front behavior when OnOff becomes FALSE.
     /* v8 ignore next */
     if (!onOff) {
       device.log.notice(
         `MatterbridgeDishwasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // SupportedModes includes a Normal mode at startup (Matter 1.6.0 § 8.3.6.1), but a plugin can still replace the list at runtime.
+      // SupportedModes includes a Normal mode at startup (Matter 1.6.1 § 8.3.6.1), but a plugin can still replace the list at runtime.
       const normalMode = this.state.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (DishwasherMode.ModeTag.Normal as number)));
-      // Matter 1.6.0 § 1.5.4.2: Other clusters MAY use best-effort attribute values in dead front, so set CurrentMode to the Normal mode when there is one.
+      // Matter 1.6.1 § 1.5.4.2: Other clusters MAY use best-effort attribute values in dead front, so set CurrentMode to the Normal mode when there is one.
       if (normalMode) this.state.currentMode = normalMode.mode;
     }
   }
@@ -246,7 +246,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
       context: this.context,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
     if (!supportedMode) {
       device.log.error(
         `MatterbridgeDishwasherModeServer: changeToMode called with unsupported mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -256,7 +256,7 @@ export class MatterbridgeDishwasherModeServer extends DishwasherModeServer {
     device.log.debug(
       `MatterbridgeDishwasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
+    // Matter 1.6.1 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
     this.state.currentMode = request.newMode;
     this.endpoint.emitCommand(DishwasherMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
@@ -287,7 +287,7 @@ const MatterbridgeDishwasherAlarmSchema = DishwasherAlarmServer.schema.extend(
 );
 
 /**
- * A Dishwasher Alarm `AlarmBitmap` with every bit of Matter 1.6.0 § 8.4.4.1 set to an explicit value.
+ * A Dishwasher Alarm `AlarmBitmap` with every bit of Matter 1.6.1 § 8.4.4.1 set to an explicit value.
  *
  * @remarks
  * Every bit of {@link DishwasherAlarm.Alarm} is optional, so a bitmap literal that forgets one still compiles and silently
@@ -314,7 +314,7 @@ class DishwasherAlarmBaseServer extends DishwasherAlarmServer {
  * Dishwasher-specific `AlarmBitmap`.
  *
  * @remarks
- * Matter 1.6.0 § 8.4.4.1 and Alarm Base § 1.15.6.1 to § 1.15.6.4 and § 1.15.8.1 define the dishwasher alarm bits carried by
+ * Matter 1.6.1 § 8.4.4.1 and Alarm Base § 1.15.6.1 to § 1.15.6.4 and § 1.15.8.1 define the dishwasher alarm bits carried by
  * `Mask`, `Latch`, `State`, `Supported`, the `Reset` and `ModifyEnabledAlarms` command fields and the `Notify` event.
  * Redeclaring these inherited elements makes their wire schema resolve the Dishwasher Alarm cluster's `AlarmBitmap`, rather
  * than the empty base-cluster bitmap.
@@ -322,7 +322,7 @@ class DishwasherAlarmBaseServer extends DishwasherAlarmServer {
  * matter.js ships no implementation for the Alarm Base cluster and only a bare behavior for the derived Dishwasher Alarm
  * cluster, so the `Reset` and `ModifyEnabledAlarms` commands and the mandatory `Notify` event are implemented here.
  *
- * Dishwasher Alarm does not override the Alarm Base commands (Matter 1.6.0 § 8.4 defines only the `AlarmBitmap`), so both
+ * Dishwasher Alarm does not override the Alarm Base commands (Matter 1.6.1 § 8.4 defines only the `AlarmBitmap`), so both
  * `Reset` (gated by the `RESET` feature, enabled here) and the optional `ModifyEnabledAlarms` are permitted, unlike
  * {@link MatterbridgeRefrigeratorAlarmServer} where both are disallowed.
  *
@@ -351,7 +351,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
    * @returns {void}
    */
   #emitNotify(state: DishwasherAlarm.Alarm, oldState: DishwasherAlarm.Alarm): void {
-    // Matter 1.6.0 § 1.15.8.1.1: Active indicates those alarms that have become active.
+    // Matter 1.6.1 § 1.15.8.1.1: Active indicates those alarms that have become active.
     const active: DishwasherAlarmBitmap = {
       inflowError: Boolean(state.inflowError && !oldState.inflowError),
       drainError: Boolean(state.drainError && !oldState.drainError),
@@ -360,7 +360,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       tempTooHigh: Boolean(state.tempTooHigh && !oldState.tempTooHigh),
       waterLevelError: Boolean(state.waterLevelError && !oldState.waterLevelError),
     };
-    // Matter 1.6.0 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
+    // Matter 1.6.1 § 1.15.8.1.2: Inactive indicates those alarms that have become inactive.
     const inactive: DishwasherAlarmBitmap = {
       inflowError: Boolean(!state.inflowError && oldState.inflowError),
       drainError: Boolean(!state.drainError && oldState.drainError),
@@ -369,7 +369,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       tempTooHigh: Boolean(!state.tempTooHigh && oldState.tempTooHigh),
       waterLevelError: Boolean(!state.waterLevelError && oldState.waterLevelError),
     };
-    // Matter 1.6.0 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
+    // Matter 1.6.1 § 1.15.8.1: Generate Notify when one or more alarms change state, carrying a copy of the new State (§ 1.15.8.1.4) and of the Mask attribute (§ 1.15.8.1.3).
     this.events.notify.emit({ active, inactive, state, mask: this.state.mask }, this.context);
   }
 
@@ -390,7 +390,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       tempTooHigh: Boolean(alarms.tempTooHigh && !this.state.supported.tempTooHigh),
       waterLevelError: Boolean(alarms.waterLevelError && !this.state.supported.waterLevelError),
     };
-    // Matter 1.6.0 § 1.15.7.1.1 and § 1.15.7.2.1: Reject the command when it sets a bit of an alarm the Supported attribute does not report, with FAILURE for Reset and INVALID_COMMAND for ModifyEnabledAlarms.
+    // Matter 1.6.1 § 1.15.7.1.1 and § 1.15.7.2.1: Reject the command when it sets a bit of an alarm the Supported attribute does not report, with FAILURE for Reset and INVALID_COMMAND for ModifyEnabledAlarms.
     if (Object.values(unsupported).some(Boolean)) {
       throw new StatusResponseError(`MatterbridgeDishwasherAlarmServer: requested alarm is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, status);
     }
@@ -403,7 +403,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
    * @returns {DishwasherAlarmBitmap} The resulting State bitmap.
    */
   #clearAlarms(alarms: DishwasherAlarm.Alarm): DishwasherAlarmBitmap {
-    // Matter 1.6.0 § 1.15.7.1.1: Reset every alarm set in the Alarms field to inactive in the State attribute and leave the other alarms untouched.
+    // Matter 1.6.1 § 1.15.7.1.1: Reset every alarm set in the Alarms field to inactive in the State attribute and leave the other alarms untouched.
     return {
       inflowError: Boolean(this.state.state.inflowError && !alarms.inflowError),
       drainError: Boolean(this.state.state.drainError && !alarms.drainError),
@@ -421,7 +421,7 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
    * @returns {DishwasherAlarmBitmap} The resulting State bitmap.
    */
   #applyMaskToState(mask: DishwasherAlarm.Alarm): DishwasherAlarmBitmap {
-    // Matter 1.6.0 § 1.15.7.2.1: Update the State attribute to reflect the alarm set enabled by the new Mask value, so an alarm that is no longer enabled becomes inactive.
+    // Matter 1.6.1 § 1.15.7.2.1: Update the State attribute to reflect the alarm set enabled by the new Mask value, so an alarm that is no longer enabled becomes inactive.
     return {
       inflowError: Boolean(this.state.state.inflowError && mask.inflowError),
       drainError: Boolean(this.state.state.drainError && mask.drainError),
@@ -449,9 +449,9 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.15.7.1.1: Respond with FAILURE when a requested alarm cannot be reset because it is not supported.
+    // Matter 1.6.1 § 1.15.7.1.1: Respond with FAILURE when a requested alarm cannot be reset because it is not supported.
     this.#assertAlarmsSupported(request.alarms, Status.Failure);
-    // Matter 1.6.0 § 1.15.7.1.1: Reset every requested alarm to inactive in the State attribute.
+    // Matter 1.6.1 § 1.15.7.1.1: Reset every requested alarm to inactive in the State attribute.
     this.state.state = this.#clearAlarms(request.alarms);
     this.endpoint.emitCommand(DishwasherAlarm, 'reset', request, this.context);
   }
@@ -475,11 +475,11 @@ export class MatterbridgeDishwasherAlarmServer extends DishwasherAlarmBaseServer
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.15.7.2.1: Reject the command with INVALID_COMMAND when the Mask sets a bit of an alarm that is not supported.
+    // Matter 1.6.1 § 1.15.7.2.1: Reject the command with INVALID_COMMAND when the Mask sets a bit of an alarm that is not supported.
     this.#assertAlarmsSupported(request.mask, Status.InvalidCommand);
-    // Matter 1.6.0 § 1.15.7.2.1: On success set the Mask attribute to the Mask field of the command.
+    // Matter 1.6.1 § 1.15.7.2.1: On success set the Mask attribute to the Mask field of the command.
     this.state.mask = request.mask;
-    // Matter 1.6.0 § 1.15.7.2.1: Then update the State attribute to reflect the alarm set enabled by the new Mask value.
+    // Matter 1.6.1 § 1.15.7.2.1: Then update the State attribute to reflect the alarm set enabled by the new Mask value.
     this.state.state = this.#applyMaskToState(request.mask);
     this.endpoint.emitCommand(DishwasherAlarm, 'modifyEnabledAlarms', request, this.context);
   }

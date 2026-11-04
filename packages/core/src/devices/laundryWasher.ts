@@ -238,7 +238,7 @@ export class MatterbridgeLaundryWasherControlsServer extends LaundryWasherContro
    * @param {number | null} spinSpeedCurrent - Requested SpinSpeedCurrent value.
    */
   #validateSpinSpeedCurrent(spinSpeedCurrent: number | null): void {
-    // Matter 1.6.0 § 8.6.6.2: Reject a non-null SpinSpeedCurrent outside the SpinSpeeds index range with CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 8.6.6.2: Reject a non-null SpinSpeedCurrent outside the SpinSpeeds index range with CONSTRAINT_ERROR.
     if (spinSpeedCurrent !== null && spinSpeedCurrent >= this.state.spinSpeeds.length) {
       throw new StatusResponseError(
         `MatterbridgeLaundryWasherControlsServer: spinSpeedCurrent ${spinSpeedCurrent} is not a valid SpinSpeeds index (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -259,7 +259,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
    * Initializes the server and hooks on/off changes.
    */
   override initialize(): void {
-    // Validates SupportedModes (Matter 1.6.0 § 8.5.6.1 requires a Normal mode) and CurrentMode.
+    // Validates SupportedModes (Matter 1.6.1 § 8.5.6.1 requires a Normal mode) and CurrentMode.
     super.initialize();
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeLaundryWasherModeServer: initialized: currentMode is ${this.state.currentMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -275,15 +275,15 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
   protected handleOnOffChange(onOff: boolean): void {
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgeLaundryWasherModeServer: handling on/off change (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.5.4.2: Begin dead front behavior when OnOff becomes FALSE.
+    // Matter 1.6.1 § 1.5.4.2: Begin dead front behavior when OnOff becomes FALSE.
     /* v8 ignore next */
     if (!onOff) {
       device.log.notice(
         `MatterbridgeLaundryWasherModeServer: on/off changed to off: setting current mode to the Normal mode for dead front (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // SupportedModes includes a Normal mode at startup (Matter 1.6.0 § 8.5.6.1), but a plugin can still replace the list at runtime.
+      // SupportedModes includes a Normal mode at startup (Matter 1.6.1 § 8.5.6.1), but a plugin can still replace the list at runtime.
       const normalMode = this.state.supportedModes.find((mode) => mode.modeTags.some((tag) => tag.value === (LaundryWasherMode.ModeTag.Normal as number)));
-      // Matter 1.6.0 § 1.5.4.2: Other clusters MAY use best-effort attribute values in dead front, so set CurrentMode to the Normal mode when there is one.
+      // Matter 1.6.1 § 1.5.4.2: Other clusters MAY use best-effort attribute values in dead front, so set CurrentMode to the Normal mode when there is one.
       if (normalMode) this.state.currentMode = normalMode.mode;
     }
   }
@@ -311,7 +311,7 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
       context: this.context,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
     if (!supportedMode) {
       device.log.error(
         `MatterbridgeLaundryWasherModeServer: changeToMode called with unsupported mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -321,10 +321,10 @@ export class MatterbridgeLaundryWasherModeServer extends LaundryWasherModeServer
     device.log.debug(
       `MatterbridgeLaundryWasherModeServer: changeToMode called with mode ${supportedMode.mode} => ${supportedMode.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode after a successful transition.
+    // Matter 1.6.1 § 1.10.7.1.1: Set CurrentMode to NewMode after a successful transition.
     this.state.currentMode = request.newMode;
     this.endpoint.emitCommand(LaundryWasherMode, 'changeToMode', request, this.context);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with Success when the requested mode transition succeeds.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with Success when the requested mode transition succeeds.
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
   }
 }

@@ -108,45 +108,45 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 5.4.8.2.1: Reject invalid TargetPosition values with CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.4.8.2.1: Reject invalid TargetPosition values with CONSTRAINT_ERROR.
     if (request.position !== undefined && !(request.position in targetToCurrentPosition)) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureControlServer.moveTo: position is not a valid TargetPositionEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.4.8.2: Reject commands without any choice field with INVALID_COMMAND.
+    // Matter 1.6.1 § 5.4.8.2: Reject commands without any choice field with INVALID_COMMAND.
     if (request.position === undefined && request.latch === undefined && request.speed === undefined) {
       throw new StatusResponse.InvalidCommandError(
         `MatterbridgeClosureControlServer.moveTo: requires at least one of position, latch, or speed to be present (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.4.8.2.4: Ignore fields whose features are unsupported without changing state.
+    // Matter 1.6.1 § 5.4.8.2.4: Ignore fields whose features are unsupported without changing state.
     if (request.position === undefined && (!this.features.motionLatching || request.latch === undefined) && (!this.features.speed || request.speed === undefined)) return;
 
-    // Matter 1.6.0 § 5.4.8.2.2: Reject invalid supported Latch values with CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.4.8.2.2: Reject invalid supported Latch values with CONSTRAINT_ERROR.
     if (this.features.motionLatching && request.latch !== undefined && typeof request.latch !== 'boolean') {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureControlServer.moveTo: latch is not a boolean value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.4.8.2.3: Reject invalid supported Speed values with CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 5.4.8.2.3: Reject invalid supported Speed values with CONSTRAINT_ERROR.
     if (this.features.speed && request.speed !== undefined && !(request.speed in ThreeLevelAuto)) {
       throw new StatusResponse.ConstraintErrorError(
         `MatterbridgeClosureControlServer.moveTo: speed is not a valid ThreeLevelAutoEnum value (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.4.8.2.4: Reject MoveTo outside Moving, WaitingForMotion or Stopped with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.4.8.2.4: Reject MoveTo outside Moving, WaitingForMotion or Stopped with INVALID_IN_STATE.
     if (![ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Stopped].includes(this.state.mainState)) {
       throw new StatusResponse.InvalidInStateError(
         `MatterbridgeClosureControlServer.moveTo: is only allowed while Moving, WaitingForMotion, or Stopped (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
     let currentState = this.state.overallCurrentState;
-    // Matter 1.6.0 § 5.4.8.2.4: Reject position changes while latched unless unlatching is requested with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.4.8.2.4: Reject position changes while latched unless unlatching is requested with INVALID_IN_STATE.
     if (this.features.motionLatching && currentState?.latch === true && request.position !== undefined && request.latch !== false) {
       throw new StatusResponse.InvalidInStateError(
         `MatterbridgeClosureControlServer.moveTo: position changes require latch false while the closure is latched (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -156,20 +156,20 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     const previousTarget = this.state.overallTargetState ?? {};
     const nextTarget = {
       ...previousTarget,
-      // Matter 1.6.0 § 5.4.8.2.1: Use the requested position or retain the previous target as fallback.
+      // Matter 1.6.1 § 5.4.8.2.1: Use the requested position or retain the previous target as fallback.
       ...(request?.position !== undefined ? { position: request.position } : null),
-      // Matter 1.6.0 § 5.4.8.2.2: Use the requested latch or retain the previous target as fallback.
+      // Matter 1.6.1 § 5.4.8.2.2: Use the requested latch or retain the previous target as fallback.
       ...(this.features.motionLatching && request?.latch !== undefined ? { latch: request.latch } : null),
-      // Matter 1.6.0 § 5.4.8.2.3: Apply the requested speed, using the command fallback Auto when omitted.
+      // Matter 1.6.1 § 5.4.8.2.3: Apply the requested speed, using the command fallback Auto when omitted.
       ...(this.features.speed ? { speed: request?.speed ?? ThreeLevelAuto.Auto } : null),
     };
-    // Matter 1.6.0 § 5.4.8.2.4: Update OverallTargetState with the requested supported fields.
+    // Matter 1.6.1 § 5.4.8.2.4: Update OverallTargetState with the requested supported fields.
     this.state.overallTargetState = nextTarget;
 
-    // Matter 1.6.0 § 5.4.8.2.3: Update current speed when Speed is supported.
+    // Matter 1.6.1 § 5.4.8.2.3: Update current speed when Speed is supported.
     if (this.features.speed && currentState !== null) {
       currentState = { ...currentState, speed: nextTarget.speed };
-      // Matter 1.6.0 § 5.4.8.2.3: Set OverallCurrentState.Speed to the new speed.
+      // Matter 1.6.1 § 5.4.8.2.3: Set OverallCurrentState.Speed to the new speed.
       this.state.overallCurrentState = currentState;
     }
 
@@ -178,15 +178,15 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       (nextTarget.position === undefined || nextTarget.position === currentState.position) &&
       (!this.features.motionLatching || nextTarget.latch === undefined || nextTarget.latch === currentState.latch) &&
       (!this.features.speed || nextTarget.speed === currentState.speed);
-    // Matter 1.6.0 § 5.4.8.2.4: Set MainState to Stopped at the target or Moving when motion can proceed.
+    // Matter 1.6.1 § 5.4.8.2.4: Set MainState to Stopped at the target or Moving when motion can proceed.
     this.state.mainState = isAtTarget ? ClosureControl.MainState.Stopped : ClosureControl.MainState.Moving;
 
     // Cancel any movement/calibration still in flight from a previous command before (re)scheduling.
     this.internal.movementTimer?.stop();
     this.internal.movementTimer = undefined;
-    // Matter 1.6.0 § 5.4.8.2.4: Take no further motion action when already at the target.
+    // Matter 1.6.1 § 5.4.8.2.4: Take no further motion action when already at the target.
     if (isAtTarget) {
-      // Matter 1.6.0 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
+      // Matter 1.6.1 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
       this.state.countdownTime = 0;
     } else if (currentState === null || this.state.movementDuration <= 0) {
       // Gate: with no OverallCurrentState to converge from, or a non-positive movementDuration, this server
@@ -194,7 +194,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       // entirely to the real device implementation (via the command handler forwarded above) to eventually
       // report completion through setState()/triggerMovementCompleted().
     } else {
-      // Matter 1.6.0 § 5.4.7.1: Report the estimated time remaining in seconds.
+      // Matter 1.6.1 § 5.4.7.1: Report the estimated time remaining in seconds.
       this.state.countdownTime = this.state.movementDuration / 1000;
       this.internal.movementTargetState = nextTarget;
       this.internal.movementPreviousState = currentState;
@@ -233,7 +233,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       if (mappedPosition !== undefined) position = mappedPosition;
     }
     const latch = targetState.latch ?? previousState.latch;
-    // Matter 1.6.0 § 5.4.6.5.4: The closure is secure only when Position is FullyClosed (if Positioning is supported) and Latch is TRUE (if MotionLatching is supported).
+    // Matter 1.6.1 § 5.4.6.5.4: The closure is secure only when Position is FullyClosed (if Positioning is supported) and Latch is TRUE (if MotionLatching is supported).
     const secureState = (!this.features.positioning || position === ClosureControl.CurrentPosition.FullyClosed) && (!this.features.motionLatching || latch === true);
 
     // Unlike Closure.setState() (which can also be called directly, e.g. by setOpenedForVentilation()/
@@ -241,31 +241,31 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
     // already written to `overallTargetState` unconditionally when moveTo() received the command — an
     // unsupported enum value would have failed conformance validation right there, before this timer was ever
     // scheduled — so it's always safe to carry `position` through to both attributes without gating it.
-    // Matter 1.6.0 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
+    // Matter 1.6.1 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
     this.state.countdownTime = 0;
-    // Matter 1.6.0 § 5.4.7.2: Report Stopped when the operation stops or completes.
+    // Matter 1.6.1 § 5.4.7.2: Report Stopped when the operation stops or completes.
     this.state.mainState = ClosureControl.MainState.Stopped;
-    // Matter 1.6.0 § 5.4.7.3: Report no current errors after successful simulated completion.
+    // Matter 1.6.1 § 5.4.7.3: Report no current errors after successful simulated completion.
     this.state.currentErrorList = [];
-    // Matter 1.6.0 § 5.4.7.4: Report the simulated current position, latch, speed and secure state.
+    // Matter 1.6.1 § 5.4.7.4: Report the simulated current position, latch, speed and secure state.
     this.state.overallCurrentState = {
       position,
       ...(this.features.motionLatching ? { latch } : null),
       ...(this.features.speed ? { speed: targetState.speed } : null),
       secureState,
     };
-    // Matter 1.6.0 § 5.4.7.5: Report the position, latch and speed targeted by the command.
+    // Matter 1.6.1 § 5.4.7.5: Report the position, latch and speed targeted by the command.
     this.state.overallTargetState = {
       position: targetState.position,
       ...(this.features.motionLatching ? { latch: targetState.latch } : null),
       ...(this.features.speed ? { speed: targetState.speed } : null),
     };
 
-    // Matter 1.6.0 § 5.4.9.4: Generate SecureStateChanged when the secure state changes.
+    // Matter 1.6.1 § 5.4.9.4: Generate SecureStateChanged when the secure state changes.
     if (secureState !== previousState.secureState) {
       this.events.secureStateChanged.emit({ secureValue: secureState }, this.context);
     }
-    // Matter 1.6.0 § 5.4.9.2: Generate MovementCompleted when movement completes.
+    // Matter 1.6.1 § 5.4.9.2: Generate MovementCompleted when movement completes.
     this.events.movementCompleted.emit(undefined, this.context);
   }
 
@@ -282,16 +282,16 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       context: this.context,
     });
 
-    // Matter 1.6.0 § 5.4.8.1: Stop ongoing movement or calibration as quickly as possible.
+    // Matter 1.6.1 § 5.4.8.1: Stop ongoing movement or calibration as quickly as possible.
     this.internal.movementTimer?.stop();
     this.internal.movementTimer = undefined;
     this.internal.calibrateTimer?.stop();
     this.internal.calibrateTimer = undefined;
-    // Matter 1.6.0 § 5.4.8.1: Stop motion only in Moving, WaitingForMotion or Calibrating states.
+    // Matter 1.6.1 § 5.4.8.1: Stop motion only in Moving, WaitingForMotion or Calibrating states.
     if ([ClosureControl.MainState.Moving, ClosureControl.MainState.WaitingForMotion, ClosureControl.MainState.Calibrating].includes(this.state.mainState)) {
-      // Matter 1.6.0 § 5.4.7.2: Report Stopped when the operation stops or completes.
+      // Matter 1.6.1 § 5.4.7.2: Report Stopped when the operation stops or completes.
       this.state.mainState = ClosureControl.MainState.Stopped;
-      // Matter 1.6.0 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
+      // Matter 1.6.1 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
       this.state.countdownTime = 0;
     }
     this.endpoint.emitCommand(ClosureControl, 'stop', {}, this.context);
@@ -310,19 +310,19 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       context: this.context,
     });
 
-    // Matter 1.6.0 § 5.4.8.3.1: If this command is received when already in the Calibrating state, the server SHALL respond with SUCCESS.
+    // Matter 1.6.1 § 5.4.8.3.1: If this command is received when already in the Calibrating state, the server SHALL respond with SUCCESS.
     if (this.state.mainState === ClosureControl.MainState.Calibrating) {
       return;
     }
     // Else, if this command is invoked in any state other than Stopped or SetupRequired, the server SHALL respond with INVALID_IN_STATE and there SHALL be no other effect.
-    // Matter 1.6.0 § 5.4.8.3.1: Reject calibration outside Stopped or SetupRequired with INVALID_IN_STATE.
+    // Matter 1.6.1 § 5.4.8.3.1: Reject calibration outside Stopped or SetupRequired with INVALID_IN_STATE.
     if (![ClosureControl.MainState.Stopped, ClosureControl.MainState.SetupRequired].includes(this.state.mainState)) {
       throw new StatusResponse.InvalidInStateError(
         `MatterbridgeClosureControlServer.calibrate: is only allowed while Stopped or SetupRequired (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
 
-    // Matter 1.6.0 § 5.4.8.3.1: Set MainState to Calibrating on an accepted request.
+    // Matter 1.6.1 § 5.4.8.3.1: Set MainState to Calibrating on an accepted request.
     this.state.mainState = ClosureControl.MainState.Calibrating;
 
     this.internal.calibrateTimer?.stop();
@@ -332,7 +332,7 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
       // the command handler forwarded above) to eventually report completion through setAttribute().
       this.internal.calibrateTimer = undefined;
     } else {
-      // Matter 1.6.0 § 5.4.7.1: Report the estimated calibration time remaining in seconds.
+      // Matter 1.6.1 § 5.4.7.1: Report the estimated calibration time remaining in seconds.
       this.state.countdownTime = this.state.calibrationDuration / 1000;
       this.internal.calibrateTimer = Time.getTimer(
         'ClosureControl calibrate complete',
@@ -351,9 +351,9 @@ export class MatterbridgeClosureControlServer extends MatterbridgeClosureControl
    */
   #completeCalibrate(): void {
     this.internal.calibrateTimer = undefined;
-    // Matter 1.6.0 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
+    // Matter 1.6.1 § 5.4.7.1: Set CountdownTime to zero when the operation has completed.
     this.state.countdownTime = 0;
-    // Matter 1.6.0 § 5.4.7.2: Report Stopped when the operation stops or completes.
+    // Matter 1.6.1 § 5.4.7.2: Report Stopped when the operation stops or completes.
     this.state.mainState = ClosureControl.MainState.Stopped;
   }
 

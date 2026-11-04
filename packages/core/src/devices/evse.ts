@@ -273,7 +273,7 @@ export class Evse extends MatterbridgeEndpoint {
   }
 
   /**
-   * Triggers the EnergyEvse `Rfid` event (Matter 1.6.0 § 9.3.10.6) for a badge scan detected by the physical RFID
+   * Triggers the EnergyEvse `Rfid` event (Matter 1.6.1 § 9.3.10.6) for a badge scan detected by the physical RFID
    * reader, e.g. from a plugin driving real hardware. Requires the `Rfid` feature to have been enabled via the
    * `rfid` option of the constructor or {@link createDefaultEnergyEvseClusterServer}.
    *
@@ -313,17 +313,17 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     this.state.requestedMaximumChargeCurrent ??= Number(this.state.maximumChargeCurrent);
     this.state.requestedMaximumDischargeCurrent ??= this.features.v2X ? Number(this.state.maximumDischargeCurrent) : 0;
     this.state.chargingTargetSchedules ??= [];
-    // Matter 1.6.0 § 9.3.8.4: A null ChargingEnabledUntil permits charging indefinitely; otherwise restore its expiry.
+    // Matter 1.6.1 § 9.3.8.4: A null ChargingEnabledUntil permits charging indefinitely; otherwise restore its expiry.
     if (this.state.chargingEnabledUntil !== null) {
-      // Matter 1.6.0 § 9.3.8.4: Restore automatic charging disablement from the persisted ChargingEnabledUntil timestamp.
+      // Matter 1.6.1 § 9.3.8.4: Restore automatic charging disablement from the persisted ChargingEnabledUntil timestamp.
       this.#scheduleChargingExpiry(this.state.chargingEnabledUntil);
     }
-    // Matter 1.6.0 § 9.3.8.5: A null DischargingEnabledUntil permits discharging indefinitely; otherwise restore its expiry.
+    // Matter 1.6.1 § 9.3.8.5: A null DischargingEnabledUntil permits discharging indefinitely; otherwise restore its expiry.
     if (this.features.v2X && this.state.dischargingEnabledUntil !== null) {
-      // Matter 1.6.0 § 9.3.8.5: Restore automatic discharging disablement from the persisted DischargingEnabledUntil timestamp.
+      // Matter 1.6.1 § 9.3.8.5: Restore automatic discharging disablement from the persisted DischargingEnabledUntil timestamp.
       this.#scheduleDischargingExpiry(this.state.dischargingEnabledUntil);
     }
-    // Matter 1.6.0 § 9.3.8.8: Recompute the offered maximum current when the consumer charging limit changes.
+    // Matter 1.6.1 § 9.3.8.8: Recompute the offered maximum current when the consumer charging limit changes.
     const userMaximumChargeCurrentChanged = this.events.userMaximumChargeCurrent$Changed;
     /* v8 ignore else -- userMaximumChargeCurrent$Changed exists because this server enables ChargingPreferences. */
     if (userMaximumChargeCurrentChanged) {
@@ -346,15 +346,15 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       endpoint: this.endpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: disable called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 9.3.9.1.1: Set ChargingEnabledUntil to a past timestamp when disabling the EVSE.
+    // Matter 1.6.1 § 9.3.9.1.1: Set ChargingEnabledUntil to a past timestamp when disabling the EVSE.
     this.state.chargingEnabledUntil = MATTER_EPOCH_OFFSET_S;
-    // Matter 1.6.0 § 9.3.9.1.1: Stop any active charging when disabling the EVSE.
+    // Matter 1.6.1 § 9.3.9.1.1: Stop any active charging when disabling the EVSE.
     this.#stopCharging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
-    // Matter 1.6.0 § 9.3.9.1.1: Disable discharging permission as well when the EVSE supports V2X.
+    // Matter 1.6.1 § 9.3.9.1.1: Disable discharging permission as well when the EVSE supports V2X.
     if (this.features.v2X) {
-      // Matter 1.6.0 § 9.3.9.1.1: Set DischargingEnabledUntil to a past timestamp when disabling a V2X EVSE.
+      // Matter 1.6.1 § 9.3.9.1.1: Set DischargingEnabledUntil to a past timestamp when disabling a V2X EVSE.
       this.state.dischargingEnabledUntil = MATTER_EPOCH_OFFSET_S;
-      // Matter 1.6.0 § 9.3.9.1.1: Stop any active discharging when disabling a V2X EVSE.
+      // Matter 1.6.1 § 9.3.9.1.1: Stop any active discharging when disabling a V2X EVSE.
       this.#stopDischarging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
     }
     this.endpoint.emitCommand(EnergyEvse, 'disable', {}, this.context);
@@ -381,7 +381,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       endpoint: this.endpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: enableCharging called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 9.3.9.2.4: Ignore EnableCharging and return FAILURE while an EVSE error or diagnostics are active.
+    // Matter 1.6.1 § 9.3.9.2.4: Ignore EnableCharging and return FAILURE while an EVSE error or diagnostics are active.
     if (
       this.state.supplyState === EnergyEvse.SupplyState.DisabledError ||
       this.state.supplyState === EnergyEvse.SupplyState.DisabledDiagnostics ||
@@ -393,21 +393,21 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     }
     this.internal.chargingExpiryTimer?.stop();
     this.internal.chargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.9.2.4: Set SupplyState to ChargingEnabled, or Enabled when discharging is already enabled.
+    // Matter 1.6.1 § 9.3.9.2.4: Set SupplyState to ChargingEnabled, or Enabled when discharging is already enabled.
     this.state.supplyState = this.#isDischargingActive() ? EnergyEvse.SupplyState.Enabled : EnergyEvse.SupplyState.ChargingEnabled;
-    // Matter 1.6.0 § 9.3.9.2.4: Update ChargingEnabledUntil to the timestamp of the ChargingEnabledUntil field.
+    // Matter 1.6.1 § 9.3.9.2.4: Update ChargingEnabledUntil to the timestamp of the ChargingEnabledUntil field.
     this.state.chargingEnabledUntil = request.chargingEnabledUntil;
-    // Matter 1.6.0 § 9.3.9.2.2: Set MinimumChargeCurrent to the command field value.
+    // Matter 1.6.1 § 9.3.9.2.2: Set MinimumChargeCurrent to the command field value.
     this.state.minimumChargeCurrent = request.minimumChargeCurrent;
-    // Matter 1.6.0 § 9.3.9.2.3: Store the requested MaximumChargeCurrent for subsequent effective-limit updates.
+    // Matter 1.6.1 § 9.3.9.2.3: Store the requested MaximumChargeCurrent for subsequent effective-limit updates.
     this.state.requestedMaximumChargeCurrent = Number(request.maximumChargeCurrent);
-    // Matter 1.6.0 § 9.3.9.2.3: Apply the requested maximum as a limit on the actual offered charging current.
+    // Matter 1.6.1 § 9.3.9.2.3: Apply the requested maximum as a limit on the actual offered charging current.
     this.#updateMaximumChargeCurrent();
-    // Matter 1.6.0 § 9.3.8.1: Begin supplying current when the connected EV demands charging.
+    // Matter 1.6.1 § 9.3.8.1: Begin supplying current when the connected EV demands charging.
     if (this.state.state === EnergyEvse.State.PluggedInDemand) {
-      // Matter 1.6.0 § 9.3.8.1: Set State to PluggedInCharging when an enabled EVSE supplies a connected EV that demands current.
+      // Matter 1.6.1 § 9.3.8.1: Set State to PluggedInCharging when an enabled EVSE supplies a connected EV that demands current.
       this.state.state = EnergyEvse.State.PluggedInCharging;
-      // Matter 1.6.0 § 9.3.10.3: Generate EnergyTransferStarted whenever the EV starts charging.
+      // Matter 1.6.1 § 9.3.10.3: Generate EnergyTransferStarted whenever the EV starts charging.
       this.events.energyTransferStarted.emit(
         {
           sessionId: this.state.sessionId ?? 0,
@@ -418,11 +418,11 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
         this.context,
       );
     }
-    // Matter 1.6.0 § 9.3.9.2.4: Reflect the enabled charging permission in the next scheduled charge.
+    // Matter 1.6.1 § 9.3.9.2.4: Reflect the enabled charging permission in the next scheduled charge.
     this.#updateNextChargeTarget();
-    // Matter 1.6.0 § 9.3.9.2.4: Schedule automatic charging disablement only when an expiry is specified.
+    // Matter 1.6.1 § 9.3.9.2.4: Schedule automatic charging disablement only when an expiry is specified.
     if (request.chargingEnabledUntil !== null) {
-      // Matter 1.6.0 § 9.3.9.2.4: Automatically stop charging when ChargingEnabledUntil expires.
+      // Matter 1.6.1 § 9.3.9.2.4: Automatically stop charging when ChargingEnabledUntil expires.
       this.#scheduleChargingExpiry(request.chargingEnabledUntil);
     }
     this.endpoint.emitCommand(EnergyEvse, 'enableCharging', request, this.context);
@@ -451,7 +451,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       endpoint: this.endpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: enableDischarging called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 9.3.9.3.3: Ignore EnableDischarging and return FAILURE while an EVSE error or diagnostics are active.
+    // Matter 1.6.1 § 9.3.9.3.3: Ignore EnableDischarging and return FAILURE while an EVSE error or diagnostics are active.
     if (
       this.state.supplyState === EnergyEvse.SupplyState.DisabledError ||
       this.state.supplyState === EnergyEvse.SupplyState.DisabledDiagnostics ||
@@ -463,17 +463,17 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     }
     this.internal.dischargingExpiryTimer?.stop();
     this.internal.dischargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.9.3.3: Set SupplyState to DischargingEnabled, or Enabled when charging is already enabled.
+    // Matter 1.6.1 § 9.3.9.3.3: Set SupplyState to DischargingEnabled, or Enabled when charging is already enabled.
     this.state.supplyState = this.#isChargingActive() ? EnergyEvse.SupplyState.Enabled : EnergyEvse.SupplyState.DischargingEnabled;
-    // Matter 1.6.0 § 9.3.9.3.1: Update DischargingEnabledUntil to the timestamp of the DischargingEnabledUntil field.
+    // Matter 1.6.1 § 9.3.9.3.1: Update DischargingEnabledUntil to the timestamp of the DischargingEnabledUntil field.
     this.state.dischargingEnabledUntil = request.dischargingEnabledUntil;
-    // Matter 1.6.0 § 9.3.9.3.2: Store the requested MaximumDischargeCurrent for the effective-limit update.
+    // Matter 1.6.1 § 9.3.9.3.2: Store the requested MaximumDischargeCurrent for the effective-limit update.
     this.state.requestedMaximumDischargeCurrent = Number(request.maximumDischargeCurrent);
-    // Matter 1.6.0 § 9.3.9.3.2: MaximumDischargeCurrent SHALL be the minimum of every applicable discharging limit.
+    // Matter 1.6.1 § 9.3.9.3.2: MaximumDischargeCurrent SHALL be the minimum of every applicable discharging limit.
     this.#updateMaximumDischargeCurrent();
-    // Matter 1.6.0 § 9.3.9.3.3: Schedule automatic discharging disablement only when an expiry is specified.
+    // Matter 1.6.1 § 9.3.9.3.3: Schedule automatic discharging disablement only when an expiry is specified.
     if (request.dischargingEnabledUntil !== null) {
-      // Matter 1.6.0 § 9.3.9.3.3: Automatically stop discharging when DischargingEnabledUntil expires.
+      // Matter 1.6.1 § 9.3.9.3.3: Automatically stop discharging when DischargingEnabledUntil expires.
       this.#scheduleDischargingExpiry(request.dischargingEnabledUntil);
     }
     this.endpoint.emitCommand(EnergyEvse, 'enableDischarging', request, this.context);
@@ -495,38 +495,38 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       endpoint: this.endpoint,
     });
     device.log.debug(`MatterbridgeEnergyEvseServer: startDiagnostics called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 9.3.9.4.1: Reject StartDiagnostics with FAILURE unless SupplyState is Disabled.
+    // Matter 1.6.1 § 9.3.9.4.1: Reject StartDiagnostics with FAILURE unless SupplyState is Disabled.
     if (this.state.supplyState !== EnergyEvse.SupplyState.Disabled) {
       throw new StatusResponse.FailureError(
         `MatterbridgeEnergyEvseServer: diagnostics can only start while charging is disabled (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
     }
-    // Matter 1.6.0 § 9.3.9.4.1: Set SupplyState to DisabledDiagnostics on success.
+    // Matter 1.6.1 § 9.3.9.4.1: Set SupplyState to DisabledDiagnostics on success.
     this.state.supplyState = EnergyEvse.SupplyState.DisabledDiagnostics;
-    // Matter 1.6.0 § 9.3.9.4.1: Reflect DisabledDiagnostics by clearing the next scheduled charge.
+    // Matter 1.6.1 § 9.3.9.4.1: Reflect DisabledDiagnostics by clearing the next scheduled charge.
     this.#clearNextChargeTarget();
     this.endpoint.emitCommand(EnergyEvse, 'startDiagnostics', {}, this.context);
   }
 
   #expireCharging(): void {
     this.internal.chargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.8.4: Set ChargingEnabledUntil to zero when the charging permission expires.
+    // Matter 1.6.1 § 9.3.8.4: Set ChargingEnabledUntil to zero when the charging permission expires.
     this.state.chargingEnabledUntil = MATTER_EPOCH_OFFSET_S;
-    // Matter 1.6.0 § 9.3.9.2.4: Stop charging when ChargingEnabledUntil expires.
+    // Matter 1.6.1 § 9.3.9.2.4: Stop charging when ChargingEnabledUntil expires.
     this.#stopCharging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
   }
 
   #expireDischarging(): void {
     this.internal.dischargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.8.5: Set DischargingEnabledUntil to zero when the discharging permission expires.
+    // Matter 1.6.1 § 9.3.8.5: Set DischargingEnabledUntil to zero when the discharging permission expires.
     this.state.dischargingEnabledUntil = MATTER_EPOCH_OFFSET_S;
-    // Matter 1.6.0 § 9.3.9.3.3: Stop discharging when DischargingEnabledUntil expires.
+    // Matter 1.6.1 § 9.3.9.3.3: Stop discharging when DischargingEnabledUntil expires.
     this.#stopDischarging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
   }
 
   #scheduleChargingExpiry(chargingEnabledUntil: number): void {
     const remainingSeconds = Math.max(0, Math.ceil(chargingEnabledUntil - Time.nowMs / 1000));
-    // Matter 1.6.0 § 9.3.9.2.4: Disable charging when the persisted charging expiry time is reached.
+    // Matter 1.6.1 § 9.3.9.2.4: Disable charging when the persisted charging expiry time is reached.
     this.internal.chargingExpiryTimer = Time.getTimer(
       'EnergyEvse charging expiry',
       Seconds(remainingSeconds),
@@ -537,7 +537,7 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
 
   #scheduleDischargingExpiry(dischargingEnabledUntil: number): void {
     const remainingSeconds = Math.max(0, Math.ceil(dischargingEnabledUntil - Time.nowMs / 1000));
-    // Matter 1.6.0 § 9.3.9.3.3: Disable discharging when the persisted discharging expiry time is reached.
+    // Matter 1.6.1 § 9.3.9.3.3: Disable discharging when the persisted discharging expiry time is reached.
     this.internal.dischargingExpiryTimer = Time.getTimer(
       'EnergyEvse discharging expiry',
       Seconds(remainingSeconds),
@@ -585,22 +585,22 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
 
   /** Applies the Matter 1.6 § 9.3.8.8 effective-current state-update mandate. */
   #updateMaximumChargeCurrent(): void {
-    // Matter 1.6.0 § 9.3.8.8: Set MaximumChargeCurrent to the minimum of every applicable charging limit.
+    // Matter 1.6.1 § 9.3.8.8: Set MaximumChargeCurrent to the minimum of every applicable charging limit.
     this.state.maximumChargeCurrent = Math.min(Number(this.state.circuitCapacity), Number(this.state.requestedMaximumChargeCurrent), Number(this.state.userMaximumChargeCurrent));
   }
 
   /** Applies the Matter 1.6 § 9.3.9.3.2 effective-current state-update mandate for the discharge direction. */
   #updateMaximumDischargeCurrent(): void {
-    // Matter 1.6.0 § 9.3.8.9: Set MaximumDischargeCurrent to the minimum of every applicable discharging limit.
+    // Matter 1.6.1 § 9.3.8.9: Set MaximumDischargeCurrent to the minimum of every applicable discharging limit.
     this.state.maximumDischargeCurrent = Math.min(Number(this.state.circuitCapacity), Number(this.state.requestedMaximumDischargeCurrent));
   }
 
   #stopCharging(reason: EnergyEvse.EnergyTransferStoppedReason): void {
     this.internal.chargingExpiryTimer?.stop();
     this.internal.chargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.10.4: Generate EnergyTransferStopped only when charging energy transfer was active.
+    // Matter 1.6.1 § 9.3.10.4: Generate EnergyTransferStopped only when charging energy transfer was active.
     if (this.state.state === EnergyEvse.State.PluggedInCharging) {
-      // Matter 1.6.0 § 9.3.10.4: Include EnergyDischarged in EnergyTransferStopped when the V2X feature is supported.
+      // Matter 1.6.1 § 9.3.10.4: Include EnergyDischarged in EnergyTransferStopped when the V2X feature is supported.
       this.events.energyTransferStopped.emit(
         {
           sessionId: this.state.sessionId ?? 0,
@@ -611,33 +611,33 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
         },
         this.context,
       );
-      // Matter 1.6.0 § 9.3.9.1.1 and § 9.3.9.2.4: Set State to PluggedInDemand after active charging stops.
+      // Matter 1.6.1 § 9.3.9.1.1 and § 9.3.9.2.4: Set State to PluggedInDemand after active charging stops.
       this.state.state = EnergyEvse.State.PluggedInDemand;
     }
-    // Matter 1.6.0 § 9.3.9.1.1 and § 9.3.9.2.4: Preserve discharging permission only while DischargingEnabledUntil is null or in the future.
+    // Matter 1.6.1 § 9.3.9.1.1 and § 9.3.9.2.4: Preserve discharging permission only while DischargingEnabledUntil is null or in the future.
     this.state.supplyState =
       this.features.v2X && this.#isPermissionActive(this.state.dischargingEnabledUntil) ? EnergyEvse.SupplyState.DischargingEnabled : EnergyEvse.SupplyState.Disabled;
-    // Matter 1.6.0 § 9.3.8.7: Indicate that no minimum charging current can be delivered while charging is disabled.
+    // Matter 1.6.1 § 9.3.8.7: Indicate that no minimum charging current can be delivered while charging is disabled.
     this.state.minimumChargeCurrent = 0;
-    // Matter 1.6.0 § 9.3.8.8: Indicate that no maximum charging current is offered while charging is disabled.
+    // Matter 1.6.1 § 9.3.8.8: Indicate that no maximum charging current is offered while charging is disabled.
     this.state.maximumChargeCurrent = 0;
-    // Matter 1.6.0 § 9.3.8.12-9.3.8.15: Clear next charging target attributes after charging stops.
+    // Matter 1.6.1 § 9.3.8.12-9.3.8.15: Clear next charging target attributes after charging stops.
     this.#clearNextChargeTarget();
   }
 
   #stopDischarging(reason: EnergyEvse.EnergyTransferStoppedReason): void {
     this.internal.dischargingExpiryTimer?.stop();
     this.internal.dischargingExpiryTimer = undefined;
-    // Matter 1.6.0 § 9.3.10.4: Generate EnergyTransferStopped only when discharging energy transfer was active.
+    // Matter 1.6.1 § 9.3.10.4: Generate EnergyTransferStopped only when discharging energy transfer was active.
     if (this.state.state === EnergyEvse.State.PluggedInDischarging) {
-      // Matter 1.6.0 § 9.3.10.4: Emit EnergyTransferStopped whenever active discharging stops.
+      // Matter 1.6.1 § 9.3.10.4: Emit EnergyTransferStopped whenever active discharging stops.
       this.events.energyTransferStopped.emit({ sessionId: this.state.sessionId ?? 0, state: this.state.state, reason, energyTransferred: 0, energyDischarged: 0 }, this.context);
-      // Matter 1.6.0 § 9.3.9.1.1 and § 9.3.9.3.3: Set State to PluggedInDemand after active discharging stops.
+      // Matter 1.6.1 § 9.3.9.1.1 and § 9.3.9.3.3: Set State to PluggedInDemand after active discharging stops.
       this.state.state = EnergyEvse.State.PluggedInDemand;
     }
-    // Matter 1.6.0 § 9.3.9.1.1 and § 9.3.9.3.3: Preserve charging permission only while ChargingEnabledUntil is null or in the future.
+    // Matter 1.6.1 § 9.3.9.1.1 and § 9.3.9.3.3: Preserve charging permission only while ChargingEnabledUntil is null or in the future.
     this.state.supplyState = this.#isPermissionActive(this.state.chargingEnabledUntil) ? EnergyEvse.SupplyState.ChargingEnabled : EnergyEvse.SupplyState.Disabled;
-    // Matter 1.6.0 § 9.3.8.9: Set MaximumDischargeCurrent to zero when the EVSE is no longer offering discharge current.
+    // Matter 1.6.1 § 9.3.8.9: Set MaximumDischargeCurrent to zero when the EVSE is no longer offering discharge current.
     this.state.maximumDischargeCurrent = 0;
   }
 
@@ -675,20 +675,20 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
     });
     let updatedDays = 0;
     for (const schedule of request.chargingTargetSchedules) {
-      // Matter 1.6.0 § 9.3.7.6: Reject a missing mandatory TargetSoC with INVALID_COMMAND when SoC reporting is supported.
+      // Matter 1.6.1 § 9.3.7.6: Reject a missing mandatory TargetSoC with INVALID_COMMAND when SoC reporting is supported.
       if (this.features.soCReporting && schedule.chargingTargets.some((target) => target.targetSoC === undefined || target.targetSoC === null)) {
         throw new StatusResponse.InvalidCommandError(
           `MatterbridgeEnergyEvseServer: targetSoC is required when SoC reporting is available (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         );
       }
       const scheduleDays = this.#encodeTargetDays(schedule.dayOfWeekForSequence);
-      // Matter 1.6.0 § 9.3.9.5.2: Reject the command with CONSTRAINT_ERROR if a day is present in more than one ChargingTargetSchedule.
+      // Matter 1.6.1 § 9.3.9.5.2: Reject the command with CONSTRAINT_ERROR if a day is present in more than one ChargingTargetSchedule.
       if ((updatedDays & scheduleDays) !== 0) {
         throw new StatusResponse.ConstraintErrorError(
           `MatterbridgeEnergyEvseServer: each day may occur in only one ChargingTargetSchedule (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
         );
       }
-      // Matter 1.6.0 § 9.3.9.5.2: Reject the command with RESOURCE_EXHAUSTED if a schedule requires more charging targets than supported.
+      // Matter 1.6.1 § 9.3.9.5.2: Reject the command with RESOURCE_EXHAUSTED if a schedule requires more charging targets than supported.
       if (schedule.chargingTargets.length > 10) {
         throw new StatusResponse.ResourceExhaustedError(
           `MatterbridgeEnergyEvseServer: a ChargingTargetSchedule supports at most 10 charging targets (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -697,15 +697,15 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       updatedDays |= scheduleDays;
     }
 
-    // Matter 1.6.0 § 9.3.9.5.2: replace the targets only for days present in this command and preserve all others.
+    // Matter 1.6.1 § 9.3.9.5.2: replace the targets only for days present in this command and preserve all others.
     const unchangedSchedules = this.state.chargingTargetSchedules.flatMap((schedule) => {
       const remainingDays = this.#encodeTargetDays(schedule.dayOfWeekForSequence) & ~updatedDays;
       // oxlint-disable-next-line typescript/no-misused-spread
       return remainingDays === 0 ? [] : [{ ...schedule, dayOfWeekForSequence: new EnergyEvse.TargetDayOfWeek(remainingDays) }];
     });
-    // Matter 1.6.0 § 9.3.9.5.2: Replace only schedules for days selected by the SetTargets command.
+    // Matter 1.6.1 § 9.3.9.5.2: Replace only schedules for days selected by the SetTargets command.
     this.state.chargingTargetSchedules = [...unchangedSchedules, ...structuredClone(request.chargingTargetSchedules)];
-    // Matter 1.6.0 § 9.3.9.5.2: Recompute the next scheduled charge from the accepted charging targets.
+    // Matter 1.6.1 § 9.3.9.5.2: Recompute the next scheduled charge from the accepted charging targets.
     this.#updateNextChargeTarget();
     this.endpoint.emitCommand(EnergyEvse, 'setTargets', request, this.context);
   }
@@ -751,18 +751,18 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       attributes: this.state,
       endpoint: this.endpoint,
     });
-    // Matter 1.6.0 § 9.3.9.8.1: Clear all stored charging targets.
+    // Matter 1.6.1 § 9.3.9.8.1: Clear all stored charging targets.
     this.state.chargingTargetSchedules = [];
     const modeState = this.endpoint.stateOf(EnergyEvseModeServer);
     const isAutomaticMode = modeState.supportedModes.some(
       (mode) => mode.mode === modeState.currentMode && mode.modeTags.some((tag) => tag.value === (EnergyEvseMode.ModeTag.TimeOfUse as number)),
     );
-    // Matter 1.6.0 § 9.3.9.8.1: Stop active charging when clearing the targets used by automatic mode.
+    // Matter 1.6.1 § 9.3.9.8.1: Stop active charging when clearing the targets used by automatic mode.
     if (isAutomaticMode && this.state.state === EnergyEvse.State.PluggedInCharging) {
-      // Matter 1.6.0 § 9.3.9.8.1: Stop charging when ClearTargets removes the schedule used by automatic mode.
+      // Matter 1.6.1 § 9.3.9.8.1: Stop charging when ClearTargets removes the schedule used by automatic mode.
       this.#stopCharging(EnergyEvse.EnergyTransferStoppedReason.EvseStopped);
     }
-    // Matter 1.6.0 § 9.3.9.8.1: Clear the attributes derived from the stored charging targets.
+    // Matter 1.6.1 § 9.3.9.8.1: Clear the attributes derived from the stored charging targets.
     this.#clearNextChargeTarget();
     this.endpoint.emitCommand(EnergyEvse, 'clearTargets', {}, this.context);
   }
@@ -787,21 +787,21 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
 
   /** Clears the schedule-derived attributes as required when no active scheduled charge exists. */
   #clearNextChargeTarget(): void {
-    // Matter 1.6.0 § 9.3.8.12: Set NextChargeStartTime to null when no active scheduled charge exists.
+    // Matter 1.6.1 § 9.3.8.12: Set NextChargeStartTime to null when no active scheduled charge exists.
     this.state.nextChargeStartTime = null;
-    // Matter 1.6.0 § 9.3.8.13: Set NextChargeTargetTime to null when no active scheduled charge exists.
+    // Matter 1.6.1 § 9.3.8.13: Set NextChargeTargetTime to null when no active scheduled charge exists.
     this.state.nextChargeTargetTime = null;
-    // Matter 1.6.0 § 9.3.8.14: Set NextChargeRequiredEnergy to null when no active scheduled charge exists.
+    // Matter 1.6.1 § 9.3.8.14: Set NextChargeRequiredEnergy to null when no active scheduled charge exists.
     this.state.nextChargeRequiredEnergy = null;
-    // Matter 1.6.0 § 9.3.8.15: Set NextChargeTargetSoC to null when no active scheduled charge exists.
+    // Matter 1.6.1 § 9.3.8.15: Set NextChargeTargetSoC to null when no active scheduled charge exists.
     this.state.nextChargeTargetSoC = null;
   }
 
   /** Updates the next scheduled charge attributes from the stored weekly schedule. */
   #updateNextChargeTarget(): void {
-    // Matter 1.6.0 § 9.3.8.12-9.3.8.15: Clear stale next charging target attributes before deriving new values.
+    // Matter 1.6.1 § 9.3.8.12-9.3.8.15: Clear stale next charging target attributes before deriving new values.
     this.#clearNextChargeTarget();
-    // Matter 1.6.0 § 9.3.8.12: Only expose next scheduled-charge attributes while charging is enabled and an EV is connected.
+    // Matter 1.6.1 § 9.3.8.12: Only expose next scheduled-charge attributes while charging is enabled and an EV is connected.
     if (!this.#isChargingActive() || this.state.state === EnergyEvse.State.NotPluggedIn) return;
 
     const now = new Date(Time.nowMs);
@@ -810,30 +810,30 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
       targetDate.setDate(now.getDate() + dayOffset);
       const dayBit = 1 << targetDate.getDay();
       const schedule = this.state.chargingTargetSchedules.find((candidate) => (this.#encodeTargetDays(candidate.dayOfWeekForSequence) & dayBit) !== 0);
-      // Matter 1.6.0 § 9.3.8.13: Select the next completion time only from days with a charging schedule.
+      // Matter 1.6.1 § 9.3.8.13: Select the next completion time only from days with a charging schedule.
       if (!schedule) continue;
       const targets = schedule.chargingTargets.toSorted((a, b) => a.targetTimeMinutesPastMidnight - b.targetTimeMinutesPastMidnight);
       for (const target of targets) {
         targetDate.setHours(0, target.targetTimeMinutesPastMidnight, 0, 0);
-        // Matter 1.6.0 § 9.3.8.13: Select a future completion time for the next scheduled charge.
+        // Matter 1.6.1 § 9.3.8.13: Select a future completion time for the next scheduled charge.
         if (targetDate.getTime() <= now.getTime()) continue;
         const targetTime = Math.floor(targetDate.getTime() / 1000);
         const useTargetSoC = target.targetSoC !== undefined && (target.addedEnergy === undefined || (this.features.soCReporting && this.state.stateOfCharge !== null));
         const requiredEnergy = useTargetSoC || target.addedEnergy === undefined ? null : target.addedEnergy;
         const targetSoCReached = useTargetSoC && this.state.stateOfCharge !== null && this.state.stateOfCharge >= Number(target.targetSoC);
-        // Matter 1.6.0 § 9.3.8.13: Set NextChargeTargetTime to the next scheduled charging completion time.
+        // Matter 1.6.1 § 9.3.8.13: Set NextChargeTargetTime to the next scheduled charging completion time.
         this.state.nextChargeTargetTime = targetTime;
-        // Matter 1.6.0 § 9.3.8.14: Set NextChargeRequiredEnergy from the next target when AddedEnergy is present.
+        // Matter 1.6.1 § 9.3.8.14: Set NextChargeRequiredEnergy from the next target when AddedEnergy is present.
         this.state.nextChargeRequiredEnergy = requiredEnergy;
-        // Matter 1.6.0 § 9.3.8.15: Report the next target SoC, or null when the target uses AddedEnergy.
+        // Matter 1.6.1 § 9.3.8.15: Report the next target SoC, or null when the target uses AddedEnergy.
         this.state.nextChargeTargetSoC = useTargetSoC ? Number(target.targetSoC) : null;
-        // Matter 1.6.0 § 9.3.9.5.2: Estimate scheduled charging duration using the offered current and local voltage.
+        // Matter 1.6.1 § 9.3.9.5.2: Estimate scheduled charging duration using the offered current and local voltage.
         // This default device assumes a nominal 230 V supply.
         const maximumPowerMw = (230_000 * Number(this.state.maximumChargeCurrent)) / 1_000;
         // A zero offered current cannot provide a finite duration; retain a valid time before the target until
         // charging is enabled with a usable current and this calculation runs again.
         const chargingSeconds = requiredEnergy === null || maximumPowerMw <= 0 ? 1 : Math.max(1, Math.ceil((Number(requiredEnergy) * 3_600) / maximumPowerMw));
-        // Matter 1.6.0 § 9.3.8.12: Set NextChargeStartTime from the target time and estimated charging duration.
+        // Matter 1.6.1 § 9.3.8.12: Set NextChargeStartTime from the target time and estimated charging duration.
         this.state.nextChargeStartTime = targetSoCReached ? null : targetTime - chargingSeconds;
         return;
       }
@@ -887,15 +887,15 @@ export class MatterbridgeEnergyEvseModeServer extends EnergyEvseModeServer {
       endpoint: this.endpoint,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
     if (!supported) {
       device.log.error(
         `MatterbridgeEnergyEvseModeServer: changeToMode called with unsupported newMode: ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
-      // Matter 1.6.0 § 1.10.7.2.1.2: StatusText SHALL be empty when Status is UnsupportedMode.
+      // Matter 1.6.1 § 1.10.7.2.1.2: StatusText SHALL be empty when Status is UnsupportedMode.
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
+    // Matter 1.6.1 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
     this.state.currentMode = request.newMode;
     device.log.debug(
       `MatterbridgeEnergyEvseModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

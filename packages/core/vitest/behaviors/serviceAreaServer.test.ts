@@ -105,6 +105,9 @@ describe('MatterbridgeServiceAreaServer', () => {
     const serviceAreaServer = MatterbridgeServiceAreaServer.with(ServiceArea.Feature.Maps);
     expect(rvc.getAttribute(ServiceArea.id, 'selectedAreas')).toEqual([1, 2]); // Left over from the selectAreas test above.
 
+    // Collect the requests announced to subscribeCommand() listeners
+    const emitted: unknown[] = [];
+    rvc.subscribeCommand(ServiceArea, 'skipArea', (data) => emitted.push(data.request));
     const skipAreaCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
     rvc.addCommandHandler('skipArea', (data) => {
       skipAreaCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
@@ -119,6 +122,8 @@ describe('MatterbridgeServiceAreaServer', () => {
     // Area 99 is not in SelectedAreas, so the request is refused.
     const rejectedResponse = await rvc.act(async (agent) => agent.get(serviceAreaServer).skipArea({ skippedArea: 99 }));
     expect(rejectedResponse).toEqual({ status: ServiceArea.SkipAreaStatus.InvalidSkippedArea, statusText: 'AreaID 99 is not in the selected areas list' });
+    // Only the accepted SkipArea is announced
+    expect(emitted).toEqual([{ skippedArea: 1 }]);
   });
 
   test('ServiceArea server skipArea with progress reporting', async () => {

@@ -244,7 +244,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 
     // The substituted value is written back to state.fanMode, which re-triggers this handler on the next
     // pre-commit cycle to validate and apply it, so nothing else needs to happen here.
-    // Matter 1.6.0 § 4.4.6.1.3: A client write of the deprecated On value SHALL be treated as a write of High.
+    // Matter 1.6.1 § 4.4.6.1.3: A client write of the deprecated On value SHALL be treated as a write of High.
     // oxlint-disable-next-line typescript/no-deprecated
     if (fanMode === FanControl.FanMode.On) {
       this.state.fanMode = FanControl.FanMode.High;
@@ -253,7 +253,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       );
       return;
     }
-    // Matter 1.6.0 § 4.4.6.1.4: A client write of the deprecated Smart value SHALL be treated as a write of Auto when the Auto feature is supported, otherwise as a write of High.
+    // Matter 1.6.1 § 4.4.6.1.4: A client write of the deprecated Smart value SHALL be treated as a write of Auto when the Auto feature is supported, otherwise as a write of High.
     // oxlint-disable-next-line typescript/no-deprecated
     if (fanMode === FanControl.FanMode.Smart) {
       this.state.fanMode = this.features.auto ? FanControl.FanMode.Auto : FanControl.FanMode.High;
@@ -263,7 +263,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       return;
     }
 
-    // Matter 1.6.0 § 4.4.6.1: Respond with CONSTRAINT_ERROR when FanMode is set to a value the FanModeSequence attribute does not indicate as supported.
+    // Matter 1.6.1 § 4.4.6.1: Respond with CONSTRAINT_ERROR when FanMode is set to a value the FanModeSequence attribute does not indicate as supported.
     if (!supportedFanModesBySequence[this.state.fanModeSequence].has(fanMode)) {
       throw new StatusResponseError(
         `MatterbridgeFanControlServer: fanMode ${getEnumDescription(FanControl.FanMode, fanMode)} is not supported by fanModeSequence ${getEnumDescription(FanControl.FanModeSequence, this.state.fanModeSequence)} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -272,9 +272,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     }
 
     if (fanMode === FanControl.FanMode.Off) {
-      // Matter 1.6.0 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the PercentSetting attribute to 0.
+      // Matter 1.6.1 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the PercentSetting attribute to 0.
       this.state.percentSetting = 0;
-      // Matter 1.6.0 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the SpeedSetting attribute to 0 when the MultiSpeed feature is supported.
+      // Matter 1.6.1 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the SpeedSetting attribute to 0 when the MultiSpeed feature is supported.
       if (this.features.multiSpeed) {
         (this.state as unknown as { speedSetting: number | null }).speedSetting = 0;
       }
@@ -286,9 +286,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       // internal, spec-mandated assignments are authorized like a local update instead of being rejected with
       // UNSUPPORTED_WRITE (136).
       this.agent.asLocalActor(() => {
-        // Matter 1.6.0 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the PercentCurrent attribute to 0.
+        // Matter 1.6.1 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the PercentCurrent attribute to 0.
         this.state.percentCurrent = 0;
-        // Matter 1.6.0 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the SpeedCurrent attribute to 0 when the MultiSpeed feature is supported.
+        // Matter 1.6.1 § 4.4.6.1.1: Successfully setting FanMode to Off SHALL set the SpeedCurrent attribute to 0 when the MultiSpeed feature is supported.
         if (this.features.multiSpeed) {
           (this.state as unknown as { speedCurrent: number }).speedCurrent = 0;
         }
@@ -302,9 +302,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
         );
       }
     } else if (fanMode === FanControl.FanMode.Auto) {
-      // Matter 1.6.0 § 4.4.6.1.2: Successfully setting FanMode to Auto SHALL set the PercentSetting attribute to null.
+      // Matter 1.6.1 § 4.4.6.1.2: Successfully setting FanMode to Auto SHALL set the PercentSetting attribute to null.
       this.state.percentSetting = null;
-      // Matter 1.6.0 § 4.4.6.1.2: Successfully setting FanMode to Auto SHALL set the SpeedSetting attribute to null when the MultiSpeed feature is supported.
+      // Matter 1.6.1 § 4.4.6.1.2: Successfully setting FanMode to Auto SHALL set the SpeedSetting attribute to null when the MultiSpeed feature is supported.
       if (this.features.multiSpeed) {
         (this.state as unknown as { speedSetting: number | null }).speedSetting = null;
         device.log.debug(
@@ -318,7 +318,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
       // Only assign when it actually differs, so an already-in-range PercentSetting isn't snapped to an
       // arbitrary point in its own range (also keeps a PercentSetting-driven FanMode change, handled by
       // #handlePercentSettingChanging, from re-triggering it).
-      // Matter 1.6.0 § 4.4.6.1 and § 4.4.6.3.1: On a successful FanMode write, PercentSetting SHALL be set to a value within the range that maps to the new mode.
+      // Matter 1.6.1 § 4.4.6.1 and § 4.4.6.3.1: On a successful FanMode write, PercentSetting SHALL be set to a value within the range that maps to the new mode.
       const resolved = resolvePercentSettingForFanMode(fanMode, this.state.percentSetting, this.state.fanModeSequence);
       if (resolved !== this.state.percentSetting) this.state.percentSetting = resolved;
       device.log.debug(
@@ -340,9 +340,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     // this is also how #handleFanModeChanging nulls PercentSetting as the mandated side effect of a FanMode=Auto
     // transition; by the time that cascades here FanMode has already settled to Auto, so that case must be let
     // through rather than reverted.
-    // Matter 1.6.0 § 4.4.6.3: If a client writes null to the PercentSetting attribute, the attribute value SHALL NOT change.
+    // Matter 1.6.1 § 4.4.6.3: If a client writes null to the PercentSetting attribute, the attribute value SHALL NOT change.
     if (percentSetting === null) {
-      // Matter 1.6.0 § 4.4.6.1.2: Setting FanMode to Auto sets PercentSetting to null, so that mandated cascade is not a client write to revert.
+      // Matter 1.6.1 § 4.4.6.1.2: Setting FanMode to Auto sets PercentSetting to null, so that mandated cascade is not a client write to revert.
       if (this.state.fanMode === FanControl.FanMode.Auto) return;
       this.state.percentSetting = oldPercentSetting;
       device.log.debug(
@@ -352,15 +352,15 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     }
 
     // 0 is always its own range mapping to Off; any other value falls into one of the Low/Medium/High ranges.
-    // Matter 1.6.0 § 4.4.6.3.1: Each FanMode value covers a PercentSetting range, and a written PercentSetting falls into exactly one of them.
+    // Matter 1.6.1 § 4.4.6.3.1: Each FanMode value covers a PercentSetting range, and a written PercentSetting falls into exactly one of them.
     const fanMode = percentSetting === 0 ? FanControl.FanMode.Off : percentToFanMode(percentSetting, this.state.fanModeSequence);
 
     // Only assign when it actually differs, so an already-consistent FanMode is left untouched (and
     // #handleFanModeChanging is not triggered needlessly).
-    // Matter 1.6.0 § 4.4.6.3.1: On a successful PercentSetting write, the server SHALL set the FanMode attribute to the value of the corresponding range.
+    // Matter 1.6.1 § 4.4.6.3.1: On a successful PercentSetting write, the server SHALL set the FanMode attribute to the value of the corresponding range.
     if (fanMode !== this.state.fanMode) this.state.fanMode = fanMode;
 
-    // Matter 1.6.0 § 4.4.6.3.1: SpeedSetting SHALL be calculated from PercentSetting as speed = ceil( SpeedMax * (percent * 0.01) ).
+    // Matter 1.6.1 § 4.4.6.3.1: SpeedSetting SHALL be calculated from PercentSetting as speed = ceil( SpeedMax * (percent * 0.01) ).
     if (this.features.multiSpeed) {
       const state = this.state as unknown as { speedSetting: number | null; speedMax: number };
       state.speedSetting = speedSettingForPercent(state.speedMax, percentSetting);
@@ -409,9 +409,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     const state = this.state as unknown as { speedSetting: number | null; speedMax: number };
 
     // The same Auto-transition exception applies as for PercentSetting (see #handlePercentSettingChanging).
-    // Matter 1.6.0 § 4.4.6.6: If a client writes null to the SpeedSetting attribute, the attribute value SHALL NOT change.
+    // Matter 1.6.1 § 4.4.6.6: If a client writes null to the SpeedSetting attribute, the attribute value SHALL NOT change.
     if (speedSetting === null) {
-      // Matter 1.6.0 § 4.4.6.1.2: Setting FanMode to Auto sets SpeedSetting to null, so that mandated cascade is not a client write to revert.
+      // Matter 1.6.1 § 4.4.6.1.2: Setting FanMode to Auto sets SpeedSetting to null, so that mandated cascade is not a client write to revert.
       if (this.state.fanMode === FanControl.FanMode.Auto) return;
       state.speedSetting = oldSpeedSetting;
       device.log.debug(
@@ -424,21 +424,21 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     if (percentSetting !== null && speedSettingForPercent(state.speedMax, percentSetting) === speedSetting) return;
 
     // Recover the equivalent PercentSetting value and, from it, the FanMode range it falls into.
-    // Matter 1.6.0 § 4.4.6.6.1: A client write of SpeedSetting 0 SHALL set FanMode to Off and PercentSetting to 0; other values map through the same ranges as PercentSetting.
+    // Matter 1.6.1 § 4.4.6.6.1: A client write of SpeedSetting 0 SHALL set FanMode to Off and PercentSetting to 0; other values map through the same ranges as PercentSetting.
     const percent = speedSetting === 0 ? 0 : Math.min(100, Math.round((speedSetting / state.speedMax) * 100));
     const fanMode = percent === 0 ? FanControl.FanMode.Off : percentToFanMode(percent, this.state.fanModeSequence);
 
     // Only assign when it actually differs, so an already-consistent FanMode is left untouched (and
     // #handleFanModeChanging is not triggered needlessly — it would otherwise re-derive PercentSetting/SpeedSetting
     // from the old PercentSetting instead of the value just computed below).
-    // Matter 1.6.0 § 4.4.6.6.1: On a successful SpeedSetting write, the server SHALL set the FanMode attribute to the value of the corresponding range.
+    // Matter 1.6.1 § 4.4.6.6.1: On a successful SpeedSetting write, the server SHALL set the FanMode attribute to the value of the corresponding range.
     if (fanMode !== this.state.fanMode) this.state.fanMode = fanMode;
 
     // Keep PercentSetting consistent with the SpeedSetting value just written, the same way
     // #handlePercentSettingChanging keeps SpeedSetting consistent with a PercentSetting write. Unconditional and
     // last, since #handleFanModeChanging's own Percent Rules handling (triggered by the FanMode assignment above,
     // when it runs) would otherwise snap PercentSetting to its range's midpoint instead of this precise value.
-    // Matter 1.6.0 § 4.4.6.6.1: On a successful SpeedSetting write, PercentSetting SHALL be kept consistent with the written speed.
+    // Matter 1.6.1 § 4.4.6.6.1: On a successful SpeedSetting write, PercentSetting SHALL be kept consistent with the written speed.
     if (percent !== this.state.percentSetting) this.state.percentSetting = percent;
     device.log.debug(
       `MatterbridgeFanControlServer: handleSpeedSettingChanging speedSetting changed to ${speedSetting} >>> fanMode ${lookupFanMode[this.state.fanMode]} percentSetting ${this.state.percentSetting} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -499,9 +499,9 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
 
     // TLV omits an optional field entirely rather than sending its default, so request.wrap/lowestOff can
     // arrive as undefined.
-    // Matter 1.6.0 § 4.4.7.1.2: The Wrap field indicates whether the step wraps around, and defaults to false when omitted.
+    // Matter 1.6.1 § 4.4.7.1.2: The Wrap field indicates whether the step wraps around, and defaults to false when omitted.
     const wrap = request.wrap ?? false;
-    // Matter 1.6.0 § 4.4.7.1.3: The LowestOff field indicates whether Off is included as a step value, and defaults to true when omitted.
+    // Matter 1.6.1 § 4.4.7.1.3: The LowestOff field indicates whether Off is included as a step value, and defaults to true when omitted.
     const lowestOff = request.lowestOff ?? true;
 
     // Snapshot the settled, pre-transaction state this step is based on, before any attribute assignment below
@@ -520,7 +520,7 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     let targetFanMode: FanControl.FanMode;
     if (request.direction === FanControl.StepDirection.Increase) {
       const higher = stepFanModes.filter((fanMode) => fanMode > currentFanMode);
-      // v8 ignore next: every FanModeSequenceEnum value includes High (Matter 1.6.0 § 4.4.5.6), so stepFanModes
+      // v8 ignore next: every FanModeSequenceEnum value includes High (Matter 1.6.1 § 4.4.5.6), so stepFanModes
       // always has at least one entry and Math.min/Math.max never see an empty array.
       // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
       targetFanMode = higher.length > 0 ? Math.min(...higher) : wrap ? Math.min(...stepFanModes) : Math.max(...stepFanModes);
@@ -537,15 +537,15 @@ export class MatterbridgeFanControlServer extends FanControlServer.with(FanContr
     // the target range — not precise enough for Step's own boundary landing, so PercentSetting is explicitly
     // overridden below with resolveStepPercentSettingForFanMode()'s result instead (see the class-level remarks
     // above for why the cascade's own result isn't read back and reused directly).
-    // Matter 1.6.0 § 4.4.7.1.5: A successful Step command SHALL change FanMode to the adjacent step value in the requested direction.
+    // Matter 1.6.1 § 4.4.7.1.5: A successful Step command SHALL change FanMode to the adjacent step value in the requested direction.
     if (targetFanMode !== currentFanMode) this.state.fanMode = targetFanMode;
 
     const resolvedPercentSetting = resolveStepPercentSettingForFanMode(targetFanMode, request.direction, currentPercentSetting, fanModeSequence);
-    // Matter 1.6.0 § 4.4.7.1.5: A successful Step command SHALL change PercentSetting to the value the new step lands on.
+    // Matter 1.6.1 § 4.4.7.1.5: A successful Step command SHALL change PercentSetting to the value the new step lands on.
     if (resolvedPercentSetting !== this.state.percentSetting) this.state.percentSetting = resolvedPercentSetting;
-    // Matter 1.6.0 § 4.4.7.1.5: A successful Step command SHALL change PercentCurrent, which this synthetic endpoint converges immediately onto the new setting.
+    // Matter 1.6.1 § 4.4.7.1.5: A successful Step command SHALL change PercentCurrent, which this synthetic endpoint converges immediately onto the new setting.
     this.state.percentCurrent = resolvedPercentSetting;
-    // Matter 1.6.0 § 4.4.6.6.1: SpeedCurrent follows the Speed Rules formula applied to the resolved percentage when the MultiSpeed feature is supported.
+    // Matter 1.6.1 § 4.4.6.6.1: SpeedCurrent follows the Speed Rules formula applied to the resolved percentage when the MultiSpeed feature is supported.
     if (this.features.multiSpeed) {
       const state = this.state as unknown as { speedMax: number; speedCurrent: number };
       state.speedCurrent = speedSettingForPercent(state.speedMax, resolvedPercentSetting);

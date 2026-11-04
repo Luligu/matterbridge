@@ -115,14 +115,14 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       audible: Boolean(alarmsToEnableDisable.audible),
     };
 
-    // Matter 1.6.0 § 1.8.7.2.2: Set AlarmsEnabled to the requested bitmap when all alarm modes are valid.
+    // Matter 1.6.1 § 1.8.7.2.2: Set AlarmsEnabled to the requested bitmap when all alarm modes are valid.
     this.state.alarmsEnabled = alarmsEnabled;
-    // Matter 1.6.0 § 1.8.7.2.2: Clear active alarm modes when they are disabled.
+    // Matter 1.6.1 § 1.8.7.2.2: Clear active alarm modes when they are disabled.
     this.state.alarmsActive = {
       visual: Boolean(this.state.alarmsActive.visual && alarmsEnabled.visual),
       audible: Boolean(this.state.alarmsActive.audible && alarmsEnabled.audible),
     };
-    // Matter 1.6.0 § 1.8.7.2.2: Clear suppressed alarm modes when they are disabled.
+    // Matter 1.6.1 § 1.8.7.2.2: Clear suppressed alarm modes when they are disabled.
     this.state.alarmsSuppressed = {
       visual: Boolean(this.state.alarmsSuppressed.visual && alarmsEnabled.visual),
       audible: Boolean(this.state.alarmsSuppressed.audible && alarmsEnabled.audible),
@@ -137,7 +137,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
    * @throws {StatusResponseError} With CONSTRAINT_ERROR when a requested alarm mode is unsupported.
    */
   #assertAlarmModesSupported(alarms: BooleanStateConfiguration.AlarmMode): void {
-    // Matter 1.6.0 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
+    // Matter 1.6.1 § 1.8.7.1.2 and § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
     if ([Boolean(alarms.visual && !this.state.alarmsSupported.visual), Boolean(alarms.audible && !this.state.alarmsSupported.audible)].some(Boolean)) {
       throw new StatusResponseError(
         `MatterbridgeBooleanStateConfigurationServer: requested alarm mode is not supported (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -154,7 +154,7 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
    * @throws {StatusResponseError} With INVALID_IN_STATE when a requested alarm mode is inactive or disabled.
    */
   #assertSuppressAlarmAllowed(alarmsToSuppress: BooleanStateConfiguration.AlarmMode): void {
-    // Matter 1.6.0 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
+    // Matter 1.6.1 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
     if (
       [
         Boolean(alarmsToSuppress.visual && (!this.state.alarmsActive.visual || !this.state.alarmsEnabled?.visual)),
@@ -187,11 +187,11 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
+    // Matter 1.6.1 § 1.8.7.1.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
     this.#assertAlarmModesSupported(request.alarmsToSuppress);
-    // Matter 1.6.0 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
+    // Matter 1.6.1 § 1.8.7.1.2: Reject suppression with INVALID_IN_STATE if a requested alarm mode is inactive or disabled.
     this.#assertSuppressAlarmAllowed(request.alarmsToSuppress);
-    // Matter 1.6.0 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
+    // Matter 1.6.1 § 1.8.7.1.2: Set each valid requested mode in AlarmsSuppressed while preserving modes already suppressed.
     this.state.alarmsSuppressed = this.#mergeAlarmsSuppressed(request.alarmsToSuppress);
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: suppressAlarm called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.endpoint.emitCommand(BooleanStateConfiguration, 'suppressAlarm', request, this.context);
@@ -216,9 +216,9 @@ export class MatterbridgeBooleanStateConfigurationServer extends BooleanStateCon
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
+    // Matter 1.6.1 § 1.8.7.2.2: Reject the command with CONSTRAINT_ERROR if any requested alarm mode is unsupported.
     this.#assertAlarmModesSupported(request.alarmsToEnableDisable);
-    // Matter 1.6.0 § 1.8.7.2.2: Apply the requested enabled modes and clear active or suppressed modes that become disabled.
+    // Matter 1.6.1 § 1.8.7.2.2: Apply the requested enabled modes and clear active or suppressed modes that become disabled.
     this.#applyAlarmsEnabled(request.alarmsToEnableDisable);
     device.log.debug(`MatterbridgeBooleanStateConfigurationServer: enableDisableAlarm called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.endpoint.emitCommand(BooleanStateConfiguration, 'enableDisableAlarm', request, this.context);
