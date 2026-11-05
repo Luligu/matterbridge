@@ -92,6 +92,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
 - [core]: Map device classes explicitly to matter.js classifications, including App to Application.
 - [core]: Keep manufacturer-specific operational states across Pause and Resume in `MatterbridgeOperationalStateServer` and `MatterbridgeRvcOperationalStateServer`.
+- [frontend]: Require the frontend authentication on the plugin `/plugins/<name>/api/*` routes before dispatching to `onFetch`. Closes [#676](https://github.com/Luligu/matterbridge/issues/676). Thanks to [@macjl](https://github.com/macjl).
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

@@ -1101,6 +1101,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
 
         // Unified API route handler for GET, POST, PUT, PATCH, DELETE
         const apiHandler = async (req: import('express').Request, res: import('express').Response): Promise<void> => {
+          if (!this.validateReq(req, res)) return;
           const method = req.method.toUpperCase();
           const path = Array.isArray(req.params.path) ? req.params.path[0] : req.params.path;
           const query = req.query;
