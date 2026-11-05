@@ -201,6 +201,8 @@
 <li>[core]: Bump <code>ws</code> to v.8.22.1.</li>
 <li>[core]: Remove the unused <code>@types/jest</code> dev dependency and the <code>jest</code> types from the core tsconfigs.</li>
 <li>[tests]: Refactor the tests for the <code>no-unsafe-enum-assignment</code> rule of oxlint v.1.90.0: use enum members instead of numeric literals and mark the deliberately invalid enum values.</li>
+<li>[core]: The <code>/api/plugins</code> endpoint now fetches the plugin list from the plugin manager through the server broadcast, with a 500 error response on failure.</li>
+<li>[core]: The plugin API representation includes <code>frontendPath</code> and derives <code>hasWhiteList</code> and <code>hasBlackList</code> from the plugin config.</li>
 <li>[docs]: Read the website&#39;s npm and Docker totals from the daily badge gist and animate stats after loading.</li>
 <li>[core]: Don&#39;t auto-close a WebRTC session when werift 0.26.0 replaces or retires a DTLS transport during SDP negotiation.</li>
 <li>[frontend]: Serve the WebSocket and HTTP <code>/api/settings</code> from Matterbridge through the <code>matterbridge_apisettings</code> broadcast request instead of building the settings locally.</li>
