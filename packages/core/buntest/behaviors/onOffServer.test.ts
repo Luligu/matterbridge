@@ -7,7 +7,7 @@
 const NAME = 'OnOffServer';
 const MATTER_PORT = 13000;
 
-import { describe, expect, test } from 'bun:test';
+import { describe, expect, spyOn, test } from 'bun:test';
 
 import { OnOffBaseServer } from '@matter/node/behaviors/on-off';
 import { OnOff } from '@matter/types/clusters/on-off';
@@ -15,9 +15,10 @@ import { addBridgedDevice, aggregator } from '@matterbridge/test-utils/buntest/m
 import { setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { getOffWithEffectRequest, getOnWithTimedOffRequest } from '@matterbridge/test-utils/matter';
 
+import { MatterbridgeOnOffServer } from '../../src/behaviors/onOffServer.js';
 import { bridge, bridgedNode, extendedColorLight, lightSensor, occupancySensor, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
-import { expectCommand, useServerNode } from '../bunUtils.js';
+import { expectCommand, recordCommand, useServerNode } from '../bunUtils.js';
 
 await setupTest(NAME, false);
 
@@ -76,6 +77,41 @@ describe('MatterbridgeOnOffServer', () => {
     device.addRequiredClusterServers();
     expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
     expect(device.getAttribute(OnOff, 'onOff')).toBe(expected);
+  });
+
+  test('should apply every command in the base server without the plugin handler when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    const device = new MatterbridgeEndpoint([extendedColorLight, bridge], { id: 'chipTestOnOff' });
+    device.createDefaultBridgedDeviceBasicInformationClusterServer('chipTestOnOff', 'SN-chipTestOnOff');
+    device.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
+    const calls = (['on', 'off', 'toggle', 'OnOff.offWithEffect', 'OnOff.onWithRecallGlobalScene', 'OnOff.onWithTimedOff'] as const).map((command) =>
+      recordCommand(device, command),
+    );
+    // The scene commands need a fabric session in the base server: stub them and check only the forwarding.
+    const base = Object.getPrototypeOf(MatterbridgeOnOffServer.prototype) as Record<'offWithEffect' | 'onWithRecallGlobalScene', () => Promise<void>>;
+    const offWithEffect = spyOn(base, 'offWithEffect').mockImplementation(async () => Promise.resolve());
+    const onWithRecallGlobalScene = spyOn(base, 'onWithRecallGlobalScene').mockImplementation(async () => Promise.resolve());
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    try {
+      await device.invokeBehaviorCommand(OnOff, 'on');
+      expect(device.getAttribute(OnOff, 'onOff')).toBe(true);
+      await device.invokeBehaviorCommand(OnOff, 'off');
+      expect(device.getAttribute(OnOff, 'onOff')).toBe(false);
+      await device.invokeBehaviorCommand(OnOff, 'toggle');
+      expect(device.getAttribute(OnOff, 'onOff')).toBe(true);
+      await device.invokeBehaviorCommand(OnOff, 'offWithEffect', getOffWithEffectRequest(OnOff.EffectIdentifier.DelayedAllOff, 0));
+      expect(offWithEffect).toHaveBeenCalledTimes(1);
+      await device.invokeBehaviorCommand(OnOff, 'onWithRecallGlobalScene');
+      expect(onWithRecallGlobalScene).toHaveBeenCalledTimes(1);
+      await device.invokeBehaviorCommand(OnOff, 'off');
+      await device.invokeBehaviorCommand(OnOff, 'onWithTimedOff', getOnWithTimedOffRequest(false, 0, 0));
+      expect(device.getAttribute(OnOff, 'onOff')).toBe(true);
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+      offWithEffect.mockRestore();
+      onWithRecallGlobalScene.mockRestore();
+    }
+    for (const recorded of calls) expect(recorded).toHaveLength(0);
   });
 
   test('StartUpOnOff does not apply without the Lighting feature', async () => {

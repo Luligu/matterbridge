@@ -81,6 +81,17 @@ async function advanceMovement(condition: () => boolean): Promise<void> {
 describe('MatterbridgeWindowCoveringServer', () => {
   useServerNode(MATTER_PORT);
 
+  test('should set movementDuration to 3000 ms on initialize when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    let cover: MatterbridgeEndpoint;
+    try {
+      cover = await addCover('chipTestCover');
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+    expect((cover.state as unknown as { windowCovering: { movementDuration: number } }).windowCovering.movementDuration).toBe(3000);
+  });
+
   afterEach(() => {
     vi.useRealTimers();
   });

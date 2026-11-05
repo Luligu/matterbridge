@@ -17,12 +17,42 @@ import { getMoveRequest, getMoveToLevelRequest, getStepRequest, getStopRequest }
 
 import { bridge, bridgedNode, extendedColorLight, lightSensor, occupancySensor, powerSource } from '../../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../../src/matterbridgeEndpoint.js';
-import { expectCommand, useServerNode } from '../bunUtils.js';
+import { expectCommand, recordCommand, useServerNode } from '../bunUtils.js';
 
 await setupTest(NAME, false);
 
 describe('MatterbridgeLevelControlServer', () => {
   useServerNode(MATTER_PORT);
+
+  test('should apply every command in the base server without the plugin handler when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    const light = new MatterbridgeEndpoint([extendedColorLight, bridge], { id: 'chipTestLevel' });
+    light.createDefaultBridgedDeviceBasicInformationClusterServer('chipTestLevel', 'SN-chipTestLevel');
+    light.addRequiredClusterServers();
+    expect(await addBridgedDevice(aggregator, light, 0, 0, 0, 0)).toBeTruthy();
+    await light.setAttribute(OnOff, 'onOff', true);
+    const commands = ['moveToLevel', 'moveToLevelWithOnOff', 'move', 'moveWithOnOff', 'step', 'stepWithOnOff', 'stop', 'stopWithOnOff'] as const;
+    const calls = commands.map((command) => recordCommand(light, command === 'moveToLevel' || command === 'moveToLevelWithOnOff' ? command : `LevelControl.${command}`));
+    const level = (): unknown => light.getAttribute(LevelControl, 'currentLevel');
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    try {
+      await light.invokeBehaviorCommand(LevelControl, 'moveToLevel', getMoveToLevelRequest(100, 0, false));
+      expect(level()).toBe(100);
+      await light.invokeBehaviorCommand(LevelControl, 'moveToLevelWithOnOff', getMoveToLevelRequest(150, 0, false));
+      expect(level()).toBe(150);
+      await light.invokeBehaviorCommand(LevelControl, 'move', getMoveRequest(LevelControl.MoveMode.Up, 5, false));
+      await light.invokeBehaviorCommand(LevelControl, 'stop', getStopRequest(false));
+      await light.invokeBehaviorCommand(LevelControl, 'moveWithOnOff', getMoveRequest(LevelControl.MoveMode.Up, 5, false));
+      await light.invokeBehaviorCommand(LevelControl, 'stopWithOnOff', getStopRequest(false));
+      await light.invokeBehaviorCommand(LevelControl, 'moveToLevel', getMoveToLevelRequest(100, 0, false));
+      await light.invokeBehaviorCommand(LevelControl, 'step', getStepRequest(LevelControl.StepMode.Up, 10, 0, false));
+      expect(level()).toBe(110);
+      await light.invokeBehaviorCommand(LevelControl, 'stepWithOnOff', getStepRequest(LevelControl.StepMode.Down, 20, 0, false));
+      expect(level()).toBe(90);
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+    for (const recorded of calls) expect(recorded).toHaveLength(0);
+  });
 
   test('every command reaches the plugin with the pre-command level, then the base server applies it', async () => {
     const light = new MatterbridgeEndpoint([extendedColorLight, bridge, powerSource], { id: 'extendedColorLight' });

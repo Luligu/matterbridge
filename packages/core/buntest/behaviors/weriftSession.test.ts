@@ -212,6 +212,39 @@ describe('WeriftWebRtcSession', () => {
     expect(session.addIceCandidate('candidate:1 1 UDP 1 127.0.0.1 1 typ host', '0', null)).resolves.toBeUndefined();
     await session.close();
   });
+
+  test('the diagnostics snapshot logs the states and the packet counter deltas', async () => {
+    const session = new WeriftWebRtcSession(1, { ...options, offerVideo: false, offerAudio: false });
+    const snapshot = async (): Promise<void> => (session as unknown as { logDiagnosticsSnapshot: () => Promise<void> }).logDiagnosticsSnapshot();
+    const getStats = spyOn(session.peerConnection, 'getStats');
+    // No stats and no transports: every summary falls back to none and the deltas to n/a.
+    getStats.mockResolvedValueOnce(new Map() as never);
+    loggerDebugSpy.mockClear();
+    await snapshot();
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('outboundRtp[none] (totalPacketsSent Δn/a)'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('iceTransportStates=[none]'));
+    // A nominated pair and outbound RTP streams, some without counters or kind.
+    getStats.mockResolvedValueOnce(
+      new Map<string, unknown>([
+        ['p0', { type: 'candidate-pair', nominated: false, packetsSent: 99 }],
+        ['p1', { type: 'candidate-pair', nominated: true, packetsSent: 5, packetsReceived: 3 }],
+        ['o1', { type: 'outbound-rtp', kind: 'video', packetsSent: 7 }],
+        ['o2', { type: 'outbound-rtp' }],
+        ['x', { type: 'transport' }],
+      ]) as never,
+    );
+    loggerDebugSpy.mockClear();
+    await snapshot();
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('nominatedPair(packetsSent=5 Δ+5, packetsReceived=3 Δ+3)'));
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('outboundRtp[video:packetsSent=7, unknown:packetsSent=0] (totalPacketsSent Δ+7)'));
+    // Counters going back produce a negative delta.
+    getStats.mockResolvedValueOnce(new Map<string, unknown>([['p1', { type: 'candidate-pair', nominated: true }]]) as never);
+    loggerDebugSpy.mockClear();
+    await snapshot();
+    expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringContaining('nominatedPair(packetsSent=0 Δ-5, packetsReceived=0 Δ-3)'));
+    getStats.mockRestore();
+    await session.close();
+  });
   describe('encoder arguments from the options and the environment', () => {
     const rtsp = { videoSource: 'rtsp', videoSourceDevice: 'rtsp://camera.local/live' } as const;
 

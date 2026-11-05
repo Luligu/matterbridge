@@ -645,8 +645,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('should retrieve plugins and filter ready devices through the direct frontend helpers', () => {
-    expect(frontend.getApiPlugins().map((plugin) => plugin.name)).toEqual(['matterbridge-mock1', 'matterbridge-mock2', 'matterbridge-mock3']);
+  test('should filter ready devices through the direct frontend helpers', () => {
     expect(frontend.getApiDevices()).toHaveLength(6);
     expect(frontend.getApiDevices('matterbridge-mock1')).toHaveLength(2);
     expect(frontend.getApiDevices('missing-plugin')).toEqual([]);

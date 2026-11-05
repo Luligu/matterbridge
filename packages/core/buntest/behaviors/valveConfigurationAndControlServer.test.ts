@@ -67,6 +67,17 @@ describe('MatterbridgeValveConfigurationAndControlServer', () => {
     vi.useRealTimers();
   });
 
+  test('should enable the movement simulation and auto close on initialize when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    let valve: MatterbridgeEndpoint;
+    try {
+      valve = await addValve('chipTestValve', 0, false);
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+    expect(valve.stateOf(MatterbridgeValveConfigurationAndControlServer)).toMatchObject({ movementDuration: 2000, autoClose: true });
+  });
+
   test('Open/Close Effect on Receipt, fault and LevelStep validation with the simulation disabled', async () => {
     const valve = await addValve('valve', 0, false);
     expect(valveState(valve)).toEqual({

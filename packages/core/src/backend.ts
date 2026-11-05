@@ -511,7 +511,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiSettings(): Promise<ApiSettings> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: 'frontend', dst: 'matterbridge', params: {} });
+    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: this.server.name, dst: 'matterbridge', params: {} });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.data;
   }
@@ -523,7 +523,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiPlugins(): Promise<ApiPlugin[]> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: 'frontend', dst: 'plugins', params: undefined });
+    const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins', params: undefined });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.plugins;
   }

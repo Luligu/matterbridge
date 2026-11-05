@@ -55,7 +55,6 @@ import type {
   ApiClusters,
   ApiDevice,
   ApiMatter,
-  ApiPlugin,
   BridgeStatus,
   PluginStatusUpdate,
   RefreshRequiredChanged,
@@ -776,10 +775,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to provide plugins (debug only reasons - not used in production)
-    this.expressApp.get('/api/plugins', (req, res) => {
+    this.expressApp.get('/api/plugins', async (req, res) => {
       this.log.debug('The frontend sent /api/plugins');
       if (!this.validateReq(req, res)) return;
-      res.json(this.getApiPlugins());
+      try {
+        res.json((await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins', params: undefined }, this.serverFetchTimeout)).result.plugins);
+      } catch (error) {
+        logError(this.log, 'Error in /api/plugins fetching the plugins from the plugin manager', error);
+        res.status(500).send('Error fetching the plugins.');
+      }
     });
 
     // Endpoint to provide devices (debug only reasons - not used in production)
@@ -1267,51 +1271,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the registered plugins sanitized for res.json().
-   *
-   * @returns {ApiPlugin[]} An array of BaseRegisteredPlugin.
-   */
-  getApiPlugins(): ApiPlugin[] {
-    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
-    const plugins: ApiPlugin[] = [];
-    for (const plugin of this.matterbridge.plugins.array()) {
-      plugins.push({
-        path: plugin.path,
-        type: plugin.type,
-        name: plugin.name,
-        version: plugin.version,
-        private: plugin.private,
-        configurationVersion: plugin.configurationVersion,
-        description: plugin.description,
-        author: plugin.author,
-        homepage: plugin.homepage,
-        help: plugin.help,
-        changelog: plugin.changelog,
-        funding: plugin.funding,
-        latestVersion: plugin.latestVersion,
-        devVersion: plugin.devVersion,
-        locked: plugin.locked,
-        error: plugin.error,
-        enabled: plugin.enabled,
-        loaded: plugin.loaded,
-        started: plugin.started,
-        configured: plugin.configured,
-        local: plugin.local,
-        restartRequired: plugin.restartRequired,
-        registeredDevices: plugin.registeredDevices,
-        configJson: plugin.configJson,
-        schemaJson: plugin.schemaJson,
-        hasWhiteList: plugin.configJson?.whiteList !== undefined,
-        hasBlackList: plugin.configJson?.blackList !== undefined,
-        frontendPath: plugin.frontendPath,
-        // Childbridge mode specific data
-        matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
-      });
-    }
-    return plugins;
-  }
-
-  /**
    * Retrieves the devices from Matterbridge.
    *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
@@ -1780,14 +1739,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // oxfmt-ignore
         const settings = (await this.server.fetch({ type: 'matterbridge_apisettings', src: this.server.name, dst: 'matterbridge', params: {} }, this.serverFetchTimeout)).result.data;
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `/api/settings took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: settings });
       } else if (data.method === '/api/plugins') {
         const start = performance.now();
-        const plugins = this.getApiPlugins();
-        // const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: 'frontend', dst: 'plugins', params: undefined });
+        const plugins = (await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins', params: undefined }, this.serverFetchTimeout)).result
+          .plugins;
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `/api/plugins took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();

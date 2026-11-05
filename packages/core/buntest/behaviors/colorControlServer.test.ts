@@ -88,6 +88,43 @@ async function step(light: MatterbridgeEndpoint, command: Command, request: obje
 describe('MatterbridgeColorControlServer', () => {
   useServerNode(MATTER_PORT);
 
+  test('should apply every command in the base server without the plugin handler when MATTERBRIDGE_CHIP_TEST is set', async () => {
+    const light = await addLight('chipTestColor', (endpoint) => {
+      endpoint.createDefaultOnOffClusterServer(true);
+      endpoint.createEnhancedColorControlClusterServer();
+    });
+    const commands: [Command, string, object][] = [
+      ['moveToHue', 'moveToHue', getMoveToHueRequest(180, 0, false)],
+      ['ColorControl.moveHue', 'moveHue', getMoveHueRequest(MoveMode.Up, 5, false)],
+      ['ColorControl.stepHue', 'stepHue', getStepHueRequest(StepMode.Up, 10, 0, false)],
+      ['ColorControl.enhancedMoveToHue', 'enhancedMoveToHue', getEnhancedMoveToHueRequest(1000, 0, false)],
+      ['ColorControl.enhancedMoveHue', 'enhancedMoveHue', getEnhancedMoveHueRequest(MoveMode.Up, 5, false)],
+      ['ColorControl.enhancedStepHue', 'enhancedStepHue', getEnhancedStepHueRequest(StepMode.Up, 10, 0, false)],
+      ['moveToSaturation', 'moveToSaturation', getMoveToSaturationRequest(100, 0, false)],
+      ['ColorControl.moveSaturation', 'moveSaturation', getMoveSaturationRequest(MoveMode.Up, 5, false)],
+      ['ColorControl.stepSaturation', 'stepSaturation', getStepSaturationRequest(StepMode.Up, 10, 0, false)],
+      ['moveToHueAndSaturation', 'moveToHueAndSaturation', getMoveToHueAndSaturationRequest(180, 100, 0, false)],
+      ['ColorControl.enhancedMoveToHueAndSaturation', 'enhancedMoveToHueAndSaturation', getEnhancedMoveToHueAndSaturationRequest(1000, 100, 0, false)],
+      ['moveToColor', 'moveToColor', getMoveToColorRequest(30000, 30000, 0, false)],
+      ['ColorControl.moveColor', 'moveColor', getMoveColorRequest(100, 100, false)],
+      ['ColorControl.stepColor', 'stepColor', getStepColorRequest(100, 100, 0, false)],
+      ['moveToColorTemperature', 'moveToColorTemperature', getMoveToColorTemperatureRequest(250, 0, false)],
+      ['ColorControl.moveColorTemperature', 'moveColorTemperature', getMoveColorTemperatureRequest(MoveMode.Up, 5, 153, 500, false)],
+      ['ColorControl.stepColorTemperature', 'stepColorTemperature', getStepColorTemperatureRequest(StepMode.Up, 10, 0, 153, 500, false)],
+      ['ColorControl.stopMoveStep', 'stopMoveStep', getStopMoveStepRequest(false)],
+    ];
+    const calls = commands.map(([handler]) => recordCommand(light, handler));
+    process.env.MATTERBRIDGE_CHIP_TEST = 'true';
+    try {
+      for (const [, command, request] of commands) await light.invokeBehaviorCommand(ColorControl, command as never, request as never);
+    } finally {
+      delete process.env.MATTERBRIDGE_CHIP_TEST;
+    }
+    for (const recorded of calls) expect(recorded).toHaveLength(0);
+    // The last absolute command applied by the base server is still in place.
+    expect(light.getAttribute(ColorControl, 'colorMode')).toBe(CT);
+  });
+
   test('every command reaches the plugin, then matter.js applies it and settles ColorMode', async () => {
     const light = await addLight('extendedColorLight');
     // Every command honours Options.ExecuteIfOff: with the light off they would be no-ops.

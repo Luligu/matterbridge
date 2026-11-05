@@ -13,6 +13,7 @@ const MATTER_CREATE_ONLY = true;
 
 import path from 'node:path';
 
+import { BasicInformation } from '@matter/types/clusters/basic-information';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
@@ -559,6 +560,16 @@ describe('Matterbridge platform', () => {
       expect(devices.result.devices).toEqual(selectDevices);
       expect(entities.result.entities).toEqual(selectEntities);
       expect(responseSpy).toHaveBeenCalledTimes(2);
+
+      // The api responses are sorted by device name and entity name
+      platform.setSelectDevice('serial0', 'name0');
+      platform.setSelectEntity('name0', 'description0');
+      const [sortedDevices, sortedEntities] = await Promise.all([
+        matterbridgeServer.fetch({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
+        matterbridgeServer.fetch({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { pluginName: platform.name } }),
+      ]);
+      expect(sortedDevices.result.devices.map((device) => device.deviceName)).toEqual(['name0', 'name1']);
+      expect(sortedEntities.result.entities.map((entity) => entity.name)).toEqual(['name0', 'name1']);
     } finally {
       matterbridgeServer.off('broadcast_message', responseSpy);
     }
@@ -1244,6 +1255,35 @@ describe('Matterbridge platform', () => {
         await platform.unregisterDevice(failed);
       } finally {
         setAttributeSpy.mockRestore();
+      }
+
+      // A device without BridgedDeviceBasicInformation gets the node label on BasicInformation
+      const hasClusterServer = MatterbridgeEndpoint.prototype.hasClusterServer;
+      const hasClusterServerSpy = vi.spyOn(MatterbridgeEndpoint.prototype, 'hasClusterServer').mockImplementation(function (this: MatterbridgeEndpoint, cluster) {
+        if (cluster === BridgedDeviceBasicInformation) return false;
+        if (cluster === BasicInformation) return true;
+        return hasClusterServer.call(this, cluster);
+      });
+      const basicSetAttributeSpy = vi.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute').mockResolvedValue(true);
+      try {
+        const basic = await registerDevice('Rename device', 'RENAME-001', 'renameUniqueId', 'RenameDeviceBasic', 176);
+        expect(basicSetAttributeSpy).toHaveBeenCalledWith(BasicInformation, 'nodeLabel', 'Renamed device', expect.anything());
+        await platform.unregisterDevice(basic);
+
+        // A device without both clusters is skipped
+        basicSetAttributeSpy.mockClear();
+        hasClusterServerSpy.mockImplementation(function (this: MatterbridgeEndpoint, cluster) {
+          if (cluster === BridgedDeviceBasicInformation || cluster === BasicInformation) return false;
+          return hasClusterServer.call(this, cluster);
+        });
+        const none = await registerDevice('Rename device', 'RENAME-001', 'renameUniqueId', 'RenameDeviceNone', 177);
+        expect(basicSetAttributeSpy).not.toHaveBeenCalledWith(expect.anything(), 'nodeLabel', expect.anything(), expect.anything());
+        hasClusterServerSpy.mockRestore();
+        basicSetAttributeSpy.mockRestore();
+        await platform.unregisterDevice(none);
+      } finally {
+        hasClusterServerSpy.mockRestore();
+        basicSetAttributeSpy.mockRestore();
       }
 
       // A new platform for the same plugin loads the persisted node labels

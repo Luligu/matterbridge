@@ -344,11 +344,22 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/plugins', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce((async () => ({ result: { plugins: [{ name: 'matterbridge-mock' }] } })) as any);
     const response = await makeRequest('/api/plugins', 'GET');
+    expect(broadcastServerFetchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'plugins_apipluginarray', dst: 'plugins' }), expect.any(Number));
 
     expect(response.status).toBe(200);
-    expect(typeof response.body).toBe('object');
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toEqual([{ name: 'matterbridge-mock' }]);
+  }, 30000);
+
+  test('GET /api/plugins error', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce(async () => {
+      throw new Error('Fetch timeout');
+    });
+    const response = await makeRequest('/api/plugins', 'GET');
+
+    expect(response.status).toBe(500);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error in /api/plugins fetching the plugins from the plugin manager'));
   }, 30000);
 
   test('GET /api/devices', async () => {
