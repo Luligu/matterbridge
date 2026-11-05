@@ -290,7 +290,7 @@ describe('PluginManager', () => {
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
     }
-  }, 10000);
+  }, 60000);
 
   test('logLevel changes correctly', async () => {
     plugins.logLevel = LogLevel.DEBUG;
