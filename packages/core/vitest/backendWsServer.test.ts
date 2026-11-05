@@ -380,6 +380,31 @@ describe('BackendWsServer', () => {
     }
   });
 
+  test.each([
+    { method: '/api/unregister-device', params: { pluginName: 'matterbridge-test', serialNumber: 'SN1', uniqueId: 'UID1' } },
+    { method: '/api/rename-device', params: { pluginName: 'matterbridge-test', serialNumber: 'SN1', uniqueId: 'UID1', label: 'New name' } },
+  ] as const)('should reject $method with an invalid parameter', async ({ method, params }) => {
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+    const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
+    try {
+      for (const key of Object.keys(params)) {
+        for (const value of [undefined, '', 123]) {
+          const client = new FakeClient();
+          await (wsServer as any).wsMessageHandler(
+            client,
+            Buffer.from(JSON.stringify({ id: 14, src: 'Frontend', dst: 'Matterbridge', method, params: { ...params, [key]: value } })),
+          );
+          expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 14, method, src: 'Matterbridge', dst: 'Frontend', error: `Wrong parameter ${key} in ${method}` });
+        }
+      }
+      expect(requestSpy).not.toHaveBeenCalled();
+      expect(snackbarSpy).not.toHaveBeenCalled();
+    } finally {
+      requestSpy.mockRestore();
+      snackbarSpy.mockRestore();
+    }
+  });
+
   test.each(['/api/restart', '/api/shutdown'] as const)('should forward %s to the main thread and acknowledge the request', async (method) => {
     const client = new FakeClient();
     const fetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockResolvedValueOnce({ result: { success: true } } as never);

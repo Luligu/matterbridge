@@ -46,7 +46,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [types]: Add `/api/unregister-device` and `/api/rename-device` request/response contracts with device identifiers and a required rename `label`.
 - [types]: Add the `PlatformSelectDevice`, `PlatformSelectEntity` and `PlatformNodeLabel` types, also re-exported by `MatterbridgePlatform`.
 - [frontend]: Add a device actions menu on registered devices opening `Reset device` and `Change controller name`.
-- [core]: Handle `/api/unregister-device` and `/api/rename-device` in the frontend and backend WebSocket servers, forwarding them to the plugin platform.
+- [core]: Handle `/api/unregister-device` and `/api/rename-device` in the frontend and backend WebSocket servers, forwarding them to the plugin platform. The backend WebSocket server validates every parameter with `isValidString()`.
 - [platform]: Reset (unregister) a device or set its controller name (`nodeLabel`) on request from the frontend; renaming back to the device name removes the custom label.
 - [platform]: Persist the controller names in the new `nodeLabels` plugin storage and apply them in `registerDevice()`.
 - [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
