@@ -1523,6 +1523,7 @@ describe('Matterbridge mocked', () => {
     expect((matterbridge as any).configureTimeout).toBeUndefined();
     expect((matterbridge as any).reachabilityTimeout).toBeUndefined();
     expect(plugin.reachabilityTimeout).toBeUndefined();
+    expect(pluginsShutdownSpy).toHaveBeenCalledWith(plugin, 'Matterbridge is closing: cleanup test', false, true);
 
     (matterbridge as any).initialized = true; // Set initialized to true to allow cleanup
     (matterbridge as any).hasCleanupStarted = false; // Set hasCleanupStarted to false to allow cleanup
@@ -1610,6 +1611,15 @@ describe('Matterbridge mocked', () => {
 
     vi.advanceTimersByTime(1000); // Simulate 1 second for the interval
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/300) in startMatterInterval interval`));
+    const pendingPlugins = matterbridge.plugins.array().filter((plugin) => plugin.enabled);
+    for (const plugin of pendingPlugins) plugin.loaded = true;
+    vi.advanceTimersByTime(301000);
+    for (const plugin of pendingPlugins) {
+      expect(plugin.error).toBe(false);
+      plugin.loaded = undefined;
+    }
+    expect(startServerNodeSpy).not.toHaveBeenCalled();
+    expect((matterbridge as any).startMatterInterval).toBeDefined();
     (matterbridge as any).failCountLimit = 0; // Set failCountLimit to 0 to trigger the fail-safe check
 
     vi.advanceTimersByTime(1000); // Simulate 1 second for the interval
@@ -1768,6 +1778,15 @@ describe('Matterbridge mocked', () => {
     vi.advanceTimersByTime(1000); // Simulate 1 second for the start interval
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`Waiting (failSafeCount=0/300)`));
 
+    const pendingPlugins = matterbridge.plugins.array().filter((plugin) => plugin.enabled);
+    for (const plugin of pendingPlugins) plugin.loaded = true;
+    vi.advanceTimersByTime(301000);
+    for (const plugin of pendingPlugins) {
+      expect(plugin.error).toBe(false);
+      plugin.loaded = undefined;
+    }
+    expect(startServerNodeSpy).not.toHaveBeenCalled();
+    expect((matterbridge as any).startMatterInterval).toBeDefined();
     (matterbridge as any).failCountLimit = 0; // Set failCountLimit to 0 to trigger the fail-safe check. It will put the plugin in error state
     vi.advanceTimersByTime(1000); // Advance 1 second for the start interval
     expect(plugin1.error).toBe(true);

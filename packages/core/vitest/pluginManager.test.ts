@@ -1960,6 +1960,43 @@ describe('PluginManager', () => {
     plugin.error = false;
   });
 
+  test.each([
+    ['resolve', 'removed'],
+    ['reject', 'removed'],
+    ['resolve', 'shutting down'],
+    ['reject', 'shutting down'],
+    ['resolve', 'replaced'],
+    ['reject', 'replaced'],
+  ])('should ignore a stale startup that completes with %s when the platform is %s', async (completion, state) => {
+    const plugin = plugins.get('matterbridge-mock4');
+    if (!plugin?.platform) throw new Error('Expected loaded mock plugin');
+    const platform = plugin.platform;
+    let finish!: () => void;
+    const pending = new Promise<void>((resolve, reject) => {
+      finish = completion === 'resolve' ? resolve : (): void => reject(new Error('Cancelled startup'));
+    });
+    const startSpy = vi.spyOn(platform, 'onStart').mockReturnValueOnce(pending);
+    const saveSpy = vi.spyOn(plugins, 'saveConfigFromPlugin');
+    const startup = plugins.start(plugin);
+    if (state === 'removed') plugin.platform = undefined;
+    if (state === 'shutting down') platform.isShuttingDown = true;
+    if (state === 'replaced') plugin.platform = Object.create(platform) as MatterbridgePlatform;
+    finish();
+    try {
+      expect(await startup).toBeUndefined();
+      expect(plugin.started).toBe(false);
+      expect(plugin.error).toBeFalsy();
+      expect(saveSpy).not.toHaveBeenCalled();
+    } finally {
+      plugin.platform = platform;
+      platform.isShuttingDown = false;
+      plugin.started = false;
+      plugin.error = false;
+      startSpy.mockRestore();
+      saveSpy.mockRestore();
+    }
+  });
+
   test('start plugin matterbridge-mock4', async () => {
     let plugin = plugins.get('matterbridge-mock4');
     expect(plugin).not.toBeUndefined();

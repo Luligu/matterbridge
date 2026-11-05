@@ -1999,7 +1999,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       // Call the shutdown method of each plugin and clear the plugins reachability timeout
       for (const plugin of this.plugins) {
         if (!plugin.enabled || plugin.error) continue;
-        await this.plugins.shutdown(plugin, 'Matterbridge is closing: ' + message, false);
+        await this.plugins.shutdown(plugin, 'Matterbridge is closing: ' + message, false, true);
         if (plugin.reachabilityTimeout) {
           clearTimeout(plugin.reachabilityTimeout);
           plugin.reachabilityTimeout = undefined;
@@ -2384,8 +2384,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.log.debug(
                 `Waiting (failSafeCount=${failCount}/${this.failCountLimit}) in startMatterInterval interval for plugin ${plg}${plugin.name}${db} loaded: ${plugin.loaded} started: ${plugin.started}...`,
               );
-              failCount++;
-              if (failCount > this.failCountLimit) {
+              // A loaded plugin may wait for an external dependency in onStart.
+              if (!plugin.loaded && ++failCount > this.failCountLimit) {
                 this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
                 plugin.error = true;
               }
@@ -2507,8 +2507,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               this.log.debug(
                 `Waiting (failSafeCount=${failCount}/${this.failCountLimit}) for plugin ${plg}${plugin.name}${db} to load (${plugin.loaded}) and start (${plugin.started}) ...`,
               );
-              failCount++;
-              if (failCount > this.failCountLimit) {
+              // A loaded plugin may wait for an external dependency in onStart.
+              if (!plugin.loaded && ++failCount > this.failCountLimit) {
                 this.log.error(`Error waiting for plugin ${plg}${plugin.name}${er} to load and start. Plugin is in error state.`);
                 plugin.error = true;
               }

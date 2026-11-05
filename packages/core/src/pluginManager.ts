@@ -1338,16 +1338,19 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       return undefined;
     }
     this.log.info(`Starting plugin ${plg}${plugin.name}${nf} type ${typ}${plugin.type}${nf}`);
+    const platform = plugin.platform;
     try {
-      await plugin.platform.onStart(message);
+      await platform.onStart(message);
+      if (plugin.platform !== platform || platform.isShuttingDown) return undefined;
       this.log.notice(`Started plugin ${plg}${plugin.name}${nt} type ${typ}${plugin.type}${nt}`);
       plugin.started = true;
-      plugin.platform.isStarted = true;
+      platform.isStarted = true;
       await this.saveConfigFromPlugin(plugin);
       this.emit('started', plugin.name);
       if (configure) await this.configure(plugin);
       return plugin;
     } catch (err) {
+      if (plugin.platform !== platform || platform.isShuttingDown) return undefined;
       plugin.error = true;
       logError(this.log, `Failed to start plugin ${plg}${plugin.name}${er}`, err);
     }
