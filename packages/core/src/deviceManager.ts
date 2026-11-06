@@ -207,16 +207,6 @@ export class DeviceManager {
   }
 
   /**
-   * Converts a MatterbridgeEndpoint to a Device.
-   *
-   * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
-   * @returns {Device} The converted Device.
-   */
-  private toDevice(device: MatterbridgeEndpoint): Device {
-    return toDevice(device);
-  }
-
-  /**
    * Gets an array of all devices.
    *
    * @returns {MatterbridgeEndpoint[]} An array of all devices.
@@ -236,7 +226,7 @@ export class DeviceManager {
     for (const device of Array.from(this._devices.values())) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
-      devices.push(this.toDevice(device));
+      devices.push(toDevice(device));
     }
     return devices;
   }

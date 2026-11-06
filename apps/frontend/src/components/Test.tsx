@@ -60,8 +60,8 @@ function Test() {
       } else if (msg.method === '/api/platform-devices' && msg.response) {
         if (debug || localDebug) console.log(`Test received ${msg.response.length} platform devices:`, msg.response);
         showSnackbarMessage('Test received /api/platform-devices', 0);
-        if (msg.response.length === 0) return;
-        const plugin = msg.response[0].plugin;
+        const plugin = msg.pluginName;
+        // Replace the devices of this plugin only: an empty response removes them all
         setDevices((prev) => [...prev.filter((device) => device.plugin !== plugin), ...msg.response]);
         for (const device of msg.response) {
           if (debug || localDebug) console.log('Test sending /api/clusters for device:', device.plugin, device.deviceName, device.number);
