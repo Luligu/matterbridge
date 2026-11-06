@@ -269,10 +269,10 @@ describe('SystemInfoTable WebSocket messages', () => {
     expect(valueCell('Total memory')).toHaveTextContent('16 GB');
     expect(addListener).toHaveBeenCalledTimes(1);
     fireEvent.click(within(screen.getByTestId('controls')).getAllByRole('button')[0]);
-    expect(sendMessage).toHaveBeenCalledExactlyOnceWith({ id: 42, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    expect(sendMessage).toHaveBeenCalledExactlyOnceWith({ id: 42, sender: 'Header', method: '/api/view-historypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     expect(window.open).not.toHaveBeenCalled();
-    update({ method: '/api/viewhistorypage', id: 42, success: true });
-    expect(window.open).toHaveBeenCalledExactlyOnceWith('./api/viewhistory', '_blank', 'noopener,noreferrer');
+    update({ method: '/api/view-historypage', id: 42, success: true });
+    expect(window.open).toHaveBeenCalledExactlyOnceWith('./api/view-history', '_blank', 'noopener,noreferrer');
     unmount();
     expect(removeListener).toHaveBeenCalledExactlyOnceWith(listener);
     expect(vi.mocked(console.log).mock.calls.some(([message]) => message === 'SystemInfoTable removed WebSocket listener')).toBe(debug);
@@ -282,9 +282,9 @@ describe('SystemInfoTable WebSocket messages', () => {
   test.each([
     { method: 'unknown', response: {} },
     { method: 'system_update' },
-    { method: '/api/viewhistorypage', id: 99, success: true },
-    { method: '/api/viewhistorypage', id: 42, success: false },
-    { method: '/api/viewhistorypage', id: 42 },
+    { method: '/api/view-historypage', id: 99, success: true },
+    { method: '/api/view-historypage', id: 42, success: false },
+    { method: '/api/view-historypage', id: 42 },
   ])('should ignore an incomplete or unrelated message: %j', (message) => {
     const { update } = renderTable();
     const before = screen.getByRole('table').textContent;

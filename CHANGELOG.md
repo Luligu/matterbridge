@@ -31,8 +31,26 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.3] - Dev branch
 
+### Breaking changes
+
+- [core]: `/api/devices` (WebSocket and HTTP) returns the stored `Device[]` instead of `ApiDevice[]`; the platform devices are served by `/api/platform-devices`.
+- [core]: Rename `/api/select/devices` and `/api/select/entities` to `/api/select-devices` and `/api/select-entities`.
+- [core]: Rename `/api/savepluginconfig` to `/api/save-plugin-config`.
+- [core]: Rename `/api/viewhistory`, `/api/downloadhistory`, `/api/viewhistorypage` and `/api/downloadhistorypage` to `/api/view-history`, `/api/download-history`, `/api/view-historypage` and `/api/download-historypage`.
+- [types]: Rename `BaseDevice` to `Device`.
+
+### Added
+
+- [types]: Add the `/api/platform-devices` request/response contracts; the response carries the requested `pluginName`.
+- [core]: Handle `/api/platform-devices` in the frontend and backend WebSocket servers, returning the `ApiDevice[]` of one plugin platform.
+
 ### Changed
 
+- [core]: Rename `toBaseDevice()` to `toDevice()`, the `devices_basearray` broadcast to `devices_array` and `Backend.getApiDevices()` to `getDevices()`; remove `devices_apidevicearray` and `DeviceManager.apiDeviceArray()`.
+- [types]: Move `ApiSettings`, `ApiSelectDevice`, `ApiSelectDeviceEntity`, `ApiSelectEntity` and `ApiSystemUpdate` from `frontendTypes` to `matterbridgeTypes`.
+- [frontend]: Home, Devices table and Devices icons request `/api/platform-devices` for each started plugin and replace the rows of that plugin only; an empty reply removes them.
+- [frontend]: Devices table and Devices icons refresh on `refresh_required` like the Home devices: on every change except `matter` and a locked `plugins` refresh.
+- [core]: Document the `Plugin` interface fields.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.3.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.0.
 - [matterbridge]: Bump `jsdom` to v.31.0.0, replacing CSS parsing, selector matching and computed styles; frontend style assertions may receive different serialized values. See the [release notes](https://github.com/jsdom/jsdom/releases/tag/v31.0.0).
@@ -47,6 +65,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `@vitejs/plugin-react` to v.6.2.1.
 - [frontend]: Bump `vite` to v.8.3.6.
 - [core]: Bump `express-rate-limit` to v.8.7.3.
+
+### Fixed
+
+- [frontend]: Devices table clears the selected device and its clusters on a full reload.
+- [frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

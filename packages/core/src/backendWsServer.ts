@@ -319,9 +319,18 @@ export class BackendWsServer {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        const devices = await this.backend.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
+      } else if (data.method === '/api/platform-devices') {
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/platform-devices' });
+          return;
+        }
+        const start = performance.now();
+        const devices = await this.backend.getApiDevices(data.params.pluginName, data.params.extended);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, pluginName: data.params.pluginName, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.pluginName, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });

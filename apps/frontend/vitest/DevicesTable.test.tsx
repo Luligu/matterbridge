@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import DevicesTable from '../src/components/DevicesTable';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
-import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
+import type { ApiDevice, ApiPlugin, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
 import { MbfLsk } from '../src/utils/localStorage';
 
 const endpointNumber = (value: number): Cluster['number'] => value;
@@ -45,9 +45,12 @@ describe('DevicesTable', () => {
 
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/settings' }));
     expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/plugins' }));
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
+    expect(socket.sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices' }));
 
-    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [firstDevice, secondDevice] });
+    for (const message of createPlatformDevicesMessages([firstDevice, secondDevice])) socket.emit(message);
+    for (const pluginName of ['matterbridge-test', 'other-plugin']) {
+      expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices', params: { pluginName, extended: true } }));
+    }
     expect(await screen.findByText('Kitchen Light')).toBeInTheDocument();
     expect(screen.getByText('Hall Sensor')).toBeInTheDocument();
     expect(screen.getByText('Total devices: 2')).toBeInTheDocument();
@@ -85,7 +88,7 @@ describe('DevicesTable', () => {
       </WebSocketContext.Provider>,
     );
     await socket.ready();
-    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device, otherDevice] });
+    for (const message of createPlatformDevicesMessages([device, otherDevice])) socket.emit(message);
     fireEvent.click((await screen.findAllByText('Kitchen Light'))[0]);
 
     expect(socket.sendMessage).toHaveBeenCalledWith(
@@ -147,7 +150,117 @@ describe('DevicesTable', () => {
     );
   });
 
-  it('should request devices on device refresh messages only', async () => {
+  it('should request platform devices only for running plugins and replace the rows of the answering plugin', async () => {
+    const socket = createSocket();
+    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001' });
+    const otherDevice = createDevice({ plugin: 'other-plugin', deviceName: 'Hall Sensor', serialNumber: 'SENSOR-001', uniqueId: 'sensor-001' });
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesTable filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    const plugins = [
+      { name: 'matterbridge-test', enabled: true, loaded: true, started: true, error: false },
+      { name: 'other-plugin', enabled: true, loaded: true, started: true, error: false },
+      { name: 'disabled-plugin', enabled: false, loaded: false, started: false, error: false },
+      { name: 'error-plugin', enabled: true, loaded: true, started: true, error: true },
+    ] as ApiPlugin[];
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/plugins', success: true, response: plugins });
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices', params: { pluginName: 'other-plugin', extended: true } }));
+    for (const pluginName of ['disabled-plugin', 'error-plugin']) {
+      expect(socket.sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices', params: { pluginName, extended: true } }));
+    }
+
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: device.plugin, response: [device] });
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: otherDevice.plugin, response: [otherDevice] });
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: 'empty-plugin', response: [] });
+    expect(await screen.findByText('Total devices: 2')).toBeInTheDocument();
+
+    // Another component's responses are ignored
+    socket.emit({
+      id: 2,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/platform-devices',
+      success: true,
+      pluginName: device.plugin,
+      response: [{ ...device, deviceName: 'Foreign Light' }],
+    });
+    expect(screen.queryByText('Foreign Light')).toBeNull();
+
+    // A new response of one plugin replaces its own rows only
+    socket.emit({
+      id: 1,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/platform-devices',
+      success: true,
+      pluginName: device.plugin,
+      response: [{ ...device, deviceName: 'Renamed Light' }],
+    });
+    expect(await screen.findByText('Renamed Light')).toBeInTheDocument();
+    expect(screen.queryByText('Kitchen Light')).toBeNull();
+    expect(screen.getByText('Hall Sensor')).toBeInTheDocument();
+    expect(screen.getByText('Total devices: 2')).toBeInTheDocument();
+
+    // An empty response of one plugin removes all its rows and keeps the rows of the other plugin
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: device.plugin, response: [] });
+    expect(await screen.findByText('Total devices: 1')).toBeInTheDocument();
+    expect(screen.queryByText('Renamed Light')).toBeNull();
+    expect(screen.getByText('Hall Sensor')).toBeInTheDocument();
+  });
+
+  it('should clear the selected device and its clusters on a full reload', async () => {
+    const socket = createSocket();
+    const device = createDevice({ deviceName: 'Kitchen Light', serialNumber: 'LIGHT-001', uniqueId: 'light-001', number: endpointNumber(1) });
+    const clusters = [createCluster('1', 'Light', [0x0100], 'OnOff', 'onOff', 'false', false)];
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesTable filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    for (const message of createPlatformDevicesMessages([device])) socket.emit(message);
+    fireEvent.click((await screen.findAllByText('Kitchen Light'))[0]);
+    socket.emit({
+      id: 1,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/clusters',
+      success: true,
+      response: {
+        plugin: device.plugin,
+        deviceName: device.deviceName,
+        serialNumber: device.serialNumber,
+        uniqueId: device.uniqueId,
+        number: endpointNumber(1),
+        id: 'Light',
+        deviceTypes: [0x0100],
+        clusters,
+      },
+    });
+    expect(await screen.findByText('Clusters')).toBeInTheDocument();
+
+    // Full reload: the clusters panel closes and the device list is emptied until the platforms answer again
+    const plugins = [{ name: 'matterbridge-test', enabled: true, loaded: true, started: true, error: false }] as ApiPlugin[];
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/plugins', success: true, response: plugins });
+    await waitFor(() => expect(screen.queryByText('Clusters')).toBeNull());
+    expect(screen.queryByText('Kitchen Light')).toBeNull();
+    expect(screen.getByText('Total devices: 0')).toBeInTheDocument();
+
+    // The selection was cleared, so clicking the device again selects it instead of deselecting it
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: device.plugin, response: [device] });
+    socket.sendMessage.mockClear();
+    fireEvent.click((await screen.findAllByText('Kitchen Light'))[0]);
+    expect(socket.sendMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ method: '/api/clusters', params: { pluginName: 'matterbridge-test', number: 1, serialNumber: 'LIGHT-001', uniqueId: 'light-001' } }),
+    );
+  });
+
+  it('should request plugins on refresh messages except matter and locked plugins', async () => {
     const socket = createSocket(false);
 
     render(
@@ -157,12 +270,17 @@ describe('DevicesTable', () => {
     );
     await socket.ready();
 
-    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'plugins' } });
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'matter' } });
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'plugins', lock: 'matterbridge-test' } });
     expect(socket.sendMessage).not.toHaveBeenCalled();
 
-    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'devices' } });
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'plugins' } });
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: true } }));
+    expect(socket.sendMessage).toHaveBeenLastCalledWith(expect.objectContaining({ method: '/api/plugins', params: {} }));
+
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'devices' } });
+    expect(socket.sendMessage).toHaveBeenCalledTimes(2);
+    expect(socket.sendMessage).toHaveBeenLastCalledWith(expect.objectContaining({ method: '/api/plugins', params: {} }));
   });
 
   it('should ignore state updates for devices outside the filtered list', async () => {
@@ -176,7 +294,7 @@ describe('DevicesTable', () => {
     );
     await socket.ready();
     socket.emit(createStateUpdate({ uniqueId: 'missing-device', serialNumber: 'MISSING-001', value: true }));
-    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+    for (const message of createPlatformDevicesMessages([device])) socket.emit(message);
 
     expect(await screen.findByText('Filtered Light')).toBeInTheDocument();
   });
@@ -192,7 +310,7 @@ describe('DevicesTable', () => {
       </WebSocketContext.Provider>,
     );
     await socket.ready();
-    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+    for (const message of createPlatformDevicesMessages([device])) socket.emit(message);
     fireEvent.click(await screen.findByText('Kitchen Light'));
     socket.emit({
       id: 2,
@@ -234,7 +352,7 @@ describe('DevicesTable', () => {
       </WebSocketContext.Provider>,
     );
     await socket.ready();
-    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+    for (const message of createPlatformDevicesMessages([device])) socket.emit(message);
     fireEvent.click(await screen.findByText('Kitchen Light'));
 
     expect(await screen.findByRole('tree')).toBeInTheDocument();
@@ -297,6 +415,7 @@ function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
     deviceName: 'Test Device',
     serialNumber: 'TEST-001',
     productUrl: '',
+    configUrl: undefined,
     uniqueId: 'test-device',
     reachable: true,
     cluster: 'OnOff: false',
@@ -348,4 +467,23 @@ function createStateUpdate(
       ...overrides,
     },
   };
+}
+
+/** Answers /api/plugins with a running plugin for each plugin of the devices, then /api/platform-devices of each plugin with its own devices. */
+function createPlatformDevicesMessages(devices: ApiDevice[]): WsMessageApiResponse[] {
+  const pluginNames = [...new Set(devices.map((device) => device.plugin))];
+  const plugins = pluginNames.map((name) => ({ name, enabled: true, loaded: true, started: true, error: false })) as ApiPlugin[];
+  const messages: WsMessageApiResponse[] = [{ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/plugins', success: true, response: plugins }];
+  for (const name of pluginNames) {
+    messages.push({
+      id: 1,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/platform-devices',
+      success: true,
+      pluginName: name,
+      response: devices.filter((device) => device.plugin === name),
+    });
+  }
+  return messages;
 }

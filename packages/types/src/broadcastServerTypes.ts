@@ -25,9 +25,21 @@
 import type { LogLevel } from 'node-ansi-logger';
 
 // matterbridge
-import type { ApiSelectDevice, ApiSelectEntity, ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
+import type {
+  ApiClusters,
+  ApiDevice,
+  ApiMatter,
+  ApiPlugin,
+  ApiSelectDevice,
+  ApiSelectEntity,
+  ApiSettings,
+  Device,
+  BridgeStatus,
+  SharedMatterbridge,
+  StoragePlugin,
+} from './matterbridgeTypes.js';
 import type { ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
@@ -486,26 +498,22 @@ export type WorkerMessageTypes = {
   };
   devices_get: {
     request: { params: { uniqueId: string } };
-    response: { result: { device: BaseDevice | undefined } };
+    response: { result: { device: Device | undefined } };
   };
   devices_set: {
-    request: { params: { device: BaseDevice } };
-    response: { result: { device: BaseDevice } };
+    request: { params: { device: Device } };
+    response: { result: { device: Device } };
   };
   devices_remove: {
-    request: { params: { device: BaseDevice } };
+    request: { params: { device: Device } };
     response: { result: { success: boolean } };
   };
   devices_clear: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
-  devices_basearray: {
+  devices_array: {
     request: { params: { pluginName?: string } };
-    response: { result: { devices: BaseDevice[] } };
-  };
-  devices_apidevicearray: {
-    request: { params: { pluginName?: string; extended?: boolean } };
-    response: { result: { devices: ApiDevice[] } };
+    response: { result: { devices: Device[] } };
   };
 };

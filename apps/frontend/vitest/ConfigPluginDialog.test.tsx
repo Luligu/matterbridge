@@ -194,7 +194,7 @@ describe('ConfigPluginDialog', () => {
     await waitFor(() => expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'matterbridge-edited', count: 0, enabledSetting: true })));
     expect(onClose).toHaveBeenCalledOnce();
     expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ method: '/api/savepluginconfig', params: { pluginName: 'matterbridge-edited', formData: onSave.mock.calls[0][0] } }),
+      expect.objectContaining({ method: '/api/save-plugin-config', params: { pluginName: 'matterbridge-edited', formData: onSave.mock.calls[0][0] } }),
     );
   });
 
@@ -427,13 +427,13 @@ describe('ConfigPluginDialog', () => {
     plugin.configJson = extendConfig(plugin, { devices: [] });
     const { addListener } = renderDialog(plugin);
     const listener = getListener(addListener);
-    const message = { id: 1234, src: 'Matterbridge', dst: 'Frontend', method: '/api/select/devices', response: [{ serialNumber: 'valid', deviceName: 'Valid device' }] };
+    const message = { id: 1234, src: 'Matterbridge', dst: 'Frontend', method: '/api/select-devices', response: [{ serialNumber: 'valid', deviceName: 'Valid device' }] };
     listener(message);
     for (const overrides of [{ src: 'Other' }, { dst: 'Other' }, { id: 0 }, { id: 9999 }, { method: '/api/other' }]) {
       listener({ ...message, ...overrides, response: [{ serialNumber: 'invalid', deviceName: 'Invalid device' }] });
     }
     listener({ ...message, response: null });
-    listener({ ...message, method: '/api/select/entities', response: null });
+    listener({ ...message, method: '/api/select-entities', response: null });
     const section = screen.getByText('Devices').closest('div')!.parentElement!;
     fireEvent.click(within(section).getAllByRole('button')[0]);
     expect(screen.getByText('Valid device')).toBeInTheDocument();
@@ -498,13 +498,13 @@ describe('ConfigPluginDialog', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: '/api/select/devices',
+        method: '/api/select-devices',
         params: { plugin: 'matterbridge-test' },
       }),
     );
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: '/api/select/entities',
+        method: '/api/select-entities',
         params: { plugin: 'matterbridge-test' },
       }),
     );
@@ -596,7 +596,7 @@ describe('ConfigPluginDialog', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       response: [{ serialNumber: 'device-001', deviceName: 'Kitchen Sensor', icon: 'wifi' }],
     });
 
@@ -663,7 +663,7 @@ describe('ConfigPluginDialog', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       response: [
         {
           serialNumber: 'wifi-001',
@@ -685,7 +685,7 @@ describe('ConfigPluginDialog', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/entities',
+      method: '/api/select-entities',
       response: [
         { name: 'Entity Wifi', description: 'WiFi Desc', icon: 'wifi' },
         { name: 'Entity Ble', description: 'Ble Desc', icon: 'ble' },
@@ -784,7 +784,7 @@ describe('ConfigPluginDialog', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       response: [
         {
           serialNumber: 'wifi-001',
@@ -803,7 +803,7 @@ describe('ConfigPluginDialog', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/entities',
+      method: '/api/select-entities',
       response: [
         { name: 'Entity Wifi', description: 'WiFi Desc', icon: 'wifi' },
         { name: 'Entity Ble', description: 'Ble Desc', icon: 'ble' },
@@ -880,7 +880,7 @@ describe('ConfigPluginDialog', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       response: [
         { serialNumber: 'wifi-001', deviceName: 'Kitchen Sensor', icon: 'wifi' },
         { serialNumber: 'ble-001', deviceName: 'Hall Sensor', icon: 'ble' },
@@ -1027,7 +1027,7 @@ describe('ConfigPluginDialog', () => {
 
     expect(sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
-        method: '/api/savepluginconfig',
+        method: '/api/save-plugin-config',
       }),
     );
     expect(onSave).toHaveBeenCalledWith(expect.objectContaining({ name: 'matterbridge-test' }));

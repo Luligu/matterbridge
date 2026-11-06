@@ -10,7 +10,7 @@ import { afterAll, beforeEach, describe, expect, test, vi } from 'bun:test';
 
 import { loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { BaseDevice } from '@matterbridge/types';
+import type { Device } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { AnsiLogger, BLUE, er, LogLevel, TimestampFormat } from 'node-ansi-logger';
 
@@ -94,8 +94,8 @@ describe('DeviceManager', () => {
     } as unknown as MatterbridgeEndpoint);
     expect(devices.size).toBe(3);
     expect(devices.length).toBe(3);
-    await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: {} } as any);
-    await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_basearray', src: 'frontend', dst: 'devices', params: { pluginName: 'jest' } } as any);
+    await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_array', src: 'frontend', dst: 'devices', params: {} } as any);
+    await (devices as any).msgHandler({ id: 123456, timestamp: Date.now(), type: 'devices_array', src: 'frontend', dst: 'devices', params: { pluginName: 'jest' } } as any);
 
     expect((await testServer.fetch({ type: 'devices_size', src: testServer.name, dst: 'devices' })).result.size).toBe(3);
     expect((await testServer.fetch({ type: 'devices_length', src: testServer.name, dst: 'devices' })).result.length).toBe(3);
@@ -143,10 +143,10 @@ describe('DeviceManager', () => {
       productLabel: 'Device label',
       productUrl: 'https://matterbridge.io/device',
       configurationVersion: 2,
-    } as unknown as BaseDevice;
+    } as unknown as Device;
     expect((await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device).toBeDefined();
     expect(devices.size).toBe(4);
-    let getDevice: BaseDevice | undefined = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device;
+    let getDevice: Device | undefined = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: baseDevice } })).result.device;
     expect(getDevice).toMatchObject({
       deviceName: 'Device1bis',
       id: 'DeviceId1bis',
@@ -172,7 +172,7 @@ describe('DeviceManager', () => {
       uniqueId: 'DeviceUniqueId1bis',
     });
     // A partial update merges into the existing device and preserves the fields not sent
-    const partialDevice = { uniqueId: 'DeviceUniqueId1bis', productLabel: 'Updated label' } as unknown as BaseDevice;
+    const partialDevice = { uniqueId: 'DeviceUniqueId1bis', productLabel: 'Updated label' } as unknown as Device;
     getDevice = (await testServer.fetch({ type: 'devices_set', src: testServer.name, dst: 'devices', params: { device: partialDevice } })).result.device;
     expect(devices.size).toBe(4);
     expect(getDevice).toMatchObject({
@@ -250,8 +250,8 @@ describe('DeviceManager', () => {
     await setDebug(true);
     expect(devices.array()).toHaveLength(3);
 
-    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toHaveLength(3);
-    expect((await testServer.fetch({ type: 'devices_basearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toMatchObject([
+    expect((await testServer.fetch({ type: 'devices_array', src: testServer.name, dst: 'devices', params: {} })).result.devices).toHaveLength(3);
+    expect((await testServer.fetch({ type: 'devices_array', src: testServer.name, dst: 'devices', params: {} })).result.devices).toMatchObject([
       {
         configUrl: undefined,
         deviceName: 'Device1',
@@ -339,96 +339,6 @@ describe('DeviceManager', () => {
       count++;
     });
     expect(count).toBe(0);
-  });
-
-  test('apiDeviceArray and devices_apidevicearray', async () => {
-    devices.clear();
-    const fake = (props: Record<string, unknown>): MatterbridgeEndpoint =>
-      ({
-        plugin: 'plugin1',
-        deviceType: 0x0100,
-        name: 'OnOffLight',
-        deviceName: 'Light',
-        serialNumber: 'SN',
-        uniqueId: 'unique',
-        id: 'light',
-        number: 5,
-        productUrl: 'https://product',
-        configUrl: 'https://config',
-        lifecycle: { isReady: true },
-        construction: { status: 'active' },
-        hasClusterServer: () => false,
-        getChildEndpoints: () => [],
-        forEachAttribute: () => {},
-        ownerOfType: () => null,
-        ...props,
-      }) as unknown as MatterbridgeEndpoint;
-
-    devices.set(fake({}));
-    devices.set(fake({ uniqueId: 'other', plugin: 'plugin2', deviceName: 'Other' }));
-    devices.set(fake({ uniqueId: 'notReady', lifecycle: { isReady: false } }));
-    devices.set(fake({ uniqueId: 'noPlugin', plugin: '' }));
-    devices.set(
-      fake({
-        uniqueId: 'server',
-        deviceName: 'Server',
-        mode: 'server',
-        serverNode: {
-          id: 'server-store',
-          lifecycle: { isOnline: true },
-          state: {
-            commissioning: { commissioned: false, pairingCodes: { qrPairingCode: 'QR', manualPairingCode: 'MAN' }, fabrics: {} },
-            administratorCommissioning: { windowStatus: 0 },
-            sessions: { sessions: {} },
-            basicInformation: { serialNumber: 'SN', reachable: true },
-          },
-        },
-      }),
-    );
-
-    const all = devices.apiDeviceArray();
-    expect(all.map((d) => d.uniqueId)).toEqual(['unique', 'other', 'server']);
-    expect(all[0]).toEqual({
-      plugin: 'plugin1',
-      type: 'OnOffLight (0x0100)',
-      number: 5,
-      id: 'light',
-      deviceName: 'Light',
-      serialNumber: 'SN',
-      productUrl: 'https://product',
-      configUrl: 'https://config',
-      uniqueId: 'unique',
-      reachable: true,
-      powerSource: undefined,
-      batteryLevel: undefined,
-      matter: undefined,
-      cluster: '',
-    });
-    expect(all[2].reachable).toBe(true);
-    expect(all[2].matter).toBeUndefined();
-    expect(devices.apiDeviceArray(undefined, false)).toEqual(all);
-    const extended = devices.apiDeviceArray(undefined, true);
-    expect(extended.map((d) => d.uniqueId)).toEqual(['unique', 'other', 'server']);
-    expect(extended[0].reachable).toBe(false);
-    expect(extended[2].reachable).toBe(true);
-    expect(extended[2].matter).toMatchObject({ id: 'server-store', online: true, commissioned: false, qrPairingCode: 'QR', manualPairingCode: 'MAN', serialNumber: 'SN' });
-
-    expect(devices.apiDeviceArray('plugin2').map((d) => d.uniqueId)).toEqual(['other']);
-    expect(devices.apiDeviceArray('missing')).toEqual([]);
-
-    expect((await testServer.fetch({ type: 'devices_apidevicearray', src: testServer.name, dst: 'devices', params: {} })).result.devices).toEqual(all);
-    for (const extended of [false, true]) {
-      for (const pluginName of [undefined, 'plugin1', 'plugin2', 'missing']) {
-        const response = await testServer.fetch({
-          type: 'devices_apidevicearray',
-          src: testServer.name,
-          dst: 'devices',
-          params: { pluginName, extended },
-        });
-        expect(response.result.devices).toEqual(devices.apiDeviceArray(pluginName, extended));
-      }
-    }
-    devices.clear();
   });
 
   test('should ignore the message when it is not a request', () => {

@@ -93,7 +93,7 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
 
   const handleViewHistory = () => {
     if (debug) console.log('SystemInfoTable handleViewHistory clicked');
-    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+    sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/view-historypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
   };
 
   useEffect(() => {
@@ -118,9 +118,9 @@ function SystemInfoTable({ systemInfo, compact }: { systemInfo: SystemInformatio
       if (msg.method === 'system_update' && msg.response) {
         if (debug) console.log('SystemInfoTable received system_update', msg);
         handleSystemUpdate(msg.response);
-      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {
-        if (debug) console.log('SystemInfoTable received /api/viewhistorypage success');
-        window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
+      } else if (msg.method === '/api/view-historypage' && msg.id === uniqueId.current && msg.success) {
+        if (debug) console.log('SystemInfoTable received /api/view-historypage success');
+        window.open(`./api/view-history`, '_blank', 'noopener,noreferrer');
       }
     };
 

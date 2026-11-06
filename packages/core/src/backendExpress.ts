@@ -288,7 +288,7 @@ export class BackendExpress {
     this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
-      res.json(await this.backend.getApiDevices());
+      res.json(await this.backend.getDevices());
     });
 
     // Endpoint to view the matterbridge log
@@ -414,8 +414,8 @@ export class BackendExpress {
     });
 
     // Endpoint to view the history.html
-    this.expressApp.get('/api/viewhistory', async (req, res) => {
-      this.log.debug('The frontend sent /api/viewhistory');
+    this.expressApp.get('/api/view-history', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-history');
       if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
@@ -423,14 +423,14 @@ export class BackendExpress {
         res.type('text/html; charset=utf-8');
         res.send(data);
       } catch (error) {
-        this.log.error(`Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
+        this.log.error(`Error in /api/view-history reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
         res.status(500).send('Error reading history file.');
       }
     });
 
     // Endpoint to download the history.html
-    this.expressApp.get('/api/downloadhistory', this.fileLimiter, async (req, res) => {
-      this.log.debug(`The frontend sent /api/downloadhistory`);
+    this.expressApp.get('/api/download-history', this.fileLimiter, async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-history`);
       if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
@@ -440,14 +440,14 @@ export class BackendExpress {
         res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
-            this.log.error(`Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
+            this.log.error(`Error in /api/download-history downloading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
             sendDownloadError(res, error, 'Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
         });
       } catch (error) {
-        this.log.error(`Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
+        this.log.error(`Error in /api/download-history reading history file ${MATTERBRIDGE_HISTORY_FILE}: ${getErrorMessage(error)}`);
         res.status(500).send('Error reading history file.');
       }
     });

@@ -35,6 +35,7 @@ const mockedBackend = {
   getApiMatter: vi.fn<Backend['getApiMatter']>(),
   getApiSettings: vi.fn(async () => ({ matterbridgeInformation: {} })),
   getApiPlugins: vi.fn(async () => [{ name: 'matterbridge-test' }]),
+  getDevices: vi.fn(async () => [{ name: 'Device' }]),
   getApiDevices: vi.fn(async () => [{ name: 'Device' }]),
   getApiCluster: vi.fn<Backend['getApiCluster']>(),
 } as unknown as Backend;
@@ -319,13 +320,29 @@ describe('BackendWsServer', () => {
     expect(mockedBackend.getApiPlugins).toHaveBeenCalled();
 
     expect(await request('/api/devices')).toMatchObject({ success: true, response: [{ name: 'Device' }] });
-    expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual([undefined, undefined]);
+    expect((mockedBackend.getDevices as Mock<Backend['getDevices']>).mock.lastCall).toEqual([undefined]);
     expect(await request('/api/devices', { pluginName: 'matterbridge-test' })).toMatchObject({ success: true });
+    expect((mockedBackend.getDevices as Mock<Backend['getDevices']>).mock.lastCall).toEqual(['matterbridge-test']);
+
+    expect(await request('/api/platform-devices', { pluginName: 'short' })).toMatchObject({ error: 'Wrong parameter pluginName in /api/platform-devices' });
+    expect(mockedBackend.getApiDevices).not.toHaveBeenCalled();
+    expect(await request('/api/platform-devices', { pluginName: 'matterbridge-test' })).toMatchObject({
+      success: true,
+      pluginName: 'matterbridge-test',
+      response: [{ name: 'Device' }],
+    });
     expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual(['matterbridge-test', undefined]);
-    for (const extended of [false, true]) {
-      expect(await request('/api/devices', { pluginName: 'matterbridge-test', extended })).toMatchObject({ success: true });
-      expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', extended);
-    }
+    expect(await request('/api/platform-devices', { pluginName: 'matterbridge-test', extended: true })).toMatchObject({ success: true });
+    expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', true);
+    (mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mockRejectedValueOnce(new Error('Timeout'));
+    client.send.mockClear();
+    await (wsServer as any).wsMessageHandler(
+      client,
+      Buffer.from(JSON.stringify({ id: 10, src: 'Frontend', dst: 'Matterbridge', method: '/api/platform-devices', params: { pluginName: 'matterbridge-test' } })),
+    );
+    expect(client.send).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error parsing message from websocket client'));
+    loggerErrorSpy.mockClear();
 
     expect(await request('/api/clusters', { pluginName: 'short', number: 1 })).toMatchObject({ error: 'Wrong parameter pluginName in /api/clusters' });
     expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 0 })).toMatchObject({ error: 'Wrong parameter number in /api/clusters' });
@@ -432,7 +449,7 @@ describe('BackendWsServer', () => {
     const client: any = new FakeClient();
     (wsServer as any).diagnostic = true;
     try {
-      for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/clusters']) {
+      for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/platform-devices', '/api/clusters']) {
         await (wsServer as any).wsMessageHandler(
           client,
           Buffer.from(
@@ -447,10 +464,10 @@ describe('BackendWsServer', () => {
           ),
         );
       }
-      for (const name of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster']) {
+      for (const name of ['getApiSettings', 'getApiPlugins', 'getDevices', 'getApiDevices', 'getApiCluster']) {
         expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Frontend:Test: ${name}() took`));
       }
-      expect(client.send).toHaveBeenCalledTimes(4);
+      expect(client.send).toHaveBeenCalledTimes(5);
     } finally {
       (wsServer as any).diagnostic = false;
       stderrSpy.mockRestore();

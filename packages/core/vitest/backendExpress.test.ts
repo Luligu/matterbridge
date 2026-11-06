@@ -50,7 +50,7 @@ const mockedBackend = {
   storedPassword: 'testpassword',
   getApiSettings: () => ({ ok: true, settings: { a: 1 } }),
   getApiPlugins: () => ({ ok: true, plugins: [{ name: 'plugin1' }] }),
-  getApiDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),
+  getDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),
   // Snackbar helpers now live on backend.backendWsServer; the source calls them via this.backend.backendWsServer?.wssSend*.
   backendWsServer: {
     wssSendSnackbarMessage: vi.fn(),
@@ -449,8 +449,8 @@ describe('BackendExpress', () => {
       '/api/download-mjlog',
       '/api/view-diagnostic',
       '/api/download-diagnostic',
-      '/api/viewhistory',
-      '/api/downloadhistory',
+      '/api/view-history',
+      '/api/download-history',
       '/api/download-backup',
       '/api/download-mbstorage',
       '/api/download-mjstorage',
@@ -674,17 +674,17 @@ describe('BackendExpress', () => {
     expect(result).toBeUndefined();
   });
 
-  test('GET /api/viewhistory + downloadhistory success then error', async () => {
+  test('GET /api/view-history + download-history success then error', async () => {
     const debugSpy = vi.spyOn((backendExpress as any).log, 'debug');
     const historyPath = path.join(HOMEDIR, MATTERBRIDGE_HISTORY_FILE);
     await fs.writeFile(historyPath, '<html>HISTORY_OK</html>', 'utf8');
 
-    const view = await makeRequest('/api/viewhistory', 'GET');
+    const view = await makeRequest('/api/view-history', 'GET');
     expect(view.status).toBe(200);
     expect(typeof view.body).toBe('string');
     expect(view.body).toContain('HISTORY_OK');
 
-    const downloadOk = await makeRequest('/api/downloadhistory', 'GET');
+    const downloadOk = await makeRequest('/api/download-history', 'GET');
     expect(downloadOk.status).toBe(200);
     expect(typeof downloadOk.body).toBe('string');
     expect(downloadOk.body).toContain('HISTORY_OK');
@@ -694,27 +694,27 @@ describe('BackendExpress', () => {
     expect(sawSuccess).toBe(true);
 
     await fs.rm(historyPath, { force: true });
-    const downloadErr = await makeRequest('/api/downloadhistory', 'GET');
+    const downloadErr = await makeRequest('/api/download-history', 'GET');
     expect(downloadErr.status).toBe(500);
     expect(typeof downloadErr.body).toBe('string');
     expect(downloadErr.body).toContain('Error reading history file');
   });
 
-  test('GET /api/viewhistory error when history file missing', async () => {
+  test('GET /api/view-history error when history file missing', async () => {
     const historyPath = path.join(HOMEDIR, MATTERBRIDGE_HISTORY_FILE);
     await fs.rm(historyPath, { force: true });
 
-    const response = await makeRequest('/api/viewhistory', 'GET');
+    const response = await makeRequest('/api/view-history', 'GET');
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('Error reading history file');
   });
 
-  test('GET /api/downloadhistory aborted download triggers error callback branch', async () => {
+  test('GET /api/download-history aborted download triggers error callback branch', async () => {
     const historyPath = path.join(HOMEDIR, MATTERBRIDGE_HISTORY_FILE);
     await fs.writeFile(historyPath, '<html>HISTORY_ABORT</html>', 'utf8');
 
-    const result = await makeGetRequestAndAbortEarly('/api/downloadhistory');
+    const result = await makeGetRequestAndAbortEarly('/api/download-history');
     expect(result).toBeUndefined();
   });
 

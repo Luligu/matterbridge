@@ -264,6 +264,28 @@ export interface MatterbridgeInformation {
   runningDays: number;
 }
 
+/** The /api/settings response */
+export interface ApiSettings {
+  matterbridgeInformation: MatterbridgeInformation;
+  systemInformation: SystemInformation;
+}
+
+/** The system_update broadcast payload */
+export interface ApiSystemUpdate {
+  systemUptime: string;
+  processUptime: string;
+  totalMemory: string;
+  freeMemory: string;
+  constrainedMemory: string;
+  rss: string;
+  heapTotal: string;
+  heapUsed: string;
+  external: string;
+  arrayBuffers: string;
+  cpuUsage: number;
+  processCpuUsage: number;
+}
+
 /** Define an interface for sanitized exposed fabric information suitable for API responses */
 export interface SanitizedExposedFabricInformation {
   fabricIndex: FabricIndex;
@@ -291,7 +313,7 @@ export interface SanitizedSession {
 export interface ApiDevice {
   // MatterbridgeEndpoint device information
 
-  /** The plugin name to be in sync with BaseDevice, ApiSelectDevice and ApiSelectEntity */
+  /** The plugin name to be in sync with Device, ApiSelectDevice and ApiSelectEntity */
   plugin: string;
   /** The device type name and code, e.g. 'OnOffLight (0x0100)' */
   type: string;
@@ -308,7 +330,7 @@ export interface ApiDevice {
   /** The product url */
   productUrl: string;
   /** The device configuration url */
-  configUrl?: string;
+  configUrl: string | undefined;
 
   // Lifecycle and state information of the MatterbridgeEndpoint device, from the helpers in packages/core/src/matterNodeHelpers.ts
 
@@ -324,8 +346,8 @@ export interface ApiDevice {
   matter?: ApiMatter;
 }
 
-/** Define an interface for base device information */
-export interface BaseDevice {
+/** Define an interface for device information: the serializable MatterbridgeEndpoint properties stored by the device manager */
+export interface Device {
   // MatterbridgeEndpoint properties
 
   mode: 'server' | 'matter' | undefined;
@@ -360,6 +382,51 @@ export interface BaseDevice {
 
   number: number | undefined;
   id: string | undefined;
+}
+
+/**
+ * A device the plugin offers for selection in the config editor (whiteList/blackList with selectFrom: 'serial' or 'name').
+ * Set by the plugin with platform.setSelectDevice(), returned by platform.getSelectDevices() for /api/select-devices.
+ */
+export interface ApiSelectDevice {
+  /** The plugin name to be in sync with ApiDevice and Device */
+  plugin: string;
+  /** The device serial number (serial in setSelectDevice) */
+  serialNumber: string;
+  /** The device name (name in setSelectDevice) */
+  deviceName: string;
+  /** The device configuration url */
+  configUrl?: string;
+  /** The device icon: 'wifi', 'ble', 'hub' */
+  icon?: string;
+  /** The entities of this device */
+  entities?: ApiSelectDeviceEntity[];
+}
+
+/** An entity of a select device (ApiSelectDevice.entities). */
+export interface ApiSelectDeviceEntity {
+  /** The entity name */
+  name: string;
+  /** The entity description */
+  description: string;
+  /** The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter' */
+  icon?: string;
+}
+
+/**
+ * An entity the plugin offers for selection in the config editor (e.g. entityBlackList with selectEntityFrom: 'name' or 'description').
+ * Entities are the components a device is made of (e.g. the switches or sensors of a device), not devices themselves.
+ * Set by the plugin with platform.setSelectEntity(), returned by platform.getSelectEntities() for /api/select-entities.
+ */
+export interface ApiSelectEntity {
+  /** The plugin name to be in sync with ApiDevice and Device */
+  plugin: string;
+  /** The entity name */
+  name: string;
+  /** The entity description */
+  description: string;
+  /** The entity icon: 'wifi', 'ble', 'hub', 'component', 'matter' */
+  icon?: string;
 }
 
 /** Define an interface for root node information */

@@ -67,7 +67,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { setupLoggers } from './matterLogger.js';
-import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toBaseDevice } from './matterNodeHelpers.js';
+import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toDevice } from './matterNodeHelpers.js';
 import { startMatterStorage, stopMatterStorage } from './matterStorage.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
@@ -1172,7 +1172,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     // Add the device to the DeviceManager
     await device.construction.ready;
-    await this.server.fetch({ type: 'devices_set', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
+    await this.server.fetch({ type: 'devices_set', src: this.server.name, dst: 'devices', params: { device: toDevice(device) } });
 
     // Subscribe to the attributes changed event
     await this.subscribeAttributeChanged(plugin, device);
@@ -1222,7 +1222,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     this.log.info(`Removed bridged endpoint #${plugin.registeredDevices} ${plg}${pluginName}${nf}:${dev}${device.deviceName}${nf} (${zb}${device.name}${nf})`);
     if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
     // Remove the device from the DeviceManager
-    await this.server.fetch({ type: 'devices_remove', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
+    await this.server.fetch({ type: 'devices_remove', src: this.server.name, dst: 'devices', params: { device: toDevice(device) } });
     await this.yieldToNode(10);
     return device;
   }
@@ -1244,7 +1244,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     const plugin = this.pluginManager.get(pluginName);
     if (!plugin) throw new Error(`Error removing all bridged endpoints for plugin ${plg}${pluginName}${er}: plugin not found`);
     this.log.debug(`Removing all #${plugin.registeredDevices} bridged endpoints for plugin ${plg}${pluginName}${db}${delay > 0 ? ` with delay ${delay} ms` : ''}...`);
-    const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName } })).result.devices;
+    const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName } })).result.devices;
     for (const device of devices) {
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion typescript/prefer-nullish-coalescing
       const endpoint = (this.aggregatorNode?.parts.get(device.id || '') || this.serverNode?.parts.get(device.id || '')) as MatterbridgeEndpoint | undefined;
@@ -1254,7 +1254,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.info(`Removed bridged endpoint #${plugin.registeredDevices} ${plg}${pluginName}${nf}:${dev}${device.deviceName}${nf} (${zb}${endpoint?.name}${nf})`);
       if (plugin.registeredDevices !== undefined) plugin.registeredDevices--;
       // Remove the device from the DeviceManager
-      await this.server.fetch({ type: 'devices_remove', src: this.server.name, dst: 'devices', params: { device: toBaseDevice(device) } });
+      await this.server.fetch({ type: 'devices_remove', src: this.server.name, dst: 'devices', params: { device: toDevice(device) } });
       await this.yieldToNode(10);
       if (delay > 0) await wait(delay);
     }

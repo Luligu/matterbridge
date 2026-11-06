@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import DevicesIcons from '../src/components/DevicesIcons';
 import { WebSocketContext, type WebSocketContextType } from '../src/components/WebSocketProvider';
-import type { ApiDevice, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
+import type { ApiDevice, ApiPlugin, Cluster, WsMessageApiResponse } from '../src/utils/backendShared';
 
 const endpointNumber = (value: number): Cluster['number'] => value;
 
@@ -92,7 +92,8 @@ describe('DevicesIcons', () => {
     expectText('Battery');
     expect(screen.getAllByText('---').length).toBeGreaterThanOrEqual(2);
     expect(screen.queryByText('Controller On')).toBeNull();
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/plugins', params: {} }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices', params: { pluginName: 'matterbridge-test', extended: false } }));
     expect(socket.sendMessage).toHaveBeenCalledWith(
       expect.objectContaining({
         method: '/api/clusters',
@@ -106,7 +107,7 @@ describe('DevicesIcons', () => {
     // endpoints/deviceTypes/clusters state objects captured by a useCallback memoized on those
     // same state values, then call setState({ ...mutatedObject }). When several /api/clusters
     // responses were handled back-to-back before React committed a render between them (exactly
-    // what happens on page reload, since /api/devices fires one /api/clusters request per device
+    // what happens on page reload, since /api/platform-devices fires one /api/clusters request per device
     // in a tight loop), every handler invocation shared the same stale object reference, so all
     // but the last commit in the batch were silently discarded - devices vanished at random.
     const socket = createSocket();
@@ -126,7 +127,6 @@ describe('DevicesIcons', () => {
     );
     await socket.ready();
 
-    const devicesMessage: WsMessageApiResponse = { id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: devices };
     const clusterMessages: WsMessageApiResponse[] = devices.map((device, i) => ({
       id: 1,
       src: 'Matterbridge',
@@ -145,9 +145,9 @@ describe('DevicesIcons', () => {
       },
     }));
 
-    // Fire /api/devices and every device's /api/clusters response together, in one synchronous
+    // Fire /api/plugins, /api/platform-devices and every device's /api/clusters response together, in one synchronous
     // batch, so clusterUpdate is invoked deviceCount times before React re-renders in between.
-    socket.emitBatch([devicesMessage, ...clusterMessages]);
+    socket.emitBatch([...createPlatformDevicesMessages(devices), ...clusterMessages]);
 
     await waitFor(() => {
       expect(screen.getAllByText(/^Fan \d$/).length).toBe(deviceCount);
@@ -250,6 +250,29 @@ describe('DevicesIcons', () => {
     });
   });
 
+  it('should request plugins on refresh messages except matter and locked plugins', async () => {
+    const socket = createSocket(false);
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'matter' } });
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'plugins', lock: 'matterbridge-test' } });
+    expect(socket.sendMessage).not.toHaveBeenCalled();
+
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'plugins' } });
+    expect(socket.sendMessage).toHaveBeenCalledTimes(1);
+    expect(socket.sendMessage).toHaveBeenLastCalledWith(expect.objectContaining({ method: '/api/plugins', params: {} }));
+
+    socket.emit({ id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'refresh_required', success: true, response: { changed: 'devices' } });
+    expect(socket.sendMessage).toHaveBeenCalledTimes(2);
+    expect(socket.sendMessage).toHaveBeenLastCalledWith(expect.objectContaining({ method: '/api/plugins', params: {} }));
+  });
+
   it('should send refresh requests and ignore empty cluster responses', async () => {
     const socket = createSocket(false);
 
@@ -280,8 +303,52 @@ describe('DevicesIcons', () => {
     });
 
     expect(socket.sendMessage).toHaveBeenCalledTimes(1);
-    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/devices', params: { extended: false } }));
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/plugins', params: {} }));
     expect(screen.queryByText('Empty')).toBeNull();
+  });
+
+  it('should request platform devices only for running plugins and ignore empty platform responses', async () => {
+    const socket = createSocket();
+    const device = createDevice({ deviceName: 'Running Device', serialNumber: 'RUN-001' });
+    const clusters = [createCluster('1', 'Light', 0x0100, 'OnOff', 'onOff', 'false', false)];
+
+    render(
+      <WebSocketContext.Provider value={socket.context}>
+        <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+      </WebSocketContext.Provider>,
+    );
+    await socket.ready();
+    const plugins = [
+      { name: 'matterbridge-test', enabled: true, loaded: true, started: true, error: false },
+      { name: 'stopped-plugin', enabled: true, loaded: true, started: false, error: false },
+    ] as ApiPlugin[];
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/plugins', success: true, response: plugins });
+    expect(socket.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices', params: { pluginName: 'matterbridge-test', extended: false } }));
+    expect(socket.sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ method: '/api/platform-devices', params: { pluginName: 'stopped-plugin', extended: false } }));
+
+    loadDevice(socket, device, clusters);
+    expect(await screen.findByText('Running Device')).toBeInTheDocument();
+    socket.sendMessage.mockClear();
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: 'empty-plugin', response: [] });
+    expect(socket.sendMessage).not.toHaveBeenCalled();
+    expect(screen.getByText('Running Device')).toBeInTheDocument();
+
+    // A new response of the same plugin, without a new /api/plugins cycle, replaces its devices
+    socket.emit({
+      id: 1,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/platform-devices',
+      success: true,
+      pluginName: device.plugin,
+      response: [{ ...device, deviceName: 'Renamed Device' }],
+    });
+    expect(await screen.findByText('Renamed Device')).toBeInTheDocument();
+    expect(screen.queryByText('Running Device')).toBeNull();
+
+    // An empty response of the same plugin removes all its devices
+    socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/platform-devices', success: true, pluginName: device.plugin, response: [] });
+    await waitFor(() => expect(screen.queryByText('Renamed Device')).toBeNull());
   });
 
   it('should update rendered cluster values when state updates arrive', async () => {
@@ -400,7 +467,7 @@ describe('DevicesIcons', () => {
 
   it('should register the websocket listener only once across devices/clusters/state_update churn', async () => {
     // Regression test: stateUpdate used to be a useCallback memoized on [clusters, devices], so
-    // every /api/devices, /api/clusters, or state_update message that changed that state gave it
+    // every /api/platform-devices, /api/clusters, or state_update message that changed that state gave it
     // a new identity, which re-ran the listener useEffect (removeListener + addListener) on every
     // single message instead of once for the component's lifetime.
     const socket = createSocket();
@@ -597,7 +664,7 @@ function createSocket(online = true): TestSocket {
 }
 
 function loadDevice(socket: TestSocket, device: ApiDevice, clusters: Cluster[]): void {
-  socket.emit({ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/devices', success: true, response: [device] });
+  for (const message of createPlatformDevicesMessages([device])) socket.emit(message);
   socket.emit({
     id: 1,
     src: 'Matterbridge',
@@ -649,6 +716,7 @@ function createDevice(overrides: Partial<ApiDevice> = {}): ApiDevice {
     deviceName: 'Controller Test',
     serialNumber: 'CONTROLLER-001',
     productUrl: '',
+    configUrl: undefined,
     uniqueId: 'controller-test',
     reachable: true,
     cluster: '',
@@ -851,4 +919,23 @@ function createCluster(
     attributeValue,
     attributeLocalValue,
   };
+}
+
+/** Answers /api/plugins with a running plugin for each plugin of the devices, then /api/platform-devices of each plugin with its own devices. */
+function createPlatformDevicesMessages(devices: ApiDevice[]): WsMessageApiResponse[] {
+  const pluginNames = [...new Set(devices.map((device) => device.plugin))];
+  const plugins = pluginNames.map((name) => ({ name, enabled: true, loaded: true, started: true, error: false })) as ApiPlugin[];
+  const messages: WsMessageApiResponse[] = [{ id: 1, src: 'Matterbridge', dst: 'Frontend', method: '/api/plugins', success: true, response: plugins }];
+  for (const name of pluginNames) {
+    messages.push({
+      id: 1,
+      src: 'Matterbridge',
+      dst: 'Frontend',
+      method: '/api/platform-devices',
+      success: true,
+      pluginName: name,
+      response: devices.filter((device) => device.plugin === name),
+    });
+  }
+  return messages;
 }

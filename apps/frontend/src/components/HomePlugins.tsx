@@ -520,8 +520,8 @@ function HomePlugins({ storeId, setStoreId }: HomePluginsProps) {
 
   const handleConfigPlugin = (plugin: ApiPlugin) => {
     if (debug) console.log('handleConfigPlugin plugin:', plugin.name);
-    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
-    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/select/entities', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/select-devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
+    sendMessage({ id: uniqueId.current, sender: 'HomePlugins', method: '/api/select-entities', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
     setSelectedPlugin(plugin);
     handleOpenConfig();
   };

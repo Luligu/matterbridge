@@ -56,15 +56,21 @@ import { getServerNodeData } from './matterNodeHelpers.js';
 
 logModuleLoaded('Plugin Manager');
 
-/** Define an interface for matterbridge */
+/** Plugin metadata and status extended with runtime storage contexts, Matter nodes, platform instance, and reachability timer */
 export interface Plugin extends ApiPlugin {
-  /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
+  /** Plugin-specific Node.js storage context, keyed by the plugin name and backed by the `storage` directory under `matterbridgeDirectory` */
   nodeContext?: NodeStorage;
+  /** Matter server node's `persist` context in the store named after the plugin, backed by `matterstorage` under `matterbridgeDirectory` */
   storageContext?: StorageContext;
+  /** Matter server node hosting the plugin's aggregator or accessory endpoint in childbridge mode */
   serverNode?: ServerNode;
+  /** Aggregator endpoint hosting a dynamic plugin's bridged devices in childbridge mode */
   aggregatorNode?: EndpointNode<AggregatorEndpoint>;
+  /** Accessory endpoint hosted by the plugin's server node in childbridge mode */
   device?: MatterbridgeEndpoint;
+  /** Loaded plugin platform instance providing lifecycle hooks and device integration */
   platform?: MatterbridgePlatform;
+  /** Timer that marks a dynamic plugin's bridged devices as reachable after startup in childbridge mode */
   reachabilityTimeout?: NodeJS.Timeout;
 }
 

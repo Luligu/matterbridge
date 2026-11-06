@@ -52,14 +52,14 @@
  * | /api/install /api/uninstall                                | missing                                                    |
  * | /api/addplugin /api/removeplugin                           | missing                                                    |
  * | /api/enableplugin /api/disableplugin /api/restartplugin    | missing                                                    |
- * | /api/savepluginconfig                                      | missing                                                    |
+ * | /api/save-plugin-config                                    | missing                                                    |
  * | /api/create-backup /api/create-config-backup               | missing                                                    |
  * | /api/create-matter-storage-backup                          | missing                                                    |
  * | /api/create-matterbridge-storage-backup                    | missing                                                    |
  * | /api/create-plugin-backup                                  | missing                                                    |
  * | /api/unregister /api/reset /api/factoryreset               | missing                                                    |
- * | /api/viewhistorypage /api/downloadhistorypage              | missing                                                    |
- * | /api/select/devices /api/select/entities                   | missing                                                    |
+ * | /api/view-historypage /api/download-historypage            | missing                                                    |
+ * | /api/select-devices /api/select-entities                   | missing                                                    |
  * | /api/action /api/command /api/config                       | missing                                                    |
  * +------------------------------------------------------------+------------------------------------------------------------+
  */
@@ -77,6 +77,7 @@ import {
   type ApiDevice,
   type ApiPlugin,
   type ApiSettings,
+  type Device,
   NODE_STORAGE_DIR,
   type SharedMatterbridge,
   type WorkerMessage,
@@ -531,13 +532,31 @@ export class Backend extends EventEmitter<BackendEvents> {
   /**
    * Retrieves the devices from the Device Manager.
    *
+   * Response for /api/devices
+   *
    * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @param {boolean} [extended] - Whether to include extended information.
-   * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
+   * @returns {Promise<Device[]>} An array of Devices for the frontend.
    */
-  async getApiDevices(pluginName?: string, extended: boolean = false): Promise<ApiDevice[]> {
+  async getDevices(pluginName?: string): Promise<Device[]> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'devices_apidevicearray', src: 'frontend', dst: 'devices', params: { pluginName, extended } });
+    const response = await this.server.fetch({ type: 'devices_array', src: 'frontend', dst: 'devices', params: { pluginName } });
+    if (this.diagnostic) writeDiagnostic('Backend', `getDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+    return response.result.devices;
+  }
+
+  /**
+   * Retrieves the devices of a single plugin from its Platform.
+   *
+   * Response for /api/platform-devices
+   *
+   * @param {string} pluginName - The name of the plugin whose platform answers.
+   * @param {boolean} [extended] - Whether to include extended information.
+   * @returns {Promise<ApiDevice[]>} The ApiDevices returned by the matching platform.
+   * @throws {Error} If the broadcast fetch fails or times out (e.g. the plugin has no running platform).
+   */
+  async getApiDevices(pluginName: string, extended: boolean = false): Promise<ApiDevice[]> {
+    const start = performance.now();
+    const response = await this.server.fetch({ type: 'platform_get_apidevices', src: 'frontend', dst: 'platform', params: { pluginName, extended } });
     if (this.diagnostic) writeDiagnostic('Backend', `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.devices;
   }

@@ -26,7 +26,7 @@ import { EndpointNumber } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerLogSpy, setDebug, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread';
-import type { ApiDevice, ApiPlugin, WorkerMessage, WsMessageApiLog, WsMessageApiSystemUpdate } from '@matterbridge/types';
+import type { ApiPlugin, Device, WorkerMessage, WsMessageApiLog, WsMessageApiSystemUpdate } from '@matterbridge/types';
 import { isApiRequest, isApiResponse, isBroadcast, BridgeStatus, plg } from '@matterbridge/types';
 import { wait, waiter } from '@matterbridge/utils/wait';
 import { CYAN, LogLevel, nf, rs, UNDERLINE, UNDERLINEOFF } from 'node-ansi-logger';
@@ -522,14 +522,14 @@ describe('Matterbridge frontend', () => {
     );
   });
 
-  test('Websocket API send /api/viewhistorypage', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/viewhistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/viewhistorypage', params: {} });
+  test('Websocket API send /api/view-historypage', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/view-historypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/view-historypage', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(msg.success).toBe(true);
   });
 
-  test('Websocket API send /api/downloadhistorypage', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/downloadhistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/downloadhistorypage', params: {} });
+  test('Websocket API send /api/download-historypage', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/download-historypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/download-historypage', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
     expect(msg.success).toBe(true);
   });
@@ -622,11 +622,10 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API send /api/devices', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/devices', params: { extended: false } });
+    const msg = await waitMessageId(++WS_ID, '/api/devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/devices', params: {} });
     expect(msg.response.length).toBe(6);
-    expect(msg.response.every((device: ApiDevice) => device.reachable && device.cluster === '')).toBe(true);
-    expect(msg.response.every((device: ApiDevice) => device.powerSource === undefined && device.batteryLevel === undefined && device.matter === undefined)).toBe(true);
-    expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'devices_apidevicearray' }));
+    expect(msg.response).toEqual(JSON.parse(JSON.stringify(matterbridge.devices.baseArray())));
+    expect(fetchBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'devices_array', dst: 'devices', params: { pluginName: undefined } }), expect.any(Number));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
@@ -636,35 +635,58 @@ describe('Matterbridge frontend', () => {
       dst: 'Matterbridge',
       src: 'Jest test',
       method: '/api/devices',
-      params: { pluginName: 'matterbridge-mock1', extended: true },
+      params: { pluginName: 'matterbridge-mock1' },
     });
     expect(msg.response.length).toBe(2);
-    expect(msg.response.every((device: ApiDevice) => device.plugin === 'matterbridge-mock1' && device.cluster.length > 0)).toBe(true);
-    expect(msg.response).toEqual(JSON.parse(JSON.stringify(frontend.getApiDevices('matterbridge-mock1', true))));
-    expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'devices_apidevicearray' }));
+    expect(msg.response.every((device: Device) => device.plugin === 'matterbridge-mock1')).toBe(true);
+    expect(msg.response).toEqual(JSON.parse(JSON.stringify(matterbridge.devices.baseArray('matterbridge-mock1'))));
+    expect(fetchBroadcastServerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'devices_array', dst: 'devices', params: { pluginName: 'matterbridge-mock1' } }),
+      expect.any(Number),
+    );
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('should filter ready devices through the direct frontend helpers', () => {
-    expect(frontend.getApiDevices()).toHaveLength(6);
-    expect(frontend.getApiDevices('matterbridge-mock1')).toHaveLength(2);
-    expect(frontend.getApiDevices('missing-plugin')).toEqual([]);
-    for (const extended of [undefined, false, true]) {
-      const expected = matterbridge.devices
-        .array()
+  test('Websocket API send /api/platform-devices without pluginName', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/platform-devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/platform-devices', params: {} });
+    expect(msg.error).toBe('Wrong parameter pluginName in /api/platform-devices');
+    expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'platform_get_apidevices' }));
+  });
+
+  test('Websocket API send /api/platform-devices', async () => {
+    // The platform answers with its own registered devices only (the endpoints added directly to matterbridge are not included)
+    const platform = matterbridge.plugins.get('matterbridge-mock1')?.platform;
+    if (!platform) throw new Error('Mock plugin 1 has no platform');
+    for (const extended of [false, true]) {
+      const expected = platform
+        .getDevices()
         .map((device) => toApiDevice(device, extended))
         .filter((device) => device !== undefined);
-      expect(frontend.getApiDevices(undefined, extended)).toEqual(expected);
+      expect(expected.length).toBeGreaterThan(0);
+      const msg = await waitMessageId(++WS_ID, '/api/platform-devices', {
+        id: WS_ID,
+        dst: 'Matterbridge',
+        src: 'Jest test',
+        method: '/api/platform-devices',
+        params: { pluginName: 'matterbridge-mock1', extended },
+      });
+      expect(msg.success).toBe(true);
+      expect(msg.pluginName).toBe('matterbridge-mock1');
+      expect(msg.response).toEqual(JSON.parse(JSON.stringify(expected)));
+      expect(fetchBroadcastServerSpy).toHaveBeenLastCalledWith(
+        expect.objectContaining({ type: 'platform_get_apidevices', dst: 'platform', params: { pluginName: 'matterbridge-mock1', extended } }),
+        expect.any(Number),
+      );
     }
+  });
 
-    const device = matterbridge.devices.array()[0];
-    const uniqueId = device.uniqueId;
-    device.uniqueId = undefined;
-    try {
-      expect(frontend.getApiDevices()).toHaveLength(5);
-    } finally {
-      device.uniqueId = uniqueId;
-    }
+  test('Websocket API send /api/platform-devices for a plugin without platform', async () => {
+    ws.send(
+      JSON.stringify({ id: ++WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/platform-devices', params: { pluginName: 'matterbridge-unknown', extended: false } }),
+    );
+    const isFetchErrorLogged = () =>
+      loggerLogSpy.mock.calls.some(([level, message]) => level === LogLevel.ERROR && message.startsWith('Error processing message') && message.includes('matterbridge-unknown'));
+    expect(await waiter('platform-devices fetch error', isFetchErrorLogged, false, 5000, 100)).toBe(true);
   });
 
   test('Websocket API send /api/clusters without params', async () => {
@@ -712,7 +734,7 @@ describe('Matterbridge frontend', () => {
   });
 
   test('Websocket API send /api/clusters', async () => {
-    const device = frontend.getApiDevices('matterbridge-mock1').find((device) => device.number === 7);
+    const device = matterbridge.devices.array().find((device) => device.plugin === 'matterbridge-mock1' && device.number === 7);
     if (!device) throw new Error('Cluster test device not found');
     const msg = await waitMessageId(++WS_ID, '/api/clusters', {
       id: WS_ID,
@@ -726,32 +748,32 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select/devices without plugin param', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select/devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/devices', params: {} });
-    expect(msg.error).toBe('Wrong parameter plugin in /api/select/devices');
+  test('Websocket API send /api/select-devices without plugin param', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select-devices', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select-devices', params: {} });
+    expect(msg.error).toBe('Wrong parameter plugin in /api/select-devices');
     expect(msg.response).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select/devices with wrong plugin', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select/devices', {
+  test('Websocket API send /api/select-devices with wrong plugin', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select-devices', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       params: { plugin: 'matterbridge_unknown' },
     });
-    expect(msg.error).toBe('Plugin not found in /api/select/devices');
+    expect(msg.error).toBe('Plugin not found in /api/select-devices');
     expect(msg.response).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select/devices', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select/devices', {
+  test('Websocket API send /api/select-devices', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select-devices', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       params: { plugin: 'matterbridge-mock1' },
     });
     expect(msg.error).toBeUndefined();
@@ -775,32 +797,32 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select/entities without plugin param', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select/entities', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select/entities', params: {} });
-    expect(msg.error).toBe('Wrong parameter plugin in /api/select/entities');
+  test('Websocket API send /api/select-entities without plugin param', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select-entities', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/select-entities', params: {} });
+    expect(msg.error).toBe('Wrong parameter plugin in /api/select-entities');
     expect(msg.response).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select/entities with wrong plugin', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select/entities', {
+  test('Websocket API send /api/select-entities with wrong plugin', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select-entities', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/select/entities',
+      method: '/api/select-entities',
       params: { plugin: 'matterbridge_unknown' },
     });
-    expect(msg.error).toBe('Plugin not found in /api/select/entities');
+    expect(msg.error).toBe('Plugin not found in /api/select-entities');
     expect(msg.response).toBeUndefined();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('Websocket API send /api/select/entities', async () => {
-    const msg = await waitMessageId(++WS_ID, '/api/select/entities', {
+  test('Websocket API send /api/select-entities', async () => {
+    const msg = await waitMessageId(++WS_ID, '/api/select-entities', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/select/entities',
+      method: '/api/select-entities',
       params: { plugin: 'matterbridge-mock1' },
     });
     expect(msg.error).toBeUndefined();
@@ -996,14 +1018,14 @@ describe('Matterbridge frontend', () => {
     await matterbridge.plugins.remove(plugin.name);
   }, 30000);
 
-  test('Websocket API /api/savepluginconfig', async () => {
+  test('Websocket API /api/save-plugin-config', async () => {
     const pluginName = 'matterbridge-mock4';
     const formData = { name: 'matterbridge-mock4', type: 'AccessoryPlatform', debug: false, unregisterOnShutdown: false, version: '1.2.2' };
-    const data = await waitMessageId(++WS_ID, '/api/savepluginconfig', {
+    const data = await waitMessageId(++WS_ID, '/api/save-plugin-config', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/savepluginconfig',
+      method: '/api/save-plugin-config',
       params: { pluginName, formData },
     });
     expect(data.error).toBeUndefined();
@@ -1012,25 +1034,25 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/^Saving config for plugin/));
 
     // Wrong parameters
-    await waitMessageId(++WS_ID, '/api/savepluginconfig', {
+    await waitMessageId(++WS_ID, '/api/save-plugin-config', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/savepluginconfig',
+      method: '/api/save-plugin-config',
       params: { pluginName: '', formData },
     });
-    await waitMessageId(++WS_ID, '/api/savepluginconfig', {
+    await waitMessageId(++WS_ID, '/api/save-plugin-config', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/savepluginconfig',
+      method: '/api/save-plugin-config',
       params: { pluginName, formData: {} },
     });
-    await waitMessageId(++WS_ID, '/api/savepluginconfig', {
+    await waitMessageId(++WS_ID, '/api/save-plugin-config', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/savepluginconfig',
+      method: '/api/save-plugin-config',
       params: { pluginName: 'matterbridge-notvalid', formData },
     });
   });

@@ -208,14 +208,45 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       if (debug || localDebug) console.log('DevicesTable received WebSocket Message:', msg);
-      if (msg.method === 'refresh_required' && msg.response.changed === 'devices') {
-        if (debug || localDebug) console.log(`DevicesTable received refresh_required: changed=${msg.response.changed} and sending /api/devices request`);
-        sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: true } });
+      // Broadcast messages refresh_required:'settings' | 'plugins' | 'devices' | 'matter'
+      if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
+        if (msg.response.changed === 'plugins' && msg.response.lock) {
+          if (debug || localDebug) console.log(`DevicesTable received refresh_required: changed=${msg.response.changed} lock=${msg.response.lock} skipping /api/plugins request`);
+        } else {
+          if (debug || localDebug) console.log(`DevicesTable received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
+          sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        }
       } else if (msg.method === 'state_update' && msg.response) {
         updateDevices(msg);
-      } else if (msg.method === '/api/devices') {
-        if (debug || localDebug) console.log(`DevicesTable received ${msg.response.length} devices:`, msg.response);
-        setDevices(msg.response);
+      } else if (msg.id === uniqueId.current && msg.method === '/api/plugins' && msg.response) {
+        // Full reload: each running plugin platform answers /api/platform-devices with its own devices
+        setDevices([]);
+        // Drop the selected device and its clusters: the device may be gone after the reload
+        setSelectedDeviceUniqueId(null);
+        setSelectedDeviceSerialNumber(null);
+        setPluginName(null);
+        setEndpoint(null);
+        setDeviceName(null);
+        setClusters([]);
+        setSubEndpointsCount(0);
+        for (const plugin of msg.response) {
+          if (plugin.enabled && plugin.loaded === true && plugin.started === true && plugin.error !== true) {
+            if (debug || localDebug) console.log(`DevicesTable sending /api/platform-devices for plugin ${plugin.name}`);
+            sendMessage({
+              id: uniqueId.current,
+              sender: 'DevicesTable',
+              method: '/api/platform-devices',
+              src: 'Frontend',
+              dst: 'Matterbridge',
+              params: { pluginName: plugin.name, extended: true },
+            });
+          }
+        }
+      } else if (msg.id === uniqueId.current && msg.method === '/api/platform-devices' && msg.response) {
+        if (debug || localDebug) console.log(`DevicesTable received ${msg.response.length} platform devices:`, msg.response);
+        const plugin = msg.pluginName;
+        // Replace the rows of this plugin only: an empty response removes them all
+        setDevices((prev) => [...prev.filter((device) => device.plugin !== plugin), ...msg.response]);
       } else if (msg.method === '/api/clusters') {
         if (debug || localDebug) console.log(`DevicesTable received ${msg.response.clusters.length} clusters for plugin ${msg.response.plugin}:`, msg.response);
         setClusters(msg.response.clusters);
@@ -247,7 +278,6 @@ function DevicesTable({ filterPlugins, filterDevices }: DevicesTableProps): Reac
       if (debug || localDebug) console.log('DevicesTable sending api requests with id ', uniqueId.current);
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/settings', src: 'Frontend', dst: 'Matterbridge', params: {} });
       sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
-      sendMessage({ id: uniqueId.current, sender: 'DevicesTable', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: true } });
     }
   }, [online, sendMessage]);
 

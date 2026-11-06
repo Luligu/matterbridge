@@ -48,7 +48,7 @@ import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-confi
 import type { ClusterId } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 // @matterbridge
-import type { ApiClusters, ApiDevice, ApiMatter, BaseDevice, Cluster, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
+import type { ApiClusters, ApiDevice, ApiMatter, Device, Cluster, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
 import { getEnumDescription } from '@matterbridge/utils/enum';
 import { isValidArray, isValidNumber, isValidObject } from '@matterbridge/utils/validate';
 // Third-party modules
@@ -110,12 +110,12 @@ export function toApiClusters(endpoint: MatterbridgeEndpoint, log: AnsiLogger): 
 }
 
 /**
- * Converts a MatterbridgeEndpoint to a BaseDevice.
+ * Converts a MatterbridgeEndpoint to a Device.
  *
  * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
- * @returns {BaseDevice} The converted BaseDevice.
+ * @returns {Device} The converted Device.
  */
-export function toBaseDevice(device: MatterbridgeEndpoint | BaseDevice): BaseDevice {
+export function toDevice(device: MatterbridgeEndpoint | Device): Device {
   return {
     // MatterbridgeEndpoint properties
     mode: device.mode,

@@ -53,7 +53,6 @@ import { FabricIndex } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiClusters,
-  ApiDevice,
   ApiMatter,
   BridgeStatus,
   PluginStatusUpdate,
@@ -90,16 +89,7 @@ import type { WebSocket, WebSocketServer } from 'ws';
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
 import { matterToAnsiLogLevel } from './matterLogger.js';
-import {
-  deleteAdvertisingNode,
-  getBatteryLevel,
-  getClusterTextFromDevice,
-  getPowerSource,
-  getReachability,
-  getServerNodeData,
-  setAdvertisingNode,
-  toApiClusters,
-} from './matterNodeHelpers.js';
+import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toApiClusters } from './matterNodeHelpers.js';
 import type { Plugin } from './pluginManager.js';
 
 logModuleLoaded('Frontend');
@@ -787,10 +777,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to provide devices (debug only reasons - not used in production)
-    this.expressApp.get('/api/devices', (req, res) => {
+    this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
-      res.json(this.getApiDevices(undefined, true));
+      try {
+        res.json((await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: {} }, this.serverFetchTimeout)).result.devices);
+      } catch (error) {
+        logError(this.log, 'Error in /api/devices fetching the devices from the device manager', error);
+        res.status(500).send('Error fetching the devices.');
+      }
     });
 
     // Endpoint to view the matterbridge log
@@ -917,8 +912,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to view the history.html
-    this.expressApp.get('/api/viewhistory', async (req, res) => {
-      this.log.debug('The frontend sent /api/viewhistory');
+    this.expressApp.get('/api/view-history', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-history');
       if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
@@ -926,14 +921,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html; charset=utf-8');
         res.send(data);
       } catch (error) {
-        logError(this.log, `Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
+        logError(this.log, `Error in /api/view-history reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
         res.status(500).send('Error reading history file.');
       }
     });
 
     // Endpoint to download the history.html
-    this.expressApp.get('/api/downloadhistory', async (req, res) => {
-      this.log.debug(`The frontend sent /api/downloadhistory`);
+    this.expressApp.get('/api/download-history', async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-history`);
       if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
@@ -943,14 +938,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
-            logError(this.log, `Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
+            logError(this.log, `Error in /api/download-history downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
             sendDownloadError(res, error, 'Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
         });
       } catch (error) {
-        logError(this.log, `Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
+        logError(this.log, `Error in /api/download-history reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
         res.status(500).send('Error reading history file.');
       }
     });
@@ -1272,41 +1267,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the devices from Matterbridge.
-   *
-   * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @param {boolean} extended - Whether to include extended device information.
-   * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
-   */
-  getApiDevices(pluginName?: string, extended: boolean = false): ApiDevice[] {
-    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
-    const devices: ApiDevice[] = [];
-    for (const device of this.matterbridge.devices.array()) {
-      // Filter by pluginName if provided
-      if (pluginName && pluginName !== device.plugin) continue;
-      // Check if the device has the required properties
-      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
-      devices.push({
-        plugin: device.plugin,
-        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        number: device.number,
-        id: device.id,
-        deviceName: device.deviceName,
-        serialNumber: device.serialNumber,
-        productUrl: device.productUrl,
-        configUrl: device.configUrl,
-        uniqueId: device.uniqueId,
-        reachable: extended ? getReachability(device) : true,
-        powerSource: extended ? getPowerSource(device) : undefined,
-        batteryLevel: extended ? getBatteryLevel(device) : undefined,
-        matter: extended && device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
-        cluster: extended ? getClusterTextFromDevice(device) : '',
-      });
-    }
-    return devices;
-  }
-
-  /**
    * Retrieves the clusters from a given plugin and endpoint number.
    *
    * Response for /api/clusters
@@ -1489,7 +1449,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.debug(`Removing plugin ${data.params.pluginName}...`);
         // Stop server nodes of devices of the plugin first
         // oxfmt-ignore
-        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
           // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
@@ -1520,7 +1480,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // oxfmt-ignore
         await this.server.fetch({ type: 'matterbridge_start_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
         // oxfmt-ignore
-        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
           // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_start_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
@@ -1535,7 +1495,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         // oxfmt-ignore
-        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
           // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
@@ -1593,13 +1553,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/savepluginconfig') {
+      } else if (data.method === '/api/save-plugin-config') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/save-plugin-config' });
           return;
         }
         if (!isValidObject(data.params.formData, 5)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/savepluginconfig' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/save-plugin-config' });
           return;
         }
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
@@ -1682,10 +1642,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const { pluginName, serialNumber, uniqueId, label } = data.params;
         this.server.request({ type: 'platform_rename_device', src: this.server.name, dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
-      } else if (data.method === '/api/viewhistorypage') {
+      } else if (data.method === '/api/view-historypage') {
         generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/downloadhistorypage') {
+      } else if (data.method === '/api/download-historypage') {
         generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/matter') {
@@ -1751,16 +1711,25 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
-        // const response = await this.server.fetch({
-        //   type: 'devices_apidevicearray',
-        //   src: 'frontend',
-        //   dst: 'devices',
-        //   params: { pluginName: data.params.pluginName, extended: data.params.extended },
-        // });
+        const pluginName = isValidString(data.params.pluginName) ? data.params.pluginName : undefined;
+        // oxfmt-ignore
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName } }, this.serverFetchTimeout)).result.devices;
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `devices_array() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
+      } else if (data.method === '/api/platform-devices') {
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/platform-devices' });
+          return;
+        }
+        const start = performance.now();
+        const { pluginName, extended } = data.params;
+        // Only the platform matching pluginName answers: it fails with a timeout when the plugin has no running platform
+        // oxfmt-ignore
+        const devices = (await this.server.fetch({ type: 'platform_get_apidevices', src: this.server.name, dst: 'platform', params: { pluginName, extended } }, this.serverFetchTimeout)).result.devices;
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `platform_get_apidevices(${pluginName}) took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, pluginName, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.pluginName, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
@@ -1798,14 +1767,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
         }
-      } else if (data.method === '/api/select/devices') {
+      } else if (data.method === '/api/select-devices') {
         if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/devices' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select-devices' });
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/devices' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select-devices' });
           return;
         }
         const start = performance.now();
@@ -1814,14 +1783,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDevices });
-      } else if (data.method === '/api/select/entities') {
+      } else if (data.method === '/api/select-entities') {
         if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select-entities' });
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select-entities' });
           return;
         }
         const start = performance.now();
