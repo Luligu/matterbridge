@@ -1,4 +1,4 @@
-# Matterbridge Agents Instructions (v.1.0.6)
+# Matterbridge Agents Instructions (v.1.0.9)
 
 ## Style And Formatting
 
@@ -12,7 +12,15 @@
 - Keep changes minimal and scoped to the request. Avoid unrelated refactors or broad cleanup.
 - Do not modify production code only to make a test pass. If a failing test points to a likely source issue, explain the issue and change behavior only when required by the task.
 - Preserve cross-platform behavior. Changes must work on Windows, macOS, and Linux, especially for paths, shell commands, environment variables, and networking behavior.
-- Maintain compatibility with the supported Node.js versions in this repository: 20.19, 22.13, 24 and 26.
+- Maintain compatibility with the supported Node.js versions in this repository: 22.13, 24 and 26.
+
+## Context And Reading
+
+- Read only the files the request needs. Start from the files the user names or the obvious entry point, and widen the search only when the task requires it.
+- Prefer targeted searches (grep / glob) and partial reads (line ranges) over reading whole large files or scanning the whole repository.
+- Do not read generated or vendored content unless the task is about it: `node_modules/`, `dist/`, `build/`, `coverage/`, `temp/`, lockfiles (`package-lock.json`, `bun.lock`), and `*.tsbuildinfo`.
+- Read `.agents/rules/*` files and skills only when the task matches their topic, not up front.
+- For a question or a small change, do not explore unrelated areas, run the full test suite, or summarize the project unasked.
 
 ## Project Architecture
 
@@ -20,7 +28,7 @@
 
 ## Testing And Validation
 
-- HARD RULE: never invoke `tsc`, `vitest`, `oxlint`, or `oxfmt` directly (via `npx`, `node node_modules/...`, or any other ad hoc form). Always use the matching entry in [package.json](./package.json) `scripts` or [tasks.json](./.vscode/tasks.json) — e.g. `npm run typecheck` (not `npx tsc`), `npm run lint`/`npm run lint:fix` (not `npx oxlint`), `npm run format`/`npm run format:check` (not `npx oxfmt`), `npm run test`/`npm run test:coverage` or a specific `Test: <Area>` task (not `npx vitest`/`node node_modules/vitest/vitest.mjs` typed out by hand). If a touched area has no matching script or task, say so and ask before improvising a raw invocation — do not silently fall back to `npx`.
+- HARD RULE: never invoke `tsc`, `vitest`, `bun test`, `oxlint`, or `oxfmt` directly (via `npx`, `node node_modules/...`, or any other ad hoc form). Always use the matching entry in [package.json](./package.json) `scripts` or [tasks.json](./.vscode/tasks.json) — e.g. `npm run typecheck` (not `npx tsc`), `npm run lint` (not `npx oxlint`; `npm run lint:fix` rewrites files, so run it only when the user asks), `npm run format`/`npm run format:check` (not `npx oxfmt`), `npm run test`/`npm run test:coverage` or a specific `Test: <Area>` task (not `npx vitest`/`node node_modules/vitest/vitest.mjs` typed out by hand), `npm run test:bun` (not `bun test`). If a touched area has no matching script or task, say so and ask before improvising a raw invocation — do not silently fall back to `npx`.
 - Keep tests deterministic and simple. Prefer small data sets and straightforward setup.
 - Some tests are intentionally multi-step flows. State may persist across successive steps within a single test flow, but each test unit must remain isolated from other tests.
 - For validation, run the relevant full test file or the matching suite/task for the touched area rather than assuming arbitrary isolated single-test execution is reliable.
@@ -28,6 +36,11 @@
 ## Documentation
 
 - When behavior changes, update the relevant tests and documentation.
+
+## Git Commits
+
+- Do not manually add a `Signed-off-by:` trailer to commit messages. VS Code’s Git interface adds it through `git.alwaysSignOff`; when committing through a terminal, always use `git commit -s`.
+- Never write a personal email address or any sensitive data into commit messages, trailers, or any generated text.
 
 ## Additional Agent Guidance
 
@@ -43,7 +56,7 @@ The following workflows are available as skills in [.agents/skills](./.agents/sk
 - `$matterjs-pr-workflow` for opening a PR against matter.js from the local fork when a change belongs upstream rather than in matterbridge.
 - `$verify-agent-context` for verifying which coding agent is running and that it loaded the shared instructions, rules and skills from AGENTS.md and `.agents/`.
 - `$verify-npm-alignment` for verifying that matterbridge and all the workspace packages published on npm are aligned on the `latest` and `dev` dist-tags.
-- `$verify-server-endpoint-context` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.0 comments on validation and state updates.
+- `$verify-server-endpoint-context` for verifying server message endpoint context, plugin forwarding order, and Matter 1.6.1 comments on validation and state updates.
 - `$verify-version-alignment` for verifying package, Docker build, test utility helper, docs update JSON files, and Docker workflow tags match the expected root version.
 
 ## Matter Specification

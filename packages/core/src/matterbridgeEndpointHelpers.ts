@@ -1538,17 +1538,49 @@ export function getDefaultPowerSourceRechargeableBatteryClusterServer(
 
 /**
  * Get the default Electrical Energy Measurement Cluster Server options with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
+ * The PeriodicEnergy feature is added when periodicEnergyImported or periodicEnergyExported is not undefined.
  *
  * @param {number} energyImported - The total consumption value in mW/h.
  * @param {number} energyExported - The total production value in mW/h.
+ * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyImported - The energy imported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
+ * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyExported - The energy exported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
  * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
+ *
+ * @remarks
+ * The Matter specification requires an event each time the energy values change, so fire it after setting the attribute:
+ * - CumulativeEnergyMeasured: each time the cumulative energy is updated (at most once per second, at least every 60 seconds while changing).
+ * - PeriodicEnergyMeasured: at the end of each measurement period (only with the PeriodicEnergy feature).
+ *
+ * Energy is in mWh and timestamps are UTC in seconds. It is also possible to use the systimes in ms since boot (startSystime and endSystime). The event fields must match the attribute values.
+ * ```typescript
+ *     const endTimestamp = Math.floor(Date.now() / 1000);
+ *     const startTimestamp = endTimestamp - 15 * 60; // e.g. a 15 minutes period ending now (endTimestamp must be at least startTimestamp + 1)
+ *     // Cumulative energy
+ *     const cumulativeImported = { energy: 1000000, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyImported', cumulativeImported, device.log);
+ *     const cumulativeExported = { energy: 1000000, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyExported', cumulativeExported, device.log);
+ *     await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported: cumulativeImported, energyExported: cumulativeExported }, device.log);
+ *     // Periodic energy
+ *     const periodicImported = { energy: 1500, startTimestamp, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyImported', periodicImported, device.log);
+ *     const periodicExported = { energy: 1500, startTimestamp, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyExported', periodicExported, device.log);
+ *     await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported: periodicImported, energyExported: periodicExported }, device.log);
+ * ```
  */
-export function getDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null) {
+export function getDefaultElectricalEnergyMeasurementClusterServer(
+  energyImported: number | bigint | null = null,
+  energyExported: number | bigint | null = null,
+  periodicEnergyImported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+  periodicEnergyExported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+) {
   return optionsFor(
     ElectricalEnergyMeasurementServer.with(
       ElectricalEnergyMeasurement.Feature.ImportedEnergy,
       ElectricalEnergyMeasurement.Feature.ExportedEnergy,
       ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+      ...(periodicEnergyImported === undefined && periodicEnergyExported === undefined ? [] : [ElectricalEnergyMeasurement.Feature.PeriodicEnergy]),
     ),
     {
       accuracy: {
@@ -1561,48 +1593,114 @@ export function getDefaultElectricalEnergyMeasurementClusterServer(energyImporte
       cumulativeEnergyReset: null,
       cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
       cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
+      ...(periodicEnergyImported === undefined ? {} : { periodicEnergyImported }),
+      ...(periodicEnergyExported === undefined ? {} : { periodicEnergyExported }),
     },
   );
 }
 
 /**
  * Get the Electrical Energy Measurement Cluster Server options with features ImportedEnergy and CumulativeEnergy.
+ * The PeriodicEnergy feature is added when periodicEnergyImported is not undefined.
  *
  * @param {number} energyImported - The total consumption value in mW/h.
+ * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyImported - The energy imported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
  * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
+ *
+ * @remarks
+ * The Matter specification requires an event each time the energy values change, so fire it after setting the attribute:
+ * - CumulativeEnergyMeasured: each time the cumulative energy is updated (at most once per second, at least every 60 seconds while changing).
+ * - PeriodicEnergyMeasured: at the end of each measurement period (only with the PeriodicEnergy feature).
+ *
+ * Energy is in mWh and timestamps are UTC in seconds. It is also possible to use the systimes in ms since boot (startSystime and endSystime). The event fields must match the attribute values.
+ * ```typescript
+ *     const endTimestamp = Math.floor(Date.now() / 1000);
+ *     const startTimestamp = endTimestamp - 15 * 60; // e.g. a 15 minutes period ending now (endTimestamp must be at least startTimestamp + 1)
+ *     // Cumulative energy
+ *     const cumulativeImported = { energy: 1000000, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyImported', cumulativeImported, device.log);
+ *     await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported: cumulativeImported }, device.log);
+ *     // Periodic energy
+ *     const periodicImported = { energy: 1500, startTimestamp, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyImported', periodicImported, device.log);
+ *     await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported: periodicImported }, device.log);
+ * ```
  */
-export function getImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null) {
-  return optionsFor(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
-    accuracy: {
-      measurementType: MeasurementType.ElectricalEnergy,
-      measured: true,
-      minMeasuredValue: Number.MIN_SAFE_INTEGER,
-      maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-      accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+export function getImportedElectricalEnergyMeasurementClusterServer(
+  energyImported: number | bigint | null = null,
+  periodicEnergyImported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+) {
+  return optionsFor(
+    ElectricalEnergyMeasurementServer.with(
+      ElectricalEnergyMeasurement.Feature.ImportedEnergy,
+      ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+      ...(periodicEnergyImported === undefined ? [] : [ElectricalEnergyMeasurement.Feature.PeriodicEnergy]),
+    ),
+    {
+      accuracy: {
+        measurementType: MeasurementType.ElectricalEnergy,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      cumulativeEnergyReset: null,
+      cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
+      ...(periodicEnergyImported === undefined ? {} : { periodicEnergyImported }),
     },
-    cumulativeEnergyReset: null,
-    cumulativeEnergyImported: energyImported !== null && energyImported >= 0 ? { energy: energyImported } : null,
-  });
+  );
 }
 
 /**
  * Get the Electrical Energy Measurement Cluster Server options with features ExportedEnergy and CumulativeEnergy.
+ * The PeriodicEnergy feature is added when periodicEnergyExported is not undefined.
  *
  * @param {number} energyExported - The total production value in mW/h.
+ * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyExported - The energy exported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
  * @returns {Behavior.Options<ElectricalEnergyMeasurementServer>} - The default options for the Electrical Energy Measurement Cluster Server.
+ *
+ * @remarks
+ * The Matter specification requires an event each time the energy values change, so fire it after setting the attribute:
+ * - CumulativeEnergyMeasured: each time the cumulative energy is updated (at most once per second, at least every 60 seconds while changing).
+ * - PeriodicEnergyMeasured: at the end of each measurement period (only with the PeriodicEnergy feature).
+ *
+ * Energy is in mWh and timestamps are UTC in seconds. It is also possible to use the systimes in ms since boot (startSystime and endSystime). The event fields must match the attribute values.
+ * ```typescript
+ *     const endTimestamp = Math.floor(Date.now() / 1000);
+ *     const startTimestamp = endTimestamp - 15 * 60; // e.g. a 15 minutes period ending now (endTimestamp must be at least startTimestamp + 1)
+ *     // Cumulative energy
+ *     const cumulativeExported = { energy: 1000000, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyExported', cumulativeExported, device.log);
+ *     await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyExported: cumulativeExported }, device.log);
+ *     // Periodic energy
+ *     const periodicExported = { energy: 1500, startTimestamp, endTimestamp };
+ *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyExported', periodicExported, device.log);
+ *     await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyExported: periodicExported }, device.log);
+ * ```
  */
-export function getExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null) {
-  return optionsFor(ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy), {
-    accuracy: {
-      measurementType: MeasurementType.ElectricalEnergy,
-      measured: true,
-      minMeasuredValue: Number.MIN_SAFE_INTEGER,
-      maxMeasuredValue: Number.MAX_SAFE_INTEGER,
-      accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+export function getExportedElectricalEnergyMeasurementClusterServer(
+  energyExported: number | bigint | null = null,
+  periodicEnergyExported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+) {
+  return optionsFor(
+    ElectricalEnergyMeasurementServer.with(
+      ElectricalEnergyMeasurement.Feature.ExportedEnergy,
+      ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+      ...(periodicEnergyExported === undefined ? [] : [ElectricalEnergyMeasurement.Feature.PeriodicEnergy]),
+    ),
+    {
+      accuracy: {
+        measurementType: MeasurementType.ElectricalEnergy,
+        measured: true,
+        minMeasuredValue: Number.MIN_SAFE_INTEGER,
+        maxMeasuredValue: Number.MAX_SAFE_INTEGER,
+        accuracyRanges: [{ rangeMin: Number.MIN_SAFE_INTEGER, rangeMax: Number.MAX_SAFE_INTEGER, fixedMax: 1 }],
+      },
+      cumulativeEnergyReset: null,
+      cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
+      ...(periodicEnergyExported === undefined ? {} : { periodicEnergyExported }),
     },
-    cumulativeEnergyReset: null,
-    cumulativeEnergyExported: energyExported !== null && energyExported >= 0 ? { energy: energyExported } : null,
-  });
+  );
 }
 
 /**

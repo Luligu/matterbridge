@@ -477,6 +477,48 @@ describe('Matterbridge frontend', () => {
     expect(msg.success).toBe(true);
   });
 
+  test('should send the reset snackbar and a success response when receiving /api/unregister-device', async () => {
+    const id = ++WS_ID;
+    const msg = await waitMessageId(id, '/api/unregister-device', {
+      id,
+      dst: 'Matterbridge',
+      src: 'Frontend',
+      method: '/api/unregister-device',
+      params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id' },
+    });
+
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledExactlyOnceWith('Resetting the device...');
+    expect(msg).toEqual({ id, method: '/api/unregister-device', src: 'Matterbridge', dst: 'Frontend', success: true });
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'platform_unregister_device',
+        dst: 'platform',
+        params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id' },
+      }),
+    );
+  });
+
+  test('should send the rename snackbar and a success response when receiving /api/rename-device', async () => {
+    const id = ++WS_ID;
+    const msg = await waitMessageId(id, '/api/rename-device', {
+      id,
+      dst: 'Matterbridge',
+      src: 'Frontend',
+      method: '/api/rename-device',
+      params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id', label: 'New controller name' },
+    });
+
+    expect(wssSendSnackbarMessageFrontendSpy).toHaveBeenCalledExactlyOnceWith('Renaming the device...');
+    expect(msg).toEqual({ id, method: '/api/rename-device', src: 'Matterbridge', dst: 'Frontend', success: true });
+    expect(requestBroadcastServerSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'platform_rename_device',
+        dst: 'platform',
+        params: { pluginName: 'matterbridge-test', serialNumber: 'test-device', uniqueId: 'test-device-unique-id', label: 'New controller name' },
+      }),
+    );
+  });
+
   test('Websocket API send /api/viewhistorypage', async () => {
     const msg = await waitMessageId(++WS_ID, '/api/viewhistorypage', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/viewhistorypage', params: {} });
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
@@ -517,11 +559,11 @@ describe('Matterbridge frontend', () => {
     const msg = await waitMessageId(++WS_ID, '/api/settings', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/settings', params: {} });
     expect(msg.response.matterbridgeInformation).toBeDefined();
     expect(msg.response.systemInformation).toBeDefined();
-    expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }));
+    expect(fetchBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }), expect.any(Number));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('should preserve Matterbridge flags and initial Matter settings in local settings responses', async () => {
+  test('should preserve Matterbridge flags and initial Matter settings in settings responses', async () => {
     const flags = {
       restartRequired: matterbridge.restartRequired,
       fixedRestartRequired: matterbridge.fixedRestartRequired,
@@ -541,7 +583,7 @@ describe('Matterbridge frontend', () => {
         matterPasscode: 123456,
         matterDiscriminator: 3860,
       });
-      expect(fetchBroadcastServerSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }));
+      expect(fetchBroadcastServerSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }), expect.any(Number));
     } finally {
       Object.assign(matterbridge, flags);
     }
@@ -600,8 +642,7 @@ describe('Matterbridge frontend', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringMatching(/^Received message from websocket client/));
   });
 
-  test('should retrieve plugins and filter ready devices through the direct frontend helpers', () => {
-    expect(frontend.getApiPlugins().map((plugin) => plugin.name)).toEqual(['matterbridge-mock1', 'matterbridge-mock2', 'matterbridge-mock3']);
+  test('should filter ready devices through the direct frontend helpers', () => {
     expect(frontend.getApiDevices()).toHaveLength(6);
     expect(frontend.getApiDevices('matterbridge-mock1')).toHaveLength(2);
     expect(frontend.getApiDevices('missing-plugin')).toEqual([]);

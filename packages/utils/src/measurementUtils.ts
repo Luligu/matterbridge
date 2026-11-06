@@ -38,9 +38,9 @@
  * @returns {number} Encoded Matter illuminance value (0, or 1 .. 0xFFFE)
  */
 export function luxToMatter(lux: number): number {
-  // Matter 1.6.0 § 2.2.5.1: MeasuredValue is 0, or in the range 1 to 0xFFFE for 1 lx <= illuminance <= 3.576 Mlx.
+  // Matter 1.6.1 § 2.2.5.1: MeasuredValue is 0, or in the range 1 to 0xFFFE for 1 lx <= illuminance <= 3.576 Mlx.
   if (!Number.isFinite(lux) || lux < 1) return 0;
-  // Matter 1.6.0 § 2.2.5.1: MeasuredValue = 10,000 x log10(illuminance) + 1.
+  // Matter 1.6.1 § 2.2.5.1: MeasuredValue = 10,000 x log10(illuminance) + 1.
   const encoded = Math.round(10000 * Math.log10(lux) + 1);
   return Math.min(encoded, 0xfffe);
 }
@@ -58,9 +58,9 @@ export function luxToMatter(lux: number): number {
  * @returns {number} Illuminance in lux (integer, >= 0)
  */
 export function matterToLux(value: number): number {
-  // Matter 1.6.0 § 2.2.5.1: MeasuredValue = 0 indicates an illuminance too low to be measured.
+  // Matter 1.6.1 § 2.2.5.1: MeasuredValue = 0 indicates an illuminance too low to be measured.
   if (!Number.isFinite(value) || value <= 0) return 0;
   const v = Math.min(value, 0xfffe);
-  // Matter 1.6.0 § 2.2.5.1: illuminance = 10 ^ ((MeasuredValue - 1) / 10,000), the inverse of luxToMatter.
+  // Matter 1.6.1 § 2.2.5.1: illuminance = 10 ^ ((MeasuredValue - 1) / 10,000), the inverse of luxToMatter.
   return Math.round(Math.pow(10, (v - 1) / 10000));
 }

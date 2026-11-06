@@ -1,4 +1,4 @@
-# Matterbridge Claude Instructions (v.1.0.6)
+# Matterbridge Claude Instructions (v.1.0.7)
 
 @AGENTS.md
 

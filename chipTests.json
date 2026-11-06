@@ -425,6 +425,72 @@
       "comment": "Requires the PeriodicEnergy feature; endpoint 206 does not enable this optional feature."
     },
     {
+      "name": "ElectricalEnergyMeasurement attributes on ElectricalSensorPeriodic endpoint 2064",
+      "test": "TC_EEM_2_1.py",
+      "endpoint": 2064,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic.pics"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensorPeriodic endpoint 2064",
+      "test": "TC_EEM_2_2.py",
+      "endpoint": 2064,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensorPeriodic endpoint 2064",
+      "test": "TC_EEM_2_3.py",
+      "endpoint": 2064,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensorPeriodic endpoint 2064",
+      "test": "TC_EEM_2_4.py",
+      "endpoint": 2064,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic exported functionality on ElectricalSensorPeriodic endpoint 2064",
+      "test": "TC_EEM_2_5.py",
+      "endpoint": 2064,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement attributes on ElectricalSensorPeriodicImported endpoint 2065",
+      "test": "TC_EEM_2_1.py",
+      "endpoint": 2065,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic-imported.pics"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative imported functionality on ElectricalSensorPeriodicImported endpoint 2065",
+      "test": "TC_EEM_2_2.py",
+      "endpoint": 2065,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic-imported.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic imported functionality on ElectricalSensorPeriodicImported endpoint 2065",
+      "test": "TC_EEM_2_4.py",
+      "endpoint": 2065,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic-imported.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement attributes on ElectricalSensorPeriodicExported endpoint 2066",
+      "test": "TC_EEM_2_1.py",
+      "endpoint": 2066,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic-exported.pics"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement cumulative exported functionality on ElectricalSensorPeriodicExported endpoint 2066",
+      "test": "TC_EEM_2_3.py",
+      "endpoint": 2066,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic-exported.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
+      "name": "ElectricalEnergyMeasurement periodic exported functionality on ElectricalSensorPeriodicExported endpoint 2066",
+      "test": "TC_EEM_2_5.py",
+      "endpoint": 2066,
+      "args": ["--PICS /root/electrical-energy-measurement.periodic-exported.pics", "--hex-arg enableKey:000102030405060708090a0b0c0d0e0f"]
+    },
+    {
       "name": "DeviceEnergyManagement attributes on DeviceEnergyManagement",
       "test": "TC_DEM_2_1.py",
       "endpoint": 207,

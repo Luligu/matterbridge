@@ -37,6 +37,7 @@ import { OnOffLightSwitchDevice, OnOffLightSwitchRequirements } from '@matter/no
 import { OnOffPlugInUnitDevice, OnOffPlugInUnitDeviceDefinition } from '@matter/node/devices/on-off-plug-in-unit';
 import { FabricManager } from '@matter/protocol';
 import { Binding, ColorControl, Descriptor, Groups, Identify, LevelControl, OccupancySensing, OnOff, ScenesManagement, Thermostat } from '@matter/types/clusters';
+import { Namespace } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addBridgedDevice,
@@ -227,7 +228,7 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create a onOffLight device', () => {
-    light = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    light = new MatterbridgeEndpoint(onOffLight, { id: 'OnOffLight', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Switch1' }] });
     expect(light).toBeDefined();
     expect(light.id).toBe('OnOffLight');
     expect(light.type.name).toBe(onOffLight.name.replace('-', '_'));
@@ -238,7 +239,10 @@ describe('Matterbridge ' + NAME, () => {
   });
 
   test('create an enhanced onOffLight device', () => {
-    extendedLight = new MatterbridgeEndpoint(extendedColorLight, { id: 'EnhancedOnOffLight', tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }] });
+    extendedLight = new MatterbridgeEndpoint(extendedColorLight, {
+      id: 'EnhancedOnOffLight',
+      tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Switch1' }],
+    });
     expect(extendedLight).toBeDefined();
     expect(extendedLight.id).toBe('EnhancedOnOffLight');
     expect(extendedLight.type.name).toBe(extendedColorLight.name.replace('-', '_'));
@@ -673,7 +677,7 @@ describe('Matterbridge ' + NAME, () => {
           occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
         },
         descriptor: {
-          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+          tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
             { deviceType: onOffPlugInUnit.code, revision: onOffPlugInUnit.revision },
             { deviceType: occupancySensor.code, revision: occupancySensor.revision },
@@ -684,7 +688,7 @@ describe('Matterbridge ' + NAME, () => {
     expect(endpoint).toBeDefined();
     expect(() =>
       endpoint.behaviors.require(DescriptorServer.with(Descriptor.Feature.TagList), {
-        tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+        tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Switch1' }],
         deviceTypeList: [
           { deviceType: onOffPlugInUnit.code, revision: onOffPlugInUnit.revision },
           { deviceType: occupancySensor.code, revision: occupancySensor.revision },
@@ -716,7 +720,7 @@ describe('Matterbridge ' + NAME, () => {
           occupancySensorTypeBitmap: { pir: true, ultrasonic: false, physicalContact: false },
         },
         descriptor: {
-          tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 1, label: 'Switch1' }],
+          tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 1, label: 'Switch1' }],
           deviceTypeList: [
             { deviceType: onOffPlugInUnit.code, revision: onOffPlugInUnit.revision },
             { deviceType: occupancySensor.code, revision: occupancySensor.revision },

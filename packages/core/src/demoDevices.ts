@@ -71,6 +71,7 @@ import { Chime } from './devices/chime.js';
 import { Closure } from './devices/closure.js';
 import { ContentApp } from './devices/contentApp.js';
 import { Cooktop } from './devices/cooktop.js';
+import { DimmablePlugInUnit } from './devices/dimmablePlugInUnit.js';
 import { Dishwasher } from './devices/dishwasher.js';
 import { Doorbell } from './devices/doorbell.js';
 import { ElectricalUtilityMeter } from './devices/electricalUtilityMeter.js';
@@ -83,7 +84,11 @@ import { IrrigationSystem } from './devices/irrigationSystem.js';
 import { LaundryDryer } from './devices/laundryDryer.js';
 import { LaundryWasher } from './devices/laundryWasher.js';
 import { MicrowaveOven } from './devices/microwaveOven.js';
+import { MountedDimmableLoadControl } from './devices/mountedDimmableLoadControl.js';
+import { MountedOnOffControl } from './devices/mountedOnOffControl.js';
+import { OnOffPlugInUnit } from './devices/onOffPlugInUnit.js';
 import { Oven } from './devices/oven.js';
+import { Pump } from './devices/pump.js';
 import { Refrigerator } from './devices/refrigerator.js';
 import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
 import { SnapshotCamera } from './devices/snapshotCamera.js';
@@ -92,6 +97,7 @@ import { Speaker } from './devices/speaker.js';
 import { VideoDoorbell } from './devices/videoDoorbell.js';
 import { VideoRemoteControl } from './devices/videoRemoteControl.js';
 import { WaterHeater } from './devices/waterHeater.js';
+import { WaterValve } from './devices/waterValve.js';
 import type { Matterbridge } from './matterbridge.js';
 import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
@@ -265,6 +271,37 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
   ep.createDefaultElectricalEnergyMeasurementClusterServer(100_000_000, 10_000_000);
   await registerDevice(ep, 'Electrical Sensor Dynamic', 'UTILITY-02-06-3');
 
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], { id: 'ElectricalSensorPeriodic', number: EndpointNumber(2_06_4) });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  const endTimestamp = Math.floor(Date.now() / 1000);
+  const startTimestamp = endTimestamp - 15 * 60;
+  ep.createDefaultElectricalEnergyMeasurementClusterServer(
+    100_000_000,
+    10_000_000,
+    { energy: 55_000, startTimestamp, endTimestamp },
+    { energy: 5_500, startTimestamp, endTimestamp },
+  );
+  await registerDevice(ep, 'Electrical Sensor Periodic', 'UTILITY-02-06-4');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], {
+    id: 'ElectricalSensorPeriodicImported',
+    number: EndpointNumber(2_06_5),
+  });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createImportedElectricalEnergyMeasurementClusterServer(200_000_000, { energy: 55_000, startTimestamp, endTimestamp });
+  await registerDevice(ep, 'Electrical Sensor Periodic Imported', 'UTILITY-02-06-5');
+
+  ep = new MatterbridgeEndpoint([getSupportedDeviceType('ElectricalSensor')!, bridgedNode, powerSource], {
+    id: 'ElectricalSensorPeriodicExported',
+    number: EndpointNumber(2_06_6),
+  });
+  ep.createDefaultPowerTopologyClusterServer(PowerTopology.Feature.NodeTopology);
+  ep.createDefaultElectricalPowerMeasurementClusterServer(220_000, 1_000, 220_000_000, 50_000);
+  ep.createExportedElectricalEnergyMeasurementClusterServer(50_000_000, { energy: 5_500, startTimestamp, endTimestamp });
+  await registerDevice(ep, 'Electrical Sensor Periodic Exported', 'UTILITY-02-06-6');
+
   ep = new MatterbridgeEndpoint([getSupportedDeviceType('DeviceEnergyManagement')!, bridgedNode, powerSource], { id: 'DeviceEnergyManagement', number: EndpointNumber(2_07) });
   ep.createDefaultDeviceEnergyManagementClusterServer();
   ep.createDefaultDeviceEnergyManagementModeClusterServer();
@@ -305,39 +342,30 @@ export async function createDemoDevices(matterbridge: Matterbridge): Promise<voi
 
   // Chapter 5 - Smart Plugs/Outlets and other Actuators
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('OnOffPlugInUnit')!, bridgedNode, powerSource], { id: 'OnOffPlugInUnit', number: EndpointNumber(5_01) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // OnOffPlugInUnit has a single device class.
+  ep = new OnOffPlugInUnit('On/Off Plug-in Unit', 'ACTUATOR-05-01', { id: 'OnOffPlugInUnit', number: EndpointNumber(5_01) });
   await registerDevice(ep, 'On/Off Plug-in Unit', 'ACTUATOR-05-01');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('DimmablePlugInUnit')!, bridgedNode, powerSource], { id: 'DimmablePlugInUnit', number: EndpointNumber(5_02) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // DimmablePlugInUnit has a single device class.
+  ep = new DimmablePlugInUnit('Dimmable Plug-in Unit', 'ACTUATOR-05-02', { id: 'DimmablePlugInUnit', number: EndpointNumber(5_02) });
   await registerDevice(ep, 'Dimmable Plug-in Unit', 'ACTUATOR-05-02');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('MountedOnOffControl')!, bridgedNode, powerSource], { id: 'MountedOnOffControl', number: EndpointNumber(5_03) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // MountedOnOffControl has a single device class.
+  ep = new MountedOnOffControl('Mounted On/Off Control', 'ACTUATOR-05-03', { id: 'MountedOnOffControl', number: EndpointNumber(5_03) });
   await registerDevice(ep, 'Mounted On/Off Control', 'ACTUATOR-05-03');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('MountedDimmableLoadControl')!, bridgedNode, powerSource], {
-    id: 'MountedDimmableLoadControl',
-    number: EndpointNumber(5_04),
-  });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // MountedDimmableLoadControl has a single device class.
+  ep = new MountedDimmableLoadControl('Mounted Dimmable Load Control', 'ACTUATOR-05-04', { id: 'MountedDimmableLoadControl', number: EndpointNumber(5_04) });
   await registerDevice(ep, 'Mounted Dimmable Load Control', 'ACTUATOR-05-04');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('Pump')!, bridgedNode, powerSource], { id: 'Pump', number: EndpointNumber(5_05) });
-  ep.createDefaultPowerSourceWiredClusterServer();
-  // Pump has no Element Requirement for OnOff Feature Lighting (unlike the plug-in/lighting device types above),
-  // so the addRequiredClusters() default (Lighting feature) would be non-conformant here — override with the
-  // plain, featureless OnOff cluster server instead.
-  ep.createOnOffClusterServer(false);
-  ep.createLevelControlClusterServer(0);
+  // Pump has a single device class.
+  ep = new Pump('Pump', 'ACTUATOR-05-05', { id: 'Pump', number: EndpointNumber(5_05) });
   await registerDevice(ep, 'Pump', 'ACTUATOR-05-05');
 
-  ep = new MatterbridgeEndpoint([getSupportedDeviceType('WaterValve')!, bridgedNode, powerSource], { id: 'WaterValve', number: EndpointNumber(5_06) });
-  ep.createDefaultPowerSourceWiredClusterServer();
+  // WaterValve has a single device class.
   // No plugin manages this demo endpoint's physical valve, so enable the built-in Open/Close movement and
   // auto-close simulation directly here (rather than relying on MATTERBRIDGE_CHIP_TEST's initialize() default).
-  ep.createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, 5000, true);
+  ep = new WaterValve('Water Valve', 'ACTUATOR-05-06', { id: 'WaterValve', number: EndpointNumber(5_06), movementDuration: 5000, autoClose: true });
   await registerDevice(ep, 'Water Valve', 'ACTUATOR-05-06');
 
   // IrrigationSystem has a single device class.

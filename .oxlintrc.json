@@ -1,7 +1,9 @@
-// .oxlintrc.json v.2.0.0
+// .oxlintrc.json v.1.2.0
 
-// This Oxlint configuration is shared between all matterbridge packages and the frontend app.
-// It is designed for a TypeScript project using ESM modules (Node.js) and a Vite/React frontend (browser).
+// This Oxlint configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules (Node.js) and a Vite/React/TypeScript frontend (browser).
+// Oxlint respects .gitignore.
+// Package specific directories and files that should be ignored are merged by mb-run --upgrade from the automator.ignore.oxlint value in the root package.json.
+
 // The base rules target the Node.js packages; the overrides below adapt them per area:
 // - Jest, Vitest and Bun test: relaxed rules for test files (.ts and .tsx);
 // - Frontend (apps/frontend): adds the React and jsx-a11y plugins and the browser environment;
@@ -218,7 +220,7 @@
         "import/no-relative-parent-imports": "off"
       }
     },
-    /* Bun */
+    /* Bun test */
     {
       "files": ["**/buntest/**/*.{spec,test}.{ts,tsx}"],
       "rules": {
@@ -250,11 +252,10 @@
         "import/no-relative-parent-imports": "off"
       }
     },
-    /* Frontend (Vite/React): root rules plus React and jsx-a11y */
+    /* Frontend Vite/React: root rules plus React and jsx-a11y */
     {
       "files": ["apps/**/*.{ts,tsx}"],
-      // "react-perf" — all four rules conflict with MUI patterns; not worth enabling
-      "plugins": ["react", "jsx-a11y"],
+      "plugins": ["react", "jsx-a11y"], // "react-perf" — all four rules conflict with MUI patterns; not worth enabling
       "env": { "node": false, "browser": true, "es2024": true },
       "rules": {
         "eslint/no-console": "off", // console logging is common in frontend code and not a problem

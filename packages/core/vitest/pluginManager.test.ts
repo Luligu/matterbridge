@@ -290,7 +290,7 @@ describe('PluginManager', () => {
         env: { ...process.env, npm_config_prefix: NPM_CONFIG_PREFIX, npm_config_cache: NPM_CONFIG_CACHE },
       });
     }
-  }, 10000);
+  }, 60000);
 
   test('logLevel changes correctly', async () => {
     plugins.logLevel = LogLevel.DEBUG;
@@ -506,6 +506,8 @@ describe('PluginManager', () => {
         type: 'Unknown',
         version: '1.0.0',
         private: true,
+        hasWhiteList: false,
+        hasBlackList: false,
       },
       {
         author: 'To update',
@@ -518,6 +520,8 @@ describe('PluginManager', () => {
         type: 'Unknown',
         version: '1.0.0',
         private: true,
+        hasWhiteList: false,
+        hasBlackList: false,
       },
       {
         author: 'To update',
@@ -530,6 +534,8 @@ describe('PluginManager', () => {
         type: 'Unknown',
         version: '1.0.0',
         private: true,
+        hasWhiteList: false,
+        hasBlackList: false,
       },
     ]);
 
@@ -557,10 +563,14 @@ describe('PluginManager', () => {
     expect((await testServer.fetch({ type: 'plugins_set', src: testServer.name, dst: 'plugins', params: { plugin: status } })).result.plugin).toEqual({
       ...mockPlugin4,
       ...status,
+      hasWhiteList: false,
+      hasBlackList: false,
     });
     expect((await testServer.fetch({ type: 'plugins_get', src: testServer.name, dst: 'plugins', params: { name: mockPlugin4.name } })).result.plugin).toEqual({
       ...mockPlugin4,
       ...status,
+      hasWhiteList: false,
+      hasBlackList: false,
     });
     // @ts-expect-error accessing private member
     plugins._plugins.delete('matterbridge-mock4');

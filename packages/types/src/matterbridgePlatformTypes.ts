@@ -89,3 +89,12 @@ export type PlatformMatterbridge = {
   readonly aggregatorProductId: number;
   readonly aggregatorProductName: string;
 };
+
+/** An entity the plugin offers for selection in the plugin config UI, set with setSelectEntity() or as a device entity in setSelectDevice() */
+export type PlatformSelectEntity = { name: string; description: string; icon?: string };
+
+/** A device the plugin offers for selection in the plugin config UI, set with setSelectDevice() */
+export type PlatformSelectDevice = { serial: string; name: string; configUrl?: string; icon?: string; entities?: PlatformSelectEntity[] };
+
+/** A custom node label of a device, keyed by its uniqueId */
+export type PlatformNodeLabel = { uniqueId: string; label: string };

@@ -302,7 +302,9 @@ describe('Matterbridge frontend express with http', () => {
     await makeRequest('/api/settings', 'GET');
     frontend.authClients.add(savedAuthClients);
 
+    broadcastServerFetchSpy.mockImplementationOnce((async () => ({ result: { data: matterbridge.getApiSettings(), success: true } })) as any);
     const response = await makeRequest('/api/settings', 'GET');
+    expect(broadcastServerFetchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings' }), expect.any(Number));
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('systemInformation');
@@ -330,12 +332,33 @@ describe('Matterbridge frontend express with http', () => {
     expect(response.body.matterbridgeInformation).not.toHaveProperty('profile');
   }, 30000);
 
+  test('GET /api/settings error', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce(async () => {
+      throw new Error('Fetch timeout');
+    });
+    const response = await makeRequest('/api/settings', 'GET');
+
+    expect(response.status).toBe(500);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error in /api/settings fetching the settings from matterbridge'));
+  }, 30000);
+
   test('GET /api/plugins', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce((async () => ({ result: { plugins: [{ name: 'matterbridge-mock' }] } })) as any);
     const response = await makeRequest('/api/plugins', 'GET');
+    expect(broadcastServerFetchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'plugins_apipluginarray', dst: 'plugins' }), expect.any(Number));
 
     expect(response.status).toBe(200);
-    expect(typeof response.body).toBe('object');
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toEqual([{ name: 'matterbridge-mock' }]);
+  }, 30000);
+
+  test('GET /api/plugins error', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce(async () => {
+      throw new Error('Fetch timeout');
+    });
+    const response = await makeRequest('/api/plugins', 'GET');
+
+    expect(response.status).toBe(500);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error in /api/plugins fetching the plugins from the plugin manager'));
   }, 30000);
 
   test('GET /api/devices', async () => {
@@ -764,6 +787,43 @@ describe('Matterbridge frontend express with http', () => {
     } finally {
       frontend.authClients.clear();
       for (const ip of saved) frontend.authClients.add(ip);
+    }
+  }, 30000);
+
+  test('Plugin /plugins/<name>/api/* requires authorization', async () => {
+    const frontendDir = await fs.mkdtemp(path.join(os.tmpdir(), 'mb-plugin-frontend-'));
+    const frontendPath = path.join(frontendDir, 'index.html');
+    await fs.writeFile(frontendPath, '<!doctype html><html></html>');
+    const onFetch = vi.fn(async () => Promise.resolve({ ok: true }));
+    matterbridge.plugins.set({ name: 'matterbridge-frontend-auth-test', enabled: true, frontendPath, platform: { onFetch } } as any);
+    await frontend.stop();
+    await frontend.start(FRONTEND_PORT);
+
+    const saved = Array.from(frontend.authClients);
+    try {
+      frontend.authClients.clear();
+      for (const method of ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']) {
+        const response = await makeRequest('/plugins/matterbridge-frontend-auth-test/api/config', method, method === 'GET' || method === 'DELETE' ? undefined : { value: 1 });
+        expect(response.status).toBe(401);
+        expect(response.body).toEqual({ error: 'Unauthorized' });
+      }
+      expect(onFetch).not.toHaveBeenCalled();
+
+      frontend.storedPassword = 'testpassword';
+      const login = await makeRequest('/api/login', 'POST', { password: 'testpassword' });
+      expect(login.status).toBe(200);
+      expect(login.body.valid).toBe(true);
+      const read = await makeRequest('/plugins/matterbridge-frontend-auth-test/api/config', 'GET');
+      expect(read.status).toBe(200);
+      expect(read.body).toEqual({ ok: true });
+      const write = await makeRequest('/plugins/matterbridge-frontend-auth-test/api/config', 'POST', { value: 1 });
+      expect(write.status).toBe(200);
+      expect(onFetch).toHaveBeenCalledWith('POST', 'config', {}, { value: 1 });
+    } finally {
+      frontend.authClients.clear();
+      for (const ip of saved) frontend.authClients.add(ip);
+      (matterbridge.plugins as any)._plugins.delete('matterbridge-frontend-auth-test');
+      await fs.rm(frontendDir, { recursive: true, force: true });
     }
   }, 30000);
 

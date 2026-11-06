@@ -126,8 +126,8 @@ export class Camera extends MatterbridgeEndpoint {
    *  - supportedStreamUsages: [StreamUsage.LiveView, StreamUsage.Recording]
    *  - streamUsagePriorities: same as supportedStreamUsages
    *  - maxConcurrentEncoders: 1
-   *  - maxEncodedPixelRate: 124416000 (1920x1080 @ 60 fps — must cover videoSensorParams' sensor resolution × maxFps, Matter 1.6/1.5.1 §11.2.7.2; verified by TC_AVSM_2_13)
-   *  - videoSensorParams: { sensorWidth: 1920, sensorHeight: 1080, maxFps: 60 } (the sensor's overall peak frame rate — Matter 1.6/1.5.1 §11.2.6.6.3 — not tied to any one resolution; only achievable at lower resolutions in practice)
+   *  - maxEncodedPixelRate: 124416000 (1920x1080 @ 60 fps — must cover videoSensorParams' sensor resolution × maxFps, Matter 1.6.1/1.5.1 §11.2.7.2; verified by TC_AVSM_2_13)
+   *  - videoSensorParams: { sensorWidth: 1920, sensorHeight: 1080, maxFps: 60 } (the sensor's overall peak frame rate — Matter 1.6.1/1.5.1 §11.2.6.6.3 — not tied to any one resolution; only achievable at lower resolutions in practice)
    *  - minViewportResolution: { width: 640, height: 360 }
    *  - rateDistortionTradeOffPoints: [{ resolution: 640x480, minBitRate: 250000 }, { resolution: 1280x720, minBitRate: 500000 }, { resolution: 1920x1080, minBitRate: 1000000 }], each with codec: VideoCodec.H264
    *  - currentFrameRate: 30

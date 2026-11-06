@@ -234,7 +234,7 @@ describe('MatterbridgeWindowCoveringServer', () => {
   });
 
   test('TiltWindowCovering server', async () => {
-    // A Tilt-only server has no lift field in operationalStatus (Matter 1.6.0 Application Cluster Spec 5.3.5.3.2),
+    // A Tilt-only server has no lift field in operationalStatus (Matter 1.6.1 Application Cluster Spec 5.3.5.3.2),
     // and global must still track the tilt movement while the covering is moving.
     // Each command is invoked once: expectCommand registers a handler per call and only the first handler
     // registered for a command name is executed.

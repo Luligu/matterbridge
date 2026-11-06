@@ -3,7 +3,7 @@
  * @description This file contains the types for WebSocket messages.
  * @author Luca Liguori
  * @created 2025-09-17
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -72,8 +72,10 @@
  * | HomeDevices                  | /api/command                                                |
  * |                              | /api/devices (reachable, powerSource, batteryLevel, matter) |
  * |                              | /api/plugins                                                |
+ * |                              | /api/rename-device                                          |
  * |                              | /api/select/devices                                         |
  * |                              | /api/settings                                               |
+ * |                              | /api/unregister-device                                      |
  * | HomeInstallAddPlugins        | /api/addplugin                                              |
  * |                              | /api/install                                                |
  * |                              | /api/uninstall                                              |
@@ -463,6 +465,36 @@ export interface WsMessageApiDevicesResponse extends WsMessageSuccessApiResponse
   response: ApiDevice[];
 }
 
+/** Request to unregister an individual device identified by its plugin, serial number and unique ID. */
+export interface WsMessageApiUnregisterDeviceRequest extends WsMessageBaseApiRequest {
+  method: '/api/unregister-device';
+  params: {
+    pluginName: string;
+    serialNumber: string;
+    uniqueId: string;
+  };
+}
+/** Success response for unregistering an individual device. */
+export interface WsMessageApiUnregisterDeviceResponse extends WsMessageSuccessApiResponse {
+  method: '/api/unregister-device';
+}
+
+/** Request to rename an individual device on the controller. */
+export interface WsMessageApiRenameDeviceRequest extends WsMessageBaseApiRequest {
+  method: '/api/rename-device';
+  params: {
+    pluginName: string;
+    serialNumber: string;
+    uniqueId: string;
+    /** New device label (nodeLabel) to use on the controller. */
+    label: string;
+  };
+}
+/** Success response for renaming an individual device on the controller. */
+export interface WsMessageApiRenameDeviceResponse extends WsMessageSuccessApiResponse {
+  method: '/api/rename-device';
+}
+
 export interface WsMessageApiClustersRequest extends WsMessageBaseApiRequest {
   method: '/api/clusters';
   params: {
@@ -700,6 +732,8 @@ export type WsMessageApiRequest =
   | WsMessageApiSettingsRequest
   | WsMessageApiPluginsRequest
   | WsMessageApiDevicesRequest
+  | WsMessageApiUnregisterDeviceRequest
+  | WsMessageApiRenameDeviceRequest
   | WsMessageApiClustersRequest
   | WsMessageApiSelectDevicesRequest
   | WsMessageApiSelectEntitiesRequest
@@ -736,6 +770,8 @@ export type WsMessageApiResponse =
   | WsMessageApiSettingsResponse
   | WsMessageApiPluginsResponse
   | WsMessageApiDevicesResponse
+  | WsMessageApiUnregisterDeviceResponse
+  | WsMessageApiRenameDeviceResponse
   | WsMessageApiClustersResponse
   | WsMessageApiSelectDevicesResponse
   | WsMessageApiSelectEntitiesResponse

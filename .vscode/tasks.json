@@ -437,6 +437,22 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: Matterbridge",
+      "type": "process",
+      "command": "bun",
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/matterbridge.device.matter.test.ts",
+        "packages/core/buntest/matterbridge.device.server.test.ts",
+        "packages/core/buntest/matterbridge.matterjs.test.ts",
+        "packages/core/buntest/matterbridge.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Frontend",
       "type": "shell",
       "command": "node",
@@ -458,6 +474,14 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: Frontend",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/frontend.express.test.ts", "packages/core/buntest/frontend.websocket.test.ts"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Behaviors",
       "type": "process",
       "command": "node",
@@ -474,6 +498,14 @@
         "--coverage.exclude=packages/core/src/behaviors/export.ts",
         "packages/core/vitest/behaviors/"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Behaviors",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/behaviors/"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -528,6 +560,34 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: Camera devices",
+      "type": "process",
+      "command": "bun",
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/behaviors/cameraAvSettingsUserLevelManagementServer.test.ts",
+        "packages/core/buntest/behaviors/cameraAvStreamManagementServer.test.ts",
+        "packages/core/buntest/behaviors/chimeServer.test.ts",
+        "packages/core/buntest/behaviors/clients.test.ts",
+        "packages/core/buntest/behaviors/ffmpeg.test.ts",
+        "packages/core/buntest/behaviors/snapshot.test.ts",
+        "packages/core/buntest/behaviors/webRtcTransportProviderServer.test.ts",
+        "packages/core/buntest/behaviors/weriftSession.test.ts",
+        "packages/core/buntest/devices/audioDoorbell.test.ts",
+        "packages/core/buntest/devices/camera.test.ts",
+        "packages/core/buntest/devices/chime.test.ts",
+        "packages/core/buntest/devices/doorbell.test.ts",
+        "packages/core/buntest/devices/floodlightCamera.test.ts",
+        "packages/core/buntest/devices/intercom.test.ts",
+        "packages/core/buntest/devices/snapshotCamera.test.ts",
+        "packages/core/buntest/devices/videoDoorbell.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: Endpoint",
       "type": "process",
       "command": "node",
@@ -550,6 +610,24 @@
         "packages/core/vitest/matterbridgeEndpoint.typed.test.ts",
         "packages/core/vitest/matterbridgeEndpointCommandHandler.test.ts",
         "packages/core/vitest/matterbridgeEndpointHelpers.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Endpoint",
+      "type": "process",
+      "command": "bun",
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/matterbridgeEndpoint-default.test.ts",
+        "packages/core/buntest/matterbridgeEndpoint-matterjs.test.ts",
+        "packages/core/buntest/matterbridgeEndpoint.test.ts",
+        "packages/core/buntest/matterbridgeEndpoint.typed.test.ts",
+        "packages/core/buntest/matterbridgeEndpointCommandHandler.test.ts",
+        "packages/core/buntest/matterbridgeEndpointHelpers.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -639,6 +717,14 @@
       "problemMatcher": []
     },
     {
+      "label": "Buntest: PluginManager",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/pluginManager.test.ts"],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
       "label": "Test: DeviceManager",
       "type": "process",
       "command": "node",
@@ -681,6 +767,14 @@
         "--coverage.include=packages/core/src/helpers.ts",
         "packages/core/vitest/helpers.test.ts"
       ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Helpers",
+      "type": "process",
+      "command": "bun",
+      "args": ["test", "--parallel", "--coverage", "packages/core/buntest/helpers.test.ts"],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
     },
@@ -939,7 +1033,10 @@
         "packages/core/buntest/cli.test.ts",
         "packages/core/buntest/cliEmitter.test.ts",
         "packages/core/buntest/cliHistory.test.ts",
-        "packages/core/buntest/protectPrototypes.test.ts"
+        "packages/core/buntest/protectPrototypes.test.ts",
+        "packages/core/buntest/mb_health.test.ts",
+        "packages/core/buntest/mb_coap.test.ts",
+        "packages/core/buntest/mb_mdns.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []
@@ -964,6 +1061,24 @@
         "packages/core/vitest/matterbridgeDeviceTypes.clusters.xml.revision.test.ts",
         "packages/core/vitest/matterbridgeDeviceTypes.clusters.xml.matterjs.revision.test.ts",
         "packages/core/vitest/matterbridgeDeviceTypes.xml.revision.test.ts"
+      ],
+      "group": { "kind": "test", "isDefault": false },
+      "problemMatcher": []
+    },
+    {
+      "label": "Buntest: Device Types",
+      "type": "process",
+      "command": "bun",
+      "args": [
+        "test",
+        "--parallel",
+        "--coverage",
+        "packages/core/buntest/matterbridgeDeviceTypes.test.ts",
+        "packages/core/buntest/matterbridgeDeviceTypes.requirements.test.ts",
+        "packages/core/buntest/matterbridgeDeviceTypes.clusters.revision.test.ts",
+        "packages/core/buntest/matterbridgeDeviceTypes.clusters.xml.revision.test.ts",
+        "packages/core/buntest/matterbridgeDeviceTypes.clusters.xml.matterjs.revision.test.ts",
+        "packages/core/buntest/matterbridgeDeviceTypes.xml.revision.test.ts"
       ],
       "group": { "kind": "test", "isDefault": false },
       "problemMatcher": []

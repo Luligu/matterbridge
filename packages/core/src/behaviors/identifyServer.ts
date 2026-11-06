@@ -51,7 +51,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeIdentifyServer: identify called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.2.6.1.1: Set the IdentifyTime attribute to the IdentifyTime field, starting, continuing or stopping the identification state.
+    // Matter 1.6.1 § 1.2.6.1.1: Set the IdentifyTime attribute to the IdentifyTime field, starting, continuing or stopping the identification state.
     await super.identify(request);
     this.endpoint.emitCommand(Identify, 'identify', request, this.context);
   }
@@ -75,7 +75,7 @@ export class MatterbridgeIdentifyServer extends IdentifyServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeIdentifyServer: triggerEffect called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.2.6.2.3: Execute the effect indicated by EffectIdentifier and EffectVariant, falling back to the default variant when unsupported.
+    // Matter 1.6.1 § 1.2.6.2.3: Execute the effect indicated by EffectIdentifier and EffectVariant, falling back to the default variant when unsupported.
     await super.triggerEffect(request);
     this.endpoint.emitCommand(Identify, 'triggerEffect', request, this.context);
   }

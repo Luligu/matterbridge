@@ -61,11 +61,11 @@ function getEnumKey(enumType: EnumLike, value: EnumValue): string | undefined {
  * Example: value `0` from `DoorState` resolves to `DoorOpen`.
  *
  * @param {EnumLike} enumType - The enum object.
- * @param {EnumValue | null | undefined} value - The enum value to resolve.
+ * @param {EnumValue | null | undefined} value - The enum value to resolve; any number or string outside the enum resolves to the fallback.
  * @param {EnumDescriptionOptions} options - Optional fallback options.
  * @returns {string} The enum member name, or the fallback.
  */
-export function getEnumDescription<T extends EnumLike>(enumType: T, value: T[keyof T] | null | undefined, options: EnumDescriptionOptions = {}): string {
+export function getEnumDescription(enumType: EnumLike, value: EnumValue | null | undefined, options: EnumDescriptionOptions = {}): string {
   const fallback = options.fallback ?? 'Invalid';
   if (value === undefined || value === null) return fallback;
 

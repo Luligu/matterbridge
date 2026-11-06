@@ -115,6 +115,7 @@ import { addVirtualDevice, addVirtualDevices, resolveRootDirectory } from './hel
 import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { startController } from './matterController.js';
+import { matterToAnsiLogLevel } from './matterLogger.js';
 import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
@@ -536,9 +537,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         matterMdnsInterface: this.mdnsInterface,
         matterIpv4Address: this.ipv4Address,
         matterIpv6Address: this.ipv6Address,
-        matterPort: this.port ?? 5540,
-        matterDiscriminator: this.discriminator,
-        matterPasscode: this.passcode,
+        matterPort: this.initialPort ?? 5540,
+        matterDiscriminator: this.initialDiscriminator,
+        matterPasscode: this.initialPasscode,
         startupAt: this.startupAt,
         shutdownAt: this.shutdownAt,
         runningTimes: this.runningTimes,
@@ -984,8 +985,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       Logger.level = (await this.nodeContext.get<number>('matterLogLevel', MatterLogLevel.INFO)) as MatterLogLevel;
     }
     Logger.format = hasParameter('no-ansi') || process.env.NO_COLOR === '1' ? MatterLogFormat.PLAIN : MatterLogFormat.ANSI;
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    this.matterLogLevel = MatterLogLevel.names[Logger.level] as LogLevel;
+    this.matterLogLevel = matterToAnsiLogLevel(Logger.level);
 
     // Create the logger for matter.js with file logging (context: matterFileLog)
     if (hasParameter('matterfilelogger') || (await this.nodeContext.get<boolean>('matterFileLog', false))) {
@@ -1822,8 +1822,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           msg = text.split(message.facility)[1]?.trim();
         }
         this.matterLog.logName = message.facility;
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        this.matterLog.log(MatterLogLevel.names[message.level as number] as LogLevel, msg);
+        this.matterLog.log(matterToAnsiLogLevel(message.level), msg);
       } catch (_error) {
         /* v8 ignore next */
         this.log.debug(`Error parsing matter log message facility ${message.facility}`);
@@ -2913,7 +2912,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
               status: PowerSource.PowerSourceStatus.Active,
               order: 0,
               description: 'AC Power',
-              // Matter 1.6.0 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
+              // Matter 1.6.1 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
               // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
               endpointList: [EndpointNumber(0)],
               wiredCurrentType: PowerSource.WiredCurrentType.Ac,

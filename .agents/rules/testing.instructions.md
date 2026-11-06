@@ -1,5 +1,5 @@
 ---
-description: 'Testing standards for unit tests in the project v.1.0.6'
+description: 'Testing standards for unit tests in the project v.1.0.7'
 ---
 
 # Testing Standards for Unit Tests
@@ -16,7 +16,7 @@ description: 'Testing standards for unit tests in the project v.1.0.6'
 
 ## 2. Test Structure
 
-- Organize tests in file name `*.test.ts` in the `test`, `vitest`, or `buntest` folders.
+- Organize tests in files named `*.test.ts` (or `*.spec.ts` where the repository already uses it) in the `test`, `vitest`, or `buntest` folders.
 - Use `describe` blocks to group related tests and `test` blocks for individual test cases.
 
 ## 3. Test Naming

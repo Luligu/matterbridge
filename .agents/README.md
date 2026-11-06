@@ -1,4 +1,4 @@
-# Shared agent instructions (v.1.0.3)
+# Shared agent instructions (v.1.0.4)
 
 This folder is the **single source of truth** for the instructions given to every coding agent used on this
 repository — OpenAI Codex, Claude Code, GitHub Copilot and Google Gemini / Antigravity. Each agent reads the same documents through its
@@ -24,13 +24,13 @@ Reference documents. They are not loaded all the time — an agent opens the one
 | `rules/testing.instructions.md`                 | Testing standards for unit tests                      |
 | `rules/matterbridge.instructions.md`            | Creating endpoints and using the single-class devices |
 | `rules/plugin-frontend.instructions.md`         | Serving a plugin's own frontend SPA and REST API      |
-| `rules/matterbridge-chip-tests.instructions.md` | The CHIP conformance test harness                     |
+| `rules/matterbridge-chip-tests.instructions.md` | The Matterbridge CHIP conformance test harness        |
 
 Each starts with YAML frontmatter holding a `description` that ends with the file's version:
 
 ```yaml
 ---
-description: 'Testing standards for unit tests in the project v.1.0.5'
+description: 'Testing standards for unit tests in the project v.1.0.7'
 ---
 ```
 
@@ -38,21 +38,21 @@ description: 'Testing standards for unit tests in the project v.1.0.5'
 
 Multi-step workflows a user asks for by name, rather than background reference material.
 
-| Skill                            | Purpose                                                    |
-| -------------------------------- | ---------------------------------------------------------- |
-| `verify-agent-context`           | Check which agent is running and that it loaded this setup |
-| `matterjs-pr-workflow`           | Open a PR against matter.js from the local fork            |
-| `verify-npm-alignment`           | Check the published npm `latest` and `dev` tags line up    |
-| `verify-server-endpoint-context` | Check server endpoint context and plugin forwarding order  |
-| `verify-version-alignment`       | Check versions match across packages, Docker and docs      |
+| Skill                            | Purpose                                                                                    |
+| -------------------------------- | ------------------------------------------------------------------------------------------ |
+| `matterjs-pr-workflow`           | Sync the matter.js fork, implement and validate changes, and open an upstream PR           |
+| `verify-agent-context`           | Check which agent is running and that it loaded this setup                                 |
+| `verify-npm-alignment`           | Check Matterbridge and workspace package alignment on npm latest and dev tags              |
+| `verify-server-endpoint-context` | Check server endpoint context, type narrowing, forwarding, observables and Matter comments |
+| `verify-version-alignment`       | Check package, Docker, test helper, docs update and workflow versions                      |
 
 Each is a folder containing `SKILL.md`, whose frontmatter carries a `name` matching the folder and a
 `description` that decides when the skill is offered:
 
 ```yaml
 ---
-name: verify-version-alignment
-description: Verify that package, Docker build, ... match the expected root version rules. v.1.0.0
+name: verify-agent-context
+description: Verify which coding agent is running and that it loaded ... v.1.0.0
 ---
 ```
 
@@ -72,7 +72,7 @@ its own folder. Those mirrors hold **only** frontmatter plus a pointer, for exam
 
 ```markdown
 ---
-description: 'Testing standards for unit tests in the project v.1.0.5'
+description: 'Testing standards for unit tests in the project v.1.0.7'
 paths:
   - '**/*.test.ts'
 ---
@@ -93,8 +93,8 @@ when the skill runs, and both also read the mirror's `description` to offer the 
    rule that is not listed there is invisible to it.
 3. Create the two pointer files, copying the frontmatter style of an existing pair and setting the
    `paths:` / `applyTo:` globs that should trigger it:
-   - `.claude/rules/<topic>/<name>.instructions.md`
-   - `.github/instructions/<topic>/<name>.instructions.md`
+   - `.claude/rules/<topic>/<topic>.instructions.md`
+   - `.github/instructions/<topic>/<topic>.instructions.md`
 
 **A new skill:**
 
@@ -106,12 +106,14 @@ when the skill runs, and both also read the mirror's `description` to offer the 
    - `.github/skills/<name>/SKILL.md`
 
 Keep the description identical across a document and its pointers, so the tools describe the same
-thing in the same words.
+thing in the same words. The one exception is a Copilot instruction pointer under `.github/instructions/`:
+its `description` drops the version, which moves to the end of a `name` holding the rule title.
 
 ## Versions
 
-Every file carries a version as `v.MAJOR.MINOR.PATCH` at the end of its `description` (or `name` for
-Copilot, or the title for `AGENTS.md`). Bump it when the content changes, and bump it in the pointers too —
+Every file carries a version as `v.MAJOR.MINOR.PATCH` at the end of its `description`, except a Copilot
+instruction pointer (end of its `name`) and `AGENTS.md` (its title line). Copilot skill pointers keep it in
+the `description` like every other skill. Bump it when the content changes, and bump it in the pointers too —
 they must always agree with the document they point at.
 
 ## Checking it works

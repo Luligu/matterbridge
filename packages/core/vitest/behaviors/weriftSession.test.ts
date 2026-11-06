@@ -148,7 +148,7 @@ describe('WeriftWebRtcSession', () => {
     expect(session.localIceCandidates).toEqual([]);
 
     // werift always reports these two, but they are optional on its RTCIceCandidate and the Matter ICECandidateStruct
-    // spells "no association" as null (Matter 1.6.0 § 11.4.5.4.2/§ 11.4.5.4.3), so both shapes are normalized here.
+    // spells "no association" as null (Matter 1.6.1 § 11.4.5.4.2/§ 11.4.5.4.3), so both shapes are normalized here.
     session.peerConnection.onIceCandidate.execute({ candidate: 'candidate:1 1 udp 2130706431 192.0.2.1 5000 typ host', sdpMid: '0', sdpMLineIndex: 0 } as never);
     session.peerConnection.onIceCandidate.execute({ candidate: 'candidate:2 1 udp 2130706431 192.0.2.2 5001 typ host' } as never);
     // The end-of-candidates signal carries no candidate and must not be added to the list. The explicit undefined is
@@ -1311,6 +1311,40 @@ describe('WeriftWebRtcSession', () => {
       // A normal close() also stops the DTLS transports (see the doc comment on `closing`), which must not re-enter
       // close() a second time via the same onStateChange subscription that drives the auto-close above.
       expect(closeSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('should not auto-close when werift closes a DTLS transport during a description operation', async () => {
+      type DtlsTransportState = { setState(state: string, emitEvent?: boolean): void };
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
+      const closeSpy = vi.spyOn(session, 'close');
+      await session.createOffer();
+      const [dtlsTransport] = session.peerConnection.dtlsTransports;
+      if (!dtlsTransport) throw new Error('no DTLS transport negotiated');
+      // Simulates werift 0.26.0 stopping a transport inside setRemoteDescription (commit / cleanupInitialProvisional).
+      vi.spyOn(session.peerConnection, 'setRemoteDescription').mockImplementationOnce(async () => {
+        (dtlsTransport as unknown as DtlsTransportState).setState('closed');
+      });
+
+      await session.applyAnswer('v=0 o=- answer');
+
+      expect(closeSpy).not.toHaveBeenCalled();
+      await session.close();
+    });
+
+    it('should not auto-close when a DTLS transport no longer in use reaches closed', async () => {
+      type DtlsTransportState = { setState(state: string, emitEvent?: boolean): void };
+      const session = new WeriftWebRtcSession(1, { ...options, offerVideo: true, offerAudio: false });
+      const closeSpy = vi.spyOn(session, 'close');
+      await session.createOffer();
+      const [dtlsTransport] = session.peerConnection.dtlsTransports;
+      if (!dtlsTransport) throw new Error('no DTLS transport negotiated');
+      const dtlsTransportsSpy = vi.spyOn(session.peerConnection, 'dtlsTransports', 'get').mockReturnValue([]);
+
+      (dtlsTransport as unknown as DtlsTransportState).setState('closed');
+
+      expect(closeSpy).not.toHaveBeenCalled();
+      dtlsTransportsSpy.mockRestore();
+      await session.close();
     });
   });
 });

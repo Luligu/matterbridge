@@ -1,18 +1,36 @@
 /**
  * downloads.mjs
- * Version: 1.0.2
+ * Version: 2.2.0
  *
- * Prints daily npm downloads for the last month for the package in ../package.json.
+ * Prints daily npm downloads for the last 30 days and today for the package in ../package.json.
+ * It queries an explicit date range because the npm `last-week` / `last-month` periods can return stale data.
  *
  * Usage:
- *   node scripts/downloads.mjs
+ *   node scripts/downloads.mjs --version, -v  Show the script version
+ *   node scripts/downloads.mjs --help, -h     Show the help
+ *   node scripts/downloads.mjs [--dry-run|-n]
  *
  * Requirements:
  *   Node.js 18+ (for global fetch)
+ *
+ * The script runs only when executed directly. Importing it exposes `main` without side effects.
  */
 
+/* oxlint-disable no-console */
+/* oxlint-disable typescript/no-unnecessary-type-conversion */
+/* oxlint-disable typescript/no-unsafe-type-assertion */
+
 import { readFile } from 'node:fs/promises';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const scriptVersion = '2.2.0';
+
+/** Number of days before today to include in the range. */
+const rangeDays = 30;
+
+/** Maximum number of trailing zero days treated as not yet published by npm. */
+const maxPendingDays = 2;
 
 /**
  * @typedef {{ day: string, downloads: number }} DownloadRow
@@ -23,8 +41,21 @@ import { fileURLToPath } from 'node:url';
  */
 
 /**
- * @typedef {{ start: string, end: string, package: string, downloads: number }} NpmDownloadsPointResponse
+ * Builds the help text.
+ *
+ * @returns {string} The usage message.
  */
+function usage() {
+  return [
+    'Usage: node scripts/downloads.mjs [--dry-run|-n]',
+    '',
+    'Print the daily npm downloads of the last 30 days and today for the package in ../package.json.',
+    '',
+    '  --dry-run, -n  Print the package name without querying the npm registry',
+    '  --version, -v  Show the script version',
+    '  --help, -h     Show this help message',
+  ].join('\n');
+}
 
 /**
  * Read and parse a JSON file.
@@ -38,49 +69,39 @@ async function readJson(path) {
 }
 
 /**
- * Fetch npm daily download stats for the last month.
+ * Format a date as YYYY-MM-DD (UTC).
  *
- * @param {string} pkgName - NPM package name.
- * @returns {Promise<NpmDownloadsRangeResponse>} Range response.
+ * @param {Date} date - Date to format.
+ * @returns {string} The day key.
  */
-async function fetchLastMonthDownloads(pkgName) {
-  const url = `https://api.npmjs.org/downloads/range/last-month/${encodeURIComponent(pkgName)}`;
-  const res = await fetch(url, {
-    headers: { accept: 'application/json' },
-  });
-
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`HTTP ${res.status} fetching ${url}\n${text}`);
-  }
-
-  const data = await res.json();
-  if (!data || !Array.isArray(data.downloads)) {
-    throw new Error(`Unexpected response shape from ${url}`);
-  }
-  return data;
+function dayKey(date) {
+  return date.toISOString().slice(0, 10);
 }
 
 /**
- * Fetch npm download stats for the current day.
+ * Fetch npm daily download stats for an explicit date range.
  *
  * @param {string} pkgName - NPM package name.
- * @returns {Promise<NpmDownloadsPointResponse>} Point response.
+ * @param {string} start - First day (YYYY-MM-DD).
+ * @param {string} end - Last day (YYYY-MM-DD).
+ * @returns {Promise<NpmDownloadsRangeResponse | null>} Range response, or null when npm has no download data for the package.
  */
-async function fetchCurrentDayDownloads(pkgName) {
-  const today = new Date().toISOString().slice(0, 10);
-  const url = `https://api.npmjs.org/downloads/point/${today}:${today}/${encodeURIComponent(pkgName)}`;
+async function fetchRangeDownloads(pkgName, start, end) {
+  const url = `https://api.npmjs.org/downloads/range/${start}:${end}/${encodeURIComponent(pkgName)}`;
   const res = await fetch(url, {
     headers: { accept: 'application/json' },
   });
+
+  // npm answers 404 until it publishes the first daily count of a new package.
+  if (res.status === 404) return null;
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status} fetching ${url}\n${text}`);
   }
 
-  const data = await res.json();
-  if (!data || typeof data.downloads !== 'number') {
+  const data = /** @type {NpmDownloadsRangeResponse} */ (await res.json());
+  if (!data || !Array.isArray(data.downloads)) {
     throw new Error(`Unexpected response shape from ${url}`);
   }
   return data;
@@ -94,7 +115,7 @@ async function fetchCurrentDayDownloads(pkgName) {
  */
 function sumDownloads(rows) {
   let total = 0;
-  for (const r of rows) total += Number(r.downloads) || 0;
+  for (const r of rows) total += r.downloads || 0;
   return total;
 }
 
@@ -106,8 +127,7 @@ function sumDownloads(rows) {
  * @returns {string} Left-padded string.
  */
 function padLeft(s, width) {
-  const str = String(s);
-  return str.length >= width ? str : ' '.repeat(width - str.length) + str;
+  return s.length >= width ? s : ' '.repeat(width - s.length) + s;
 }
 
 /**
@@ -118,8 +138,7 @@ function padLeft(s, width) {
  * @returns {string} Right-padded string.
  */
 function padRight(s, width) {
-  const str = String(s);
-  return str.length >= width ? str : str + ' '.repeat(width - str.length);
+  return s.length >= width ? s : s + ' '.repeat(width - s.length);
 }
 
 /**
@@ -129,7 +148,7 @@ function padRight(s, width) {
  * @returns {string} Formatted number.
  */
 function formatNumber(n) {
-  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(Number(n) || 0);
+  return new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(n || 0);
 }
 
 /**
@@ -145,8 +164,7 @@ const colorEnabled = Boolean(process.stdout.isTTY && !process.env.NO_COLOR && pr
  * @returns {string} Styled text.
  */
 function ansi(code, text) {
-  if (!colorEnabled) return text;
-  return `\u001b[${code}m${text}\u001b[0m`;
+  return colorEnabled ? `\u001b[${code}m${text}\u001b[0m` : text;
 }
 
 /**
@@ -198,12 +216,13 @@ const style = {
 };
 
 /**
- * Entrypoint.
+ * Print the downloads of the package.
  *
+ * @param {string} pkgPath - Path of the package.json.
+ * @param {boolean} dryRun - When true, print the package name without querying the npm registry.
  * @returns {Promise<void>}
  */
-async function main() {
-  const pkgPath = fileURLToPath(new URL('../package.json', import.meta.url));
+async function printDownloads(pkgPath, dryRun) {
   const pkgUnknown = await readJson(pkgPath);
   if (!pkgUnknown || typeof pkgUnknown !== 'object') {
     throw new Error(`Unexpected JSON in ${pkgPath}`);
@@ -216,31 +235,48 @@ async function main() {
     throw new Error(`Missing/invalid "name" in ${pkgPath}`);
   }
 
-  const [lastMonthData, currentDayData] = await Promise.all([fetchLastMonthDownloads(name), fetchCurrentDayDownloads(name)]);
-
-  const rows = lastMonthData.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 }));
-  const currentDayRow = { day: String(currentDayData.end), downloads: Number(currentDayData.downloads) || 0 };
-  const currentDayPending = currentDayRow.day > lastMonthData.end && currentDayRow.downloads === 0;
-  if (!rows.some((r) => r.day === currentDayRow.day)) {
-    rows.push(currentDayRow);
+  if (dryRun) {
+    console.log(`[dry-run] Would fetch the npm downloads of ${name}`);
+    return;
   }
+
+  const today = new Date();
+  const end = dayKey(today);
+  const start = dayKey(new Date(today.getTime() - rangeDays * 24 * 60 * 60 * 1000));
+  const rangeData = await fetchRangeDownloads(name, start, end);
+  if (!rangeData) {
+    console.log(`npm has no download data for ${name} yet: new packages appear after npm publishes their first daily count, usually within 1-2 days.`);
+    return;
+  }
+
+  const rows = rangeData.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 }));
   rows.sort((a, b) => a.day.localeCompare(b.day));
 
-  const summaryRows = currentDayPending ? rows.filter((r) => r.day !== currentDayRow.day) : rows;
+  // npm reports 0 for the latest days until it publishes their counts: mark the trailing zero days as pending.
+  const pendingDays = new Set();
+  for (let i = rows.length - 1; i >= 0 && pendingDays.size < maxPendingDays && rows[i].downloads === 0; i -= 1) {
+    pendingDays.add(rows[i].day);
+  }
+
+  const summaryRows = rows.filter((r) => !pendingDays.has(r.day));
   const total = sumDownloads(summaryRows);
   const days = summaryRows.length || 1;
   const avg = Math.round(total / days);
-  const minRow = summaryRows.reduce((m, r) => (r.downloads < m.downloads ? r : m), summaryRows[0] ?? { day: '-', downloads: 0 });
-  const maxRow = summaryRows.reduce((m, r) => (r.downloads > m.downloads ? r : m), summaryRows[0] ?? { day: '-', downloads: 0 });
+  let minRow = summaryRows[0] ?? { day: '-', downloads: 0 };
+  let maxRow = minRow;
+  for (const r of summaryRows) {
+    if (r.downloads < minRow.downloads) minRow = r;
+    if (r.downloads > maxRow.downloads) maxRow = r;
+  }
 
-  const dayWidth = Math.max(3, ...rows.map((r) => String(r.day).length));
+  const dayWidth = Math.max(3, ...rows.map((r) => r.day.length));
   const downloadStrings = rows.map((r) => formatNumber(r.downloads));
   const downloadsWidth = Math.max('DOWNLOADS'.length, ...downloadStrings.map((s) => s.length));
-  const rangeStart = rows[0]?.day ?? lastMonthData.start;
-  const rangeEnd = rows[rows.length - 1]?.day ?? currentDayData.end;
+  const rangeStart = rows[0]?.day ?? rangeData.start;
+  const rangeEnd = rows[rows.length - 1]?.day ?? rangeData.end;
 
-  console.log(style.bold(style.cyan('npm downloads (last-month + today)')));
-  console.log(`${style.dim('Package:')} ${lastMonthData.package}`);
+  console.log(style.bold(style.cyan(`npm downloads (last ${rangeDays} days + today)`)));
+  console.log(`${style.dim('Package:')} ${rangeData.package}`);
   console.log(`${style.dim('Range:  ')} ${rangeStart} .. ${rangeEnd}`);
   console.log('');
 
@@ -250,14 +286,14 @@ async function main() {
   for (let i = 0; i < rows.length; i += 1) {
     const r = rows[i];
     const downloads = downloadStrings[i];
-    const renderedDownloads = currentDayPending && r.day === currentDayRow.day ? style.dim(padLeft('pending', downloadsWidth)) : padLeft(downloads, downloadsWidth);
+    const renderedDownloads = pendingDays.has(r.day) ? style.dim(padLeft('pending', downloadsWidth)) : padLeft(downloads, downloadsWidth);
     console.log(`${padRight(r.day, dayWidth)} ${renderedDownloads}`);
   }
 
   console.log('');
   console.log(style.dim('Summary'));
-  if (currentDayPending) {
-    console.log(style.dim("Today:    npm has not published today's count yet"));
+  if (pendingDays.size > 0) {
+    console.log(style.dim(`Pending:  npm has not published the count of ${[...pendingDays].sort().join(', ')} yet`));
   }
   console.log(`${style.dim('Total:   ')} ${style.bold(style.green(formatNumber(total)))}`);
   console.log(`${style.dim('Avg/day: ')} ${style.yellow(formatNumber(avg))}`);
@@ -265,7 +301,32 @@ async function main() {
   console.log(`${style.dim('Max:     ')} ${formatNumber(maxRow.downloads)} (${maxRow.day})`);
 }
 
-main().catch((err) => {
-  console.error(err?.stack || String(err));
-  process.exitCode = 1;
-});
+/**
+ * Entrypoint.
+ *
+ * @param {string[]} [args] - Command line arguments, without the runtime and script paths.
+ * @param {string} [pkgPath] - Path of the package.json.
+ * @returns {Promise<number>} The exit code.
+ */
+export async function main(args = process.argv.slice(2), pkgPath = fileURLToPath(new URL('../package.json', import.meta.url))) {
+  if (args.includes('--version') || args.includes('-v')) {
+    console.log(scriptVersion);
+    return 0;
+  }
+
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(usage());
+    return 0;
+  }
+
+  try {
+    await printDownloads(pkgPath, args.includes('--dry-run') || args.includes('-n'));
+    return 0;
+  } catch (err) {
+    console.error(err instanceof Error ? err.stack : String(err));
+    return 1;
+  }
+}
+
+// `import.meta.main` needs Node.js 22.18 or 24.2; older runtimes fall back to comparing the executed script path.
+if (import.meta.main ?? path.resolve(process.argv[1] ?? '') === import.meta.filename) process.exitCode = await main();

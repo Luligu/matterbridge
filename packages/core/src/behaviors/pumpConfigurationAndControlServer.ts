@@ -74,6 +74,9 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
     this.reactTo(this.events.operationMode$Changing, this.#handleOperationModeChanging);
     // oxlint-disable-next-line typescript/unbound-method
     this.reactTo(this.events.operationMode$Changed, this.#handleOperationModeChanged);
+
+    // Matter 1.6.1 § 5.5.5.1: A pump that starts powered on runs at the setpoint of the stored level, so sync Speed, Capacity and the PumpStatus Running bit now instead of waiting for the first change.
+    if (this.endpoint.behaviors.has(OnOffServer.id) && this.agent.get(OnOffServer).state.onOff) this.#applySetpoint(this.internal.lastLevel ?? 254);
   }
 
   /**
@@ -85,10 +88,20 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
    * @returns {number} The resulting setpoint, in percent (0-100).
    */
   #percentFromLevel(currentLevel: number): number {
-    // Matter 1.6.0 § 5.5.5.2: Level 0 stops the pump, so the setpoint is 0%.
+    // Matter 1.6.1 § 5.5.5.2: Level 0 stops the pump, so the setpoint is 0%.
     if (currentLevel <= 0) return 0;
-    // Matter 1.6.0 § 5.5.5.2: Level 1-200 maps to a setpoint of Level/2 percent, while Level 201-255 maps to 100.0%.
+    // Matter 1.6.1 § 5.5.5.2: Level 1-200 maps to a setpoint of Level/2 percent, while Level 201-255 maps to 100.0%.
     return currentLevel <= 200 ? currentLevel / 2 : 100;
+  }
+
+  /**
+   * Tells whether the pump is powered on: the OnOff state when the endpoint has an OnOff cluster, otherwise
+   * always `true` (a Pump without OnOff is driven only by LevelControl and OperationMode).
+   *
+   * @returns {boolean} Whether the pump is powered on.
+   */
+  #isOn(): boolean {
+    return this.endpoint.behaviors.has(OnOffServer.id) ? this.agent.get(OnOffServer).state.onOff : true;
   }
 
   /**
@@ -124,16 +137,16 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
    */
   #currentSetpoint(normalLevel: number): { speed: number; percent: number } {
     const maxConstSpeed = this.state.maxConstSpeed ?? this.state.maxSpeed ?? 0;
-    // Matter 1.6.0 § 4.2.6.2: OperationMode Minimum runs the pump at the minimum possible speed, independent of the LevelControl setpoint.
+    // Matter 1.6.1 § 4.2.6.2: OperationMode Minimum runs the pump at the minimum possible speed, independent of the LevelControl setpoint.
     if (this.state.operationMode === PumpConfigurationAndControl.OperationMode.Minimum) {
       const speed = this.state.minConstSpeed ?? 0;
       return { speed, percent: maxConstSpeed > 0 ? (speed / maxConstSpeed) * 100 : 0 };
     }
-    // Matter 1.6.0 § 4.2.6.2: OperationMode Maximum runs the pump at its maximum possible speed, independent of the LevelControl setpoint.
+    // Matter 1.6.1 § 4.2.6.2: OperationMode Maximum runs the pump at its maximum possible speed, independent of the LevelControl setpoint.
     if (this.state.operationMode === PumpConfigurationAndControl.OperationMode.Maximum) {
       return { speed: maxConstSpeed, percent: 100 };
     }
-    // Matter 1.6.0 § 4.2.6.2.1: In OperationMode Normal the setpoint is an internal variable controlled between 0% and 100%, e.g. by the Level Control cluster.
+    // Matter 1.6.1 § 4.2.6.2.1: In OperationMode Normal the setpoint is an internal variable controlled between 0% and 100%, e.g. by the Level Control cluster.
     const percent = this.#percentFromLevel(normalLevel);
     return { speed: this.#speedFromPercent(percent), percent };
   }
@@ -150,26 +163,44 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
     const { speed, percent } = this.#currentSetpoint(normalLevel);
     const capacity = this.#capacityFromPercent(percent);
     this.agent.asLocalActor(() => {
-      // Matter 1.6.0 § 4.2.7.18: Speed indicates the actual speed of the pump in RPM and is updated dynamically as the speed changes.
+      // Matter 1.6.1 § 4.2.7.18: Speed indicates the actual speed of the pump in RPM and is updated dynamically as the speed changes.
       this.state.speed = speed;
-      // Matter 1.6.0 § 4.2.7.17: Capacity indicates the actual capacity as a percentage of the effective maximum setpoint, in units of 0.005%.
+      // Matter 1.6.1 § 4.2.7.17: Capacity indicates the actual capacity as a percentage of the effective maximum setpoint, in units of 0.005%.
       this.state.capacity = capacity;
+      this.#setRunning(speed > 0);
     });
     return { speed, capacity };
   }
 
   /**
-   * Stops the pump: sets Speed and Capacity to 0. Both are Read-only (access "R V", no Write) per the
-   * Matter spec — asLocalActor() authorizes this internal, spec-mandated update.
+   * Keeps the PumpStatus Running bit in sync with the applied speed, preserving the other bits. Must be called
+   * from inside asLocalActor(), since PumpStatus is Read-only (access "R V", no Write) per the Matter spec.
+   * A real device implementation can still set PumpStatus itself to report the physical running state.
+   *
+   * @param {boolean} running - Whether the pump is running.
+   */
+  #setRunning(running: boolean): void {
+    // Matter 1.6.1 § 4.2.7.14: PumpStatus is optional; skip it when the attribute is not implemented.
+    if (this.state.pumpStatus === undefined || this.state.pumpStatus.running === running) return;
+    // Matter 1.6.1 § 4.2.7.14 / § 4.2.6.1: The Running bit SHALL be set to 1 while the pump is running, and to 0 while it is not.
+    const pumpStatus = new PumpConfigurationAndControl.PumpStatus(this.state.pumpStatus);
+    pumpStatus.running = running;
+    this.state.pumpStatus = pumpStatus;
+  }
+
+  /**
+   * Stops the pump: sets Speed and Capacity to 0 and clears the PumpStatus Running bit. All are Read-only
+   * (access "R V", no Write) per the Matter spec — asLocalActor() authorizes this internal, spec-mandated update.
    *
    * @returns {{ speed: number; capacity: number }} The Speed and Capacity values that were applied (always `{ speed: 0, capacity: 0 }`).
    */
   #stopPump(): { speed: number; capacity: number } {
     this.agent.asLocalActor(() => {
-      // Matter 1.6.0 § 4.2.7.18 (with § 5.5.5.2, Level 0 stops the pump): Speed indicates the actual pump speed, which is 0 RPM while stopped.
+      // Matter 1.6.1 § 4.2.7.18 (with § 5.5.5.2, Level 0 stops the pump): Speed indicates the actual pump speed, which is 0 RPM while stopped.
       this.state.speed = 0;
-      // Matter 1.6.0 § 4.2.7.17 (with § 5.5.5.2, Level 0 stops the pump): Capacity indicates the actual capacity, which is 0% while stopped.
+      // Matter 1.6.1 § 4.2.7.17 (with § 5.5.5.2, Level 0 stops the pump): Capacity indicates the actual capacity, which is 0% while stopped.
       this.state.capacity = 0;
+      this.#setRunning(false);
     });
     return { speed: 0, capacity: 0 };
   }
@@ -180,7 +211,7 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
    * device."
    */
   #handleOperationModeChanging(): void {
-    // Matter 1.6.0 § 4.2.6.1.3: While PumpStatus.LocalOverride is set, any request changing OperationMode SHALL generate a FAILURE error status.
+    // Matter 1.6.1 § 4.2.6.1.3: While PumpStatus.LocalOverride is set, any request changing OperationMode SHALL generate a FAILURE error status.
     if (this.state.pumpStatus?.localOverride) {
       throw new StatusResponseError(
         `MatterbridgePumpConfigurationAndControlServer: operationMode cannot be changed while PumpStatus.LocalOverride is set (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -193,8 +224,8 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
    * Reacts to OperationMode changes by mirroring the new value onto EffectiveOperationMode (§4.2.7.15):
    * "The value of the EffectiveOperationMode attribute is the same as the OperationMode attribute", unless
    * PumpStatus.LocalOverride is set — but #handleOperationModeChanging already rejects OperationMode writes
-   * in that case, so this handler only ever runs while LocalOverride is clear. Also re-applies the setpoint
-   * (§4.2.6.2): switching to/from Minimum or Maximum immediately forces Speed/Capacity to
+   * in that case, so this handler only ever runs while LocalOverride is clear. While the pump is on, also
+   * re-applies the setpoint (§4.2.6.2): switching to/from Minimum or Maximum immediately forces Speed/Capacity to
    * MinConstSpeed/MaxConstSpeed, independent of LevelControl; switching back to Normal restores the
    * LevelControl-derived setpoint (§4.2.6.2.1).
    *
@@ -210,10 +241,12 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
     // EffectiveOperationMode is Read-only (access "R V", no Write) per the Matter spec — asLocalActor()
     // authorizes this internal, spec-mandated update.
     this.agent.asLocalActor(() => {
-      // Matter 1.6.0 § 4.2.7.15: EffectiveOperationMode has the same value as OperationMode unless the pump runs with local settings or PumpStatus.LocalOverride is set.
+      // Matter 1.6.1 § 4.2.7.15: EffectiveOperationMode has the same value as OperationMode unless the pump runs with local settings or PumpStatus.LocalOverride is set.
       this.state.effectiveOperationMode = operationMode;
     });
-    // Matter 1.6.0 § 4.2.6.2: Re-apply the setpoint so Minimum and Maximum immediately force the minimum and maximum possible speed, and Normal restores the LevelControl-derived setpoint.
+    // Matter 1.6.1 § 5.5.5.1: Only the On command powers the pump on, so while it is Off the new mode only takes effect at the next On.
+    if (!this.#isOn()) return;
+    // Matter 1.6.1 § 4.2.6.2: Re-apply the setpoint so Minimum and Maximum immediately force the minimum and maximum possible speed, and Normal restores the LevelControl-derived setpoint.
     const { speed, capacity } = this.#applySetpoint(this.internal.lastLevel ?? 254);
     device.log.info(
       `MatterbridgePumpConfigurationAndControlServer: pump speed changed to ${speed}, capacity changed to ${capacity} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -233,7 +266,7 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgePumpConfigurationAndControlServer: onOff changed to ${onOff} from ${oldOnOff} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
 
-    // Matter 1.6.0 § 5.5.5.1: On powers the pump on and moves it to the level stored by a previous Off, or to the maximum level allowed for the pump when none is stored; Off powers it off.
+    // Matter 1.6.1 § 5.5.5.1: On powers the pump on and moves it to the level stored by a previous Off, or to the maximum level allowed for the pump when none is stored; Off powers it off.
     const { speed, capacity } = onOff ? this.#applySetpoint(this.internal.lastLevel ?? 254) : this.#stopPump();
     device.log.info(
       `MatterbridgePumpConfigurationAndControlServer: pump speed changed to ${speed}, capacity changed to ${capacity} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -241,7 +274,8 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
   }
 
   /**
-   * Reacts to LevelControl CurrentLevel changes using the Pump device type level-to-setpoint mapping.
+   * Reacts to LevelControl CurrentLevel changes using the Pump device type level-to-setpoint mapping. While
+   * the pump is Off the level is only stored, and is applied by the next On.
    *
    * @param {number | null} currentLevel - The new CurrentLevel value.
    * @param {number | null} oldCurrentLevel - The previous CurrentLevel value.
@@ -253,7 +287,9 @@ export class MatterbridgePumpConfigurationAndControlServer extends PumpConfigura
     );
 
     this.internal.lastLevel = currentLevel ?? this.internal.lastLevel;
-    // Matter 1.6.0 § 5.5.5.2: The Level Control cluster controls the pump setpoint, with the setpoint given as a percentage derived from CurrentLevel.
+    // Matter 1.6.1 § 5.5.5.1: Only the On command powers the pump on, so while it is Off the stored level only takes effect at the next On.
+    if (!this.#isOn()) return;
+    // Matter 1.6.1 § 5.5.5.2: The Level Control cluster controls the pump setpoint, with the setpoint given as a percentage derived from CurrentLevel.
     const { speed, capacity } = this.#applySetpoint(currentLevel ?? 0);
     device.log.info(
       `MatterbridgePumpConfigurationAndControlServer: pump speed changed to ${speed}, capacity changed to ${capacity} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

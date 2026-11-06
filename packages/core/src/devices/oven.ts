@@ -240,7 +240,7 @@ export class Oven extends MatterbridgeEndpoint {
    * @remarks
    * For this derived cluster, only these pre-defined strings may be used in the PhaseList attribute:
    * "pre-heating", "pre-heated", and "cooling down".
-   * Matter 1.6 Application Cluster Specification §1.14.4.1 defines Stopped, Running, Paused, and Error as
+   * Matter 1.6.1 Application Cluster Specification §1.14.4.1 defines Stopped, Running, Paused, and Error as
    * mandatory OperationalStateEnum values. Device Library Specification §13.4.5 requires the Temperature
    * Controlled Cabinet device type's OperationalStateList to be fully populated.
    */
@@ -299,7 +299,7 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
       context: this.context,
     });
     const supportedMode = this.state.supportedModes.find((supportedMode) => supportedMode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with UnsupportedMode, including a StatusText that may be empty, when NewMode matches no SupportedModes entry.
     if (!supportedMode) {
       device.log.error(`MatterbridgeOvenModeServer: changeToMode called with unsupported mode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: '' };
@@ -307,7 +307,7 @@ export class MatterbridgeOvenModeServer extends OvenModeServer {
     device.log.debug(
       `MatterbridgeOvenModeServer: changeToMode called with mode ${supportedMode.mode} = ${supportedMode.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
+    // Matter 1.6.1 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode and respond with Success.
     this.state.currentMode = request.newMode;
     this.endpoint.emitCommand(OvenMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
@@ -340,7 +340,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
    * Handles the OvenCavityOperationalState `Stop` command.
    *
    * @remarks
-   * Matter 1.6 Device Library Specification §13.4.5 makes `OperationCompletion` mandatory when a Temperature
+   * Matter 1.6.1 Device Library Specification §13.4.5 makes `OperationCompletion` mandatory when a Temperature
    * Controlled Cabinet exposes Oven Cavity Operational State. A successful Stop ends the operation started by the
    * initial Start command, so this method emits the event once and clears the stored start time.
    *
@@ -357,7 +357,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.14.6.2: Respond with ErrorStateID NoError and take no further action if Stop is received while already Stopped.
+    // Matter 1.6.1 § 1.14.6.2: Respond with ErrorStateID NoError and take no further action if Stop is received while already Stopped.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Stopped as number)) {
       device.log.debug(
         `MatterbridgeOvenCavityOperationalStateServer: stop received while already Stopped, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -367,15 +367,15 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
     device.log.debug(
       `MatterbridgeOvenCavityOperationalStateServer: stop called setting operational state to Stopped and operational error to No error (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.14.7.2: Generate OperationCompletion when the overall operation ends, with TotalOperationalTime measured from the initial Start.
+    // Matter 1.6.1 § 1.14.7.2: Generate OperationCompletion when the overall operation ends, with TotalOperationalTime measured from the initial Start.
     if (this.internal.operationStartedAt !== undefined) {
       const totalOperationalTime = Math.round((Date.now() - this.internal.operationStartedAt) / 1000);
       this.events.operationCompletion.emit({ completionErrorCode: this.state.operationalError.errorStateId, totalOperationalTime, pausedTime: 0 }, this.context);
       this.internal.operationStartedAt = undefined;
     }
-    // Matter 1.6.0 § 1.14.6.2: On success, set OperationalState to Stopped.
+    // Matter 1.6.1 § 1.14.6.2: On success, set OperationalState to Stopped.
     this.state.operationalState = OperationalState.OperationalStateEnum.Stopped;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(OvenCavityOperationalState, 'stop', {}, this.context);
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' } };
@@ -397,7 +397,7 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.14.6.3: Respond with ErrorStateID NoError and take no further action if Start is received while already Running.
+    // Matter 1.6.1 § 1.14.6.3: Respond with ErrorStateID NoError and take no further action if Start is received while already Running.
     if (this.state.operationalState === (OperationalState.OperationalStateEnum.Running as number)) {
       device.log.debug(
         `MatterbridgeOvenCavityOperationalStateServer: start received while already Running, taking no further action (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -407,11 +407,11 @@ export class MatterbridgeOvenCavityOperationalStateServer extends MatterbridgeOv
     device.log.debug(
       `MatterbridgeOvenCavityOperationalStateServer: start called setting operational state to Running and operational error to No error (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.14.7.2.2: TotalOperationalTime counts from the initial Start command, so keep the start time of an operation already in progress.
+    // Matter 1.6.1 § 1.14.7.2.2: TotalOperationalTime counts from the initial Start command, so keep the start time of an operation already in progress.
     this.internal.operationStartedAt ??= Date.now();
-    // Matter 1.6.0 § 1.14.6.3: On success, set OperationalState to Running.
+    // Matter 1.6.1 § 1.14.6.3: On success, set OperationalState to Running.
     this.state.operationalState = OperationalState.OperationalStateEnum.Running;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(OvenCavityOperationalState, 'start', {}, this.context);
     return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' } };

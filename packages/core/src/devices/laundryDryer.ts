@@ -131,7 +131,7 @@ export class LaundryDryer extends MatterbridgeEndpoint {
     this.createDefaultPowerSourceWiredClusterServer();
     this.createDeadFrontOnOffClusterServer(true);
     this.createDefaultLaundryWasherModeClusterServer(options.currentMode, options.supportedModes);
-    this.createDefaultLaundryDryerControlsClusterServer(1);
+    this.createDefaultLaundryDryerControlsClusterServer(LaundryDryerControls.DrynessLevel.Normal);
     if (options.temperatureSetpoint) createNumberTemperatureControlClusterServer(this, options.temperatureSetpoint, options.minTemperature, options.maxTemperature, options.step);
     else createLevelTemperatureControlClusterServer(this, options.selectedTemperatureLevel, options.supportedTemperatureLevels);
     this.createDefaultOperationalStateClusterServer(options.operationalState);
@@ -204,7 +204,7 @@ export class MatterbridgeLaundryDryerControlsServer extends LaundryDryerControls
    * @param {LaundryDryerControls.DrynessLevel | null} selectedDrynessLevel - Requested SelectedDrynessLevel value.
    */
   #validateSelectedDrynessLevel(selectedDrynessLevel: LaundryDryerControls.DrynessLevel | null): void {
-    // Matter 1.6.0 § 8.9.5.2: Reject a SelectedDrynessLevel that is neither null nor contained in SupportedDrynessLevels with CONSTRAINT_ERROR.
+    // Matter 1.6.1 § 8.9.5.2: Reject a SelectedDrynessLevel that is neither null nor contained in SupportedDrynessLevels with CONSTRAINT_ERROR.
     if (selectedDrynessLevel !== null && !this.state.supportedDrynessLevels.includes(selectedDrynessLevel)) {
       throw new StatusResponseError(
         `MatterbridgeLaundryDryerControlsServer: selectedDrynessLevel ${selectedDrynessLevel} is not in SupportedDrynessLevels (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

@@ -453,6 +453,7 @@ describe('Matterbridge ' + NAME, () => {
     // CONSTRAINT_ERROR ahead of any state-dependent check, regardless of the device's current MainState.
     await expect(
       device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         position: 99 as ClosureControl.TargetPosition,
       }),
     ).rejects.toMatchObject({ code: Status.ConstraintError });
@@ -465,6 +466,7 @@ describe('Matterbridge ' + NAME, () => {
 
     await expect(
       device.invokeBehaviorCommand('closureControl', 'ClosureControl.moveTo', {
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         speed: 99 as ThreeLevelAuto,
       }),
     ).rejects.toMatchObject({ code: Status.ConstraintError });

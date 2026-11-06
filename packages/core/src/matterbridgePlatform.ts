@@ -3,7 +3,7 @@
  * @description This file contains the class MatterbridgePlatform.
  * @author Luca Liguori
  * @created 2024-03-21
- * @version 1.6.7
+ * @version 1.7.0
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -25,13 +25,25 @@
 import path from 'node:path';
 
 // @matter
+import { BasicInformation } from '@matter/types/clusters/basic-information';
 import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import type { EndpointNumber } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiSelectDevice, ApiSelectEntity, PlatformConfig, PlatformMatterbridge, PlatformSchema, WorkerMessage } from '@matterbridge/types';
-import { hasParameter } from '@matterbridge/utils/cli';
+import type {
+  ApiSelectDevice,
+  ApiSelectEntity,
+  PlatformConfig,
+  PlatformMatterbridge,
+  PlatformNodeLabel,
+  PlatformSchema,
+  PlatformSelectDevice,
+  PlatformSelectEntity,
+  WorkerMessage,
+} from '@matterbridge/types';
+import { hasAnyParameter } from '@matterbridge/utils/cli';
+import { inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidObject, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget } from '@matterbridge/utils/wait';
@@ -51,7 +63,17 @@ logModuleLoaded('MatterbridgePlatform');
 // Module-private brand
 const MATTERBRIDGE_PLATFORM_BRAND = Symbol('MatterbridgePlatform.brand');
 
-export type { BasePlatformConfig, PlatformConfig, PlatformConfigValue, PlatformMatterbridge, PlatformSchema, PlatformSchemaValue } from '@matterbridge/types';
+export type {
+  BasePlatformConfig,
+  PlatformConfig,
+  PlatformConfigValue,
+  PlatformMatterbridge,
+  PlatformNodeLabel,
+  PlatformSchema,
+  PlatformSchemaValue,
+  PlatformSelectDevice,
+  PlatformSelectEntity,
+} from '@matterbridge/types';
 
 /**
  * Type guard to check whether a value is a MatterbridgePlatform instance.
@@ -124,18 +146,19 @@ export class MatterbridgePlatform {
   /** Indicates whether the platform is shutting down. */
   isShuttingDown = false;
 
-  // Device and entity select in the plugin config UI
-  readonly #selectDevices = new Map<
-    string,
-    { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }
-  >();
-  readonly #selectEntities = new Map<string, { name: string; description: string; icon?: string }>();
+  /** Map of devices for the device select in the plugin config UI, keyed by serial */
+  readonly #selectDevices = new Map<string, PlatformSelectDevice>();
+  /** Map of entities for the entity select in the plugin config UI, keyed by name */
+  readonly #selectEntities = new Map<string, PlatformSelectEntity>();
+  /** Map of node labels keyed by uniqueId */
+  readonly #nodeLabels = new Map<string, string>();
 
   // Promises for platform initialization. They are grouped in MatterbridgePlatform.ready with Promise.all.
   readonly #contextReady: Promise<void>;
   readonly #selectDeviceContextReady: Promise<void>;
   readonly #selectEntityContextReady: Promise<void>;
-  /** The ready promise for the platform, which resolves when the platform is fully initialized (including context and selects). Await platform.ready if you access the platform context or select early. */
+  readonly #nodeLabelsContextReady: Promise<void>;
+  /** The ready promise for the platform, which resolves when the platform is fully initialized. Await platform.ready if you access the platform context or select early. */
   readonly ready: Promise<void>;
 
   /** Registered MatterbridgeEndpoint map keyed by uniqueId */
@@ -143,8 +166,11 @@ export class MatterbridgePlatform {
 
   /** Broadcast server */
   readonly #server: BroadcastServer;
-  readonly #debug = hasParameter('debug') || hasParameter('verbose');
-  readonly #verbose = hasParameter('verbose');
+
+  /** Debug mode, enabled with --debug, --verbose, --debug-platform or --verbose-platform */
+  readonly #debug = hasAnyParameter('debug', 'verbose', 'debug-platform', 'verbose-platform');
+  /** Verbose mode, enabled with --verbose or --verbose-platform */
+  readonly #verbose = hasAnyParameter('verbose', 'verbose-platform');
 
   /** MatterNode helper injected by the PluginManager.load() method */
   #addBridgedEndpoint: ((pluginName: string, device: MatterbridgeEndpoint) => Promise<void>) | undefined;
@@ -238,10 +264,7 @@ export class MatterbridgePlatform {
     // create the selectDevice storage for the plugin platform
     this.log.debug(`Loading selectDevice for plugin ${this.config.name}`);
     this.#selectDeviceContextReady = this.#storage.createStorage('selectDevice').then(async (context) => {
-      const selectDevice = await context.get<{ serial: string; name: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] }[]>(
-        'selectDevice',
-        [],
-      );
+      const selectDevice = await context.get<PlatformSelectDevice[]>('selectDevice', []);
       for (const device of selectDevice) this.#selectDevices.set(device.serial, device);
       this.log.debug(`Loaded ${this.#selectDevices.size} selectDevice for plugin ${this.config.name}`);
       return;
@@ -250,14 +273,23 @@ export class MatterbridgePlatform {
     // create the selectEntity storage for the plugin platform
     this.log.debug(`Loading selectEntity for plugin ${this.config.name}`);
     this.#selectEntityContextReady = this.#storage.createStorage('selectEntity').then(async (context) => {
-      const selectEntity = await context.get<{ name: string; description: string; icon?: string }[]>('selectEntity', []);
+      const selectEntity = await context.get<PlatformSelectEntity[]>('selectEntity', []);
       for (const entity of selectEntity) this.#selectEntities.set(entity.name, entity);
       this.log.debug(`Loaded ${this.#selectEntities.size} selectEntity for plugin ${this.config.name}`);
       return;
     });
 
+    // create the nodeLabels storage for the plugin platform
+    this.log.debug(`Loading nodeLabels for plugin ${this.config.name}`);
+    this.#nodeLabelsContextReady = this.#storage.createStorage('nodeLabels').then(async (context) => {
+      const nodeLabels = await context.get<PlatformNodeLabel[]>('nodeLabels', []);
+      for (const label of nodeLabels) this.#nodeLabels.set(label.uniqueId, label.label);
+      this.log.debug(`Loaded ${this.#nodeLabels.size} nodeLabels for plugin ${this.config.name}`);
+      return;
+    });
+
     // Create the `ready` promise for the platform
-    this.ready = Promise.all([this.#contextReady, this.#selectDeviceContextReady, this.#selectEntityContextReady]).then(() => {
+    this.ready = Promise.all([this.#contextReady, this.#selectDeviceContextReady, this.#selectEntityContextReady, this.#nodeLabelsContextReady]).then(() => {
       this.log.debug(`MatterbridgePlatform for plugin ${this.config.name} is fully initialized`);
       this.isReady = true;
       return;
@@ -310,6 +342,76 @@ export class MatterbridgePlatform {
         if (msg.params.pluginName !== this.name) return;
         this.#server.respond({ ...msg, result: { entities: this.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name)) } });
         break;
+      case 'platform_unregister_device':
+        if (msg.params.pluginName === this.name) {
+          // Acknowledge the request to the server: no need to wait to complete since this is a request that doesn't require response.
+          this.#server.respond({ ...msg, result: { success: true } });
+
+          const { serialNumber, uniqueId } = msg.params;
+          fireAndForget(
+            (async (): Promise<void> => {
+              try {
+                const endpoint = this.getDevices().find((device) => device.serialNumber === serialNumber && device.uniqueId === uniqueId);
+                if (!endpoint) {
+                  this.log.warn(`Unregister device: no device found with serialNumber ${CYAN}${serialNumber}${wr} and uniqueId ${CYAN}${uniqueId}${wr}`);
+                  this.wssSendSnackbarMessage(`Device ${serialNumber} not found`, 5, 'warning');
+                  return;
+                }
+                await this.unregisterDevice(endpoint);
+                this.wssSendSnackbarMessage(`Device ${endpoint.deviceName} reset`, 5, 'success');
+                this.wssSendRestartRequired(true, true);
+              } finally {
+                this.#server.request({ type: 'frontend_closesnackbarmessage', src: 'platform', dst: 'frontend', params: { message: 'Resetting the device...' } });
+              }
+            })(),
+            this.log,
+            `Unregister device ${serialNumber}`,
+          );
+        } else {
+          return;
+        }
+        break;
+      case 'platform_rename_device':
+        if (msg.params.pluginName === this.name) {
+          // Acknowledge the request to the server: no need to wait to complete since this is a request that doesn't require response.
+          this.#server.respond({ ...msg, result: { success: true } });
+
+          const { serialNumber, uniqueId, label } = msg.params;
+          fireAndForget(
+            (async (): Promise<void> => {
+              try {
+                const endpoint = this.getDevices().find((device) => device.serialNumber === serialNumber && device.uniqueId === uniqueId);
+                if (!endpoint?.uniqueId) {
+                  this.log.warn(`Rename device: no device found with serialNumber ${CYAN}${serialNumber}${wr} and uniqueId ${CYAN}${uniqueId}${wr}`);
+                  this.wssSendSnackbarMessage(`Device ${serialNumber} not found`, 5, 'warning');
+                  return;
+                }
+                if (!isValidString(label, 1, 32)) {
+                  this.log.warn(`Rename device: the new name for device ${CYAN}${endpoint.deviceName}${wr} must be 1 to 32 characters long`);
+                  this.wssSendSnackbarMessage(`The new name must be 1 to 32 characters long`, 5, 'warning');
+                  return;
+                }
+                // Renaming back to the device name removes the custom label
+                if (label === endpoint.deviceName) this.#nodeLabels.delete(endpoint.uniqueId);
+                else this.#nodeLabels.set(endpoint.uniqueId, label);
+                const nodeLabels: PlatformNodeLabel[] = Array.from(this.#nodeLabels.entries()).map(([key, value]) => ({ uniqueId: key, label: value }));
+                const storage = await this.#storage.createStorage('nodeLabels');
+                await storage.set('nodeLabels', nodeLabels);
+                await this.#setNodeLabel(endpoint, label);
+                this.log.info(`Device ${endpoint.deviceName} renamed to ${label}`);
+                this.wssSendSnackbarMessage(`Device ${endpoint.deviceName} renamed to ${label}`, 5, 'success');
+                this.wssSendRestartRequired(true, true);
+              } finally {
+                this.#server.request({ type: 'frontend_closesnackbarmessage', src: 'platform', dst: 'frontend', params: { message: 'Renaming the device...' } });
+              }
+            })(),
+            this.log,
+            `Rename device ${serialNumber}`,
+          );
+        } else {
+          return;
+        }
+        break;
       default:
         /* v8 ignore next Debug logs are not relevant for coverage */
         if (this.#verbose) this.log.debug(`Unknown broadcast request ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
@@ -326,6 +428,7 @@ export class MatterbridgePlatform {
     // Cleanup memory
     this.#selectDevices.clear();
     this.#selectEntities.clear();
+    this.#nodeLabels.clear();
     this.#registeredEndpoints.clear();
 
     // Close the storage
@@ -727,6 +830,30 @@ export class MatterbridgePlatform {
 
     await this.#addBridgedEndpoint?.(this.name, device);
     this.#registeredEndpoints.set(device.uniqueId, device);
+
+    // Apply the node label set from the frontend, if any
+    const nodeLabel = this.#nodeLabels.get(device.uniqueId);
+    if (isValidString(nodeLabel, 1, 32)) {
+      await this.#setNodeLabel(device, nodeLabel);
+    }
+  }
+
+  /**
+   * Sets the nodeLabel attribute of a device on its BridgedDeviceBasicInformation or BasicInformation cluster.
+   * Errors are logged and not thrown.
+   *
+   * @param {MatterbridgeEndpoint} device - The device to set the nodeLabel on.
+   * @param {string} nodeLabel - The nodeLabel to set.
+   * @returns {Promise<void>} A promise that resolves when the nodeLabel is set.
+   */
+  async #setNodeLabel(device: MatterbridgeEndpoint, nodeLabel: string): Promise<void> {
+    this.log.debug(`Setting nodeLabel ${CYAN}${nodeLabel}${db} for device ${CYAN}${device.deviceName}${db}`);
+    try {
+      if (device.hasClusterServer(BridgedDeviceBasicInformation)) await device.setAttribute(BridgedDeviceBasicInformation, 'nodeLabel', nodeLabel, this.log);
+      else if (device.hasClusterServer(BasicInformation)) await device.setAttribute(BasicInformation, 'nodeLabel', nodeLabel, this.log);
+    } catch (error) {
+      inspectError(this.log, `Failed to set nodeLabel ${nodeLabel} for device ${device.deviceName}`, error);
+    }
   }
 
   /**
@@ -814,7 +941,7 @@ export class MatterbridgePlatform {
    * @param {string} name - The name of the device.
    * @param {string} [configUrl] - The configuration URL of the device.
    * @param {string} [icon] - The icon of the device: 'wifi', 'ble', 'hub'
-   * @param {Array<{ name: string; description: string; icon?: string }>} [entities] - The entities associated with the device.
+   * @param {PlatformSelectEntity[]} [entities] - The entities associated with the device.
    * @returns {void}
    *
    * @remarks
@@ -831,7 +958,7 @@ export class MatterbridgePlatform {
    * },
    * ```
    */
-  setSelectDevice(serial: string, name: string, configUrl?: string, icon?: string, entities?: { name: string; description: string; icon?: string }[]): void {
+  setSelectDevice(serial: string, name: string, configUrl?: string, icon?: string, entities?: PlatformSelectEntity[]): void {
     const device = this.#selectDevices.get(serial);
     if (device) {
       device.serial = serial;
@@ -851,11 +978,9 @@ export class MatterbridgePlatform {
    * Retrieve a select device by serial.
    *
    * @param {string} serial - The serial number of the device.
-   * @returns {{ serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] } | undefined} The select device or undefined if not found.
+   * @returns {PlatformSelectDevice | undefined} The select device or undefined if not found.
    */
-  getSelectDevice(
-    serial: string,
-  ): { serial: string; name: string; configUrl?: string; icon?: string; entities?: { name: string; description: string; icon?: string }[] } | undefined {
+  getSelectDevice(serial: string): PlatformSelectDevice | undefined {
     return this.#selectDevices.get(serial);
   }
 
@@ -942,15 +1067,9 @@ export class MatterbridgePlatform {
    * Retrieve a select entity by name.
    *
    * @param {string} name - The name of the entity.
-   * @returns {{ name: string; description: string; icon?: string } | undefined} The select entity or undefined if not found.
+   * @returns {PlatformSelectEntity | undefined} The select entity or undefined if not found.
    */
-  getSelectEntity(name: string):
-    | {
-        name: string;
-        description: string;
-        icon?: string | undefined;
-      }
-    | undefined {
+  getSelectEntity(name: string): PlatformSelectEntity | undefined {
     return this.#selectEntities.get(name);
   }
 

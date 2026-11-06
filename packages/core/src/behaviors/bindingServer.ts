@@ -60,7 +60,7 @@ export class MatterbridgeBindingServer extends BindingServer {
       /* v8 ignore next */
       if (toAddClientList.length > 0) {
         device.log.info(`MatterbridgeBindingServer: adding client clusters ${toAddClientList.join(', ')} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-        // Matter 1.6.0 § 9.5.6.3: The Descriptor ClientList attribute lists each cluster ID for the client clusters present on the endpoint instance.
+        // Matter 1.6.1 § 9.5.6.3: The Descriptor ClientList attribute lists each cluster ID for the client clusters present on the endpoint instance.
         await this.endpoint.setStateOf(DescriptorServer, { clientList: [...currentClientList, ...toAddClientList] });
       }
       const targets = this.endpoint.stateOf(BindingServer).binding;

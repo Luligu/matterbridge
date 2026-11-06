@@ -191,10 +191,10 @@ export class WeriftWebRtcSession {
    *
    * {@link createOffer} / {@link createAnswer} gather every candidate into the SDP they return (see the comments
    * there), so this list is already complete by the time that SDP is sent. It is kept so the provider can also
-   * trickle the same candidates to the peer's WebRtcTransportRequestor via ICECandidates, which Matter 1.6.0
+   * trickle the same candidates to the peer's WebRtcTransportRequestor via ICECandidates, which Matter 1.6.1
    * § 11.4.3.2 expects the camera to send — see {@link localIceCandidates}.
    *
-   * Matter 1.6.0 § 11.4.5.4.1 requires sdpMid/sdpMLineIndex to travel as named struct fields rather than being
+   * Matter 1.6.1 § 11.4.5.4.1 requires sdpMid/sdpMLineIndex to travel as named struct fields rather than being
    * serialized into the candidate string, so all three are kept separately here. werift leaves either undefined when
    * the candidate has no such association; the Matter struct spells that case as null.
    */
@@ -977,7 +977,7 @@ export class WeriftWebRtcSession {
     }
     if (options.offerAudio) this.peerConnection.addTransceiver('audio', { direction: 'sendonly' });
     const offer = await this.peerConnection.createOffer();
-    await this.peerConnection.setLocalDescription(offer);
+    await this.withDescriptionOperation(async () => this.peerConnection.setLocalDescription(offer));
     // setLocalDescription gathers ICE candidates into the SDP it stores as localDescription; offer.sdp itself
     // predates that gathering, so localDescription (always set once setLocalDescription above resolves) is returned.
     // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
@@ -997,20 +997,18 @@ export class WeriftWebRtcSession {
   async createAnswer(offerSdp: string, overrides?: WeriftOfferOverrides): Promise<string> {
     this.applyOptionOverrides(overrides);
     this.log.debug(`CreateAnswer requested for remote offer (${this.summarizeSdp(offerSdp)}, videoResolution=${this.options.videoResolution ?? 'undefined'})`);
-    await this.peerConnection.setRemoteDescription({ type: 'offer', sdp: offerSdp });
+    await this.withDescriptionOperation(async () => this.peerConnection.setRemoteDescription({ type: 'offer', sdp: offerSdp }));
     const hasVideoTransceiver = this.peerConnection.getTransceivers().some((transceiver) => transceiver.kind === 'video');
     this.log.debug(`Remote offer created video transceiver: ${hasVideoTransceiver}`);
     if (hasVideoTransceiver) {
       const preferredCodec = this.getPreferredInjectableVideoCodec();
-      /* v8 ignore start -- unreachable: this.peerConnection defaults to VP8 as its only local video codec (werift's
-       * own RTCPeerConnection default), so any offer that negotiates a video transceiver at all always ends up with
-       * VP8 available; there is no real-world remote offer that reaches this point without an injectable codec. */
+      // No injectable codec when a remote offer arrives during a pending local offer: werift rolls the local offer
+      // back (glare) and the locally added video transceiver survives without negotiated codecs.
       if (preferredCodec) {
         this.preferVideoCodecOnTransceivers(preferredCodec.mimeType.toLowerCase());
       } else {
         this.log.warn('No injectable video codec available on negotiated transceivers (supported: VP8, H264)');
       }
-      /* v8 ignore stop */
       await this.generateVideoTrack(preferredCodec);
     }
     const hasAudioTransceiver = this.peerConnection.getTransceivers().some((transceiver) => transceiver.kind === 'audio');
@@ -1031,7 +1029,7 @@ export class WeriftWebRtcSession {
       transceiver.setDirection('sendonly');
     }
     const answer = await this.peerConnection.createAnswer();
-    await this.peerConnection.setLocalDescription(answer);
+    await this.withDescriptionOperation(async () => this.peerConnection.setLocalDescription(answer));
     // See the matching comment in createOffer above: localDescription (not answer.sdp) carries the gathered candidates.
     // oxlint-disable-next-line typescript-eslint/no-non-null-assertion
     const sdp = this.peerConnection.localDescription!.sdp;
@@ -1048,7 +1046,7 @@ export class WeriftWebRtcSession {
    */
   async applyAnswer(answerSdp: string): Promise<void> {
     this.log.debug(`ApplyAnswer requested (${this.summarizeSdp(answerSdp)})`);
-    await this.peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp });
+    await this.withDescriptionOperation(async () => this.peerConnection.setRemoteDescription({ type: 'answer', sdp: answerSdp }));
     this.log.info(`Remote SDP answer applied (signalingState=${this.peerConnection.signalingState})`);
     this.logDtlsTransportStateChanges();
   }
@@ -1078,6 +1076,32 @@ export class WeriftWebRtcSession {
   private closing = false;
 
   /**
+   * Number of werift description operations (setLocalDescription / setRemoteDescription) currently in flight, see
+   * {@link withDescriptionOperation}. Since werift 0.26.0 negotiation is a single transaction that replaces and
+   * retires DTLS transports inside these calls (cleanupInitialProvisional, commit), so a transport reaching `closed`
+   * while this is non-zero is werift's own negotiation, not the peer tearing the session down. Auto-closing then
+   * would close the peer connection from inside the operation, which werift rejects with InvalidStateError.
+   */
+  private descriptionOperations = 0;
+
+  /**
+   * Runs a werift description operation while {@link descriptionOperations} is incremented, so
+   * {@link logDtlsTransportStateChanges} ignores the DTLS transport changes werift makes during the negotiation.
+   *
+   * @template T
+   * @param {() => Promise<T>} operation - The setLocalDescription / setRemoteDescription call to run.
+   * @returns {Promise<T>} The result of the operation.
+   */
+  private async withDescriptionOperation<T>(operation: () => Promise<T>): Promise<T> {
+    this.descriptionOperations++;
+    try {
+      return await operation();
+    } finally {
+      this.descriptionOperations--;
+    }
+  }
+
+  /**
    * Subscribes each of this session's DTLS transports' onStateChange event to a dedicated log line — rather than
    * relying only on the periodic {@link logDiagnosticsSnapshot} tick to notice a transition — and, once a transport
    * reaches `closed` or `failed`, closes this session. Safe to call more than once (e.g. after createOffer and again
@@ -1090,6 +1114,7 @@ export class WeriftWebRtcSession {
    * itself. Unlike iceConnectionState, peerConnection.connectionState never reflects a closed DTLS transport either,
    * so without this dedicated subscription an abandoned session (e.g. a controller that never sends EndSession)
    * would otherwise stay open — peer connection, ffmpeg generators and all — until the whole platform shuts down.
+   * A transport werift replaces or retires during a negotiation (see {@link descriptionOperations}) is ignored.
    *
    * @returns {void}
    */
@@ -1100,6 +1125,11 @@ export class WeriftWebRtcSession {
       transport.onStateChange.subscribe((state) => {
         this.log.info(`DTLS transport state: ${state}`);
         if ((state === 'closed' || state === 'failed') && !this.closing) {
+          // A transport werift replaced or retired during a negotiation is not a peer teardown (see descriptionOperations).
+          if (this.descriptionOperations > 0 || !this.peerConnection.dtlsTransports.includes(transport)) {
+            this.log.debug(`Ignoring DTLS transport state ${state} for session ${this.webRtcSessionId}: transport replaced or retired by the negotiation`);
+            return;
+          }
           this.log.info(`Closing session ${this.webRtcSessionId}: DTLS transport reached ${state}`);
           fireAndForget(this.close(), this.log, `Failed to auto-close session ${this.webRtcSessionId} after DTLS transport reached ${state}`);
         }

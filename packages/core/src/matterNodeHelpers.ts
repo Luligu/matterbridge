@@ -299,6 +299,7 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
   device.forEachAttribute((clusterName, clusterId, attributeName, attributeId, attributeValue) => {
     // console.log(`${device.deviceName} => Cluster: ${clusterName}-${clusterId} Attribute: ${attributeName}-${attributeId} Value(${typeof attributeValue}): ${attributeValue}`);
     if (typeof attributeValue === 'undefined' || attributeValue === undefined) return;
+    const enumValue = typeof attributeValue === 'number' ? attributeValue : undefined;
     if (clusterName === 'descriptor' && attributeName === 'clientList' && isValidArray(attributeValue, 1))
       // oxlint-disable-next-line typescript/no-unsafe-type-assertion
       attributes += `Client cluster(s): [${(attributeValue as ClusterId[]).map((id) => getClusterNameById(id)).join(', ')}] `;
@@ -345,14 +346,14 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
       if (supportedMode) attributes += `Mode: ${supportedMode.label} `;
     }
     if (clusterName === 'operationalState' && attributeName === 'operationalState')
-      attributes += `OpState: ${getEnumDescription(OperationalState.OperationalStateEnum, attributeValue as OperationalState.OperationalStateEnum)} `;
+      attributes += `OpState: ${getEnumDescription(OperationalState.OperationalStateEnum, enumValue)} `;
     if (clusterName === 'rvcOperationalState' && attributeName === 'operationalState')
-      attributes += `OpState: ${getEnumDescription(RvcOperationalState.OperationalState, attributeValue as RvcOperationalState.OperationalState)} `;
+      attributes += `OpState: ${getEnumDescription(RvcOperationalState.OperationalState, enumValue)} `;
 
     if (clusterName === 'pumpConfigurationAndControl' && attributeName === 'operationMode') attributes += `Mode: ${attributeValue} `;
 
     if (clusterName === 'valveConfigurationAndControl' && attributeName === 'currentState')
-      attributes += `State: ${getEnumDescription(ValveConfigurationAndControl.ValveState, attributeValue as ValveConfigurationAndControl.ValveState, { fallback: 'unknown' })} `;
+      attributes += `State: ${getEnumDescription(ValveConfigurationAndControl.ValveState, enumValue, { fallback: 'unknown' })} `;
 
     if (clusterName === 'levelControl' && attributeName === 'currentLevel') attributes += `Level: ${attributeValue} `;
 
@@ -374,18 +375,15 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (clusterName === 'booleanStateConfiguration' && attributeName === 'alarmsActive' && isValidObject(attributeValue))
       attributes += `Active alarms: ${stringify(attributeValue)} `;
 
-    if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState')
-      attributes += `Smoke: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
-    if (clusterName === 'smokeCoAlarm' && attributeName === 'coState')
-      attributes += `Co: ${getEnumDescription(SmokeCoAlarm.AlarmState, attributeValue as SmokeCoAlarm.AlarmState)} `;
+    if (clusterName === 'smokeCoAlarm' && attributeName === 'smokeState') attributes += `Smoke: ${getEnumDescription(SmokeCoAlarm.AlarmState, enumValue)} `;
+    if (clusterName === 'smokeCoAlarm' && attributeName === 'coState') attributes += `Co: ${getEnumDescription(SmokeCoAlarm.AlarmState, enumValue)} `;
 
-    if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${getEnumDescription(FanControl.FanMode, attributeValue as FanControl.FanMode)} `;
+    if (clusterName === 'fanControl' && attributeName === 'fanMode') attributes += `Mode: ${getEnumDescription(FanControl.FanMode, enumValue)} `;
     if (clusterName === 'fanControl' && attributeName === 'percentCurrent') attributes += `Percent: ${attributeValue}% `;
     if (clusterName === 'fanControl' && attributeName === 'speedCurrent') attributes += `Speed: ${attributeValue} `;
     if (clusterName === 'fanControl' && attributeName === 'rockSetting' && isValidObject(attributeValue)) attributes += `Rock: ${stringify(attributeValue)} `;
     if (clusterName === 'fanControl' && attributeName === 'windSetting' && isValidObject(attributeValue)) attributes += `Wind: ${stringify(attributeValue)} `;
-    if (clusterName === 'fanControl' && attributeName === 'airflowDirection')
-      attributes += `Direction: ${getEnumDescription(FanControl.AirflowDirection, attributeValue as FanControl.AirflowDirection)} `;
+    if (clusterName === 'fanControl' && attributeName === 'airflowDirection') attributes += `Direction: ${getEnumDescription(FanControl.AirflowDirection, enumValue)} `;
 
     if (clusterName === 'hepaFilterMonitoring' && attributeName === 'condition') attributes += `Hepa filter: ${attributeValue}% `;
     if (clusterName === 'activatedCarbonFilterMonitoring' && attributeName === 'condition') attributes += `Carbon filter: ${attributeValue}% `;
@@ -400,8 +398,7 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
       if (attributeValue === null) attributes += `Illuminance: unknown `;
       else if (isValidNumber(attributeValue)) attributes += `Illuminance: ${Math.round(Math.max(Math.pow(10, attributeValue / 10000), 0))} lx `;
     }
-    if (clusterName === 'airQuality' && attributeName === 'airQuality')
-      attributes += `Air quality: ${getEnumDescription(AirQuality.AirQualityEnum, attributeValue as AirQuality.AirQualityEnum)} `;
+    if (clusterName === 'airQuality' && attributeName === 'airQuality') attributes += `Air quality: ${getEnumDescription(AirQuality.AirQualityEnum, enumValue)} `;
     if (clusterName === 'totalVolatileOrganicCompoundsConcentrationMeasurement' && attributeName === 'measuredValue')
       appendMeasurement('Voc', getMeasurementText(attributeValue, 1, ''));
     if (clusterName === 'pm1ConcentrationMeasurement' && attributeName === 'measuredValue') appendMeasurement('Pm1', getMeasurementText(attributeValue, 1, ''));
@@ -420,8 +417,7 @@ export function getClusterTextFromDevice(device: MatterbridgeEndpoint): string {
     if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyImported') appendMeasurement('Imported', getEnergyText(attributeValue));
     if (clusterName === 'electricalEnergyMeasurement' && attributeName === 'cumulativeEnergyExported') appendMeasurement('Exported', getEnergyText(attributeValue));
     if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaCanGenerate') attributes += `ESA can generate: ${attributeValue} `;
-    if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaState')
-      attributes += `ESA state: ${DeviceEnergyManagement.EsaState[attributeValue as DeviceEnergyManagement.EsaState]} `;
+    if (clusterName === 'deviceEnergyManagement' && attributeName === 'esaState') attributes += `ESA state: ${getEnumDescription(DeviceEnergyManagement.EsaState, enumValue)} `;
     if (clusterName === 'fixedLabel' && attributeName === 'labelList') attributes += `${getFixedLabel(device)} `;
     if (clusterName === 'userLabel' && attributeName === 'labelList') attributes += `${getUserLabel(device)} `;
   });

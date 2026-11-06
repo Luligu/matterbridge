@@ -4,8 +4,32 @@
  * @author Luca Liguori
  */
 
-import type { WsMessage } from '../src/frontendTypes.js';
+import { expectTypeOf } from 'vitest';
+
+import type {
+  WsMessage,
+  WsMessageApiRequest,
+  WsMessageApiResponse,
+  WsMessageApiUnregisterDeviceRequest,
+  WsMessageApiUnregisterDeviceResponse,
+  WsMessageApiRenameDeviceRequest,
+  WsMessageApiRenameDeviceResponse,
+} from '../src/frontendTypes.js';
 import { isApiRequest, isApiResponse, isBroadcast } from '../src/frontendTypes.js';
+
+describe('Device API message types', () => {
+  test('should require pluginName, serialNumber and uniqueId for unregister requests', () => {
+    expectTypeOf<WsMessageApiUnregisterDeviceRequest['params']>().toEqualTypeOf<{ pluginName: string; serialNumber: string; uniqueId: string }>();
+    expectTypeOf<Extract<WsMessageApiRequest, { method: '/api/unregister-device' }>>().toEqualTypeOf<WsMessageApiUnregisterDeviceRequest>();
+    expectTypeOf<Extract<WsMessageApiResponse, { method: '/api/unregister-device' }>>().toEqualTypeOf<WsMessageApiUnregisterDeviceResponse>();
+  });
+
+  test('should additionally require the new name for rename requests', () => {
+    expectTypeOf<WsMessageApiRenameDeviceRequest['params']>().toEqualTypeOf<{ pluginName: string; serialNumber: string; uniqueId: string; label: string }>();
+    expectTypeOf<Extract<WsMessageApiRequest, { method: '/api/rename-device' }>>().toEqualTypeOf<WsMessageApiRenameDeviceRequest>();
+    expectTypeOf<Extract<WsMessageApiResponse, { method: '/api/rename-device' }>>().toEqualTypeOf<WsMessageApiRenameDeviceResponse>();
+  });
+});
 
 describe('WsMessage type guards', () => {
   const request: WsMessage = { id: 1, src: 'Frontend', dst: 'Matterbridge', method: 'ping' };

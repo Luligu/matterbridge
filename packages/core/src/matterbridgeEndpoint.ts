@@ -29,6 +29,7 @@
 
 // @matter/general
 import { type AtLeastOne, Lifecycle, UINT16_MAX, UINT32_MAX } from '@matter/general';
+import { DeviceClassification } from '@matter/model';
 // @matter/node
 import { type ActionContext, type Behavior, Endpoint, type EndpointType, MutableEndpoint, type ServerNode, SupportedBehaviors } from '@matter/node';
 // @matter behaviors
@@ -125,7 +126,7 @@ import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
 import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
-import type { DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
+import { DeviceClasses, type DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
   CommandHandler,
   type CommandHandlerData,
@@ -186,6 +187,15 @@ import {
 import type { MatterbridgeEndpointOptions, SerializedMatterbridgeEndpoint, SubscribeCommandListener } from './matterbridgeEndpointTypes.js';
 
 logModuleLoaded('MatterbridgeEndpoint');
+
+// Endpoint conditions such as Client and Composed are not device classifications.
+const deviceClassifications: Partial<Record<DeviceClasses, DeviceClassification>> = {
+  [DeviceClasses.Node]: DeviceClassification.Node,
+  [DeviceClasses.App]: DeviceClassification.Application,
+  [DeviceClasses.Utility]: DeviceClassification.Utility,
+  [DeviceClasses.Simple]: DeviceClassification.Simple,
+  [DeviceClasses.Dynamic]: DeviceClassification.Dynamic,
+};
 
 // Module-private brand
 const MATTERBRIDGE_ENDPOINT_BRAND = Symbol('MatterbridgeEndpoint.brand');
@@ -369,8 +379,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       name: firstDefinition.name,
       deviceType: firstDefinition.code,
       deviceRevision: firstDefinition.revision,
-      // @ts-expect-error we don't import an entire module for DeviceClassification
-      deviceClass: firstDefinition.deviceClass.toLowerCase(),
+      deviceClass: deviceClassifications[firstDefinition.deviceClass],
       requirements: {
         server: {
           mandatory: SupportedBehaviors(...getBehaviourTypesFromClusterServerIds(firstDefinition.requiredServerClusters)),
@@ -2588,59 +2597,135 @@ export class MatterbridgeEndpoint extends Endpoint {
 
   /**
    * Creates a default Electrical Energy Measurement Cluster Server with features ImportedEnergy, ExportedEnergy, and CumulativeEnergy.
+   * The PeriodicEnergy feature is added when periodicEnergyImported or periodicEnergyExported is not undefined.
    *
    * @param {number} energyImported - The total consumption value in mW/h.
    * @param {number} energyExported - The total production value in mW/h.
+   * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyImported - The energy imported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
+   * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyExported - The energy exported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
-   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported, energyExported })`.
+   * The Matter specification requires an event each time the energy values change, so fire it after setting the attribute:
+   * - CumulativeEnergyMeasured: each time the cumulative energy is updated (at most once per second, at least every 60 seconds while changing).
+   * - PeriodicEnergyMeasured: at the end of each measurement period (only with the PeriodicEnergy feature).
+   *
+   * Energy is in mWh and timestamps are UTC in seconds. It is also possible to use the systimes in ms since boot (startSystime and endSystime). The event fields must match the attribute values.
+   * ```typescript
+   *     const endTimestamp = Math.floor(Date.now() / 1000);
+   *     const startTimestamp = endTimestamp - 15 * 60; // e.g. a 15 minutes period ending now (endTimestamp must be at least startTimestamp + 1)
+   *     // Cumulative energy
+   *     const cumulativeImported = { energy: 1000000, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyImported', cumulativeImported, device.log);
+   *     const cumulativeExported = { energy: 1000000, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyExported', cumulativeExported, device.log);
+   *     await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported: cumulativeImported, energyExported: cumulativeExported }, device.log);
+   *     // Periodic energy
+   *     const periodicImported = { energy: 1500, startTimestamp, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyImported', periodicImported, device.log);
+   *     const periodicExported = { energy: 1500, startTimestamp, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyExported', periodicExported, device.log);
+   *     await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported: periodicImported, energyExported: periodicExported }, device.log);
+   * ```
    */
-  createDefaultElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null, energyExported: number | bigint | null = null): this {
+  createDefaultElectricalEnergyMeasurementClusterServer(
+    energyImported: number | bigint | null = null,
+    energyExported: number | bigint | null = null,
+    periodicEnergyImported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+    periodicEnergyExported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+  ): this {
     this.behaviors.require(
       ElectricalEnergyMeasurementServer.with(
         ElectricalEnergyMeasurement.Feature.ImportedEnergy,
         ElectricalEnergyMeasurement.Feature.ExportedEnergy,
         ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+        ...(periodicEnergyImported === undefined && periodicEnergyExported === undefined ? [] : [ElectricalEnergyMeasurement.Feature.PeriodicEnergy]),
       ),
-      getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported),
+      getDefaultElectricalEnergyMeasurementClusterServer(energyImported, energyExported, periodicEnergyImported, periodicEnergyExported),
     );
     return this;
   }
 
   /**
    * Creates an Electrical Energy Measurement Cluster Server with features ImportedEnergy and CumulativeEnergy.
+   * The PeriodicEnergy feature is added when periodicEnergyImported is not undefined.
    *
    * @param {number} energyImported - The total consumption value in mW/h.
+   * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyImported - The energy imported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
-   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported })`.
+   * The Matter specification requires an event each time the energy values change, so fire it after setting the attribute:
+   * - CumulativeEnergyMeasured: each time the cumulative energy is updated (at most once per second, at least every 60 seconds while changing).
+   * - PeriodicEnergyMeasured: at the end of each measurement period (only with the PeriodicEnergy feature).
+   *
+   * Energy is in mWh and timestamps are UTC in seconds. It is also possible to use the systimes in ms since boot (startSystime and endSystime). The event fields must match the attribute values.
+   * ```typescript
+   *     const endTimestamp = Math.floor(Date.now() / 1000);
+   *     const startTimestamp = endTimestamp - 15 * 60; // e.g. a 15 minutes period ending now (endTimestamp must be at least startTimestamp + 1)
+   *     // Cumulative energy
+   *     const cumulativeImported = { energy: 1000000, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyImported', cumulativeImported, device.log);
+   *     await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyImported: cumulativeImported }, device.log);
+   *     // Periodic energy
+   *     const periodicImported = { energy: 1500, startTimestamp, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyImported', periodicImported, device.log);
+   *     await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported: periodicImported }, device.log);
+   * ```
    */
-  createImportedElectricalEnergyMeasurementClusterServer(energyImported: number | bigint | null = null): this {
+  createImportedElectricalEnergyMeasurementClusterServer(
+    energyImported: number | bigint | null = null,
+    periodicEnergyImported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+  ): this {
     this.behaviors.require(
-      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ImportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
-      getImportedElectricalEnergyMeasurementClusterServer(energyImported),
+      ElectricalEnergyMeasurementServer.with(
+        ElectricalEnergyMeasurement.Feature.ImportedEnergy,
+        ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+        ...(periodicEnergyImported === undefined ? [] : [ElectricalEnergyMeasurement.Feature.PeriodicEnergy]),
+      ),
+      getImportedElectricalEnergyMeasurementClusterServer(energyImported, periodicEnergyImported),
     );
     return this;
   }
 
   /**
    * Creates an Electrical Energy Measurement Cluster Server with features ExportedEnergy and CumulativeEnergy.
+   * The PeriodicEnergy feature is added when periodicEnergyExported is not undefined.
    *
    * @param {number} energyExported - The total production value in mW/h.
+   * @param {ElectricalEnergyMeasurement.EnergyMeasurement | null | undefined} periodicEnergyExported - The energy exported during the last measurement period, with its start and end timestamps (or systimes). Defaults to undefined (no PeriodicEnergy feature).
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * To emit the CumulativeEnergyMeasured event, use the Matterbridge triggerEvent helper:
-   * `await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyExported })`.
+   * The Matter specification requires an event each time the energy values change, so fire it after setting the attribute:
+   * - CumulativeEnergyMeasured: each time the cumulative energy is updated (at most once per second, at least every 60 seconds while changing).
+   * - PeriodicEnergyMeasured: at the end of each measurement period (only with the PeriodicEnergy feature).
+   *
+   * Energy is in mWh and timestamps are UTC in seconds. It is also possible to use the systimes in ms since boot (startSystime and endSystime). The event fields must match the attribute values.
+   * ```typescript
+   *     const endTimestamp = Math.floor(Date.now() / 1000);
+   *     const startTimestamp = endTimestamp - 15 * 60; // e.g. a 15 minutes period ending now (endTimestamp must be at least startTimestamp + 1)
+   *     // Cumulative energy
+   *     const cumulativeExported = { energy: 1000000, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'cumulativeEnergyExported', cumulativeExported, device.log);
+   *     await device.triggerEvent(ElectricalEnergyMeasurement, 'cumulativeEnergyMeasured', { energyExported: cumulativeExported }, device.log);
+   *     // Periodic energy
+   *     const periodicExported = { energy: 1500, startTimestamp, endTimestamp };
+   *     await device.setAttribute(ElectricalEnergyMeasurement, 'periodicEnergyExported', periodicExported, device.log);
+   *     await device.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyExported: periodicExported }, device.log);
+   * ```
    */
-  createExportedElectricalEnergyMeasurementClusterServer(energyExported: number | bigint | null = null): this {
+  createExportedElectricalEnergyMeasurementClusterServer(
+    energyExported: number | bigint | null = null,
+    periodicEnergyExported?: ElectricalEnergyMeasurement.EnergyMeasurement | null,
+  ): this {
     this.behaviors.require(
-      ElectricalEnergyMeasurementServer.with(ElectricalEnergyMeasurement.Feature.ExportedEnergy, ElectricalEnergyMeasurement.Feature.CumulativeEnergy),
-      getExportedElectricalEnergyMeasurementClusterServer(energyExported),
+      ElectricalEnergyMeasurementServer.with(
+        ElectricalEnergyMeasurement.Feature.ExportedEnergy,
+        ElectricalEnergyMeasurement.Feature.CumulativeEnergy,
+        ...(periodicEnergyExported === undefined ? [] : [ElectricalEnergyMeasurement.Feature.PeriodicEnergy]),
+      ),
+      getExportedElectricalEnergyMeasurementClusterServer(energyExported, periodicEnergyExported),
     );
     return this;
   }
@@ -3253,14 +3338,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       configStatus: {
         // persisted
         operational: true,
-        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+        // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: true,
         tiltPositionAware: false,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      // No tilt field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
+      // No tilt field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support feature Lift
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
@@ -3307,7 +3392,7 @@ export class MatterbridgeEndpoint extends Endpoint {
         configStatus: {
           // persisted
           operational: true,
-          // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+          // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
           liftMovementReversed: false,
           liftPositionAware: true,
           tiltPositionAware: true,
@@ -3354,14 +3439,14 @@ export class MatterbridgeEndpoint extends Endpoint {
       configStatus: {
         // persisted
         operational: true,
-        // onlineReserved: false, // Deprecated: Matter 1.6.0 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+        // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
         liftMovementReversed: false,
         liftPositionAware: false,
         tiltPositionAware: true,
         liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
         tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
       },
-      // No lift field: Matter 1.6.0 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
+      // No lift field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
       operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
       endProductType, // Must support features Lift and Tilt
       mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
@@ -3393,7 +3478,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       }
       this.log.debug(`Set WindowCovering currentPositionTiltPercent100ths and targetPositionTiltPercent100ths to ${position} and operationalStatus to Stopped.`);
     }
-    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.1 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -3426,7 +3511,7 @@ export class MatterbridgeEndpoint extends Endpoint {
       await this.setAttribute(WindowCovering, 'currentPositionTiltPercent100ths', current, this.log);
       await this.setAttribute(WindowCovering, 'targetPositionTiltPercent100ths', target, this.log);
     }
-    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.1 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -3447,7 +3532,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    */
   async setWindowCoveringStatus(status: WindowCovering.MovementStatus): Promise<void> {
     const { lift, tilt } = featuresFor(this, WindowCovering);
-    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.0 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
+    // The lift/tilt fields are included only when the server supports the matching LF/TL feature (Matter 1.6.1 Application Cluster Spec §5.3.5.3.2/§5.3.5.3.3).
     await this.setAttribute(
       WindowCovering,
       'operationalStatus',
@@ -4132,7 +4217,7 @@ export class MatterbridgeEndpoint extends Endpoint {
    * percentSetting is writable.
    */
   createOnOffFanControlClusterServer(fanMode: FanControl.FanMode = FanControl.FanMode.Off): this {
-    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply here.
+    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.1 § 4.4.6) also apply here.
     this.behaviors.require(MatterbridgeFanControlServer.with(), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
@@ -4163,7 +4248,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     percentSetting: number = 0,
     percentCurrent: number = 0,
   ): this {
-    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.0 § 4.4.6) also apply here.
+    // Featureless MatterbridgeFanControlServer, so the Fan Control attribute rules (Matter 1.6.1 § 4.4.6) also apply here.
     this.behaviors.require(MatterbridgeFanControlServer.with(), {
       // Base fan control attributes
       fanMode, // Writable and persistent attribute
@@ -4408,10 +4493,10 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * Matter 1.6.0 § 2.17.4 gives OverTemperature and UnderTemperature the choice conformance `O.a+`, so at least one of the
+   * Matter 1.6.1 § 2.17.4 gives OverTemperature and UnderTemperature the choice conformance `O.a+`, so at least one of the
    * two SHALL be supported. Both are enabled here, which is why the two critical thresholds are always present.
    * The MajorThreshold and MinorThreshold features are not enabled, so the four major/minor alarm bits are always false:
-   * Matter 1.6.0 § 1.15.6.4 requires the Mask, Latch, and State bits of an unsupported alarm to be false.
+   * Matter 1.6.1 § 1.15.6.4 requires the Mask, Latch, and State bits of an unsupported alarm to be false.
    * The Notify event is emitted automatically whenever the State attribute changes, so a plugin that raises or clears an
    * alarm only has to update State. The thresholds are read-only over the wire: the plugin owns the temperature evaluation.
    */
@@ -4425,7 +4510,7 @@ export class MatterbridgeEndpoint extends Endpoint {
   ): this {
     const bitmap = (alarm: TemperatureAlarm.Alarm): Required<TemperatureAlarm.Alarm> => ({
       criticalOverTemperatureAlarm: Boolean(alarm.criticalOverTemperatureAlarm),
-      // Matter 1.6.0 § 1.15.6.4: The bits of an unsupported alarm are false, and MajorThreshold/MinorThreshold are not enabled.
+      // Matter 1.6.1 § 1.15.6.4: The bits of an unsupported alarm are false, and MajorThreshold/MinorThreshold are not enabled.
       majorOverTemperatureAlarm: false,
       minorOverTemperatureAlarm: false,
       minorUnderTemperatureAlarm: false,
@@ -4651,7 +4736,7 @@ export class MatterbridgeEndpoint extends Endpoint {
          * Indicates the number of minutes a PIN, RFID, Fingerprint, or other credential associated with a user of
          * type ExpiringUser shall remain valid after its first use before expiring. When the credential expires,
          * the UserStatus for the corresponding user record shall be set to OccupiedDisabled.
-         * Matter 1.6.0 § 5.2.9.36. Constraint 1 to 2880 minutes.
+         * Matter 1.6.1 § 5.2.9.36. Constraint 1 to 2880 minutes.
          */
         ...(expiringUserTimeout !== undefined ? { expiringUserTimeout } : {}),
         // WeekDayAccessSchedules feature attributes
@@ -4731,6 +4816,39 @@ export class MatterbridgeEndpoint extends Endpoint {
       targetLevel: valveLevel,
       defaultOpenLevel: 100, // Writable and persistent across restarts
       levelStep: 1, // Fixed
+      // Simulation knobs
+      movementDuration,
+      autoClose,
+    });
+    return this;
+  }
+
+  /**
+   * Creates an on/off Valve Configuration And Control cluster server without features (no Level feature).
+   *
+   * Use it to expose a binary valve (e.g. a solenoid valve or a relay) that can only be fully opened or closed.
+   *
+   * @param {ValveConfigurationAndControl.ValveState} [valveState] - The valve state to set. Defaults to `ValveConfigurationAndControl.ValveState.Closed`.
+   * @param {number} [movementDuration] - Simulated duration, in milliseconds, that an Open/Close movement takes to complete. A non-positive value disables the built-in simulation, leaving completion to the real device implementation. Defaults to 0 (disabled).
+   * @param {boolean} [autoClose] - Whether the RemainingDuration countdown timer auto-closes the valve once it reaches 0. Defaults to `false` (disabled), leaving auto-close to the real device implementation.
+   * @returns {this} The current MatterbridgeEndpoint instance for chaining.
+   *
+   * @remarks
+   * Same Open/Close behavior as `createDefaultValveConfigurationAndControlClusterServer()`, without the
+   * CurrentLevel/TargetLevel/DefaultOpenLevel/LevelStep attributes: the TargetLevel field of the Open command is ignored.
+   */
+  createOnOffValveConfigurationAndControlClusterServer(
+    valveState: ValveConfigurationAndControl.ValveState = ValveConfigurationAndControl.ValveState.Closed,
+    movementDuration: number = 0,
+    autoClose: boolean = false,
+  ): this {
+    this.behaviors.require(MatterbridgeValveConfigurationAndControlServer.with(), {
+      currentState: valveState,
+      targetState: valveState,
+      openDuration: null,
+      defaultOpenDuration: null, // Writable and persistent across restarts
+      remainingDuration: null,
+      valveFault: { generalFault: false, blocked: false, leaking: false, notConnected: false, shortCircuit: false, currentExceeded: false },
       // Simulation knobs
       movementDuration,
       autoClose,

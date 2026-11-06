@@ -62,14 +62,14 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 2.11.7.1: Only one SelfTestRequest may be processed at a time, and the device SHALL NOT execute the self-test and SHALL return BUSY when ExpressedState is SmokeAlarm, COAlarm, Testing, InterconnectSmoke or InterconnectCO.
+    // Matter 1.6.1 § 2.11.7.1: Only one SelfTestRequest may be processed at a time, and the device SHALL NOT execute the self-test and SHALL return BUSY when ExpressedState is SmokeAlarm, COAlarm, Testing, InterconnectSmoke or InterconnectCO.
     if (this.state.expressedState !== SmokeCoAlarm.ExpressedState.Normal || this.state.testInProgress) {
       throw new StatusResponseError(`MatterbridgeSmokeCoAlarmServer: self-test is busy (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.Busy);
     }
-    // Matter 1.6.0 § 2.11.7.1: Set TestInProgress to true and ExpressedState to Testing on successful acceptance.
+    // Matter 1.6.1 § 2.11.7.1: Set TestInProgress to true and ExpressedState to Testing on successful acceptance.
     this.state.testInProgress = true;
     this.state.expressedState = SmokeCoAlarm.ExpressedState.Testing;
-    // Matter 1.6.0 § 2.11.7.1: Upon completion of the self-test procedure the server updates TestInProgress and ExpressedState and generates SelfTestComplete.
+    // Matter 1.6.1 § 2.11.7.1: Upon completion of the self-test procedure the server updates TestInProgress and ExpressedState and generates SelfTestComplete.
     this.#scheduleSelfTestComplete();
     device.log.debug(`MatterbridgeSmokeCoAlarmServer: selfTestRequest called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.endpoint.emitCommand(SmokeCoAlarm, 'selfTestRequest', {}, this.context);
@@ -101,13 +101,13 @@ export class MatterbridgeSmokeCoAlarmServer extends SmokeCoAlarmServer.with(Smok
    */
   #completeSelfTest(): void {
     this.internal.selfTestTimer = undefined;
-    // Matter 1.6.0 § 2.11.7.1: Upon completion of the self-test procedure the TestInProgress attribute SHALL be set to False.
+    // Matter 1.6.1 § 2.11.7.1: Upon completion of the self-test procedure the TestInProgress attribute SHALL be set to False.
     this.state.testInProgress = false;
-    // Matter 1.6.0 § 2.11.7.1: Upon completion of the self-test procedure the ExpressedState attribute SHALL be updated to reflect the current state of the server.
+    // Matter 1.6.1 § 2.11.7.1: Upon completion of the self-test procedure the ExpressedState attribute SHALL be updated to reflect the current state of the server.
     this.state.expressedState = SmokeCoAlarm.ExpressedState.Normal;
-    // Matter 1.6.0 § 2.11.8.6: The SelfTestComplete event SHALL be generated when the self-test completes and TestInProgress changes to False.
+    // Matter 1.6.1 § 2.11.8.6: The SelfTestComplete event SHALL be generated when the self-test completes and TestInProgress changes to False.
     this.events.selfTestComplete.emit(undefined, this.context);
-    // Matter 1.6.0 § 2.11.8.11: The AllClear event SHALL be generated when the ExpressedState attribute returns to Normal.
+    // Matter 1.6.1 § 2.11.8.11: The AllClear event SHALL be generated when the ExpressedState attribute returns to Normal.
     this.events.allClear.emit(undefined, this.context);
   }
 

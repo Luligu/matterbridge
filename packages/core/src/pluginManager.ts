@@ -558,8 +558,9 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       registeredDevices: plugin.registeredDevices,
       configJson: plugin.configJson,
       schemaJson: plugin.schemaJson,
-      hasWhiteList: plugin.hasWhiteList,
-      hasBlackList: plugin.hasBlackList,
+      frontendPath: plugin.frontendPath,
+      hasWhiteList: plugin.configJson?.whiteList !== undefined,
+      hasBlackList: plugin.configJson?.blackList !== undefined,
       matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
     };
   }

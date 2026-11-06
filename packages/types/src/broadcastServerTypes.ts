@@ -163,6 +163,14 @@ export type WorkerMessageTypes = {
     request: { params: { pluginName: string } };
     response: { result: { entities: ApiSelectEntity[] } };
   };
+  platform_unregister_device: {
+    request: { params: { pluginName: string; serialNumber: string; uniqueId: string } };
+    response: { result: { success: boolean } };
+  };
+  platform_rename_device: {
+    request: { params: { pluginName: string; serialNumber: string; uniqueId: string; label: string } };
+    response: { result: { success: boolean } };
+  };
 
   // ThreadsManager methods
   manager_run: {

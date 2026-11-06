@@ -1,6 +1,6 @@
 ---
 name: matterjs-pr-workflow
-description: Sync the matter.js fork, implement and test a fix or a new feature/enhancement, format, lint, commit, push, and open a PR against matter-js/matter.js. v.1.0.1
+description: Sync the matter.js fork, implement and test a fix or a new feature/enhancement, format, lint, commit, push, and open a PR against matter-js/matter.js. v.1.0.2
 ---
 
 # Open a PR against matter.js from the local fork
@@ -52,9 +52,9 @@ Branch from the freshly synced `main`, not from whatever branch happened to be c
   correct the behavior — no incidental refactors. For a feature/enhancement, that means the smallest coherent
   implementation of what was asked, not a broader redesign of the surrounding code.
 - Match the target file's existing comment/casting conventions (matter.js source files do **not** use the
-  `Matter 1.6.0 § x.y.z` comment style that matterbridge's own CLAUDE.md mandates — that's a matterbridge-only
+  `Matter 1.6.1 § x.y.z` comment style that matterbridge's own CLAUDE.md mandates — that's a matterbridge-only
   convention). Plain, spec-referencing comments (e.g. `// Per § 5.2.10.21.1, ...`) match existing matter.js style.
-- Cite the authoritative spec text from `chip/1.6.0/specs/*.html` in the matterbridge repo when verifying the
+- Cite the authoritative spec text from `chip/1.6.1/specs/*.md` in the matterbridge repo when verifying the
   correct behavior, the correct field/attribute semantics, or that a new feature matches how the spec actually
   defines it — don't guess status codes, constraint bounds, or field semantics either way.
 

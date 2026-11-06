@@ -305,10 +305,10 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
    * Handles the RvcRunMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §7.2.4.1 (DIRECTMODECH): while CurrentMode has no Idle mode tag,
+   * Matter 1.6.1 Application Cluster spec §7.2.4.1 (DIRECTMODECH): while CurrentMode has no Idle mode tag,
    * changing directly to another non-Idle mode SHALL return InvalidInMode unless DirectModeChange is enabled.
    * Changing to an Idle-tagged mode remains allowed because that is how the RVC device type stops an operation
-   * (Matter 1.6 Device Library spec §12.1.6.4.2).
+   * (Matter 1.6.1 Device Library spec §12.1.6.4.2).
    *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
    * @returns {ModeBase.ChangeToModeResponse} Command response with change status.
@@ -325,7 +325,7 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode when NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with UnsupportedMode when NewMode matches no SupportedModes entry.
     if (!supported) {
       device.log.error(
         `MatterbridgeRvcRunModeServer: changeToMode called with unsupported newMode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -336,33 +336,33 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
       (mode) => mode.mode === this.state.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)),
     );
     const requestedIsIdle = supported.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number));
-    // Matter 1.6.0 § 7.2.4.1: Without DirectModeChange, respond with InvalidInMode to a change from a non-Idle mode to another non-Idle mode.
+    // Matter 1.6.1 § 7.2.4.1: Without DirectModeChange, respond with InvalidInMode to a change from a non-Idle mode to another non-Idle mode.
     if (request.newMode !== this.state.currentMode && !this.features.directModeChange && !currentIsIdle && !requestedIsIdle) {
       device.log.debug(
         `MatterbridgeRvcRunModeServer: changeToMode rejected direct non-Idle mode change from ${this.state.currentMode} to ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Direct mode change is not supported while operating' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with Success when NewMode is already the CurrentMode.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with Success when NewMode is already the CurrentMode.
     if (request.newMode === this.state.currentMode) {
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Already in requested mode' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
+    // Matter 1.6.1 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
     this.state.currentMode = request.newMode;
     const operationalState = this.agent.get(MatterbridgeRvcOperationalStateServer);
     if (supported.modeTags.find((tag) => tag.value === (RvcRunMode.ModeTag.Cleaning as number))) {
       device.log.debug(`MatterbridgeRvcRunModeServer: changeToMode called with newMode Cleaning => Running (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-      // Matter 1.6.0 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
+      // Matter 1.6.1 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
       operationalState.beginOperation();
-      // Matter 1.6.0 § 7.2.7.2.2: A Cleaning mode means the device was asked to clean, so it is actively Running.
+      // Matter 1.6.1 § 7.2.7.2.2: A Cleaning mode means the device was asked to clean, so it is actively Running.
       operationalState.state.operationalState = RvcOperationalState.OperationalState.Running;
       this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Running' };
     } else if (supported.modeTags.find((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number))) {
       device.log.debug(`MatterbridgeRvcRunModeServer: changeToMode called with newMode Idle => SeekingCharger (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-      // Matter 1.6.0 § 1.14.7.2: The overall operation ends, so generate the OperationCompletion event.
+      // Matter 1.6.1 § 1.14.7.2: The overall operation ends, so generate the OperationCompletion event.
       operationalState.completeOperation();
-      // Matter 1.6.0 § 7.2.7.2.1: In an Idle mode the device performs auxiliary actions such as seeking the charger.
+      // Matter 1.6.1 § 7.2.7.2.1: In an Idle mode the device performs auxiliary actions such as seeking the charger.
       operationalState.state.operationalState = RvcOperationalState.OperationalState.SeekingCharger;
       this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Seeking charger' };
@@ -370,9 +370,9 @@ export class MatterbridgeRvcRunModeServer extends RvcRunModeServer {
     device.log.debug(
       `MatterbridgeRvcRunModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
+    // Matter 1.6.1 § 1.14.7.2.2: A new operation starts, so start timing TotalOperationalTime for the OperationCompletion event.
     operationalState.beginOperation();
-    // Matter 1.6.0 § 7.2.7.2: A non-Idle mode is a main operation of the device, so it is Running.
+    // Matter 1.6.1 § 7.2.7.2: A non-Idle mode is a main operation of the device, so it is Running.
     operationalState.state.operationalState = RvcOperationalState.OperationalState.Running;
     this.endpoint.emitCommand(RvcRunMode, 'changeToMode', request, this.context);
     return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Success' };
@@ -390,7 +390,7 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
    * Handles the RvcCleanMode `ChangeToMode` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §7.3.4.1 (DIRECTMODECH): if RVC Run Mode CurrentMode has no Idle
+   * Matter 1.6.1 Application Cluster spec §7.3.4.1 (DIRECTMODECH): if RVC Run Mode CurrentMode has no Idle
    * mode tag, a clean-mode change SHALL return InvalidInMode unless DirectModeChange is enabled.
    *
    * @param {ModeBase.ChangeToModeRequest} request - Mode change request payload.
@@ -408,14 +408,14 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
       context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with UnsupportedMode when NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with UnsupportedMode when NewMode matches no SupportedModes entry.
     if (!supported) {
       device.log.error(
         `MatterbridgeRvcCleanModeServer: changeToMode called with unsupported newMode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: Respond with Success when NewMode is already the CurrentMode.
+    // Matter 1.6.1 § 1.10.7.1.1: Respond with Success when NewMode is already the CurrentMode.
     if (request.newMode === this.state.currentMode) {
       return { status: ModeBase.ModeChangeStatus.Success, statusText: 'Already in requested mode' };
     }
@@ -423,14 +423,14 @@ export class MatterbridgeRvcCleanModeServer extends RvcCleanModeServer {
     const runModeIsIdle = runModeState.supportedModes.some(
       (mode) => mode.mode === runModeState.currentMode && mode.modeTags.some((tag) => tag.value === (RvcRunMode.ModeTag.Idle as number)),
     );
-    // Matter 1.6.0 § 7.3.4.1: Without DirectModeChange, respond with InvalidInMode to a clean mode change while the RVC Run Mode CurrentMode is not Idle.
+    // Matter 1.6.1 § 7.3.4.1: Without DirectModeChange, respond with InvalidInMode to a clean mode change while the RVC Run Mode CurrentMode is not Idle.
     if (!this.features.directModeChange && !runModeIsIdle) {
       device.log.debug(
         `MatterbridgeRvcCleanModeServer: changeToMode rejected while RVC Run Mode ${runModeState.currentMode} is non-Idle (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       return { status: ModeBase.ModeChangeStatus.InvalidInMode, statusText: 'Clean mode cannot change while operating' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
+    // Matter 1.6.1 § 1.10.7.1.1: On a successful transition set CurrentMode to NewMode.
     this.state.currentMode = request.newMode;
     device.log.debug(
       `MatterbridgeRvcCleanModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
@@ -461,8 +461,8 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Emits the mandatory RVC OperationCompletion event when an active operation ends.
    *
    * @remarks
-   * Matter 1.6 Device Library spec §12.1.4 requires the RVC Operational State OperationCompletion event.
-   * Matter 1.6 Application Cluster spec §1.14.7.2 defines TotalOperationalTime and PausedTime.
+   * Matter 1.6.1 Device Library spec §12.1.4 requires the RVC Operational State OperationCompletion event.
+   * Matter 1.6.1 Application Cluster spec §1.14.7.2 defines TotalOperationalTime and PausedTime.
    */
   completeOperation(): void {
     if (this.internal.operationStartedAt === undefined) return;
@@ -481,7 +481,7 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Handles the RvcOperationalState `Pause` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §1.14.6.1 requires Paused to be an idempotent success, incompatible
+   * Matter 1.6.1 Application Cluster spec §1.14.6.1 requires Paused to be an idempotent success, incompatible
    * states to return CommandInvalidInState without side effects, and successful requests to set Paused.
    * The RVC state compatibility table additionally makes SeekingCharger Pause-compatible.
    *
@@ -498,11 +498,11 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.14.6.1: Respond with ErrorStateID NoError and take no further action if Pause is received while already Paused.
+    // Matter 1.6.1 § 1.14.6.1: Respond with ErrorStateID NoError and take no further action if Pause is received while already Paused.
     if (this.state.operationalState === (RvcOperationalState.OperationalState.Paused as number)) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already paused' } };
     }
-    // Matter 1.6.0 § 1.14.6.1 and § 7.4.4.1: Respond with CommandInvalidInState when the current state is not Pause-compatible (only Running and SeekingCharger are).
+    // Matter 1.6.1 § 1.14.6.1 and § 7.4.4.1: Respond with CommandInvalidInState when the current state is not Pause-compatible (only Running and SeekingCharger are).
     if (
       this.state.operationalState !== (RvcOperationalState.OperationalState.Running as number) &&
       this.state.operationalState !== (RvcOperationalState.OperationalState.SeekingCharger as number)
@@ -512,13 +512,13 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       };
     }
     device.log.debug(`MatterbridgeRvcOperationalStateServer: pause called setting operational state to Paused (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.14.6.4: Remember the state before Paused, so Resume can restore it.
+    // Matter 1.6.1 § 1.14.6.4: Remember the state before Paused, so Resume can restore it.
     this.internal.operationalStateBeforePause = this.state.operationalState;
-    // Matter 1.6.0 § 1.14.7.2.3: Start timing the paused interval reported as PausedTime in OperationCompletion.
+    // Matter 1.6.1 § 1.14.7.2.3: Start timing the paused interval reported as PausedTime in OperationCompletion.
     this.internal.pausedSinceMs = Date.now();
-    // Matter 1.6.0 § 1.14.6.1: On success, set OperationalState to Paused.
+    // Matter 1.6.1 § 1.14.6.1: On success, set OperationalState to Paused.
     this.state.operationalState = RvcOperationalState.OperationalState.Paused;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(RvcOperationalState, 'pause', {}, this.context);
     return {
@@ -530,7 +530,7 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Handles the RvcOperationalState `Resume` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §1.14.6.4 requires Running to be an idempotent success, incompatible
+   * Matter 1.6.1 Application Cluster spec §1.14.6.4 requires Running to be an idempotent success, incompatible
    * states to return CommandInvalidInState without side effects, and a successful Resume to restore the most
    * recent non-Error operational state that preceded Paused.
    *
@@ -547,11 +547,11 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 1.14.6.4: Respond with ErrorStateID NoError and take no further action if Resume is received while already Running.
+    // Matter 1.6.1 § 1.14.6.4: Respond with ErrorStateID NoError and take no further action if Resume is received while already Running.
     if (this.state.operationalState === (RvcOperationalState.OperationalState.Running as number)) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already running' } };
     }
-    // Matter 1.6.0 § 1.14.6.4: Respond with CommandInvalidInState when the current state is not Resume-compatible (only Paused is).
+    // Matter 1.6.1 § 1.14.6.4: Respond with CommandInvalidInState when the current state is not Resume-compatible (only Paused is).
     if (this.state.operationalState !== (RvcOperationalState.OperationalState.Paused as number)) {
       return {
         commandResponseState: { errorStateId: OperationalState.ErrorState.CommandInvalidInState, errorStateDetails: 'Not Resume-compatible in the current operational state' },
@@ -560,14 +560,14 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
     device.log.debug(
       `MatterbridgeRvcOperationalStateServer: resume called restoring operational state to ${this.internal.operationalStateBeforePause} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.14.7.2.3: Close the paused interval, so it counts toward PausedTime in OperationCompletion.
+    // Matter 1.6.1 § 1.14.7.2.3: Close the paused interval, so it counts toward PausedTime in OperationCompletion.
     if (this.internal.pausedSinceMs !== undefined) {
       this.internal.pausedAccumulatedMs += Date.now() - this.internal.pausedSinceMs;
       this.internal.pausedSinceMs = undefined;
     }
-    // Matter 1.6.0 § 1.14.6.4: On success, restore the most recent non-Error OperationalState that preceded Paused.
+    // Matter 1.6.1 § 1.14.6.4: On success, restore the most recent non-Error OperationalState that preceded Paused.
     this.state.operationalState = this.internal.operationalStateBeforePause;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(RvcOperationalState, 'resume', {}, this.context);
     return {
@@ -579,7 +579,7 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
    * Handles the RvcOperationalState `GoHome` command.
    *
    * @remarks
-   * Matter 1.6 Application Cluster spec §7.4.5.1 requires SeekingCharger to be an idempotent success; states
+   * Matter 1.6.1 Application Cluster spec §7.4.5.1 requires SeekingCharger to be an idempotent success; states
    * that cannot seek the charger, including Charging and Docked, return CommandInvalidInState without side
    * effects; and every successful request sets OperationalState to SeekingCharger. Run Mode changes to Idle
    * only after docking completes, not when GoHome is accepted.
@@ -597,11 +597,11 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.0 § 7.4.5.1: Respond with ErrorStateID NoError and take no further action if GoHome is received while already SeekingCharger.
+    // Matter 1.6.1 § 7.4.5.1: Respond with ErrorStateID NoError and take no further action if GoHome is received while already SeekingCharger.
     if (this.state.operationalState === (RvcOperationalState.OperationalState.SeekingCharger as number)) {
       return { commandResponseState: { errorStateId: OperationalState.ErrorState.NoError, errorStateDetails: 'Already seeking charger' } };
     }
-    // Matter 1.6.0 § 7.4.5.1: Respond with CommandInvalidInState when the device cannot seek the charger in the current state.
+    // Matter 1.6.1 § 7.4.5.1: Respond with CommandInvalidInState when the device cannot seek the charger in the current state.
     if (
       this.state.operationalState === (RvcOperationalState.OperationalState.Error as number) ||
       this.state.operationalState === (RvcOperationalState.OperationalState.Charging as number) ||
@@ -618,9 +618,9 @@ export class MatterbridgeRvcOperationalStateServer extends MatterbridgeRvcOperat
     device.log.debug(
       `MatterbridgeRvcOperationalStateServer: goHome called setting operational state to SeekingCharger (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 7.4.5.1: On success, set OperationalState to SeekingCharger.
+    // Matter 1.6.1 § 7.4.5.1: On success, set OperationalState to SeekingCharger.
     this.state.operationalState = RvcOperationalState.OperationalState.SeekingCharger;
-    // Matter 1.6.0 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
+    // Matter 1.6.1 § 1.14.5.6: OperationalError shall report NoError when no error condition exists.
     this.state.operationalError = { errorStateId: RvcOperationalState.ErrorState.NoError, errorStateDetails: 'Fully operational' };
     this.endpoint.emitCommand(RvcOperationalState, 'goHome', {}, this.context);
     return {
@@ -634,7 +634,7 @@ export namespace MatterbridgeRvcOperationalStateServer {
   /** Internal state retained across RVC operational commands. */
   export class Internal extends MatterbridgeRvcOperationalStateServerBase.Internal {
     /** Most recent non-Error operational state before entering Paused (§1.14.6.4). */
-    operationalStateBeforePause: RvcOperationalState.OperationalState | OperationalState.OperationalStateEnum = RvcOperationalState.OperationalState.Running;
+    operationalStateBeforePause: RvcOperationalState.OperationalState | OperationalState.OperationalStateEnum | number = RvcOperationalState.OperationalState.Running;
     /** Start time used for OperationCompletion.TotalOperationalTime (§1.14.7.2.2). */
     operationStartedAt: number | undefined;
     /** Accumulated paused duration used for OperationCompletion.PausedTime (§1.14.7.2.3). */

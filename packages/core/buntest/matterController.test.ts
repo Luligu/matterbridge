@@ -119,7 +119,7 @@ describe('Matter controller commands', () => {
       controllerVendorName: 'Matterbridge',
       controllerProductId: 32768,
       controllerProductName: 'Matterbridge Controller',
-      matterbridgeVersion: '3.11.1',
+      matterbridgeVersion: '3.11.2',
       systemInformation: { osRelease: '1.2.3' },
       port: 6000,
     } as unknown as Matterbridge;
@@ -250,7 +250,7 @@ describe('Matter controller commands', () => {
       controller: { adminFabricLabel: 'Matterbridge Controller' },
       subscriptions: { persistenceEnabled: false },
       network: { autoStartCommissionedPeers: false, port: undefined },
-      basicInformation: { softwareVersion: 31101, softwareVersionString: '3.11.1', hardwareVersion: 10203, hardwareVersionString: '1.2.3' },
+      basicInformation: { softwareVersion: 31102, softwareVersionString: '3.11.2', hardwareVersion: 10203, hardwareVersionString: '1.2.3' },
     });
     expect(nodeStart).toHaveBeenCalledTimes(1);
   });

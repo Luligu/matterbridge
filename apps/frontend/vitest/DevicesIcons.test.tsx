@@ -199,11 +199,11 @@ describe('DevicesIcons', () => {
       createCluster('2', 'ClosureOpen', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 1 }', { position: 1 }),
       createCluster('3', 'ClosurePartial', 0x0230, 'ClosureControl', 'overallCurrentState', '{ position: 2 }', { position: 2 }),
       createCluster('4', 'ClosureInvalid', 0x0230, 'ClosureControl', 'overallCurrentState', '{}', {}),
-      createCluster('5', 'WindowClosed', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '0', 0),
-      createCluster('6', 'WindowOpen', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '10000', 10_000),
+      createCluster('5', 'WindowOpen', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '0', 0),
+      createCluster('6', 'WindowClosed', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '10000', 10_000),
       createCluster('7', 'WindowPartial', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '5000', 5000),
       createCluster('8', 'WindowInvalid', 0x0202, 'WindowCovering', 'currentPositionLiftPercent100ths', '-1', -1),
-      createCluster('9', 'ClosurePanelClosed', 0x0231, 'ClosureDimension', 'currentState', '{ position: 0 }', { position: 0 }),
+      createCluster('9', 'ClosurePanelPosition', 0x0231, 'ClosureDimension', 'currentState', '{ position: 0 }', { position: 0 }),
       createCluster('10', 'ClosurePanelInvalid', 0x0231, 'ClosureDimension', 'currentState', '{}', {}),
     ];
 
@@ -215,10 +215,39 @@ describe('DevicesIcons', () => {
     await socket.ready();
     loadDevice(socket, device, clusters);
 
-    expect(await screen.findAllByText('Closed')).toHaveLength(3);
+    expect(await screen.findAllByText('Closed')).toHaveLength(2);
     expect(screen.getAllByText('Open')).toHaveLength(2);
     expect(screen.getAllByText('Partial')).toHaveLength(2);
     expect(screen.getAllByText('N/A')).toHaveLength(3);
+    expectText('0%');
+  });
+
+  describe.each([
+    { clusterName: 'WindowCovering', deviceType: 0x0202, attributeName: 'currentPositionLiftPercent100ths' },
+    { clusterName: 'ClosureDimension', deviceType: 0x0231, attributeName: 'currentState' },
+  ])('$clusterName positions', ({ clusterName, deviceType, attributeName }) => {
+    it.each([
+      { position: 0, windowLabel: 'Open', dimensionLabel: '0%' },
+      { position: 10_000, windowLabel: 'Closed', dimensionLabel: '100%' },
+      { position: 5000, windowLabel: 'Partial', dimensionLabel: '50%' },
+      { position: 1234, windowLabel: 'Partial', dimensionLabel: '12.34%' },
+      ...[null, undefined, -1, 10_001, 0.5, Number.NaN, Number.POSITIVE_INFINITY, '0'].map((position) => ({ position, windowLabel: 'N/A', dimensionLabel: 'N/A' })),
+    ])('should render the correct label when position is $position', async ({ position, windowLabel, dimensionLabel }) => {
+      const socket = createSocket();
+      const device = createDevice();
+      const value = clusterName === 'ClosureDimension' ? { position } : position;
+      const clusters = [createCluster('1', 'main', deviceType, clusterName, attributeName, String(position), value)];
+
+      render(
+        <WebSocketContext.Provider value={socket.context}>
+          <DevicesIcons filterPlugins="All plugins" filterDevices="" />
+        </WebSocketContext.Provider>,
+      );
+      await socket.ready();
+      loadDevice(socket, device, clusters);
+
+      expect(await screen.findByText(clusterName === 'ClosureDimension' ? dimensionLabel : windowLabel)).toBeInTheDocument();
+    });
   });
 
   it('should send refresh requests and ignore empty cluster responses', async () => {

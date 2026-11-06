@@ -42,7 +42,7 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
 
     const device = this.endpoint.stateOf(MatterbridgeServer);
     device.log.info(`MatterbridgePowerSourceServer: initializing (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 11.7.7.32: A cluster instance with a non-empty EndpointList SHALL include the endpoint upon which the cluster instance resides.
+    // Matter 1.6.1 § 11.7.7.32: A cluster instance with a non-empty EndpointList SHALL include the endpoint upon which the cluster instance resides.
     this.state.endpointList = [this.endpoint.number];
     this.endpoint.construction.onSuccess(async () => {
       device.log.debug(`MatterbridgePowerSourceServer: construction completed (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
@@ -52,7 +52,7 @@ export class MatterbridgePowerSourceServer extends PowerSourceServer {
           endpointList.push(endpoint.number);
         }
       }
-      // Matter 1.6.0 § 11.7.7.32: EndpointList SHALL indicate the list of endpoints powered by the source defined by this cluster.
+      // Matter 1.6.1 § 11.7.7.32: EndpointList SHALL indicate the list of endpoints powered by the source defined by this cluster.
       await this.endpoint.setStateOf(PowerSourceServer, { endpointList });
       device.log.debug(
         `MatterbridgePowerSourceServer: construction completed with endpointList ${endpointList.join(', ')} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,

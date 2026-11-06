@@ -1,6 +1,6 @@
 /**
  * downloads.mjs
- * Version: 2.1.0
+ * Version: 2.2.0
  *
  * Prints daily npm downloads for the last 30 days and today for the package in ../package.json.
  * It queries an explicit date range because the npm `last-week` / `last-month` periods can return stale data.
@@ -24,7 +24,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const scriptVersion = '2.1.0';
+const scriptVersion = '2.2.0';
 
 /** Number of days before today to include in the range. */
 const rangeDays = 30;
@@ -84,13 +84,16 @@ function dayKey(date) {
  * @param {string} pkgName - NPM package name.
  * @param {string} start - First day (YYYY-MM-DD).
  * @param {string} end - Last day (YYYY-MM-DD).
- * @returns {Promise<NpmDownloadsRangeResponse>} Range response.
+ * @returns {Promise<NpmDownloadsRangeResponse | null>} Range response, or null when npm has no download data for the package.
  */
 async function fetchRangeDownloads(pkgName, start, end) {
   const url = `https://api.npmjs.org/downloads/range/${start}:${end}/${encodeURIComponent(pkgName)}`;
   const res = await fetch(url, {
     headers: { accept: 'application/json' },
   });
+
+  // npm answers 404 until it publishes the first daily count of a new package.
+  if (res.status === 404) return null;
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -241,6 +244,10 @@ async function printDownloads(pkgPath, dryRun) {
   const end = dayKey(today);
   const start = dayKey(new Date(today.getTime() - rangeDays * 24 * 60 * 60 * 1000));
   const rangeData = await fetchRangeDownloads(name, start, end);
+  if (!rangeData) {
+    console.log(`npm has no download data for ${name} yet: new packages appear after npm publishes their first daily count, usually within 1-2 days.`);
+    return;
+  }
 
   const rows = rangeData.downloads.map((r) => ({ day: String(r.day), downloads: Number(r.downloads) || 0 }));
   rows.sort((a, b) => a.day.localeCompare(b.day));

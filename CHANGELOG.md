@@ -29,6 +29,74 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.2] - 2026-11-06
+
+### Development News
+
+- [chip]: ElectricalSensorPeriodic endpoint 2064 CHIP conformance is green ✅ for all automated harness tests covering the `ElectricalEnergyMeasurement` cluster, including the optional `PeriodicEnergy` feature (`TC_EEM_2_4.py` and `TC_EEM_2_5.py`), with its own `electrical-energy-measurement.periodic.pics`.
+- [chip]: ElectricalSensorPeriodicImported endpoint 2065 CHIP conformance is green ✅ for all applicable automated harness tests covering the `ElectricalEnergyMeasurement` cluster `ImportedEnergy`, `CumulativeEnergy` and `PeriodicEnergy` features, with its own `electrical-energy-measurement.periodic-imported.pics`.
+- [chip]: ElectricalSensorPeriodicExported endpoint 2066 CHIP conformance is green ✅ for all applicable automated harness tests covering the `ElectricalEnergyMeasurement` cluster `ExportedEnergy`, `CumulativeEnergy` and `PeriodicEnergy` features, with its own `electrical-energy-measurement.periodic-exported.pics`.
+
+### Breaking changes
+
+- [dgram]: Decoded mDNS questions and records keep only the `DnsClass` in `class` and expose the top bit as `unicastResponse` on questions and `cacheFlush` on records (RFC 6762 §5.4, §10.2).
+
+### Added
+
+- [types]: Add `/api/unregister-device` and `/api/rename-device` request/response contracts with device identifiers and a required rename `label`.
+- [types]: Add the `PlatformSelectDevice`, `PlatformSelectEntity` and `PlatformNodeLabel` types, also re-exported by `MatterbridgePlatform`.
+- [frontend]: Add a device actions menu on registered devices opening `Reset device` and `Change controller name`.
+- [core]: Handle `/api/unregister-device` and `/api/rename-device` in the frontend and backend WebSocket servers, forwarding them to the plugin platform. The backend WebSocket server validates every parameter with `isValidString()`.
+- [platform]: Reset (unregister) a device or set its controller name (`nodeLabel`) on request from the frontend; renaming back to the device name removes the custom label.
+- [platform]: Persist the controller names in the new `nodeLabels` plugin storage and apply them in `registerDevice()`. Thanks to [@JoanYpersiel](https://github.com/JoanYpersiel) for [PR #669](https://github.com/Luligu/matterbridge/pull/669).
+- [endpoint]: Add optional `periodicEnergyImported`/`periodicEnergyExported` parameters to `createDefaultElectricalEnergyMeasurementClusterServer()`, `createImportedElectricalEnergyMeasurementClusterServer()` and `createExportedElectricalEnergyMeasurementClusterServer()` that enable the `PeriodicEnergy` feature (Matter 1.6.1 § 2.12.4.4), and document firing the `CumulativeEnergyMeasured`/`PeriodicEnergyMeasured` events.
+- [devices]: Add the `OnOffPlugInUnit`, `DimmablePlugInUnit`, `MountedOnOffControl` and `MountedDimmableLoadControl` single-class devices (Matter 1.6.1 § 5.1 - 5.4) with Identify, Groups, Scenes Management, OnOff (Lighting) and LevelControl (OnOff, Lighting, levels 1..254; optional through `levelControl` for the on/off device types) clusters, configured through an options object. The mounted device types also list their plug-in unit subset device type for older controllers (RECOMMENDED by the spec), unless `plugInUnitDeviceType` is `false`.
+- [chip]: Create the OnOffPlugInUnit (501), DimmablePlugInUnit (502), MountedOnOffControl (503) and MountedDimmableLoadControl (504) demo devices with the new device classes.
+- [devices]: Add the `Pump` single-class device (Matter 1.6.1 § 5.5) with OnOff, optional LevelControl, PumpConfigurationAndControl (ConstantSpeed) and optional Temperature/Pressure/Flow Measurement clusters, configured through a `PumpOptions` object.
+- [devices]: Add the `WaterValve` single-class device (Matter 1.6.1 § 5.6) with ValveConfigurationAndControl (with or without the `Level` feature) and optional FlowMeasurement clusters, configured through a `WaterValveOptions` object, with `openValve()`/`closeValve()` helpers.
+- [endpoint]: Add `createOnOffValveConfigurationAndControlClusterServer()` to create a `ValveConfigurationAndControl` cluster server without the `Level` feature, for binary (on/off) valves.
+- [chip]: Add the ElectricalSensorPeriodic (2064), ElectricalSensorPeriodicImported (2065) and ElectricalSensorPeriodicExported (2066) demo devices, simulate the periodic energy in the fake load and fake generator test event triggers, and add the 11 `TC_EEM_2_1`–`2_5` conformance tests on them.
+
+### Changed
+
+- [utils]: `getEnumDescription()` accepts any number or string `value`; values outside the enum return the fallback.
+- [behaviors]: The Pump Configuration and Control server keeps the `PumpStatus` `Running` bit in sync with the applied speed (OnOff, LevelControl and OperationMode changes, and at startup when the pump is already on).
+- [dgram]: Add an optional `cacheFlush` / `unicastResponse` flag to `dnsResponseClassToString()` and `dnsQuestionClassToString()`.
+- [platform]: `--debug-platform` and `--verbose-platform` also enable the platform debug and verbose logs.
+- [platform]: `ready` also waits for the `nodeLabels` storage to load.
+- [core]: Log unknown `EsaState` values as `Invalid` instead of `undefined`.
+- [chip]: Validate the previous EnergyEvse `FaultState` in the fault test event triggers.
+- [chip]: Create the Pump (505) and WaterValve (506) demo devices with the `Pump` and `WaterValve` device classes, so the demo pump starts at level 254 and runs on `On`, and enable `PumpStatus` and `Speed` in the pump PICS.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.2.
+- [matterbridge]: Bump `@types/node` to v.26.6.6.
+- [matterbridge]: Bump `marked` to v.18.1.2.
+- [matterbridge]: Bump `oxfmt` to v.0.75.0.
+- [matterbridge]: Bump `oxlint` to v.1.90.0.
+- [frontend]: Bump `react-router` to v.8.5.1.
+- [frontend]: Bump `globals` to v.17.14.0.
+- [core]: Bump `express-rate-limit` to v.8.7.2.
+- [core]: Bump `werift` to v.0.26.0.
+- [core]: Bump `ws` to v.8.22.1.
+- [core]: Remove the unused `@types/jest` dev dependency and the `jest` types from the core tsconfigs.
+- [tests]: Refactor the tests for the `no-unsafe-enum-assignment` rule of oxlint v.1.90.0: use enum members instead of numeric literals and mark the deliberately invalid enum values.
+- [core]: The `/api/plugins` endpoint now fetches the plugin list from the plugin manager through the server broadcast, with a 500 error response on failure.
+- [core]: The plugin API representation includes `frontendPath` and derives `hasWhiteList` and `hasBlackList` from the plugin config.
+- [docs]: Read the website's npm and Docker totals from the daily badge gist and animate stats after loading.
+- [core]: Don't auto-close a WebRTC session when werift 0.26.0 replaces or retires a DTLS transport during SDP negotiation.
+- [frontend]: Serve the WebSocket and HTTP `/api/settings` from Matterbridge through the `matterbridge_apisettings` broadcast request instead of building the settings locally.
+
+### Fixed
+
+- [devices]: Remove the unreachable `undefined` fallback of `WaterValve.getCurrentLevel()` with the `Level` feature, restoring the 100% branch coverage of `waterValve.ts`.
+- [frontend]: Correct inverted WindowCovering Open/Closed labels and display ClosureDimension positions as percentages. Closes [#671](https://github.com/Luligu/matterbridge/issues/671). Thanks to [@peteroettl](https://github.com/peteroettl).
+- [docs]: Bind the heading text renderer to the parser for marked 18.1.2.
+- [core]: Map device classes explicitly to matter.js classifications, including App to Application.
+- [core]: Keep manufacturer-specific operational states across Pause and Resume in `MatterbridgeOperationalStateServer` and `MatterbridgeRvcOperationalStateServer`.
+- [frontend]: Require the frontend authentication on the plugin `/plugins/<name>/api/*` routes before dispatching to `onFetch`. Closes [#676](https://github.com/Luligu/matterbridge/issues/676). Thanks to [@macjl](https://github.com/macjl).
+- [behaviors]: Keep the pump stopped when its `OperationMode` or LevelControl `CurrentLevel` changes while Off; the new setpoint applies on the next `On` (Matter 1.6.1 § 5.5.5.1).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.1] - 2026-10-30
 
 ### Breaking changes

@@ -1,0 +1,15 @@
+# To run tests on ElectricalEnergyMeasurement --PICS is required
+# Matches createDefaultElectricalEnergyMeasurementClusterServer() with periodic energy on CHIP ElectricalSensor endpoint 2064
+EEM.S=1
+EEM.S.F00=1 # ImportedEnergy
+EEM.S.F01=1 # ExportedEnergy
+EEM.S.F02=1 # CumulativeEnergy
+EEM.S.F03=1 # PeriodicEnergy
+EEM.S.A0000=1 # Accuracy
+EEM.S.A0001=1 # CumulativeEnergyImported
+EEM.S.A0002=1 # CumulativeEnergyExported
+EEM.S.A0003=1 # PeriodicEnergyImported
+EEM.S.A0004=1 # PeriodicEnergyExported
+EEM.S.A0005=1 # CumulativeEnergyReset
+EEM.S.E00=0 # CumulativeEnergyMeasured
+EEM.S.E01=0 # PeriodicEnergyMeasured

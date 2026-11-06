@@ -149,6 +149,7 @@ describe('Matterbridge ' + NAME, () => {
     // SHALL return CONSTRAINT_ERROR, checked ahead of the latch/mainState InvalidInState checks below.
     await expect(
       device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         direction: 2 as ClosureDimension.StepDirection,
         numberOfSteps: 1,
       }),
@@ -165,6 +166,7 @@ describe('Matterbridge ' + NAME, () => {
       device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.step', {
         direction: ClosureDimension.StepDirection.Increase,
         numberOfSteps: 1,
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         speed: 4 as ThreeLevelAuto,
       }),
     ).rejects.toMatchObject({ code: Status.ConstraintError });

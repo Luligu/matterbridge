@@ -71,6 +71,7 @@ Matterbridge calls this method for `GET`, `POST`, `PUT`, `PATCH`, and `DELETE` r
 - A thrown error becomes a `500` response with `{ error: 'Internal error in plugin <name>' }`.
 - `DELETE` returns `204` with no response body. Every other method returns `res.json(value)`.
 - If `plugin.platform` is not running, Matterbridge returns `503` without calling `onFetch`.
+- The routes require the frontend authentication like the core `/api/...` routes: an unauthenticated client gets `401` with `{ error: 'Unauthorized' }` and `onFetch` is not called. The plugin frontend shares the Matterbridge frontend login, so handle `401` by asking the user to log in from the Matterbridge frontend.
 
 The base implementation only logs the request and returns `undefined`, so override it to expose real endpoints.
 

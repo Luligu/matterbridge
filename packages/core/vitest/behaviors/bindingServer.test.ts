@@ -21,6 +21,7 @@ import { Identify } from '@matter/types/clusters/identify';
 import { OccupancySensing } from '@matter/types/clusters/occupancy-sensing';
 import { OnOff } from '@matter/types/clusters/on-off';
 import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
+import { Namespace } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addBridgedDevice,
@@ -320,7 +321,7 @@ describe('Client clusters and behaviors', () => {
     const endpoint = new Endpoint(OnOffPlugInUnitDevice.with(BindingServer, DescriptorServer.with('TagList')).withClientClusters(OccupancySensingClient), {
       id: 'OnOffPlugIn',
       descriptor: {
-        tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Plug' }],
+        tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Plug' }],
       },
       identify: {
         identifyTime: 0,

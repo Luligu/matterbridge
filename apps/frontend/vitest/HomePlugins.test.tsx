@@ -416,6 +416,8 @@ describe('HomePlugins', () => {
     load([plugin]);
     const openButton = pluginButton('Open the plugin frontend (double-click for a new tab)');
     plugin.frontendPath = undefined;
+    fireEvent.doubleClick(openButton);
+    expect(window.open).not.toHaveBeenCalled();
     singleClick(openButton);
     expect(screen.queryByTitle('plugin-one frontend')).not.toBeInTheDocument();
     plugin.frontendPath = '/frontend';

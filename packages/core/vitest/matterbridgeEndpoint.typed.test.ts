@@ -740,6 +740,7 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for unavailable wired attribute on battery feature set
         device.getAttribute(batteryBehavior, 'wiredCurrentType', device.log);
         // @ts-expect-error intentional type-check guard for typed feature-gated value
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         device.setAttribute(batteryBehavior, 'batChargeLevel', PowerSource.WiredCurrentType.Ac, device.log);
         // @ts-expect-error intentional type-check guard for typed feature-gated cluster payload
         device.setCluster(batteryBehavior, { status: PowerSource.PowerSourceStatus.Active, order: 0, description: 'Battery power', endpointList: [] }, device.log);

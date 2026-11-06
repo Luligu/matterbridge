@@ -419,6 +419,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
     await expect(
       camera.invokeBehaviorCommand(CameraAvStreamManagement, 'videoStreamAllocate', {
         streamUsage: StreamUsage.LiveView,
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         videoCodec: 10 as CameraAvStreamManagement.VideoCodec,
         minFrameRate: 15,
         maxFrameRate: 30,
@@ -619,6 +620,7 @@ describe('MatterbridgeCameraAvStreamManagementServer', () => {
     await expect(
       camera.invokeBehaviorCommand(CameraAvStreamManagement, 'audioStreamAllocate', {
         streamUsage: StreamUsage.LiveView,
+        // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
         audioCodec: 10 as CameraAvStreamManagement.AudioCodec,
         channelCount: 1,
         sampleRate: 48000,

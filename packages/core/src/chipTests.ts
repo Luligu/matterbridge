@@ -131,7 +131,7 @@ const smokeCoAlarmDeviceMutedClearTrigger = 0x005c0000000000abn;
 // TC_EPM_2_2/TC_EEM_2_2/TC_EEM_2_3's send_test_event_trigger_start_fake_1kw_load_2s()/
 // send_test_event_trigger_start_fake_3kw_generator_5s()/send_test_event_trigger_stop_fake_readings()
 // (src/python_testing/TC_EnergyReporting_Utils.py). TC_EEM_2_4/TC_EEM_2_5's PeriodicEnergy (imported/exported)
-// accumulation is not implemented — endpoint 206 doesn't enable that optional feature.
+// readings are simulated on the endpoints that enable that optional feature (2064, 2065 and 2066).
 const electricalPowerMeasurementStartFakeLoadTrigger = 0x0091000000000001n;
 const electricalEnergyMeasurementStartFakeGeneratorTrigger = 0x0091000000000002n;
 const electricalPowerMeasurementStopFakeReadingsTrigger = 0x0091000000000000n;
@@ -694,8 +694,7 @@ async function handleEnergyEvseTestEventTrigger(eventTrigger: bigint): Promise<b
 }
 
 async function applyEnergyEvseFault(endpoint: MatterbridgeEndpoint, faultState: EnergyEvse.FaultState, log: AnsiLogger): Promise<void> {
-  const previousFaultStateAttribute = endpoint.getAttribute(EnergyEvse.id, 'faultState');
-  const previousFaultState = typeof previousFaultStateAttribute === 'number' ? previousFaultStateAttribute : EnergyEvse.FaultState.NoError;
+  const previousFaultState = getEnergyEvseFaultState(endpoint.getAttribute(EnergyEvse.id, 'faultState'));
   const state = getEnergyEvseState(endpoint.getAttribute(EnergyEvse.id, 'state'));
   const supplyState = getEnergyEvseSupplyState(endpoint.getAttribute(EnergyEvse.id, 'supplyState'));
   const restoredSupplyState = getEnergyEvseRestoredSupplyState(faultState, supplyState);
@@ -764,6 +763,51 @@ function getEnergyEvseState(value: unknown): EnergyEvse.State {
       return EnergyEvse.State.Fault;
     default:
       return EnergyEvse.State.NotPluggedIn;
+  }
+}
+
+/**
+ * Validates an Energy EVSE FaultState attribute read from the generic endpoint API.
+ *
+ * @param {unknown} value - Attribute value to validate.
+ * @returns {EnergyEvse.FaultState} Valid fault state, or `NoError` when the value is absent or invalid.
+ */
+function getEnergyEvseFaultState(value: unknown): EnergyEvse.FaultState {
+  switch (value) {
+    case EnergyEvse.FaultState.MeterFailure:
+      return EnergyEvse.FaultState.MeterFailure;
+    case EnergyEvse.FaultState.OverVoltage:
+      return EnergyEvse.FaultState.OverVoltage;
+    case EnergyEvse.FaultState.UnderVoltage:
+      return EnergyEvse.FaultState.UnderVoltage;
+    case EnergyEvse.FaultState.OverCurrent:
+      return EnergyEvse.FaultState.OverCurrent;
+    case EnergyEvse.FaultState.ContactWetFailure:
+      return EnergyEvse.FaultState.ContactWetFailure;
+    case EnergyEvse.FaultState.ContactDryFailure:
+      return EnergyEvse.FaultState.ContactDryFailure;
+    case EnergyEvse.FaultState.GroundFault:
+      return EnergyEvse.FaultState.GroundFault;
+    case EnergyEvse.FaultState.PowerLoss:
+      return EnergyEvse.FaultState.PowerLoss;
+    case EnergyEvse.FaultState.PowerQuality:
+      return EnergyEvse.FaultState.PowerQuality;
+    case EnergyEvse.FaultState.PilotShortCircuit:
+      return EnergyEvse.FaultState.PilotShortCircuit;
+    case EnergyEvse.FaultState.EmergencyStop:
+      return EnergyEvse.FaultState.EmergencyStop;
+    case EnergyEvse.FaultState.EvDisconnected:
+      return EnergyEvse.FaultState.EvDisconnected;
+    case EnergyEvse.FaultState.WrongPowerSupply:
+      return EnergyEvse.FaultState.WrongPowerSupply;
+    case EnergyEvse.FaultState.LiveNeutralSwap:
+      return EnergyEvse.FaultState.LiveNeutralSwap;
+    case EnergyEvse.FaultState.OverTemperature:
+      return EnergyEvse.FaultState.OverTemperature;
+    case EnergyEvse.FaultState.Other:
+      return EnergyEvse.FaultState.Other;
+    default:
+      return EnergyEvse.FaultState.NoError;
   }
 }
 
@@ -982,7 +1026,7 @@ async function applyClosureControlTestEventTrigger(endpoint: MatterbridgeEndpoin
 }
 
 // The fake-load/fake-generator trigger carries no endpoint field on the wire, but every TC_EPM_*/TC_EEM_*/
-// TC_DEM_* chipTests.json entry that uses it sets "endpoint": 206 (ElectricalSensor) — see
+// TC_DEM_* chipTests.json entry that uses it pins its own endpoint (206, or 2064/2065/2066 for PeriodicEnergy) — see
 // chipTestActiveEndpointId — so this never needs to guess or broadcast across createChipTestDevices()'s other
 // ElectricalPowerMeasurement/ElectricalEnergyMeasurement endpoints (the imported/exported variants).
 
@@ -1055,6 +1099,25 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
         { cumulativeEnergyExported: { energy: (current?.energy ?? 0) + electricalEnergyMeasurementExportedEnergyPerTick } },
         log,
       );
+    }
+    // TC_EEM_2_4/2_5 read PeriodicEnergyImported/Exported twice, 3 seconds apart, and assert the energy differs,
+    // so each tick reports the energy of the last 1 second period with a small random variation, then fires
+    // PeriodicEnergyMeasured as the spec requires at the end of each measurement period.
+    const endTimestamp = Math.floor(Date.now() / 1000);
+    const periodic = (energyPerTick: number): ElectricalEnergyMeasurement.EnergyMeasurement => ({
+      energy: energyPerTick + Math.floor(Math.random() * 51),
+      startTimestamp: endTimestamp - 1,
+      endTimestamp,
+    });
+    if (isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyImported')) {
+      const energyImported = periodic(electricalEnergyMeasurementImportedEnergyPerTick);
+      await endpoint.setCluster(ElectricalEnergyMeasurement, { periodicEnergyImported: energyImported }, log);
+      await endpoint.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyImported }, log);
+    }
+    if (!isFakeLoad && endpoint.hasAttributeServer(ElectricalEnergyMeasurement.id, 'periodicEnergyExported')) {
+      const energyExported = periodic(electricalEnergyMeasurementExportedEnergyPerTick);
+      await endpoint.setCluster(ElectricalEnergyMeasurement, { periodicEnergyExported: energyExported }, log);
+      await endpoint.triggerEvent(ElectricalEnergyMeasurement, 'periodicEnergyMeasured', { energyExported }, log);
     }
   };
 
@@ -1444,7 +1507,7 @@ async function handleWaterHeaterManagementTestEventTrigger(eventTrigger: bigint)
 // directly rather than broadcasting or guessing. Command validation, ESAState transitions, and
 // PowerAdjustStart/PowerAdjustEnd events are implemented spec-compliantly by
 // MatterbridgeDeviceEnergyManagementServer itself (behaviors/deviceEnergyManagementServer.ts), including
-// reacting to OptOutState changes that must cancel an active session (Matter 1.6 Application Cluster Spec
+// reacting to OptOutState changes that must cancel an active session (Matter 1.6.1 Application Cluster Spec
 // § 9.2.8.8) — these handlers only need to set the attributes each trigger populates or clears.
 async function handleDeviceEnergyManagementTestEventTrigger(eventTrigger: bigint): Promise<boolean> {
   if (
@@ -1717,6 +1780,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
           await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, { operationalState: OperationalState.OperationalStateEnum.Paused });
           break;
         case 'OnFault': {
+          // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
           const errorStateId: OperationalState.ErrorState = command.Param ?? OperationalState.ErrorState.NoError;
           const isNoError = errorStateId === OperationalState.ErrorState.NoError;
           await endpoint.setStateOf(endpoint.behaviors.supported.operationalState, {
@@ -1750,7 +1814,7 @@ async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command:
       return;
     case 'SimulateLatchPosition': {
       // TC_SWTCH.py's _send_latching_switch_named_pipe_command(): move a latching switch to a new position.
-      // Matter 1.6.0 § 1.13.7.1: SwitchLatched is generated when the switch is moved to a NEW position, so a
+      // Matter 1.6.1 § 1.13.7.1: SwitchLatched is generated when the switch is moved to a NEW position, so a
       // command that re-states the position the switch is already in must stay silent. TC_SWTCH_2_2 relies on
       // that: it parks the switch at position 0 (usually already the current value) and resets its event
       // listener, so a spurious SwitchLatched(0) here would be read as the answer to its next position change.
@@ -1805,7 +1869,7 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
   await endpoint.triggerEvent(Switch.id, 'initialPress', { newPosition }, matterbridge.log);
   matterbridge.log.info(`CHIP test app pipe pressed Switch position ${newPosition} on endpoint ${endpointId} for ${durationMs}ms`);
 
-  // Matter 1.6.0 § 1.13.7.3: LongPress is generated once the press has been held past the long-press threshold,
+  // Matter 1.6.1 § 1.13.7.3: LongPress is generated once the press has been held past the long-press threshold,
   // i.e. LongPressDelayMillis into the LongPressDurationMillis the command asks us to hold for.
   if (features.momentarySwitchLongPress) {
     await wait(Math.min(delayMs, durationMs));
@@ -1816,7 +1880,7 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
   }
 
   await endpoint.setAttribute(Switch.id, 'currentPosition', 0, matterbridge.log);
-  // Matter 1.6.0 § 1.13.7.5/1.13.7.4: a release after a long press reports LongRelease when MSL is supported,
+  // Matter 1.6.1 § 1.13.6.5/1.13.6.4: a release after a long press reports LongRelease when MSL is supported,
   // and ShortRelease when only MSR is. With neither feature the position simply returns to 0 silently.
   if (features.momentarySwitchLongPress) {
     await endpoint.triggerEvent(Switch.id, 'longRelease', { previousPosition: newPosition }, matterbridge.log);
@@ -1830,14 +1894,14 @@ async function simulateChipTestSwitchLongPress(matterbridge: Matterbridge, endpo
  * Simulates a rapid sequence of press/release cycles on a Switch endpoint, for TC_SWTCH.py's SimulateMultiPress
  * app pipe command (_send_multi_press_named_pipe_command(), used by TC_SWTCH_2_5).
  *
- * Matter 1.6.0 § 1.13.7: a multi-press sequence reports InitialPress on every press, MultiPressOngoing from the
+ * Matter 1.6.1 § 1.13.7: a multi-press sequence reports InitialPress on every press, MultiPressOngoing from the
  * second press onwards, ShortRelease after each release when MSR is supported, and a single MultiPressComplete
  * once the sequence ends. MultiPressComplete is emitted here rather than on a following SimulateSwitchIdle,
  * because TC_SWTCH_2_5 calls _ask_for_switch_idle(omit_for_simulator=True) — which sends nothing at all under
  * the button simulator — and then waits for the event.
  *
  * Both press counts are capped at MultiPressMax, whose constraint on CurrentNumberOfPressesCounted and
- * TotalNumberOfPressesCounted is `max MultiPressMax` (Matter 1.6.0 § 1.13.7.6/1.13.7.7).
+ * TotalNumberOfPressesCounted is `max MultiPressMax` (Matter 1.6.1 § 1.13.6.6/1.13.6.7).
  *
  * @param {Matterbridge} matterbridge - The Matterbridge instance.
  * @param {MatterbridgeEndpoint} endpoint - The endpoint hosting the Switch cluster server.

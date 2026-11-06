@@ -47,7 +47,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
    * Also re-applies StartUpCurrentLevel on restart. matter.js guards its own startup
    * logic with `!this.endpoint.ownerOfType(AggregatorEndpoint)` (matter.js PR #3048), so it never runs for a
    * bridged endpoint — and every Matterbridge device sits under the aggregator. That guard has no basis in
-   * the specification: Matter 1.6.0 § 1.6.6.15 excludes only OTA reboots, and Core § 7.12.1 counts "a program
+   * the specification: Matter 1.6.1 § 1.6.6.15 excludes only OTA reboots, and Core § 7.12.1 counts "a program
    * restart" as a restart. The attribute is still advertised as supported (LVL.S.A4000), so without this
    * override a controller can write it, read it back, and never see it take effect. StartUpCurrentLevel
    * defaults to null in createDefaultLevelControlClusterServer(), and null means "keep the previous value",
@@ -66,7 +66,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       const state = this.state as unknown as { startUpCurrentLevel: number | null; currentLevel: number | null };
       const startUpCurrentLevel = state.startUpCurrentLevel ?? null;
       const currentLevel = state.currentLevel;
-      // Matter 1.6.0 § 1.6.6.15: 0 selects the minimum permitted level, null keeps the previous value, any
+      // Matter 1.6.1 § 1.6.6.15: 0 selects the minimum permitted level, null keeps the previous value, any
       // other value is used as-is.
       const targetLevel = startUpCurrentLevel === 0 ? this.minLevel : (startUpCurrentLevel ?? currentLevel);
       if (targetLevel !== currentLevel) state.currentLevel = targetLevel;
@@ -84,7 +84,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async moveToLevel(request: LevelControl.MoveToLevelRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
+      // Matter 1.6.1 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
       await super.moveToLevel(request);
       return;
     }
@@ -101,7 +101,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevel called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
+    // Matter 1.6.1 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress.
     await super.moveToLevel(request);
     this.endpoint.emitCommand(LevelControl, 'moveToLevel', request, this.context);
   }
@@ -116,7 +116,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async moveToLevelWithOnOff(request: LevelControl.MoveToLevelRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
+      // Matter 1.6.1 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.1 § 1.6.4.1.2).
       await super.moveToLevelWithOnOff(request);
       return;
     }
@@ -133,7 +133,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveToLevelWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
+    // Matter 1.6.1 § 1.6.7.1.1: Process the temporary Options bitmap, then move CurrentLevel to the Level field over TransitionTime, updating RemainingTime while the transition is in progress. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.1 § 1.6.4.1.2).
     await super.moveToLevelWithOnOff(request);
     this.endpoint.emitCommand(LevelControl, 'moveToLevelWithOnOff', request, this.context);
   }
@@ -148,7 +148,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async move(request: LevelControl.MoveRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
+      // Matter 1.6.1 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
       await super.move(request);
       return;
     }
@@ -165,7 +165,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: move called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
+    // Matter 1.6.1 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached.
     await super.move(request);
     this.endpoint.emitCommand(LevelControl, 'move', request, this.context);
   }
@@ -180,7 +180,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async moveWithOnOff(request: LevelControl.MoveRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
+      // Matter 1.6.1 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.1 § 1.6.4.1.2).
       await super.moveWithOnOff(request);
       return;
     }
@@ -197,7 +197,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: moveWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
+    // Matter 1.6.1 § 1.6.7.2.3: Reject a Rate of zero with INVALID_COMMAND, then move CurrentLevel continuously up or down at the given rate until the allowed maximum or minimum is reached. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.1 § 1.6.4.1.2).
     await super.moveWithOnOff(request);
     this.endpoint.emitCommand(LevelControl, 'moveWithOnOff', request, this.context);
   }
@@ -212,7 +212,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async step(request: LevelControl.StepRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
+      // Matter 1.6.1 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
       await super.step(request);
       return;
     }
@@ -229,7 +229,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: step called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
+    // Matter 1.6.1 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device.
     await super.step(request);
     this.endpoint.emitCommand(LevelControl, 'step', request, this.context);
   }
@@ -244,7 +244,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async stepWithOnOff(request: LevelControl.StepRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
+      // Matter 1.6.1 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.1 § 1.6.4.1.2).
       await super.stepWithOnOff(request);
       return;
     }
@@ -261,7 +261,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: stepWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.0 § 1.6.4.1.2).
+    // Matter 1.6.1 § 1.6.7.3.4: Reject a StepSize of zero with INVALID_COMMAND, then change CurrentLevel by StepSize in the given direction, clamping at the maximum or minimum level allowed for the device. With the 'with On/Off' variant the OnOff attribute is also affected (Matter 1.6.1 § 1.6.4.1.2).
     await super.stepWithOnOff(request);
     this.endpoint.emitCommand(LevelControl, 'stepWithOnOff', request, this.context);
   }
@@ -276,7 +276,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async stop(request: LevelControl.StopRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
+      // Matter 1.6.1 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
       await super.stop(request);
       return;
     }
@@ -291,7 +291,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: stop called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
+    // Matter 1.6.1 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
     await super.stop(request);
     this.endpoint.emitCommand(LevelControl, 'stop', request, this.context);
   }
@@ -306,7 +306,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
   override async stopWithOnOff(request: LevelControl.StopRequest): Promise<void> {
     // v8 ignore next - forwarder gated off under MATTERBRIDGE_CHIP_TEST
     if (process.env.MATTERBRIDGE_CHIP_TEST) {
-      // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
+      // Matter 1.6.1 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
       await super.stopWithOnOff(request);
       return;
     }
@@ -321,7 +321,7 @@ export class MatterbridgeLevelControlServer extends LevelControlServer {
       context: this.context,
     });
     device.log.debug(`MatterbridgeLevelControlServer: stopWithOnOff called (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
-    // Matter 1.6.0 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
+    // Matter 1.6.1 § 1.6.7.4.1: Terminate any MoveToLevel, Move or Step in progress, leaving CurrentLevel at its value on receipt and setting RemainingTime to 0.
     await super.stopWithOnOff(request);
     this.endpoint.emitCommand(LevelControl, 'stopWithOnOff', request, this.context);
   }

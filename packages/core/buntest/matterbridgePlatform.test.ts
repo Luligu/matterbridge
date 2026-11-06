@@ -11,9 +11,13 @@ const MATTER_PORT = 7000;
 const MATTER_CREATE_ONLY = true;
 
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, test, vi } from 'bun:test';
+import path from 'node:path';
 
+import { BasicInformation } from '@matter/types/clusters/basic-information';
+import { BridgedDeviceBasicInformation } from '@matter/types/clusters/bridged-device-basic-information';
 import { Descriptor } from '@matter/types/clusters/descriptor';
 import { EndpointNumber } from '@matter/types/datatype';
+import { Namespace } from '@matter/types/globals';
 import { flushAsync } from '@matterbridge/test-utils';
 import {
   addBridgedEndpoint,
@@ -33,15 +37,22 @@ import { log, loggerDebugSpy, loggerLogSpy, loggerWarnSpy, setDebug, setupTest }
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { PlatformMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, wr } from 'node-ansi-logger';
+import { NodeStorageManager } from 'node-persist-manager';
 
 import { bridgedNode, contactSensor, humiditySensor, powerSource, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { getSnapshot } from '../src/matterbridgeEndpointHelpers.js';
 import { assertMatterbridgePlatform, isMatterbridgePlatform, MatterbridgePlatform } from '../src/matterbridgePlatform.js';
 import { toApiClusters, toApiDevice } from '../src/matterNodeHelpers.js';
+import { waitFor } from './bunUtils.js';
 
 // Setup the test environment
 await setupTest(NAME, false);
+
+// Spy on the Matterbridge node helpers injected into the platform via setMatterNode.
+const addBridgedEndpointMatterbridgeSpy = vi.fn(addBridgedEndpoint);
+const removeBridgedEndpointMatterbridgeSpy = vi.fn(removeBridgedEndpoint);
+const removeAllBridgedEndpointsMatterbridgeSpy = vi.fn(removeAllBridgedEndpoints);
 
 describe('Matterbridge platform', () => {
   let matterbridge: PlatformMatterbridge;
@@ -124,7 +135,7 @@ describe('Matterbridge platform', () => {
 
     // Inject in the platform the Matterbridge node helpers using local spies
     // @ts-expect-error - setMatterNode is intentionally private
-    platform.setMatterNode(addBridgedEndpoint, removeBridgedEndpoint, removeAllBridgedEndpoints, addVirtualEndpoint);
+    platform.setMatterNode(addBridgedEndpointMatterbridgeSpy, removeBridgedEndpointMatterbridgeSpy, removeAllBridgedEndpointsMatterbridgeSpy, addVirtualEndpoint);
 
     // Add the platform to the Matterbridge environment
     expect(platform).toBeDefined();
@@ -167,6 +178,18 @@ describe('Matterbridge platform', () => {
       matterbridgeServer.request({ type: 'platform_get_apidevices', src: 'matterbridge', dst: 'platform', params: { pluginName: 'missing-plugin', extended: false } });
       matterbridgeServer.request({ type: 'platform_get_apiselectdevices', src: 'matterbridge', dst: 'platform', params: { pluginName: 'missing-plugin' } });
       matterbridgeServer.request({ type: 'platform_get_apiselectentities', src: 'matterbridge', dst: 'platform', params: { pluginName: 'missing-plugin' } });
+      matterbridgeServer.request({
+        type: 'platform_unregister_device',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: 'missing-plugin', serialNumber: 'missing-serial', uniqueId: 'missing-unique-id' },
+      });
+      matterbridgeServer.request({
+        type: 'platform_rename_device',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: 'missing-plugin', serialNumber: 'missing-serial', uniqueId: 'missing-unique-id', label: 'New name' },
+      });
       matterbridgeServer.request({
         type: 'platform_get_apiclusters',
         src: 'matterbridge',
@@ -704,10 +727,10 @@ describe('Matterbridge platform', () => {
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 201;
-    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Humidity' }] }, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 2, label: 'Humidity' }] }, true);
     child2.addRequiredClusterServers();
     child2.number = 202;
-    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Humidity' }] }, true);
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 3, label: 'Humidity' }] }, true);
     child3.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await testDevice.construction.ready;
@@ -728,10 +751,10 @@ describe('Matterbridge platform', () => {
     const child1 = testDevice.addChildDeviceType('child1', temperatureSensor, undefined, true);
     child1.addRequiredClusterServers();
     child1.number = 202;
-    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 2, label: 'Humidity' }] }, true);
+    const child2 = testDevice.addChildDeviceType('child2', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 2, label: 'Humidity' }] }, true);
     child2.addRequiredClusterServers();
     child2.number = 203;
-    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: 0x07, tag: 3, label: 'Humidity' }] }, true);
+    const child3 = testDevice.addChildDeviceType('child3', humiditySensor, { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonNumber, tag: 3, label: 'Humidity' }] }, true);
     child3.addRequiredClusterServers();
     await platform.registerDevice(testDevice);
     await testDevice.construction.ready;
@@ -1112,6 +1135,187 @@ describe('Matterbridge platform', () => {
       }
     } finally {
       await platform.unregisterDevice(device);
+    }
+  });
+
+  test('platform_unregister_device should acknowledge and unregister the device in the background', async () => {
+    const snackbarSpy = vi.spyOn(platform, 'wssSendSnackbarMessage');
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
+    await platform.unregisterAllDevices();
+    const device = await registerDevice('Unregister device', 'UNREGISTER-001', 'unregisterUniqueId', 'UnregisterDevice', 170);
+    expect(platform.size()).toBe(1);
+
+    const response = await matterbridgeServer.fetch({
+      type: 'platform_unregister_device',
+      src: 'matterbridge',
+      dst: 'platform',
+      params: { pluginName: platform.name, serialNumber: 'UNREGISTER-001', uniqueId: 'unregisterUniqueId' },
+    });
+    expect(response.result.success).toBe(true);
+    await waitFor(() => platform.size() === 0);
+    expect(removeBridgedEndpointMatterbridgeSpy).toHaveBeenCalledWith(platform.name, device);
+    // Bun asymmetric matchers have no asymmetricMatch(): match the close snackbar request with a plain predicate
+    const closeResetting = (message: any): boolean => message?.type === 'frontend_closesnackbarmessage' && message?.params?.message === 'Resetting the device...';
+    await waitFor(() => requestSpy.mock.calls.some(([message]) => closeResetting(message)));
+    expect(snackbarSpy).toHaveBeenCalledWith('Device Unregister device reset', 5, 'success');
+    expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_restartrequired', params: { snackbar: true, fixed: true } }));
+    snackbarSpy.mockRestore();
+    requestSpy.mockRestore();
+  });
+
+  test('platform_unregister_device should acknowledge and do nothing for an unknown device', async () => {
+    await platform.unregisterAllDevices();
+    const device = await registerDevice('Unregister device', 'UNREGISTER-002', 'unregisterUniqueId2', 'UnregisterDevice2', 171);
+    const snackbarSpy = vi.spyOn(platform, 'wssSendSnackbarMessage');
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
+
+    try {
+      const response = await matterbridgeServer.fetch({
+        type: 'platform_unregister_device',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, serialNumber: 'UNREGISTER-002', uniqueId: 'wrongUniqueId' },
+      });
+      expect(response.result.success).toBe(true);
+      await flushAsync();
+      expect(platform.size()).toBe(1);
+      expect(removeBridgedEndpointMatterbridgeSpy).not.toHaveBeenCalled();
+      expect(snackbarSpy).toHaveBeenCalledWith('Device UNREGISTER-002 not found', 5, 'warning');
+      expect(requestSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_restartrequired' }));
+      expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_closesnackbarmessage', params: { message: 'Resetting the device...' } }));
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.WARN,
+        `Unregister device: no device found with serialNumber ${CYAN}UNREGISTER-002${wr} and uniqueId ${CYAN}wrongUniqueId${wr}`,
+      );
+    } finally {
+      snackbarSpy.mockRestore();
+      requestSpy.mockRestore();
+      await platform.unregisterDevice(device);
+    }
+  });
+
+  test('platform_rename_device should acknowledge and persist the node label', async () => {
+    const device = await registerDevice('Rename device', 'RENAME-001', 'renameUniqueId', 'RenameDevice', 172);
+    const storageManager = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, platform.name), logging: false });
+    const storage = await storageManager.createStorage('nodeLabels');
+    const snackbarSpy = vi.spyOn(platform, 'wssSendSnackbarMessage');
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
+    // Bun asymmetric matchers have no asymmetricMatch(): match the close snackbar request with a plain predicate
+    const closeRenaming = (message: any): boolean => message?.type === 'frontend_closesnackbarmessage' && message?.params?.message === 'Renaming the device...';
+
+    try {
+      // Unknown device and empty name are acknowledged but not stored
+      for (const params of [
+        { pluginName: platform.name, serialNumber: 'RENAME-001', uniqueId: 'wrongUniqueId', label: 'Wrong device' },
+        { pluginName: platform.name, serialNumber: 'RENAME-001', uniqueId: 'renameUniqueId', label: '' },
+        { pluginName: platform.name, serialNumber: 'RENAME-001', uniqueId: 'renameUniqueId', label: 'x'.repeat(33) },
+      ]) {
+        const response = await matterbridgeServer.fetch({ type: 'platform_rename_device', src: 'matterbridge', dst: 'platform', params });
+        expect(response.result.success).toBe(true);
+      }
+      await flushAsync();
+      expect(await storage.get<unknown[]>('nodeLabels', [])).toEqual([]);
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, `Rename device: no device found with serialNumber ${CYAN}RENAME-001${wr} and uniqueId ${CYAN}wrongUniqueId${wr}`);
+      const invalidNameWarning = `Rename device: the new name for device ${CYAN}Rename device${wr} must be 1 to 32 characters long`;
+      expect(loggerLogSpy.mock.calls.filter(([level, message]) => level === LogLevel.WARN && message === invalidNameWarning)).toHaveLength(2);
+      expect(snackbarSpy).toHaveBeenCalledWith('Device RENAME-001 not found', 5, 'warning');
+      expect(snackbarSpy).toHaveBeenCalledWith('The new name must be 1 to 32 characters long', 5, 'warning');
+      expect(requestSpy).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_restartrequired' }));
+      expect(requestSpy.mock.calls.filter(([message]) => closeRenaming(message))).toHaveLength(3);
+      requestSpy.mockClear();
+
+      const response = await matterbridgeServer.fetch({
+        type: 'platform_rename_device',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, serialNumber: 'RENAME-001', uniqueId: 'renameUniqueId', label: 'Renamed device' },
+      });
+      expect(response.result.success).toBe(true);
+      await waitFor(() => requestSpy.mock.calls.some(([message]) => closeRenaming(message)));
+      expect(await storage.get<unknown[]>('nodeLabels', [])).toEqual([{ uniqueId: 'renameUniqueId', label: 'Renamed device' }]);
+      expect(device.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel')).toBe('Renamed device');
+      expect(snackbarSpy).toHaveBeenCalledWith('Device Rename device renamed to Renamed device', 5, 'success');
+      expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_restartrequired', params: { snackbar: true, fixed: true } }));
+
+      // A device registered again with the same uniqueId gets the node label
+      await platform.unregisterDevice(device);
+      const renamed = await registerDevice('Rename device', 'RENAME-001', 'renameUniqueId', 'RenameDevice2', 173);
+      expect(renamed.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel')).toBe('Renamed device');
+      await platform.unregisterDevice(renamed);
+
+      // A failure setting the node label is logged and the device stays registered
+      const setAttributeSpy = vi.spyOn(MatterbridgeEndpoint.prototype, 'setAttribute').mockRejectedValueOnce(new Error('Test nodeLabel error'));
+      try {
+        const failed = await registerDevice('Rename device', 'RENAME-001', 'renameUniqueId', 'RenameDevice3', 174);
+        expect(platform.getDevices()).toContain(failed);
+        expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Failed to set nodeLabel Renamed device for device Rename device: Test nodeLabel error'));
+        await platform.unregisterDevice(failed);
+      } finally {
+        setAttributeSpy.mockRestore();
+      }
+
+      // A new platform for the same plugin loads the persisted node labels
+      // @ts-expect-error access private constructor
+      const reloaded: MatterbridgePlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Matterbridge platform reloaded' }), {
+        name: platform.name,
+        type: 'type',
+        version: '1.0.0',
+        debug: false,
+        unregisterOnShutdown: false,
+      });
+      await reloaded.ready;
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Loaded 1 nodeLabels for plugin ${platform.name}`);
+      await (reloaded as any).destroy();
+
+      // Renaming back to the device name removes the node label
+      const restored = await registerDevice('Rename device', 'RENAME-001', 'renameUniqueId', 'RenameDevice4', 175);
+      expect(restored.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel')).toBe('Renamed device');
+      requestSpy.mockClear();
+      await matterbridgeServer.fetch({
+        type: 'platform_rename_device',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, serialNumber: 'RENAME-001', uniqueId: 'renameUniqueId', label: 'Rename device' },
+      });
+      await waitFor(() => requestSpy.mock.calls.some(([message]) => closeRenaming(message)));
+      expect(await storage.get<unknown[]>('nodeLabels', [])).toEqual([]);
+      expect(restored.getAttribute(BridgedDeviceBasicInformation, 'nodeLabel')).toBe('Rename device');
+    } finally {
+      snackbarSpy.mockRestore();
+      requestSpy.mockRestore();
+      await storage.set('nodeLabels', []);
+      await storageManager.close();
+      await platform.unregisterAllDevices();
+    }
+  });
+
+  test('platform_rename_device should set the node label on the BasicInformation cluster', async () => {
+    const device = await registerDevice('Rename basic device', 'RENAME-BASIC-001', 'renameBasicUniqueId', 'RenameBasicDevice', 176);
+    // A device with BasicInformation instead of BridgedDeviceBasicInformation (a server mode device): it needs its own server node, so stub the cluster checks
+    const hasClusterServerSpy = vi.spyOn(device, 'hasClusterServer').mockImplementation((cluster) => cluster === BasicInformation);
+    const setAttributeSpy = vi.spyOn(device, 'setAttribute').mockResolvedValue(true);
+    const storageManager = new NodeStorageManager({ dir: path.join(matterbridge.matterbridgeDirectory, platform.name), logging: false });
+    const storage = await storageManager.createStorage('nodeLabels');
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
+    const closeRenaming = (message: any): boolean => message?.type === 'frontend_closesnackbarmessage' && message?.params?.message === 'Renaming the device...';
+
+    try {
+      const response = await matterbridgeServer.fetch({
+        type: 'platform_rename_device',
+        src: 'matterbridge',
+        dst: 'platform',
+        params: { pluginName: platform.name, serialNumber: 'RENAME-BASIC-001', uniqueId: 'renameBasicUniqueId', label: 'Renamed basic' },
+      });
+      expect(response.result.success).toBe(true);
+      await waitFor(() => requestSpy.mock.calls.some(([message]) => closeRenaming(message)));
+      expect(setAttributeSpy).toHaveBeenCalledWith(BasicInformation, 'nodeLabel', 'Renamed basic', expect.anything());
+    } finally {
+      hasClusterServerSpy.mockRestore();
+      setAttributeSpy.mockRestore();
+      requestSpy.mockRestore();
+      await storage.set('nodeLabels', []);
+      await storageManager.close();
+      await platform.unregisterAllDevices();
     }
   });
 

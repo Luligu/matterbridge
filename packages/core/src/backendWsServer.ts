@@ -359,6 +359,44 @@ export class BackendWsServer {
         }
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: matter });
         this.wssSendRefreshRequired('matter', { matter });
+      } else if (data.method === '/api/unregister-device') {
+        if (!isValidString(data.params.pluginName, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/unregister-device' });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter serialNumber in /api/unregister-device' });
+          return;
+        }
+        if (!isValidString(data.params.uniqueId, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter uniqueId in /api/unregister-device' });
+          return;
+        }
+        this.wssSendSnackbarMessage('Resetting the device...');
+        const { pluginName, serialNumber, uniqueId } = data.params;
+        this.server.request({ type: 'platform_unregister_device', src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, uniqueId } });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
+      } else if (data.method === '/api/rename-device') {
+        if (!isValidString(data.params.pluginName, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/rename-device' });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter serialNumber in /api/rename-device' });
+          return;
+        }
+        if (!isValidString(data.params.uniqueId, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter uniqueId in /api/rename-device' });
+          return;
+        }
+        if (!isValidString(data.params.label, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter label in /api/rename-device' });
+          return;
+        }
+        this.wssSendSnackbarMessage('Renaming the device...');
+        const { pluginName, serialNumber, uniqueId, label } = data.params;
+        this.server.request({ type: 'platform_rename_device', src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
       }
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);

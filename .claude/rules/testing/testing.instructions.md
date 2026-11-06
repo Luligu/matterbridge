@@ -1,5 +1,5 @@
 ---
-description: 'Testing standards for unit tests in the project v.1.0.6'
+description: 'Testing standards for unit tests in the project v.1.0.7'
 paths:
   - '**/*.test.ts'
   - '**/*.spec.ts'

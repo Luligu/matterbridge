@@ -1,4 +1,4 @@
-# Matterbridge Code of Conduct
+# Matterbridge Code of Conduct (v.1.0.0)
 
 ## Our Standards
 

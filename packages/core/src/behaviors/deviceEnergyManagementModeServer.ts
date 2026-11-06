@@ -55,16 +55,16 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
       context: this.context,
     });
     const supported = this.state.supportedModes.find((mode) => mode.mode === request.newMode);
-    // Matter 1.6.0 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
+    // Matter 1.6.1 § 1.10.7.1.1: Reject ChangeToMode with UnsupportedMode if NewMode matches no SupportedModes entry.
     if (!supported) {
       device.log.error(
         `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with unsupported newMode ${request.newMode} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
       );
       return { status: ModeBase.ModeChangeStatus.UnsupportedMode, statusText: 'Unsupported mode' };
     }
-    // Matter 1.6.0 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
+    // Matter 1.6.1 § 1.10.7.1.1: Set CurrentMode to NewMode when the transition succeeds.
     this.state.currentMode = request.newMode;
-    // Matter 1.6.0 § 9.8.7.1.1: A mode tagged NoOptimization prohibits energy usage optimization, so opt the ESA out of adjustment.
+    // Matter 1.6.1 § 9.8.7.1.1: A mode tagged NoOptimization prohibits energy usage optimization, so opt the ESA out of adjustment.
     if (supported.modeTags.find((tag) => tag.value === (DeviceEnergyManagementMode.ModeTag.NoOptimization as number))) {
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer)) {
         await this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
@@ -72,7 +72,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
         });
       }
     } else {
-      // Matter 1.6.0 §§ 9.8.7.1.2-9.8.7.1.4: A mode tagged DeviceOptimization, LocalOptimization, or GridOptimization permits energy usage optimization, so clear the ESA's opt-out.
+      // Matter 1.6.1 §§ 9.8.7.1.2-9.8.7.1.4: A mode tagged DeviceOptimization, LocalOptimization, or GridOptimization permits energy usage optimization, so clear the ESA's opt-out.
       if (this.endpoint.behaviors.has(DeviceEnergyManagementServer)) {
         await this.endpoint.setStateOf(DeviceEnergyManagementServer.with(DeviceEnergyManagement.Feature.PowerForecastReporting, DeviceEnergyManagement.Feature.PowerAdjustment), {
           optOutState: DeviceEnergyManagement.OptOutState.NoOptOut,
@@ -82,7 +82,7 @@ export class MatterbridgeDeviceEnergyManagementModeServer extends DeviceEnergyMa
     device.log.debug(
       `MatterbridgeDeviceEnergyManagementModeServer: changeToMode called with newMode ${request.newMode} => ${supported.label} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
-    // Matter 1.6.0 § 1.10.7.1.1: Transition into the mode associated with NewMode and respond with Success, or with a product-specific status and StatusText when the device is unable to transition.
+    // Matter 1.6.1 § 1.10.7.1.1: Transition into the mode associated with NewMode and respond with Success, or with a product-specific status and StatusText when the device is unable to transition.
     const response = await super.changeToMode(request);
     // The base implementation only rejects an unsupported NewMode, which was already answered above, so the change succeeded.
     this.endpoint.emitCommand(DeviceEnergyManagementMode, 'changeToMode', request, this.context);

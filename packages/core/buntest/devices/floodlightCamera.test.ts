@@ -18,7 +18,7 @@ import { OnOff } from '@matter/types/clusters/on-off';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { WebRtcTransportRequestor } from '@matter/types/clusters/web-rtc-transport-requestor';
 import { EndpointNumber } from '@matter/types/datatype';
-import { StreamUsage } from '@matter/types/globals';
+import { Namespace, StreamUsage } from '@matter/types/globals';
 import {
   addBridgedDevice,
   aggregator,
@@ -347,7 +347,7 @@ describe('FloodlightCamera', () => {
 
   it('should create the mandatory light with custom lightOptions', async () => {
     const device = new FloodlightCamera('Floodlight Camera Light Options', 'FLOODLIGHT-CAMERA-LIGHT-OPTIONS', {
-      lightOptions: { name: 'Front Floodlight', tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }], onOff: true },
+      lightOptions: { name: 'Front Floodlight', tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Front' }], onOff: true },
     });
     const light = device.getChildEndpointById('FrontFloodlight');
     expect(light).toBeDefined();
@@ -389,10 +389,10 @@ describe('FloodlightCamera', () => {
 
   it('should add additional lights with tags and a custom initial state', async () => {
     const device = new FloodlightCamera('Floodlight Camera Multi Light', 'FLOODLIGHT-CAMERA-MULTI-LIGHT', {
-      lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+      lightOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 4, label: 'Middle' }] },
     });
-    const left = device.addLight('Left Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Left' }], onOff: true });
-    const right = device.addLight('Right Floodlight', { tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Right' }] });
+    const left = device.addLight('Left Floodlight', { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Left' }], onOff: true });
+    const right = device.addLight('Right Floodlight', { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 1, label: 'Right' }] });
     expect(left.id).toBe('LeftFloodlight');
     expect(right.id).toBe('RightFloodlight');
 
@@ -417,20 +417,23 @@ describe('FloodlightCamera', () => {
 
   it('should create the camera child endpoint with a tagList', async () => {
     const device = new FloodlightCamera('Floodlight Camera Camera Tags', 'FLOODLIGHT-CAMERA-CAMERA-TAGS', {
-      cameraOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }] },
+      cameraOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Front' }] },
     });
     const cameraChild = device.getChildEndpointById('Camera');
     expect(cameraChild).toBeDefined();
 
     expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
-    expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: 8, tag: 0, label: 'Front' }]);
+    expect(cameraChild?.getAttribute('Descriptor', 'tagList')).toEqual([{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 0, label: 'Front' }]);
   });
 
   it('should add an additional light with an explicit endpoint number', async () => {
     const device = new FloodlightCamera('Floodlight Camera Light Number', 'FLOODLIGHT-CAMERA-LIGHT-NUMBER', {
-      lightOptions: { tagList: [{ mfgCode: null, namespaceId: 8, tag: 4, label: 'Middle' }] },
+      lightOptions: { tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 4, label: 'Middle' }] },
     });
-    const light = device.addLight('Side Floodlight', { number: EndpointNumber(16_02_0), tagList: [{ mfgCode: null, namespaceId: 8, tag: 1, label: 'Side' }] });
+    const light = device.addLight('Side Floodlight', {
+      number: EndpointNumber(16_02_0),
+      tagList: [{ mfgCode: null, namespaceId: Namespace.CommonPosition, tag: 1, label: 'Side' }],
+    });
     expect(light.number).toBe(EndpointNumber(16_02_0));
 
     expect(await addBridgedDevice(aggregator, device, 0, 0, 0, 0)).toBeTruthy();
