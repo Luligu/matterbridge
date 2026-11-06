@@ -95,7 +95,7 @@ describe('MatterbridgePumpConfigurationAndControlServer', () => {
 
   test('CurrentLevel maps to Speed and Capacity with the Level/2 percent rule (Device Library § 5.5.5.2)', async () => {
     // maxConstSpeed 3000: level 120 = 60.0% = speed 1800, capacity 12000; level 200 or more = 100.0%.
-    const device = await addPump('levelPump', { level: 0 });
+    const device = await addPump('levelPump', { onOff: true, level: 0 });
     for (const [level, expected] of [
       [120, [1800, 12000]],
       [200, [3000, 20000]],
@@ -139,7 +139,7 @@ describe('MatterbridgePumpConfigurationAndControlServer', () => {
   });
 
   test('Speed falls back to MaxSpeed, then 0, when MaxConstSpeed is unset', async () => {
-    const device = await addPump('noConstSpeedPump', { level: 200 });
+    const device = await addPump('noConstSpeedPump', { onOff: true, level: 200 });
     await device.setAttribute(PUMP, 'maxConstSpeed', null);
     await write(device, LevelControl.id, 'currentLevel', 254);
     expect(speedCapacity(device)).toEqual([3000, 20000]);
@@ -208,7 +208,7 @@ describe('MatterbridgePumpConfigurationAndControlServer', () => {
   });
 
   test('Minimum and Maximum force MinConstSpeed and MaxConstSpeed, independent of LevelControl (§ 4.2.6.2)', async () => {
-    const device = await addPump('opSpeedPump', { level: 0 });
+    const device = await addPump('opSpeedPump', { onOff: true, level: 0 });
     await write(device, LevelControl.id, 'currentLevel', 120);
     expect(speedCapacity(device)).toEqual([1800, 12000]);
     // Minimum: 1000 rpm = round(1000 / 3000 * 100 * 200) = 6667.
@@ -223,7 +223,7 @@ describe('MatterbridgePumpConfigurationAndControlServer', () => {
     expect(speedCapacity(device)).toEqual([630, 4200]);
 
     // Minimum with no MaxConstSpeed and no MaxSpeed reports 0% capacity, and 0 rpm once MinConstSpeed is unset too.
-    const minNoMax = await addPump('minNoMaxPump');
+    const minNoMax = await addPump('minNoMaxPump', { onOff: true });
     await minNoMax.setAttribute(PUMP, 'maxConstSpeed', null);
     await minNoMax.setAttribute(PUMP, 'maxSpeed', null);
     await minNoMax.setAttribute(PUMP, 'operationMode', OperationMode.Minimum);
@@ -232,5 +232,19 @@ describe('MatterbridgePumpConfigurationAndControlServer', () => {
     await minNoMax.setAttribute(PUMP, 'operationMode', OperationMode.Normal);
     await minNoMax.setAttribute(PUMP, 'operationMode', OperationMode.Minimum);
     expect(speedCapacity(minNoMax)).toEqual([0, 0]);
+  });
+
+  test('OperationMode and CurrentLevel changes while Off keep the pump stopped and apply on the next On (§ 5.5.5.1)', async () => {
+    const device = await addPump('offPump', { onOff: false, level: 120 });
+    // Created Off: initialize() leaves Speed and Capacity unreported (null).
+    await device.setAttribute(PUMP, 'operationMode', OperationMode.Maximum);
+    expect(device.getAttribute(PUMP, 'effectiveOperationMode')).toBe(OperationMode.Maximum);
+    expect([...speedCapacity(device), running(device)]).toEqual([null, null, false]);
+    await device.setAttribute(PUMP, 'operationMode', OperationMode.Normal);
+    await write(device, LevelControl.id, 'currentLevel', 42);
+    expect([...speedCapacity(device), running(device)]).toEqual([null, null, false]);
+    // On applies the level stored while Off (42 = 21%).
+    await write(device, OnOff.id, 'onOff', true);
+    expect([...speedCapacity(device), running(device)]).toEqual([630, 4200, true]);
   });
 });

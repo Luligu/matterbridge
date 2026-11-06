@@ -215,6 +215,7 @@
 <li>[core]: Map device classes explicitly to matter.js classifications, including App to Application.</li>
 <li>[core]: Keep manufacturer-specific operational states across Pause and Resume in <code>MatterbridgeOperationalStateServer</code> and <code>MatterbridgeRvcOperationalStateServer</code>.</li>
 <li>[frontend]: Require the frontend authentication on the plugin <code>/plugins/&lt;name&gt;/api/*</code> routes before dispatching to <code>onFetch</code>. Closes <a href="https://github.com/Luligu/matterbridge/issues/676">#676</a>. Thanks to <a href="https://github.com/macjl">@macjl</a>.</li>
+<li>[behaviors]: Keep the pump stopped when its <code>OperationMode</code> or LevelControl <code>CurrentLevel</code> changes while Off; the new setpoint applies on the next <code>On</code> (Matter 1.6.1 § 5.5.5.1).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3111-2026-10-30">[3.11.1] - 2026-10-30</h2>
