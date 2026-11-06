@@ -29,6 +29,27 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.3] - Dev branch
+
+### Changed
+
+- [matterbridge]: Bump `matterbridge` version to v.3.11.3.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.0.
+- [matterbridge]: Bump `jsdom` to v.31.0.0, replacing CSS parsing, selector matching and computed styles; frontend style assertions may receive different serialized values. See the [release notes](https://github.com/jsdom/jsdom/releases/tag/v31.0.0).
+- [matterbridge]: Bump `marked` to v.18.1.3.
+- [matterbridge]: Bump `oxfmt` to v.0.77.0, including the new HTML formatter introduced in v.0.76.0 and a fix preserving inline JSDoc tags. See the [v.0.76.0](https://github.com/oxc-project/oxc/releases/tag/oxfmt_v0.76.0) and [v.0.77.0](https://github.com/oxc-project/oxc/releases/tag/oxfmt_v0.77.0) release notes.
+- [matterbridge]: Bump `oxlint` to v.1.92.0, fixing `jsdoc/require-param` handling of enclosing function JSDoc and improving lint performance. See the [release notes](https://github.com/oxc-project/oxc/releases/tag/oxlint_v1.92.0).
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2006.
+- [matterbridge]: Bump `vitest` to v.5.1.0, adding `--last-failed` and `--since-last-run`, Node.js module fake-timer support, and fixes for concurrent mock imports and linked-package mocks. See the [release notes](https://github.com/vitest-dev/vitest/releases/tag/v5.1.0).
+- [frontend]: Bump `@rjsf/core` to v.6.11.1.
+- [frontend]: Bump `@rjsf/utils` to v.6.11.1.
+- [frontend]: Bump `@rjsf/validator-ajv8` to v.6.11.1.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.2.1.
+- [frontend]: Bump `vite` to v.8.3.6.
+- [core]: Bump `express-rate-limit` to v.8.7.3.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.2] - 2026-11-06
 
 ### Development News
