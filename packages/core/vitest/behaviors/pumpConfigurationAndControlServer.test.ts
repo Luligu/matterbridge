@@ -253,6 +253,11 @@ describe('Server clusters and behaviors', () => {
     expect(noOnOffPump.hasAttributeServer(OnOff.id, 'onOff')).toBe(false);
     expect(noOnOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBeNull();
     expect(noOnOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBeNull();
+
+    // Without OnOff the pump counts as on, so an OperationMode change applies the setpoint right away.
+    await noOnOffPump.setAttribute(PumpConfigurationAndControl.id, 'operationMode', PumpConfigurationAndControl.OperationMode.Maximum);
+    expect(noOnOffPump.getAttribute(PumpConfigurationAndControl.id, 'speed')).toBe(3000);
+    expect(noOnOffPump.getAttribute(PumpConfigurationAndControl.id, 'capacity')).toBe(20000);
   });
 
   test('should fall back to MaxLevel and treat a null CurrentLevel as stopped', async () => {

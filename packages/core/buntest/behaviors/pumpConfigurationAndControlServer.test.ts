@@ -188,6 +188,9 @@ describe('MatterbridgePumpConfigurationAndControlServer', () => {
     expect(await addBridgedDevice(aggregator, noOnOff, 0, 0, 0, 0)).toBeTruthy();
     expect(noOnOff.hasAttributeServer(OnOff.id, 'onOff')).toBe(false);
     expect(speedCapacity(noOnOff)).toEqual([null, null]);
+    // Without OnOff the pump counts as on, so an OperationMode change applies the setpoint right away.
+    await noOnOff.setAttribute(PUMP, 'operationMode', OperationMode.Maximum);
+    expect(speedCapacity(noOnOff)).toEqual([3000, 20000]);
   });
 
   test('OperationMode is mirrored to EffectiveOperationMode and rejected with FAILURE during LocalOverride', async () => {
