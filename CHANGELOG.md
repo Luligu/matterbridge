@@ -51,6 +51,8 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Home, Devices table and Devices icons request `/api/platform-devices` for each started plugin and replace the rows of that plugin only; an empty reply removes them.
 - [frontend]: Devices table and Devices icons refresh on `refresh_required` like the Home devices: on every change except `matter` and a locked `plugins` refresh.
 - [core]: Document the `Plugin` interface fields.
+- [agents]: Add Bionic / LM Studio to the shared agent stack: update `AGENTS.md` to v.1.0.11 (`@<name>` skill invocation, read the global `~/.agents/AGENTS.md` first), `.agents/README.md` to v.1.0.5, `STYLEGUIDE.md` to v.1.1.1 and `SHARED-AGENTS.md`.
+- [agents]: Update the `verify-agent-context` skill to v.1.0.6: report the global instruction file, the global `~/.agents/AGENTS.md` master and global settings, and group skills by source.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.3.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.0.
 - [matterbridge]: Bump `jsdom` to v.31.0.0, replacing CSS parsing, selector matching and computed styles; frontend style assertions may receive different serialized values. See the [release notes](https://github.com/jsdom/jsdom/releases/tag/v31.0.0).
