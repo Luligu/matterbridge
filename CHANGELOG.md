@@ -31,6 +31,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.3] - Dev branch
 
+### Development News
+
+- [chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the `TimeSynchronization` cluster (`TC_TIMESYNC_2_1.py` to `TC_TIMESYNC_3_1.py`, 14 tests), with its own `root-camera.pics`.
+- [chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the `TlsCertificateManagement` cluster (`TC_TLSCERT_2_1.py` to `TC_TLSCERT_2_13.py`, 13 tests).
+- [chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all available automated harness tests covering the `TlsClientManagement` cluster (`TC_TLSCLIENT_2_1.py`, `3_1`, `3_2`, `3_3`, `3_10` and `3_20`, 6 tests).
+
 ### Breaking changes
 
 - [core]: `/api/devices` (WebSocket and HTTP) returns the stored `Device[]` instead of `ApiDevice[]`; the platform devices are served by `/api/platform-devices`.
@@ -38,11 +44,17 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Rename `/api/savepluginconfig` to `/api/save-plugin-config`.
 - [core]: Rename `/api/viewhistory`, `/api/downloadhistory`, `/api/viewhistorypage` and `/api/downloadhistorypage` to `/api/view-history`, `/api/download-history`, `/api/view-historypage` and `/api/download-historypage`.
 - [types]: Rename `BaseDevice` to `Device`.
+- [core]: Remove the `setUtcTime`, `setTimeZone` and `setDstOffset` Time Synchronization entries from `CommandHandlers`: the cluster lives on the Root Node, which has no plugin command handler.
+- [matterbridge]: Replace the `--root-power-source` param with `--root-camera`, which adds the Power Source, Time Synchronization, TLS Certificate Management and TLS Client Management clusters on the Root endpoint, as required by the camera device types; `MATTERBRIDGE_CHIP_TEST` enables it too.
 
 ### Added
 
 - [types]: Add the `/api/platform-devices` request/response contracts; the response carries the requested `pluginName`.
 - [core]: Handle `/api/platform-devices` in the frontend and backend WebSocket servers, returning the `ApiDevice[]` of one plugin platform.
+- [core]: Add the `MatterbridgeTimeSynchronizationServer`, `MatterbridgeTlsCertificateManagementServer` and `MatterbridgeTlsClientManagementServer` Root Node behaviors from matterbridge-example-camera, with vitest and bun tests.
+- [core]: `MatterbridgeTimeSynchronizationServer` repeats the `DSTTableEmpty` event at most once per hour while the `DSTOffset` list is empty (Matter 1.6.1 § 11.17.10.1).
+- [core]: `MatterbridgeTlsCertificateManagementServer` rejects a `ClientCSR` key pair colliding with another TLS or operational key pair with `DYNAMIC_CONSTRAINT_ERROR` (Matter 1.6.1 § 14.4.6.8).
+- [chip]: Add `root-camera.pics` and the 33 `TIMESYNC`, `TLSCERT` and `TLSCLIENT` conformance tests on the Root endpoint (`npm run chip:test:time-sync`, `chip:test:tls-cert` and `chip:test:tls-client`).
 
 ### Changed
 

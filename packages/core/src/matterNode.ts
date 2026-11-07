@@ -41,11 +41,9 @@ import { Crypto, Environment, LogFormat as MatterLogFormat, LogLevel as MatterLo
 import { Endpoint, ServerNode } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
 import { BridgedDeviceBasicInformationServer } from '@matter/node/behaviors/bridged-device-basic-information';
-import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, PaseClient } from '@matter/protocol';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type { BridgeStatus, PlatformConfig, PlatformSchema, PluginName, PluginStatusUpdate, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
@@ -67,7 +65,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { setupLoggers } from './matterLogger.js';
-import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toDevice } from './matterNodeHelpers.js';
+import { deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode, toDevice } from './matterNodeHelpers.js';
 import { startMatterStorage, stopMatterStorage } from './matterStorage.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
@@ -684,12 +682,15 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       validDiscriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
+    // The root camera clusters are required on the Root Node by the camera device types and are always added for the CHIP tests.
+    const rootCamera = hasParameter('root-camera') || Boolean(process.env.MATTERBRIDGE_CHIP_TEST);
     let rootEndpoint;
-    if (hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST) {
+    if (rootCamera) {
       this.log.warn(' ****************************************************************************************');
-      this.log.warn(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+      this.log.warn(' * Adding the PowerSource, TimeSynchronization, TlsCertificateManagement and            *');
+      this.log.warn(' * TlsClientManagement cluster servers to the root endpoint (root camera).              *');
       this.log.warn(' ****************************************************************************************');
-      rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+      rootEndpoint = rootCameraEndpoint();
     } else {
       rootEndpoint = ServerNode.RootEndpoint;
     }
@@ -765,19 +766,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         reachable: true,
       },
 
-      ...(hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST
-        ? {
-            powerSource: {
-              status: PowerSource.PowerSourceStatus.Active,
-              order: 0,
-              description: 'AC Power',
-              // Matter 1.6.1 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
-              // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
-              endpointList: [EndpointNumber(0)],
-              wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-            },
-          }
-        : {}),
+      ...(rootCamera ? rootCameraOptions() : {}),
     });
 
     /**

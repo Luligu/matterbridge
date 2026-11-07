@@ -181,6 +181,17 @@ Root node clusters:
 - GroupKeyManagement
 - OperationalCredentials
 - PowerSource
+- TimeSynchronization (TimeZone, NTPClient and TimeSyncClient features)
+- TlsCertificateManagement
+- TlsClientManagement
+
+PowerSource, TimeSynchronization, TlsCertificateManagement and TlsClientManagement are the root camera clusters, added
+by `--root-camera` and always by `MATTERBRIDGE_CHIP_TEST` (`rootCameraEndpoint()` in
+`packages/core/src/matterNodeHelpers.ts`). The camera device types (Camera, Floodlight Camera, Video Doorbell, Intercom,
+Audio Doorbell, Snapshot Camera) require them on the Root Node, and these clusters SHALL NOT be on any other endpoint.
+Their TC_TIMESYNC, TC_TLSCERT and TC_TLSCLIENT tests run on endpoint 0 with `/root/root-camera.pics`, each with
+`resetBefore` to clear the persisted Time Synchronization and TLS state (`root.timeSynchronization.*`,
+`root.tlsCertificateManagement.*` and `root.tlsClientManagement.*` in `resetClusterGlobs`).
 
 ## Endpoint 1
 

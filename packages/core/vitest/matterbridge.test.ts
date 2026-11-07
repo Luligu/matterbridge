@@ -31,6 +31,9 @@ import { getInterfaceName } from '@matterbridge/utils/network';
 import { LogLevel, nf } from 'node-ansi-logger';
 import type { MockedFunction } from 'vitest';
 
+import { MatterbridgeTimeSynchronizationServer } from '../src/behaviors/timeSynchronizationServer.js';
+import { MatterbridgeTlsCertificateManagementServer } from '../src/behaviors/tlsCertificateManagementServer.js';
+import { MatterbridgeTlsClientManagementServer } from '../src/behaviors/tlsClientManagementServer.js';
 import { Matterbridge } from '../src/matterbridge.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import { closeMdnsInstance, destroyInstance } from './vitestUtils.js';
@@ -272,8 +275,11 @@ describe('Matterbridge', () => {
     clearInterval((matterbridge as any).checkUpdateInterval);
 
     expect(matterbridge.serverNode).toBeDefined();
-    // Without --root-power-source, the Root endpoint SHALL NOT expose a Power Source cluster.
+    // Without --root-camera, the Root endpoint SHALL NOT expose the Power Source and the camera Root Node clusters.
     expect(matterbridge.serverNode?.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBeFalsy();
+    expect(matterbridge.serverNode?.behaviors.has(MatterbridgeTimeSynchronizationServer)).toBeFalsy();
+    expect(matterbridge.serverNode?.behaviors.has(MatterbridgeTlsCertificateManagementServer)).toBeFalsy();
+    expect(matterbridge.serverNode?.behaviors.has(MatterbridgeTlsClientManagementServer)).toBeFalsy();
     expect(matterbridge.aggregatorNode).toBeDefined();
     expect(matterbridge.matterStorageManager).toBeDefined();
     expect(matterbridge.matterStorageService).toBeDefined();
@@ -468,18 +474,21 @@ describe('Matterbridge', () => {
     expect(matterbridge.matterbridgeContext).toBeDefined();
     if (!matterbridge.matterbridgeContext) return;
 
-    process.argv.push('--root-power-source');
+    process.argv.push('--root-camera');
     const invalidServerNode = await (matterbridge as any).createServerNode(matterbridge.matterbridgeContext, MATTER_PORT + 1, -1, 0x1000);
-    process.argv.splice(process.argv.indexOf('--root-power-source'), 1);
+    process.argv.splice(process.argv.indexOf('--root-camera'), 1);
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTimeSynchronizationServer)).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTlsCertificateManagementServer)).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTlsClientManagementServer)).toBe(true);
     expect(invalidServerNode.state.powerSource.status).toBe(PowerSource.PowerSourceStatus.Active);
     expect(invalidServerNode.state.powerSource.order).toBe(0);
     expect(invalidServerNode.state.powerSource.endpointList).toEqual([0]);
     expect(invalidServerNode.state.powerSource.wiredCurrentType).toBe(PowerSource.WiredCurrentType.Ac);
-    expect(loggerWarnSpy).toHaveBeenCalledWith(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+    expect(loggerWarnSpy).toHaveBeenCalledWith(' * Adding the PowerSource, TimeSynchronization, TlsCertificateManagement and            *');
     expect(loggerWarnSpy).toHaveBeenCalledWith('Invalid passcode -1 for server node Matterbridge. Passcode must be between 0 and 99999999. Generating a random passcode...');
     expect(loggerWarnSpy).toHaveBeenCalledWith(
       'Invalid discriminator 4096 for server node Matterbridge. Discriminator must be between 0 and 4095 (0xFFF). Generating a random discriminator...',

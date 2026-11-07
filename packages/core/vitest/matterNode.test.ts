@@ -27,6 +27,9 @@ import { getInterfaceName } from '@matterbridge/utils/network';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
+import { MatterbridgeTimeSynchronizationServer } from '../src/behaviors/timeSynchronizationServer.js';
+import { MatterbridgeTlsCertificateManagementServer } from '../src/behaviors/tlsCertificateManagementServer.js';
+import { MatterbridgeTlsClientManagementServer } from '../src/behaviors/tlsClientManagementServer.js';
 import { DeviceManager } from '../src/deviceManager.js';
 import type { Matterbridge } from '../src/matterbridge.js';
 import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
@@ -384,9 +387,9 @@ describe('MatterNode', () => {
       1.5,
     );
 
-    process.argv.push('--root-power-source');
+    process.argv.push('--root-camera');
     const invalidServerNode = await matter.createServerNode(MATTER_PORT + 1, -1, 0x1000);
-    process.argv.splice(process.argv.indexOf('--root-power-source'), 1);
+    process.argv.splice(process.argv.indexOf('--root-camera'), 1);
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
@@ -398,6 +401,9 @@ describe('MatterNode', () => {
     expect(invalidServerNode.state.basicInformation.productUrl).toBe('https://matterbridge.io');
     expect(invalidServerNode.state.basicInformation.configurationVersion).toBe(1);
     expect(invalidServerNode.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTimeSynchronizationServer)).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTlsCertificateManagementServer)).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTlsClientManagementServer)).toBe(true);
     const powerSourceState = invalidServerNode.stateOf(PowerSourceServer.with(PowerSource.Feature.Wired));
     expect(powerSourceState.status).toBe(PowerSource.PowerSourceStatus.Active);
     expect(powerSourceState.order).toBe(0);
@@ -429,8 +435,11 @@ describe('MatterNode', () => {
     await matter.serverNode?.construction.ready;
     await matter.aggregatorNode?.construction.ready;
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created ${plg}Matterbridge${db} server node`);
-    // Without --root-power-source, the Root endpoint SHALL NOT expose a Power Source cluster.
+    // Without --root-camera, the Root endpoint SHALL NOT expose the Power Source and the camera Root Node clusters.
     expect(matter.serverNode?.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBeFalsy();
+    expect(matter.serverNode?.behaviors.has(MatterbridgeTimeSynchronizationServer)).toBeFalsy();
+    expect(matter.serverNode?.behaviors.has(MatterbridgeTlsCertificateManagementServer)).toBeFalsy();
+    expect(matter.serverNode?.behaviors.has(MatterbridgeTlsClientManagementServer)).toBeFalsy();
   });
 
   test('Start server node for Matterbridge', async () => {

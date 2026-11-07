@@ -30,6 +30,7 @@
 // @matter
 import { Lifecycle } from '@matter/general';
 import { ServerNode, type SessionsBehavior } from '@matter/node';
+import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import type { ExposedFabricInformation } from '@matter/protocol';
 import { getClusterNameById } from '@matter/types/cluster';
 import { AirQuality } from '@matter/types/clusters/air-quality';
@@ -43,9 +44,10 @@ import { OperationalState } from '@matter/types/clusters/operational-state';
 import { PowerSource } from '@matter/types/clusters/power-source';
 import { RvcOperationalState } from '@matter/types/clusters/rvc-operational-state';
 import { SmokeCoAlarm } from '@matter/types/clusters/smoke-co-alarm';
+import { TimeSynchronization } from '@matter/types/clusters/time-synchronization';
 import { UserLabel } from '@matter/types/clusters/user-label';
 import { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
-import type { ClusterId } from '@matter/types/datatype';
+import { type ClusterId, EndpointNumber } from '@matter/types/datatype';
 import { ThreeLevelAuto } from '@matter/types/globals';
 // @matterbridge
 import type { ApiClusters, ApiDevice, ApiMatter, Device, Cluster, SanitizedExposedFabricInformation, SanitizedSession } from '@matterbridge/types';
@@ -55,6 +57,9 @@ import { isValidArray, isValidNumber, isValidObject } from '@matterbridge/utils/
 import { type AnsiLogger, stringify } from 'node-ansi-logger';
 
 // matterbridge
+import { MATTER_EPOCH_US, MatterbridgeTimeSynchronizationServer } from './behaviors/timeSynchronizationServer.js';
+import { MatterbridgeTlsCertificateManagementServer } from './behaviors/tlsCertificateManagementServer.js';
+import { MatterbridgeTlsClientManagementServer } from './behaviors/tlsClientManagementServer.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { capitalizeFirstLetter, featuresFor, getAttribute, getSnapshot } from './matterbridgeEndpointHelpers.js';
 
@@ -590,4 +595,77 @@ export function getVendorIdName(vendorId: number | undefined): string {
     // no default
   }
   return vendorName;
+}
+
+/**
+ * Returns the Root Node endpoint type of a server node that hosts camera device types (`--root-camera` or
+ * `MATTERBRIDGE_CHIP_TEST`): the Root Node with the Power Source, Time Synchronization, TLS Certificate Management
+ * and TLS Client Management cluster servers.
+ *
+ * Matter 1.6.1 § 2.1: Camera, Floodlight Camera and Video Doorbell (through their Camera), Intercom, Audio Doorbell and
+ * Snapshot Camera assert PowerSourceCond, TimeSync*Cond, TLSCertificatesCond and TLSClientCond on the Root Node. These
+ * clusters have Node scope and SHALL NOT be present on any other endpoint (§ 11.17, § 14.4, § 14.5 of the Core
+ * specification), so a bridge exposing any of these device types needs them on its own Root Node.
+ *
+ * @returns {ReturnType<typeof rootCameraEndpoint>} The Root Node endpoint type with the four cluster servers.
+ */
+// oxlint-disable-next-line typescript/explicit-module-boundary-types, typescript/explicit-function-return-type -- the endpoint type is inferred from the behaviors
+export function rootCameraEndpoint() {
+  return ServerNode.RootEndpoint.with(
+    PowerSourceServer.with(PowerSource.Feature.Wired),
+    MatterbridgeTimeSynchronizationServer,
+    MatterbridgeTlsCertificateManagementServer,
+    MatterbridgeTlsClientManagementServer,
+  );
+}
+
+/**
+ * Returns the initial state of the four cluster servers added by {@link rootCameraEndpoint}, to spread into the
+ * `ServerNode.create()` options.
+ *
+ * @returns {ReturnType<typeof rootCameraOptions>} The initial state of the Power Source, Time Synchronization, TLS Certificate Management and TLS Client Management cluster servers.
+ */
+// oxlint-disable-next-line typescript/explicit-module-boundary-types, typescript/explicit-function-return-type -- the options are inferred and checked by ServerNode.create()
+export function rootCameraOptions() {
+  return {
+    powerSource: {
+      status: PowerSource.PowerSourceStatus.Active,
+      order: 0,
+      description: 'AC Power',
+      // Matter 1.6.1 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
+      // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
+      endpointList: [EndpointNumber(0)],
+      wiredCurrentType: PowerSource.WiredCurrentType.Ac,
+    },
+    // Matter 1.6.1 § 11.17: the TimeSyncClient, NTPClient and TimeZone features are required by a Camera; the clock is the host clock.
+    timeSynchronization: {
+      utcTime: null,
+      granularity: TimeSynchronization.Granularity.NoTimeGranularity,
+      timeSource: TimeSynchronization.TimeSource.None,
+      trustedTimeSource: null,
+      defaultNtp: null,
+      supportsDnsResolve: false,
+      // Matter 1.6.1 § 11.17.8.6: the TimeZone attribute SHALL have at least one entry, UTC by default. The epoch-us ValidAt 0 is the
+      // Matter epoch, kept by matter.js as Unix microseconds.
+      timeZone: [{ offset: 0, validAt: MATTER_EPOCH_US }],
+      dstOffset: [],
+      localTime: null,
+      timeZoneDatabase: TimeSynchronization.TimeZoneDatabase.None,
+      // Matter 1.6.1 § 11.17.8.11: TimeZoneListMaxSize is 1 or 2, the second entry handling a scheduled time zone change.
+      timeZoneListMaxSize: 2,
+      dstOffsetListMaxSize: 2,
+    },
+    // Matter 1.6.1 § 14.4.5: MaxRootCertificates is 5 to 254 and MaxClientCertificates is 2 to 254, per fabric.
+    tlsCertificateManagement: {
+      maxRootCertificates: 5,
+      provisionedRootCertificates: [],
+      maxClientCertificates: 5,
+      provisionedClientCertificates: [],
+    },
+    // Matter 1.6.1 § 14.5.6.1: MaxProvisioned is 5 to 254, per fabric.
+    tlsClientManagement: {
+      maxProvisioned: 5,
+      provisionedEndpoints: [],
+    },
+  };
 }
