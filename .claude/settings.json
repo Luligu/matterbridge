@@ -1,6 +1,14 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "_comment": "Claude settings v.1.0.9",
+  "_comment": "Claude settings v.1.0.10",
+  "sandbox": {
+    "enabled": true,
+    "autoAllowBashIfSandboxed": false,
+    "network": {
+      "allowLocalBinding": true,
+      "allowedDomains": ["api.github.com", "matterbridge.io"]
+    }
+  },
   "permissions": {
     "deny": [
       "Read(.env)",
