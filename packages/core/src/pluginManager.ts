@@ -3,7 +3,7 @@
  * @description This file contains the PluginManager class.
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.4.0
+ * @version 1.4.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -333,6 +333,27 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             }
           }
           break;
+        case 'plugins_getconfig':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.server.respond({ ...msg, result: { config: plugin.configJson } });
+            } else {
+              this.server.respond({ ...msg, result: { config: undefined } });
+            }
+          }
+          break;
+        case 'plugins_setconfig':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              plugin.configJson = msg.params.config;
+              this.server.respond({ ...msg, result: { success: true } });
+            } else {
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
+            }
+          }
+          break;
         case 'plugins_getschema':
           {
             const plugin = this.get(msg.params.name);
@@ -567,7 +588,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       frontendPath: plugin.frontendPath,
       hasWhiteList: plugin.configJson?.whiteList !== undefined,
       hasBlackList: plugin.configJson?.blackList !== undefined,
-      matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
+      matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : plugin.matter,
     };
   }
 

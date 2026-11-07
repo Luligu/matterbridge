@@ -3,7 +3,7 @@
  * @description This file contains the class MatterNode.
  * @author Luca Liguori
  * @created 2025-10-01
- * @version 1.1.3
+ * @version 1.1.4
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -48,7 +48,7 @@ import { PowerSource } from '@matter/types/clusters/power-source';
 import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { BridgeStatus, PluginName, PluginStatusUpdate, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
+import type { BridgeStatus, PlatformConfig, PlatformSchema, PluginName, PluginStatusUpdate, SharedMatterbridge, WorkerMessage } from '@matterbridge/types';
 import { dev, MATTER_STORAGE_DIR, NODE_STORAGE_DIR, plg } from '@matterbridge/types';
 import { getIntParameter, getParameter, hasAnyParameter, hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
@@ -331,7 +331,10 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       // Load only the specified plugin
       this.log.debug(`Loading plugin ${CYAN}${this.pluginName}${db}...`);
       await this.pluginManager.load(this.pluginName);
-      this.pluginStatusUpdate(this.pluginName, { loaded: this.pluginManager.get(this.pluginName)?.loaded });
+      const plugin = this.pluginManager.get(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { loaded: plugin?.loaded });
+      if (plugin?.configJson) this.pluginSetConfig(plugin.name, plugin.configJson);
+      if (plugin?.schemaJson) this.pluginSetSchema(plugin.name, plugin.schemaJson);
       this.log.debug(`Loaded plugin ${CYAN}${this.pluginName}${db}`);
 
       this.log.debug(`Created MatterNode instance for plugin ${CYAN}${this.pluginName}${db}`);
@@ -350,6 +353,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await Promise.all(loadPromises);
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
         this.pluginStatusUpdate(plugin.name, { loaded: plugin.loaded });
+        if (plugin.configJson) this.pluginSetConfig(plugin.name, plugin.configJson);
+        if (plugin.schemaJson) this.pluginSetSchema(plugin.name, plugin.schemaJson);
       }
       this.log.debug('Loaded all plugins');
 
@@ -378,6 +383,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
 
     if (!this.pluginName) {
+      this.matterbridgeStatusUpdate('starting');
+
       // Start all loaded plugins
       this.log.debug(`Starting all plugins for ${this.storeId}...`);
       const startPromises: Promise<Plugin | undefined>[] = [];
@@ -387,6 +394,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await Promise.all(startPromises);
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled)) {
         this.pluginStatusUpdate(plugin.name, { started: plugin.started, registeredDevices: plugin.registeredDevices });
+        if (plugin.configJson) this.pluginSetConfig(plugin.name, plugin.configJson);
+        if (plugin.schemaJson) this.pluginSetSchema(plugin.name, plugin.schemaJson);
       }
       this.log.debug(`Started all plugins for ${this.storeId}`);
 
@@ -412,6 +421,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       await this.pluginManager.start(this.pluginName, 'Starting MatterNode');
       const plugin = this.pluginManager.get(this.pluginName);
       this.pluginStatusUpdate(this.pluginName, { started: plugin?.started, registeredDevices: plugin?.registeredDevices });
+      if (plugin?.configJson) this.pluginSetConfig(plugin.name, plugin.configJson);
+      if (plugin?.schemaJson) this.pluginSetSchema(plugin.name, plugin.schemaJson);
       this.log.debug(`Started plugin ${this.pluginName}...`);
 
       // Start the server node
@@ -433,6 +444,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
     this.log.debug(`Started dependant MatterNodes for ${this.storeId}`);
 
+    if (!this.pluginName) this.matterbridgeStatusUpdate('started');
     this.log.info(`Started MatterNode for ${this.storeId}`);
     await this.yieldToNode();
   }
@@ -460,11 +472,17 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     }
 
     if (!this.pluginName) {
+      this.matterbridgeStatusUpdate('stopping');
       this.log.debug(`Stopping all plugins for ${this.storeId}...`);
 
       const shutdownPromises: Promise<Plugin | undefined>[] = [];
       for (const plugin of this.pluginManager.array().filter((p) => p.enabled && p.started)) {
-        shutdownPromises.push(this.pluginManager.shutdown(plugin, 'Stopping MatterNode'));
+        shutdownPromises.push(
+          this.pluginManager.shutdown(plugin, 'Stopping MatterNode').then((result) => {
+            this.pluginStatusUpdate(plugin.name, { loaded: plugin.loaded, started: plugin.started, configured: plugin.configured, registeredDevices: plugin.registeredDevices });
+            return result;
+          }),
+        );
       }
       await Promise.all(shutdownPromises);
 
@@ -473,6 +491,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
       this.log.debug(`Stopping plugin ${this.pluginName}...`);
 
       await this.pluginManager.shutdown(this.pluginName, 'Stopping MatterNode');
+      const plugin = this.pluginManager.get(this.pluginName);
+      this.pluginStatusUpdate(this.pluginName, { loaded: plugin?.loaded, started: plugin?.started, configured: plugin?.configured, registeredDevices: plugin?.registeredDevices });
 
       this.log.debug(`Stopped plugin ${this.pluginName}`);
     }
@@ -490,6 +510,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
     await this.stopMatterStorage();
 
+    if (!this.pluginName) this.matterbridgeStatusUpdate('stopped');
     this.log.info(`Stopped MatterNode for ${this.storeId}`);
     await this.yieldToNode();
   }
@@ -766,6 +787,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     serverNode.lifecycle.commissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was initially commissioned successfully!`);
       deleteAdvertisingNode(storeId);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
@@ -773,6 +795,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     serverNode.lifecycle.decommissioned.on(() => {
       this.log.notice(`Server node for ${storeId} was fully decommissioned successfully!`);
       deleteAdvertisingNode(storeId);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is offline`, timeout: 5, severity: 'warning' } });
       // The server node is reset to factory defaults and the subscribeAttribute listeners of the plugins are lost (#657)
@@ -806,6 +829,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
         this.log.notice(`Server node for ${storeId} is already commissioned. Waiting for controllers to connect ...`);
         deleteAdvertisingNode(storeId);
       }
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is online`, timeout: 5, severity: 'success' } });
       this.emit('online', storeId);
@@ -815,6 +839,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
     serverNode.lifecycle.offline.on(() => {
       this.log.notice(`Server node for ${storeId} is offline`);
       deleteAdvertisingNode(storeId);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
       this.server.request({ type: 'frontend_snackbarmessage', src: 'matter', dst: 'frontend', params: { message: `${storeId} is offline`, timeout: 5, severity: 'warning' } });
       this.emit('offline', storeId);
@@ -840,6 +865,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
           break;
       }
       this.log.notice(`Commissioned fabric index ${fabricIndex} ${action} on server node for ${storeId}: ${debugStringify(serverNode.state.commissioning.fabrics[fabricIndex])}`);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
@@ -849,6 +875,7 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      */
     serverNode.events.sessions.opened.on((session) => {
       this.log.notice(`Session opened on server node for ${storeId}: ${debugStringify(session)}`);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
@@ -857,12 +884,14 @@ export class MatterNode extends EventEmitter<MatterEvents> {
      */
     serverNode.events.sessions.closed.on((session) => {
       this.log.notice(`Session closed on server node for ${storeId}: ${debugStringify(session)}`);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
     /** This event is triggered when a subscription gets added or removed on an operative session. */
     serverNode.events.sessions.subscriptionsChanged.on((session) => {
       this.log.notice(`Session subscriptions changed on server node for ${storeId}: ${debugStringify(session)}`);
+      this.pluginMatterUpdate(serverNode);
       this.server.request({ type: 'frontend_refreshrequired', src: 'matter', dst: 'frontend', params: { changed: 'matter', matter: { ...getServerNodeData(serverNode) } } });
     });
 
@@ -1472,6 +1501,40 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   }
 
   /**
+   * Sends the plugin config to the global plugin manager the frontend api plugins come from.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {PlatformConfig} config - The plugin config.
+   * @returns {void}
+   */
+  pluginSetConfig(pluginName: string, config: PlatformConfig): void {
+    this.server.request({ type: 'plugins_setconfig', src: 'matter', dst: 'plugins', params: { name: pluginName, config } });
+  }
+
+  /**
+   * Sends the plugin schema to the global plugin manager the frontend api plugins come from.
+   *
+   * @param {string} pluginName - The name of the plugin.
+   * @param {PlatformSchema} schema - The plugin schema.
+   * @returns {void}
+   */
+  pluginSetSchema(pluginName: string, schema: PlatformSchema): void {
+    this.server.request({ type: 'plugins_setschema', src: 'matter', dst: 'plugins', params: { name: pluginName, schema } });
+  }
+
+  /**
+   * Sends the matter data of the plugin server node to the global plugin manager the frontend api plugins come from.
+   * Only the MatterNode of a plugin in childbridge mode sends it: in bridge mode and for the server mode devices the plugin has no server node.
+   *
+   * @param {ServerNode} serverNode - The server node of the plugin.
+   * @returns {void}
+   */
+  pluginMatterUpdate(serverNode: ServerNode): void {
+    if (!this.pluginName || this.device) return;
+    this.server.request({ type: 'plugins_set', src: 'matter', dst: 'plugins', params: { plugin: { name: this.pluginName, matter: getServerNodeData(serverNode) } } });
+  }
+
+  /**
    * Sends a plugin status update to the global plugin manager and to the frontend.
    *
    * @param {string} pluginName - The name of the plugin.
@@ -1490,12 +1553,13 @@ export class MatterNode extends EventEmitter<MatterEvents> {
   }
 
   /**
-   * Sends a matterbridge status update to the frontend.
+   * Sets the matterbridge status and sends a matterbridge status update to the frontend.
    *
    * @param {BridgeStatus} status - The new matterbridge status.
    * @returns {void}
    */
   matterbridgeStatusUpdate(status: BridgeStatus): void {
+    this.server.request({ type: 'matterbridge_apisettings', src: 'matter', dst: 'matterbridge', params: { bridgeStatus: status } });
     this.server.request({
       type: 'frontend_broadcast_message',
       src: 'matter',

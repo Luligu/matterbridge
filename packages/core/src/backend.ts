@@ -3,7 +3,7 @@
  * @description This file contains the class Backend.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -53,12 +53,7 @@
  * | /api/addplugin /api/removeplugin                           | missing                                                    |
  * | /api/enableplugin /api/disableplugin /api/restartplugin    | missing                                                    |
  * | /api/save-plugin-config                                    | missing                                                    |
- * | /api/create-backup /api/create-config-backup               | missing                                                    |
- * | /api/create-matter-storage-backup                          | missing                                                    |
- * | /api/create-matterbridge-storage-backup                    | missing                                                    |
- * | /api/create-plugin-backup                                  | missing                                                    |
  * | /api/unregister /api/reset /api/factoryreset               | missing                                                    |
- * | /api/view-historypage /api/download-historypage            | missing                                                    |
  * | /api/select-devices /api/select-entities                   | missing                                                    |
  * | /api/action /api/command /api/config                       | missing                                                    |
  * +------------------------------------------------------------+------------------------------------------------------------+
@@ -126,6 +121,8 @@ export class Backend extends EventEmitter<BackendEvents> {
   private listening = false;
   private httpServer: HttpServer | undefined;
   private httpsServer: HttpsServer | undefined;
+  /** Timeout for server fetch requests in milliseconds. */
+  serverFetchTimeout = 5000;
 
   /** True when the backend serves https and wss (--ssl, --tls or --mtls). */
   readonly secure: boolean;
@@ -512,7 +509,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiSettings(): Promise<ApiSettings> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: this.server.name, dst: 'matterbridge', params: {} });
+    const response = await this.server.fetch({ type: 'matterbridge_apisettings', src: this.server.name, dst: 'matterbridge', params: {} }, this.serverFetchTimeout);
     if (this.diagnostic) writeDiagnostic('Backend', `getApiSettings() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.data;
   }
@@ -524,7 +521,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiPlugins(): Promise<ApiPlugin[]> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins', params: undefined });
+    const response = await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins', params: undefined }, this.serverFetchTimeout);
     if (this.diagnostic) writeDiagnostic('Backend', `getApiPlugins() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.plugins;
   }
@@ -539,7 +536,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getDevices(pluginName?: string): Promise<Device[]> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'devices_array', src: 'frontend', dst: 'devices', params: { pluginName } });
+    const response = await this.server.fetch({ type: 'devices_array', src: 'frontend', dst: 'devices', params: { pluginName } }, this.serverFetchTimeout);
     if (this.diagnostic) writeDiagnostic('Backend', `getDevices() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.devices;
   }
@@ -556,7 +553,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiDevices(pluginName: string, extended: boolean = false): Promise<ApiDevice[]> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'platform_get_apidevices', src: 'frontend', dst: 'platform', params: { pluginName, extended } });
+    const response = await this.server.fetch({ type: 'platform_get_apidevices', src: 'frontend', dst: 'platform', params: { pluginName, extended } }, this.serverFetchTimeout);
     if (this.diagnostic) writeDiagnostic('Backend', `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.devices;
   }
@@ -576,12 +573,15 @@ export class Backend extends EventEmitter<BackendEvents> {
   async getApiCluster(pluginName: string, number: number, serialNumber: string, uniqueId: string): Promise<ApiClusters> {
     const start = performance.now();
     this.log.debug(`Retrieving API cluster for plugin: ${pluginName}, number: ${number}, serial: ${serialNumber}, uniqueId: ${uniqueId}`);
-    const response = await this.server.fetch({
-      type: 'platform_get_apiclusters',
-      src: 'frontend',
-      dst: 'platform',
-      params: { pluginName, number, serialNumber, uniqueId },
-    });
+    const response = await this.server.fetch(
+      {
+        type: 'platform_get_apiclusters',
+        src: 'frontend',
+        dst: 'platform',
+        params: { pluginName, number, serialNumber, uniqueId },
+      },
+      this.serverFetchTimeout,
+    );
     if (this.diagnostic) writeDiagnostic('Backend', `getApiCluster() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.clusters;
   }
@@ -604,7 +604,7 @@ export class Backend extends EventEmitter<BackendEvents> {
    */
   async getApiMatter(id: string): Promise<ApiMatter | undefined> {
     const start = performance.now();
-    const response = await this.server.fetch({ type: 'matter_apimatter', src: 'frontend', dst: 'matter', params: { id } });
+    const response = await this.server.fetch({ type: 'matter_apimatter', src: 'frontend', dst: 'matter', params: { id } }, this.serverFetchTimeout);
     if (this.diagnostic) writeDiagnostic('Backend', `getApiMatter() took ${(performance.now() - start).toFixed(2)} ms`);
     return response.result.matter;
   }

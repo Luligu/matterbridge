@@ -50,6 +50,7 @@ const mockedSharedMatterbridge = {
 const mockedBackend = {
   authClients: new Set<string>(),
   storedPassword: 'testpassword',
+  serverFetchTimeout: 5000,
   getApiSettings: () => ({ ok: true, settings: { a: 1 } }),
   getApiPlugins: () => ({ ok: true, plugins: [{ name: 'plugin1' }] }),
   getDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),

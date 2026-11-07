@@ -105,6 +105,7 @@
 // matterbridge
 import type { PlatformConfig } from './matterbridgePlatformTypes.js';
 import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, ApiSelectDevice, ApiSelectEntity, ApiSettings, ApiSystemUpdate, BridgeStatus, Device } from './matterbridgeTypes.js';
+import type { ArchiveCommand } from './workerTypes.js';
 
 export type RefreshRequiredChanged = 'settings' | 'plugins' | 'devices' | 'matter';
 
@@ -649,7 +650,7 @@ export interface WsMessageApiArchive extends WsMessageSuccessApiResponse {
   id: 0;
   method: 'archive';
   response: {
-    command: 'zip' | 'verify' | 'unzip';
+    command: ArchiveCommand;
     archivePath: string;
     sourcePaths: string[];
     destinationPath: string;

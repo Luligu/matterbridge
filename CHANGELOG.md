@@ -70,8 +70,12 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [core]: Forward childbridge status updates to experimental backend WebSocket clients.
+
 - [frontend]: Devices table clears the selected device and its clusters on a full reload.
 - [frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.
+- [core]: `/api/create-backup` works with `--profile`: the profile directories are stored flat as `.matterbridge`, `Matterbridge` and `.mattercert` instead of failing on duplicate entry names.
+- [thread]: The archive worker logs an error and responds with `success: false` when the archive command throws.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

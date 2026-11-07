@@ -175,7 +175,8 @@ describe('MatterNode', () => {
     const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
     try {
       matter.matterbridgeStatusUpdate('started');
-      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledTimes(2);
+      expect(requestSpy).toHaveBeenCalledWith({ type: 'matterbridge_apisettings', src: 'matter', dst: 'matterbridge', params: { bridgeStatus: 'started' } });
       expect(requestSpy).toHaveBeenCalledWith({
         type: 'frontend_broadcast_message',
         src: 'matter',
@@ -183,6 +184,52 @@ describe('MatterNode', () => {
         params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status: 'started' } } },
       });
     } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
+  test('pluginMatterUpdate should update the plugin manager with the server node matter data only for a plugin in childbridge mode', () => {
+    // Minimal structural server node so getServerNodeData can read its state
+    const serverNode = {
+      id: 'mocknode',
+      lifecycle: { isOnline: true },
+      state: {
+        commissioning: { commissioned: false, pairingCodes: { qrPairingCode: 'MT:QR', manualPairingCode: '12345678901' }, fabrics: {} },
+        administratorCommissioning: { windowStatus: 0 },
+        sessions: { sessions: {} },
+        basicInformation: { serialNumber: '0x123456' },
+      },
+    } as unknown as Parameters<MatterNode['pluginMatterUpdate']>[0];
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      // Bridge mode: the plugins have no server node
+      matter.pluginMatterUpdate(serverNode);
+      expect(requestSpy).not.toHaveBeenCalled();
+
+      // Childbridge mode: the plugin server node
+      // @ts-expect-error access private property
+      matter.pluginName = 'matterbridge-test';
+      matter.pluginMatterUpdate(serverNode);
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'plugins_set',
+        src: 'matter',
+        dst: 'plugins',
+        params: { plugin: { name: 'matterbridge-test', matter: expect.objectContaining({ id: 'mocknode', online: true, qrPairingCode: 'MT:QR' }) } },
+      });
+
+      // Server mode device: the server node belongs to the device, not to the plugin
+      requestSpy.mockClear();
+      // @ts-expect-error access private property
+      matter.device = {};
+      matter.pluginMatterUpdate(serverNode);
+      expect(requestSpy).not.toHaveBeenCalled();
+    } finally {
+      // @ts-expect-error access private property
+      matter.pluginName = undefined;
+      // @ts-expect-error access private property
+      matter.device = undefined;
       requestSpy.mockRestore();
     }
   });

@@ -31,6 +31,7 @@ const mockedBackend = {
   fixedRestartRequired: false,
   updateRequired: false,
   secure: false,
+  serverFetchTimeout: 5000,
   getApiMatter: vi.fn<Backend['getApiMatter']>(),
   getApiSettings: vi.fn(async () => ({ matterbridgeInformation: {} })),
   getApiPlugins: vi.fn(async () => [{ name: 'matterbridge-test' }]),
@@ -87,6 +88,18 @@ describe('BackendWsServer', () => {
     const manager = new BroadcastServer('manager', log);
     const response = await manager.fetch({ type: 'get_log_level', src: 'manager', dst: 'frontend', params: undefined });
     expect(response.result.logLevel).toBe((wsServer as any).log.logLevel);
+
+    const statusSpy = vi.spyOn(wsServer, 'wssSendMatterbridgeStatusUpdate');
+    try {
+      for (const status of ['starting', 'started'] as const) {
+        const statusResponse = await manager.fetch({ type: 'frontend_matterbridgestatusupdate', src: 'manager', dst: 'frontend', params: { status } });
+        expect(statusResponse.result.success).toBe(true);
+        expect(statusSpy).toHaveBeenLastCalledWith(status);
+      }
+      expect(statusSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      statusSpy.mockRestore();
+    }
 
     // A response message is not a request and is ignored
     await (wsServer as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'get_log_level', src: 'manager', dst: 'frontend', result: { logLevel: LogLevel.INFO } });
@@ -428,12 +441,15 @@ describe('BackendWsServer', () => {
     const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
     try {
       await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 12, src: 'Frontend', dst: 'Matterbridge', method, params: {} })));
-      expect(fetchSpy).toHaveBeenCalledWith({
-        type: method === '/api/restart' ? 'matterbridge_restart' : 'matterbridge_shutdown',
-        src: 'frontend',
-        dst: 'matterbridge',
-        params: undefined,
-      });
+      expect(fetchSpy).toHaveBeenCalledWith(
+        {
+          type: method === '/api/restart' ? 'matterbridge_restart' : 'matterbridge_shutdown',
+          src: 'frontend',
+          dst: 'matterbridge',
+          params: undefined,
+        },
+        mockedBackend.serverFetchTimeout,
+      );
       expect(snackbarSpy).toHaveBeenCalledWith(method === '/api/restart' ? 'Restarting matterbridge...' : 'Shutting down matterbridge...', 0);
       expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 12, method, src: 'Matterbridge', dst: 'Frontend', success: true });
     } finally {
@@ -462,8 +478,8 @@ describe('BackendWsServer', () => {
           ),
         );
       }
-      for (const name of ['getApiSettings', 'getApiPlugins', 'getDevices', 'getApiDevices', 'getApiCluster']) {
-        expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Frontend:Test: ${name}() took`));
+      for (const name of ['getApiSettings()', 'getApiPlugins()', 'getDevices(matterbridge-test)', 'getApiDevices(matterbridge-test)', 'getApiCluster()']) {
+        expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Frontend:Test: ${name} took`));
       }
       expect(client.send).toHaveBeenCalledTimes(5);
     } finally {

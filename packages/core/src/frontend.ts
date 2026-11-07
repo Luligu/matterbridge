@@ -3,7 +3,7 @@
  * @description This file contains the class Frontend.
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.6
+ * @version 1.4.7
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -54,6 +54,7 @@ import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiClusters,
   ApiMatter,
+  ArchiveCommand,
   BridgeStatus,
   PluginStatusUpdate,
   RefreshRequiredChanged,
@@ -309,8 +310,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               method: 'archive',
               success: true,
               response: {
-                // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-                command: msg.result.command as 'zip' | 'verify' | 'unzip',
+                command: msg.result.command,
                 archivePath: msg.result.archivePath,
                 sourcePaths: msg.result.sourcePaths,
                 destinationPath: msg.result.destinationPath,
@@ -1590,12 +1590,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/create-backup') {
         this.wssSendSnackbarMessage('Creating matterbridge backup...', 0);
         this.log.notice(`Creating matterbridge backup...`);
-        this.zip(
-          'zip',
-          path.join(os.tmpdir(), `matterbridge.backup.zip`),
-          [this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgePluginDirectory, this.matterbridge.matterbridgeCertDirectory],
-          '',
-        );
+        const backupDirs = [this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgePluginDirectory, this.matterbridge.matterbridgeCertDirectory];
+        // With a profile the directories end with profiles/<name>: store them flat as in the default layout
+        const backupNames = this.matterbridge.profile ? backupDirs.map((dir) => path.basename(path.dirname(path.dirname(dir)))) : undefined;
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.backup.zip`), backupDirs, '', backupNames);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/create-matterbridge-storage-backup') {
         this.wssSendSnackbarMessage('Creating matterbridge storage backup...', 0);
@@ -2417,12 +2415,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a zip or verify command to the manager to create or verify an archive of the source paths at the destination path.
    *
-   * @param {'zip' | 'verify' | 'unzip'} command - The command to execute: 'zip' to create an archive, 'verify' to verify an archive, 'unzip' to extract an archive.
+   * @param {ArchiveCommand} command - The command to execute: 'zip' to create an archive, 'verify' to verify an archive, 'unzip' to extract an archive.
    * @param {string} archivePath - The path of the archive to create, verify or extract.
    * @param {string[]} sourcePaths - The paths of the files or directories to include in the archive (only for 'zip' command).
    * @param {string} destinationPath - The path where the archive should be extracted (only for 'unzip' command).
+   * @param {string[]} [archiveNames] - Optional names of the top-level entries in the archive, one per source path (only for 'zip' command).
    */
-  zip(command: 'zip' | 'verify' | 'unzip', archivePath: string, sourcePaths: string[], destinationPath: string): void {
+  zip(command: ArchiveCommand, archivePath: string, sourcePaths: string[], destinationPath: string, archiveNames?: string[]): void {
     this.server.request({
       type: 'manager_run',
       src: 'frontend',
@@ -2435,6 +2434,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           archivePath,
           sourcePaths,
           destinationPath,
+          archiveNames,
         },
       },
     });

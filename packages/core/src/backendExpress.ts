@@ -3,7 +3,7 @@
  * @description This file contains the class BackendExpress.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -96,7 +96,6 @@ export class BackendExpress {
   });
 
   expressApp: express.Application | undefined;
-  serverFetchTimeout = 5000; // 5 seconds
 
   /**
    * Create a new BackendExpress instance.
@@ -225,6 +224,7 @@ export class BackendExpress {
       res.status(200).json(healthStatus);
     });
 
+    // TODO: like history this is relative to the backend thread
     // Endpoint to provide memory usage details
     this.expressApp.get('/memory', async (req, res) => {
       this.log.debug('Express received /memory');
@@ -289,6 +289,18 @@ export class BackendExpress {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
       res.json(await this.backend.getDevices());
+    });
+
+    // Endpoint to provide the devices of a plugin (debug only reasons - not used in production)
+    this.expressApp.get('/api/platform-devices', async (req, res) => {
+      this.log.debug('The frontend sent /api/platform-devices');
+      if (!this.validateReq(req, res)) return;
+      const pluginName = req.query.pluginName;
+      if (typeof pluginName !== 'string' || pluginName.length < 10) {
+        res.status(400).json({ error: 'Wrong parameter pluginName in /api/platform-devices' });
+        return;
+      }
+      res.json(await this.backend.getApiDevices(pluginName, req.query.extended === 'true'));
     });
 
     // Endpoint to view the matterbridge log
@@ -579,7 +591,7 @@ export class BackendExpress {
 
     /* / Plugin frontend routes
     // oxfmt-ignore
-    const plugins = (await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins' }, this.serverFetchTimeout)).result.plugins;
+    const plugins = (await this.server.fetch({ type: 'plugins_apipluginarray', src: this.server.name, dst: 'plugins' }, this.backend.serverFetchTimeout)).result.plugins;
 
     for (const plugin of plugins.filter((p) => p.enabled && !p.error)) {
       const { existsSync } = await import('node:fs');

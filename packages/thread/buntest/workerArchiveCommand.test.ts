@@ -102,7 +102,7 @@ describe('workerArchiveCommand', () => {
 
     expect(wrapperName).toBe('ArchiveCommand');
     expect(success).toBe(true);
-    expect(createZip).toHaveBeenCalledWith(workerData.archivePath, workerData.sourcePaths);
+    expect(createZip).toHaveBeenCalledWith(workerData.archivePath, workerData.sourcePaths, workerData.archiveNames);
     expect(readZip).not.toHaveBeenCalled();
     expect(unZip).not.toHaveBeenCalled();
     expect(loggerMock).toHaveBeenCalledWith(
@@ -114,6 +114,15 @@ describe('workerArchiveCommand', () => {
       `Archive command ${workerData.command} on ${workerData.archivePath} with source paths ${workerData.sourcePaths.join(', ')} and destination path ${workerData.destinationPath} executed successfully`,
     );
     expect(respondMock).toHaveBeenCalledWith(archiveResponse(workerData, true));
+  });
+
+  test('should log an error and respond with failure when the archive command throws', async () => {
+    createZip.mockRejectedValue(new Error('File already exists'));
+    const { success, loggerMock, respondMock, workerData } = await runWorker({ command: 'zip' });
+
+    expect(success).toBe(false);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, `Archive command zip on ${workerData.archivePath} error: File already exists`);
+    expect(respondMock).toHaveBeenCalledWith(archiveResponse(workerData, false));
   });
 
   test('should read the archive and log success when the command is verify', async () => {

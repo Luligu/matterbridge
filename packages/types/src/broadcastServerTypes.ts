@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer types.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.3
+ * @version 2.0.4
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -40,7 +40,7 @@ import type {
   SharedMatterbridge,
   StoragePlugin,
 } from './matterbridgeTypes.js';
-import type { ThreadNames, WorkerData } from './workerTypes.js';
+import type { ArchiveCommand, ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'cli' | 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -221,7 +221,7 @@ export type WorkerMessageTypes = {
   };
   manager_archive_response: {
     request: { params: undefined };
-    response: { result: { command: string; archivePath: string; sourcePaths: string[]; destinationPath: string; success: boolean } };
+    response: { result: { command: ArchiveCommand; archivePath: string; sourcePaths: string[]; destinationPath: string; success: boolean } };
   };
 
   // Matterbridge methods
@@ -262,7 +262,7 @@ export type WorkerMessageTypes = {
     response: { result: { success: true } };
   };
   matterbridge_apisettings: {
-    request: { params: { restartRequired?: boolean; fixedRestartRequired?: boolean; updateRequired?: boolean } };
+    request: { params: { restartRequired?: boolean; fixedRestartRequired?: boolean; updateRequired?: boolean; bridgeStatus?: BridgeStatus } };
     response: { result: { data: ApiSettings; success: true } };
   };
   matterbridge_start_plugin_server: {
@@ -465,6 +465,14 @@ export type WorkerMessageTypes = {
   plugins_loadschema: {
     request: { params: { name: string } };
     response: { result: { schema: PlatformSchema | undefined } };
+  };
+  plugins_getconfig: {
+    request: { params: { name: string } };
+    response: { result: { config: PlatformConfig | undefined } };
+  };
+  plugins_setconfig: {
+    request: { params: { name: string; config: PlatformConfig } };
+    response: { result: { success: true } };
   };
   plugins_getschema: {
     request: { params: { name: string } };
