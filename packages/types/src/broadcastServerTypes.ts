@@ -183,6 +183,14 @@ export type WorkerMessageTypes = {
     request: { params: { pluginName: string; serialNumber: string; uniqueId: string; label: string } };
     response: { result: { success: boolean } };
   };
+  platform_select_device: {
+    request: { params: { pluginName: string; serialNumber: string; deviceName: string } };
+    response: { result: { success: boolean } };
+  };
+  platform_unselect_device: {
+    request: { params: { pluginName: string; serialNumber: string; deviceName: string } };
+    response: { result: { success: boolean } };
+  };
 
   // ThreadsManager methods
   manager_run: {

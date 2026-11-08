@@ -726,7 +726,7 @@ describe('HomeDevices', () => {
     expect(screen.getByRole('button', { name: 'Show the QRCode' })).toBeInTheDocument();
   });
 
-  it('sends the selectdevice command for a row that only exists in selectDevices', () => {
+  it('sends the unselect request for a row that only exists in selectDevices', () => {
     const { sendMessage, sendWebSocketMessage } = renderComponent();
     sendWebSocketMessage({ id: 7, method: '/api/plugins', response: selectablePlugin });
     sendWebSocketMessage({
@@ -741,12 +741,15 @@ describe('HomeDevices', () => {
     fireEvent.click(checkbox);
 
     expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ method: '/api/command', params: expect.objectContaining({ command: 'unselectdevice', plugin: 'matterbridge-test', serial: 'select-only' }) }),
+      expect.objectContaining({
+        method: '/api/unselect',
+        params: expect.objectContaining({ pluginName: 'matterbridge-test', serialNumber: 'select-only' }),
+      }),
     );
     expect(checkbox).not.toBeChecked();
   });
 
-  it('sends the selectdevice command when checking a device and unselectdevice when unchecking it', () => {
+  it('sends select when checking a device and unselect when unchecking it', () => {
     const { sendMessage } = renderWithDevice('/plugins/matterbridge-test', {}, { plugins: selectablePlugin });
 
     const checkbox = screen.getByRole('checkbox');
@@ -754,13 +757,13 @@ describe('HomeDevices', () => {
 
     fireEvent.click(checkbox);
     expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ method: '/api/command', params: expect.objectContaining({ command: 'unselectdevice', plugin: 'matterbridge-test', serial: 'test1' }) }),
+      expect.objectContaining({ method: '/api/unselect', params: expect.objectContaining({ pluginName: 'matterbridge-test', serialNumber: 'test1' }) }),
     );
     expect(checkbox).not.toBeChecked();
 
     fireEvent.click(checkbox);
     expect(sendMessage).toHaveBeenCalledWith(
-      expect.objectContaining({ method: '/api/command', params: expect.objectContaining({ command: 'selectdevice', plugin: 'matterbridge-test', serial: 'test1' }) }),
+      expect.objectContaining({ method: '/api/select', params: expect.objectContaining({ pluginName: 'matterbridge-test', serialNumber: 'test1' }) }),
     );
     expect(checkbox).toBeChecked();
   });

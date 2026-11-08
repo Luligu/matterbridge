@@ -67,8 +67,11 @@ describe('Matterbridge platform', () => {
   // The 'plugins' responder answers plugins_add and plugins_apipluginarray fetches and stores the added plugins.
   const pluginsServer = new BroadcastServer('plugins', serverLog);
   pluginsServer.on('broadcast_message', (msg: WorkerMessage) => {
+    if (!pluginsServer.isWorkerRequest(msg)) return;
     if (msg.type === 'plugins_getschema') {
       pluginsServer?.respond({ type: 'plugins_getschema', src: 'plugins', dst: msg.src, id: msg.id, timestamp: msg.timestamp, result: { schema: {} } });
+    } else if (msg.type === 'plugins_saveconfigfromjson') {
+      pluginsServer.respond({ ...msg, result: { success: true } });
     }
   });
 
@@ -575,6 +578,99 @@ describe('Matterbridge platform', () => {
     }
     await platform.clearSelect();
     await (platform as any).destroy();
+  });
+
+  for (const selectFrom of ['serial', 'name'] as const) {
+    test(`should select and unselect devices by ${selectFrom} through broadcasts`, async () => {
+      // @ts-expect-error access private constructor
+      const selectionPlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Selection platform' }), {
+        name: 'selection-test',
+        type: 'type',
+        version: '1.0.0',
+        debug: false,
+        unregisterOnShutdown: false,
+        postfix: 'POST',
+        whiteList: ['other'],
+        blackList: [selectFrom === 'serial' ? 'serial1' : 'Device 1'],
+      });
+      await selectionPlatform.ready;
+      const schemaSpy = vi.spyOn(selectionPlatform, 'getSchema').mockResolvedValue({ properties: { blackList: { selectFrom } } });
+      const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request');
+      const params = { pluginName: selectionPlatform.name, serialNumber: 'serial1-POST', deviceName: 'Device 1' };
+      const value = selectFrom === 'serial' ? 'serial1' : 'Device 1';
+      try {
+        for (let i = 0; i < 2; i++) {
+          const response = await matterbridgeServer.fetch({ type: 'platform_select_device', src: 'matterbridge', dst: 'platform', params });
+          expect(response.result.success).toBe(true);
+          expect(selectionPlatform.config.whiteList).toEqual(['other', value]);
+          expect(selectionPlatform.config.blackList).toEqual([]);
+          expect(params.serialNumber).toBe('serial1-POST');
+        }
+        for (let i = 0; i < 2; i++) {
+          const response = await matterbridgeServer.fetch({ type: 'platform_unselect_device', src: 'matterbridge', dst: 'platform', params });
+          expect(response.result.success).toBe(true);
+          expect(selectionPlatform.config.whiteList).toEqual(['other']);
+          expect(selectionPlatform.config.blackList).toEqual([value]);
+        }
+        expect(requestSpy).toHaveBeenCalledWith(
+          expect.objectContaining({ type: 'plugins_saveconfigfromjson', params: { name: selectionPlatform.name, config: selectionPlatform.config, restartRequired: true } }),
+        );
+        expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'matterbridge_apisettings', params: { restartRequired: true } }));
+        expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_restartrequired', params: { snackbar: false, fixed: false } }));
+        expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'frontend_refreshrequired', params: { changed: 'plugins' } }));
+        selectionPlatform.config.whiteList = [];
+        await matterbridgeServer.fetch({ type: 'platform_select_device', src: 'matterbridge', dst: 'platform', params });
+        expect(selectionPlatform.config.whiteList).toEqual([]);
+        expect(selectionPlatform.config.blackList).toEqual([]);
+      } finally {
+        schemaSpy.mockRestore();
+        requestSpy.mockRestore();
+        // @ts-expect-error destroy is intentionally private
+        await selectionPlatform.destroy();
+      }
+    });
+  }
+
+  test('should reject invalid selection broadcasts and ignore requests for another plugin', async () => {
+    // @ts-expect-error access private constructor
+    const selectionPlatform = new MatterbridgePlatform(matterbridge, new AnsiLogger({ logName: 'Selection platform' }), {
+      name: 'selection-test',
+      type: 'type',
+      version: '1.0.0',
+      debug: false,
+      unregisterOnShutdown: false,
+      whiteList: ['other'],
+      blackList: [],
+    });
+    await selectionPlatform.ready;
+    const schemaSpy = vi.spyOn(selectionPlatform, 'getSchema').mockResolvedValue({});
+    const params = { pluginName: selectionPlatform.name, serialNumber: 'serial1', deviceName: 'Device 1' };
+    try {
+      for (const type of ['platform_select_device', 'platform_unselect_device'] as const) {
+        await expect(matterbridgeServer.fetch({ type, src: 'matterbridge', dst: 'platform', params })).rejects.toThrow('select undefined not supported');
+        await expect(matterbridgeServer.fetch({ type, src: 'matterbridge', dst: 'platform', params: { ...params, serialNumber: '' } })).rejects.toThrow('Wrong parameters');
+        await expect(matterbridgeServer.fetch({ type, src: 'matterbridge', dst: 'platform', params: { ...params, deviceName: '' } })).rejects.toThrow('Wrong parameters');
+        schemaSpy.mockClear();
+        matterbridgeServer.request({ type, src: 'matterbridge', dst: 'platform', params: { ...params, pluginName: 'another-plugin' } });
+        await flushAsync();
+        expect(schemaSpy).not.toHaveBeenCalled();
+      }
+      expect(selectionPlatform.config.whiteList).toEqual(['other']);
+      expect(selectionPlatform.config.blackList).toEqual([]);
+      schemaSpy.mockRejectedValue('Schema unavailable');
+      await expect(matterbridgeServer.fetch({ type: 'platform_select_device', src: 'matterbridge', dst: 'platform', params })).rejects.toThrow('Schema unavailable');
+      schemaSpy.mockResolvedValue({ properties: { blackList: { selectFrom: 'serial' } } });
+      selectionPlatform.config.postfix = {};
+      await expect(matterbridgeServer.fetch({ type: 'platform_select_device', src: 'matterbridge', dst: 'platform', params })).rejects.toThrow('postfix must be a string');
+      selectionPlatform.config.postfix = undefined;
+      const response = await matterbridgeServer.fetch({ type: 'platform_select_device', src: 'matterbridge', dst: 'platform', params });
+      expect(response.result.success).toBe(true);
+      expect(selectionPlatform.config.whiteList).toEqual(['other', 'serial1']);
+    } finally {
+      schemaSpy.mockRestore();
+      // @ts-expect-error destroy is intentionally private
+      await selectionPlatform.destroy();
+    }
   });
 
   test('should clear the device selects', async () => {

@@ -435,6 +435,48 @@ describe('BackendWsServer', () => {
     }
   });
 
+  test.each([
+    { method: '/api/select', type: 'platform_select_device' },
+    { method: '/api/unselect', type: 'platform_unselect_device' },
+  ] as const)('should forward $method to the platform and send its result', async ({ method, type }) => {
+    const params = { pluginName: 'matterbridge-test', serialNumber: 'SN1', deviceName: 'Device 1' };
+    const fetchSpy = vi
+      .spyOn(BroadcastServer.prototype, 'fetch')
+      .mockResolvedValueOnce({ result: { success: true } } as never)
+      .mockRejectedValueOnce(new Error('SelectDevice: select undefined not supported'));
+    try {
+      let client = new FakeClient();
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 15, src: 'Frontend', dst: 'Matterbridge', method, params })));
+      expect(fetchSpy).toHaveBeenCalledExactlyOnceWith({ type, src: 'frontend', dst: 'platform', params }, mockedBackend.serverFetchTimeout);
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 15, method, src: 'Matterbridge', dst: 'Frontend', success: true });
+
+      client = new FakeClient();
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 16, src: 'Frontend', dst: 'Matterbridge', method, params })));
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 16, method, src: 'Matterbridge', dst: 'Frontend', error: 'SelectDevice: select undefined not supported' });
+
+      fetchSpy.mockClear();
+      for (const key of Object.keys(params)) {
+        for (const value of [undefined, '', 123]) {
+          client = new FakeClient();
+          await (wsServer as any).wsMessageHandler(
+            client,
+            Buffer.from(JSON.stringify({ id: 17, src: 'Frontend', dst: 'Matterbridge', method, params: { ...params, [key]: value } })),
+          );
+          expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 17, method, src: 'Matterbridge', dst: 'Frontend', error: `Wrong parameter ${key} in ${method}` });
+        }
+      }
+      client = new FakeClient();
+      await (wsServer as any).wsMessageHandler(
+        client,
+        Buffer.from(JSON.stringify({ id: 18, src: 'Frontend', dst: 'Matterbridge', method, params: { ...params, pluginName: 'short' } })),
+      );
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 18, method, src: 'Matterbridge', dst: 'Frontend', error: `Wrong parameter pluginName in ${method}` });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
   test.each(['/api/restart', '/api/shutdown'] as const)('should forward %s to the main thread and acknowledge the request', async (method) => {
     const client = new FakeClient();
     const fetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockResolvedValueOnce({ result: { success: true } } as never);

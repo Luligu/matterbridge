@@ -2040,43 +2040,43 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.warn(`Unknown parameter ${data.params.name} in /api/config`);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown parameter ${data.params.name} in /api/config` });
         }
-      } else if (data.method === '/api/command') {
+      } else if (data.method === '/api/select' || data.method === '/api/unselect') {
         const localData = data;
-        if (!isValidString(data.params.command, 5)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' });
+        if (!isValidString(data.params.pluginName, 10) || !isValidString(data.params.serialNumber, 1) || !isValidString(data.params.deviceName, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameters in ${data.method}` });
           return;
         }
-        if (data.params.command === 'selectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
-          const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        if (data.method === '/api/select') {
+          const plugin = this.matterbridge.plugins.get(data.params.pluginName);
           if (!plugin) {
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' });
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin not found in ${data.method}` });
             return;
           }
           const config = plugin.configJson;
           // oxlint-disable-next-line typescript/no-explicit-any
           const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
           // this.log.debug(`SelectDevice(selectMode ${select}) data ${debugStringify(data)}`);
-          if (select === 'serial') this.log.info(`Selected device serial ${data.params.serial}`);
-          if (select === 'name') this.log.info(`Selected device name ${data.params.name}`);
+          if (select === 'serial') this.log.info(`Selected device serial ${data.params.serialNumber}`);
+          if (select === 'name') this.log.info(`Selected device name ${data.params.deviceName}`);
           if (config && select && (select === 'serial' || select === 'name')) {
             // Remove postfix from the serial if it exists
             if (config.postfix) {
-              data.params.serial = data.params.serial.replace('-' + config.postfix, '');
+              data.params.serialNumber = data.params.serialNumber.replace('-' + config.postfix, '');
             }
             // Add the serial to the whiteList if the whiteList exists and the serial or name is not already in it
             if (isValidArray(config.whiteList, 1)) {
-              if (select === 'serial' && !config.whiteList.includes(data.params.serial)) {
-                config.whiteList.push(data.params.serial);
-              } else if (select === 'name' && !config.whiteList.includes(data.params.name)) {
-                config.whiteList.push(data.params.name);
+              if (select === 'serial' && !config.whiteList.includes(data.params.serialNumber)) {
+                config.whiteList.push(data.params.serialNumber);
+              } else if (select === 'name' && !config.whiteList.includes(data.params.deviceName)) {
+                config.whiteList.push(data.params.deviceName);
               }
             }
             // Remove the serial from the blackList if the blackList exists and the serial or name is in it
             if (isValidArray(config.blackList, 1)) {
-              if (select === 'serial' && config.blackList.includes(data.params.serial)) {
-                config.blackList = config.blackList.filter((item) => item !== localData.params.serial);
-              } else if (select === 'name' && config.blackList.includes(data.params.name)) {
-                config.blackList = config.blackList.filter((item) => item !== localData.params.name);
+              if (select === 'serial' && config.blackList.includes(data.params.serialNumber)) {
+                config.blackList = config.blackList.filter((item) => item !== localData.params.serialNumber);
+              } else if (select === 'name' && config.blackList.includes(data.params.deviceName)) {
+                config.blackList = config.blackList.filter((item) => item !== localData.params.deviceName);
               }
             }
             if (plugin.platform) plugin.platform.config = config;
@@ -2090,41 +2090,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.error(`SelectDevice: select ${select} not supported`);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` });
           }
-        } else if (
-          data.params.command === 'unselectdevice' &&
-          isValidString(data.params.plugin, 10) &&
-          isValidString(data.params.serial, 1) &&
-          isValidString(data.params.name, 1)
-        ) {
-          const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        } else {
+          const plugin = this.matterbridge.plugins.get(data.params.pluginName);
           if (!plugin) {
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' });
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin not found in ${data.method}` });
             return;
           }
           const config = plugin.configJson;
           // oxlint-disable-next-line typescript/no-explicit-any
           const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
           // this.log.debug(`UnselectDevice(selectMode ${select}) data ${debugStringify(data)}`);
-          if (select === 'serial') this.log.info(`Unselected device serial ${data.params.serial}`);
-          if (select === 'name') this.log.info(`Unselected device name ${data.params.name}`);
+          if (select === 'serial') this.log.info(`Unselected device serial ${data.params.serialNumber}`);
+          if (select === 'name') this.log.info(`Unselected device name ${data.params.deviceName}`);
           if (config && select && (select === 'serial' || select === 'name')) {
             if (config.postfix) {
-              data.params.serial = data.params.serial.replace('-' + config.postfix, '');
+              data.params.serialNumber = data.params.serialNumber.replace('-' + config.postfix, '');
             }
             // Remove the serial from the whiteList if the whiteList exists and the serial is in it
             if (isValidArray(config.whiteList, 1)) {
-              if (select === 'serial' && config.whiteList.includes(data.params.serial)) {
-                config.whiteList = config.whiteList.filter((item) => item !== localData.params.serial);
-              } else if (select === 'name' && config.whiteList.includes(data.params.name)) {
-                config.whiteList = config.whiteList.filter((item) => item !== localData.params.name);
+              if (select === 'serial' && config.whiteList.includes(data.params.serialNumber)) {
+                config.whiteList = config.whiteList.filter((item) => item !== localData.params.serialNumber);
+              } else if (select === 'name' && config.whiteList.includes(data.params.deviceName)) {
+                config.whiteList = config.whiteList.filter((item) => item !== localData.params.deviceName);
               }
             }
             // Add the serial to the blackList
             if (isValidArray(config.blackList)) {
-              if (select === 'serial' && !config.blackList.includes(data.params.serial)) {
-                config.blackList.push(data.params.serial);
-              } else if (select === 'name' && !config.blackList.includes(data.params.name)) {
-                config.blackList.push(data.params.name);
+              if (select === 'serial' && !config.blackList.includes(data.params.serialNumber)) {
+                config.blackList.push(data.params.serialNumber);
+              } else if (select === 'name' && !config.blackList.includes(data.params.deviceName)) {
+                config.blackList.push(data.params.deviceName);
               }
             }
             if (plugin.platform) plugin.platform.config = config;

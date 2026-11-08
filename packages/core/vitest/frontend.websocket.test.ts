@@ -1354,40 +1354,49 @@ describe('Matterbridge frontend', () => {
     expect(matterbridge.ipv6Address).toBeUndefined();
   }, 60000);
 
-  test('Websocket API /api/command with no params', async () => {
-    const data = await waitMessageId(++WS_ID, '/api/command', { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method: '/api/command', params: {} });
-    expect(data.success).toBeUndefined();
-    expect(data.response).toBeUndefined();
-    expect(data.error).toBeDefined();
-  });
+  for (const method of ['/api/select', '/api/unselect'] as const) {
+    for (const params of [
+      {},
+      { serialNumber: '0x123456789', deviceName: 'Switch plugin 1' },
+      { pluginName: 'matterbridge-mock1', deviceName: 'Switch plugin 1' },
+      { pluginName: 'matterbridge-mock1', serialNumber: '0x123456789' },
+    ]) {
+      test(`Websocket API ${method} rejects missing required parameters ${JSON.stringify(params)}`, async () => {
+        const data = await waitMessageId(++WS_ID, method, { id: WS_ID, dst: 'Matterbridge', src: 'Jest test', method, params });
+        expect(data.success).toBeUndefined();
+        expect(data.response).toBeUndefined();
+        expect(data.error).toBe(`Wrong parameters in ${method}`);
+      });
+    }
+  }
 
-  test('Websocket API /api/command with selectdevice and invalid plugin', async () => {
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+  test('Websocket API /api/select with selectdevice and invalid plugin', async () => {
+    const data = await waitMessageId(++WS_ID, '/api/select', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'selectdevice', plugin: 'matterbridge-invalid', serial: '0x123456789', name: 'Switch plugin 1' },
+      method: '/api/select',
+      params: { pluginName: 'matterbridge-invalid', serialNumber: '0x123456789', deviceName: 'Switch plugin 1' },
     });
     expect(data.success).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.error).toBeDefined();
   });
 
-  test('Websocket API /api/command with unselectdevice and invalid plugin', async () => {
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+  test('Websocket API /api/unselect with unselectdevice and invalid plugin', async () => {
+    const data = await waitMessageId(++WS_ID, '/api/unselect', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'unselectdevice', plugin: 'matterbridge-invalid', serial: '0x123456789', name: 'Switch plugin 1' },
+      method: '/api/unselect',
+      params: { pluginName: 'matterbridge-invalid', serialNumber: '0x123456789', deviceName: 'Switch plugin 1' },
     });
     expect(data.success).toBeUndefined();
     expect(data.response).toBeUndefined();
     expect(data.error).toBeDefined();
   });
 
-  test('Websocket API /api/command plugin matterbridge-mock1 with unselectdevice from name', async () => {
+  test('Websocket API /api/unselect plugin matterbridge-mock1 with unselectdevice from name', async () => {
     const config = matterbridge.plugins.get('matterbridge-mock1')?.configJson;
     expect(config).toBeDefined();
     if (!config) return;
@@ -1395,12 +1404,12 @@ describe('Matterbridge frontend', () => {
     config.whiteList = ['Switch plugin 1'];
     expect(config.whiteList).toEqual(['Switch plugin 1']);
     expect(config.blackList).toEqual([]);
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+    const data = await waitMessageId(++WS_ID, '/api/unselect', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'unselectdevice', plugin: 'matterbridge-mock1', serial: '0x123456789', name: 'Switch plugin 1' },
+      method: '/api/unselect',
+      params: { pluginName: 'matterbridge-mock1', serialNumber: '0x123456789', deviceName: 'Switch plugin 1' },
     });
     expect(data.success).toBeTruthy();
     expect(data.response).toBeUndefined();
@@ -1409,7 +1418,7 @@ describe('Matterbridge frontend', () => {
     expect(config.blackList).toEqual(['Switch plugin 1']);
   });
 
-  test('Websocket API /api/command plugin matterbridge-mock2 with unselectdevice from serial', async () => {
+  test('Websocket API /api/unselect plugin matterbridge-mock2 with unselectdevice from serial', async () => {
     const config = matterbridge.plugins.get('matterbridge-mock2')?.configJson;
     expect(config).toBeDefined();
     if (!config) return;
@@ -1417,12 +1426,12 @@ describe('Matterbridge frontend', () => {
     config.whiteList = ['0x123456789'];
     expect(config.whiteList).toEqual(['0x123456789']);
     expect(config.blackList).toEqual([]);
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+    const data = await waitMessageId(++WS_ID, '/api/unselect', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'unselectdevice', plugin: 'matterbridge-mock2', serial: '0x123456789', name: 'Outlet plugin 2' },
+      method: '/api/unselect',
+      params: { pluginName: 'matterbridge-mock2', serialNumber: '0x123456789', deviceName: 'Outlet plugin 2' },
     });
     expect(data.success).toBeTruthy();
     expect(data.response).toBeUndefined();
@@ -1431,17 +1440,17 @@ describe('Matterbridge frontend', () => {
     expect(config.blackList).toEqual(['0x123456789']);
   });
 
-  test('Websocket API /api/command plugin matterbridge-mock3 with unselectdevice', async () => {
+  test('Websocket API /api/unselect plugin matterbridge-mock3 with unselectdevice', async () => {
     const config = matterbridge.plugins.get('matterbridge-mock3')?.configJson;
     expect(config).toBeDefined();
     expect(config?.whiteList).toEqual([]);
     expect(config?.blackList).toEqual([]);
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+    const data = await waitMessageId(++WS_ID, '/api/unselect', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'unselectdevice', plugin: 'matterbridge-mock3', serial: '0x123456789', name: 'Light plugin 3' },
+      method: '/api/unselect',
+      params: { pluginName: 'matterbridge-mock3', serialNumber: '0x123456789', deviceName: 'Light plugin 3' },
     });
     expect(data.success).toBeUndefined();
     expect(data.response).toBeUndefined();
@@ -1450,7 +1459,7 @@ describe('Matterbridge frontend', () => {
     expect(config?.blackList).toEqual([]);
   });
 
-  test('Websocket API /api/command plugin matterbridge-mock1 with selectdevice from name', async () => {
+  test('Websocket API /api/select plugin matterbridge-mock1 with selectdevice from name', async () => {
     const config = matterbridge.plugins.get('matterbridge-mock1')?.configJson;
     expect(config).toBeDefined();
     if (!config) return;
@@ -1458,12 +1467,12 @@ describe('Matterbridge frontend', () => {
     config.whiteList = ['DeviceXYZ'];
     expect(config.whiteList).toEqual(['DeviceXYZ']);
     expect(config.blackList).toEqual(['Switch plugin 1']);
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+    const data = await waitMessageId(++WS_ID, '/api/select', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'selectdevice', plugin: 'matterbridge-mock1', serial: '0x123456789', name: 'Switch plugin 1' },
+      method: '/api/select',
+      params: { pluginName: 'matterbridge-mock1', serialNumber: '0x123456789', deviceName: 'Switch plugin 1' },
     });
     expect(data.success).toBeTruthy();
     expect(data.response).toBeUndefined();
@@ -1472,19 +1481,19 @@ describe('Matterbridge frontend', () => {
     expect(config.blackList).toEqual([]);
   });
 
-  test('Websocket API /api/command plugin matterbridge-mock2 with selectdevice from serial', async () => {
+  test('Websocket API /api/select plugin matterbridge-mock2 with selectdevice from serial', async () => {
     const config = matterbridge.plugins.get('matterbridge-mock2')?.configJson;
     expect(config).toBeDefined();
     if (!config) return;
     config.whiteList = ['SerialXYZ'];
     expect(config.whiteList).toEqual(['SerialXYZ']);
     expect(config.blackList).toEqual(['0x123456789']);
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+    const data = await waitMessageId(++WS_ID, '/api/select', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'selectdevice', plugin: 'matterbridge-mock2', serial: '0x123456789', name: 'Outlet plugin 2' },
+      method: '/api/select',
+      params: { pluginName: 'matterbridge-mock2', serialNumber: '0x123456789', deviceName: 'Outlet plugin 2' },
     });
     expect(data.success).toBeTruthy();
     expect(data.response).toBeUndefined();
@@ -1493,17 +1502,17 @@ describe('Matterbridge frontend', () => {
     expect(config.blackList).toEqual([]);
   });
 
-  test('Websocket API /api/command plugin matterbridge-mock3 with selectdevice', async () => {
+  test('Websocket API /api/select plugin matterbridge-mock3 with selectdevice', async () => {
     const config = matterbridge.plugins.get('matterbridge-mock3')?.configJson;
     expect(config).toBeDefined();
     expect(config?.whiteList).toEqual([]);
     expect(config?.blackList).toEqual([]);
-    const data = await waitMessageId(++WS_ID, '/api/command', {
+    const data = await waitMessageId(++WS_ID, '/api/select', {
       id: WS_ID,
       dst: 'Matterbridge',
       src: 'Jest test',
-      method: '/api/command',
-      params: { command: 'selectdevice', plugin: 'matterbridge-mock3', serial: '0x123456789', name: 'Light plugin 3' },
+      method: '/api/select',
+      params: { pluginName: 'matterbridge-mock3', serialNumber: '0x123456789', deviceName: 'Light plugin 3' },
     });
     expect(data.success).toBeUndefined();
     expect(data.response).toBeUndefined();

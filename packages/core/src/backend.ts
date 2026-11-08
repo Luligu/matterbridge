@@ -55,7 +55,7 @@
  * | /api/save-plugin-config                                    | missing                                                    |
  * | /api/unregister /api/reset /api/factoryreset               | missing                                                    |
  * | /api/select-devices /api/select-entities                   | missing                                                    |
- * | /api/action /api/command /api/config                       | missing                                                    |
+ * | /api/action /api/config                                    | missing                                                    |
  * +------------------------------------------------------------+------------------------------------------------------------+
  */
 

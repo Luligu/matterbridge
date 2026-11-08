@@ -120,7 +120,7 @@ interface HomeDevicesProps {
  * registered device it also reports is already present via api/platform-devices - and never touches a registered device's row.
  * Live updates (device reachability, checkbox selection, matter info) patch a single row directly.
  * The resulting list is displayed in a table.
- * The user can select/unselect devices using checkboxes. This sends api/command to selectdevice/unselectdevice.
+ * The user can select/unselect devices using checkboxes. This sends /api/select or /api/unselect.
  * The user can open the configuration page of a device if configUrl is set.
  * The user can open a QR code dialog if the device has matter information.
  * Registered devices have an actions menu that opens confirmation dialogs before sending unregister or controller-name requests.
@@ -537,19 +537,19 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       sendMessage({
         id: uniqueId.current,
         sender: 'HomeDevices',
-        method: '/api/command',
+        method: '/api/select',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { command: 'selectdevice', plugin: device.plugin, serial: device.serialNumber, name: device.deviceName },
+        params: { pluginName: device.plugin, serialNumber: device.serialNumber, deviceName: device.deviceName },
       });
     } else {
       sendMessage({
         id: uniqueId.current,
         sender: 'HomeDevices',
-        method: '/api/command',
+        method: '/api/unselect',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { command: 'unselectdevice', plugin: device.plugin, serial: device.serialNumber, name: device.deviceName },
+        params: { pluginName: device.plugin, serialNumber: device.serialNumber, deviceName: device.deviceName },
       });
     }
   };

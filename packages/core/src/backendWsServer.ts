@@ -54,7 +54,7 @@ import {
 } from '@matterbridge/types';
 import { hasAnyParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
-import { inspectError } from '@matterbridge/utils/error';
+import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { isValidArray, isValidNumber, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
@@ -451,6 +451,28 @@ export class BackendWsServer {
         const { pluginName, serialNumber, uniqueId, label } = data.params;
         this.server.request({ type: 'platform_rename_device', src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
+      } else if (data.method === '/api/select' || data.method === '/api/unselect') {
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameter pluginName in ${data.method}` });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameter serialNumber in ${data.method}` });
+          return;
+        }
+        if (!isValidString(data.params.deviceName, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameter deviceName in ${data.method}` });
+          return;
+        }
+        const { pluginName, serialNumber, deviceName } = data.params;
+        const type = data.method === '/api/select' ? 'platform_select_device' : 'platform_unselect_device';
+        try {
+          // The platform responds after the config has been updated, so wait for its result
+          await this.server.fetch({ type, src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, deviceName } }, this.backend.serverFetchTimeout);
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } catch (error) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: getErrorMessage(error) });
+        }
       } else if (data.method === '/api/create-backup') {
         // TODO: add close on error
         this.wssSendSnackbarMessage('Creating matterbridge backup...', 0);

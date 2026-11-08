@@ -39,6 +39,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Breaking changes
 
+- [core]: Replace `/api/command` with `/api/select` and `/api/unselect`, requiring `pluginName`, `serialNumber` and `deviceName` without a `command` parameter.
 - [core]: `/api/devices` (WebSocket and HTTP) returns the stored `Device[]` instead of `ApiDevice[]`; the platform devices are served by `/api/platform-devices`.
 - [core]: Rename `/api/select/devices` and `/api/select/entities` to `/api/select-devices` and `/api/select-entities`.
 - [core]: Rename `/api/savepluginconfig` to `/api/save-plugin-config`.
@@ -49,6 +50,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [types]: Add `platform_select_device` and `platform_unselect_device` broadcast contracts matching the frontend selection parameters.
+- [core]: Handle platform select/unselect broadcasts using schema selection mode, postfix stripping and white/black lists, with config saving and restart/refresh notifications.
 - [types]: Add the `/api/platform-devices` request/response contracts; the response carries the requested `pluginName`.
 - [core]: Handle `/api/platform-devices` in the frontend and backend WebSocket servers, returning the `ApiDevice[]` of one plugin platform.
 - [core]: Add the `MatterbridgeTimeSynchronizationServer`, `MatterbridgeTlsCertificateManagementServer` and `MatterbridgeTlsClientManagementServer` Root Node behaviors from matterbridge-example-camera, with vitest and bun tests.

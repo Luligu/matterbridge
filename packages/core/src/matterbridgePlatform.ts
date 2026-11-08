@@ -342,6 +342,56 @@ export class MatterbridgePlatform {
         if (msg.params.pluginName !== this.name) return;
         this.#server.respond({ ...msg, result: { entities: this.getSelectEntities().toSorted((keyA, keyB) => keyA.name.localeCompare(keyB.name)) } });
         break;
+      case 'platform_select_device':
+      case 'platform_unselect_device': {
+        if (msg.params.pluginName !== this.name) return;
+        const { serialNumber, deviceName } = msg.params;
+        fireAndForget(
+          (async (): Promise<void> => {
+            try {
+              if (!isValidString(serialNumber, 1) || !isValidString(deviceName, 1)) {
+                throw new Error(`Wrong parameters in ${msg.type}`);
+              }
+              const schema = await this.getSchema();
+              const properties = schema?.properties;
+              const blackList = isValidObject(properties) && 'blackList' in properties ? properties.blackList : undefined;
+              const select = isValidObject(blackList) && 'selectFrom' in blackList ? blackList.selectFrom : undefined;
+              if (select !== 'serial' && select !== 'name') {
+                throw new Error(`SelectDevice: select ${String(select)} not supported`);
+              }
+              const selected = msg.type === 'platform_select_device';
+              this.log.info(`${selected ? 'Selected' : 'Unselected'} device ${select} ${select === 'serial' ? serialNumber : deviceName}`);
+              const config = this.config;
+              if (config.postfix && !isValidString(config.postfix)) throw new Error('SelectDevice: postfix must be a string');
+              const serial = config.postfix ? serialNumber.replace('-' + config.postfix, '') : serialNumber;
+              const value = select === 'serial' ? serial : deviceName;
+              if (selected) {
+                if (isValidArray(config.whiteList, 1) && !config.whiteList.includes(value)) config.whiteList.push(value);
+                if (isValidArray(config.blackList, 1) && config.blackList.includes(value)) {
+                  config.blackList = config.blackList.filter((item) => item !== value);
+                }
+              } else {
+                if (isValidArray(config.whiteList, 1) && config.whiteList.includes(value)) {
+                  config.whiteList = config.whiteList.filter((item) => item !== value);
+                }
+                if (isValidArray(config.blackList) && !config.blackList.includes(value)) config.blackList.push(value);
+              }
+              this.#server.request({ type: 'plugins_saveconfigfromjson', src: 'platform', dst: 'plugins', params: { name: this.name, config, restartRequired: true } });
+              this.#server.request({ type: 'matterbridge_apisettings', src: 'platform', dst: 'matterbridge', params: { restartRequired: true } });
+              this.#server.request({ type: 'frontend_restartrequired', src: 'platform', dst: 'frontend', params: { snackbar: false, fixed: false } });
+              this.#server.request({ type: 'frontend_refreshrequired', src: 'platform', dst: 'frontend', params: { changed: 'plugins' } });
+              this.#server.respond({ ...msg, result: { success: true } });
+            } catch (error) {
+              const message = error instanceof Error ? error.message : String(error);
+              this.log.error(`${msg.type}: ${message}`);
+              this.#server.respond({ ...msg, error: message });
+            }
+          })(),
+          this.log,
+          `${msg.type} ${serialNumber}`,
+        );
+        break;
+      }
       case 'platform_unregister_device':
         if (msg.params.pluginName === this.name) {
           // Acknowledge the request to the server: no need to wait to complete since this is a request that doesn't require response.

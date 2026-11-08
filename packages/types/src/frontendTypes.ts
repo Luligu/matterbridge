@@ -70,7 +70,7 @@
  * |                              | /api/view-historypage                                                |
  * | Home                         | /api/plugins                                                         |
  * |                              | /api/settings                                                        |
- * | HomeDevices                  | /api/command                                                         |
+ * | HomeDevices                  | /api/select /api/unselect                                             |
  * |                              | /api/platform-devices (reachable, powerSource, batteryLevel, matter) |
  * |                              | /api/plugins                                                         |
  * |                              | /api/rename-device                                                   |
@@ -511,17 +511,25 @@ export interface WsMessageApiConfigResponse extends WsMessageSuccessApiResponse 
   method: '/api/config';
 }
 
-export interface WsMessageApiCommandRequest extends WsMessageBaseApiRequest {
-  method: '/api/command';
+export interface WsMessageApiSelectRequest extends WsMessageBaseApiRequest {
+  method: '/api/select';
   params: {
-    command: string;
-    plugin?: string;
-    serial?: string;
-    name?: string;
+    pluginName: string;
+    serialNumber: string;
+    deviceName: string;
   };
 }
-export interface WsMessageApiCommandResponse extends WsMessageSuccessApiResponse {
-  method: '/api/command';
+export interface WsMessageApiUnselectRequest extends WsMessageBaseApiRequest {
+  method: '/api/unselect';
+  params: {
+    pluginName: string;
+    serialNumber: string;
+    deviceName: string;
+  };
+}
+// Shared by /api/select and /api/unselect so a handler serving both can respond with the request method
+export interface WsMessageApiSelectUnselectResponse extends WsMessageSuccessApiResponse {
+  method: '/api/select' | '/api/unselect';
 }
 
 // Broadcast message types
@@ -694,7 +702,8 @@ export type WsMessageApiRequest =
   | WsMessageApiSelectEntitiesRequest
   | WsMessageApiActionRequest
   | WsMessageApiConfigRequest
-  | WsMessageApiCommandRequest;
+  | WsMessageApiSelectRequest
+  | WsMessageApiUnselectRequest;
 
 // Union type for all specific WebSocket API response message types
 export type WsMessageApiResponse =
@@ -733,7 +742,7 @@ export type WsMessageApiResponse =
   | WsMessageApiSelectEntitiesResponse
   | WsMessageApiActionResponse
   | WsMessageApiConfigResponse
-  | WsMessageApiCommandResponse
+  | WsMessageApiSelectUnselectResponse
   | WsMessageApiLog
   | WsMessageApiRefreshRequired
   | WsMessageApiRestartRequired

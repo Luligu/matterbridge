@@ -418,7 +418,8 @@ export class MatterbridgeTimeSynchronizationServer extends MatterbridgeTimeSynch
    */
   #emitDstTableEmpty(now: bigint, reason?: string): void {
     if (!this.internal.ready) return;
-    if (reason !== undefined) log.info(`MatterbridgeTimeSynchronizationServer: the DSTOffset table ${reason}, generating DSTTableEmpty (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    if (reason !== undefined)
+      log.info(`MatterbridgeTimeSynchronizationServer: the DSTOffset table ${reason}, generating DSTTableEmpty (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
     this.internal.dstTableEmptyAt = now;
     this.events.dstTableEmpty.emit(undefined, this.context);
   }

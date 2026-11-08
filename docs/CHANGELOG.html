@@ -153,18 +153,33 @@
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
 <h2 id="3113-dev-branch">[3.11.3] - Dev branch</h2>
+<h3 id="development-news">Development News</h3>
+<ul>
+<li>[chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the <code>TimeSynchronization</code> cluster (<code>TC_TIMESYNC_2_1.py</code> to <code>TC_TIMESYNC_3_1.py</code>, 14 tests), with its own <code>root-camera.pics</code>.</li>
+<li>[chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the <code>TlsCertificateManagement</code> cluster (<code>TC_TLSCERT_2_1.py</code> to <code>TC_TLSCERT_2_13.py</code>, 13 tests).</li>
+<li>[chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all available automated harness tests covering the <code>TlsClientManagement</code> cluster (<code>TC_TLSCLIENT_2_1.py</code>, <code>3_1</code>, <code>3_2</code>, <code>3_3</code>, <code>3_10</code> and <code>3_20</code>, 6 tests).</li>
+</ul>
 <h3 id="breaking-changes">Breaking changes</h3>
 <ul>
+<li>[core]: Replace <code>/api/command</code> with <code>/api/select</code> and <code>/api/unselect</code>, requiring <code>pluginName</code>, <code>serialNumber</code> and <code>deviceName</code> without a <code>command</code> parameter.</li>
 <li>[core]: <code>/api/devices</code> (WebSocket and HTTP) returns the stored <code>Device[]</code> instead of <code>ApiDevice[]</code>; the platform devices are served by <code>/api/platform-devices</code>.</li>
 <li>[core]: Rename <code>/api/select/devices</code> and <code>/api/select/entities</code> to <code>/api/select-devices</code> and <code>/api/select-entities</code>.</li>
 <li>[core]: Rename <code>/api/savepluginconfig</code> to <code>/api/save-plugin-config</code>.</li>
 <li>[core]: Rename <code>/api/viewhistory</code>, <code>/api/downloadhistory</code>, <code>/api/viewhistorypage</code> and <code>/api/downloadhistorypage</code> to <code>/api/view-history</code>, <code>/api/download-history</code>, <code>/api/view-historypage</code> and <code>/api/download-historypage</code>.</li>
 <li>[types]: Rename <code>BaseDevice</code> to <code>Device</code>.</li>
+<li>[core]: Remove the <code>setUtcTime</code>, <code>setTimeZone</code> and <code>setDstOffset</code> Time Synchronization entries from <code>CommandHandlers</code>: the cluster lives on the Root Node, which has no plugin command handler.</li>
+<li>[matterbridge]: Replace the <code>--root-power-source</code> param with <code>--root-camera</code>, which adds the Power Source, Time Synchronization, TLS Certificate Management and TLS Client Management clusters on the Root endpoint, as required by the camera device types; <code>MATTERBRIDGE_CHIP_TEST</code> enables it too.</li>
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[types]: Add <code>platform_select_device</code> and <code>platform_unselect_device</code> broadcast contracts matching the frontend selection parameters.</li>
+<li>[core]: Handle platform select/unselect broadcasts using schema selection mode, postfix stripping and white/black lists, with config saving and restart/refresh notifications.</li>
 <li>[types]: Add the <code>/api/platform-devices</code> request/response contracts; the response carries the requested <code>pluginName</code>.</li>
 <li>[core]: Handle <code>/api/platform-devices</code> in the frontend and backend WebSocket servers, returning the <code>ApiDevice[]</code> of one plugin platform.</li>
+<li>[core]: Add the <code>MatterbridgeTimeSynchronizationServer</code>, <code>MatterbridgeTlsCertificateManagementServer</code> and <code>MatterbridgeTlsClientManagementServer</code> Root Node behaviors from matterbridge-example-camera, with vitest and bun tests.</li>
+<li>[core]: <code>MatterbridgeTimeSynchronizationServer</code> repeats the <code>DSTTableEmpty</code> event at most once per hour while the <code>DSTOffset</code> list is empty (Matter 1.6.1 § 11.17.10.1).</li>
+<li>[core]: <code>MatterbridgeTlsCertificateManagementServer</code> rejects a <code>ClientCSR</code> key pair colliding with another TLS or operational key pair with <code>DYNAMIC_CONSTRAINT_ERROR</code> (Matter 1.6.1 § 14.4.6.8).</li>
+<li>[chip]: Add <code>root-camera.pics</code> and the 33 <code>TIMESYNC</code>, <code>TLSCERT</code> and <code>TLSCLIENT</code> conformance tests on the Root endpoint (<code>npm run chip:test:time-sync</code>, <code>chip:test:tls-cert</code> and <code>chip:test:tls-client</code>).</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -205,7 +220,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3112-2026-11-06">[3.11.2] - 2026-11-06</h2>
-<h3 id="development-news">Development News</h3>
+<h3 id="development-news-1">Development News</h3>
 <ul>
 <li>[chip]: ElectricalSensorPeriodic endpoint 2064 CHIP conformance is green ✅ for all automated harness tests covering the <code>ElectricalEnergyMeasurement</code> cluster, including the optional <code>PeriodicEnergy</code> feature (<code>TC_EEM_2_4.py</code> and <code>TC_EEM_2_5.py</code>), with its own <code>electrical-energy-measurement.periodic.pics</code>.</li>
 <li>[chip]: ElectricalSensorPeriodicImported endpoint 2065 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>ElectricalEnergyMeasurement</code> cluster <code>ImportedEnergy</code>, <code>CumulativeEnergy</code> and <code>PeriodicEnergy</code> features, with its own <code>electrical-energy-measurement.periodic-imported.pics</code>.</li>
@@ -442,7 +457,7 @@
 <li>[test-utils]: <code>addDevice()</code> and <code>deleteDevice()</code> (vitest, jest and bun) take <code>ticks</code> and <code>microTurns</code> (default 1) after <code>rounds</code>, so <code>pause</code> moves from the 4th to the 6th parameter; <code>rounds</code> now defaults to 1 (was 3).</li>
 <li>[test-utils]: <code>flushServerNode()</code> (vitest, jest and bun) takes a first <code>rounds</code> parameter (default 3) and passes <code>rounds</code>, <code>ticks</code>, <code>microTurns</code> and <code>pause</code> to the endpoint number persistence flush, so it can run without timer pauses.</li>
 </ul>
-<h3 id="development-news-1">Development news</h3>
+<h3 id="development-news-2">Development news</h3>
 <ul>
 <li>[errata]: Clarification of the v.3.10.12 RVC release note: <code>SkipArea</code> conformance <code>[CurrentArea | Progress]</code> makes the command optional when either attribute is implemented (Matter 1.6.1 Core § 7.3.4; Application Cluster § 1.17.7). Advertising <code>SkipArea</code> by default is a choice in Matterbridge’s <code>RoboticVacuumCleaner</code> implementation, not a specification requirement; <code>SkipAreaResponse</code> is required when <code>SkipArea</code> is implemented.</li>
 </ul>
@@ -721,7 +736,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="31010-2026-09-18">[3.10.10] - 2026-09-18</h2>
-<h3 id="development-news-2">Development News</h3>
+<h3 id="development-news-3">Development News</h3>
 <ul>
 <li>[chip]: Chime endpoint 1607 CHIP conformance is green ✅ for all automated harness tests covering the <code>Chime</code> cluster, including the optional <code>ChimeID</code> field of the <code>PlayChimeSound</code> command (<code>TC_CHIME_2_5.py</code>) and the <code>ChimeStartedPlaying</code> event (<code>TC_CHIME_2_6.py</code>).</li>
 <li>[chip]: Momentary Switch endpoint 606 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Switch</code> cluster, including the <code>MomentarySwitch</code>, <code>MomentarySwitchRelease</code>, <code>MomentarySwitchLongPress</code> and <code>MomentarySwitchMultiPress</code> features, with its own <code>generic-switch-momentary.pics</code>.</li>
@@ -776,7 +791,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3109-2026-09-11">[3.10.9] - 2026-09-11</h2>
-<h3 id="development-news-3">Development News</h3>
+<h3 id="development-news-4">Development News</h3>
 <ul>
 <li>[chip]: EVSE Complete endpoint 14011 CHIP conformance is green ✅ for all automated harness tests covering the <code>EnergyEvse</code> and <code>EnergyEvseMode</code> clusters, including the optional <code>SoCReporting</code>, <code>PlugAndCharge</code>, <code>Rfid</code>, and <code>V2X</code> features.</li>
 </ul>
@@ -830,7 +845,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3108-2026-09-04">[3.10.8] - 2026-09-04</h2>
-<h3 id="development-news-4">Development News</h3>
+<h3 id="development-news-5">Development News</h3>
 <ul>
 <li><p>[chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster.</p>
 </li>
@@ -949,7 +964,7 @@
 </ul>
 </li>
 </ul>
-<h3 id="development-news-5">Development News</h3>
+<h3 id="development-news-6">Development News</h3>
 <ul>
 <li>[chip]: EnergyEvse endpoint 1401 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>EnergyEvse</code> cluster.</li>
 <li>[chip]: EnergyEvseMode endpoint 1401 CHIP conformance is green ✅ for the automated harness tests covering the <code>EnergyEvseMode</code> cluster.</li>
@@ -1036,7 +1051,7 @@
 <ul>
 <li>[devices]: The <code>Speaker</code> constructor now takes a <code>SpeakerOptions</code> object as its third parameter instead of separate <code>muted</code>/<code>volume</code> positional parameters. Update <code>new Speaker(name, serial, muted, volume)</code> calls to <code>new Speaker(name, serial, { muted, volume })</code>. The options object also adds <code>powerSourceType</code> (defaults to <code>&#39;Wired&#39;</code>, added a <code>PowerSource</code> cluster server that previous versions did not create; pass <code>&#39;None&#39;</code> to omit it), <code>id</code> and <code>number</code>.</li>
 </ul>
-<h3 id="development-news-6">Development News</h3>
+<h3 id="development-news-7">Development News</h3>
 <ul>
 <li>[chip]: Root endpoint 0 CHIP conformance is green ✅ for the automated harness tests covering the <code>RootNode</code> device type and <code>BasicInformation</code>, <code>PowerSource</code>, <code>AccessControl</code>, <code>GeneralDiagnostics</code>, <code>GroupKeyManagement</code>, <code>OperationalCredentials</code> and <code>GeneralCommissioning</code> clusters.</li>
 <li>[chip]: Aggregator endpoint 1 CHIP conformance is green ✅ for the automated harness tests covering the <code>Aggregator</code> device type.</li>
@@ -1107,7 +1122,7 @@
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3105-2026-08-14">[3.10.5] - 2026-08-14</h2>
-<h3 id="development-news-7">Development news</h3>
+<h3 id="development-news-8">Development news</h3>
 <ul>
 <li>[closure]: Closure device is released for production and fully Matter 1.6.0 compliant (all chip tests pass). So far fully supported by SmartThings and partially by Matter Server dashboard.</li>
 </ul>
