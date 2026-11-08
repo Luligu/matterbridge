@@ -1,4 +1,23 @@
-# Matterbridge Agents Instructions (v.1.0.11)
+# Matterbridge Agents Instructions (v.1.0.12)
+
+## Git — HARD RULES (non-negotiable)
+
+- Read-only Git commands are always allowed: status, diff, log, show, blame, and branch/tag listing. Fetch is also allowed, although it updates remote-tracking refs; do not use options that delete refs, such as --prune.
+- NEVER rewrite existing history: no rebase, amend, force-push, reset --hard, filter-branch, or reflog edits. These actions are prohibited even under the authorization procedure below.
+- NEVER delete branches or tags (no branch -D, branch -d, push --delete, or tag -d).
+- Staging changes, making local commits, pushing, and creating new branches are allowed ONLY when I ask for them AND authorize the exact command using the procedure below. My initial request is not authorization.
+- Except for the explicitly allowed commands above, every Git command that changes the working tree, index, refs, or history requires authorization using the same procedure. This includes pull, merge, checkout/switch, restore, clean, cherry-pick, revert, tag creation, and stash operations.
+- NEVER run a destructive or irreversible Git command without authorization. Actions explicitly prohibited above remain prohibited.
+
+### Authorization procedure
+
+1. Show the exact command in a bash code block. Specify the repository and branch, plus the affected files and full commit message where applicable.
+2. Ask exactly: **"Do you authorize me to run this command to <action> in `<repo>` (`<branch>`)?"**
+3. End your turn and wait.
+4. Run the command only after an explicit affirmative answer to that question (e.g. "yes", "ok", "go", "authorized"). A question, change request, silence, or the original task request is NOT authorization.
+5. Authorization covers only that exact command, that repository, and one execution. Run it exactly as shown. Any changed command or retry after a failure requires new authorization.
+
+Without authorization, or when in doubt about whether authorization is required, do nothing: show the command and ask. Never work around missing authorization with an equivalent command, script, alias, or tool.
 
 ## Style And Formatting
 
