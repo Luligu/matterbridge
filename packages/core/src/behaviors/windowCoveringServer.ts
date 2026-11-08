@@ -434,3 +434,17 @@ export namespace MatterbridgeWindowCoveringServer {
   }
 }
 /* v8 ignore stop */
+
+/** MatterbridgeWindowCoveringServer with features Lift and PositionAwareLift. Single source for the lift-only feature set. */
+export const MatterbridgeLiftWindowCoveringServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift);
+
+/** MatterbridgeWindowCoveringServer with features Lift, PositionAwareLift, Tilt and PositionAwareTilt. Single source for the lift and tilt feature set. */
+export const MatterbridgeLiftTiltWindowCoveringServer = MatterbridgeWindowCoveringServer.with(
+  WindowCovering.Feature.Lift,
+  WindowCovering.Feature.PositionAwareLift,
+  WindowCovering.Feature.Tilt,
+  WindowCovering.Feature.PositionAwareTilt,
+);
+
+/** MatterbridgeWindowCoveringServer with features Tilt and PositionAwareTilt. Single source for the tilt-only feature set. */
+export const MatterbridgeTiltWindowCoveringServer = MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt);

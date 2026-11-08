@@ -50,6 +50,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [core]: Add default Window Covering options helpers for lift, lift/tilt and tilt servers.
 - [types]: Add `platform_select_device` and `platform_unselect_device` broadcast contracts matching the frontend selection parameters.
 - [core]: Handle platform select/unselect broadcasts using schema selection mode, postfix stripping and white/black lists, with config saving and restart/refresh notifications.
 - [types]: Add the `/api/platform-devices` request/response contracts; the response carries the requested `pluginName`.

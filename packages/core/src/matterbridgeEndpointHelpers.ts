@@ -152,7 +152,7 @@ import { type MeasurementAccuracy, MeasurementType, type Semtag } from '@matter/
 // @matterbridge
 import { deepEqual } from '@matterbridge/utils/deep-equal';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { isValidArray } from '@matterbridge/utils/validate';
+import { isValidArray, isValidNumber } from '@matterbridge/utils/validate';
 import { waiter } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import { type AnsiLogger, BLUE, CYAN, db, debugStringify, er, hk, nf, or, wr, YELLOW, zb } from 'node-ansi-logger';
@@ -177,7 +177,7 @@ import { MatterbridgeSmokeCoAlarmServer } from './behaviors/smokeCoAlarmServer.j
 import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarmServer.js';
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
-import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
+import { MatterbridgeLiftTiltWindowCoveringServer, MatterbridgeLiftWindowCoveringServer, MatterbridgeTiltWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { CommandHandlers } from './matterbridgeEndpointCommandHandler.js';
 import type { SubscribeCommandEvents, SubscribeCommandListener, SubscribeCommandObservable } from './matterbridgeEndpointTypes.js';
@@ -471,7 +471,7 @@ export function getBehaviourTypeFromClusterServerId(clusterId: ClusterId): Behav
   if (clusterId === OnOff.id) return MatterbridgeOnOffServer.with('Lighting');
   if (clusterId === LevelControl.id) return MatterbridgeLevelControlServer.with('OnOff', 'Lighting');
   if (clusterId === ColorControl.id) return MatterbridgeColorControlServer;
-  if (clusterId === WindowCovering.id) return MatterbridgeWindowCoveringServer.with('Lift', 'PositionAwareLift');
+  if (clusterId === WindowCovering.id) return MatterbridgeLiftWindowCoveringServer;
   if (clusterId === Thermostat.id) return MatterbridgeThermostatServer.with('AutoMode', 'Heating', 'Cooling');
   if (clusterId === ThermostatUserInterfaceConfiguration.id) return ThermostatUserInterfaceConfigurationServer;
   if (clusterId === FanControl.id) return MatterbridgeFanControlServer;
@@ -1898,6 +1898,151 @@ export function getDefaultDeviceEnergyManagementModeClusterServer(currentMode?: 
 }
 
 /** Application Cluster Helpers */
+
+/**
+ * Validate a WindowCovering position in 100ths and return its Percentage mirror.
+ *
+ * @param {number | null} positionPercent100ths - Position in 100ths (0 = open, 10000 = closed), or null when unknown.
+ * @param {string} name - Parameter name used in the error message.
+ * @returns {number | null} The position as a Percentage (0-100), or null when unknown.
+ * @throws {Error} If the position is not null and not an integer from 0 to 10000.
+ */
+function windowCoveringPercentage(positionPercent100ths: number | null, name: string): number | null {
+  if (positionPercent100ths === null) return null;
+  if (!isValidNumber(positionPercent100ths, 0, 10000) || !Number.isInteger(positionPercent100ths)) {
+    throw new Error(`Invalid WindowCovering ${name} ${positionPercent100ths}: expected an integer from 0 to 10000 or null`);
+  }
+  return Math.floor(positionPercent100ths / 100);
+}
+
+/**
+ * Get the default lift and position-aware lift WindowCovering cluster server options.
+ *
+ * @param {number | null} positionPercent100ths - Initial position (0 = open, 10000 = closed), or null when unknown.
+ * @param {WindowCovering.WindowCoveringType} type - Window covering type supporting lift.
+ * @param {WindowCovering.EndProductType} endProductType - End product type supporting lift.
+ * @param {number} movementDuration - Simulated movement duration in milliseconds; 0 disables simulation.
+ * @returns {Behavior.Options<typeof MatterbridgeLiftWindowCoveringServer>} Default options for `MatterbridgeLiftWindowCoveringServer`.
+ * @throws {Error} If positionPercent100ths is not null and not an integer from 0 to 10000.
+ */
+export function getDefaultWindowCoveringClusterServer(
+  positionPercent100ths: number | null = 0,
+  type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.Rollershade,
+  endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
+  movementDuration: number = 0,
+): Behavior.Options<typeof MatterbridgeLiftWindowCoveringServer> {
+  const currentPositionLiftPercentage = windowCoveringPercentage(positionPercent100ths, 'positionPercent100ths');
+  return optionsFor(MatterbridgeLiftWindowCoveringServer, {
+    type, // Must support feature Lift
+    numberOfActuationsLift: 0, // persisted
+    configStatus: {
+      // persisted
+      operational: true,
+      // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+      liftMovementReversed: false,
+      liftPositionAware: true,
+      tiltPositionAware: false,
+      liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+      tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+    },
+    // No tilt field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
+    operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
+    endProductType, // Must support feature Lift
+    mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+    targetPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed
+    currentPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed, persisted
+    currentPositionLiftPercentage, // Mirror of currentPositionLiftPercent100ths, persisted
+    movementDuration,
+  });
+}
+
+/**
+ * Get the default position-aware lift and tilt WindowCovering cluster server options.
+ *
+ * @param {number | null} positionLiftPercent100ths - Initial lift position (0 = open, 10000 = closed), or null when unknown.
+ * @param {number | null} positionTiltPercent100ths - Initial tilt position (0 = open, 10000 = closed), or null when unknown.
+ * @param {WindowCovering.WindowCoveringType} type - Window covering type supporting lift and tilt.
+ * @param {WindowCovering.EndProductType} endProductType - End product type supporting lift and tilt.
+ * @param {number} movementDuration - Simulated movement duration in milliseconds; 0 disables simulation.
+ * @returns {Behavior.Options<typeof MatterbridgeLiftTiltWindowCoveringServer>} Default options for `MatterbridgeLiftTiltWindowCoveringServer`.
+ * @throws {Error} If a position is not null and not an integer from 0 to 10000.
+ */
+export function getDefaultLiftTiltWindowCoveringClusterServer(
+  positionLiftPercent100ths: number | null = 0,
+  positionTiltPercent100ths: number | null = 0,
+  type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindLift,
+  endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.InteriorBlind,
+  movementDuration: number = 0,
+): Behavior.Options<typeof MatterbridgeLiftTiltWindowCoveringServer> {
+  const currentPositionLiftPercentage = windowCoveringPercentage(positionLiftPercent100ths, 'positionLiftPercent100ths');
+  const currentPositionTiltPercentage = windowCoveringPercentage(positionTiltPercent100ths, 'positionTiltPercent100ths');
+  return optionsFor(MatterbridgeLiftTiltWindowCoveringServer, {
+    type, // Must support features Lift and Tilt
+    numberOfActuationsLift: 0, // persisted
+    numberOfActuationsTilt: 0, // persisted
+    configStatus: {
+      // persisted
+      operational: true,
+      // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+      liftMovementReversed: false,
+      liftPositionAware: true,
+      tiltPositionAware: true,
+      liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+      tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+    },
+    operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+    endProductType, // Must support features Lift and Tilt
+    mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+    targetPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed
+    currentPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed, persisted
+    currentPositionLiftPercentage, // Mirror of currentPositionLiftPercent100ths, persisted
+    targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
+    currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
+    currentPositionTiltPercentage, // Mirror of currentPositionTiltPercent100ths, persisted
+    movementDuration,
+  });
+}
+
+/**
+ * Get the default tilt and position-aware tilt WindowCovering cluster server options.
+ *
+ * @param {number | null} positionTiltPercent100ths - Initial tilt position (0 = open, 10000 = closed), or null when unknown.
+ * @param {WindowCovering.WindowCoveringType} type - Window covering type supporting tilt.
+ * @param {WindowCovering.EndProductType} endProductType - End product type supporting tilt.
+ * @param {number} movementDuration - Simulated movement duration in milliseconds; 0 disables simulation.
+ * @returns {Behavior.Options<typeof MatterbridgeTiltWindowCoveringServer>} Default options for `MatterbridgeTiltWindowCoveringServer`.
+ * @throws {Error} If positionTiltPercent100ths is not null and not an integer from 0 to 10000.
+ */
+export function getDefaultTiltWindowCoveringClusterServer(
+  positionTiltPercent100ths: number | null = 0,
+  type: WindowCovering.WindowCoveringType = WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
+  endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.TiltOnlyInteriorBlind,
+  movementDuration: number = 0,
+): Behavior.Options<typeof MatterbridgeTiltWindowCoveringServer> {
+  const currentPositionTiltPercentage = windowCoveringPercentage(positionTiltPercent100ths, 'positionTiltPercent100ths');
+  return optionsFor(MatterbridgeTiltWindowCoveringServer, {
+    type, // Must support feature Tilt
+    numberOfActuationsTilt: 0, // persisted
+    configStatus: {
+      // persisted
+      operational: true,
+      // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
+      liftMovementReversed: false,
+      liftPositionAware: false,
+      tiltPositionAware: true,
+      liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+      tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
+    },
+    // No lift field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
+    operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+    endProductType, // Must support feature Tilt
+    mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
+    targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
+    currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
+    currentPositionTiltPercentage, // Mirror of currentPositionTiltPercent100ths, persisted
+    movementDuration,
+  });
+}
 
 /**
  * Get the default OperationalState Cluster Server.
