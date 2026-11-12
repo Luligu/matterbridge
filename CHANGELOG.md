@@ -29,7 +29,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
-## [3.11.3] - Dev branch
+## [3.11.3] - 2026-11-13
 
 ### Development News
 
@@ -67,7 +67,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Home, Devices table and Devices icons request `/api/platform-devices` for each started plugin and replace the rows of that plugin only; an empty reply removes them.
 - [frontend]: Devices table and Devices icons refresh on `refresh_required` like the Home devices: on every change except `matter` and a locked `plugins` refresh.
 - [core]: Document the `Plugin` interface fields.
-- [agents]: Add Bionic / LM Studio to the shared agent stack: update `AGENTS.md` to v.1.0.11 (`@<name>` skill invocation, read the global `~/.agents/AGENTS.md` first), `.agents/README.md` to v.1.0.5, `STYLEGUIDE.md` to v.1.1.1 and `SHARED-AGENTS.md`.
+- [agents]: Add Bionic / LM Studio to the shared agent stack: update `AGENTS.md` to v.1.0.12 (`@<name>` skill invocation, read the global `~/.agents/AGENTS.md` first), `.agents/README.md` to v.1.0.5, `STYLEGUIDE.md` to v.1.1.1 and `SHARED-AGENTS.md`.
 - [agents]: Update the `verify-agent-context` skill to v.1.0.6: report the global instruction file, the global `~/.agents/AGENTS.md` master and global settings, and group skills by source.
 - [matterbridge]: Bump `matterbridge` version to v.3.11.3.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.0.
@@ -87,7 +87,6 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [core]: Forward childbridge status updates to experimental backend WebSocket clients.
-
 - [frontend]: Devices table clears the selected device and its clusters on a full reload.
 - [frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.
 - [core]: `/api/create-backup` works with `--profile`: the profile directories are stored flat as `.matterbridge`, `Matterbridge` and `.mattercert` instead of failing on duplicate entry names.

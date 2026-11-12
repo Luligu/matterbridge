@@ -152,7 +152,7 @@
 <p>The format is based on <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and this project adheres to <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>.</p>
 <p>If you like this project and find it useful, please consider giving it a star on <a href="https://github.com/Luligu/matterbridge">GitHub</a> and sponsoring it.</p>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a></p>
-<h2 id="3113-dev-branch">[3.11.3] - Dev branch</h2>
+<h2 id="3113-2026-11-13">[3.11.3] - 2026-11-13</h2>
 <h3 id="development-news">Development News</h3>
 <ul>
 <li>[chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the <code>TimeSynchronization</code> cluster (<code>TC_TIMESYNC_2_1.py</code> to <code>TC_TIMESYNC_3_1.py</code>, 14 tests), with its own <code>root-camera.pics</code>.</li>
@@ -172,6 +172,7 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
+<li>[core]: Add default Window Covering options helpers for lift, lift/tilt and tilt servers.</li>
 <li>[types]: Add <code>platform_select_device</code> and <code>platform_unselect_device</code> broadcast contracts matching the frontend selection parameters.</li>
 <li>[core]: Handle platform select/unselect broadcasts using schema selection mode, postfix stripping and white/black lists, with config saving and restart/refresh notifications.</li>
 <li>[types]: Add the <code>/api/platform-devices</code> request/response contracts; the response carries the requested <code>pluginName</code>.</li>
@@ -188,7 +189,7 @@
 <li>[frontend]: Home, Devices table and Devices icons request <code>/api/platform-devices</code> for each started plugin and replace the rows of that plugin only; an empty reply removes them.</li>
 <li>[frontend]: Devices table and Devices icons refresh on <code>refresh_required</code> like the Home devices: on every change except <code>matter</code> and a locked <code>plugins</code> refresh.</li>
 <li>[core]: Document the <code>Plugin</code> interface fields.</li>
-<li>[agents]: Add Bionic / LM Studio to the shared agent stack: update <code>AGENTS.html</code> to v.1.0.11 (<code>@&lt;name&gt;</code> skill invocation, read the global <code>~/.agents/AGENTS.html</code> first), <code>.agents/README.html</code> to v.1.0.5, <code>STYLEGUIDE.html</code> to v.1.1.1 and <code>SHARED-AGENTS.html</code>.</li>
+<li>[agents]: Add Bionic / LM Studio to the shared agent stack: update <code>AGENTS.html</code> to v.1.0.12 (<code>@&lt;name&gt;</code> skill invocation, read the global <code>~/.agents/AGENTS.html</code> first), <code>.agents/README.html</code> to v.1.0.5, <code>STYLEGUIDE.html</code> to v.1.1.1 and <code>SHARED-AGENTS.html</code>.</li>
 <li>[agents]: Update the <code>verify-agent-context</code> skill to v.1.0.6: report the global instruction file, the global <code>~/.agents/AGENTS.html</code> master and global settings, and group skills by source.</li>
 <li>[matterbridge]: Bump <code>matterbridge</code> version to v.3.11.3.</li>
 <li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.5.1.0.</li>
@@ -207,16 +208,11 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
-<li><p>[core]: Forward childbridge status updates to experimental backend WebSocket clients.</p>
-</li>
-<li><p>[frontend]: Devices table clears the selected device and its clusters on a full reload.</p>
-</li>
-<li><p>[frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.</p>
-</li>
-<li><p>[core]: <code>/api/create-backup</code> works with <code>--profile</code>: the profile directories are stored flat as <code>.matterbridge</code>, <code>Matterbridge</code> and <code>.mattercert</code> instead of failing on duplicate entry names.</p>
-</li>
-<li><p>[thread]: The archive worker logs an error and responds with <code>success: false</code> when the archive command throws.</p>
-</li>
+<li>[core]: Forward childbridge status updates to experimental backend WebSocket clients.</li>
+<li>[frontend]: Devices table clears the selected device and its clusters on a full reload.</li>
+<li>[frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.</li>
+<li>[core]: <code>/api/create-backup</code> works with <code>--profile</code>: the profile directories are stored flat as <code>.matterbridge</code>, <code>Matterbridge</code> and <code>.mattercert</code> instead of failing on duplicate entry names.</li>
+<li>[thread]: The archive worker logs an error and responds with <code>success: false</code> when the archive command throws.</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3112-2026-11-06">[3.11.2] - 2026-11-06</h2>

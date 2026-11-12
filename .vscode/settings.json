@@ -1,4 +1,4 @@
-// VS Code settings v.1.0.18
+// VS Code settings v.1.0.19
 {
   "npm.packageManager": "npm",
   // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
@@ -49,6 +49,18 @@
   "chat.useAgentsMdFile": true, // Load AGENTS.md at the workspace root as always-on instructions.
   "chat.useNestedAgentsMdFiles": true, // Also load nested AGENTS.md files in subfolders. Experimental.
   "github.copilot.chat.commitMessageGeneration.instructions": [{ "file": ".github/commit-message-instructions.md" }], // Conventional Commits for the Source Control "Generate Commit Message" button.
+  "chat.tools.urls.autoApprove": {
+    // Allow chat tools to access these domains without approval.
+    "github.com": true,
+    "matterbridge.io": true,
+    "api.github.com": true,
+    "registry.npmjs.org": true,
+    "www.rfc-editor.org": true,
+    "www.ietf.org": true
+  },
+  "chat.permissions.default": "autoApprove", // Automatically approve permissions by default.
+  "chat.agent.sandbox.enabled": "on", // Run agent commands in the sandbox.
+  "chat.agent.sandbox.network.allowLocalNetwork": true, // Allow sandboxed commands to access the local network.
   "chat.tools.terminal.autoApprove": {
     // Denied: raw tool invocations must go through the npm scripts (AGENTS.md hard rule).
     "npx tsc": false,
@@ -122,5 +134,6 @@
     "git branch -vv": true,
     "git ls-files": true
   },
-  "lmstudioCode.minContextLength": 262144
+  "lmstudio-copilot.enableThinking": false,
+  "lmstudio-copilot.reasoningEffort": "none"
 }
