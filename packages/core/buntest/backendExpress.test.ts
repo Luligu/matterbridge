@@ -54,6 +54,7 @@ const mockedBackend = {
   getApiSettings: () => ({ ok: true, settings: { a: 1 } }),
   getApiPlugins: () => ({ ok: true, plugins: [{ name: 'plugin1' }] }),
   getDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),
+  getApiDevices: (pluginName: string, extended: boolean) => ({ ok: true, pluginName, extended }),
   // Snackbar helpers now live on backend.backendWsServer; the source calls them via this.backend.backendWsServer?.wssSend*.
   backendWsServer: {
     wssSendSnackbarMessage: vi.fn(),
@@ -446,6 +447,7 @@ describe('BackendExpress', () => {
     const protectedGetEndpoints = [
       '/api/plugins',
       '/api/devices',
+      '/api/platform-devices?pluginName=matterbridge-test',
       '/api/view-mblog',
       '/api/download-mblog',
       '/api/view-mjlog',
@@ -544,6 +546,22 @@ describe('BackendExpress', () => {
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
     expect(Array.isArray(response.body.devices)).toBe(true);
+  });
+
+  test('GET /api/platform-devices authorized', async () => {
+    for (const query of ['', '?pluginName=short', '?pluginName=a&pluginName=matterbridge-test']) {
+      const wrong = await makeRequest(`/api/platform-devices${query}`, 'GET');
+      expect(wrong.status).toBe(400);
+      expect(wrong.body).toEqual({ error: 'Wrong parameter pluginName in /api/platform-devices' });
+    }
+
+    const response = await makeRequest('/api/platform-devices?pluginName=matterbridge-test', 'GET');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ ok: true, pluginName: 'matterbridge-test', extended: false });
+
+    const extended = await makeRequest('/api/platform-devices?pluginName=matterbridge-test&extended=true', 'GET');
+    expect(extended.status).toBe(200);
+    expect(extended.body).toEqual({ ok: true, pluginName: 'matterbridge-test', extended: true });
   });
 
   test('GET /api/view-mblog success then error', async () => {
