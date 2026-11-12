@@ -213,6 +213,7 @@
 <li>[frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.</li>
 <li>[core]: <code>/api/create-backup</code> works with <code>--profile</code>: the profile directories are stored flat as <code>.matterbridge</code>, <code>Matterbridge</code> and <code>.mattercert</code> instead of failing on duplicate entry names.</li>
 <li>[thread]: The archive worker logs an error and responds with <code>success: false</code> when the archive command throws.</li>
+<li>[core]: The <code>ClosureControl</code>, <code>ClosureDimension</code> and <code>SoilMeasurement</code> definitions register in <code>MatterDefinition</code> even when a device type has the same id (<code>DimmerSwitch</code> 0x0104, <code>ColorDimmerSwitch</code> 0x0105).</li>
 </ul>
 <p><a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a></p>
 <h2 id="3112-2026-11-06">[3.11.2] - 2026-11-06</h2>

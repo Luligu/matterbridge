@@ -9,6 +9,7 @@ import { describe, expect, test } from 'bun:test';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 import { ClosureDimension } from '../../src/clusters/closure-dimension.js';
+import { expectClusterRegistration } from './registration.js';
 
 describe('ClosureDimension cluster', () => {
   test('identity, features, attributes and commands', () => {
@@ -52,5 +53,10 @@ describe('ClosureDimension cluster', () => {
       direction: ClosureDimension.StepDirection.Increase,
       numberOfSteps: 1,
     });
+  });
+
+  test('registers the definition and the model when matter.js does not ship the cluster', async () => {
+    const specifier = '../../src/clusters/closure-dimension.js?register';
+    await expectClusterRegistration(0x0105, async () => (await import(specifier)) as Record<string, unknown>, 'ClosureDimension');
   });
 });

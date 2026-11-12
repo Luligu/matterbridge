@@ -9,7 +9,7 @@ const NAME = 'Ffmpeg';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, mock, test, vi } from 'bun:test';
 import type { ChildProcess, SpawnSyncReturns } from 'node:child_process';
 import { EventEmitter } from 'node:events';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -200,6 +200,29 @@ describe('ffmpeg resolution', () => {
     expect((await fresh()).hasFfmpeg()).toBe(false);
     // Depending on the host the file is missing or present and rejected.
     expect(loggerDebugSpy).toHaveBeenCalledWith(expect.stringMatching(/^Candidate \/opt\/homebrew\/bin\/ffmpeg (is not accessible|did not run successfully)$/));
+  });
+
+  test('on Windows a missing winget package storage and an unreadable Gyan package are ignored', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    clearSearchPath();
+    spawnSyncMock.mockImplementation(() => fakeSync(new Error('spawn ENOENT')));
+    // LOCALAPPDATA without Microsoft\WinGet\Packages.
+    await inTempDir(async (localAppData) => {
+      process.env.LOCALAPPDATA = localAppData;
+      expect((await fresh()).hasFfmpeg()).toBe(false);
+    });
+    // A Gyan package directory that cannot be listed (chmod has no effect on Windows hosts, where it lists as empty).
+    await inTempDir(async (localAppData) => {
+      const gyanPackage = path.join(localAppData, 'Microsoft', 'WinGet', 'Packages', 'Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe');
+      await mkdir(path.join(gyanPackage, 'ffmpeg-8.1.2-full_build'), { recursive: true });
+      await chmod(gyanPackage, 0o000);
+      try {
+        process.env.LOCALAPPDATA = localAppData;
+        expect((await fresh()).hasFfmpeg()).toBe(false);
+      } finally {
+        await chmod(gyanPackage, 0o755);
+      }
+    });
   });
 
   test('on Windows the winget Gyan.FFmpeg bin and the Program Files installs are probed', async () => {
