@@ -1,4 +1,4 @@
-# Shared agent instructions (v.1.0.5)
+# Shared agent instructions (v.1.0.6)
 
 This folder is the **single source of truth** for the instructions given to every coding agent used on this
 repository — OpenAI Codex, Claude Code, GitHub Copilot, Google Gemini / Antigravity and Bionic / LM Studio. Each agent reads the same documents through its
@@ -26,11 +26,12 @@ Reference documents. They are not loaded all the time — an agent opens the one
 | `rules/plugin-frontend.instructions.md`         | Serving a plugin's own frontend SPA and REST API      |
 | `rules/matterbridge-chip-tests.instructions.md` | The Matterbridge CHIP conformance test harness        |
 
-Each starts with YAML frontmatter holding a `description` that ends with the file's version:
+Each starts with YAML frontmatter holding a human-readable `name` and a `description` that ends with the file's version:
 
 ```yaml
 ---
-description: 'Testing standards for unit tests in the project v.1.0.7'
+name: 'Testing Standards'
+description: 'Testing standards for unit tests in the project v.1.0.8'
 ---
 ```
 
@@ -67,13 +68,13 @@ Optional `scripts/`, `references/` and `assets/` subfolders are supported alongs
 | Skills      | discovered automatically, run with `$name` | `.claude/skills/*` → `/name`                        | `.github/skills/*` → `/name`                                             | discovered automatically from `.agents/skills/*` → `/name` | discovered automatically from `.agents/skills/*` → `@name` |
 
 Codex, Gemini / Antigravity and Bionic / LM Studio read `.agents/` natively — they scan `.agents/skills` from
-the working directory up to the repository root. Bionic loads no global instruction file, so `AGENTS.md`
+the working directory up to the repository root. Bionic also loads no global instruction file, so `AGENTS.md`
 asks it to read `~/.agents/AGENTS.md` itself. Claude Code and Copilot have no such convention, so each keeps a
 small mirror in its own folder. Those mirrors hold **only** frontmatter plus a pointer, for example:
 
 ```markdown
 ---
-description: 'Testing standards for unit tests in the project v.1.0.7'
+description: 'Testing standards for unit tests in the project v.1.0.8'
 paths:
   - '**/*.test.ts'
 ---
@@ -89,7 +90,7 @@ when the skill runs, and both also read the mirror's `description` to offer the 
 
 **A new rule:**
 
-1. Write `.agents/rules/<topic>.instructions.md` with a `description` frontmatter ending in `v.1.0.0`.
+1. Write `.agents/rules/<topic>.instructions.md` with a human-readable `name` and a `description` ending in `v.1.0.0` in its frontmatter.
 2. Add a bullet for it in `AGENTS.md` under _Additional Agent Guidance_ — Codex and Bionic have no
    auto-loading, so a rule that is not listed there is invisible to them.
 3. Create the two pointer files, copying the frontmatter style of an existing pair and setting the
