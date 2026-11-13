@@ -1,4 +1,4 @@
-// VS Code settings v.1.0.20
+// VS Code settings v.1.0.21
 {
   "npm.packageManager": "npm",
   // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
@@ -25,6 +25,7 @@
     "source.fixAll.oxc": "always"
   },
   "diffEditor.ignoreTrimWhitespace": false,
+  "vitest.configSearchPatternExclude": "{**/node_modules/**,**/vendor/**,**/.*/**,**/*.d.ts,**/template/**}",
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
