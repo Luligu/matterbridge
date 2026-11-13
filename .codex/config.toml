@@ -1,11 +1,14 @@
-# Codex config v.1.0.7
+# Codex config v.1.0.8
 
 approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 
 web_search = "live"
 
-default_permissions = "matterbridge_sandbox_online"
+default_permissions = "matterbridge_sandbox_restricted"
+
+[features]
+network_proxy = true
 
 [shell_environment_policy]
 inherit = "core"
@@ -13,12 +16,42 @@ inherit = "core"
 [windows]
 sandbox = "elevated"
 
+[permissions.matterbridge_sandbox_restricted]
+description = "Workspace access with sensitive files denied and restricted network."
+extends = ":workspace"
+
+[permissions.matterbridge_sandbox_restricted.network]
+enabled = true
+allow_local_binding = true
+
+[permissions.matterbridge_sandbox_restricted.network.domains]
+"api.github.com" = "allow"
+"github.com" = "allow"
+"registry.npmjs.org" = "allow"
+"matterbridge.io" = "allow"
+"www.rfc-editor.org" = "allow"
+"www.ietf.org" = "allow"
+
+[permissions.matterbridge_sandbox_restricted.filesystem]
+glob_scan_max_depth = 4
+
+[permissions.matterbridge_sandbox_restricted.filesystem.":workspace_roots"]
+".env" = "deny"
+".env.*" = "deny"
+# removed for a bug in Codex sandbox "**/.env" = "deny"
+# removed for a bug in Codex sandbox "**/.env.*" = "deny"
+# removed for a bug in Codex sandbox "**/secrets/**" = "deny"
+
 [permissions.matterbridge_sandbox_online]
 description = "Workspace access with sensitive files denied and network enabled."
 extends = ":workspace"
 
 [permissions.matterbridge_sandbox_online.network]
 enabled = true
+allow_local_binding = true
+
+[permissions.matterbridge_sandbox_online.network.domains]
+"*" = "allow"
 
 [permissions.matterbridge_sandbox_online.filesystem]
 glob_scan_max_depth = 4
@@ -26,9 +59,9 @@ glob_scan_max_depth = 4
 [permissions.matterbridge_sandbox_online.filesystem.":workspace_roots"]
 ".env" = "deny"
 ".env.*" = "deny"
-"**/.env" = "deny"
-"**/.env.*" = "deny"
-"**/secrets/**" = "deny"
+# removed for a bug in Codex sandbox "**/.env" = "deny"
+# removed for a bug in Codex sandbox "**/.env.*" = "deny"
+# removed for a bug in Codex sandbox "**/secrets/**" = "deny"
 
 [permissions.matterbridge_sandbox_offline]
 description = "Workspace access with sensitive files denied and network disabled."
@@ -36,6 +69,7 @@ extends = ":workspace"
 
 [permissions.matterbridge_sandbox_offline.network]
 enabled = false
+allow_local_binding = false
 
 [permissions.matterbridge_sandbox_offline.filesystem]
 glob_scan_max_depth = 4
@@ -43,6 +77,6 @@ glob_scan_max_depth = 4
 [permissions.matterbridge_sandbox_offline.filesystem.":workspace_roots"]
 ".env" = "deny"
 ".env.*" = "deny"
-"**/.env" = "deny"
-"**/.env.*" = "deny"
-"**/secrets/**" = "deny"
+# removed for a bug in Codex sandbox "**/.env" = "deny"
+# removed for a bug in Codex sandbox "**/.env.*" = "deny"
+# removed for a bug in Codex sandbox "**/secrets/**" = "deny"
