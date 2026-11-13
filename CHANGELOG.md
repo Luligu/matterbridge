@@ -37,6 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Changed
 
+- [docker]: Bump `s6-overlay` to v.3.2.3.2 in `Dockerfile.s6-rc` and `Dockerfile.s6-rc-legacy`, move `user` bundle to `user-bundles.d`, and add `docker/rootfs/README.md`.
 - [matterbridge]: Bump `jsdom` to v.31.0.1.
 - [matterbridge]: Bump `marked` to v.18.2.0.
 - [matterbridge]: Bump `node-ansi-logger` to v.3.3.2.
