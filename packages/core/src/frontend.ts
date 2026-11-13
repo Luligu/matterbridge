@@ -401,6 +401,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       AnsiLogger.setGlobalCallback(this.wssSendLogMessage.bind(this), callbackLogLevel);
       this.log.debug(`WebSocketServer logger global callback set to ${callbackLogLevel}`);
       this.log.info(`WebSocketServer client "${clientIp}" connected to Matterbridge`);
+      const cache = AnsiLogger.getGlobalCache();
+      /* v8 ignore next */
+      if (cache) {
+        cache.replay((entry) => {
+          this.wssSendLogMessage(entry.level, entry.time, entry.name, entry.message);
+        });
+      }
 
       ws.on('message', (message) => {
         fireAndForget(this.wsMessageHandler(ws, message), this.log, `Error handling message from WebSocket client ${clientIp}`);

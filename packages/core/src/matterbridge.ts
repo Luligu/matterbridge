@@ -83,6 +83,7 @@ import { fireAndForget, wait } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import {
   AnsiLogger,
+  AnsiLoggerCache,
   BLUE,
   BRIGHT,
   CYAN,
@@ -242,6 +243,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public logLevel: LogLevel = this.log.logLevel;
   /** Whether to log to a file */
   public fileLogger = false;
+  /** Cache for the logger to store and reuse log entries */
+  public loggerCache = new AnsiLoggerCache(getIntParameter('loggerCache'));
 
   /** Matter logger */
   public readonly matterLog = new AnsiLogger({
@@ -704,6 +707,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async initialize(): Promise<void> {
     // Emit the initialize_started event
     this.emit('initialize_started');
+
+    // Set the logger global cache
+    AnsiLogger.setGlobalCache(this.loggerCache);
 
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';

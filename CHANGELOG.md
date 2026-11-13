@@ -31,10 +31,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.4] - Dev branch
 
+### Added
+
+- [core]: Add `AnsiLoggerCache` global logger cache (`--loggerCache`) and replay cached log entries to newly connected frontend WebSocket clients.
+
 ### Changed
 
 - [matterbridge]: Bump `jsdom` to v.31.0.1.
 - [matterbridge]: Bump `marked` to v.18.2.0.
+- [matterbridge]: Bump `node-ansi-logger` to v.3.3.2.
+- [matterbridge]: Bump `node-persist-manager` to v.2.1.2.
 - [matterbridge]: Bump `oxfmt` to v.0.78.0.
 - [matterbridge]: Bump `oxlint` to v.1.93.0.
 - [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2007.
