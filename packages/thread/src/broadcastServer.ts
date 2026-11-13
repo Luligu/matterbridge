@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer class.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.2
+ * @version 2.0.3
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -54,11 +54,24 @@ interface BroadcastServerEvents {
 type BroadcastChannelEvent = Parameters<NonNullable<BroadcastChannel['onmessage']>>[0];
 
 /**
+ * A fetch waiting for its response, stored by request id.
+ */
+interface PendingFetch {
+  /** Settles the fetch when the message is the response to its request, otherwise ignores it. */
+  handler: (msg: WorkerMessage) => void;
+  /** Rejects the fetch with the given error and removes it from the pending fetches. */
+  cancel: (error: Error) => void;
+}
+
+/**
  * BroadcastServer class to handle broadcast messages between workers with BroadcastChannel.
  */
 export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   private readonly broadcastChannel: BroadcastChannel;
   private closed = false;
+  // The fetches waiting for a response, by request id. A single map lookup per message replaces one event listener per fetch.
+  private readonly pendingFetches = new Map<number, PendingFetch>();
+
   private readonly debug = hasAnyParameter('debug', 'verbose', 'debug-broadcast', 'verbose-broadcast');
   private readonly verbose = hasAnyParameter('verbose', 'verbose-broadcast');
   private readonly diagnostic = hasAnyParameter('diagnostic', 'diagnostic-broadcast');
@@ -83,7 +96,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
   }
 
   /**
-   * Closes the broadcast channel.
+   * Closes the broadcast channel and rejects the fetches still waiting for a response.
    *
    * @returns {void}
    */
@@ -92,6 +105,8 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     this.broadcastChannel.onmessageerror = null;
     this.broadcastChannel.close();
     this.closed = true;
+    // Each cancel deletes its own entry: deleting from a Map while iterating it is safe
+    for (const pending of this.pendingFetches.values()) pending.cancel(new Error('Broadcast channel is closed'));
   }
 
   /**
@@ -104,6 +119,7 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     const msg: WorkerMessage = event.data;
     if (msg.dst === this.name || msg.dst === 'all') {
       if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received broadcast message: ${debugStringify(msg)}`);
+      if (msg.id !== undefined) this.pendingFetches.get(msg.id)?.handler(msg);
       this.emit('broadcast_message', msg);
     } else {
       if (this.verbose) this.log.debug(`Server ${CYAN}${this.name}${db} received unrelated broadcast message: ${debugStringify(msg)}`);
@@ -302,7 +318,8 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
    * @param {WorkerMessageRequest<K>} message - The typed request message to fetch.
    * @param {number} timeout - The timeout in milliseconds to wait for a response. Default is 250ms.
    * @returns {Promise<WorkerMessageResponseSuccess<K>>} A promise that resolves with the successful response from the worker or rejects on timeout.
-   * @throws {Error} If the fetch operation times out after the specified timeout (default 250ms) or if an error response is received or if the response is malformed.
+   * @throws {Error} If the fetch operation times out after the specified timeout (default 250ms) or if an error response is received or if the response is malformed
+   * or if the channel is closed or if a fetch with the same provided id is already pending.
    */
   async fetch<T extends WorkerMessageRequestAny, K extends Extract<keyof WorkerMessageTypes, T['type']>>(
     message: T,
@@ -311,11 +328,22 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
     if (this.closed) {
       return Promise.reject(new Error('Broadcast channel is closed'));
     }
+    let id: number;
+    if (message.id === undefined) {
+      // Generate an id not used by any pending fetch
+      do id = this.getUniqueId();
+      while (this.pendingFetches.has(id));
+    } else {
+      if (this.pendingFetches.has(message.id)) {
+        return Promise.reject(new Error(`Fetch id ${message.id} is already pending for message type ${message.type} from ${this.name} to ${message.dst}`));
+      }
+      id = message.id;
+    }
     let timeoutId: NodeJS.Timeout;
     const start = performance.now();
     const requestMessage = {
       ...message,
-      id: message.id ?? this.getUniqueId(),
+      id,
       timestamp: message.timestamp ?? Date.now(),
       src: this.name,
     };
@@ -323,9 +351,10 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
 
     return new Promise<WorkerMessageResponseSuccess<K>>((resolve, reject) => {
       const responseHandler = (msg: WorkerMessage): void => {
-        if (this.isWorkerResponseOfType(msg, requestMessage.type) && msg.id === requestMessage.id) {
+        // The id already matches: the handler is looked up by the message id
+        if (this.isWorkerResponseOfType(msg, requestMessage.type)) {
           clearTimeout(timeoutId);
-          this.off('broadcast_message', responseHandler);
+          this.pendingFetches.delete(requestMessage.id);
           if (this.verbose) this.log.debug(`Fetch response: ${debugStringify(msg)}`);
           if (this.diagnostic)
             writeDiagnostic(
@@ -350,12 +379,17 @@ export class BroadcastServer extends EventEmitter<BroadcastServerEvents> {
         }
       };
 
-      this.on('broadcast_message', responseHandler);
+      const cancel = (error: Error): void => {
+        clearTimeout(timeoutId);
+        this.pendingFetches.delete(requestMessage.id);
+        reject(error);
+      };
+
+      this.pendingFetches.set(requestMessage.id, { handler: responseHandler, cancel });
       this.request(requestMessage);
 
       timeoutId = setTimeout(() => {
-        this.off('broadcast_message', responseHandler);
-        reject(new Error(`Fetch timeout after ${timeout}ms for message type ${requestMessage.type} id ${requestMessage.id} from ${requestMessage.src} to ${requestMessage.dst}`));
+        cancel(new Error(`Fetch timeout after ${timeout}ms for message type ${requestMessage.type} id ${requestMessage.id} from ${requestMessage.src} to ${requestMessage.dst}`));
       }, timeout);
     });
   }

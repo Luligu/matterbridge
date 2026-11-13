@@ -513,6 +513,64 @@ describe('BroadcastServer', () => {
     expect(result2).toEqual(res2);
   });
 
+  test('fetch: should not add listeners when more than 10 fetches are pending', async () => {
+    const listeners = server.listenerCount('broadcast_message');
+    const fetches: Promise<unknown>[] = [];
+    for (let i = 0; i < 16; i++) fetches.push(server.fetch({ id: 600000 + i, type: 'test', src: 'frontend', dst: 'manager', params: { userId: i } }));
+    expect(server.listenerCount('broadcast_message')).toBe(listeners);
+    expect((server as any).pendingFetches.size).toBe(16);
+    for (let i = 0; i < 16; i++) {
+      (server as any).broadcastChannel.onmessage({ data: { id: 600000 + i, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'A', age: i } } });
+    }
+    const results = await Promise.all(fetches);
+    expect(results).toHaveLength(16);
+    expect((server as any).pendingFetches.size).toBe(0);
+  });
+
+  test('fetch: should generate another id when the generated id is already pending', async () => {
+    const getUniqueIdSpy = vi.spyOn(server, 'getUniqueId').mockReturnValueOnce(900000001).mockReturnValueOnce(900000001).mockReturnValueOnce(900000002);
+    try {
+      const fetch1 = server.fetch({ type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } });
+      const fetch2 = server.fetch({ type: 'test', src: 'frontend', dst: 'manager', params: { userId: 2 } });
+      expect(getUniqueIdSpy).toHaveBeenCalledTimes(3);
+      (server as any).broadcastChannel.onmessage({ data: { id: 900000002, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'B', age: 2 } } });
+      (server as any).broadcastChannel.onmessage({ data: { id: 900000001, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'A', age: 1 } } });
+      const [result1, result2] = await Promise.all([fetch1, fetch2]);
+      expect(result1.result).toEqual({ name: 'A', age: 1 });
+      expect(result2.result).toEqual({ name: 'B', age: 2 });
+    } finally {
+      getUniqueIdSpy.mockRestore();
+    }
+  });
+
+  test('fetch: should reject when the provided id is already pending', async () => {
+    const requestMsg = { id: 999001, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const pending = server.fetch(requestMsg);
+    expect(server.fetch(requestMsg)).rejects.toThrow(/Fetch id 999001 is already pending/);
+    (server as any).broadcastChannel.onmessage({ data: { id: 999001, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'A', age: 1 } } });
+    expect((await pending).result).toEqual({ name: 'A', age: 1 });
+  });
+
+  test('fetch: should ignore a message with the pending id that is not its response', async () => {
+    const requestMsg = { id: 999003, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } as const;
+    const pending = server.fetch(requestMsg);
+    // A request and a response of another type with the same id must not settle the fetch
+    (server as any).broadcastChannel.onmessage({ data: { id: 999003, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } } });
+    (server as any).broadcastChannel.onmessage({ data: { id: 999003, timestamp: Date.now(), type: 'test_simple', src: 'frontend', dst: 'manager', result: { success: true } } });
+    expect((server as any).pendingFetches.size).toBe(1);
+    (server as any).broadcastChannel.onmessage({ data: { id: 999003, timestamp: Date.now(), type: 'test', src: 'frontend', dst: 'manager', result: { name: 'A', age: 1 } } });
+    expect((await pending).result).toEqual({ name: 'A', age: 1 });
+    expect((server as any).pendingFetches.size).toBe(0);
+  });
+
+  test('close: should reject the pending fetches when the channel is closed', async () => {
+    const testServer = new BroadcastServer('manager', log, NAME);
+    const pending = testServer.fetch({ id: 999002, type: 'test', src: 'frontend', dst: 'manager', params: { userId: 1 } }, 1000);
+    testServer.close();
+    expect(pending).rejects.toThrow(/Broadcast channel is closed/);
+    expect((testServer as any).pendingFetches.size).toBe(0);
+  });
+
   test('close', () => {
     server.close();
     expect((server as any).broadcastChannel.onmessage).toBeNull();
