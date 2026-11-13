@@ -31,6 +31,21 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.4] - Dev branch
 
+### Changed
+
+- [matterbridge]: Bump `jsdom` to v.31.0.1.
+- [matterbridge]: Bump `marked` to v.18.2.0.
+- [matterbridge]: Bump `oxfmt` to v.0.78.0.
+- [matterbridge]: Bump `oxlint` to v.1.93.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2007.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.3.0.
+- [frontend]: Bump `vite` to v.8.3.8.
+- [thread]: Remove unused `@matter/main` dependency.
+- [thread]: Bump `@zip.js/zip.js` to v.2.25.0.
+- [core]: Bump `express-rate-limit` to v.8.7.4.
+- [core]: Bump `werift` to v.0.27.0.
+- [core]: Bump `ws` to v.8.23.0.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.11.3] - 2026-11-13

@@ -357,7 +357,7 @@ export class MatterbridgeTimeSynchronizationServer extends MatterbridgeTimeSynch
     }
     for (const [index, entry] of dstOffset.entries()) {
       const isLast = index === dstOffset.length - 1;
-      const previous = index > 0 ? dstOffset[index - 1] : undefined;
+      const previous = dstOffset[index - 1];
       // Matter 1.6.1 § 11.17.8.7 and § 11.17.6.7: Only the last entry may have a null ValidUntil, and a non-null ValidUntil SHALL be larger than ValidStarting.
       const validUntilOk = entry.validUntil === null ? isLast : BigInt(entry.validUntil) > BigInt(entry.validStarting);
       // Matter 1.6.1 § 11.17.8.7: The entries are sorted by ValidStarting, none starting before the ValidUntil of the previous entry.
