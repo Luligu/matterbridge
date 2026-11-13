@@ -578,8 +578,8 @@
     "@matterbridge/thread": "3.11.4",
     "@matterbridge/types": "3.11.4",
     "@matterbridge/utils": "3.11.4",
-    "node-ansi-logger": "3.3.1",
-    "node-persist-manager": "2.1.1"
+    "node-ansi-logger": "3.3.2",
+    "node-persist-manager": "2.1.2"
   },
   "devDependencies": {
     "@matter/main": "0.18.0",

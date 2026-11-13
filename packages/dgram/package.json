@@ -68,7 +68,7 @@
   },
   "dependencies": {
     "@matterbridge/utils": "3.11.4",
-    "node-ansi-logger": "3.3.1"
+    "node-ansi-logger": "3.3.2"
   },
   "devDependencies": {
     "@matterbridge/test-utils": "3.11.4",
