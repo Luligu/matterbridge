@@ -46,6 +46,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Bump `werift` to v.0.27.0.
 - [core]: Bump `ws` to v.8.23.0.
 
+### Fixed
+
+- [thread]: Track pending `BroadcastServer.fetch()` requests in a map instead of one listener per call, avoiding `MaxListenersExceededWarning` on >10 concurrent fetches and rejecting pending fetches on `close()` and duplicate request ids.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.11.3] - 2026-11-13
