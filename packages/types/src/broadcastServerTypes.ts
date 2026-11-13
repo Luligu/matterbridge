@@ -3,7 +3,7 @@
  * @description This file contains the BroadcastServer types.
  * @author Luca Liguori
  * @created 2025-10-05
- * @version 2.0.3
+ * @version 2.0.4
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -25,10 +25,22 @@
 import type { LogLevel } from 'node-ansi-logger';
 
 // matterbridge
-import type { ApiSelectDevice, ApiSelectEntity, ApiSettings, PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
+import type { PluginStatusUpdate, RefreshRequiredChanged, WsMessageBroadcast } from './frontendTypes.js';
 import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from './matterbridgePlatformTypes.js';
-import type { ApiClusters, ApiDevice, ApiMatter, ApiPlugin, BaseDevice, BridgeStatus, SharedMatterbridge, StoragePlugin } from './matterbridgeTypes.js';
-import type { ThreadNames, WorkerData } from './workerTypes.js';
+import type {
+  ApiClusters,
+  ApiDevice,
+  ApiMatter,
+  ApiPlugin,
+  ApiSelectDevice,
+  ApiSelectEntity,
+  ApiSettings,
+  Device,
+  BridgeStatus,
+  SharedMatterbridge,
+  StoragePlugin,
+} from './matterbridgeTypes.js';
+import type { ArchiveCommand, ThreadNames, WorkerData } from './workerTypes.js';
 
 /** Types of worker source */
 export type WorkerSrcType = 'cli' | 'manager' | 'matterbridge' | 'plugins' | 'devices' | 'frontend' | 'matter' | 'platform' | 'spawn' | 'updates';
@@ -171,6 +183,14 @@ export type WorkerMessageTypes = {
     request: { params: { pluginName: string; serialNumber: string; uniqueId: string; label: string } };
     response: { result: { success: boolean } };
   };
+  platform_select_device: {
+    request: { params: { pluginName: string; serialNumber: string; deviceName: string } };
+    response: { result: { success: boolean } };
+  };
+  platform_unselect_device: {
+    request: { params: { pluginName: string; serialNumber: string; deviceName: string } };
+    response: { result: { success: boolean } };
+  };
 
   // ThreadsManager methods
   manager_run: {
@@ -209,7 +229,7 @@ export type WorkerMessageTypes = {
   };
   manager_archive_response: {
     request: { params: undefined };
-    response: { result: { command: string; archivePath: string; sourcePaths: string[]; destinationPath: string; success: boolean } };
+    response: { result: { command: ArchiveCommand; archivePath: string; sourcePaths: string[]; destinationPath: string; success: boolean } };
   };
 
   // Matterbridge methods
@@ -250,7 +270,7 @@ export type WorkerMessageTypes = {
     response: { result: { success: true } };
   };
   matterbridge_apisettings: {
-    request: { params: { restartRequired?: boolean; fixedRestartRequired?: boolean; updateRequired?: boolean } };
+    request: { params: { restartRequired?: boolean; fixedRestartRequired?: boolean; updateRequired?: boolean; bridgeStatus?: BridgeStatus } };
     response: { result: { data: ApiSettings; success: true } };
   };
   matterbridge_start_plugin_server: {
@@ -454,6 +474,14 @@ export type WorkerMessageTypes = {
     request: { params: { name: string } };
     response: { result: { schema: PlatformSchema | undefined } };
   };
+  plugins_getconfig: {
+    request: { params: { name: string } };
+    response: { result: { config: PlatformConfig | undefined } };
+  };
+  plugins_setconfig: {
+    request: { params: { name: string; config: PlatformConfig } };
+    response: { result: { success: true } };
+  };
   plugins_getschema: {
     request: { params: { name: string } };
     response: { result: { schema: PlatformSchema | undefined } };
@@ -486,26 +514,22 @@ export type WorkerMessageTypes = {
   };
   devices_get: {
     request: { params: { uniqueId: string } };
-    response: { result: { device: BaseDevice | undefined } };
+    response: { result: { device: Device | undefined } };
   };
   devices_set: {
-    request: { params: { device: BaseDevice } };
-    response: { result: { device: BaseDevice } };
+    request: { params: { device: Device } };
+    response: { result: { device: Device } };
   };
   devices_remove: {
-    request: { params: { device: BaseDevice } };
+    request: { params: { device: Device } };
     response: { result: { success: boolean } };
   };
   devices_clear: {
     request: { params: undefined };
     response: { result: { success: true } };
   };
-  devices_basearray: {
+  devices_array: {
     request: { params: { pluginName?: string } };
-    response: { result: { devices: BaseDevice[] } };
-  };
-  devices_apidevicearray: {
-    request: { params: { pluginName?: string; extended?: boolean } };
-    response: { result: { devices: ApiDevice[] } };
+    response: { result: { devices: Device[] } };
   };
 };

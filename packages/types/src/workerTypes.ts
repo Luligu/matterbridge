@@ -3,7 +3,7 @@
  * @description This file contains the worker types.
  * @author Luca Liguori
  * @created 2025-11-25
- * @version 1.2.0
+ * @version 1.2.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -30,6 +30,9 @@ export type ThreadNames = 'SystemCheck' | 'GlobalPrefix' | 'CheckUpdates' | 'Spa
 
 /** Thread type used in the thread system */
 export type ThreadType = 'worker' | 'thread';
+
+/** Command executed by the archive command worker: 'zip' to create an archive, 'verify' to verify an archive, 'unzip' to extract an archive */
+export type ArchiveCommand = 'zip' | 'verify' | 'unzip';
 
 /** Base worker data for all workers, with a required execution type */
 export interface BaseWorkerData {
@@ -63,10 +66,12 @@ export interface ArchiveWorkerData {
   debug?: boolean;
   verbose?: boolean;
   tracker?: boolean;
-  command: 'zip' | 'verify' | 'unzip';
+  command: ArchiveCommand;
   archivePath: string;
   sourcePaths: string[];
   destinationPath: string;
+  /** Optional names of the top-level entries in the archive, one per source path (only for 'zip' command). Defaults to the basename of each source path. */
+  archiveNames?: string[];
 }
 
 /** Worker data for root node worker. Without pluginName the root node runs in bridge mode with all the plugins */

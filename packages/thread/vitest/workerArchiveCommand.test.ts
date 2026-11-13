@@ -5,6 +5,7 @@
  */
 
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+import type { ArchiveCommand } from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 import type { Mock } from 'vitest';
 
@@ -12,8 +13,9 @@ import type { Mock } from 'vitest';
 await setupTest('WorkerArchiveCommand', false);
 
 type RunOptions = Readonly<{
-  command?: 'zip' | 'verify' | 'unzip';
+  command?: ArchiveCommand;
   createZipResult?: number;
+  createZipError?: Error;
   readZipResult?: Array<Record<string, unknown>>;
   unZipResult?: string;
   workerData?: Record<string, unknown>;
@@ -61,7 +63,9 @@ async function runWorkerArchiveCommand(options: RunOptions): Promise<RunWorkerAr
   let wrapperName: string | undefined;
   let runPromise: Promise<boolean> | undefined;
 
-  const createZip = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.createZipResult ?? 128));
+  const createZip = vi.fn<(...args: any[]) => any>(
+    async () => await (options.createZipError ? Promise.reject(options.createZipError) : Promise.resolve(options.createZipResult ?? 128)),
+  );
   const readZip = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.readZipResult ?? [{ filename: 'file.txt' }]));
   const unZip = vi.fn<(...args: any[]) => any>(async () => await Promise.resolve(options.unZipResult ?? workerData.destinationPath));
 
@@ -93,7 +97,7 @@ describe('workerArchiveCommand', () => {
     expect(wrapperName).toBe('ArchiveCommand');
     expect(success).toBe(true);
 
-    expect(createZip).toHaveBeenCalledWith(workerData.archivePath, workerData.sourcePaths);
+    expect(createZip).toHaveBeenCalledWith(workerData.archivePath, workerData.sourcePaths, workerData.archiveNames);
     expect(readZip).not.toHaveBeenCalled();
     expect(unZip).not.toHaveBeenCalled();
     expect(loggerMock).toHaveBeenCalledWith(
@@ -117,6 +121,14 @@ describe('workerArchiveCommand', () => {
         success: true,
       },
     });
+  });
+
+  test('failure: zip command throws, logs an error and responds with failure', async () => {
+    const { success, loggerMock, respondMock, workerData } = await runWorkerArchiveCommand({ command: 'zip', createZipError: new Error('File already exists') });
+
+    expect(success).toBe(false);
+    expect(loggerMock).toHaveBeenCalledWith(LogLevel.ERROR, `Archive command zip on ${workerData.archivePath} error: File already exists`);
+    expect(respondMock).toHaveBeenCalledWith(expect.objectContaining({ type: 'manager_archive_response', result: expect.objectContaining({ success: false }) }));
   });
 
   test('success: verify command reads archive and logs success', async () => {

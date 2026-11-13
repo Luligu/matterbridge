@@ -98,8 +98,8 @@ interface MixedApiDevices {
   cluster?: string;
   matter?: ApiMatter;
   selected?: boolean;
-  // 'device': from the authoritative /api/devices roster. 'select': a selectable-but-not-yet-registered
-  // device, known only from /api/select/devices for its plugin. Lets each response type patch only the
+  // 'device': from the authoritative /api/platform-devices roster of its plugin. 'select': a selectable-but-not-yet-registered
+  // device, known only from /api/select-devices for its plugin. Lets each response type patch only the
   // rows it owns without touching or needing to know about the other's rows.
   origin: 'device' | 'select';
 }
@@ -111,16 +111,16 @@ interface HomeDevicesProps {
 
 /**
  * Starts with sending api/plugins to get the list of plugins.
- * For each plugin, if enabled, loaded and started, send api/select/devices to get every device that plugin knows about,
- * registered or not (this is how a not-yet-registered but selectable device is discovered).
- * Then send api/devices to get the complete, authoritative list of all registered devices across every plugin.
- * api/devices fully owns the registered-device rows: each response replaces them wholesale, since it is always the richer,
- * up-to-date source for anything already registered. api/select/devices only ever adds rows for devices its response
- * reports that aren't already covered by a registered-device row - in practice the not-yet-registered ones, since a
- * registered device it also reports is already present via api/devices - and never touches a registered device's row.
+ * For each plugin, if enabled, loaded and started, send api/platform-devices to get the authoritative list of the devices
+ * registered by that plugin platform, and api/select-devices to get every device that plugin knows about, registered or not
+ * (this is how a not-yet-registered but selectable device is discovered).
+ * api/platform-devices fully owns the registered-device rows of its plugin: each response replaces them wholesale, since it is
+ * always the richer, up-to-date source for anything already registered. api/select-devices only ever adds rows for devices its
+ * response reports that aren't already covered by a registered-device row - in practice the not-yet-registered ones, since a
+ * registered device it also reports is already present via api/platform-devices - and never touches a registered device's row.
  * Live updates (device reachability, checkbox selection, matter info) patch a single row directly.
  * The resulting list is displayed in a table.
- * The user can select/unselect devices using checkboxes. This sends api/command to selectdevice/unselectdevice.
+ * The user can select/unselect devices using checkboxes. This sends /api/select or /api/unselect.
  * The user can open the configuration page of a device if configUrl is set.
  * The user can open a QR code dialog if the device has matter information.
  * Registered devices have an actions menu that opens confirmation dialogs before sending unregister or controller-name requests.
@@ -422,39 +422,46 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
           setPlugins(msg.response as unknown as ExtendedBaseRegisteredPlugin[]); // Store the plugins response
           setMixedDevices([]); // Full reload: start from a clean slate so a plugin that's no longer running doesn't leave stale rows behind.
-          // Request all the devices
-          sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: true } });
-          if (debug || localDebug) console.log(`HomeDevices sent /api/devices`);
-          // Request the selected devices for each plugin
+          // Request the registered devices and the selected devices for each plugin
+          let requested = 0;
           for (const plugin of msg.response) {
             if (plugin.enabled && plugin.loaded === true && plugin.started === true /* && plugin.configured===true */ && plugin.error !== true) {
-              sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
-              if (debug || localDebug) console.log(`HomeDevices sent /api/select/devices for plugin: ${plugin.name}`);
+              requested++;
+              sendMessage({
+                id: uniqueId.current,
+                sender: 'HomeDevices',
+                method: '/api/platform-devices',
+                src: 'Frontend',
+                dst: 'Matterbridge',
+                params: { pluginName: plugin.name, extended: true },
+              });
+              if (debug || localDebug) console.log(`HomeDevices sent /api/platform-devices for plugin: ${plugin.name}`);
+              sendMessage({ id: uniqueId.current, sender: 'HomeDevices', method: '/api/select-devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
+              if (debug || localDebug) console.log(`HomeDevices sent /api/select-devices for plugin: ${plugin.name}`);
             }
           }
+          if (requested === 0) setFooterLeft('Registered devices:'); // No running plugin: nothing to wait for
         }
-      } else if (msg.id === uniqueId.current && msg.method === '/api/devices') {
-        if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} devices:`, msg.response);
+      } else if (msg.id === uniqueId.current && msg.method === '/api/platform-devices') {
+        if (debug || localDebug) console.log(`HomeDevices (id: ${msg.id}) received ${msg.response?.length} platform devices:`, msg.response);
         if (msg.response) {
-          // const start = new Date();
-          // console.log(`HomeDevices registering ${msg.response?.length} devices...`);
-          // /api/devices is the complete, authoritative roster: every response replaces all 'device'-origin
-          // rows wholesale (added, updated, or dropped to match exactly what it reports), while leaving
-          // 'select'-origin rows alone, except pruning any now superseded by a device that just got registered.
+          // /api/platform-devices is the authoritative roster of one plugin: every response, empty included, replaces all the
+          // 'device'-origin rows of that plugin (added, updated, or dropped to match exactly what it reports), while
+          // leaving 'select'-origin rows alone, except pruning any now superseded by a device that just got registered.
+          const pluginName = msg.pluginName;
           const registered: MixedApiDevices[] = (msg.response as ApiDevicesWithSelected[]).map((device) =>
             Object.assign(device, { selected: isSelected(device), origin: 'device' as const }),
           );
-          setFooterLeft('Registering devices...');
+          setFooterLeft(`Registering devices for ${pluginName}...`);
           setMixedDevices((prev) => {
             const registeredKeys = new Set(registered.map((d) => `${d.plugin}::${d.serialNumber}`));
+            const keptRegistered = prev.filter((row) => row.origin === 'device' && row.plugin !== pluginName);
             const keptSelectOnly = prev.filter((row) => row.origin === 'select' && !registeredKeys.has(`${row.plugin}::${row.serialNumber}`));
-            return [...registered, ...keptSelectOnly];
+            return [...keptRegistered, ...registered, ...keptSelectOnly];
           });
-          setFooterLeft('Registered devices:');
-          // const stop = new Date();
-          // console.log(`HomeDevices registered ${msg.response?.length} devices (took ${stop.getTime() - start.getTime()} ms)`);
         }
-      } else if (msg.id === uniqueId.current && msg.method === '/api/select/devices') {
+        setFooterLeft('Registered devices:');
+      } else if (msg.id === uniqueId.current && msg.method === '/api/select-devices') {
         if (debug || localDebug)
           console.log(
             `HomeDevices (id: ${msg.id}) received ${msg.response?.length} selectDevices for plugin ${msg.response && msg.response.length > 0 ? msg.response[0].plugin : 'without select devices'}:`,
@@ -469,7 +476,7 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
             // This response lists every device the plugin knows, registered or not. Drop this plugin's
             // previous select-only rows, then add back only the devices not already covered by a
             // 'device'-origin row - the ones this plugin also reports as registered are skipped, since
-            // api/devices already has the richer, authoritative row for them.
+            // api/platform-devices already has the richer, authoritative row for them.
             const withoutStaleSelectOnly = prev.filter((row) => !(row.origin === 'select' && row.plugin === pluginName));
             const registeredRows = withoutStaleSelectOnly.filter((row) => row.origin === 'device');
             const newSelectOnlyRows: MixedApiDevices[] = (msg.response as ApiSelectDevicesWithSelected[])
@@ -530,19 +537,19 @@ function HomeDevices({ storeId, setStoreId }: HomeDevicesProps) {
       sendMessage({
         id: uniqueId.current,
         sender: 'HomeDevices',
-        method: '/api/command',
+        method: '/api/select',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { command: 'selectdevice', plugin: device.plugin, serial: device.serialNumber, name: device.deviceName },
+        params: { pluginName: device.plugin, serialNumber: device.serialNumber, deviceName: device.deviceName },
       });
     } else {
       sendMessage({
         id: uniqueId.current,
         sender: 'HomeDevices',
-        method: '/api/command',
+        method: '/api/unselect',
         src: 'Frontend',
         dst: 'Matterbridge',
-        params: { command: 'unselectdevice', plugin: device.plugin, serial: device.serialNumber, name: device.deviceName },
+        params: { pluginName: device.plugin, serialNumber: device.serialNumber, deviceName: device.deviceName },
       });
     }
   };

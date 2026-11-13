@@ -25,6 +25,7 @@ describe('muiTheme', () => {
   afterEach(() => {
     cleanup();
     window.getComputedStyle = originalGetComputedStyle;
+    document.documentElement.style.removeProperty('--main-label-color');
   });
 
   it('getCssVariable returns value from CSS', async () => {
@@ -87,6 +88,7 @@ describe('muiTheme', () => {
   });
 
   it('themes the Select dropdown arrow', async () => {
+    document.documentElement.style.setProperty('--main-label-color', 'rgb(18, 52, 86)');
     const { createMuiTheme } = await loadMuiTheme();
     render(
       <ThemeProvider theme={createMuiTheme('#123456')}>
@@ -97,6 +99,6 @@ describe('muiTheme', () => {
     );
     const icon = document.querySelector('.MuiSelect-icon');
     expect(icon).not.toBeNull();
-    expect(getComputedStyle(icon as Element).color).toBe('var(--main-label-color)');
+    expect(getComputedStyle(icon as Element).color).toBe('rgb(18, 52, 86)');
   });
 });

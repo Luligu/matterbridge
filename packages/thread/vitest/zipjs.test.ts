@@ -96,6 +96,24 @@ describe('zipjs', () => {
     expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(`Zip ${zipPath} is empty.`));
   });
 
+  test('creates a zip archive with custom top-level entry names', async () => {
+    const tempDirectory = await createTempDirectory();
+    const firstDirectory = path.join(tempDirectory, 'first', 'profiles', 'Test');
+    const secondDirectory = path.join(tempDirectory, 'second', 'profiles', 'Test');
+    const zipPath = path.join(tempDirectory, 'named.zip');
+
+    await mkdir(firstDirectory, { recursive: true });
+    await mkdir(secondDirectory, { recursive: true });
+    await writeFile(path.join(firstDirectory, 'first.txt'), 'first-content');
+    await writeFile(path.join(secondDirectory, 'second.txt'), 'second-content');
+
+    await expect(createZip(zipPath, [firstDirectory, secondDirectory])).rejects.toThrow('File already exists');
+    await createZip(zipPath, [firstDirectory, secondDirectory], ['first', 'second']);
+
+    const content = await readZip(zipPath);
+    expect(content.map((entry) => entry.filename)).toEqual(['first/', 'first/first.txt', 'second/', 'second/second.txt']);
+  });
+
   test('rejects createZip when no sources are provided', async () => {
     const tempDirectory = await createTempDirectory();
 

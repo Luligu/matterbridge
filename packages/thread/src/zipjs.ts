@@ -3,7 +3,7 @@
  * @description This file contains zip.js utility functions.
  * @author Luca Liguori
  * @created 2026-03-11
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -45,18 +45,19 @@ export interface ZipContentEntry {
  *
  * @param {string} zipPath - The output zip file path.
  * @param {string[]} sourcePaths - The files and directories to include in the archive.
+ * @param {string[]} [archiveNames] - Optional names of the top-level entries in the archive, one per source path. Defaults to the basename of each source path.
  * @returns {Promise<number>} The size of the generated zip file in bytes.
  */
-export async function createZip(zipPath: string, sourcePaths: string[]): Promise<number> {
+export async function createZip(zipPath: string, sourcePaths: string[], archiveNames?: string[]): Promise<number> {
   if (sourcePaths.length === 0) throw new Error('No files or directories provided to createZip.');
 
   const log = createLogger();
   const writer = new ZipWriter(new Uint8ArrayWriter());
   let entryCount = 0;
 
-  for (const sourcePath of sourcePaths) {
+  for (const [index, sourcePath] of sourcePaths.entries()) {
     const resolvedSourcePath = path.resolve(sourcePath);
-    entryCount += await addZipEntry(writer, resolvedSourcePath, path.basename(resolvedSourcePath), log);
+    entryCount += await addZipEntry(writer, resolvedSourcePath, archiveNames?.[index] ?? path.basename(resolvedSourcePath), log);
   }
 
   const zipData = await writer.close();

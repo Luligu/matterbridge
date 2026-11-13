@@ -3,7 +3,7 @@
  * @description This file contains the class BackendWsServer.
  * @author Luca Liguori
  * @created 2026-03-30
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -25,27 +25,38 @@
 
 // WARNING: Not released yet and excluded from Vitest coverage
 
+// Node.js built-in modules
+import os from 'node:os';
+import path from 'node:path';
+
 // @matter
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type {
-  ApiMatter,
-  BridgeStatus,
-  PluginStatusUpdate,
-  RefreshRequiredChanged,
-  SharedMatterbridge,
-  WorkerMessage,
-  WsMessageApiRequest,
-  WsMessageApiResponse,
-  WsMessageBroadcast,
-  WsMessageErrorApiResponse,
+import {
+  type ApiMatter,
+  type BridgeStatus,
+  MATTER_STORAGE_DIR,
+  MATTERBRIDGE_BACKUP_FILE,
+  MATTERBRIDGE_HISTORY_FILE,
+  MATTERBRIDGE_PLUGIN_CONFIG_FILE,
+  MATTERBRIDGE_PLUGIN_STORAGE_FILE,
+  NODE_STORAGE_DIR,
+  type ArchiveCommand,
+  type PluginStatusUpdate,
+  type RefreshRequiredChanged,
+  type SharedMatterbridge,
+  type WorkerMessage,
+  type WsMessageApiRequest,
+  type WsMessageApiResponse,
+  type WsMessageBroadcast,
+  type WsMessageErrorApiResponse,
 } from '@matterbridge/types';
 import { hasAnyParameter } from '@matterbridge/utils/cli';
 import { writeDiagnostic } from '@matterbridge/utils/diagnostic';
-import { inspectError } from '@matterbridge/utils/error';
+import { getErrorMessage, inspectError } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
-import { isValidNumber, isValidString } from '@matterbridge/utils/validate';
+import { isValidArray, isValidNumber, isValidString } from '@matterbridge/utils/validate';
 import { fireAndForget, withTimeout } from '@matterbridge/utils/wait';
 // AnsiLogger
 import { AnsiLogger, CYAN, debugStringify, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
@@ -54,6 +65,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 
 // matterbridge
 import type { Backend } from './backend.js';
+import { generateHistoryPage } from './cliHistory.js';
 
 logModuleLoaded('BackendWsServer');
 
@@ -119,9 +131,42 @@ export class BackendWsServer {
           this.log.logLevel = msg.params.logLevel;
           this.server.respond({ ...msg, result: { logLevel: this.log.logLevel } });
           break;
+        case 'frontend_matterbridgestatusupdate':
+          this.wssSendMatterbridgeStatusUpdate(msg.params.status);
+          this.server.respond({ ...msg, result: { success: true } });
+          break;
         case 'frontend_broadcast_message':
           this.wssBroadcastMessage(msg.params.msg);
           this.server.respond({ ...msg, result: { success: true } });
+          break;
+        // no default
+      }
+    }
+    if (this.server.isWorkerResponse(msg) && (msg.dst === 'all' || msg.dst === 'frontend')) {
+      switch (msg.type) {
+        case 'manager_archive_response':
+          // The archive worker finished: tell the clients the zip is ready to download (the download route closes the snackbar)
+          if (
+            msg.result?.success &&
+            isValidString(msg.result.command) &&
+            isValidString(msg.result.archivePath) &&
+            isValidArray(msg.result.sourcePaths) &&
+            isValidString(msg.result.destinationPath)
+          ) {
+            this.wssBroadcastMessage({
+              id: 0,
+              src: 'Matterbridge',
+              dst: 'Frontend',
+              method: 'archive',
+              success: true,
+              response: {
+                command: msg.result.command,
+                archivePath: msg.result.archivePath,
+                sourcePaths: msg.result.sourcePaths,
+                destinationPath: msg.result.destinationPath,
+              },
+            });
+          }
           break;
         // no default
       }
@@ -301,11 +346,11 @@ export class BackendWsServer {
         }
       } else if (data.method === '/api/restart') {
         this.wssSendSnackbarMessage('Restarting matterbridge...', 0);
-        await this.server.fetch({ type: 'matterbridge_restart', src: 'frontend', dst: 'matterbridge', params: undefined });
+        await this.server.fetch({ type: 'matterbridge_restart', src: 'frontend', dst: 'matterbridge', params: undefined }, this.backend.serverFetchTimeout);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/shutdown') {
         this.wssSendSnackbarMessage('Shutting down matterbridge...', 0);
-        await this.server.fetch({ type: 'matterbridge_shutdown', src: 'frontend', dst: 'matterbridge', params: undefined });
+        await this.server.fetch({ type: 'matterbridge_shutdown', src: 'frontend', dst: 'matterbridge', params: undefined }, this.backend.serverFetchTimeout);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/settings') {
         const start = performance.now();
@@ -319,9 +364,18 @@ export class BackendWsServer {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = await this.backend.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        const devices = await this.backend.getDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getDevices(${data.params.pluginName}) took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
+      } else if (data.method === '/api/platform-devices') {
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/platform-devices' });
+          return;
+        }
+        const start = performance.now();
+        const devices = await this.backend.getApiDevices(data.params.pluginName, data.params.extended);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices(${data.params.pluginName}) took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, pluginName: data.params.pluginName, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.pluginName, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
@@ -397,6 +451,74 @@ export class BackendWsServer {
         const { pluginName, serialNumber, uniqueId, label } = data.params;
         this.server.request({ type: 'platform_rename_device', src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
+      } else if (data.method === '/api/select' || data.method === '/api/unselect') {
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameter pluginName in ${data.method}` });
+          return;
+        }
+        if (!isValidString(data.params.serialNumber, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameter serialNumber in ${data.method}` });
+          return;
+        }
+        if (!isValidString(data.params.deviceName, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameter deviceName in ${data.method}` });
+          return;
+        }
+        const { pluginName, serialNumber, deviceName } = data.params;
+        const type = data.method === '/api/select' ? 'platform_select_device' : 'platform_unselect_device';
+        try {
+          // The platform responds after the config has been updated, so wait for its result
+          await this.server.fetch({ type, src: 'frontend', dst: 'platform', params: { pluginName, serialNumber, deviceName } }, this.backend.serverFetchTimeout);
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+        } catch (error) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: getErrorMessage(error) });
+        }
+      } else if (data.method === '/api/create-backup') {
+        // TODO: add close on error
+        this.wssSendSnackbarMessage('Creating matterbridge backup...', 0);
+        this.log.notice(`Creating matterbridge backup...`);
+        const backupDirs = [this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgePluginDirectory, this.matterbridge.matterbridgeCertDirectory];
+        // With a profile the directories end with profiles/<name>: store them flat as in the default layout
+        const backupNames = this.matterbridge.profile ? backupDirs.map((dir) => path.basename(path.dirname(path.dirname(dir)))) : undefined;
+        this.zip('zip', path.join(os.tmpdir(), MATTERBRIDGE_BACKUP_FILE), backupDirs, '', backupNames);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-matterbridge-storage-backup') {
+        // TODO: add close on error
+        this.wssSendSnackbarMessage('Creating matterbridge storage backup...', 0);
+        this.log.notice(`Creating matterbridge storage backup...`);
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`), [path.join(this.matterbridge.matterbridgeDirectory, NODE_STORAGE_DIR)], '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-matter-storage-backup') {
+        // TODO: add close on error
+        this.wssSendSnackbarMessage('Creating matter storage backup...', 0);
+        this.log.notice(`Creating matter storage backup...`);
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`), [path.join(this.matterbridge.matterbridgeDirectory, MATTER_STORAGE_DIR)], '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-plugin-backup') {
+        // TODO: add close on error
+        this.wssSendSnackbarMessage('Creating plugin backup...', 0);
+        this.log.notice(`Creating plugin backup...`);
+        this.zip('zip', path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_STORAGE_FILE), [this.matterbridge.matterbridgePluginDirectory], '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/create-config-backup') {
+        // TODO: add close on error
+        this.wssSendSnackbarMessage('Creating config backup...', 0);
+        this.log.notice(`Creating config backup...`);
+        const plugins = (await this.server.fetch({ type: 'plugins_storagepluginarray', src: 'frontend', dst: 'plugins', params: undefined }, this.backend.serverFetchTimeout))
+          .result.plugins;
+        const pluginsPaths = plugins.map((p) => path.join(this.matterbridge.matterbridgeDirectory, p.name + '.config.json'));
+        this.zip('zip', path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_CONFIG_FILE), pluginsPaths, '');
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/view-historypage') {
+        // TODO: this is the backend thread only
+        // Generate the history page: the frontend then opens /api/view-history
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
+      } else if (data.method === '/api/download-historypage') {
+        // TODO: this is the backend thread only
+        // Generate the history page: the frontend then downloads /api/download-history
+        generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       }
     } catch (error) {
       inspectError(this.log, `Error parsing message from websocket client`, error);
@@ -634,6 +756,24 @@ export class BackendWsServer {
       method: 'state_update',
       success: true,
       response: { plugin, serialNumber, uniqueId, number, id, cluster, attribute, value },
+    });
+  }
+
+  /**
+   * Sends a zip, verify or unzip command to the manager thread.
+   *
+   * @param {ArchiveCommand} command - The command to execute.
+   * @param {string} archivePath - The path of the archive to create, verify or extract.
+   * @param {string[]} sourcePaths - The paths of the files or directories to include in the archive (only for 'zip' command).
+   * @param {string} destinationPath - The path where the archive should be extracted (only for 'unzip' command).
+   * @param {string[]} [archiveNames] - Optional names of the top-level entries in the archive, one per source path (only for 'zip' command).
+   */
+  private zip(command: ArchiveCommand, archivePath: string, sourcePaths: string[], destinationPath: string, archiveNames?: string[]): void {
+    this.server.request({
+      type: 'manager_run',
+      src: 'frontend',
+      dst: 'manager',
+      params: { name: 'ArchiveCommand', workerData: { threadName: 'ArchiveCommand', command, archivePath, sourcePaths, destinationPath, archiveNames } },
     });
   }
 }

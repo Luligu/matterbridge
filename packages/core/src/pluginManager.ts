@@ -3,7 +3,7 @@
  * @description This file contains the PluginManager class.
  * @author Luca Liguori
  * @created 2024-07-14
- * @version 1.4.0
+ * @version 1.4.1
  * @license Apache-2.0
  *
  * Copyright 2024, 2025, 2026 Luca Liguori.
@@ -56,15 +56,21 @@ import { getServerNodeData } from './matterNodeHelpers.js';
 
 logModuleLoaded('Plugin Manager');
 
-/** Define an interface for matterbridge */
+/** Plugin metadata and status extended with runtime storage contexts, Matter nodes, platform instance, and reachability timer */
 export interface Plugin extends ApiPlugin {
-  /** Node storage context created in the directory 'storage' in matterbridgeDirectory with the plugin name */
+  /** Plugin-specific Node.js storage context, keyed by the plugin name and backed by the `storage` directory under `matterbridgeDirectory` */
   nodeContext?: NodeStorage;
+  /** Matter server node's `persist` context in the store named after the plugin, backed by `matterstorage` under `matterbridgeDirectory` */
   storageContext?: StorageContext;
+  /** Matter server node hosting the plugin's aggregator or accessory endpoint in childbridge mode */
   serverNode?: ServerNode;
+  /** Aggregator endpoint hosting a dynamic plugin's bridged devices in childbridge mode */
   aggregatorNode?: EndpointNode<AggregatorEndpoint>;
+  /** Accessory endpoint hosted by the plugin's server node in childbridge mode */
   device?: MatterbridgeEndpoint;
+  /** Loaded plugin platform instance providing lifecycle hooks and device integration */
   platform?: MatterbridgePlatform;
+  /** Timer that marks a dynamic plugin's bridged devices as reachable after startup in childbridge mode */
   reachabilityTimeout?: NodeJS.Timeout;
 }
 
@@ -327,6 +333,27 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
             }
           }
           break;
+        case 'plugins_getconfig':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              this.server.respond({ ...msg, result: { config: plugin.configJson } });
+            } else {
+              this.server.respond({ ...msg, result: { config: undefined } });
+            }
+          }
+          break;
+        case 'plugins_setconfig':
+          {
+            const plugin = this.get(msg.params.name);
+            if (plugin) {
+              plugin.configJson = msg.params.config;
+              this.server.respond({ ...msg, result: { success: true } });
+            } else {
+              this.server.respond({ ...msg, error: `Plugin ${msg.params.name} not found` });
+            }
+          }
+          break;
         case 'plugins_getschema':
           {
             const plugin = this.get(msg.params.name);
@@ -561,7 +588,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
       frontendPath: plugin.frontendPath,
       hasWhiteList: plugin.configJson?.whiteList !== undefined,
       hasBlackList: plugin.configJson?.blackList !== undefined,
-      matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : undefined,
+      matter: plugin.serverNode ? getServerNodeData(plugin.serverNode) : plugin.matter,
     };
   }
 

@@ -9,6 +9,7 @@ import { describe, expect, test } from 'bun:test';
 import { ThreeLevelAuto } from '@matter/types/globals';
 
 import { ClosureControl } from '../../src/clusters/closure-control.js';
+import { expectClusterRegistration } from './registration.js';
 
 describe('ClosureControl cluster', () => {
   test('identity, features, attributes, commands and events', () => {
@@ -39,5 +40,10 @@ describe('ClosureControl cluster', () => {
     });
     expect(new ClosureControl.EngageStateChangedEvent({ engageValue: true })).toMatchObject({ engageValue: true });
     expect(new ClosureControl.SecureStateChangedEvent({ secureValue: false })).toMatchObject({ secureValue: false });
+  });
+
+  test('registers the definition and the model when matter.js does not ship the cluster', async () => {
+    const specifier = '../../src/clusters/closure-control.js?register';
+    await expectClusterRegistration(0x0104, async () => (await import(specifier)) as Record<string, unknown>, 'ClosureControl');
   });
 });

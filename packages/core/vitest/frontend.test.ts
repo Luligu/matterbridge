@@ -282,13 +282,6 @@ describe('Matterbridge frontend', () => {
     (frontend as any).authClients.clear();
   });
 
-  test('Frontend getDevices', async () => {
-    (frontend as any).matterbridge.hasCleanupStarted = true;
-    expect(frontend.getApiDevices()).toEqual([]);
-    (frontend as any).matterbridge.hasCleanupStarted = false;
-    expect(frontend.getApiDevices()).toEqual([]);
-  });
-
   test('Frontend getApiCluster', async () => {
     (frontend as any).matterbridge.hasCleanupStarted = true;
     expect(frontend.getApiCluster('', 1, '', '')).toBeUndefined();

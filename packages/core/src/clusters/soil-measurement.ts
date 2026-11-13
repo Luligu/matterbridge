@@ -60,7 +60,7 @@ export const SoilMeasurementModel = new ClusterModel(SoilMeasurementDefinition);
 
 // Register the cluster definition with the Matter definition so it can be referenced by devices and endpoints.
 /* v8 ignore next -- This condition is only true if the cluster ID is not already registered, which should be the case for a custom cluster. */
-if (!MatterDefinition.children.some((child) => child.id === SoilMeasurementDefinition.id)) {
+if (!MatterDefinition.children.some((child) => 'tag' in child && child.tag === 'cluster' && child.id === SoilMeasurementDefinition.id)) {
   MatterDefinition.children.push(SoilMeasurementDefinition);
 }
 

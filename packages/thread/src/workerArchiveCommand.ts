@@ -3,7 +3,7 @@
  * @description This file contains the workerArchiveCommand thread.
  * @author Luca Liguori
  * @created 2026-03-14
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,6 +22,7 @@
  */
 
 import { isArchiveWorkerData } from '@matterbridge/types';
+import { getErrorMessage } from '@matterbridge/utils/error';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
 import { LogLevel } from 'node-ansi-logger';
 
@@ -40,10 +41,14 @@ export default new ThreadsWrapper('ArchiveCommand', async (worker) => {
     `Starting archive command ${worker.workerData.command} on ${worker.workerData.archivePath} with source paths ${worker.workerData.sourcePaths.join(', ')} and destination path ${worker.workerData.destinationPath}...`,
   );
   let success: boolean = false;
-  /* v8 ignore next */
-  if (worker.workerData.command === 'zip') success = (await createZip(worker.workerData.archivePath, worker.workerData.sourcePaths)) > 0;
-  else if (worker.workerData.command === 'verify') success = (await readZip(worker.workerData.archivePath)).length > 0;
-  else if (worker.workerData.command === 'unzip') success = (await unZip(worker.workerData.archivePath, worker.workerData.destinationPath)).length > 0;
+  try {
+    /* v8 ignore next */
+    if (worker.workerData.command === 'zip') success = (await createZip(worker.workerData.archivePath, worker.workerData.sourcePaths, worker.workerData.archiveNames)) > 0;
+    else if (worker.workerData.command === 'verify') success = (await readZip(worker.workerData.archivePath)).length > 0;
+    else if (worker.workerData.command === 'unzip') success = (await unZip(worker.workerData.archivePath, worker.workerData.destinationPath)).length > 0;
+  } catch (error) {
+    worker.logger(LogLevel.ERROR, `Archive command ${worker.workerData.command} on ${worker.workerData.archivePath} error: ${getErrorMessage(error)}`);
+  }
   if (success)
     worker.logger(
       LogLevel.INFO,

@@ -29,6 +29,72 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.3] - 2026-11-13
+
+### Development News
+
+- [chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the `TimeSynchronization` cluster (`TC_TIMESYNC_2_1.py` to `TC_TIMESYNC_3_1.py`, 14 tests), with its own `root-camera.pics`.
+- [chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all automated harness tests covering the `TlsCertificateManagement` cluster (`TC_TLSCERT_2_1.py` to `TC_TLSCERT_2_13.py`, 13 tests).
+- [chip]: RootNode endpoint 0 CHIP conformance is green ✅ for all available automated harness tests covering the `TlsClientManagement` cluster (`TC_TLSCLIENT_2_1.py`, `3_1`, `3_2`, `3_3`, `3_10` and `3_20`, 6 tests).
+
+### Breaking changes
+
+- [core]: Replace `/api/command` with `/api/select` and `/api/unselect`, requiring `pluginName`, `serialNumber` and `deviceName` without a `command` parameter.
+- [core]: `/api/devices` (WebSocket and HTTP) returns the stored `Device[]` instead of `ApiDevice[]`; the platform devices are served by `/api/platform-devices`.
+- [core]: Rename `/api/select/devices` and `/api/select/entities` to `/api/select-devices` and `/api/select-entities`.
+- [core]: Rename `/api/savepluginconfig` to `/api/save-plugin-config`.
+- [core]: Rename `/api/viewhistory`, `/api/downloadhistory`, `/api/viewhistorypage` and `/api/downloadhistorypage` to `/api/view-history`, `/api/download-history`, `/api/view-historypage` and `/api/download-historypage`.
+- [types]: Rename `BaseDevice` to `Device`.
+- [core]: Remove the `setUtcTime`, `setTimeZone` and `setDstOffset` Time Synchronization entries from `CommandHandlers`: the cluster lives on the Root Node, which has no plugin command handler.
+- [matterbridge]: Replace the `--root-power-source` param with `--root-camera`, which adds the Power Source, Time Synchronization, TLS Certificate Management and TLS Client Management clusters on the Root endpoint, as required by the camera device types; `MATTERBRIDGE_CHIP_TEST` enables it too.
+
+### Added
+
+- [core]: Add default Window Covering options helpers for lift, lift/tilt and tilt servers.
+- [types]: Add `platform_select_device` and `platform_unselect_device` broadcast contracts matching the frontend selection parameters.
+- [core]: Handle platform select/unselect broadcasts using schema selection mode, postfix stripping and white/black lists, with config saving and restart/refresh notifications.
+- [types]: Add the `/api/platform-devices` request/response contracts; the response carries the requested `pluginName`.
+- [core]: Handle `/api/platform-devices` in the frontend and backend WebSocket servers, returning the `ApiDevice[]` of one plugin platform.
+- [core]: Add the `MatterbridgeTimeSynchronizationServer`, `MatterbridgeTlsCertificateManagementServer` and `MatterbridgeTlsClientManagementServer` Root Node behaviors from matterbridge-example-camera, with vitest and bun tests.
+- [core]: `MatterbridgeTimeSynchronizationServer` repeats the `DSTTableEmpty` event at most once per hour while the `DSTOffset` list is empty (Matter 1.6.1 § 11.17.10.1).
+- [core]: `MatterbridgeTlsCertificateManagementServer` rejects a `ClientCSR` key pair colliding with another TLS or operational key pair with `DYNAMIC_CONSTRAINT_ERROR` (Matter 1.6.1 § 14.4.6.8).
+- [chip]: Add `root-camera.pics` and the 33 `TIMESYNC`, `TLSCERT` and `TLSCLIENT` conformance tests on the Root endpoint (`npm run chip:test:time-sync`, `chip:test:tls-cert` and `chip:test:tls-client`).
+
+### Changed
+
+- [core]: Rename `toBaseDevice()` to `toDevice()`, the `devices_basearray` broadcast to `devices_array` and `Backend.getApiDevices()` to `getDevices()`; remove `devices_apidevicearray` and `DeviceManager.apiDeviceArray()`.
+- [types]: Move `ApiSettings`, `ApiSelectDevice`, `ApiSelectDeviceEntity`, `ApiSelectEntity` and `ApiSystemUpdate` from `frontendTypes` to `matterbridgeTypes`.
+- [frontend]: Home, Devices table and Devices icons request `/api/platform-devices` for each started plugin and replace the rows of that plugin only; an empty reply removes them.
+- [frontend]: Devices table and Devices icons refresh on `refresh_required` like the Home devices: on every change except `matter` and a locked `plugins` refresh.
+- [core]: Document the `Plugin` interface fields.
+- [agents]: Add Bionic / LM Studio to the shared agent stack: update `AGENTS.md` to v.1.0.12 (`@<name>` skill invocation, read the global `~/.agents/AGENTS.md` first), `.agents/README.md` to v.1.0.5, `STYLEGUIDE.md` to v.1.1.1 and `SHARED-AGENTS.md`.
+- [agents]: Update the `verify-agent-context` skill to v.1.0.6: report the global instruction file, the global `~/.agents/AGENTS.md` master and global settings, and group skills by source.
+- [matterbridge]: Bump `matterbridge` version to v.3.11.3.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.0.
+- [matterbridge]: Bump `jsdom` to v.31.0.0, replacing CSS parsing, selector matching and computed styles; frontend style assertions may receive different serialized values. See the [release notes](https://github.com/jsdom/jsdom/releases/tag/v31.0.0).
+- [matterbridge]: Bump `marked` to v.18.1.3.
+- [matterbridge]: Bump `oxfmt` to v.0.77.0, including the new HTML formatter introduced in v.0.76.0 and a fix preserving inline JSDoc tags. See the [v.0.76.0](https://github.com/oxc-project/oxc/releases/tag/oxfmt_v0.76.0) and [v.0.77.0](https://github.com/oxc-project/oxc/releases/tag/oxfmt_v0.77.0) release notes.
+- [matterbridge]: Bump `oxlint` to v.1.92.0, fixing `jsdoc/require-param` handling of enclosing function JSDoc and improving lint performance. See the [release notes](https://github.com/oxc-project/oxc/releases/tag/oxlint_v1.92.0).
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2006.
+- [matterbridge]: Bump `vitest` to v.5.1.0, adding `--last-failed` and `--since-last-run`, Node.js module fake-timer support, and fixes for concurrent mock imports and linked-package mocks. See the [release notes](https://github.com/vitest-dev/vitest/releases/tag/v5.1.0).
+- [frontend]: Bump `@rjsf/core` to v.6.11.1.
+- [frontend]: Bump `@rjsf/utils` to v.6.11.1.
+- [frontend]: Bump `@rjsf/validator-ajv8` to v.6.11.1.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.2.1.
+- [frontend]: Bump `vite` to v.8.3.6.
+- [core]: Bump `express-rate-limit` to v.8.7.3.
+
+### Fixed
+
+- [core]: Forward childbridge status updates to experimental backend WebSocket clients.
+- [frontend]: Devices table clears the selected device and its clusters on a full reload.
+- [frontend]: Devices table reloads when the bridge starts, instead of staying empty until remounted.
+- [core]: `/api/create-backup` works with `--profile`: the profile directories are stored flat as `.matterbridge`, `Matterbridge` and `.mattercert` instead of failing on duplicate entry names.
+- [thread]: The archive worker logs an error and responds with `success: false` when the archive command throws.
+- [core]: The `ClosureControl`, `ClosureDimension` and `SoilMeasurement` definitions register in `MatterDefinition` even when a device type has the same id (`DimmerSwitch` 0x0104, `ColorDimmerSwitch` 0x0105).
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.2] - 2026-11-06
 
 ### Development News

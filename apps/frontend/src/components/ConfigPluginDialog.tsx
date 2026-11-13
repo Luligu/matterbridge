@@ -167,15 +167,15 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     const handleWebSocketMessage = (msg: WsMessage) => {
       if (msg.src === 'Matterbridge' && msg.dst === 'Frontend') {
         // Local messages
-        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select/devices') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select-devices') {
           if (msg.response) {
-            if (debug) console.log(`ConfigPluginDialog (id: ${msg.id}) received ${msg.response.length} /api/select/devices:`, msg.response);
+            if (debug) console.log(`ConfigPluginDialog (id: ${msg.id}) received ${msg.response.length} /api/select-devices:`, msg.response);
             selectDevices = msg.response;
           }
         }
-        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select/entities') {
+        if (isApiResponse(msg) && msg.id === uniqueId.current && msg.method === '/api/select-entities') {
           if (msg.response) {
-            if (debug) console.log(`ConfigPluginDialog (id: ${msg.id}) received ${msg.response.length} /api/select/entities:`, msg.response);
+            if (debug) console.log(`ConfigPluginDialog (id: ${msg.id}) received ${msg.response.length} /api/select-entities:`, msg.response);
             selectEntities = msg.response;
           }
         }
@@ -254,9 +254,9 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     if (plugin.name && plugin.configJson && plugin.schemaJson) {
       setFormData(plugin.configJson);
       setSchema(plugin.schemaJson);
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/select/devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
-      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/select/entities', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
-      if (debug) console.log('HomePlugins sent "/api/select/devices" and "/api/select/entities" for plugin:', plugin.name);
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/select-devices', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
+      sendMessage({ id: uniqueId.current, sender: 'ConfigPlugin', method: '/api/select-entities', src: 'Frontend', dst: 'Matterbridge', params: { plugin: plugin.name } });
+      if (debug) console.log('HomePlugins sent "/api/select-devices" and "/api/select-entities" for plugin:', plugin.name);
     }
 
     return () => {
@@ -278,7 +278,7 @@ export const ConfigPluginDialog = ({ open, onClose, onSave, plugin }: ConfigPlug
     sendMessage({
       id: uniqueId.current,
       sender: 'ConfigPlugin',
-      method: '/api/savepluginconfig',
+      method: '/api/save-plugin-config',
       src: 'Frontend',
       dst: 'Matterbridge',
       params: { pluginName: data.formData.name, formData: data.formData },

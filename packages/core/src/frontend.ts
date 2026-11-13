@@ -3,7 +3,7 @@
  * @description This file contains the class Frontend.
  * @author Luca Liguori
  * @created 2025-01-13
- * @version 1.4.6
+ * @version 1.4.7
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -53,8 +53,8 @@ import { FabricIndex } from '@matter/types/datatype';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import type {
   ApiClusters,
-  ApiDevice,
   ApiMatter,
+  ArchiveCommand,
   BridgeStatus,
   PluginStatusUpdate,
   RefreshRequiredChanged,
@@ -90,16 +90,7 @@ import type { WebSocket, WebSocketServer } from 'ws';
 import { generateHistoryPage } from './cliHistory.js';
 import type { Matterbridge } from './matterbridge.js';
 import { matterToAnsiLogLevel } from './matterLogger.js';
-import {
-  deleteAdvertisingNode,
-  getBatteryLevel,
-  getClusterTextFromDevice,
-  getPowerSource,
-  getReachability,
-  getServerNodeData,
-  setAdvertisingNode,
-  toApiClusters,
-} from './matterNodeHelpers.js';
+import { deleteAdvertisingNode, getServerNodeData, setAdvertisingNode, toApiClusters } from './matterNodeHelpers.js';
 import type { Plugin } from './pluginManager.js';
 
 logModuleLoaded('Frontend');
@@ -319,8 +310,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
               method: 'archive',
               success: true,
               response: {
-                // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-                command: msg.result.command as 'zip' | 'verify' | 'unzip',
+                command: msg.result.command,
                 archivePath: msg.result.archivePath,
                 sourcePaths: msg.result.sourcePaths,
                 destinationPath: msg.result.destinationPath,
@@ -787,10 +777,15 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to provide devices (debug only reasons - not used in production)
-    this.expressApp.get('/api/devices', (req, res) => {
+    this.expressApp.get('/api/devices', async (req, res) => {
       this.log.debug('The frontend sent /api/devices');
       if (!this.validateReq(req, res)) return;
-      res.json(this.getApiDevices(undefined, true));
+      try {
+        res.json((await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: {} }, this.serverFetchTimeout)).result.devices);
+      } catch (error) {
+        logError(this.log, 'Error in /api/devices fetching the devices from the device manager', error);
+        res.status(500).send('Error fetching the devices.');
+      }
     });
 
     // Endpoint to view the matterbridge log
@@ -917,8 +912,8 @@ export class Frontend extends EventEmitter<FrontendEvents> {
     });
 
     // Endpoint to view the history.html
-    this.expressApp.get('/api/viewhistory', async (req, res) => {
-      this.log.debug('The frontend sent /api/viewhistory');
+    this.expressApp.get('/api/view-history', async (req, res) => {
+      this.log.debug('The frontend sent /api/view-history');
       if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
@@ -926,14 +921,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html; charset=utf-8');
         res.send(data);
       } catch (error) {
-        logError(this.log, `Error in /api/viewhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
+        logError(this.log, `Error in /api/view-history reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
         res.status(500).send('Error reading history file.');
       }
     });
 
     // Endpoint to download the history.html
-    this.expressApp.get('/api/downloadhistory', async (req, res) => {
-      this.log.debug(`The frontend sent /api/downloadhistory`);
+    this.expressApp.get('/api/download-history', async (req, res) => {
+      this.log.debug(`The frontend sent /api/download-history`);
       if (!this.validateReq(req, res)) return;
       try {
         const fs = await import('node:fs');
@@ -943,14 +938,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         res.type('text/html; charset=utf-8');
         res.download(path.join(os.tmpdir(), MATTERBRIDGE_HISTORY_FILE), MATTERBRIDGE_HISTORY_FILE, (error) => {
           if (error) {
-            logError(this.log, `Error in /api/downloadhistory downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
+            logError(this.log, `Error in /api/download-history downloading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
             sendDownloadError(res, error, 'Error downloading history file');
           } else {
             this.log.debug(`History file ${MATTERBRIDGE_HISTORY_FILE} downloaded successfully`);
           }
         });
       } catch (error) {
-        logError(this.log, `Error in /api/downloadhistory reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
+        logError(this.log, `Error in /api/download-history reading history file ${MATTERBRIDGE_HISTORY_FILE}`, error);
         res.status(500).send('Error reading history file.');
       }
     });
@@ -1272,41 +1267,6 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   }
 
   /**
-   * Retrieves the devices from Matterbridge.
-   *
-   * @param {string} [pluginName] - The name of the plugin to filter devices by.
-   * @param {boolean} extended - Whether to include extended device information.
-   * @returns {ApiDevice[]} An array of ApiDevices for the frontend.
-   */
-  getApiDevices(pluginName?: string, extended: boolean = false): ApiDevice[] {
-    if (this.matterbridge.hasCleanupStarted) return []; // Skip if cleanup has started
-    const devices: ApiDevice[] = [];
-    for (const device of this.matterbridge.devices.array()) {
-      // Filter by pluginName if provided
-      if (pluginName && pluginName !== device.plugin) continue;
-      // Check if the device has the required properties
-      if (!device.plugin || !device.deviceType || !device.name || !device.deviceName || !device.serialNumber || !device.uniqueId || !device.lifecycle.isReady) continue;
-      devices.push({
-        plugin: device.plugin,
-        type: device.name + ' (0x' + device.deviceType.toString(16).padStart(4, '0') + ')',
-        number: device.number,
-        id: device.id,
-        deviceName: device.deviceName,
-        serialNumber: device.serialNumber,
-        productUrl: device.productUrl,
-        configUrl: device.configUrl,
-        uniqueId: device.uniqueId,
-        reachable: extended ? getReachability(device) : true,
-        powerSource: extended ? getPowerSource(device) : undefined,
-        batteryLevel: extended ? getBatteryLevel(device) : undefined,
-        matter: extended && device.mode === 'server' && device.serverNode ? getServerNodeData(device.serverNode) : undefined,
-        cluster: extended ? getClusterTextFromDevice(device) : '',
-      });
-    }
-    return devices;
-  }
-
-  /**
    * Retrieves the clusters from a given plugin and endpoint number.
    *
    * Response for /api/clusters
@@ -1489,7 +1449,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.log.debug(`Removing plugin ${data.params.pluginName}...`);
         // Stop server nodes of devices of the plugin first
         // oxfmt-ignore
-        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
           // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
@@ -1520,7 +1480,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         // oxfmt-ignore
         await this.server.fetch({ type: 'matterbridge_start_plugin_server', src: this.server.name, dst: 'matterbridge', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout);
         // oxfmt-ignore
-        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
           // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_start_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
@@ -1535,7 +1495,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           return;
         }
         // oxfmt-ignore
-        const devices = (await this.server.fetch({ type: 'devices_basearray', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName: data.params.pluginName } }, this.serverFetchTimeout)).result.devices;
         for (const device of devices.filter((d) => d.mode === 'server')) {
           // oxfmt-ignore
           if(device.uniqueId) await this.server.fetch({ type: 'matterbridge_stop_device_server', src: this.server.name, dst: 'matterbridge', params: { deviceUniqueId: device.uniqueId } }, this.serverFetchTimeout);
@@ -1593,13 +1553,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         this.wssSendRefreshRequired('plugins');
         this.wssSendRefreshRequired('devices');
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/savepluginconfig') {
+      } else if (data.method === '/api/save-plugin-config') {
         if (!isValidString(data.params.pluginName, 10) || !this.matterbridge.plugins.has(data.params.pluginName)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/savepluginconfig' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/save-plugin-config' });
           return;
         }
         if (!isValidObject(data.params.formData, 5)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/savepluginconfig' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter formData in /api/save-plugin-config' });
           return;
         }
         this.log.info(`Saving config for plugin ${plg}${data.params.pluginName}${nf}...`);
@@ -1630,12 +1590,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
       } else if (data.method === '/api/create-backup') {
         this.wssSendSnackbarMessage('Creating matterbridge backup...', 0);
         this.log.notice(`Creating matterbridge backup...`);
-        this.zip(
-          'zip',
-          path.join(os.tmpdir(), `matterbridge.backup.zip`),
-          [this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgePluginDirectory, this.matterbridge.matterbridgeCertDirectory],
-          '',
-        );
+        const backupDirs = [this.matterbridge.matterbridgeDirectory, this.matterbridge.matterbridgePluginDirectory, this.matterbridge.matterbridgeCertDirectory];
+        // With a profile the directories end with profiles/<name>: store them flat as in the default layout
+        const backupNames = this.matterbridge.profile ? backupDirs.map((dir) => path.basename(path.dirname(path.dirname(dir)))) : undefined;
+        this.zip('zip', path.join(os.tmpdir(), `matterbridge.backup.zip`), backupDirs, '', backupNames);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/create-matterbridge-storage-backup') {
         this.wssSendSnackbarMessage('Creating matterbridge storage backup...', 0);
@@ -1682,10 +1640,10 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         const { pluginName, serialNumber, uniqueId, label } = data.params;
         this.server.request({ type: 'platform_rename_device', src: this.server.name, dst: 'platform', params: { pluginName, serialNumber, uniqueId, label } });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true }); // We just acknowledge the request, operation happens asynchronously
-      } else if (data.method === '/api/viewhistorypage') {
+      } else if (data.method === '/api/view-historypage') {
         generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
-      } else if (data.method === '/api/downloadhistorypage') {
+      } else if (data.method === '/api/download-historypage') {
         generateHistoryPage({ outputPath: path.join(this.matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), pageTitle: `Matterbridge Cpu & Memory History` });
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true });
       } else if (data.method === '/api/matter') {
@@ -1751,16 +1709,25 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: plugins });
       } else if (data.method === '/api/devices') {
         const start = performance.now();
-        const devices = this.getApiDevices(isValidString(data.params.pluginName) ? data.params.pluginName : undefined, data.params.extended);
-        // const response = await this.server.fetch({
-        //   type: 'devices_apidevicearray',
-        //   src: 'frontend',
-        //   dst: 'devices',
-        //   params: { pluginName: data.params.pluginName, extended: data.params.extended },
-        // });
+        const pluginName = isValidString(data.params.pluginName) ? data.params.pluginName : undefined;
+        // oxfmt-ignore
+        const devices = (await this.server.fetch({ type: 'devices_array', src: this.server.name, dst: 'devices', params: { pluginName } }, this.serverFetchTimeout)).result.devices;
         /* v8 ignore next */
-        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getApiDevices() took ${(performance.now() - start).toFixed(2)} ms`);
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `devices_array() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: devices });
+      } else if (data.method === '/api/platform-devices') {
+        if (!isValidString(data.params.pluginName, 10)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/platform-devices' });
+          return;
+        }
+        const start = performance.now();
+        const { pluginName, extended } = data.params;
+        // Only the platform matching pluginName answers: it fails with a timeout when the plugin has no running platform
+        // oxfmt-ignore
+        const devices = (await this.server.fetch({ type: 'platform_get_apidevices', src: this.server.name, dst: 'platform', params: { pluginName, extended } }, this.serverFetchTimeout)).result.devices;
+        /* v8 ignore next */
+        if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `platform_get_apidevices(${pluginName}) took ${(performance.now() - start).toFixed(2)} ms`);
+        sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, pluginName, response: devices });
       } else if (data.method === '/api/clusters') {
         if (!isValidString(data.params.pluginName, 10)) {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter pluginName in /api/clusters' });
@@ -1798,14 +1765,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         } else {
           sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Endpoint not found in /api/clusters' });
         }
-      } else if (data.method === '/api/select/devices') {
+      } else if (data.method === '/api/select-devices') {
         if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/devices' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select-devices' });
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/devices' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select-devices' });
           return;
         }
         const start = performance.now();
@@ -1814,14 +1781,14 @@ export class Frontend extends EventEmitter<FrontendEvents> {
         /* v8 ignore next */
         if (this.diagnostic) writeDiagnostic(`Frontend:${data.sender}`, `getSelectDevices() took ${(performance.now() - start).toFixed(2)} ms`);
         sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, success: true, response: selectDevices });
-      } else if (data.method === '/api/select/entities') {
+      } else if (data.method === '/api/select-entities') {
         if (!isValidString(data.params.plugin, 10)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select/entities' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter plugin in /api/select-entities' });
           return;
         }
         const plugin = this.matterbridge.plugins.get(data.params.plugin);
         if (!plugin) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select/entities' });
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/select-entities' });
           return;
         }
         const start = performance.now();
@@ -2073,43 +2040,43 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.warn(`Unknown parameter ${data.params.name} in /api/config`);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Unknown parameter ${data.params.name} in /api/config` });
         }
-      } else if (data.method === '/api/command') {
+      } else if (data.method === '/api/select' || data.method === '/api/unselect') {
         const localData = data;
-        if (!isValidString(data.params.command, 5)) {
-          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Wrong parameter command in /api/command' });
+        if (!isValidString(data.params.pluginName, 10) || !isValidString(data.params.serialNumber, 1) || !isValidString(data.params.deviceName, 1)) {
+          sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Wrong parameters in ${data.method}` });
           return;
         }
-        if (data.params.command === 'selectdevice' && isValidString(data.params.plugin, 10) && isValidString(data.params.serial, 1) && isValidString(data.params.name, 1)) {
-          const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        if (data.method === '/api/select') {
+          const plugin = this.matterbridge.plugins.get(data.params.pluginName);
           if (!plugin) {
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' });
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin not found in ${data.method}` });
             return;
           }
           const config = plugin.configJson;
           // oxlint-disable-next-line typescript/no-explicit-any
           const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
           // this.log.debug(`SelectDevice(selectMode ${select}) data ${debugStringify(data)}`);
-          if (select === 'serial') this.log.info(`Selected device serial ${data.params.serial}`);
-          if (select === 'name') this.log.info(`Selected device name ${data.params.name}`);
+          if (select === 'serial') this.log.info(`Selected device serial ${data.params.serialNumber}`);
+          if (select === 'name') this.log.info(`Selected device name ${data.params.deviceName}`);
           if (config && select && (select === 'serial' || select === 'name')) {
             // Remove postfix from the serial if it exists
             if (config.postfix) {
-              data.params.serial = data.params.serial.replace('-' + config.postfix, '');
+              data.params.serialNumber = data.params.serialNumber.replace('-' + config.postfix, '');
             }
             // Add the serial to the whiteList if the whiteList exists and the serial or name is not already in it
             if (isValidArray(config.whiteList, 1)) {
-              if (select === 'serial' && !config.whiteList.includes(data.params.serial)) {
-                config.whiteList.push(data.params.serial);
-              } else if (select === 'name' && !config.whiteList.includes(data.params.name)) {
-                config.whiteList.push(data.params.name);
+              if (select === 'serial' && !config.whiteList.includes(data.params.serialNumber)) {
+                config.whiteList.push(data.params.serialNumber);
+              } else if (select === 'name' && !config.whiteList.includes(data.params.deviceName)) {
+                config.whiteList.push(data.params.deviceName);
               }
             }
             // Remove the serial from the blackList if the blackList exists and the serial or name is in it
             if (isValidArray(config.blackList, 1)) {
-              if (select === 'serial' && config.blackList.includes(data.params.serial)) {
-                config.blackList = config.blackList.filter((item) => item !== localData.params.serial);
-              } else if (select === 'name' && config.blackList.includes(data.params.name)) {
-                config.blackList = config.blackList.filter((item) => item !== localData.params.name);
+              if (select === 'serial' && config.blackList.includes(data.params.serialNumber)) {
+                config.blackList = config.blackList.filter((item) => item !== localData.params.serialNumber);
+              } else if (select === 'name' && config.blackList.includes(data.params.deviceName)) {
+                config.blackList = config.blackList.filter((item) => item !== localData.params.deviceName);
               }
             }
             if (plugin.platform) plugin.platform.config = config;
@@ -2123,41 +2090,36 @@ export class Frontend extends EventEmitter<FrontendEvents> {
             this.log.error(`SelectDevice: select ${select} not supported`);
             sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `SelectDevice: select ${select} not supported` });
           }
-        } else if (
-          data.params.command === 'unselectdevice' &&
-          isValidString(data.params.plugin, 10) &&
-          isValidString(data.params.serial, 1) &&
-          isValidString(data.params.name, 1)
-        ) {
-          const plugin = this.matterbridge.plugins.get(data.params.plugin);
+        } else {
+          const plugin = this.matterbridge.plugins.get(data.params.pluginName);
           if (!plugin) {
-            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: 'Plugin not found in /api/command' });
+            sendResponse({ id: data.id, method: data.method, src: 'Matterbridge', dst: data.src, error: `Plugin not found in ${data.method}` });
             return;
           }
           const config = plugin.configJson;
           // oxlint-disable-next-line typescript/no-explicit-any
           const select = (plugin.schemaJson?.properties as any)?.blackList?.selectFrom;
           // this.log.debug(`UnselectDevice(selectMode ${select}) data ${debugStringify(data)}`);
-          if (select === 'serial') this.log.info(`Unselected device serial ${data.params.serial}`);
-          if (select === 'name') this.log.info(`Unselected device name ${data.params.name}`);
+          if (select === 'serial') this.log.info(`Unselected device serial ${data.params.serialNumber}`);
+          if (select === 'name') this.log.info(`Unselected device name ${data.params.deviceName}`);
           if (config && select && (select === 'serial' || select === 'name')) {
             if (config.postfix) {
-              data.params.serial = data.params.serial.replace('-' + config.postfix, '');
+              data.params.serialNumber = data.params.serialNumber.replace('-' + config.postfix, '');
             }
             // Remove the serial from the whiteList if the whiteList exists and the serial is in it
             if (isValidArray(config.whiteList, 1)) {
-              if (select === 'serial' && config.whiteList.includes(data.params.serial)) {
-                config.whiteList = config.whiteList.filter((item) => item !== localData.params.serial);
-              } else if (select === 'name' && config.whiteList.includes(data.params.name)) {
-                config.whiteList = config.whiteList.filter((item) => item !== localData.params.name);
+              if (select === 'serial' && config.whiteList.includes(data.params.serialNumber)) {
+                config.whiteList = config.whiteList.filter((item) => item !== localData.params.serialNumber);
+              } else if (select === 'name' && config.whiteList.includes(data.params.deviceName)) {
+                config.whiteList = config.whiteList.filter((item) => item !== localData.params.deviceName);
               }
             }
             // Add the serial to the blackList
             if (isValidArray(config.blackList)) {
-              if (select === 'serial' && !config.blackList.includes(data.params.serial)) {
-                config.blackList.push(data.params.serial);
-              } else if (select === 'name' && !config.blackList.includes(data.params.name)) {
-                config.blackList.push(data.params.name);
+              if (select === 'serial' && !config.blackList.includes(data.params.serialNumber)) {
+                config.blackList.push(data.params.serialNumber);
+              } else if (select === 'name' && !config.blackList.includes(data.params.deviceName)) {
+                config.blackList.push(data.params.deviceName);
               }
             }
             if (plugin.platform) plugin.platform.config = config;
@@ -2448,12 +2410,13 @@ export class Frontend extends EventEmitter<FrontendEvents> {
   /**
    * Sends a zip or verify command to the manager to create or verify an archive of the source paths at the destination path.
    *
-   * @param {'zip' | 'verify' | 'unzip'} command - The command to execute: 'zip' to create an archive, 'verify' to verify an archive, 'unzip' to extract an archive.
+   * @param {ArchiveCommand} command - The command to execute: 'zip' to create an archive, 'verify' to verify an archive, 'unzip' to extract an archive.
    * @param {string} archivePath - The path of the archive to create, verify or extract.
    * @param {string[]} sourcePaths - The paths of the files or directories to include in the archive (only for 'zip' command).
    * @param {string} destinationPath - The path where the archive should be extracted (only for 'unzip' command).
+   * @param {string[]} [archiveNames] - Optional names of the top-level entries in the archive, one per source path (only for 'zip' command).
    */
-  zip(command: 'zip' | 'verify' | 'unzip', archivePath: string, sourcePaths: string[], destinationPath: string): void {
+  zip(command: ArchiveCommand, archivePath: string, sourcePaths: string[], destinationPath: string, archiveNames?: string[]): void {
     this.server.request({
       type: 'manager_run',
       src: 'frontend',
@@ -2466,6 +2429,7 @@ export class Frontend extends EventEmitter<FrontendEvents> {
           archivePath,
           sourcePaths,
           destinationPath,
+          archiveNames,
         },
       },
     });

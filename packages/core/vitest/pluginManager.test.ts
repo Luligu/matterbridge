@@ -609,6 +609,24 @@ describe('PluginManager', () => {
     );
     await expect(testServer.fetch({ type: 'plugins_setschema', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown', schema } })).rejects.toThrow();
 
+    // plugins_getconfig: found returns the (currently undefined) configJson, not found returns undefined
+    expect(
+      (await testServer.fetch({ type: 'plugins_getconfig', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mockschema' } })).result.config,
+    ).toBeUndefined();
+    expect((await testServer.fetch({ type: 'plugins_getconfig', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown' } })).result.config).toBeUndefined();
+
+    // plugins_setconfig: found stores the config and returns success, not found rejects
+    const setConfig = { name: 'matterbridge-mockschema', type: 'Unknown', version: '1.0.0' } as unknown as PlatformConfig;
+    expect(
+      (await testServer.fetch({ type: 'plugins_setconfig', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mockschema', config: setConfig } })).result.success,
+    ).toBe(true);
+    expect((await testServer.fetch({ type: 'plugins_getconfig', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-mockschema' } })).result.config).toEqual(
+      setConfig,
+    );
+    await expect(
+      testServer.fetch({ type: 'plugins_setconfig', src: testServer.name, dst: 'plugins', params: { name: 'matterbridge-unknown', config: setConfig } }),
+    ).rejects.toThrow();
+
     // plugins_saveconfigfromjson: found returns success, not found rejects
     const config = { name: 'matterbridge-mockschema', type: 'Unknown', version: '1.0.0' } as unknown as PlatformConfig;
     expect(
@@ -662,6 +680,33 @@ describe('PluginManager', () => {
     const apiPlugin = plugins.apiPluginArray().find((p) => p.name === 'matterbridge-mockmatter');
     expect(apiPlugin?.matter).toBeDefined();
     expect(apiPlugin?.matter?.id).toBe('mockmatter');
+
+    // @ts-expect-error accessing private member
+    plugins._plugins.delete('matterbridge-mockmatter');
+    expect(plugins.length).toBe(3);
+  });
+
+  test('toApiPlugin should keep the stored matter data when the plugin has no server node', () => {
+    plugins.set({
+      name: 'matterbridge-mockmatter',
+      path: './packages/core/src/mock/plugin1/package.json',
+      enabled: true,
+      type: 'Unknown' as any,
+      version: '1.0.0',
+      configurationVersion: 1,
+      description: 'To update',
+      author: 'To update',
+      homepage: 'https://example.com',
+      private: true,
+    });
+    const plugin = plugins.get('matterbridge-mockmatter');
+    expect(plugin).toBeDefined();
+    if (!plugin) return;
+    expect(plugins.apiPluginArray().find((p) => p.name === 'matterbridge-mockmatter')?.matter).toBeUndefined();
+    // The matter data sent by the MatterNode thread of the plugin in childbridge mode
+    const matter = { id: 'mockmatter', online: true } as unknown as Plugin['matter'];
+    plugin.matter = matter;
+    expect(plugins.apiPluginArray().find((p) => p.name === 'matterbridge-mockmatter')?.matter).toBe(matter);
 
     // @ts-expect-error accessing private member
     plugins._plugins.delete('matterbridge-mockmatter');

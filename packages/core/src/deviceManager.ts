@@ -23,7 +23,7 @@
 
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiDevice, BaseDevice, WorkerMessage } from '@matterbridge/types';
+import type { Device, WorkerMessage } from '@matterbridge/types';
 import { dev } from '@matterbridge/types';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { logModuleLoaded } from '@matterbridge/utils/loader';
@@ -32,7 +32,7 @@ import { AnsiLogger, BLUE, CYAN, db, debugStringify, er, LogLevel, TimestampForm
 
 // matterbridge
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { toApiDevice, toBaseDevice } from './matterNodeHelpers.js';
+import { toDevice } from './matterNodeHelpers.js';
 
 logModuleLoaded('Device Manager');
 
@@ -94,7 +94,7 @@ export class DeviceManager {
         case 'devices_get':
           {
             const endpoint = this.get(msg.params.uniqueId);
-            this.server.respond({ ...msg, result: { device: endpoint ? toBaseDevice(endpoint) : undefined } });
+            this.server.respond({ ...msg, result: { device: endpoint ? toDevice(endpoint) : undefined } });
           }
           break;
         case 'devices_set':
@@ -102,28 +102,25 @@ export class DeviceManager {
             // Merge the properties into the existing device, so the fields not sent are preserved, otherwise add the device
             const device = msg.params.device.uniqueId ? this._devices.get(msg.params.device.uniqueId) : undefined;
             if (device) {
-              Object.assign(device, Object.fromEntries(Object.entries(toBaseDevice(msg.params.device)).filter(([, value]) => value !== undefined)));
+              Object.assign(device, Object.fromEntries(Object.entries(toDevice(msg.params.device)).filter(([, value]) => value !== undefined)));
               // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-              this.server.respond({ ...msg, result: { device: device as unknown as BaseDevice } });
+              this.server.respond({ ...msg, result: { device: device as unknown as Device } });
             } else {
               // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-              this.server.respond({ ...msg, result: { device: this.set(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as BaseDevice } });
+              this.server.respond({ ...msg, result: { device: this.set(toDevice(msg.params.device) as unknown as MatterbridgeEndpoint) as unknown as Device } });
             }
           }
           break;
         case 'devices_remove':
           // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-          this.server.respond({ ...msg, result: { success: this.remove(toBaseDevice(msg.params.device) as unknown as MatterbridgeEndpoint) } });
+          this.server.respond({ ...msg, result: { success: this.remove(toDevice(msg.params.device) as unknown as MatterbridgeEndpoint) } });
           break;
         case 'devices_clear':
           this.clear();
           this.server.respond({ ...msg, result: { success: true } });
           break;
-        case 'devices_basearray':
+        case 'devices_array':
           this.server.respond({ ...msg, result: { devices: this.baseArray(msg.params.pluginName) } });
-          break;
-        case 'devices_apidevicearray':
-          this.server.respond({ ...msg, result: { devices: this.apiDeviceArray(msg.params.pluginName, msg.params.extended) } });
           break;
         default:
           if (this.verbose) this.log.debug(`Unknown broadcast message ${CYAN}${msg.type}${db} from ${CYAN}${msg.src}${db}`);
@@ -210,16 +207,6 @@ export class DeviceManager {
   }
 
   /**
-   * Converts a MatterbridgeEndpoint to a BaseDevice.
-   *
-   * @param {MatterbridgeEndpoint} device The MatterbridgeEndpoint to convert.
-   * @returns {BaseDevice} The converted BaseDevice.
-   */
-  private toBaseDevice(device: MatterbridgeEndpoint): BaseDevice {
-    return toBaseDevice(device);
-  }
-
-  /**
    * Gets an array of all devices.
    *
    * @returns {MatterbridgeEndpoint[]} An array of all devices.
@@ -232,33 +219,14 @@ export class DeviceManager {
    * Gets a base array of all devices suitable for serialization.
    *
    * @param {string} [pluginName] - Optional plugin name to filter devices.
-   * @returns {ApiDevices[]} A base array of all devices.
+   * @returns {Device[]} A base array of all devices.
    */
-  baseArray(pluginName?: string): BaseDevice[] {
-    const devices: BaseDevice[] = [];
+  baseArray(pluginName?: string): Device[] {
+    const devices: Device[] = [];
     for (const device of Array.from(this._devices.values())) {
       // Filter by pluginName if provided
       if (pluginName && pluginName !== device.plugin) continue;
-      devices.push(this.toBaseDevice(device));
-    }
-    return devices;
-  }
-
-  /**
-   * Gets an array of all devices in the ApiDevice format used by the frontend.
-   * Devices that are not ready or miss the required properties are skipped.
-   *
-   * @param {string} [pluginName] - Optional plugin name to filter devices.
-   * @param {boolean} [extended] - Whether to include extended information.
-   * @returns {ApiDevice[]} An array of ApiDevice.
-   */
-  apiDeviceArray(pluginName?: string, extended?: boolean): ApiDevice[] {
-    const devices: ApiDevice[] = [];
-    for (const device of this._devices.values()) {
-      // Filter by pluginName if provided
-      if (pluginName && pluginName !== device.plugin) continue;
-      const apiDevice = toApiDevice(device, extended);
-      if (apiDevice) devices.push(apiDevice);
+      devices.push(toDevice(device));
     }
     return devices;
   }

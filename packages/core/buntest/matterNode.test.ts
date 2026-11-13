@@ -28,6 +28,9 @@ import { getInterfaceName } from '@matterbridge/utils/network';
 import { AnsiLogger, CYAN, db, er, LogLevel, nf, TimestampFormat, zb } from 'node-ansi-logger';
 import { NodeStorageManager } from 'node-persist-manager';
 
+import { MatterbridgeTimeSynchronizationServer } from '../src/behaviors/timeSynchronizationServer.js';
+import { MatterbridgeTlsCertificateManagementServer } from '../src/behaviors/tlsCertificateManagementServer.js';
+import { MatterbridgeTlsClientManagementServer } from '../src/behaviors/tlsClientManagementServer.js';
 import { DeviceManager } from '../src/deviceManager.js';
 import type { Matterbridge } from '../src/matterbridge.js';
 import { bridgedNode, flowSensor, humiditySensor, powerSource, pressureSensor, temperatureSensor } from '../src/matterbridgeDeviceTypes.js';
@@ -176,7 +179,8 @@ describe('MatterNode', () => {
     const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
     try {
       matter.matterbridgeStatusUpdate('started');
-      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledTimes(2);
+      expect(requestSpy).toHaveBeenCalledWith({ type: 'matterbridge_apisettings', src: 'matter', dst: 'matterbridge', params: { bridgeStatus: 'started' } });
       expect(requestSpy).toHaveBeenCalledWith({
         type: 'frontend_broadcast_message',
         src: 'matter',
@@ -184,6 +188,52 @@ describe('MatterNode', () => {
         params: { msg: { id: 0, src: 'Matterbridge', dst: 'Frontend', method: 'matterbridge_status_update', success: true, response: { status: 'started' } } },
       });
     } finally {
+      requestSpy.mockRestore();
+    }
+  });
+
+  test('pluginMatterUpdate should update the plugin manager with the server node matter data only for a plugin in childbridge mode', () => {
+    // Minimal structural server node so getServerNodeData can read its state
+    const serverNode = {
+      id: 'mocknode',
+      lifecycle: { isOnline: true },
+      state: {
+        commissioning: { commissioned: false, pairingCodes: { qrPairingCode: 'MT:QR', manualPairingCode: '12345678901' }, fabrics: {} },
+        administratorCommissioning: { windowStatus: 0 },
+        sessions: { sessions: {} },
+        basicInformation: { serialNumber: '0x123456' },
+      },
+    } as unknown as Parameters<MatterNode['pluginMatterUpdate']>[0];
+    // @ts-expect-error access private property
+    const requestSpy = vi.spyOn(matter.server, 'request').mockImplementation(() => {});
+    try {
+      // Bridge mode: the plugins have no server node
+      matter.pluginMatterUpdate(serverNode);
+      expect(requestSpy).not.toHaveBeenCalled();
+
+      // Childbridge mode: the plugin server node
+      // @ts-expect-error access private property
+      matter.pluginName = 'matterbridge-test';
+      matter.pluginMatterUpdate(serverNode);
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'plugins_set',
+        src: 'matter',
+        dst: 'plugins',
+        params: { plugin: { name: 'matterbridge-test', matter: expect.objectContaining({ id: 'mocknode', online: true, qrPairingCode: 'MT:QR' }) } },
+      });
+
+      // Server mode device: the server node belongs to the device, not to the plugin
+      requestSpy.mockClear();
+      // @ts-expect-error access private property
+      matter.device = {};
+      matter.pluginMatterUpdate(serverNode);
+      expect(requestSpy).not.toHaveBeenCalled();
+    } finally {
+      // @ts-expect-error access private property
+      matter.pluginName = undefined;
+      // @ts-expect-error access private property
+      matter.device = undefined;
       requestSpy.mockRestore();
     }
   });
@@ -338,9 +388,9 @@ describe('MatterNode', () => {
       1.5,
     );
 
-    process.argv.push('--root-power-source');
+    process.argv.push('--root-camera');
     const invalidServerNode = await matter.createServerNode(MATTER_PORT + 1, -1, 0x1000);
-    process.argv.splice(process.argv.indexOf('--root-power-source'), 1);
+    process.argv.splice(process.argv.indexOf('--root-camera'), 1);
 
     expect(invalidServerNode.state.commissioning.pairingCodes.manualPairingCode).toEqual(expect.any(String));
     expect(invalidServerNode.state.commissioning.pairingCodes.qrPairingCode).toEqual(expect.any(String));
@@ -352,6 +402,9 @@ describe('MatterNode', () => {
     expect(invalidServerNode.state.basicInformation.productUrl).toBe('https://matterbridge.io');
     expect(invalidServerNode.state.basicInformation.configurationVersion).toBe(1);
     expect(invalidServerNode.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTimeSynchronizationServer)).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTlsCertificateManagementServer)).toBe(true);
+    expect(invalidServerNode.behaviors.has(MatterbridgeTlsClientManagementServer)).toBe(true);
     const powerSourceState = invalidServerNode.stateOf(PowerSourceServer.with(PowerSource.Feature.Wired));
     expect(powerSourceState.status).toBe(PowerSource.PowerSourceStatus.Active);
     expect(powerSourceState.order).toBe(0);
@@ -400,8 +453,11 @@ describe('MatterNode', () => {
     await matter.serverNode?.construction.ready;
     await matter.aggregatorNode?.construction.ready;
     expect(loggerDebugSpy).toHaveBeenCalledWith(`Created ${plg}Matterbridge${db} server node`);
-    // Without --root-power-source, the Root endpoint SHALL NOT expose a Power Source cluster.
+    // Without --root-camera, the Root endpoint SHALL NOT expose the Power Source and the camera Root Node clusters.
     expect(matter.serverNode?.behaviors.has(PowerSourceServer.with(PowerSource.Feature.Wired))).toBeFalsy();
+    expect(matter.serverNode?.behaviors.has(MatterbridgeTimeSynchronizationServer)).toBeFalsy();
+    expect(matter.serverNode?.behaviors.has(MatterbridgeTlsCertificateManagementServer)).toBeFalsy();
+    expect(matter.serverNode?.behaviors.has(MatterbridgeTlsClientManagementServer)).toBeFalsy();
   });
 
   test('Start server node for Matterbridge', async () => {

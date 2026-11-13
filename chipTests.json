@@ -2,6 +2,9 @@
   "resetClusterGlobs": [
     "root.accessControl.acl",
     "root.accessControl.extension",
+    "root.timeSynchronization.*",
+    "root.tlsCertificateManagement.*",
+    "root.tlsClientManagement.*",
     "*.smokeCoAlarm.*",
     "*.DimmableLight.levelControl.*",
     "*.RoboticVacuumCleaner.rvcRunMode.currentMode",
@@ -353,6 +356,238 @@
       "args": ["--int-arg PIXIT.CGEN.FailsafeExpiryLengthSeconds:900", "--int-arg PIXIT.CGEN.RequiredTCAcknowledgements:1", "--int-arg PIXIT.CGEN.TCRevision:1"],
       "revokeWindowBefore": true,
       "comment": "Self-skips: same unimplemented TC feature as TC_CGEN_2_5."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.1 on RootNode",
+      "test": "TC_TIMESYNC_2_1.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.2 on RootNode",
+      "test": "TC_TIMESYNC_2_2.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.3 on RootNode",
+      "test": "Test_TC_TIMESYNC_2_3",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.4 on RootNode",
+      "test": "TC_TIMESYNC_2_4.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.5 on RootNode",
+      "test": "TC_TIMESYNC_2_5.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.6 on RootNode",
+      "test": "TC_TIMESYNC_2_6.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.7 on RootNode",
+      "test": "TC_TIMESYNC_2_7.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.8 on RootNode",
+      "test": "TC_TIMESYNC_2_8.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.9 on RootNode",
+      "test": "TC_TIMESYNC_2_9.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.10 on RootNode",
+      "test": "TC_TIMESYNC_2_10.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.11 on RootNode",
+      "test": "TC_TIMESYNC_2_11.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.12 on RootNode",
+      "test": "TC_TIMESYNC_2_12.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-2.13 on RootNode",
+      "test": "TC_TIMESYNC_2_13.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TimeSynchronization TC-TIMESYNC-3.1 on RootNode",
+      "test": "TC_TIMESYNC_3_1.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement attributes on RootNode",
+      "test": "TC_TLSCERT_2_1.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement ProvisionRootCertificate basic insertion and modification on RootNode",
+      "test": "TC_TLSCERT_2_2.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement ProvisionRootCertificate with several entries on RootNode",
+      "test": "TC_TLSCERT_2_3.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement ProvisionRootCertificate with bad arguments on RootNode",
+      "test": "TC_TLSCERT_2_4.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement FindRootCertificate with bad arguments on RootNode",
+      "test": "TC_TLSCERT_2_5.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement LookupRootCertificate on RootNode",
+      "test": "TC_TLSCERT_2_6.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement RemoveRootCertificate on RootNode",
+      "test": "TC_TLSCERT_2_7.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement ClientCSR on RootNode",
+      "test": "TC_TLSCERT_2_8.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement ProvisionClientCertificate on RootNode",
+      "test": "TC_TLSCERT_2_9.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement ProvisionClientCertificate with bad arguments on RootNode",
+      "test": "TC_TLSCERT_2_10.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement FindClientCertificate on RootNode",
+      "test": "TC_TLSCERT_2_11.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement LookupClientCertificate on RootNode",
+      "test": "TC_TLSCERT_2_12.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsCertificateManagement RemoveClientCertificate on RootNode",
+      "test": "TC_TLSCERT_2_13.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsClientManagement attributes on RootNode",
+      "test": "TC_TLSCLIENT_2_1.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsClientManagement ProvisionEndpoint basic insertion and modification on RootNode",
+      "test": "TC_TLSCLIENT_3_1.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsClientManagement ProvisionEndpoint with several entries on RootNode",
+      "test": "TC_TLSCLIENT_3_2.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsClientManagement ProvisionEndpoint with bad arguments on RootNode",
+      "test": "TC_TLSCLIENT_3_3.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "resetAfter": true,
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST). The only reset of the block: this test leaves its CR1 TLS endpoints provisioned, which fails TC_TLSCLIENT_3_10 with EndpointAlreadyInstalled; 3.10 then aborts leaving its CR2 fabric, which fails TC_TLSCLIENT_3_20 with a FabricConflict."
+    },
+    {
+      "name": "TlsClientManagement FindEndpoint on RootNode",
+      "test": "TC_TLSCLIENT_3_10.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
+    },
+    {
+      "name": "TlsClientManagement RemoveEndpoint on RootNode",
+      "test": "TC_TLSCLIENT_3_20.py",
+      "endpoint": 0,
+      "args": ["--PICS /root/root-camera.pics"],
+      "comment": "Root camera cluster (--root-camera, always on with MATTERBRIDGE_CHIP_TEST)."
     },
     {
       "name": "ElectricalPowerMeasurement attributes on ElectricalSensor",

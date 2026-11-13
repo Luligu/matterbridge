@@ -326,8 +326,8 @@ describe('HomePlugins', () => {
 
     fireEvent.click(pluginButton('Plugin config'));
     expect(sendMessage.mock.calls.slice(-2).map(([message]) => [message.method, message.params])).toEqual([
-      ['/api/select/devices', { plugin: 'plugin-one' }],
-      ['/api/select/entities', { plugin: 'plugin-one' }],
+      ['/api/select-devices', { plugin: 'plugin-one' }],
+      ['/api/select-entities', { plugin: 'plugin-one' }],
     ]);
     expect(screen.getByRole('dialog', { name: 'Plugin configuration' })).toHaveTextContent('plugin-one');
     fireEvent.click(screen.getByRole('button', { name: 'Save config' }));

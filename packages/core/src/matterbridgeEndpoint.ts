@@ -125,7 +125,7 @@ import { MatterbridgeTemperatureAlarmServer } from './behaviors/temperatureAlarm
 import { MatterbridgeThermostatServer } from './behaviors/thermostatServer.js';
 import { MatterbridgeValveConfigurationAndControlServer } from './behaviors/valveConfigurationAndControlServer.js';
 import { MatterbridgeWaterTankLevelMonitoringServer } from './behaviors/waterTankLevelMonitoringServer.js';
-import { MatterbridgeWindowCoveringServer } from './behaviors/windowCoveringServer.js';
+import { MatterbridgeLiftTiltWindowCoveringServer, MatterbridgeLiftWindowCoveringServer, MatterbridgeTiltWindowCoveringServer } from './behaviors/windowCoveringServer.js';
 import { DeviceClasses, type DeviceTypeDefinition } from './matterbridgeDeviceTypes.js';
 import {
   CommandHandler,
@@ -163,6 +163,7 @@ import {
   getDefaultElectricalPowerMeasurementClusterServer,
   getDefaultFlowMeasurementClusterServer,
   getDefaultIlluminanceMeasurementClusterServer,
+  getDefaultLiftTiltWindowCoveringClusterServer,
   getDefaultOccupancySensingClusterServer,
   getDefaultOperationalStateClusterServer,
   getDefaultPowerSourceBatteryClusterServer,
@@ -173,6 +174,8 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getDefaultTiltWindowCoveringClusterServer,
+  getDefaultWindowCoveringClusterServer,
   getExportedElectricalEnergyMeasurementClusterServer,
   getImportedElectricalEnergyMeasurementClusterServer,
   invokeBehaviorCommand,
@@ -3332,28 +3335,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.RollerShade,
     movementDuration: number = 0,
   ): this {
-    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Lift, WindowCovering.Feature.PositionAwareLift), {
-      type, // Must support feature Lift
-      numberOfActuationsLift: 0, // persisted
-      configStatus: {
-        // persisted
-        operational: true,
-        // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
-        liftMovementReversed: false,
-        liftPositionAware: true,
-        tiltPositionAware: false,
-        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-      },
-      // No tilt field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.3 conditions the tilt bits on the TL (Tilt) feature, which this Lift-only server does not support.
-      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
-      endProductType, // Must support feature Lift
-      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
-      targetPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed
-      currentPositionLiftPercent100ths: positionPercent100ths, // 0 Fully open 10000 fully closed, persisted
-      currentPositionLiftPercentage: positionPercent100ths === null ? null : Math.floor(positionPercent100ths / 100), // Mirror of currentPositionLiftPercent100ths, persisted
-      movementDuration,
-    });
+    this.behaviors.require(MatterbridgeLiftWindowCoveringServer, getDefaultWindowCoveringClusterServer(positionPercent100ths, type, endProductType, movementDuration));
     return this;
   }
 
@@ -3379,47 +3361,18 @@ export class MatterbridgeEndpoint extends Endpoint {
     movementDuration: number = 0,
   ): this {
     this.behaviors.require(
-      MatterbridgeWindowCoveringServer.with(
-        WindowCovering.Feature.Lift,
-        WindowCovering.Feature.PositionAwareLift,
-        WindowCovering.Feature.Tilt,
-        WindowCovering.Feature.PositionAwareTilt,
-      ),
-      {
-        type, // Must support features Lift and Tilt
-        numberOfActuationsLift: 0, // persisted
-        numberOfActuationsTilt: 0, // persisted
-        configStatus: {
-          // persisted
-          operational: true,
-          // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
-          liftMovementReversed: false,
-          liftPositionAware: true,
-          tiltPositionAware: true,
-          liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-          tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-        },
-        operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-        endProductType, // Must support features Lift and Tilt
-        mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
-        targetPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed
-        currentPositionLiftPercent100ths: positionLiftPercent100ths, // 0 Fully open 10000 fully closed, persisted
-        currentPositionLiftPercentage: positionLiftPercent100ths === null ? null : Math.floor(positionLiftPercent100ths / 100), // Mirror of currentPositionLiftPercent100ths, persisted
-        targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
-        currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
-        currentPositionTiltPercentage: positionTiltPercent100ths === null ? null : Math.floor(positionTiltPercent100ths / 100), // Mirror of currentPositionTiltPercent100ths, persisted
-        movementDuration,
-      },
+      MatterbridgeLiftTiltWindowCoveringServer,
+      getDefaultLiftTiltWindowCoveringClusterServer(positionLiftPercent100ths, positionTiltPercent100ths, type, endProductType, movementDuration),
     );
     return this;
   }
 
   /**
-   * Creates a default window covering cluster server with features Lift, PositionAwareLift, Tilt, PositionAwareTilt.
+   * Creates a default window covering cluster server with features Tilt and PositionAwareTilt.
    *
    * @param {number | null} positionTiltPercent100ths - The tilt position percentage in 100ths (0-10000). Defaults to 0. Matter uses 10000 = fully closed 0 = fully opened.
-   * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindLift). Must support features Lift and Tilt.
-   * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.InteriorBlind). Must support features Lift and Tilt.
+   * @param {WindowCovering.WindowCoveringType} type - The type of window covering (default: WindowCovering.WindowCoveringType.TiltBlindTiltOnly). Must support feature Tilt.
+   * @param {WindowCovering.EndProductType} endProductType - The end product type (default: WindowCovering.EndProductType.TiltOnlyInteriorBlind). Must support feature Tilt.
    * @param {number} movementDuration - Duration in milliseconds of the built-in tilt movement simulation. Defaults to 0, which disables the simulation: `currentPositionTiltPercent100ths`/`operationalStatus` then only change when the plugin itself calls `setAttribute()`/`updateAttribute()` to report real movement. A positive value makes `MatterbridgeWindowCoveringServer` simulate the movement itself, converging `currentPositionTiltPercent100ths` to the target and resetting `operationalStatus` to Stopped after this many milliseconds — useful when there is no real motor/feedback to drive the attributes.
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
@@ -3433,28 +3386,7 @@ export class MatterbridgeEndpoint extends Endpoint {
     endProductType: WindowCovering.EndProductType = WindowCovering.EndProductType.TiltOnlyInteriorBlind,
     movementDuration: number = 0,
   ): this {
-    this.behaviors.require(MatterbridgeWindowCoveringServer.with(WindowCovering.Feature.Tilt, WindowCovering.Feature.PositionAwareTilt), {
-      type, // Must support features Lift and Tilt
-      numberOfActuationsTilt: 0, // persisted
-      configStatus: {
-        // persisted
-        operational: true,
-        // onlineReserved: false, // Deprecated: Matter 1.6.1 Application Cluster Spec §5.3.5.1 marks ConfigStatusBitmap bit 1 (OnlineReserved) conformance "D" (Deprecated).
-        liftMovementReversed: false,
-        liftPositionAware: false,
-        tiltPositionAware: true,
-        liftEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-        tiltEncoderControlled: false, // 0 = Timer Controlled 1 = Encoder Controlled
-      },
-      // No lift field: Matter 1.6.1 Application Cluster Spec §5.3.5.3.2 conditions the lift bits on the LF (Lift) feature, which this Tilt-only server does not support.
-      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
-      endProductType, // Must support features Lift and Tilt
-      mode: { motorDirectionReversed: false, calibrationMode: false, maintenanceMode: false, ledFeedback: false }, // persisted
-      targetPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed
-      currentPositionTiltPercent100ths: positionTiltPercent100ths, // 0 Fully open 10000 fully closed, persisted
-      currentPositionTiltPercentage: positionTiltPercent100ths === null ? null : Math.floor(positionTiltPercent100ths / 100), // Mirror of currentPositionTiltPercent100ths, persisted
-      movementDuration,
-    });
+    this.behaviors.require(MatterbridgeTiltWindowCoveringServer, getDefaultTiltWindowCoveringClusterServer(positionTiltPercent100ths, type, endProductType, movementDuration));
     return this;
   }
 

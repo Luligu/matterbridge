@@ -22,10 +22,6 @@
  * limitations under the License.
  */
 
-import { mkdir, writeFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 
 import { hasFfmpeg, redactSource, runFfmpeg } from './ffmpeg.js';
@@ -251,24 +247,3 @@ async function grab(src: string, width: number, height: number, q: number): Prom
     });
   });
 }
-
-// Manual test entrypoint: run with `npm run build && node dist/behaviors/snapshot.js [source]` (`test` for the synthetic test pattern)
-/* v8 ignore start -- exercised manually with a real camera and ffmpeg, not by unit tests */
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  const src = process.argv[2] ?? 'Surface Camera Front';
-  const outputDir = path.join(process.cwd(), 'temp');
-  await mkdir(outputDir, { recursive: true });
-
-  const resolutions = [
-    { width: 640, height: 480 },
-    { width: 1280, height: 720 },
-    { width: 1920, height: 1080 },
-  ];
-  for (const { width, height } of resolutions) {
-    const result = await captureSnapshot({ src, width, height });
-    const outputFile = path.join(outputDir, `snapshot-${width}x${height}.jpeg`);
-    await writeFile(outputFile, result.data);
-    log.info(`Saved snapshot to ${outputFile} (${result.byteLength}B, ${result.width}x${result.height}, quality=${result.quality}, downgraded=${result.downgraded})`);
-  }
-}
-/* v8 ignore stop */

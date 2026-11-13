@@ -36,7 +36,6 @@ function Test() {
         showSnackbarMessage('Refresh required', 0);
         sendMessage({ id: uniqueId.current, method: '/api/settings', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
         sendMessage({ id: uniqueId.current, method: '/api/plugins', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
-        sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
       } else if (msg.method === '/api/settings' && msg.response) {
         if (debug || localDebug) console.log('Test received /api/settings:', msg.response);
         showSnackbarMessage('Test received /api/settings', 0);
@@ -45,10 +44,25 @@ function Test() {
         if (debug || localDebug) console.log(`Test received ${msg.response.length} plugins:`, msg.response);
         showSnackbarMessage('Test received /api/plugins', 0);
         setPlugins(msg.response);
-      } else if (msg.method === '/api/devices' && msg.response) {
-        if (debug || localDebug) console.log(`Test received ${msg.response.length} devices:`, msg.response);
-        showSnackbarMessage('Test received /api/devices', 0);
-        setDevices(msg.response);
+        setDevices([]);
+        for (const plugin of msg.response) {
+          if (plugin.enabled && plugin.loaded === true && plugin.started === true && plugin.error !== true) {
+            sendMessage({
+              id: uniqueId.current,
+              method: '/api/platform-devices',
+              sender: 'Test',
+              src: 'Frontend',
+              dst: 'Matterbridge',
+              params: { pluginName: plugin.name, extended: false },
+            });
+          }
+        }
+      } else if (msg.method === '/api/platform-devices' && msg.response) {
+        if (debug || localDebug) console.log(`Test received ${msg.response.length} platform devices:`, msg.response);
+        showSnackbarMessage('Test received /api/platform-devices', 0);
+        const plugin = msg.pluginName;
+        // Replace the devices of this plugin only: an empty response removes them all
+        setDevices((prev) => [...prev.filter((device) => device.plugin !== plugin), ...msg.response]);
         for (const device of msg.response) {
           if (debug || localDebug) console.log('Test sending /api/clusters for device:', device.plugin, device.deviceName, device.number);
           sendMessage({
@@ -79,7 +93,6 @@ function Test() {
       if (debug || localDebug) console.log('Test useEffect online received online');
       sendMessage({ id: uniqueId.current, method: '/api/settings', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
       sendMessage({ id: uniqueId.current, method: '/api/plugins', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: {} });
-      sendMessage({ id: uniqueId.current, method: '/api/devices', sender: 'Test', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
     }
     if (debug || localDebug) console.log('Test useEffect online mounted');
 

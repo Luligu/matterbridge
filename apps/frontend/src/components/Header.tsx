@@ -158,9 +158,9 @@ function Header() {
       showSnackbarMessage('Downloading diagnostic log...', 5);
       window.location.href = './api/download-diagnostic';
     } else if (value === 'view-history') {
-      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/viewhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/view-historypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'download-history') {
-      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/downloadhistorypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
+      sendMessage({ id: uniqueId.current, sender: 'Header', method: '/api/download-historypage', src: 'Frontend', dst: 'Matterbridge', params: {} });
     } else if (value === 'download-mbstorage') {
       logMessage('Matterbridge', `Downloading matterbridge storage...`);
       showSnackbarMessage('Downloading matterbridge storage...', 5);
@@ -280,12 +280,12 @@ function Header() {
           );
           setUpdate(true);
         }
-      } else if (msg.method === '/api/viewhistorypage' && msg.id === uniqueId.current && msg.success) {
-        if (debug) console.log('Header received /api/viewhistorypage success');
-        window.open(`./api/viewhistory`, '_blank', 'noopener,noreferrer');
-      } else if (msg.method === '/api/downloadhistorypage' && msg.id === uniqueId.current && msg.success) {
-        if (debug) console.log('Header received /api/downloadhistorypage success');
-        window.location.href = `./api/downloadhistory`;
+      } else if (msg.method === '/api/view-historypage' && msg.id === uniqueId.current && msg.success) {
+        if (debug) console.log('Header received /api/view-historypage success');
+        window.open(`./api/view-history`, '_blank', 'noopener,noreferrer');
+      } else if (msg.method === '/api/download-historypage' && msg.id === uniqueId.current && msg.success) {
+        if (debug) console.log('Header received /api/download-historypage success');
+        window.location.href = `./api/download-history`;
       } else if (msg.method === 'archive' && msg.success && msg.response.command === 'zip') {
         if (debug) console.log('Header received archive success response for zip command', msg.response);
         if (msg.response.archivePath.endsWith('matterbridge.backup.zip')) window.location.href = `./api/download-backup`;

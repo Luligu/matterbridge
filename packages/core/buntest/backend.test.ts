@@ -18,7 +18,7 @@ import tls from 'node:tls';
 import { getFreePort } from '@matterbridge/test-utils';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import { type ApiClusters, type ApiMatter, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
+import { type ApiClusters, type ApiDevice, type ApiMatter, type Device, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';
@@ -278,9 +278,9 @@ describe('Backend', () => {
     const deviceParamsSpy = vi.fn();
     const devicesServer = new BroadcastServer('devices', log);
     devicesServer.on('broadcast_message', (msg: WorkerMessage) => {
-      if (devicesServer.isWorkerRequestOfType(msg, 'devices_apidevicearray')) {
+      if (devicesServer.isWorkerRequestOfType(msg, 'devices_array')) {
         deviceParamsSpy(msg.params);
-        devicesServer.respond({ ...msg, result: { devices: msg.params.pluginName === 'plugin1' ? [{ plugin: 'plugin1' } as any] : [] } });
+        devicesServer.respond({ ...msg, result: { devices: msg.params.pluginName === 'plugin1' ? [{ plugin: 'plugin1' } as Device] : [] } });
       }
     });
 
@@ -308,6 +308,7 @@ describe('Backend', () => {
       ],
     };
     const clusterRequestSpy = vi.fn();
+    const platformDevicesRequestSpy = vi.fn();
     const platformServer = new BroadcastServer('platform', log);
     platformServer.on('broadcast_message', (msg: WorkerMessage) => {
       if (platformServer.isWorkerRequestOfType(msg, 'platform_get_apiclusters')) {
@@ -315,19 +316,19 @@ describe('Backend', () => {
         if (msg.params.pluginName === 'plugin1') platformServer.respond({ ...msg, result: { clusters } });
         else platformServer.respond({ ...msg, error: 'Endpoint not found' });
       }
+      if (platformServer.isWorkerRequestOfType(msg, 'platform_get_apidevices')) {
+        platformDevicesRequestSpy(msg);
+        if (msg.params.pluginName === 'plugin1') platformServer.respond({ ...msg, result: { devices: [{ plugin: 'plugin1' } as ApiDevice] } });
+      }
     });
 
     expect(await backend.getApiMatter('Matterbridge')).toMatchObject({ id: 'Matterbridge' });
     expect(await backend.getApiSettings()).toMatchObject({ test: 'settings' });
     expect(await backend.getApiPlugins()).toMatchObject([{ name: 'plugin1' }]);
-    expect(await backend.getApiDevices('plugin1')).toMatchObject([{ plugin: 'plugin1' }]);
-    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1', extended: false });
-    for (const extended of [false, true]) {
-      expect(await backend.getApiDevices('plugin1', extended)).toMatchObject([{ plugin: 'plugin1' }]);
-      expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1', extended });
-    }
-    expect(await backend.getApiDevices()).toEqual([]);
-    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: undefined, extended: false });
+    expect(await backend.getDevices('plugin1')).toMatchObject([{ plugin: 'plugin1' }]);
+    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: 'plugin1' });
+    expect(await backend.getDevices()).toEqual([]);
+    expect(deviceParamsSpy).toHaveBeenLastCalledWith({ pluginName: undefined });
     expect(await backend.getApiCluster('plugin1', 1, 'SN1', 'UID1')).toEqual(clusters);
     expect(clusterRequestSpy).toHaveBeenLastCalledWith(
       expect.objectContaining({
@@ -338,9 +339,15 @@ describe('Backend', () => {
       }),
     );
     expect(backend.getApiCluster('missing-plugin', 1, 'SN1', 'UID1')).rejects.toThrow('Endpoint not found');
+    expect(await backend.getApiDevices('plugin1')).toEqual([{ plugin: 'plugin1' } as ApiDevice]);
+    expect(platformDevicesRequestSpy).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: 'platform_get_apidevices', src: 'frontend', dst: 'platform', params: { pluginName: 'plugin1', extended: false } }),
+    );
+    expect(await backend.getApiDevices('plugin1', true)).toEqual([{ plugin: 'plugin1' } as ApiDevice]);
+    expect(platformDevicesRequestSpy).toHaveBeenLastCalledWith(expect.objectContaining({ params: { pluginName: 'plugin1', extended: true } }));
     expect(backend.generateDiagnostic()).resolves.toBeUndefined();
 
-    for (const method of ['getApiMatter', 'getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
+    for (const method of ['getApiMatter', 'getApiSettings', 'getApiPlugins', 'getDevices', 'getApiDevices', 'getApiCluster', 'generateDiagnostic']) {
       const timing = new RegExp(`Backend: ${method}\\(\\) took \\d+\\.\\d{2} ms`);
       expect(stderrSpy.mock.calls.some(([message]) => timing.test(String(message)))).toBe(Boolean(flag));
     }

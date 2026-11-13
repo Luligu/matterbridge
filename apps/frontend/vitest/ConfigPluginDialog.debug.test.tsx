@@ -136,7 +136,7 @@ describe('ConfigPluginDialog debug paths', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/devices',
+      method: '/api/select-devices',
       response: [
         {
           serialNumber: 'serial-001',
@@ -154,7 +154,7 @@ describe('ConfigPluginDialog debug paths', () => {
       id: 1234,
       src: 'Matterbridge',
       dst: 'Frontend',
-      method: '/api/select/entities',
+      method: '/api/select-entities',
       response: [
         { name: 'Entity One', description: 'Entity One Desc', icon: 'wifi' },
         { name: 'Entity Two', description: 'Entity Two Desc', icon: 'hub' },
@@ -226,7 +226,7 @@ describe('ConfigPluginDialog debug paths', () => {
       );
     });
 
-    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/savepluginconfig' }));
+    expect(sendMessage).toHaveBeenCalledWith(expect.objectContaining({ method: '/api/save-plugin-config' }));
     expect(onClose).toHaveBeenCalled();
 
     unmount();

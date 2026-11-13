@@ -8,11 +8,21 @@ const NAME = 'BackendWsServer';
 
 import { afterAll, beforeEach, describe, expect, test, vi, type Mock } from 'bun:test';
 import { EventEmitter } from 'node:events';
+import os from 'node:os';
+import path from 'node:path';
 
 import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
-import { log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, loggerNoticeSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
-import type { ApiMatter, SharedMatterbridge } from '@matterbridge/types';
+import {
+  type ApiMatter,
+  MATTER_STORAGE_DIR,
+  MATTERBRIDGE_BACKUP_FILE,
+  MATTERBRIDGE_PLUGIN_CONFIG_FILE,
+  MATTERBRIDGE_PLUGIN_STORAGE_FILE,
+  NODE_STORAGE_DIR,
+  type SharedMatterbridge,
+} from '@matterbridge/types';
 import { LogLevel } from 'node-ansi-logger';
 
 import type { Backend } from '../src/backend.js';
@@ -32,9 +42,11 @@ const mockedBackend = {
   fixedRestartRequired: false,
   updateRequired: false,
   secure: false,
+  serverFetchTimeout: 5000,
   getApiMatter: vi.fn<Backend['getApiMatter']>(),
   getApiSettings: vi.fn(async () => ({ matterbridgeInformation: {} })),
   getApiPlugins: vi.fn(async () => [{ name: 'matterbridge-test' }]),
+  getDevices: vi.fn(async () => [{ name: 'Device' }]),
   getApiDevices: vi.fn(async () => [{ name: 'Device' }]),
   getApiCluster: vi.fn<Backend['getApiCluster']>(),
 } as unknown as Backend;
@@ -87,6 +99,18 @@ describe('BackendWsServer', () => {
     const manager = new BroadcastServer('manager', log);
     const response = await manager.fetch({ type: 'get_log_level', src: 'manager', dst: 'frontend', params: undefined });
     expect(response.result.logLevel).toBe((wsServer as any).log.logLevel);
+
+    const statusSpy = vi.spyOn(wsServer, 'wssSendMatterbridgeStatusUpdate');
+    try {
+      for (const status of ['starting', 'started'] as const) {
+        const statusResponse = await manager.fetch({ type: 'frontend_matterbridgestatusupdate', src: 'manager', dst: 'frontend', params: { status } });
+        expect(statusResponse.result.success).toBe(true);
+        expect(statusSpy).toHaveBeenLastCalledWith(status);
+      }
+      expect(statusSpy).toHaveBeenCalledTimes(2);
+    } finally {
+      statusSpy.mockRestore();
+    }
 
     // A response message is not a request and is ignored
     await (wsServer as any).broadcastMsgHandler({ id: 123456, timestamp: Date.now(), type: 'get_log_level', src: 'manager', dst: 'frontend', result: { logLevel: LogLevel.INFO } });
@@ -319,13 +343,29 @@ describe('BackendWsServer', () => {
     expect(mockedBackend.getApiPlugins).toHaveBeenCalled();
 
     expect(await request('/api/devices')).toMatchObject({ success: true, response: [{ name: 'Device' }] });
-    expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual([undefined, undefined]);
+    expect((mockedBackend.getDevices as Mock<Backend['getDevices']>).mock.lastCall).toEqual([undefined]);
     expect(await request('/api/devices', { pluginName: 'matterbridge-test' })).toMatchObject({ success: true });
+    expect((mockedBackend.getDevices as Mock<Backend['getDevices']>).mock.lastCall).toEqual(['matterbridge-test']);
+
+    expect(await request('/api/platform-devices', { pluginName: 'short' })).toMatchObject({ error: 'Wrong parameter pluginName in /api/platform-devices' });
+    expect(mockedBackend.getApiDevices).not.toHaveBeenCalled();
+    expect(await request('/api/platform-devices', { pluginName: 'matterbridge-test' })).toMatchObject({
+      success: true,
+      pluginName: 'matterbridge-test',
+      response: [{ name: 'Device' }],
+    });
     expect((mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mock.lastCall).toEqual(['matterbridge-test', undefined]);
-    for (const extended of [false, true]) {
-      expect(await request('/api/devices', { pluginName: 'matterbridge-test', extended })).toMatchObject({ success: true });
-      expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', extended);
-    }
+    expect(await request('/api/platform-devices', { pluginName: 'matterbridge-test', extended: true })).toMatchObject({ success: true });
+    expect(mockedBackend.getApiDevices).toHaveBeenLastCalledWith('matterbridge-test', true);
+    (mockedBackend.getApiDevices as Mock<Backend['getApiDevices']>).mockRejectedValueOnce(new Error('Timeout'));
+    client.send.mockClear();
+    await (wsServer as any).wsMessageHandler(
+      client,
+      Buffer.from(JSON.stringify({ id: 10, src: 'Frontend', dst: 'Matterbridge', method: '/api/platform-devices', params: { pluginName: 'matterbridge-test' } })),
+    );
+    expect(client.send).not.toHaveBeenCalled();
+    expect(loggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Error parsing message from websocket client'));
+    loggerErrorSpy.mockClear();
 
     expect(await request('/api/clusters', { pluginName: 'short', number: 1 })).toMatchObject({ error: 'Wrong parameter pluginName in /api/clusters' });
     expect(await request('/api/clusters', { pluginName: 'matterbridge-test', number: 0 })).toMatchObject({ error: 'Wrong parameter number in /api/clusters' });
@@ -407,18 +447,64 @@ describe('BackendWsServer', () => {
     }
   });
 
+  test.each([
+    { method: '/api/select', type: 'platform_select_device' },
+    { method: '/api/unselect', type: 'platform_unselect_device' },
+  ] as const)('should forward $method to the platform and send its result', async ({ method, type }) => {
+    const params = { pluginName: 'matterbridge-test', serialNumber: 'SN1', deviceName: 'Device 1' };
+    const fetchSpy = vi
+      .spyOn(BroadcastServer.prototype, 'fetch')
+      .mockResolvedValueOnce({ result: { success: true } } as never)
+      .mockRejectedValueOnce(new Error('SelectDevice: select undefined not supported'));
+    try {
+      let client = new FakeClient();
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 15, src: 'Frontend', dst: 'Matterbridge', method, params })));
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledWith({ type, src: 'frontend', dst: 'platform', params }, mockedBackend.serverFetchTimeout);
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 15, method, src: 'Matterbridge', dst: 'Frontend', success: true });
+
+      client = new FakeClient();
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 16, src: 'Frontend', dst: 'Matterbridge', method, params })));
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 16, method, src: 'Matterbridge', dst: 'Frontend', error: 'SelectDevice: select undefined not supported' });
+
+      fetchSpy.mockClear();
+      for (const key of Object.keys(params)) {
+        for (const value of [undefined, '', 123]) {
+          client = new FakeClient();
+          await (wsServer as any).wsMessageHandler(
+            client,
+            Buffer.from(JSON.stringify({ id: 17, src: 'Frontend', dst: 'Matterbridge', method, params: { ...params, [key]: value } })),
+          );
+          expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 17, method, src: 'Matterbridge', dst: 'Frontend', error: `Wrong parameter ${key} in ${method}` });
+        }
+      }
+      client = new FakeClient();
+      await (wsServer as any).wsMessageHandler(
+        client,
+        Buffer.from(JSON.stringify({ id: 18, src: 'Frontend', dst: 'Matterbridge', method, params: { ...params, pluginName: 'short' } })),
+      );
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 18, method, src: 'Matterbridge', dst: 'Frontend', error: `Wrong parameter pluginName in ${method}` });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    } finally {
+      fetchSpy.mockRestore();
+    }
+  });
+
   test.each(['/api/restart', '/api/shutdown'] as const)('should forward %s to the main thread and acknowledge the request', async (method) => {
     const client = new FakeClient();
     const fetchSpy = vi.spyOn(BroadcastServer.prototype, 'fetch').mockResolvedValueOnce({ result: { success: true } } as never);
     const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
     try {
       await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 12, src: 'Frontend', dst: 'Matterbridge', method, params: {} })));
-      expect(fetchSpy).toHaveBeenCalledWith({
-        type: method === '/api/restart' ? 'matterbridge_restart' : 'matterbridge_shutdown',
-        src: 'frontend',
-        dst: 'matterbridge',
-        params: undefined,
-      });
+      expect(fetchSpy).toHaveBeenCalledWith(
+        {
+          type: method === '/api/restart' ? 'matterbridge_restart' : 'matterbridge_shutdown',
+          src: 'frontend',
+          dst: 'matterbridge',
+          params: undefined,
+        },
+        mockedBackend.serverFetchTimeout,
+      );
       expect(snackbarSpy).toHaveBeenCalledWith(method === '/api/restart' ? 'Restarting matterbridge...' : 'Shutting down matterbridge...', 0);
       expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 12, method, src: 'Matterbridge', dst: 'Frontend', success: true });
     } finally {
@@ -432,7 +518,7 @@ describe('BackendWsServer', () => {
     const client: any = new FakeClient();
     (wsServer as any).diagnostic = true;
     try {
-      for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/clusters']) {
+      for (const method of ['/api/settings', '/api/plugins', '/api/devices', '/api/platform-devices', '/api/clusters']) {
         await (wsServer as any).wsMessageHandler(
           client,
           Buffer.from(
@@ -447,14 +533,165 @@ describe('BackendWsServer', () => {
           ),
         );
       }
-      for (const name of ['getApiSettings', 'getApiPlugins', 'getApiDevices', 'getApiCluster']) {
-        expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Frontend:Test: ${name}() took`));
+      for (const name of ['getApiSettings()', 'getApiPlugins()', 'getDevices(matterbridge-test)', 'getApiDevices(matterbridge-test)', 'getApiCluster()']) {
+        expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining(`Frontend:Test: ${name} took`));
       }
-      expect(client.send).toHaveBeenCalledTimes(4);
+      expect(client.send).toHaveBeenCalledTimes(5);
     } finally {
       (wsServer as any).diagnostic = false;
       stderrSpy.mockRestore();
     }
+  });
+
+  test('should broadcast the archive message when the manager archive response is valid', async () => {
+    const broadcastSpy = vi.spyOn(wsServer, 'wssBroadcastMessage');
+    const result = { success: true, command: 'zip', archivePath: 'archive.zip', sourcePaths: ['a', 'b'], destinationPath: '' };
+    const response = (dst: string, res: Record<string, unknown>): Record<string, unknown> => ({
+      id: 123456,
+      timestamp: Date.now(),
+      type: 'manager_archive_response',
+      src: 'manager',
+      dst,
+      result: res,
+    });
+    try {
+      for (const dst of ['frontend', 'all']) {
+        await (wsServer as any).broadcastMsgHandler(response(dst, result));
+      }
+      expect(broadcastSpy).toHaveBeenCalledTimes(2);
+      expect(broadcastSpy).toHaveBeenLastCalledWith({
+        id: 0,
+        src: 'Matterbridge',
+        dst: 'Frontend',
+        method: 'archive',
+        success: true,
+        response: { command: 'zip', archivePath: 'archive.zip', sourcePaths: ['a', 'b'], destinationPath: '' },
+      });
+
+      // Failed or incomplete results and responses for other threads are not broadcast
+      broadcastSpy.mockClear();
+      await (wsServer as any).broadcastMsgHandler(response('frontend', { ...result, success: false }));
+      for (const key of ['command', 'archivePath', 'sourcePaths', 'destinationPath']) {
+        await (wsServer as any).broadcastMsgHandler(response('frontend', { ...result, [key]: 123 }));
+      }
+      await (wsServer as any).broadcastMsgHandler(response('plugins', result));
+      await (wsServer as any).broadcastMsgHandler({ ...response('frontend', result), type: 'get_log_level' });
+      expect(broadcastSpy).not.toHaveBeenCalled();
+    } finally {
+      broadcastSpy.mockRestore();
+    }
+  });
+
+  test.each([
+    {
+      method: '/api/create-backup',
+      snackbar: 'Creating matterbridge backup...',
+      archivePath: (): string => path.join(os.tmpdir(), MATTERBRIDGE_BACKUP_FILE),
+      sourcePaths: (): string[] => [path.join(HOMEDIR, '.matterbridge'), path.join(HOMEDIR, 'Matterbridge'), path.join(HOMEDIR, '.mattercert')],
+    },
+    {
+      method: '/api/create-matterbridge-storage-backup',
+      snackbar: 'Creating matterbridge storage backup...',
+      archivePath: (): string => path.join(os.tmpdir(), `matterbridge.${NODE_STORAGE_DIR}.zip`),
+      sourcePaths: (): string[] => [path.join(HOMEDIR, '.matterbridge', NODE_STORAGE_DIR)],
+    },
+    {
+      method: '/api/create-matter-storage-backup',
+      snackbar: 'Creating matter storage backup...',
+      archivePath: (): string => path.join(os.tmpdir(), `matterbridge.${MATTER_STORAGE_DIR}.zip`),
+      sourcePaths: (): string[] => [path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR)],
+    },
+    {
+      method: '/api/create-plugin-backup',
+      snackbar: 'Creating plugin backup...',
+      archivePath: (): string => path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_STORAGE_FILE),
+      sourcePaths: (): string[] => [path.join(HOMEDIR, 'Matterbridge')],
+    },
+  ] as const)('should send the zip command to the manager and acknowledge $method', async ({ method, snackbar, archivePath, sourcePaths }) => {
+    Object.assign(mockedSharedMatterbridge, {
+      matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge'),
+      matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge'),
+      matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert'),
+      profile: undefined,
+    });
+    const client = new FakeClient();
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+    const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
+    try {
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 19, src: 'Frontend', dst: 'Matterbridge', method, params: {} })));
+      expect(snackbarSpy).toHaveBeenCalledWith(snackbar, 0);
+      expect(loggerNoticeSpy).toHaveBeenCalledWith(snackbar);
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect(requestSpy).toHaveBeenCalledWith({
+        type: 'manager_run',
+        src: 'frontend',
+        dst: 'manager',
+        params: {
+          name: 'ArchiveCommand',
+          workerData: { threadName: 'ArchiveCommand', command: 'zip', archivePath: archivePath(), sourcePaths: sourcePaths(), destinationPath: '', archiveNames: undefined },
+        },
+      });
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 19, method, src: 'Matterbridge', dst: 'Frontend', success: true });
+    } finally {
+      requestSpy.mockRestore();
+      snackbarSpy.mockRestore();
+    }
+  });
+
+  test('should store the profile directories flat in the backup when a profile is used', async () => {
+    Object.assign(mockedSharedMatterbridge, {
+      matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge', 'profiles', 'dev'),
+      matterbridgePluginDirectory: path.join(HOMEDIR, 'Matterbridge', 'profiles', 'dev'),
+      matterbridgeCertDirectory: path.join(HOMEDIR, '.mattercert', 'profiles', 'dev'),
+      profile: 'dev',
+    });
+    const client = new FakeClient();
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+    try {
+      await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 20, src: 'Frontend', dst: 'Matterbridge', method: '/api/create-backup', params: {} })));
+      expect(requestSpy).toHaveBeenCalledTimes(1);
+      expect((requestSpy.mock.calls[0][0] as any).params.workerData.archiveNames).toEqual(['.matterbridge', 'Matterbridge', '.mattercert']);
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 20, method: '/api/create-backup', src: 'Matterbridge', dst: 'Frontend', success: true });
+    } finally {
+      requestSpy.mockRestore();
+      (mockedSharedMatterbridge as any).profile = undefined;
+    }
+  });
+
+  test('should zip the plugin config files and acknowledge /api/create-config-backup', async () => {
+    Object.assign(mockedSharedMatterbridge, { matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge') });
+    const client = new FakeClient();
+    const fetchSpy = vi
+      .spyOn(BroadcastServer.prototype, 'fetch')
+      .mockResolvedValueOnce({ result: { plugins: [{ name: 'matterbridge-test' }, { name: 'matterbridge-other' }] } } as never);
+    const requestSpy = vi.spyOn(BroadcastServer.prototype, 'request').mockImplementation(() => {});
+    const snackbarSpy = vi.spyOn(wsServer, 'wssSendSnackbarMessage');
+    try {
+      await (wsServer as any).wsMessageHandler(
+        client,
+        Buffer.from(JSON.stringify({ id: 21, src: 'Frontend', dst: 'Matterbridge', method: '/api/create-config-backup', params: {} })),
+      );
+      expect(snackbarSpy).toHaveBeenCalledWith('Creating config backup...', 0);
+      expect(fetchSpy).toHaveBeenCalledWith({ type: 'plugins_storagepluginarray', src: 'frontend', dst: 'plugins', params: undefined }, mockedBackend.serverFetchTimeout);
+      expect((requestSpy.mock.calls[0][0] as any).params.workerData).toMatchObject({
+        command: 'zip',
+        archivePath: path.join(os.tmpdir(), MATTERBRIDGE_PLUGIN_CONFIG_FILE),
+        sourcePaths: [path.join(HOMEDIR, '.matterbridge', 'matterbridge-test.config.json'), path.join(HOMEDIR, '.matterbridge', 'matterbridge-other.config.json')],
+      });
+      expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 21, method: '/api/create-config-backup', src: 'Matterbridge', dst: 'Frontend', success: true });
+    } finally {
+      fetchSpy.mockRestore();
+      requestSpy.mockRestore();
+      snackbarSpy.mockRestore();
+    }
+  });
+
+  test.each(['/api/view-historypage', '/api/download-historypage'] as const)('should generate the history page and acknowledge %s', async (method) => {
+    Object.assign(mockedSharedMatterbridge, { matterbridgeDirectory: path.join(HOMEDIR, '.matterbridge') });
+    const client = new FakeClient();
+    await (wsServer as any).wsMessageHandler(client, Buffer.from(JSON.stringify({ id: 22, src: 'Frontend', dst: 'Matterbridge', method, params: {} })));
+    expect(JSON.parse(client.send.mock.calls[0][0])).toEqual({ id: 22, method, src: 'Matterbridge', dst: 'Frontend', success: true });
+    expect(loggerErrorSpy).not.toHaveBeenCalled();
   });
 
   test('Send helpers (active + inactive clients)', () => {

@@ -50,9 +50,11 @@ const mockedSharedMatterbridge = {
 const mockedBackend = {
   authClients: new Set<string>(),
   storedPassword: 'testpassword',
+  serverFetchTimeout: 5000,
   getApiSettings: () => ({ ok: true, settings: { a: 1 } }),
   getApiPlugins: () => ({ ok: true, plugins: [{ name: 'plugin1' }] }),
-  getApiDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),
+  getDevices: () => ({ ok: true, devices: [{ name: 'device1' }] }),
+  getApiDevices: (pluginName: string, extended: boolean) => ({ ok: true, pluginName, extended }),
   // Snackbar helpers now live on backend.backendWsServer; the source calls them via this.backend.backendWsServer?.wssSend*.
   backendWsServer: {
     wssSendSnackbarMessage: vi.fn(),
@@ -445,14 +447,15 @@ describe('BackendExpress', () => {
     const protectedGetEndpoints = [
       '/api/plugins',
       '/api/devices',
+      '/api/platform-devices?pluginName=matterbridge-test',
       '/api/view-mblog',
       '/api/download-mblog',
       '/api/view-mjlog',
       '/api/download-mjlog',
       '/api/view-diagnostic',
       '/api/download-diagnostic',
-      '/api/viewhistory',
-      '/api/downloadhistory',
+      '/api/view-history',
+      '/api/download-history',
       '/api/download-backup',
       '/api/download-mbstorage',
       '/api/download-mjstorage',
@@ -543,6 +546,22 @@ describe('BackendExpress', () => {
     expect(response.status).toBe(200);
     expect(response.body.ok).toBe(true);
     expect(Array.isArray(response.body.devices)).toBe(true);
+  });
+
+  test('GET /api/platform-devices authorized', async () => {
+    for (const query of ['', '?pluginName=short', '?pluginName=a&pluginName=matterbridge-test']) {
+      const wrong = await makeRequest(`/api/platform-devices${query}`, 'GET');
+      expect(wrong.status).toBe(400);
+      expect(wrong.body).toEqual({ error: 'Wrong parameter pluginName in /api/platform-devices' });
+    }
+
+    const response = await makeRequest('/api/platform-devices?pluginName=matterbridge-test', 'GET');
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ ok: true, pluginName: 'matterbridge-test', extended: false });
+
+    const extended = await makeRequest('/api/platform-devices?pluginName=matterbridge-test&extended=true', 'GET');
+    expect(extended.status).toBe(200);
+    expect(extended.body).toEqual({ ok: true, pluginName: 'matterbridge-test', extended: true });
   });
 
   test('GET /api/view-mblog success then error', async () => {
@@ -676,17 +695,17 @@ describe('BackendExpress', () => {
     expect(result).toBeUndefined();
   });
 
-  test('GET /api/viewhistory + downloadhistory success then error', async () => {
+  test('GET /api/view-history + download-history success then error', async () => {
     const debugSpy = vi.spyOn((backendExpress as any).log, 'debug');
     const historyPath = path.join(HOMEDIR, MATTERBRIDGE_HISTORY_FILE);
     await fs.writeFile(historyPath, '<html>HISTORY_OK</html>', 'utf8');
 
-    const view = await makeRequest('/api/viewhistory', 'GET');
+    const view = await makeRequest('/api/view-history', 'GET');
     expect(view.status).toBe(200);
     expect(typeof view.body).toBe('string');
     expect(view.body).toContain('HISTORY_OK');
 
-    const downloadOk = await makeRequest('/api/downloadhistory', 'GET');
+    const downloadOk = await makeRequest('/api/download-history', 'GET');
     expect(downloadOk.status).toBe(200);
     expect(typeof downloadOk.body).toBe('string');
     expect(downloadOk.body).toContain('HISTORY_OK');
@@ -696,27 +715,27 @@ describe('BackendExpress', () => {
     expect(sawSuccess).toBe(true);
 
     await fs.rm(historyPath, { force: true });
-    const downloadErr = await makeRequest('/api/downloadhistory', 'GET');
+    const downloadErr = await makeRequest('/api/download-history', 'GET');
     expect(downloadErr.status).toBe(500);
     expect(typeof downloadErr.body).toBe('string');
     expect(downloadErr.body).toContain('Error reading history file');
   });
 
-  test('GET /api/viewhistory error when history file missing', async () => {
+  test('GET /api/view-history error when history file missing', async () => {
     const historyPath = path.join(HOMEDIR, MATTERBRIDGE_HISTORY_FILE);
     await fs.rm(historyPath, { force: true });
 
-    const response = await makeRequest('/api/viewhistory', 'GET');
+    const response = await makeRequest('/api/view-history', 'GET');
     expect(response.status).toBe(500);
     expect(typeof response.body).toBe('string');
     expect(response.body).toContain('Error reading history file');
   });
 
-  test('GET /api/downloadhistory aborted download triggers error callback branch', async () => {
+  test('GET /api/download-history aborted download triggers error callback branch', async () => {
     const historyPath = path.join(HOMEDIR, MATTERBRIDGE_HISTORY_FILE);
     await fs.writeFile(historyPath, '<html>HISTORY_ABORT</html>', 'utf8');
 
-    const result = await makeGetRequestAndAbortEarly('/api/downloadhistory');
+    const result = await makeGetRequestAndAbortEarly('/api/download-history');
     expect(result).toBeUndefined();
   });
 

@@ -3,7 +3,7 @@
  * @description This file contains the class Matterbridge.
  * @author Luca Liguori
  * @created 2023-12-29
- * @version 1.8.4
+ * @version 1.8.5
  * @license Apache-2.0
  *
  * Copyright 2023, 2024, 2025, 2026 Luca Liguori.
@@ -51,11 +51,9 @@ import {
 } from '@matter/general';
 import { Endpoint, ServerNode } from '@matter/node';
 import { BasicInformationServer } from '@matter/node/behaviors/basic-information';
-import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { AggregatorEndpoint } from '@matter/node/endpoints/aggregator';
 import { type DeviceCertification, PaseClient } from '@matter/protocol';
-import { PowerSource } from '@matter/types/clusters/power-source';
-import { DeviceTypeId, EndpointNumber, VendorId } from '@matter/types/datatype';
+import { DeviceTypeId, VendorId } from '@matter/types/datatype';
 import { ManualPairingCodeCodec } from '@matter/types/schema';
 // @matterbridge
 import { BroadcastServer } from '@matterbridge/thread/server';
@@ -116,7 +114,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { startController } from './matterController.js';
 import { matterToAnsiLogLevel } from './matterLogger.js';
-import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, setAdvertisingNode } from './matterNodeHelpers.js';
+import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('Matterbridge');
@@ -616,6 +614,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
           if (this.fixedRestartRequired) this.restartRequired = true;
           else if (msg.params?.restartRequired !== undefined) this.restartRequired = msg.params.restartRequired;
           if (msg.params?.updateRequired !== undefined) this.updateRequired = msg.params.updateRequired;
+          if (msg.params?.bridgeStatus !== undefined) this.bridgeStatus = msg.params.bridgeStatus;
           this.server.respond({ ...msg, result: { data: this.getApiSettings(), success: true } });
           break;
         case 'matterbridge_start_plugin_server':
@@ -1507,6 +1506,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       if (hasParameter('experimental-node')) {
         // A MatterNode thread, started by the ThreadsManager, is requested for each enabled plugin
         this.log.notice(`***Starting experimental MatterNode threads in ${this.bridgeMode} mode...`);
+        this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'starting') } });
         for (const plugin of this.plugins.array().filter((p) => p.enabled)) {
           this.server.request({
             type: 'manager_run',
@@ -1515,6 +1515,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
             params: { name: 'RootNode', workerData: { threadName: 'RootNode', sharedMatterbridge: this.getSharedMatterbridge(), pluginName: plugin.name } },
           });
         }
+        // TODO: Implement proper handling for starting MatterNode threads for each plugin, including error handling and status updates.
+        this.server.request({ type: 'frontend_matterbridgestatusupdate', src: 'matterbridge', dst: 'frontend', params: { status: (this.bridgeStatus = 'started') } });
         this.log.notice(`***Started experimental MatterNode threads in ${this.bridgeMode} mode`);
         return;
       }
@@ -2095,8 +2097,10 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         this.log.info('Matter storage reset done!');
       }
 
-      // Stop matter storage
-      await this.stopMatterStorage();
+      // Stop the matter storage
+      if (!hasParameter('experimental-node')) {
+        await this.stopMatterStorage();
+      }
 
       // Clear the advertising nodes
       clearAdvertisingNodes();
@@ -2827,12 +2831,15 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       discriminator = PaseClient.generateRandomDiscriminator(this.environment.get(Crypto));
     }
 
+    // The root camera clusters are required on the Root Node by the camera device types and are always added for the CHIP tests.
+    const rootCamera = hasParameter('root-camera') || Boolean(process.env.MATTERBRIDGE_CHIP_TEST);
     let rootEndpoint;
-    if (hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST) {
+    if (rootCamera) {
       this.log.warn(' ****************************************************************************************');
-      this.log.warn(' * Adding the PowerSource cluster server to the root endpoint.                           *');
+      this.log.warn(' * Adding the PowerSource, TimeSynchronization, TlsCertificateManagement and            *');
+      this.log.warn(' * TlsClientManagement cluster servers to the root endpoint (root camera).              *');
       this.log.warn(' ****************************************************************************************');
-      rootEndpoint = ServerNode.RootEndpoint.with(PowerSourceServer.with(PowerSource.Feature.Wired));
+      rootEndpoint = rootCameraEndpoint();
     } else {
       rootEndpoint = ServerNode.RootEndpoint;
     }
@@ -2906,19 +2913,7 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
         reachable: true,
       },
 
-      ...(hasParameter('root-power-source') || process.env.MATTERBRIDGE_CHIP_TEST
-        ? {
-            powerSource: {
-              status: PowerSource.PowerSourceStatus.Active,
-              order: 0,
-              description: 'AC Power',
-              // Matter 1.6.1 § 11.7.7.32: an empty EndpointList means the source powers the entire node. On a bridge the root power
-              // source only powers the root endpoint: the bridged endpoints have their own (or an unknown) power source.
-              endpointList: [EndpointNumber(0)],
-              wiredCurrentType: PowerSource.WiredCurrentType.Ac,
-            },
-          }
-        : {}),
+      ...(rootCamera ? rootCameraOptions() : {}),
     });
 
     /**

@@ -358,8 +358,8 @@ describe('Header', () => {
       [undefined, 'Restart', '/api/restart', {}],
       [undefined, 'Shutdown', '/api/shutdown', {}],
       [undefined, 'Backup', '/api/create-backup', {}],
-      ['View', 'Matterbridge system history', '/api/viewhistorypage', {}],
-      ['Download', 'Matterbridge system history', '/api/downloadhistorypage', {}],
+      ['View', 'Matterbridge system history', '/api/view-historypage', {}],
+      ['Download', 'Matterbridge system history', '/api/download-historypage', {}],
       ['Download', 'Matterbridge storage', '/api/create-matterbridge-storage-backup', {}],
       ['Download', 'Matter storage', '/api/create-matter-storage-backup', {}],
       ['Download', 'Matterbridge plugins storage', '/api/create-plugin-backup', {}],
@@ -447,10 +447,10 @@ describe('Header', () => {
   test.each([false, true])('should process successful history and archive replies with debug=%s', (debug) => {
     appSettings.debug = debug;
     const { update } = renderHeader();
-    update({ id: 42, method: '/api/viewhistorypage', success: true });
-    expect(window.open).toHaveBeenCalledExactlyOnceWith('./api/viewhistory', '_blank', 'noopener,noreferrer');
-    update({ id: 42, method: '/api/downloadhistorypage', success: true });
-    expect(locationMock.href).toBe('./api/downloadhistory');
+    update({ id: 42, method: '/api/view-historypage', success: true });
+    expect(window.open).toHaveBeenCalledExactlyOnceWith('./api/view-history', '_blank', 'noopener,noreferrer');
+    update({ id: 42, method: '/api/download-historypage', success: true });
+    expect(locationMock.href).toBe('./api/download-history');
     for (const [name, target] of [
       ['matterbridge.backup.zip', './api/download-backup'],
       ['matterbridge.storage.zip', './api/download-mbstorage'],
@@ -463,10 +463,10 @@ describe('Header', () => {
     }
     locationMock.href = 'unchanged';
     for (const message of [
-      { id: 99, method: '/api/viewhistorypage', success: true },
-      { id: 42, method: '/api/viewhistorypage', success: false },
-      { id: 99, method: '/api/downloadhistorypage', success: true },
-      { id: 42, method: '/api/downloadhistorypage', success: false },
+      { id: 99, method: '/api/view-historypage', success: true },
+      { id: 42, method: '/api/view-historypage', success: false },
+      { id: 99, method: '/api/download-historypage', success: true },
+      { id: 42, method: '/api/download-historypage', success: false },
       { method: 'archive', success: false, response: { command: 'zip' } },
       { method: 'archive', success: true, response: { command: 'unzip' } },
       { method: 'archive', success: true, response: { command: 'zip', archivePath: 'unrelated.zip' } },

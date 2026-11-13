@@ -206,8 +206,7 @@ describe('MbfScreen', () => {
   it('applies desktop layout when mobile=false', () => {
     const { container } = renderWithContext(false);
     const style = container.firstChild as HTMLElement;
-    expect(style.style.width).toBe('calc(100vw - 40px)');
-    expect(style.style.height).toBe('calc(100vh - 40px)');
+    expect(style).toHaveStyle({ width: `${window.innerWidth - 40}px`, height: `${window.innerHeight - 40}px` });
     expect(style).toHaveStyle('padding: 20px');
   });
 

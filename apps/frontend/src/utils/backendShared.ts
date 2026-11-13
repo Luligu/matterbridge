@@ -9,11 +9,6 @@ export type {
   WsMessageApiClustersResponse,
   WsMessageApiDevicesRequest,
   WsMessageErrorApiResponse,
-  ApiSettings,
-  ApiSelectDevice,
-  ApiSelectDeviceEntity,
-  ApiSelectEntity,
-  ApiSystemUpdate,
   WsMessage,
 } from '../../../../packages/types/src/frontendTypes';
 export type {
@@ -21,6 +16,11 @@ export type {
   ApiDevice,
   ApiClusters,
   ApiMatter,
+  ApiSettings,
+  ApiSelectDevice,
+  ApiSelectDeviceEntity,
+  ApiSelectEntity,
+  ApiSystemUpdate,
   MatterbridgeInformation,
   SystemInformation,
   Cluster,

@@ -70,6 +70,28 @@ describe('Matterbridge ' + NAME, () => {
     await press(device, () => callback.mock.calls.length === 1);
   });
 
+  test('a virtual device ignores a rejected callback and a rejected turn off', async () => {
+    const callback = vi.fn(async () => {
+      throw new Error('callback failed');
+    });
+    const device = await addVirtualDevice(aggregator, 'Failing Device', 'light', callback);
+    const originalSetStateOf = device.setStateOf.bind(device);
+    const setStateOfSpy = vi.spyOn(device, 'setStateOf').mockImplementation(async (type: any, values: any) => {
+      if (values?.onOff === false) throw new Error('turn off failed');
+      return originalSetStateOf(type, values);
+    });
+    try {
+      await device.setStateOf(OnOffServer, { onOff: true });
+      await waitFor(() => callback.mock.calls.length === 1 && setStateOfSpy.mock.calls.some(([, values]: any[]) => values?.onOff === false));
+      // The rejected turn off leaves the device on
+      expect(device.stateOf(OnOffServer).onOff).toBe(true);
+    } finally {
+      setStateOfSpy.mockRestore();
+      await device.delete();
+    }
+    expect([...aggregator.parts].map((part) => part.id)).toEqual(['TestDevice:light']);
+  });
+
   test('addVirtualDevices adds the restart and update devices of every virtual mode', async () => {
     matterbridge.virtualMode = 'disabled';
     matterbridge.bridgeMode = 'bridge';

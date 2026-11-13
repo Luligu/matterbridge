@@ -20,7 +20,7 @@ import fs, { existsSync, mkdirSync, type PathLike, rmSync, unlinkSync, writeFile
 import os from 'node:os';
 import path from 'node:path';
 
-import { Logger, LogLevel as MatterLogLevel } from '@matter/general';
+import { LogFormat as MatterLogFormat, Logger, LogLevel as MatterLogLevel } from '@matter/general';
 import { VendorId } from '@matter/types/datatype';
 import { flushAsync } from '@matterbridge/test-utils';
 import { HOMEDIR, loggerErrorSpy, loggerInfoSpy, loggerLogSpy, originalProcessArgv, setDebug, setupTest } from '@matterbridge/test-utils/vitest/setup';
@@ -1026,6 +1026,15 @@ describe('Matterbridge mocked', () => {
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.WARN, expect.stringContaining('Test warn log message'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Test error log message'));
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.FATAL, expect.stringContaining('Test fatal log message'));
+
+    const originalFormat = Logger.format;
+    try {
+      Logger.format = MatterLogFormat.ANSI;
+      Logger.get('Jest').info('Test ANSI log message');
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Test ANSI log message'));
+    } finally {
+      Logger.format = originalFormat;
+    }
     /*
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test debug log message'));
     expect(consoleLogSpy).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('Test info log message'));

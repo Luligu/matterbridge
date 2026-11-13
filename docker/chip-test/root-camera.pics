@@ -1,0 +1,35 @@
+# Root Node of Matterbridge with the root camera clusters (--root-camera or MATTERBRIDGE_CHIP_TEST), see rootCameraEndpoint() in
+# packages/core/src/matterNodeHelpers.ts. Passed with --PICS to the TC_TIMESYNC_*, TC_TLSCERT_* and TC_TLSCLIENT_* tests on endpoint 0.
+
+# Time Synchronization: MatterbridgeTimeSynchronizationServer (packages/core/src/behaviors/timeSynchronizationServer.ts)
+TIMESYNC.S=1
+TIMESYNC.S.F00=1 # TimeZone
+TIMESYNC.S.F01=1 # NTPClient
+TIMESYNC.S.F02=0 # NTPServer: not implemented
+TIMESYNC.S.F03=1 # TimeSyncClient
+TIMESYNC.S.A0000=1 # UTCTime
+TIMESYNC.S.A0001=1 # Granularity
+TIMESYNC.S.A0002=1 # TimeSource
+TIMESYNC.S.A0003=1 # TrustedTimeSource
+TIMESYNC.S.A0004=1 # DefaultNTP
+TIMESYNC.S.A0005=1 # TimeZone
+TIMESYNC.S.A0006=1 # DSTOffset
+TIMESYNC.S.A0007=1 # LocalTime
+TIMESYNC.S.A0008=1 # TimeZoneDatabase
+TIMESYNC.S.A0009=0 # NTPServerAvailable: NTPServer feature only
+TIMESYNC.S.A000a=1 # TimeZoneListMaxSize
+TIMESYNC.S.A000b=1 # DSTOffsetListMaxSize
+TIMESYNC.S.A000c=1 # SupportsDNSResolve
+TIMESYNC.S.C00.Rsp=1 # SetUTCTime
+TIMESYNC.S.C01.Rsp=1 # SetTrustedTimeSource
+TIMESYNC.S.C02.Rsp=1 # SetTimeZone
+TIMESYNC.S.C04.Rsp=1 # SetDSTOffset
+TIMESYNC.S.C05.Rsp=1 # SetDefaultNTP
+TIMESYNC.S.C03.Tx=1 # SetTimeZoneResponse
+TIMESYNC.C=0
+
+# TLS Certificate Management: MatterbridgeTlsCertificateManagementServer (packages/core/src/behaviors/tlsCertificateManagementServer.ts)
+TLSCERT.S=1
+
+# TLS Client Management: MatterbridgeTlsClientManagementServer (packages/core/src/behaviors/tlsClientManagementServer.ts)
+TLSCLIENT.S=1

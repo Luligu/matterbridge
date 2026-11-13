@@ -40,10 +40,12 @@ import { db, er, hk, or, wr } from 'node-ansi-logger';
 
 import { MatterbridgeBindingServer } from '../src/behaviors/bindingServer.js';
 import { MatterbridgeDoorLockServer } from '../src/behaviors/doorLockServer.js';
+import { MatterbridgeLiftTiltWindowCoveringServer, MatterbridgeLiftWindowCoveringServer, MatterbridgeTiltWindowCoveringServer } from '../src/behaviors/windowCoveringServer.js';
 import { bridgedNode, closureController, doorLock, irrigationSystem, temperatureSensor, waterValve, windowCovering } from '../src/matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from '../src/matterbridgeEndpoint.js';
 import {
   getApparentElectricalPowerMeasurementClusterServer,
+  getBehaviourTypeFromClusterServerId,
   getCluster,
   getDefaultDeviceEnergyManagementClusterServer,
   getDefaultDeviceEnergyManagementModeClusterServer,
@@ -51,6 +53,7 @@ import {
   getDefaultElectricalPowerMeasurementClusterServer,
   getDefaultFlowMeasurementClusterServer,
   getDefaultIlluminanceMeasurementClusterServer,
+  getDefaultLiftTiltWindowCoveringClusterServer,
   getDefaultOccupancySensingClusterServer,
   getDefaultOperationalStateClusterServer,
   getDefaultPowerSourceBatteryClusterServer,
@@ -60,6 +63,8 @@ import {
   getDefaultRelativeHumidityMeasurementClusterServer,
   getDefaultSoilMeasurementClusterServer,
   getDefaultTemperatureMeasurementClusterServer,
+  getDefaultTiltWindowCoveringClusterServer,
+  getDefaultWindowCoveringClusterServer,
   getExportedElectricalEnergyMeasurementClusterServer,
   getImportedElectricalEnergyMeasurementClusterServer,
   getSemtag,
@@ -91,6 +96,107 @@ async function advanceUntilSettled<T>(promise: Promise<T>, realTimeout: number =
   expect(status.settled).toBe(true);
   return promise;
 }
+
+describe('Window Covering defaults', () => {
+  test('should preserve lift defaults, custom values and unknown positions without tilt status', () => {
+    expect(getDefaultWindowCoveringClusterServer()).toMatchObject({
+      type: WindowCovering.WindowCoveringType.Rollershade,
+      endProductType: WindowCovering.EndProductType.RollerShade,
+      currentPositionLiftPercentage: 0,
+      movementDuration: 0,
+      configStatus: { liftPositionAware: true, tiltPositionAware: false },
+    });
+    const options = getDefaultWindowCoveringClusterServer(1234, WindowCovering.WindowCoveringType.Drapery, WindowCovering.EndProductType.PleatedShade, 200);
+    expect(options).toMatchObject({
+      type: WindowCovering.WindowCoveringType.Drapery,
+      endProductType: WindowCovering.EndProductType.PleatedShade,
+      currentPositionLiftPercent100ths: 1234,
+      targetPositionLiftPercent100ths: 1234,
+      currentPositionLiftPercentage: 12,
+      movementDuration: 200,
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped },
+    });
+    expect(options.operationalStatus).not.toHaveProperty('tilt');
+    expect(options).not.toHaveProperty('currentPositionTiltPercent100ths');
+    expect(options.configStatus).not.toHaveProperty('onlineReserved');
+    expect(getDefaultWindowCoveringClusterServer(null)).toMatchObject({
+      currentPositionLiftPercent100ths: null,
+      targetPositionLiftPercent100ths: null,
+      currentPositionLiftPercentage: null,
+    });
+  });
+
+  test('should preserve lift and tilt defaults, custom values and independently unknown positions', () => {
+    expect(getDefaultLiftTiltWindowCoveringClusterServer()).toMatchObject({
+      type: WindowCovering.WindowCoveringType.TiltBlindLift,
+      endProductType: WindowCovering.EndProductType.InteriorBlind,
+      currentPositionLiftPercentage: 0,
+      currentPositionTiltPercentage: 0,
+      movementDuration: 0,
+      configStatus: { liftPositionAware: true, tiltPositionAware: true },
+    });
+    expect(getDefaultLiftTiltWindowCoveringClusterServer(1234, 5678, undefined, undefined, 200)).toMatchObject({
+      currentPositionLiftPercent100ths: 1234,
+      targetPositionLiftPercent100ths: 1234,
+      currentPositionLiftPercentage: 12,
+      currentPositionTiltPercent100ths: 5678,
+      targetPositionTiltPercent100ths: 5678,
+      currentPositionTiltPercentage: 56,
+      movementDuration: 200,
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, lift: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+    });
+    expect(getDefaultLiftTiltWindowCoveringClusterServer(null, 10000)).toMatchObject({
+      currentPositionLiftPercent100ths: null,
+      targetPositionLiftPercent100ths: null,
+      currentPositionLiftPercentage: null,
+      currentPositionTiltPercentage: 100,
+    });
+    expect(getDefaultLiftTiltWindowCoveringClusterServer(10000, null)).toMatchObject({
+      currentPositionLiftPercentage: 100,
+      currentPositionTiltPercent100ths: null,
+      targetPositionTiltPercent100ths: null,
+      currentPositionTiltPercentage: null,
+    });
+  });
+
+  test('should preserve tilt defaults, custom values and unknown positions without lift status', () => {
+    expect(getDefaultTiltWindowCoveringClusterServer()).toMatchObject({
+      type: WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
+      endProductType: WindowCovering.EndProductType.TiltOnlyInteriorBlind,
+      currentPositionTiltPercentage: 0,
+      movementDuration: 0,
+      configStatus: { liftPositionAware: false, tiltPositionAware: true },
+    });
+    const options = getDefaultTiltWindowCoveringClusterServer(5678, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.TiltOnlyPergola, 200);
+    expect(options).toMatchObject({
+      type: WindowCovering.WindowCoveringType.TiltBlindTiltOnly,
+      endProductType: WindowCovering.EndProductType.TiltOnlyPergola,
+      currentPositionTiltPercent100ths: 5678,
+      targetPositionTiltPercent100ths: 5678,
+      currentPositionTiltPercentage: 56,
+      movementDuration: 200,
+      operationalStatus: { global: WindowCovering.MovementStatus.Stopped, tilt: WindowCovering.MovementStatus.Stopped },
+    });
+    expect(options.operationalStatus).not.toHaveProperty('lift');
+    expect(options).not.toHaveProperty('currentPositionLiftPercent100ths');
+    expect(getDefaultTiltWindowCoveringClusterServer(null)).toMatchObject({
+      currentPositionTiltPercent100ths: null,
+      targetPositionTiltPercent100ths: null,
+      currentPositionTiltPercentage: null,
+    });
+  });
+
+  test('should reject positions that are not integers from 0 to 10000', () => {
+    for (const position of [-1, 10001, 12.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(() => getDefaultWindowCoveringClusterServer(position)).toThrow(
+        `Invalid WindowCovering positionPercent100ths ${position}: expected an integer from 0 to 10000 or null`,
+      );
+      expect(() => getDefaultLiftTiltWindowCoveringClusterServer(position, 0)).toThrow(`Invalid WindowCovering positionLiftPercent100ths ${position}`);
+      expect(() => getDefaultLiftTiltWindowCoveringClusterServer(0, position)).toThrow(`Invalid WindowCovering positionTiltPercent100ths ${position}`);
+      expect(() => getDefaultTiltWindowCoveringClusterServer(position)).toThrow(`Invalid WindowCovering positionTiltPercent100ths ${position}`);
+    }
+  });
+});
 
 describe('Options helpers', () => {
   let device: MatterbridgeEndpoint;
@@ -138,6 +244,50 @@ describe('Options helpers', () => {
 
     // Restore all mocks
     vi.restoreAllMocks();
+  });
+
+  test('createDefault*WindowCoveringClusterServer installs the helper options', () => {
+    const lift = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringLiftDefaults' });
+    lift.createDefaultWindowCoveringClusterServer(1234, WindowCovering.WindowCoveringType.Drapery, WindowCovering.EndProductType.PleatedShade, 200);
+    expect(lift.behaviors.optionsFor(MatterbridgeLiftWindowCoveringServer)).toEqual(
+      getDefaultWindowCoveringClusterServer(1234, WindowCovering.WindowCoveringType.Drapery, WindowCovering.EndProductType.PleatedShade, 200),
+    );
+    expect(
+      new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringLiftDefaultArgs' })
+        .createDefaultWindowCoveringClusterServer()
+        .behaviors.optionsFor(MatterbridgeLiftWindowCoveringServer),
+    ).toEqual(getDefaultWindowCoveringClusterServer());
+
+    const liftTilt = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringLiftTiltDefaults' });
+    liftTilt.createDefaultLiftTiltWindowCoveringClusterServer(
+      1234,
+      5678,
+      WindowCovering.WindowCoveringType.TiltBlindLift,
+      WindowCovering.EndProductType.ExteriorVenetianBlind,
+      200,
+    );
+    expect(liftTilt.behaviors.optionsFor(MatterbridgeLiftTiltWindowCoveringServer)).toEqual(
+      getDefaultLiftTiltWindowCoveringClusterServer(1234, 5678, WindowCovering.WindowCoveringType.TiltBlindLift, WindowCovering.EndProductType.ExteriorVenetianBlind, 200),
+    );
+    expect(
+      new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringLiftTiltDefaultArgs' })
+        .createDefaultLiftTiltWindowCoveringClusterServer()
+        .behaviors.optionsFor(MatterbridgeLiftTiltWindowCoveringServer),
+    ).toEqual(getDefaultLiftTiltWindowCoveringClusterServer());
+
+    const tilt = new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringTiltDefaults' });
+    tilt.createDefaultTiltWindowCoveringClusterServer(5678, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.TiltOnlyPergola, 200);
+    expect(tilt.behaviors.optionsFor(MatterbridgeTiltWindowCoveringServer)).toEqual(
+      getDefaultTiltWindowCoveringClusterServer(5678, WindowCovering.WindowCoveringType.TiltBlindTiltOnly, WindowCovering.EndProductType.TiltOnlyPergola, 200),
+    );
+    expect(
+      new MatterbridgeEndpoint(windowCovering, { id: 'WindowCoveringTiltDefaultArgs' })
+        .createDefaultTiltWindowCoveringClusterServer()
+        .behaviors.optionsFor(MatterbridgeTiltWindowCoveringServer),
+    ).toEqual(getDefaultTiltWindowCoveringClusterServer());
+
+    // addClusterServers installs the lift-only server, so the cluster id lookup must return the same behavior type
+    expect(getBehaviourTypeFromClusterServerId(WindowCovering.id)).toBe(MatterbridgeLiftWindowCoveringServer);
   });
 
   test('getSemtag helper', () => {

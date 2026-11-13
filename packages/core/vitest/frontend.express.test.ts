@@ -362,11 +362,22 @@ describe('Matterbridge frontend express with http', () => {
   }, 30000);
 
   test('GET /api/devices', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce((async () => ({ result: { devices: [{ plugin: 'matterbridge-mock', deviceName: 'Device' }] } })) as any);
     const response = await makeRequest('/api/devices', 'GET');
+    expect(broadcastServerFetchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'devices_array', dst: 'devices', params: {} }), expect.any(Number));
 
     expect(response.status).toBe(200);
-    expect(typeof response.body).toBe('object');
-    expect(Array.isArray(response.body)).toBe(true);
+    expect(response.body).toEqual([{ plugin: 'matterbridge-mock', deviceName: 'Device' }]);
+  }, 30000);
+
+  test('GET /api/devices error', async () => {
+    broadcastServerFetchSpy.mockImplementationOnce(async () => {
+      throw new Error('Fetch timeout');
+    });
+    const response = await makeRequest('/api/devices', 'GET');
+
+    expect(response.status).toBe(500);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, expect.stringContaining('Error in /api/devices fetching the devices from the device manager'));
   }, 30000);
 
   test('GET /api/view-mblog error', async () => {
@@ -450,39 +461,39 @@ describe('Matterbridge frontend express with http', () => {
     }
   }, 30000);
 
-  test('GET /api/viewhistory', async () => {
+  test('GET /api/view-history', async () => {
     try {
       await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
     } catch (error) {
       /* Ignore if the file does not exist */
     }
-    let response = await makeRequest('/api/viewhistory', 'GET');
+    let response = await makeRequest('/api/view-history', 'GET');
     expect(response.status).toBe(500);
 
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
-    response = await makeRequest('/api/viewhistory', 'GET');
+    response = await makeRequest('/api/view-history', 'GET');
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
   }, 30000);
 
-  test('GET /api/downloadhistory', async () => {
+  test('GET /api/download-history', async () => {
     try {
       await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
     } catch (error) {
       /* Ignore if the file does not exist */
     }
-    let response = await makeRequest('/api/downloadhistory', 'GET');
+    let response = await makeRequest('/api/download-history', 'GET');
     expect(response.status).toBe(500);
 
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
-    response = await makeRequest('/api/downloadhistory', 'GET');
+    response = await makeRequest('/api/download-history', 'GET');
     expect(response.status).toBe(200);
     expect(typeof response.body).toBe('string');
     await fs.unlink(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE));
   }, 30000);
 
-  test('GET /api/downloadhistory error', async () => {
+  test('GET /api/download-history error', async () => {
     await fs.writeFile(path.join(matterbridge.matterbridgeDirectory, MATTERBRIDGE_HISTORY_FILE), 'any data', 'utf8');
     const downloadSpy = vi.spyOn(expressResponse, 'download').mockImplementation((...args: unknown[]) => {
       const done = args[args.length - 1];
@@ -492,7 +503,7 @@ describe('Matterbridge frontend express with http', () => {
     });
 
     try {
-      const response = await makeRequest('/api/downloadhistory', 'GET');
+      const response = await makeRequest('/api/download-history', 'GET');
 
       expect(response.status).toBe(500);
       expect(response.body).toBe('Error downloading history file');
@@ -769,8 +780,8 @@ describe('Matterbridge frontend express with http', () => {
         '/api/download-mjlog',
         '/api/view-diagnostic',
         '/api/download-diagnostic',
-        '/api/viewhistory',
-        '/api/downloadhistory',
+        '/api/view-history',
+        '/api/download-history',
         '/api/download-backup',
         '/api/download-mbstorage',
         '/api/download-mjstorage',

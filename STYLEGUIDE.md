@@ -1,4 +1,4 @@
-# Style Guide (v.1.1.0)
+# Style Guide (v.1.1.1)
 
 Concise rules the codebase and all agent suggestions should follow.
 
@@ -93,7 +93,7 @@ In Matterbridge and its plugins the logger is always AnsiLogger.
 
 ## 10. Agents
 
-- Every coding agent (Codex, Claude Code, GitHub Copilot, Gemini / Antigravity) loads [AGENTS.md](AGENTS.md), which points here: keep the shared agent instructions there and the code style here.
+- Every coding agent (Codex, Claude Code, GitHub Copilot, Gemini / Antigravity, Bionic / LM Studio) loads [AGENTS.md](AGENTS.md), which points here: keep the shared agent instructions there and the code style here.
 
 ## 11. File Header Blocks
 

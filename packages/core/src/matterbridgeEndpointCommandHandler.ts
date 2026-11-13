@@ -67,7 +67,6 @@ import type { TemperatureAlarm } from '@matter/types/clusters/temperature-alarm'
 import type { TemperatureControl } from '@matter/types/clusters/temperature-control';
 import type { Thermostat } from '@matter/types/clusters/thermostat';
 import type { ThreadNetworkDiagnostics } from '@matter/types/clusters/thread-network-diagnostics';
-import type { TimeSynchronization } from '@matter/types/clusters/time-synchronization';
 import type { ValveConfigurationAndControl } from '@matter/types/clusters/valve-configuration-and-control';
 import type { WaterHeaterManagement } from '@matter/types/clusters/water-heater-management';
 import type { WaterHeaterMode } from '@matter/types/clusters/water-heater-mode';
@@ -848,32 +847,6 @@ export type CommandHandlerDataMap = {
     request: {}; // TlvNoArguments
     cluster: 'threadNetworkDiagnostics';
     attributes: ClusterAttributeValues<(typeof ThreadNetworkDiagnostics)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-
-  // Time Synchronization
-  'setUtcTime': CommandHandlerData<'TimeSynchronization.setUtcTime'>;
-  'setTimeZone': CommandHandlerData<'TimeSynchronization.setTimeZone'>;
-  'setDstOffset': CommandHandlerData<'TimeSynchronization.setDstOffset'>;
-  'TimeSynchronization.setUtcTime': {
-    command: 'setUtcTime';
-    request: TimeSynchronization.SetUtcTimeRequest;
-    cluster: 'timeSynchronization';
-    attributes: ClusterAttributeValues<(typeof TimeSynchronization)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'TimeSynchronization.setTimeZone': {
-    command: 'setTimeZone';
-    request: TimeSynchronization.SetTimeZoneRequest;
-    cluster: 'timeSynchronization';
-    attributes: ClusterAttributeValues<(typeof TimeSynchronization)['attributes']>;
-    endpoint: MatterbridgeEndpoint;
-  };
-  'TimeSynchronization.setDstOffset': {
-    command: 'setDstOffset';
-    request: TimeSynchronization.SetDstOffsetRequest;
-    cluster: 'timeSynchronization';
-    attributes: ClusterAttributeValues<(typeof TimeSynchronization)['attributes']>;
     endpoint: MatterbridgeEndpoint;
   };
 

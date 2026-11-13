@@ -791,17 +791,40 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
   useEffect(() => {
     const handleWebSocketMessage = (msg: WsMessageApiResponse) => {
       // if (debug || localDebug) console.log('DevicesIcons received WebSocket Message:', msg);
-      if (msg.method === 'refresh_required') {
-        if (debug || localDebug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending api requests`);
-        sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
+      // Broadcast messages refresh_required:'settings' | 'plugins' | 'devices' | 'matter'
+      if (msg.method === 'refresh_required' && msg.response.changed !== 'matter') {
+        if (msg.response.changed === 'plugins' && msg.response.lock) {
+          if (debug || localDebug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} lock=${msg.response.lock} skipping /api/plugins request`);
+        } else {
+          if (debug || localDebug) console.log(`DevicesIcons received refresh_required: changed=${msg.response.changed} and sending /api/plugins request`);
+          sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
+        }
       } else if (msg.method === 'state_update' && msg.response) {
         stateUpdate(msg);
-      } else if (msg.method === '/api/devices' && msg.response) {
-        if (debug || localDebug) console.log(`DevicesIcons received ${msg.response.length} devices:`, msg.response);
-        setDevices(msg.response);
+      } else if (msg.id === uniqueId.current && msg.method === '/api/plugins' && msg.response) {
+        // Full reload: each running plugin platform answers /api/platform-devices with its own devices
+        setDevices([]);
         setEndpoints({});
         setClusters({});
-        // Request clusters for all devices
+        for (const plugin of msg.response) {
+          if (plugin.enabled && plugin.loaded === true && plugin.started === true && plugin.error !== true) {
+            if (debug || localDebug) console.log(`DevicesIcons sending /api/platform-devices for plugin ${plugin.name}`);
+            sendMessage({
+              id: uniqueId.current,
+              sender: 'DevicesIcons',
+              method: '/api/platform-devices',
+              src: 'Frontend',
+              dst: 'Matterbridge',
+              params: { pluginName: plugin.name, extended: false },
+            });
+          }
+        }
+      } else if (msg.id === uniqueId.current && msg.method === '/api/platform-devices' && msg.response) {
+        if (debug || localDebug) console.log(`DevicesIcons received ${msg.response.length} platform devices:`, msg.response);
+        const plugin = msg.pluginName;
+        // Replace the devices of this plugin only: an empty response removes them all
+        setDevices((prev) => [...prev.filter((device) => device.plugin !== plugin), ...msg.response]);
+        // Request clusters for the devices of this plugin
         for (const device of msg.response) {
           if (debug || localDebug) console.log('DevicesIcons sending /api/clusters');
           sendMessage({
@@ -831,7 +854,7 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
     if (debug || localDebug) console.log('DevicesIcons useEffect online mounting');
     if (online) {
       if (debug || localDebug) console.log('DevicesIcons useEffect online sending api requests');
-      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/devices', src: 'Frontend', dst: 'Matterbridge', params: { extended: false } });
+      sendMessage({ id: uniqueId.current, sender: 'DevicesIcons', method: '/api/plugins', src: 'Frontend', dst: 'Matterbridge', params: {} });
     }
     if (debug || localDebug) console.log('DevicesIcons useEffect online mounted');
 
