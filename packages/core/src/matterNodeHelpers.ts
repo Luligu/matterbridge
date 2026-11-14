@@ -598,6 +598,25 @@ export function getVendorIdName(vendorId: number | undefined): string {
 }
 
 /**
+ * Truncates a string to a maximum number of UTF-8 bytes without splitting a character.
+ * It is used for the device name of the commissionable advertisement: Matter 1.6.1 Core § 4.3.1.9 limits the DN TXT key to 32 bytes.
+ *
+ * @param {string} value - The string to truncate.
+ * @param {number} maxBytes - The maximum length in UTF-8 bytes.
+ * @returns {string} The string, cut at the last character that fits in maxBytes.
+ */
+export function truncateUtf8(value: string, maxBytes: number): string {
+  let bytes = 0;
+  let result = '';
+  for (const character of value) {
+    bytes += Buffer.byteLength(character);
+    if (bytes > maxBytes) break;
+    result += character;
+  }
+  return result;
+}
+
+/**
  * Returns the Root Node endpoint type of a server node that hosts camera device types (`--root-camera` or
  * `MATTERBRIDGE_CHIP_TEST`): the Root Node with the Power Source, Time Synchronization, TLS Certificate Management
  * and TLS Client Management cluster servers.

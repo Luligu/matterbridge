@@ -115,7 +115,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { startController } from './matterController.js';
 import { matterToAnsiLogLevel } from './matterLogger.js';
-import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode } from './matterNodeHelpers.js';
+import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode, truncateUtf8 } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('Matterbridge');
@@ -2890,8 +2890,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Provide Node announcement settings
       productDescription: {
-        name: await storageContext.get<string>('deviceName'),
+        // Matter 1.6.1 Core § 4.3.1.9: the DN TXT key of the commissionable advertisement has a maximum length of 32 bytes
+        name: truncateUtf8(await storageContext.get<string>('deviceName'), 32),
         deviceType: DeviceTypeId(await storageContext.get<number>('deviceType')),
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        productId: await storageContext.get<number>('productId'),
       },
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint

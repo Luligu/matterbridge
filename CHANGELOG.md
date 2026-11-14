@@ -31,10 +31,16 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.4] - Dev branch
 
+### Development News
+
+- [matter.js]: See the [0.18.1 dev audit](Matter.js-0.18.1.md) for thermostat changes, initialization failures and the multi-ServerNode mDNS responder fix.
+
 ### Added
 
 - [core]: Add `AnsiLoggerCache` global logger cache (`--loggerCache`) and replay cached log entries to newly connected frontend WebSocket clients.
 - [dgram]: Add `MdnsResponder`, `MdnsScanner`, `MatterAdvertise` and `MatterbridgeAdvertise` (ported from matterbridge-native).
+- [mb-mdns-scan]: Add `mb-mdns-scan` bin that runs the `MdnsScanner` CLI.
+- [mb-mdns-advertise]: Add `mb-mdns-advertise` bin that runs the `MatterbridgeAdvertise` CLI.
 
 ### Changed
 
@@ -57,6 +63,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
+- [core]: Truncate the device name of the commissionable advertisement (DN TXT key) to 32 UTF-8 bytes (Matter 1.6.1 Core § 4.3.1.9).
 - [dgram]: Escape dots and backslashes in DNS labels and enforce label/name length limits (RFC 6763 §4.3); allow uncompressed rdata for legacy SRV replies (RFC 6762 §18.14).
 - [thread]: Track pending `BroadcastServer.fetch()` requests in a map instead of one listener per call, avoiding `MaxListenersExceededWarning` on >10 concurrent fetches and rejecting pending fetches on `close()` and duplicate request ids.
 
