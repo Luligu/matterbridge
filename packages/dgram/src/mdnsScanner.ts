@@ -42,8 +42,12 @@ export const MATTER_COMMISSIONABLE_SERVICE = '_matterc._udp';
 export const MATTER_OPERATIONAL_SERVICE = '_matter._tcp';
 /** DNS-SD service type of the Matter Commissioner Discovery (Matter Core §4.3.3). */
 export const MATTER_COMMISSIONER_SERVICE = '_matterd._udp';
-/** The Matter DNS-SD service types scanned by default. */
+/** DNS-SD service type of the Matterbridge frontend, as advertised by {@link MatterbridgeAdvertise}. */
+export const MATTERBRIDGE_SERVICE = '_matterbridge._tcp';
+/** The Matter DNS-SD service types. */
 export const MDNS_SCANNER_MATTER_SERVICES = [MATTER_COMMISSIONABLE_SERVICE, MATTER_OPERATIONAL_SERVICE, MATTER_COMMISSIONER_SERVICE];
+/** The DNS-SD service types scanned by default: the Matter ones and Matterbridge. */
+export const MDNS_SCANNER_DEFAULT_SERVICES = [...MDNS_SCANNER_MATTER_SERVICES, MATTERBRIDGE_SERVICE];
 /** Default interval in ms between two logs of the devices. */
 export const MDNS_SCANNER_DEFAULT_LOG_INTERVAL_MS = 60000;
 
@@ -56,6 +60,7 @@ const SERVICE_LABELS: Record<string, string> = {
   [MATTER_COMMISSIONABLE_SERVICE]: 'commissionable',
   [MATTER_OPERATIONAL_SERVICE]: 'operational',
   [MATTER_COMMISSIONER_SERVICE]: 'commissioner',
+  [MATTERBRIDGE_SERVICE]: 'matterbridge',
 };
 
 /**
@@ -68,10 +73,12 @@ export interface MdnsScannerOptions {
   enableIpv4?: boolean;
   /** Scan on IPv6 (ff02::fb). Defaults to true. */
   enableIpv6?: boolean;
-  /** Service types as `_service._tcp` or `_service._udp`. Defaults to {@link MDNS_SCANNER_MATTER_SERVICES}. */
+  /** Service types as `_service._tcp` or `_service._udp`. Defaults to {@link MDNS_SCANNER_DEFAULT_SERVICES}. */
   services?: string[];
   /** Send a PTR query for the services on start, so the devices already advertised answer at once. Defaults to true. */
   query?: boolean;
+  /** Interval in ms between two PTR queries for the services after the one on start, 0 sends only the one on start. Needs `query`. Defaults to 0. */
+  queryIntervalMs?: number;
   /** Query the records again at 80%, 85%, 90% and 95% of their TTL, so the ones still alive do not expire (RFC 6762 §5.2). Defaults to true. */
   refresh?: boolean;
   /** Interval in ms between two logs of the devices, 0 disables it. Defaults to {@link MDNS_SCANNER_DEFAULT_LOG_INTERVAL_MS}. */
@@ -106,6 +113,10 @@ export interface MdnsScannerDevice {
   types: string[];
   /** The PTR data, i.e. the service instance names, e.g. `87E1B004E235A130-8FC7772401CD0696._matter._tcp.local`, whose SRV record points to the target. */
   ptr: Map<string, number>;
+  /** The SRV data, as the service instance name and its port, e.g. `87E1B004E235A130-8FC7772401CD0696._matter._tcp.local:5540`. */
+  srv: Map<string, number>;
+  /** The TXT data, as the service instance name and its strings, e.g. `87E1B004E235A130-8FC7772401CD0696._matter._tcp.local SII=5000, SAI=300`. */
+  txt: Map<string, number>;
   /** The A data (IPv4 addresses) of the target. */
   a: Map<string, number>;
   /** The AAAA data (IPv6 addresses) of the target. */
@@ -116,10 +127,12 @@ export interface MdnsScannerDevice {
 interface CachedRecord {
   /** Owner name. */
   name: string;
-  /** Record type: PTR, SRV, A or AAAA. */
+  /** Record type: PTR, SRV, TXT, A or AAAA. */
   type: DnsRecordType;
-  /** PTR: the instance name; SRV: the target; A and AAAA: the address. */
+  /** PTR: the instance name; SRV: the target; TXT: the strings; A and AAAA: the address. */
   data: string;
+  /** SRV: the port. */
+  port?: number;
   /** Time in ms when the record was received. */
   received: number;
   /** Time in ms when the record expires. */
@@ -178,9 +191,9 @@ class MdnsScannerSocket extends Mdns {
 
 /**
  * Dual stack (IPv4 and IPv6) mDNS scanner of the Matter advertisements: commissionable nodes (`_matterc._udp`),
- * operational nodes (`_matter._tcp`) and commissioners (`_matterd._udp`), including their subtypes.
+ * operational nodes (`_matter._tcp`) and commissioners (`_matterd._udp`), including their subtypes, plus the Matterbridge frontends (`_matterbridge._tcp`).
  *
- * It keeps a map keyed by the SRV target with the PTR, A and AAAA data of each target. Every record expires when its
+ * It keeps a map keyed by the SRV target with the PTR, SRV, TXT, A and AAAA data of each target. Every record expires when its
  * TTL has elapsed or when a goodbye (TTL 0) is received (RFC 6762 §10.1), and the cache-flush bit is honored (RFC 6762 §10.2).
  * The records are queried again at 80%, 85%, 90% and 95% of their TTL, so the ones still alive are refreshed (RFC 6762 §5.2).
  * The map is logged every minute.
@@ -196,6 +209,8 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
   private readonly scannerSockets: Partial<Record<MdnsScannerFamily, MdnsScannerSocket>> = {};
   private readonly codec: Mdns;
   private readonly query: boolean;
+  private readonly queryIntervalMs: number;
+  private queryTimer: NodeJS.Timeout | undefined;
   private readonly refresh: boolean;
   private readonly logIntervalMs: number;
   private readonly records = new Map<string, CachedRecord>();
@@ -217,8 +232,9 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
     this.log = new AnsiLogger({ logName: 'MdnsScanner', logTimestampFormat: TimestampFormat.TIME_MILLIS, logLevel: LogLevel.INFO });
     this.interfaceName = options.interfaceName;
     this.mdnsPort = options.mdnsPort ?? MDNS_MULTICAST_PORT;
-    this.services = options.services ?? [...MDNS_SCANNER_MATTER_SERVICES];
+    this.services = options.services ?? [...MDNS_SCANNER_DEFAULT_SERVICES];
     this.query = options.query ?? true;
+    this.queryIntervalMs = options.queryIntervalMs ?? 0;
     this.refresh = options.refresh ?? true;
     this.logIntervalMs = options.logIntervalMs ?? MDNS_SCANNER_DEFAULT_LOG_INTERVAL_MS;
     if (this.services.length === 0) throw new Error('MdnsScanner: at least one service is required');
@@ -253,13 +269,14 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
         this.log.info(`Another mDNS responder is bound to ${family} port ${this.mdnsPort}: querying without unicast responses (RFC 6762 §15.1)`);
     }
     await Promise.all(this.families().map(async (family) => this.startSocket(family)));
-    this.log.info(`Scanning ${CYAN}${this.services.join(', ')}${nf} on ${CYAN}${this.interfaceName ?? 'all interfaces'}${nf}`);
+    this.log.info(`Scanning ${CYAN}${this.services.join(', ')}${nf} on ${CYAN}${this.interfaceName ?? 'all interfaces'}${nf} (${CYAN}${this.families().join(', ')}${nf})`);
     this.expireTimer = setInterval(() => {
       this.expire();
       this.sendRefreshQueries();
     }, EXPIRE_INTERVAL_MS).unref();
     if (this.logIntervalMs > 0) this.logTimer = setInterval(() => this.logDevices(), this.logIntervalMs).unref();
     if (this.query) this.sendQuery();
+    if (this.query && this.queryIntervalMs > 0) this.queryTimer = setInterval(() => this.sendQuery(), this.queryIntervalMs).unref();
   }
 
   /**
@@ -272,6 +289,7 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
     this.stopped = true;
     clearInterval(this.expireTimer);
     clearInterval(this.logTimer);
+    clearInterval(this.queryTimer);
     await Promise.all(
       this.families().map(async (family) => {
         const socket = this.sockets[family];
@@ -290,12 +308,17 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
    * Sends a PTR query for every service on each socket, one question per query: some responders do not answer the queries with several questions.
    * The first queries ask for unicast responses (QU) on the families where the scanner is the first socket bound to the mDNS port (RFC 6762 §5.4, §15.1),
    * so every responder answers even the records it multicast recently; the next ones ask for multicast responses (QM).
+   * The fresh PTR records are sent as known answers (RFC 6762 §7.1), so the queries repeated with `queryIntervalMs` are answered only by the devices not known yet.
    */
   sendQuery(): void {
+    this.log.info(`Querying ${CYAN}${this.services.join(', ')}${nf} on ${CYAN}${this.interfaceName ?? 'all interfaces'}${nf} (${CYAN}${this.families().join(', ')}${nf})`);
+    const now = Date.now();
     for (const service of this.services) {
+      const name = `${service}.local`;
+      const answers = this.fittingKnownAnswers({ name, type: DnsRecordType.PTR }, now);
       for (const family of this.families()) {
         const unicastResponse = this.firstOnPort[family] && !this.queried;
-        this.sockets[family]?.sendQuery([{ name: `${service}.local`, type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse }]);
+        this.sockets[family]?.sendQuery([{ name, type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse }], answers);
       }
     }
     this.queried = true;
@@ -333,17 +356,8 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
     }
     if (due.size === 0) return;
     this.log.debug(`Refreshing ${due.size} record sets`);
-    // Keep only the known answers that fit in one message; the sizes are uncompressed, so the compressed packet is smaller.
-    // A known answer left out only costs an answer the responder sends again.
-    const nameLength = (name: string): number => Buffer.byteLength(name) + 2;
     for (const { name, type } of due.values()) {
-      let length = 12 + nameLength(name) + 4;
-      const answers: KnownAnswer[] = [];
-      for (const answer of this.knownAnswers({ name, type }, now)) {
-        length += nameLength(answer.name) + 10 + answer.rdata.length;
-        if (length > MDNS_MAX_MESSAGE_LENGTH) break;
-        answers.push(answer);
-      }
+      const answers = this.fittingKnownAnswers({ name, type }, now);
       for (const family of this.families()) this.sockets[family]?.sendQuery([{ name, type, class: DnsClass.IN }], answers);
     }
   }
@@ -356,10 +370,12 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
     const now = Date.now();
     const list = (records: Map<string, number>): string =>
       [...records].map(([data, expires]) => `${CYAN}${data}${nf} (${MAGENTA}${Math.max(0, Math.round((expires - now) / 1000))}${nf}s)`).join(', ') || 'none';
-    this.log.info(`Matter devices: ${MAGENTA}${this.devices.size}${nf}`);
+    this.log.info(`Devices advertising ${CYAN}${this.services.join(', ')}${nf}: ${MAGENTA}${this.devices.size}${nf}`);
     for (const device of [...this.devices.values()].toSorted((a, b) => a.target.localeCompare(b.target))) {
       this.log.info(`- ${GREEN}${device.target}${nf} ${MAGENTA}${device.types.join(', ')}${nf}`);
       this.log.info(`  PTR ${list(device.ptr)}`);
+      this.log.info(`  SRV ${list(device.srv)}`);
+      this.log.info(`  TXT ${list(device.txt)}`);
       this.log.info(`  A ${list(device.a)}`);
       this.log.info(`  AAAA ${list(device.aaaa)}`);
     }
@@ -424,10 +440,12 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
       if (record.type === DnsRecordType.PTR && this.isServicePtr(record.name, record.data))
         changed = this.cache(record.name, record.type, record.data, record.class, record.cacheFlush, record.ttl, now) || changed;
       if (record.type === DnsRecordType.SRV && this.isServiceInstance(record.name)) {
-        const target = srvTarget(record.data);
-        if (target === undefined) continue;
-        changed = this.cache(record.name, record.type, target, record.class, record.cacheFlush, record.ttl, now) || changed;
+        const srv = parseSrv(record.data);
+        if (srv === undefined) continue;
+        changed = this.cache(record.name, record.type, srv.target, record.class, record.cacheFlush, record.ttl, now, srv.port) || changed;
       }
+      if (record.type === DnsRecordType.TXT && this.isServiceInstance(record.name))
+        changed = this.cache(record.name, record.type, record.data, record.class, record.cacheFlush, record.ttl, now) || changed;
     }
     for (const record of received) {
       if ((record.type === DnsRecordType.A || record.type === DnsRecordType.AAAA) && this.isTarget(record.name)) {
@@ -447,9 +465,10 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
    * @param {boolean} cacheFlush - True when the record has the cache-flush bit set.
    * @param {number} ttl - The TTL in seconds.
    * @param {number} now - The current time in ms.
+   * @param {number} [port] - The port of an SRV record.
    * @returns {boolean} True if the cache changed.
    */
-  private cache(name: string, type: DnsRecordType, data: string, rrclass: DnsClass, cacheFlush: boolean, ttl: number, now: number): boolean {
+  private cache(name: string, type: DnsRecordType, data: string, rrclass: DnsClass, cacheFlush: boolean, ttl: number, now: number, port?: number): boolean {
     if (rrclass !== DnsClass.IN) return false;
     const key = `${name.toLowerCase()}|${type}|${data.toLowerCase()}`;
     if (ttl === 0) {
@@ -470,13 +489,13 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
       }
     }
     const refreshAt = REFRESH_PERCENTS.map((percent) => now + ttl * 10 * (percent + Math.random() * REFRESH_JITTER_PERCENT));
-    this.records.set(key, { name, type, data, received: now, expires: now + ttl * 1000, ttl, refreshAt });
+    this.records.set(key, { name, type, data, port, received: now, expires: now + ttl * 1000, ttl, refreshAt });
     return true;
   }
 
   /**
    * Returns the known answers of a refresh question: the cached records of the same name and type with more than half of their TTL left (RFC 6762 §7.1).
-   * The SRV records are not included, since only their target is cached.
+   * The SRV and TXT records are not included, since their rdata is not cached.
    *
    * @param {RefreshQuestion} question - The question.
    * @param {number} now - The current time in ms.
@@ -493,6 +512,26 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
       else if (record.type === DnsRecordType.AAAA) rdata = this.codec.encodeAAAA(record.data);
       else continue;
       answers.push({ name: record.name, rtype: record.type, rclass: DnsClass.IN, ttl: Math.floor((record.expires - now) / 1000), rdata });
+    }
+    return answers;
+  }
+
+  /**
+   * Returns the known answers of a question that fit in one message with it; the sizes are uncompressed, so the compressed packet is smaller.
+   * A known answer left out only costs an answer the responder sends again.
+   *
+   * @param {RefreshQuestion} question - The question.
+   * @param {number} now - The current time in ms.
+   * @returns {KnownAnswer[]} The known answers that fit.
+   */
+  private fittingKnownAnswers(question: RefreshQuestion, now: number): KnownAnswer[] {
+    const nameLength = (name: string): number => Buffer.byteLength(name) + 2;
+    let length = 12 + nameLength(question.name) + 4;
+    const answers: KnownAnswer[] = [];
+    for (const answer of this.knownAnswers(question, now)) {
+      length += nameLength(answer.name) + 10 + answer.rdata.length;
+      if (length > MDNS_MAX_MESSAGE_LENGTH) break;
+      answers.push(answer);
     }
     return answers;
   }
@@ -549,14 +588,16 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
       const key = srv.data.toLowerCase();
       let device = next.get(key);
       if (!device) {
-        device = { target: srv.data, types: [], ptr: new Map(), a: new Map(), aaaa: new Map() };
+        device = { target: srv.data, types: [], ptr: new Map(), srv: new Map(), txt: new Map(), a: new Map(), aaaa: new Map() };
         next.set(key, device);
       }
+      set(device.srv, `${srv.name}:${srv.port}`, srv.expires);
       const instance = srv.name.toLowerCase();
       const service = this.services.find((candidate) => instance.endsWith(`.${candidate}.local`.toLowerCase()));
       const label = service && (SERVICE_LABELS[service] ?? service);
       if (label && !device.types.includes(label)) device.types = [...device.types, label].toSorted();
       for (const ptr of records) if (ptr.type === DnsRecordType.PTR && ptr.data.toLowerCase() === instance) set(device.ptr, ptr.data, ptr.expires);
+      for (const txt of records) if (txt.type === DnsRecordType.TXT && txt.name.toLowerCase() === instance) set(device.txt, `${txt.name} ${txt.data}`, txt.expires);
     }
     for (const address of records.filter((record) => record.type === DnsRecordType.A || record.type === DnsRecordType.AAAA)) {
       const device = next.get(address.name.toLowerCase());
@@ -591,33 +632,38 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
 }
 
 /**
- * Returns the target of an SRV record from its decoded data (see {@link Mdns.decodeResourceRecord}).
+ * Returns the target and the port of an SRV record from its decoded data (see {@link Mdns.decodeResourceRecord}).
  *
  * @param {string} data - The SRV data, e.g. `{"priority":0,"weight":0,"port":5540,"target":"B75AFB458ECD0000.local"}`.
- * @returns {string | undefined} The target, or undefined if the data is not valid.
+ * @returns {{ target: string; port: number } | undefined} The target and the port, or undefined if the data is not valid.
  */
-function srvTarget(data: string): string | undefined {
+function parseSrv(data: string): { target: string; port: number } | undefined {
   let parsed: unknown;
   try {
     parsed = JSON.parse(data);
   } catch {
     return undefined;
   }
-  return typeof parsed === 'object' && parsed !== null && 'target' in parsed && typeof parsed.target === 'string' ? parsed.target : undefined;
+  if (typeof parsed !== 'object' || parsed === null || !('target' in parsed) || typeof parsed.target !== 'string') return undefined;
+  if (!('port' in parsed) || typeof parsed.port !== 'number') return undefined;
+  return { target: parsed.target, port: parsed.port };
 }
 
 /** The help of the `mdns-scan` bin. */
 export const MDNS_SCAN_HELP = `Usage: mdns-scan [options]
 
-Scans the Matter DNS-SD services (or the ones given) with mDNS over IPv4 and IPv6, and logs the devices every minute.
+Scans the Matter and Matterbridge DNS-SD services (or the ones given) with mDNS over IPv4 and IPv6, and logs the devices every minute.
 Stop it with Ctrl+C.
 
 Options:
   --interface <name>        Network interface to scan on (default: all the interfaces)
-  --query                   Query the services on start (default: only listen)
+  --query [seconds]         Send one PTR query per service on start, when the sockets are ready, and then every <seconds>;
+                            without <seconds> it is sent only on start (default: only listen)
   --service <type>          Service type to scan, as _service._tcp or _service._udp; repeat it for more services
-                            (default: ${MDNS_SCANNER_MATTER_SERVICES.join(', ')})
-  --no-refresh              Do not query the records again at 80-95% of their TTL
+                            (default: ${MDNS_SCANNER_DEFAULT_SERVICES.join(', ')})
+  --no-refresh              Do not query again the records of the known devices at 80, 85, 90 and 95% of their TTL:
+                            a device then stays only as long as it advertises again before its records expire
+                            (default: refresh, so the devices still alive do not expire)
   --log-interval <seconds>  Seconds between two logs of the devices, 0 disables them (default: ${MDNS_SCANNER_DEFAULT_LOG_INTERVAL_MS / 1000})
   --no-ipv4                 Do not scan on IPv4 (224.0.0.251)
   --no-ipv6                 Do not scan on IPv6 (ff02::fb)
@@ -646,8 +692,17 @@ function commandLineError(message: string): undefined {
  * @returns {Promise<MdnsScanner | undefined>} The started scanner, or undefined after the help or a command line error.
  */
 export async function runMdnsScanner(argv: string[], options: MdnsScannerOptions = {}): Promise<MdnsScanner | undefined> {
+  // parseArgs() has no options with an optional value: take the seconds of --query out of the arguments
+  const args: string[] = [];
+  let querySeconds: string | undefined;
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index];
+    if (arg.startsWith('--query=')) querySeconds = arg.slice('--query='.length);
+    else if (arg === '--query' && /^\d/.test(argv[index + 1] ?? '')) querySeconds = argv[++index];
+    args.push(arg.startsWith('--query=') ? '--query' : arg);
+  }
   const config = {
-    args: argv,
+    args,
     options: {
       'interface': { type: 'string' },
       'query': { type: 'boolean' },
@@ -674,11 +729,14 @@ export async function runMdnsScanner(argv: string[], options: MdnsScannerOptions
   }
   const logInterval = values['log-interval'] === undefined ? undefined : Number(values['log-interval']);
   if (logInterval !== undefined && (!Number.isFinite(logInterval) || logInterval < 0)) return commandLineError(`invalid --log-interval ${values['log-interval']}`);
+  const queryInterval = querySeconds === undefined ? undefined : Number(querySeconds);
+  if (queryInterval !== undefined && (querySeconds === '' || !Number.isFinite(queryInterval) || queryInterval < 0)) return commandLineError(`invalid --query ${querySeconds}`);
   let scanner: MdnsScanner;
   try {
     scanner = new MdnsScanner({
       interfaceName: values.interface,
       query: values.query === true,
+      queryIntervalMs: queryInterval === undefined ? undefined : queryInterval * 1000,
       services: values.service,
       refresh: values['no-refresh'] !== true,
       logIntervalMs: logInterval === undefined ? undefined : logInterval * 1000,

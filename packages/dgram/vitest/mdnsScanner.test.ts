@@ -13,7 +13,7 @@ import { LogLevel } from 'node-ansi-logger';
 import { DnsClass, DnsHeaderFlag, DnsRecordType, Mdns, MDNS_MAX_MESSAGE_LENGTH, type MdnsMessage } from '../src/mdns.js';
 import {
   MDNS_SCAN_HELP,
-  MDNS_SCANNER_MATTER_SERVICES,
+  MDNS_SCANNER_DEFAULT_SERVICES,
   MdnsScanner,
   type MdnsScannerDevice,
   type MdnsScannerFamily,
@@ -72,6 +72,7 @@ const srv = (instance: string, target: string, ttl = 120): Record => ({
 });
 const a = (host: string, address: string, ttl = 120, flush = true): Record => ({ name: host, type: DnsRecordType.A, ttl, rdata: codec.encodeA(address), flush });
 const aaaa = (host: string, address: string, ttl = 120): Record => ({ name: host, type: DnsRecordType.AAAA, ttl, rdata: codec.encodeAAAA(address), flush: true });
+const txt = (instance: string, strings: string[], ttl = 4500): Record => ({ name: instance, type: DnsRecordType.TXT, ttl, rdata: codec.encodeTxtRdata(strings), flush: true });
 
 describe('MdnsScanner', () => {
   let scanner: MdnsScanner | undefined;
@@ -145,8 +146,8 @@ describe('MdnsScanner', () => {
   describe('construction', () => {
     it('should scan the Matter commissionable, operational and commissioner services on IPv4 and IPv6 by default', () => {
       const created = new MdnsScanner();
-      expect(created.services).toEqual(['_matterc._udp', '_matter._tcp', '_matterd._udp']);
-      expect(created.services).not.toBe(MDNS_SCANNER_MATTER_SERVICES);
+      expect(created.services).toEqual(['_matterc._udp', '_matter._tcp', '_matterd._udp', '_matterbridge._tcp']);
+      expect(created.services).not.toBe(MDNS_SCANNER_DEFAULT_SERVICES);
       expect(created.mdnsPort).toBe(5353);
       expect(created.interfaceName).toBeUndefined();
       expect(created.sockets.ipv4).toBeInstanceOf(Mdns);
@@ -172,7 +173,11 @@ describe('MdnsScanner', () => {
   describe('lifecycle', () => {
     it('should send a PTR query for every service on both sockets on start, one question per query', async () => {
       await startScanner({ query: true });
-      expect(sent).toHaveLength(6);
+      expect(sent).toHaveLength(8);
+      expect(loggerLogSpy).toHaveBeenCalledWith(
+        LogLevel.INFO,
+        expect.stringMatching(/Querying .*_matterc\._udp, _matter\._tcp, _matterd\._udp, _matterbridge\._tcp.* on .*all interfaces.* \(.*ipv4, ipv6.*\)/),
+      );
       for (const family of ['ipv4', 'ipv6'] as const) {
         const packets = sent.filter((packet) => packet.family === family);
         for (const packet of packets) expect(packet.address).toBe(family === 'ipv4' ? '224.0.0.251' : 'ff02::fb');
@@ -182,6 +187,7 @@ describe('MdnsScanner', () => {
           [['_matterc._udp.local', DnsRecordType.PTR]],
           [['_matter._tcp.local', DnsRecordType.PTR]],
           [['_matterd._udp.local', DnsRecordType.PTR]],
+          [['_matterbridge._tcp.local', DnsRecordType.PTR]],
         ]);
       }
     });
@@ -189,10 +195,10 @@ describe('MdnsScanner', () => {
     it('should ask for unicast responses only in the first queries, when it is the first socket bound to the port (RFC 6762 §5.4, §15.1)', async () => {
       const created = await startScanner({ query: true });
       const unicast = (): boolean[] => sent.flatMap((packet) => codec.decodeMdnsMessage(packet.msg).questions?.map((question) => question.unicastResponse) ?? []);
-      expect(unicast()).toEqual(Array(6).fill(true)); // Alone on the random test port
+      expect(unicast()).toEqual(Array(8).fill(true)); // Alone on the random test port
       sent = [];
       created.sendQuery();
-      expect(unicast()).toEqual(Array(6).fill(false));
+      expect(unicast()).toEqual(Array(8).fill(false));
     });
 
     it('should ask for multicast responses when another mDNS responder is bound to the port first (RFC 6762 §15.1)', async () => {
@@ -201,7 +207,7 @@ describe('MdnsScanner', () => {
       await new Promise<void>((resolve) => responder.bind(port, '0.0.0.0', resolve));
       await startScanner({ query: true, mdnsPort: port, enableIpv6: false });
       const unicast = sent.flatMap((packet) => codec.decodeMdnsMessage(packet.msg).questions?.map((question) => question.unicastResponse) ?? []);
-      expect(unicast).toEqual(Array(3).fill(false));
+      expect(unicast).toEqual(Array(4).fill(false));
       expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`Another mDNS responder is bound to ipv4 port ${port}`));
       await new Promise<void>((resolve) => responder.close(() => resolve()));
     });
@@ -216,8 +222,25 @@ describe('MdnsScanner', () => {
     });
 
     it('should not send a query when disabled', async () => {
-      await startScanner();
+      await startScanner({ queryIntervalMs: 30000 });
+      vi.advanceTimersByTime(30000);
       expect(sent).toHaveLength(0);
+    });
+
+    it('should repeat the query at the query interval with the known answers (RFC 6762 §7.1), until stopped', async () => {
+      const created = await startScanner({ query: true, queryIntervalMs: 30000, services: ['_matter._tcp'], enableIpv6: false, refresh: false });
+      expect(sent).toHaveLength(1);
+      inject(buildPacket([ptr('_matter._tcp.local', OPERATIONAL)], [srv(OPERATIONAL, HOST)]));
+      vi.advanceTimersByTime(29000);
+      expect(sent).toHaveLength(1);
+      vi.advanceTimersByTime(1000);
+      expect(sent).toHaveLength(2);
+      const message = codec.decodeMdnsMessage(sent[1].msg);
+      expect(message.questions?.map((question) => question.name)).toEqual(['_matter._tcp.local']);
+      expect(message.answers?.map((answer) => [answer.name, answer.data])).toEqual([['_matter._tcp.local', OPERATIONAL]]);
+      await created.stop();
+      vi.advanceTimersByTime(60000);
+      expect(sent).toHaveLength(2);
     });
 
     it('should refuse to start twice and stop only once', async () => {
@@ -434,9 +457,9 @@ describe('MdnsScanner', () => {
       inject(buildPacket([srv(COMMISSIONABLE, 'A0000000000000.local')]));
       loggerLogSpy.mockClear();
       vi.advanceTimersByTime(59000);
-      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matter devices'));
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Devices advertising'));
       vi.advanceTimersByTime(1000);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matter devices'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Devices advertising'));
       const lines = loggerLogSpy.mock.calls.map((call) => call[1]);
       expect(lines.some((line) => line.includes(OPERATIONAL) && line.includes('4440'))).toBe(true);
       expect(lines.some((line) => line.includes('fe80:0:0:0:0:0:0:1') && line.includes('60'))).toBe(true);
@@ -444,6 +467,30 @@ describe('MdnsScanner', () => {
       expect(lines.findIndex((line) => line.includes('A0000000000000.local'))).toBeLessThan(lines.findIndex((line) => line.includes(HOST)));
       expect(lines.some((line) => line.includes(HOST) && line.includes('operational'))).toBe(true);
       expect(lines.some((line) => line.includes('A0000000000000.local') && line.includes('commissionable'))).toBe(true);
+    });
+
+    it('should log the scanned services with the number of devices', async () => {
+      const created = await startScanner({ services: ['_http._tcp', '_ipp._tcp'] });
+      loggerLogSpy.mockClear();
+      created.logDevices();
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringMatching(/Devices advertising .*_http\._tcp, _ipp\._tcp.*: .*0/));
+    });
+
+    it('should log the SRV port and the TXT strings of the instances of the target', async () => {
+      const created = await startScanner();
+      inject(buildPacket([ptr('_matter._tcp.local', OPERATIONAL)], [srv(OPERATIONAL, HOST), txt(OPERATIONAL, ['SII=5000', 'SAI=300']), txt('other._matter._tcp.local', ['T=1'])]));
+      expect([...(device()?.srv.keys() ?? [])]).toEqual([`${OPERATIONAL}:5540`]);
+      expect([...(device()?.txt.keys() ?? [])]).toEqual([`${OPERATIONAL} SII=5000, SAI=300`]);
+      loggerLogSpy.mockClear();
+      created.logDevices();
+      const lines = loggerLogSpy.mock.calls.map((call) => call[1]);
+      expect(lines.some((line) => line.includes('  SRV ') && line.includes(`${OPERATIONAL}:5540`) && line.includes('120'))).toBe(true);
+      expect(lines.some((line) => line.includes('  TXT ') && line.includes('SII=5000, SAI=300') && line.includes('4500'))).toBe(true);
+      // A new TXT with the cache-flush bit replaces the previous one after the grace second (RFC 6762 §10.2)
+      vi.advanceTimersByTime(2000);
+      inject(buildPacket([txt(OPERATIONAL, ['SII=3000'])]));
+      vi.advanceTimersByTime(2000);
+      expect([...(device()?.txt.keys() ?? [])]).toEqual([`${OPERATIONAL} SII=3000`]);
     });
 
     it('should show every kind of the target, and the service type for the other services', async () => {
@@ -470,7 +517,7 @@ describe('MdnsScanner', () => {
       await startScanner({ logIntervalMs: 0 });
       loggerLogSpy.mockClear();
       vi.advanceTimersByTime(120000);
-      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matter devices'));
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Devices advertising'));
     });
   });
 
@@ -659,7 +706,7 @@ describe('MdnsScanner', () => {
       const created = await runMdnsScanner(['--interface', interfaceName ?? '', '--query'], { mdnsPort: nextPort++, enableIpv6: false });
       if (!created) throw new Error('scanner not created');
       expect(created.interfaceName).toBe(interfaceName);
-      expect(sendQuery).toHaveBeenCalledTimes(3); // One query per service
+      expect(sendQuery).toHaveBeenCalledTimes(4); // One query per service
       expect(process.listenerCount('SIGINT')).toBe(sigint + 1);
       const stopped = new Promise<void>((resolve) => created.sockets.ipv4?.once('close', () => resolve()));
       lastListener('SIGINT')();
@@ -672,7 +719,7 @@ describe('MdnsScanner', () => {
       const sendQuery = vi.spyOn(Mdns.prototype, 'sendQuery').mockReturnValue(Buffer.alloc(0));
       scanner = await runMdnsScanner([], { mdnsPort: nextPort++ });
       expect(scanner?.interfaceName).toBeUndefined();
-      expect(scanner?.services).toEqual(MDNS_SCANNER_MATTER_SERVICES);
+      expect(scanner?.services).toEqual(MDNS_SCANNER_DEFAULT_SERVICES);
       expect(scanner?.sockets.ipv4).toBeInstanceOf(Mdns);
       expect(scanner?.sockets.ipv6).toBeInstanceOf(Mdns);
       expect(scanner?.log.logLevel).toBe(LogLevel.INFO);
@@ -702,7 +749,7 @@ describe('MdnsScanner', () => {
       loggerLogSpy.mockClear();
       vi.advanceTimersByTime(119000);
       expect(send).not.toHaveBeenCalled();
-      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matter devices'));
+      expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Devices advertising'));
       removeListeners();
     });
 
@@ -713,7 +760,7 @@ describe('MdnsScanner', () => {
       expect(scanner?.log.logLevel).toBe(LogLevel.DEBUG);
       loggerLogSpy.mockClear();
       vi.advanceTimersByTime(30000);
-      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Matter devices'));
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining('Devices advertising'));
       removeListeners();
     });
 
@@ -731,6 +778,30 @@ describe('MdnsScanner', () => {
 
     it('should report an unknown option', async () => {
       expect(await runWithError(['--unknown'])).toContain('--unknown');
+    });
+
+    it('should repeat the query every --query seconds, and only on start without them', async () => {
+      const sendQuery = vi.spyOn(Mdns.prototype, 'sendQuery').mockReturnValue(Buffer.alloc(0));
+      for (const [args, repeated] of [
+        [['--query', '30'], true],
+        [['--query=30'], true],
+        [['--query'], false],
+      ] as const) {
+        sendQuery.mockClear();
+        scanner = await runMdnsScanner([...args, '--service', '_matter._tcp'], { mdnsPort: nextPort++, enableIpv6: false });
+        expect(sendQuery).toHaveBeenCalledTimes(1);
+        vi.advanceTimersByTime(30000);
+        expect(sendQuery).toHaveBeenCalledTimes(repeated ? 2 : 1);
+        await scanner?.stop();
+        removeListeners();
+      }
+      sendQuery.mockRestore();
+    });
+
+    it('should report an invalid query interval', async () => {
+      expect(await runWithError(['--query=abc'])).toContain('invalid --query abc');
+      consoleErrorSpy.mockClear();
+      expect(await runWithError(['--query='])).toContain('invalid --query ');
     });
 
     it('should report an invalid log interval', async () => {
@@ -776,7 +847,7 @@ describe('MdnsScanner', () => {
       expect(created.devices.size).toBe(0);
     });
 
-    it('should ignore SRV data that is valid JSON without a string target', async () => {
+    it('should ignore SRV data that is valid JSON without a string target or a number port', async () => {
       const created = await startScanner();
       const socket = created.sockets.ipv4;
       if (!socket) throw new Error('IPv4 socket not created');
@@ -788,14 +859,17 @@ describe('MdnsScanner', () => {
         ttl: 120,
         data,
       });
-      vi.spyOn(socket, 'decodeMdnsMessage').mockReturnValueOnce(response([record('5'), record('null'), record('{"port":5540}'), record('{"target":1}')]));
+      vi.spyOn(socket, 'decodeMdnsMessage').mockReturnValueOnce(
+        response([record('5'), record('null'), record('{"port":5540}'), record('{"target":1}'), record(`{"target":"${HOST}"}`), record(`{"target":"${HOST}","port":"5540"}`)]),
+      );
       inject(buildPacket([]));
       expect(created.devices.size).toBe(0);
     });
 
-    it('should keep the changed state when a PTR record of another class is not cached', async () => {
+    it('should keep the changed state when a PTR or TXT record of another class is not cached', async () => {
       const created = await startScanner();
       inject(buildPacket([{ ...ptr('_matter._tcp.local', OPERATIONAL), rclass: 3 }, ptr('_matter._tcp.local', OPERATIONAL)]));
+      inject(buildPacket([{ ...txt(OPERATIONAL, ['SII=5000']), rclass: 3 }]));
       expect(created.devices.size).toBe(0);
     });
   });

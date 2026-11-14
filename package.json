@@ -48,6 +48,8 @@
     "matterbridge": "bin/matterbridge.js",
     "mb-mdns": "bin/mb_mdns.js",
     "mb_mdns": "bin/mb_mdns.js",
+    "mb-mdns-scan": "bin/mb_mdns_scan.js",
+    "mb-mdns-advertise": "bin/mb_mdns_advertise.js",
     "mb-coap": "bin/mb_coap.js",
     "mb_coap": "bin/mb_coap.js",
     "mb-health": "bin/mb_health.js",
