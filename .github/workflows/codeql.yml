@@ -7,7 +7,6 @@ on:
       - 'docs/**' # any file under docs/
       - 'screenshots/**' # any file under screenshots/
       - 'scripts/**' # any file under scripts/
-      - 'chip/**' # any file under chip/
       - 'systemd/**' # any file under systemd/
       - 'apps/frontend/build/**' # any file under apps/frontend/build/
       - '**/*.md' # any .md anywhere
@@ -20,7 +19,6 @@ on:
       - 'docs/**' # any file under docs/
       - 'screenshots/**' # any file under screenshots/
       - 'scripts/**' # any file under scripts/
-      - 'chip/**' # any file under chip/
       - 'systemd/**' # any file under systemd/
       - 'apps/frontend/build/**' # any file under apps/frontend/build/
       - '**/*.md' # any .md anywhere
@@ -53,7 +51,6 @@ jobs:
               - 'docs/**'
               - 'screenshots/**'
               - 'scripts/**'
-              - 'chip/**'
               - 'systemd/**'
               - 'apps/frontend/build/**'
               - '**/*.md'

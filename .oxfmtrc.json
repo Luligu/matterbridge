@@ -9,7 +9,6 @@
     "**/.cache/**",
     "**/.git/**",
     "**/build/**",
-    "chip/**",
     "**/coverage/**",
     "docs/**",
     "**/dist/**",

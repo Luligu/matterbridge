@@ -5,11 +5,12 @@
  */
 
 import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'bun:test';
-import type dgram from 'node:dgram';
+import dgram from 'node:dgram';
+import { EventEmitter } from 'node:events';
 
 import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
 
-import { DnsClass, DnsClassFlag, DnsRecordType, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
+import { DnsClass, DnsClassFlag, DnsRecordType, isFirstOnPort, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
 
 // Mock node:dgram so the Mdns constructor does not open a real socket. Unlike Jest's automock,
 // Vitest's bare automock returns undefined from createSocket, so provide a minimal fake socket
@@ -59,6 +60,34 @@ describe('Mdns', () => {
   it('should construct and initialize properties', () => {
     expect(mdns.deviceQueries).toBeInstanceOf(Map);
     expect(mdns.deviceResponses).toBeInstanceOf(Map);
+  });
+
+  describe('isFirstOnPort', () => {
+    it.each(['udp4', 'udp6'] as const)('should release the probe socket and return true when %s binds successfully', async (socketType) => {
+      const probe = Object.assign(new EventEmitter(), {
+        bind: vi.fn((_port: number, _address: string, onBound: () => void) => onBound()),
+        close: vi.fn(),
+      });
+      const createSocket = vi.spyOn(dgram, 'createSocket').mockReturnValueOnce(probe as unknown as dgram.Socket);
+      expect(await isFirstOnPort(socketType)).toBe(true);
+      expect(createSocket).toHaveBeenCalledWith({ type: socketType, reuseAddr: false });
+      expect(probe.bind).toHaveBeenCalledWith(5353, socketType === 'udp4' ? '0.0.0.0' : '::', expect.any(Function));
+      expect(probe.close).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['udp4', 'udp6'] as const)('should release the probe socket and return false when the %s port is occupied', async (socketType) => {
+      const probe = Object.assign(new EventEmitter(), {
+        bind: vi.fn((_port: number, _address: string, _onBound: () => void) => {
+          probe.emit('error', Object.assign(new Error('Address already in use'), { code: 'EADDRINUSE' }));
+        }),
+        close: vi.fn(),
+      });
+      const createSocket = vi.spyOn(dgram, 'createSocket').mockReturnValueOnce(probe as unknown as dgram.Socket);
+      expect(await isFirstOnPort(socketType, 15353)).toBe(false);
+      expect(createSocket).toHaveBeenCalledWith({ type: socketType, reuseAddr: false });
+      expect(probe.bind).toHaveBeenCalledWith(15353, socketType === 'udp4' ? '0.0.0.0' : '::', expect.any(Function));
+      expect(probe.close).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('mDNS helper guards', () => {
@@ -119,6 +148,17 @@ describe('Mdns', () => {
     const { name: decoded, newOffset } = mdns.decodeDnsName(encoded, 0);
     expect(decoded).toBe('Küche.local');
     expect(newOffset).toBe(encoded.length);
+  });
+
+  it('should round-trip escaped DNS label boundaries and reject invalid lengths', () => {
+    const name = 'Office\\.Printer\\\\One._http._tcp.local';
+    const encoded = mdns.encodeDnsName(name);
+    expect(encoded[0]).toBe(Buffer.byteLength('Office.Printer\\One'));
+    expect(mdns.decodeDnsName(encoded, 0).name).toBe(name);
+    expect(() => mdns.encodeDnsName('x'.repeat(64) + '.local')).toThrow('label length');
+    expect(() => mdns.encodeDnsName('a..local')).toThrow('label length');
+    expect(() => mdns.encodeDnsName('trailing\\')).toThrow('escape');
+    expect(() => mdns.encodeDnsName(Array(5).fill('x'.repeat(63)).join('.'))).toThrow('255');
   });
 
   describe('encodeTxtRdata', () => {
@@ -518,8 +558,18 @@ describe('Mdns', () => {
 
     it('should encode the empty name without compression', () => {
       const compression = new Map<string, number>();
-      expect(mdns.encodeDnsName('', compression, 12)).toEqual(mdns.encodeDnsName(''));
+      expect(mdns.encodeDnsName('')).toEqual(Buffer.from([0]));
+      expect(mdns.encodeDnsName('', compression, 12)).toEqual(Buffer.from([0]));
       expect(compression.size).toBe(0);
+    });
+
+    it('should accept one trailing root separator and reject empty interior labels', () => {
+      const wire = Buffer.from([7, ...Buffer.from('example'), 5, ...Buffer.from('local'), 0]);
+      expect(mdns.encodeDnsName('example.local')).toEqual(wire);
+      expect(mdns.encodeDnsName('example.local.')).toEqual(wire);
+      for (const name of ['.', '.example.local', 'example..local', 'example.local..']) {
+        expect(() => mdns.encodeDnsName(name)).toThrow('Invalid DNS label length');
+      }
     });
 
     it('should compress the domain name in the rdata of a PTR record', () => {
@@ -731,6 +781,21 @@ describe('Mdns', () => {
     (mdns as any).decodeMdnsMessage = saved;
     expect(mdns.deviceResponses.has('1.2.3.4')).toBe(true);
     expect(mdns.deviceResponses.get('1.2.3.4')?.dataPTR).toBeUndefined();
+  });
+
+  it('should reject decoded names that encodeDnsName would not accept', () => {
+    // Five 60-byte labels: 1 + 5 * 61 = 306 bytes
+    const label = Buffer.concat([Buffer.from([60]), Buffer.alloc(60, 0x61)]);
+    expect(() => mdns.decodeDnsName(Buffer.concat([label, label, label, label, label, Buffer.from([0])]), 0)).toThrow('DNS name exceeds 255 bytes');
+    // RFC 6762 Appendix C: 255 bytes without the terminating zero byte are allowed (64 + 64 + 64 + 63), 256 are not
+    const longest = ['a'.repeat(63), 'b'.repeat(63), 'c'.repeat(63), 'd'.repeat(62)].join('.');
+    expect(mdns.encodeDnsName(longest)).toHaveLength(256);
+    expect(mdns.decodeDnsName(mdns.encodeDnsName(longest), 0).name).toBe(longest);
+    const tooLong = Buffer.concat([mdns.encodeDnsName(longest).subarray(0, 192), Buffer.from([63]), Buffer.alloc(63, 0x64), Buffer.from([0])]);
+    expect(() => mdns.decodeDnsName(tooLong, 0)).toThrow('DNS name exceeds 255 bytes');
+    expect(() => mdns.encodeDnsName(`${longest}d`)).toThrow('DNS name exceeds 255 bytes');
+    // Invalid UTF-8 bytes decode to 3-byte replacement characters: 22 * 3 = 66 bytes
+    expect(() => mdns.decodeDnsName(Buffer.concat([Buffer.from([22]), Buffer.alloc(22, 0xff), Buffer.from([0])]), 0)).toThrow('Invalid DNS label length');
   });
 
   it('should handle decodeDnsName error cases', () => {

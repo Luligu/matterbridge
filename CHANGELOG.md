@@ -34,6 +34,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [core]: Add `AnsiLoggerCache` global logger cache (`--loggerCache`) and replay cached log entries to newly connected frontend WebSocket clients.
+- [dgram]: Add `MdnsResponder`, `MdnsScanner`, `MatterAdvertise` and `MatterbridgeAdvertise` (ported from matterbridge-native).
 
 ### Changed
 
@@ -52,9 +53,11 @@ If you like this project and find it useful, please consider giving it a star on
 - [core]: Bump `express-rate-limit` to v.8.7.4.
 - [core]: Bump `werift` to v.0.27.0.
 - [core]: Bump `ws` to v.8.23.0.
+- [dgram]: Log per-packet traffic only in verbose mode, with the byte count.
 
 ### Fixed
 
+- [dgram]: Escape dots and backslashes in DNS labels and enforce label/name length limits (RFC 6763 §4.3); allow uncompressed rdata for legacy SRV replies (RFC 6762 §18.14).
 - [thread]: Track pending `BroadcastServer.fetch()` requests in a map instead of one listener per call, avoiding `MaxListenersExceededWarning` on >10 concurrent fetches and rejecting pending fetches on `close()` and duplicate request ids.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>

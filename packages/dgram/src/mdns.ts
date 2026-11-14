@@ -3,7 +3,7 @@
  * @description This file contains the class Mdns.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.1.1
+ * @version 1.2.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -602,6 +602,12 @@ export class Mdns extends Multicast {
   /**
    * Decodes a DNS name from a buffer, handling compression.
    *
+   * @remarks
+   * RFC 6763 §4.3 requires preserving DNS label boundaries when representing a name as dotted text.
+   * Literal dots and backslashes within a label are backslash-escaped; only unescaped dots separate labels.
+   * The returned name can be passed to {@link Mdns.encodeDnsName} without losing those boundaries.
+   * It is an escaped DNS presentation name, not an unescaped user-facing service name. The root is returned as an empty string.
+   *
    * @param {Buffer} msg - The full mDNS message buffer.
    * @param {number} offset - The offset at which the DNS name starts.
    * @returns {{ name: string; newOffset: number }} An object with the decoded name and the new offset.
@@ -609,6 +615,7 @@ export class Mdns extends Multicast {
    */
   decodeDnsName(msg: Buffer, offset: number): { name: string; newOffset: number } {
     const labels: string[] = [];
+    let size = 0; // RFC 6762 Appendix C: the 255-byte limit does not count the terminating zero byte
     let jumped = false;
     let originalOffset = offset;
     let iterations = 0; // Prevent infinite loops
@@ -646,7 +653,14 @@ export class Mdns extends Multicast {
       if (offset + len > msg.length) {
         throw new Error('Label length exceeds buffer bounds while decoding DNS name.');
       }
-      labels.push(msg.toString('utf8', offset, offset + len));
+      if (len > 63) throw new Error('Invalid DNS label length');
+      const label = msg.toString('utf8', offset, offset + len);
+      // Invalid UTF-8 decodes to longer replacement characters: check the lengths encodeDnsName() will see.
+      const encodedLength = Buffer.byteLength(label);
+      if (encodedLength > 63) throw new Error('Invalid DNS label length');
+      size += 1 + encodedLength;
+      if (size > 255) throw new Error('DNS name exceeds 255 bytes');
+      labels.push(label.replaceAll('\\', '\\\\').replaceAll('.', '\\.'));
       offset += len;
     }
 
@@ -655,6 +669,7 @@ export class Mdns extends Multicast {
 
   /**
    * Encodes a domain name into the DNS label format.
+   * Presentation names escape literal dots and backslashes (RFC 6763 §4.3).
    *
    * For example, "example.local" becomes:
    * [7] "example" [5] "local" [0]
@@ -662,18 +677,46 @@ export class Mdns extends Multicast {
    * With a compression table (RFC 1035 §4.1.4, RFC 6762 §18.14), the longest suffix of the name already written in the
    * message is replaced by a 2-byte pointer, and the suffixes written here are added to the table.
    *
-   * @param {string} name - The domain name to encode.
+   * @remarks
+   * RFC 6763 §4.3 permits literal dots in service instance labels and requires escaping them in dotted presentation names.
+   * Unescaped dots separate labels; a backslash escapes the next character, including a literal dot or backslash.
+   * Callers must escape literal backslashes too; otherwise they are consumed as escape prefixes.
+   * Labels are limited to 63 UTF-8 bytes and the full wire name to 255 bytes, including label lengths but not the terminating zero byte (RFC 6762 Appendix C).
+   * This API supports character escapes, not decimal byte escapes. An empty string encodes the root as one zero byte.
+   * A single trailing unescaped dot is accepted as the root terminator (example.local. equals example.local).
+   * Interior empty labels, repeated trailing dots, and a lone dot are rejected.
+   *
+   * @param {string} name - The escaped DNS presentation name to encode.
    * @param {Map<string, number>} [compression] - Optional compression table of the message: name suffix to its offset in the message.
    * @param {number} [offset] - The offset in the message where the name is written (default 0). Used only with a compression table.
    * @returns {Buffer} The encoded domain name as a Buffer.
+   * @throws {Error} If an escape, label length or total name length is invalid.
    */
   encodeDnsName(name: string, compression?: Map<string, number>, offset: number = 0): Buffer {
-    const labels = name.split('.');
+    const labels: string[] = [];
+    let label = '';
+    for (let index = 0; index < name.length; index++) {
+      const character = name[index];
+      if (character === '\\') {
+        if (++index === name.length) throw new Error('Incomplete DNS name escape');
+        label += name[index];
+      } else if (character === '.') {
+        labels.push(label);
+        label = '';
+      } else label += character;
+    }
+    if (label) labels.push(label);
+    if (labels.some((part) => !part || Buffer.byteLength(part) > 63)) throw new Error('Invalid DNS label length');
+    // RFC 6762 Appendix C, RFC 6763 §7.2: up to 255 bytes on the wire, not counting the terminating zero byte.
+    if (labels.reduce((size, part) => size + 1 + Buffer.byteLength(part), 0) > 255) throw new Error('DNS name exceeds 255 bytes');
     const buffers: Buffer[] = [];
     let length = 0;
     for (const [index, label] of labels.entries()) {
       if (compression && label !== '') {
-        const suffix = labels.slice(index).join('.');
+        const suffix = labels
+          .slice(index)
+          .map((part) => part.replaceAll('\\', '\\\\').replaceAll('.', '\\.'))
+          .join('.');
         const pointer = compression.get(suffix);
         if (pointer !== undefined) return Buffer.concat([...buffers, Buffer.from([0xc0 | (pointer >> 8), pointer & 0xff])]);
         // A pointer has 14 bits, so only offsets below 0x4000 can be referenced.
@@ -806,19 +849,21 @@ export class Mdns extends Multicast {
    * @param {{ name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer }} record - The record to encode. If flush is true, the DnsClassFlag.FLUSH cache-flush flag is added to rclass (default false).
    * @param {Map<string, number>} [compression] - Optional compression table of the message (see {@link Mdns.encodeDnsName}).
    * @param {number} [offset] - The offset in the message where the record is written (default 0). Used only with a compression table.
+   * @param {boolean} [compressRdata] - Whether to compress embedded names; false for legacy SRV replies (RFC 6762 §18.14).
    * @returns {Buffer} The encoded resource record: name, type, class, TTL, RDLENGTH and rdata.
    */
   encodeResourceRecord(
     { name, rtype, rclass, flush = false, ttl, rdata }: { name: string; rtype: number; rclass: number; flush?: boolean; ttl: number; rdata: Buffer },
     compression?: Map<string, number>,
     offset: number = 0,
+    compressRdata = true,
   ): Buffer {
     // Encode the domain name in DNS label format.
     const rname = this.encodeDnsName(name, compression, offset);
 
     // Compress the domain name in the rdata of PTR (at 0) and SRV (after priority, weight and port, at 6) records.
     const nameStart = rtype === (DnsRecordType.PTR as number) ? 0 : rtype === (DnsRecordType.SRV as number) ? 6 : -1;
-    if (compression && nameStart >= 0) {
+    if (compression && compressRdata && nameStart >= 0) {
       let rdataName: string | undefined;
       try {
         rdataName = this.decodeDnsName(rdata, nameStart).name;

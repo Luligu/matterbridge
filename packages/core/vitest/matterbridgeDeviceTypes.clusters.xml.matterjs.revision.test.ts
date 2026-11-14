@@ -120,7 +120,7 @@ import { setupTest } from '@matterbridge/test-utils/vitest/setup';
 // Setup the test environment
 await setupTest(NAME, false);
 
-const XML_CLUSTERS_DIR = path.join('chip', '1.6.1', 'xml', 'clusters');
+const XML_CLUSTERS_DIR = path.join('..', 'Matter', '1.6.1', 'xml', 'clusters');
 
 let hasXmlDir = true;
 try {

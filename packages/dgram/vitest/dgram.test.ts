@@ -75,9 +75,13 @@ describe('Dgram', () => {
 
     const message = Buffer.from('Hello');
     dgram.send(message, '127.0.0.1', 12345);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent ${BLUE}5${db} bytes to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
+
+    dgram.verbose = true;
+    dgram.send(message, '127.0.0.1', 12345);
 
     expect(sendSpy).toHaveBeenCalledWith(message, 0, message.length, 12345, '127.0.0.1', expect.any(Function));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent a message to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent ${BLUE}5${db} bytes to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
@@ -777,6 +781,19 @@ describe('Dgram', () => {
 
     expect(dgram.getIpv6InterfaceAddress('eth0')).toBe('fd78:cbf8:4939:746:a58f:3de1:74fc:5db9');
 
+    await new Promise<void>((resolve) => {
+      dgram.on('close', resolve);
+      dgram.socket.close();
+    });
+  });
+
+  test('Log the received message bytes in verbose mode', async () => {
+    dgram = new Dgram('Dgram', 'udp4');
+    dgram.verbose = true;
+    const message = Buffer.from('Hello');
+    const rinfo = { address: '127.0.0.1', family: 'IPv4', port: 12345, size: message.length };
+    dgram.socket.emit('message', message, rinfo);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('bytes from'));
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);
       dgram.socket.close();

@@ -74,7 +74,7 @@ chip-tool descriptor read server-list 0x12344321 1607   # ... 1366 (Chime) ...
 ### Both fabrics need their own binding
 
 The `Binding` attribute is fabric-scoped (`fabricScoped="true"` on both the attribute and `TargetStruct`, see
-`chip/1.6.0/xml/clusters/Binding-Cluster.xml`), so each fabric sees and writes only its own entries. The
+`~/GitHub/Matter/1.6.0/xml/clusters/Binding-Cluster.xml`), so each fabric sees and writes only its own entries. The
 container is commissioned on two fabrics — fabric index 1 is chip-tool's baked-in `alpha` identity, fabric
 index 2 is the Python test framework's `default_controller` (`operationalcredentials read commissioned-fabrics`
 reports `2`). A binding written from chip-tool is invisible to the Python tests and vice versa, so write it on

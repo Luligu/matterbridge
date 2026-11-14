@@ -3,7 +3,7 @@
  * @description Dgram package entrypoint exports.
  * @author Luca Liguori
  * @created 2026-03-04
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -21,8 +21,14 @@
  * limitations under the License.
  */
 
+// oxlint-disable oxc/no-barrel-file
+
 export * from './coap.js';
 export * from './dgram.js';
 export * from './mdns.js';
+export * from './mdnsResponder.js';
+export * from './matterbridgeAdvertise.js';
+export * from './matterAdvertise.js';
+export * from './mdnsScanner.js';
 export * from './multicast.js';
 export * from './unicast.js';

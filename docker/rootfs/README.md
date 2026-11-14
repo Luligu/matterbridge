@@ -16,12 +16,12 @@ This directory is copied to `/` in [Dockerfile.s6-rc](../Dockerfile.s6-rc) and [
 
 ## Files
 
-| File                                                         | Content / Role                                                                                |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
-| `etc/s6-overlay/user-bundles.d/user/contents.d/matterbridge` | Registers `matterbridge` in the `user` bundle<br>(`3.2.3.2+` path, replaces `s6-rc.d/user`).  |
-| `etc/s6-overlay/s6-rc.d/matterbridge/type`                   | Service type: `longrun`.                                                                      |
-| `etc/s6-overlay/s6-rc.d/matterbridge/dependencies.d/base`    | Ensures `base` is up before starting `matterbridge`.                                          |
-| `etc/s6-overlay/s6-rc.d/matterbridge/timeout-kill`           | `55000` ms (55 s) stop timeout before `SIGKILL`<br>(under `config.yaml` `timeout: 60`).       |
-| `etc/s6-overlay/s6-rc.d/matterbridge/run`                    | `#!/command/with-contenv sh` entrypoint script<br>(`chmod +x` in both Dockerfiles).           |
-| `etc/s6-overlay/s6-rc.d/matterbridge/finish`                 | Writes non-zero exit code to<br>`/run/s6-linux-init-container-results/exitcode` and halts.    |
-| `data/options.json`                                          | Default fallback options for standalone Docker runs<br>(overwritten by Supervisor).           |
+| File                                                         | Content / Role                                                                               |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `etc/s6-overlay/user-bundles.d/user/contents.d/matterbridge` | Registers `matterbridge` in the `user` bundle<br>(`3.2.3.2+` path, replaces `s6-rc.d/user`). |
+| `etc/s6-overlay/s6-rc.d/matterbridge/type`                   | Service type: `longrun`.                                                                     |
+| `etc/s6-overlay/s6-rc.d/matterbridge/dependencies.d/base`    | Ensures `base` is up before starting `matterbridge`.                                         |
+| `etc/s6-overlay/s6-rc.d/matterbridge/timeout-kill`           | `55000` ms (55 s) stop timeout before `SIGKILL`<br>(under `config.yaml` `timeout: 60`).      |
+| `etc/s6-overlay/s6-rc.d/matterbridge/run`                    | `#!/command/with-contenv sh` entrypoint script<br>(`chmod +x` in both Dockerfiles).          |
+| `etc/s6-overlay/s6-rc.d/matterbridge/finish`                 | Writes non-zero exit code to<br>`/run/s6-linux-init-container-results/exitcode` and halts.   |
+| `data/options.json`                                          | Default fallback options for standalone Docker runs<br>(overwritten by Supervisor).          |
