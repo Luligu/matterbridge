@@ -94,7 +94,7 @@ describe('MatterbridgeAdvertise', () => {
       const sigint = process.listenerCount('SIGINT');
       const result = await runMatterbridgeAdvertise(argv, { mdnsPort: nextPort++, addressCheckIntervalMs: 0 });
       const code = process.exitCode;
-      process.exitCode = exitCode;
+      process.exitCode = exitCode ?? 0; // Bun ignores undefined, so the exit code of the test run would stay 2
       expect(result).toBeUndefined();
       expect(code).toBe(2);
       expect(process.listenerCount('SIGINT')).toBe(sigint);
