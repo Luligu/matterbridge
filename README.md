@@ -440,6 +440,10 @@ Matterbridge plugin that connects iRobot Roomba robot vacuums to the Matter fabr
 
 Matterbridge dynamic platform plugin that exposes Elgato Key Light, Key Light Air and Light Strip to Matter using the local HTTP API with mDNS discovery.
 
+### [myIO](https://github.com/SmarthomeNinja/matterbridge-myio)
+
+A Matterbridge plugin that exposes the outputs, shutters, thermostat zones and sensors of myIO smart home controllers to Matter over their local HTTP API.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
