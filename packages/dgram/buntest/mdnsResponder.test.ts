@@ -12,7 +12,14 @@ import { loggerLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/bun
 import { LogLevel } from 'node-ansi-logger';
 
 import { DnsClass, DnsClassFlag, DnsHeaderFlag, DnsRecordType, Mdns, MDNS_MAX_MESSAGE_LENGTH, type MdnsMessage } from '../src/mdns.js';
-import { MDNS_HOST_RECORD_TTL, MDNS_OTHER_RECORD_TTL, MdnsResponder, type MdnsResponderFamily, type MdnsResponderOptions } from '../src/mdnsResponder.js';
+import {
+  MDNS_ANNOUNCE_DEFAULT_COUNT,
+  MDNS_HOST_RECORD_TTL,
+  MDNS_OTHER_RECORD_TTL,
+  MdnsResponder,
+  type MdnsResponderFamily,
+  type MdnsResponderOptions,
+} from '../src/mdnsResponder.js';
 
 // Mocks AnsiLogger.prototype.log and the console methods, and sets process.argv to ['bun', NAME].
 await setupTest('MdnsResponderTest');
@@ -127,7 +134,8 @@ describe('MdnsResponder', () => {
    */
   async function startAdvertiser(options: Partial<MdnsResponderOptions> = {}): Promise<MdnsResponder> {
     port = nextPort++;
-    const advertiser = new MdnsResponder({ ...defaults, mdnsPort: port, addressCheckIntervalMs: 0, ...options });
+    // Three announcements keep the sequences of these tests short; the default of 8 has its own test.
+    const advertiser = new MdnsResponder({ ...defaults, mdnsPort: port, addressCheckIntervalMs: 0, announceCount: 3, ...options });
     adv = advertiser;
     sent = [];
     spyOn(advertiser, 'transmit').mockImplementation((family, packet, address, destinationPort) => {
@@ -238,6 +246,9 @@ describe('MdnsResponder', () => {
       expect(() => new MdnsResponder({ ...defaults, port: 0 })).toThrow('invalid port');
       expect(() => new MdnsResponder({ ...defaults, txt: ['x'.repeat(256)] })).toThrow('TXT entry too long');
       expect(() => new MdnsResponder({ ...defaults, enableIpv4: false, enableIpv6: false })).toThrow('at least one of IPv4 and IPv6 must be enabled');
+      for (const announceCount of [1, 9, 2.5]) {
+        expect(() => new MdnsResponder({ ...defaults, announceCount })).toThrow('announceCount must be an integer from 2 to 8');
+      }
     });
   });
 
@@ -800,6 +811,21 @@ describe('MdnsResponder', () => {
         ]);
         expect(JSON.parse(nsec[2].data)).toEqual({ nextDomain: `${advertiser.instanceName}._example._tcp.local`, types: ['TXT', 'SRV'] });
       }
+    });
+
+    it('should announce 8 times by default, doubling the interval (RFC 6762 §8.3)', async () => {
+      expect(MDNS_ANNOUNCE_DEFAULT_COUNT).toBe(8);
+      await startAdvertiser({ announceCount: undefined });
+      await completeProbing();
+      const announcements = (): Sent[] => sentOn('ipv4').filter((packet) => packet.message.qr === 1);
+      expect(announcements()).toHaveLength(1);
+      // The announcements follow at 1, 3, 7, 15, 31, 63 and 127 seconds.
+      for (const [index, interval] of [1000, 2000, 4000, 8000, 16000, 32000, 64000].entries()) {
+        vi.advanceTimersByTime(interval);
+        expect(announcements()).toHaveLength(index + 2);
+      }
+      vi.advanceTimersByTime(300000);
+      expect(announcements()).toHaveLength(8);
     });
 
     it('should re-announce with the new port and TXT after an update', async () => {

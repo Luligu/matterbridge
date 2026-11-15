@@ -286,6 +286,8 @@ describe('Matter discovery', () => {
     { mode: 'controller', port: 5541, address: '203.0.113.10' },
     { mode: 'controller', port: 5541, address: 'invalid' },
     { mode: 'controller', port: 5541, address: 'fe80::10%lan1' },
+    { mode: 'controller', port: 5541, announceCount: 1 },
+    { mode: 'controller', port: 5541, announceCount: 9 },
     { mode: 'operational', port: 5540, compressedFabricId: -1n, nodeId: 1n },
     { mode: 'operational', port: 5540, compressedFabricId: 1n, nodeId: 0n },
     { mode: 'operational', port: 5540, compressedFabricId: 1n, nodeId: 0xfffffff000000000n },

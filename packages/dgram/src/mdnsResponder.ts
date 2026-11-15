@@ -3,7 +3,7 @@
  * @description Shared RFC 6762 / RFC 6763 mDNS and DNS-SD responder.
  * @author Luca Liguori
  * @created 2026-09-28
- * @version 1.0.4
+ * @version 1.0.5
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -56,7 +56,10 @@ const PROBE_CONFLICT_WINDOW_MS = 10000; // RFC 6762 §8.1
 const PROBE_CONFLICT_LIMIT = 15; // RFC 6762 §8.1
 const PROBE_THROTTLE_DELAY_MS = 5000; // RFC 6762 §8.1
 const PROBE_FAILURE_ERROR_MS = 60000; // RFC 6762 §9 step 5
-const ANNOUNCE_COUNT = 3; // RFC 6762 §8.3: at least 2, up to 8
+/** Default number of unsolicited announcements; RFC 6762 §8.3 requires at least 2 and allows up to 8. */
+export const MDNS_ANNOUNCE_DEFAULT_COUNT = 8;
+const ANNOUNCE_MIN_COUNT = 2; // RFC 6762 §8.3
+const ANNOUNCE_MAX_COUNT = 8; // RFC 6762 §8.3
 const ANNOUNCE_FIRST_INTERVAL_MS = 1000; // RFC 6762 §8.3: one second, then doubling
 const RESPONSE_MIN_DELAY_MS = 20; // RFC 6762 §6
 const RESPONSE_MAX_DELAY_MS = 120; // RFC 6762 §6
@@ -104,6 +107,8 @@ export interface MdnsResponderOptions {
   enableIpv6?: boolean;
   /** Interval in ms between two checks of the interface addresses, 0 disables it. Defaults to {@link MDNS_ADVERTISE_DEFAULT_ADDRESS_CHECK_MS}. */
   addressCheckIntervalMs?: number;
+  /** Number of unsolicited announcements, 2..8 (RFC 6762 §8.3): one second apart, then doubling. Defaults to {@link MDNS_ANNOUNCE_DEFAULT_COUNT}. */
+  announceCount?: number;
   /** mDNS UDP port. Defaults to 5353; only tests should change it. */
   mdnsPort?: number;
 }
@@ -261,6 +266,7 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
   private instanceLabel: string;
   private readonly aliasLabel: string | undefined;
   private readonly addressCheckIntervalMs: number;
+  private readonly announceCount: number;
   private readonly codec: Mdns;
 
   private readonly claims = new Map<ClaimKind, ClaimState>();
@@ -303,6 +309,9 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     this.txt = [...(options.txt ?? [])];
     this.services = [...options.services];
     this.addressCheckIntervalMs = options.addressCheckIntervalMs ?? MDNS_ADVERTISE_DEFAULT_ADDRESS_CHECK_MS;
+    this.announceCount = options.announceCount ?? MDNS_ANNOUNCE_DEFAULT_COUNT;
+    if (!Number.isInteger(this.announceCount) || this.announceCount < ANNOUNCE_MIN_COUNT || this.announceCount > ANNOUNCE_MAX_COUNT)
+      throw new RangeError(`MdnsResponder: announceCount must be an integer from ${ANNOUNCE_MIN_COUNT} to ${ANNOUNCE_MAX_COUNT}`);
 
     const interfaceName = options.interfaceName;
     if (!interfaceName || !os.networkInterfaces()[interfaceName]) throw new Error(`MdnsResponder: network interface ${interfaceName ?? '(none found)'} not available`);
@@ -820,7 +829,7 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     this.startProbing();
   }
 
-  /** Starts an announcement sequence: 3 unsolicited responses at 0, 1 and 3 seconds (RFC 6762 §8.3). */
+  /** Starts an announcement sequence: announceCount unsolicited responses, one second apart, then doubling (RFC 6762 §8.3). */
   private startAnnouncing(): void {
     this.cancelAnnouncing();
     const announce = (index: number): void => {
@@ -828,13 +837,13 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
       const answers = records.filter((record) => record.type !== DnsRecordType.NSEC);
       const additionals = records.filter((record) => record.type === DnsRecordType.NSEC);
       for (const family of this.families()) this.sendMulticast(family, answers, additionals);
+      this.log.info(`Announced ${CYAN}${this.hostName}${nf} and ${CYAN}${this.instanceLabel}${nf} (${index + 1}/${this.announceCount})`);
       if (index === 0) {
-        this.log.info(`Announced ${CYAN}${this.hostName}${nf} and ${CYAN}${this.instanceLabel}${nf}`);
         this.emit('announced');
         this.announcedResolve?.();
         this.announcedResolve = undefined;
       }
-      if (index + 1 < ANNOUNCE_COUNT) this.announceTimer = this.setTimer(() => announce(index + 1), ANNOUNCE_FIRST_INTERVAL_MS * 2 ** index);
+      if (index + 1 < this.announceCount) this.announceTimer = this.setTimer(() => announce(index + 1), ANNOUNCE_FIRST_INTERVAL_MS * 2 ** index);
     };
     announce(0);
   }

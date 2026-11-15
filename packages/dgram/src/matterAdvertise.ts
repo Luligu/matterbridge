@@ -3,7 +3,7 @@
  * @description Matter discovery advertisements using the local mDNS responder (Matter Core 1.6.1 §4.3).
  * @author Luca Liguori
  * @created 2026-11-11
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -50,6 +50,8 @@ export interface MatterAdvertiseCommonOptions {
   durationMs?: number;
   /** Address polling interval in milliseconds, 0 disables polling. Defaults to 10000. */
   addressCheckIntervalMs?: number;
+  /** Number of unsolicited mDNS announcements, 2..8 (RFC 6762 §8.3). Defaults to 8. */
+  announceCount?: number;
   /** mDNS port override for tests. Defaults to 5353. */
   mdnsPort?: number;
 }
@@ -224,6 +226,7 @@ export class MatterAdvertise extends EventEmitter<MatterAdvertiseEvents> {
         enableIpv6: selected.some((info) => info.family === 'IPv6'),
         mdnsPort: options.mdnsPort,
         addressCheckIntervalMs: options.addressCheckIntervalMs,
+        announceCount: options.announceCount,
         // Core §4.3.1 and §4.3.3 require a fresh 64-bit temporary identifier on collision.
         // Operational names (§4.3.2.1) and MAC-derived hosts cannot acquire arbitrary numeric suffixes.
         // Stopping those claims is our failure policy, not an alternate Matter naming scheme.
@@ -326,6 +329,7 @@ function createService(options: MatterAdvertiseOptions): MatterService {
   if (options.mdnsPort !== undefined) integer('mdnsPort', options.mdnsPort, 65535, 1);
   if (options.durationMs !== undefined) integer('durationMs', options.durationMs, 2147483647, 1);
   if (options.addressCheckIntervalMs !== undefined) integer('addressCheckIntervalMs', options.addressCheckIntervalMs, 2147483647);
+  if (options.announceCount !== undefined) integer('announceCount', options.announceCount, 8, 2);
   const result: MatterService = { service: '', instance: randomInstance(), subtypes: [], txt: [] };
   // Core §4.3.4: decimal milliseconds, without leading zeros; these are upper bounds, not default intervals.
   for (const [key, value, maximum] of [
