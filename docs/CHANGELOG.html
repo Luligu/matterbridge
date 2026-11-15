@@ -163,6 +163,7 @@
 <li>[dgram]: Add <code>MdnsResponder</code>, <code>MdnsScanner</code>, <code>MatterAdvertise</code> and <code>MatterbridgeAdvertise</code> (ported from matterbridge-native).</li>
 <li>[mb-mdns-scan]: Add <code>mb-mdns-scan</code> bin that runs the <code>MdnsScanner</code> CLI.</li>
 <li>[mb-mdns-advertise]: Add <code>mb-mdns-advertise</code> bin that runs the <code>MatterbridgeAdvertise</code> CLI.</li>
+<li>[dgram]: Add the <code>announceCount</code> option (2 to 8, RFC 6762 §8.3) to <code>MdnsResponder</code> and <code>MatterAdvertise</code>.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -182,6 +183,7 @@
 <li>[core]: Bump <code>werift</code> to v.0.27.0.</li>
 <li>[core]: Bump <code>ws</code> to v.8.23.0.</li>
 <li>[dgram]: Log per-packet traffic only in verbose mode, with the byte count.</li>
+<li>[dgram]: Send 8 mDNS announcements by default instead of 3, and log each one.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
