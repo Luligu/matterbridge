@@ -113,6 +113,12 @@ The RFC texts are taken from the RFC Editor (https://www.rfc-editor.org/rfc/rfcN
 - [RFC 768 — User Datagram Protocol](../Rfcs/rfc768.txt).
 - [RFC 8085 — UDP Usage Guidelines (BCP 145)](../Rfcs/rfc8085.txt): message size, fragmentation, rate limiting and multicast senders.
 
+### TCP
+
+- [RFC 9293 — Transmission Control Protocol (TCP)](../Rfcs/rfc9293.txt): the reference of Matter Core § 4.15; connection failures (§ 3.8.3), keep-alives (§ 3.8.4) and half-closed connections (§ 3.6.1).
+- [RFC 1122 — Requirements for Internet Hosts — Communication Layers](../Rfcs/rfc1122.txt): § 4.2 TCP host requirements, including keep-alives (§ 4.2.3.6).
+- [RFC 5482 — TCP User Timeout Option](../Rfcs/rfc5482.txt): the TCP User Timeout of Matter Core § 4.15.2.1.
+
 ### IPv4 multicast (`Multicast`)
 
 - [RFC 1112 — Host Extensions for IP Multicasting](../Rfcs/rfc1112.txt): group membership, TTL and loopback.
