@@ -134,3 +134,8 @@ The RFC texts are taken from the RFC Editor (https://www.rfc-editor.org/rfc/rfcN
 
 - [RFC 7252 — The Constrained Application Protocol (CoAP)](../Rfcs/rfc7252.txt).
 - [RFC 7641 — Observing Resources in CoAP](../Rfcs/rfc7641.txt).
+- [RFC 7959 — Block-Wise Transfers in the Constrained Application Protocol (CoAP)](../Rfcs/rfc7959.txt).
+- [RFC 6690 — Constrained RESTful Environments (CoRE) Link Format](../Rfcs/rfc6690.txt): the `/.well-known/core` discovery format.
+- [RFC 8132 — PATCH and FETCH Methods for the Constrained Application Protocol (CoAP)](../Rfcs/rfc8132.txt).
+- [RFC 8323 — CoAP (Constrained Application Protocol) over TCP, TLS, and WebSockets](../Rfcs/rfc8323.txt).
+- [RFC 7390 — Group Communication for the Constrained Application Protocol (CoAP)](../Rfcs/rfc7390.txt): Experimental, multicast requests.
