@@ -392,6 +392,7 @@
     "updateMatter:latest": "node scripts/update-matter.mjs latest",
     "updateMatter:dev": "node scripts/update-matter.mjs dev",
     "updateMatter:loc": "node scripts/update-matter.mjs loc",
+    "docker:run:ubuntu:sandbox": "docker run -it --rm --pull always --hostname sandbox --name ubuntu-sandbox --network bridge --cap-drop=ALL --security-opt=no-new-privileges:true --memory=2g --cpus=2 --pids-limit=256 ubuntu:latest bash",
     "docker:run:node:24-trixie": "docker run -it --rm --pull always --network matterbridge -p 8283:8283 --name matterbridge-node-24-trixie node:24-trixie bash",
     "docker:run:node:24-trixie-slim": "docker run -it --rm --pull always --network matterbridge -p 8283:8283 --name matterbridge-node-24-trixie-slim node:24-trixie-slim bash",
     "docker:run:node:24-alpine": "docker run -it --rm --pull always --network matterbridge -p 8283:8283 --name matterbridge-node-24-alpine node:24-alpine sh",
