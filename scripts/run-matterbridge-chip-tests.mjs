@@ -254,7 +254,7 @@ function start(local = false) {
     '--network',
     'matterbridge',
     '--restart',
-    'always',
+    'unless-stopped',
     '--stop-timeout',
     '60',
     '--name',
