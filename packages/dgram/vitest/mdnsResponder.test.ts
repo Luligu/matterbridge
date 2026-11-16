@@ -1149,6 +1149,32 @@ describe('MdnsResponder', () => {
       expect(sent[0].message.answers?.[0].name).toBe(advertiser.hostName);
     });
 
+    it('should drop the packet and keep advertising when a destination is unreachable', async () => {
+      const advertiser = await announcedAdvertiser({ enableIpv6: false });
+      const socket = advertiser.sockets.ipv4;
+      if (!socket) throw new Error('IPv4 socket not created');
+      const errors = vi.fn();
+      advertiser.on('error', errors);
+      socket.on('error', errors);
+      const warn = vi.spyOn(socket.log, 'warn').mockImplementation(() => {});
+      // The querier left the link after its query: the unicast reply cannot be delivered.
+      const send = vi.spyOn(socket.socket, 'send').mockImplementationOnce((...parameters: unknown[]) => {
+        const callback = parameters.at(-1) as (error: Error | null) => void;
+        callback(Object.assign(new Error('send EHOSTUNREACH 192.168.69.103:5353'), { code: 'EHOSTUNREACH', syscall: 'send' }));
+      });
+      const query = buildPacket({ questions: [{ name: advertiser.hostName, type: DnsRecordType.ANY }] });
+      MdnsResponder.prototype.transmit.call(advertiser, 'ipv4', query, '192.168.69.103', 5353);
+      expect(send).toHaveBeenCalledTimes(1);
+      expect(warn).toHaveBeenCalledWith('Packet to 192.168.69.103:5353 dropped: send EHOSTUNREACH 192.168.69.103:5353');
+      expect(errors).not.toHaveBeenCalled();
+      // The responder still answers: the next packet goes through the same socket.
+      const transmitted = new Promise((resolve) => socket.once('sent', resolve));
+      MdnsResponder.prototype.transmit.call(advertiser, 'ipv4', query, '127.0.0.1', port);
+      await transmitted;
+      expect(errors).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
     it('should log a socket error and emit it when there is a listener', async () => {
       const advertiser = await announcedAdvertiser();
       advertiser.sockets.ipv4?.socket.emit('error', new Error('first'));

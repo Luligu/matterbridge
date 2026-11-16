@@ -232,6 +232,28 @@ class MdnsResponderSocket extends Mdns {
   override onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
     this.onPacket?.(msg, rinfo);
   }
+
+  /**
+   * Sends a packet best-effort: a destination that cannot be reached loses that packet and does not fail the socket.
+   *
+   * @remarks
+   * A unicast reply (RFC 6762 §5.4, §6.7) goes to the address of the querier, which may have left the link since
+   * its query (EHOSTUNREACH, ENETUNREACH, EHOSTDOWN). mDNS has no delivery guarantee: the querier asks again.
+   *
+   * @param {Buffer} msg - The packet.
+   * @param {string} serverAddress - Destination address.
+   * @param {number} serverPort - Destination port.
+   */
+  override send(msg: Buffer, serverAddress: string, serverPort: number): void {
+    this.socket.send(msg, 0, msg.length, serverPort, serverAddress, (error: Error | null) => {
+      if (error) {
+        this.log.warn(`Packet to ${serverAddress}:${serverPort} dropped: ${getErrorMessage(error)}`);
+        return;
+      }
+      this.emit('sent', msg, serverAddress, serverPort);
+      this.onSent(msg, serverAddress, serverPort);
+    });
+  }
 }
 
 /**
