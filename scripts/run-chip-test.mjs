@@ -1,12 +1,14 @@
 /**
- * run-matterbridge-chip-tests.mjs
- * Version: 1.0.1
+ * run-chip-test.mjs
+ * Version: 1.2.0
  *
  * Manage the `luligu/matterbridge:chip-test` docker container and run the Matter CHIP test suite defined
  * in chipTests.json, logging full results to chipTests.log and just the pass/fail summary to
  * chipTestsSummary.log. The image already bundles a full Matterbridge instance (built from the `dev`
  * branch at image-build time) started with `--novirtual`, so there is nothing to install, build, or add
- * here: `--start` just brings the container up and waits for Matterbridge's root server node to come
+ * by default. With `--start --plugin`, the prepared plugin in cwd is copied into the container,
+ * configured from chipTests.json.config, and registered with Matterbridge. Otherwise `--start` just
+ * brings the container up and waits for Matterbridge's root server node to come
  * online, and the test list runs against that instance as-is.
  *
  * chipTests.json shape:
@@ -58,11 +60,12 @@
  *                          below.
  *
  * Usage:
- *   node scripts/run-matterbridge-chip-tests.mjs --start          Create and start the chip-test container.
- *   node scripts/run-matterbridge-chip-tests.mjs --start --local  Create and start the chip-test container from the local matterbridge:chip-test image (no pull).
- *   node scripts/run-matterbridge-chip-tests.mjs --stop           Stop the chip-test container.
- *   node scripts/run-matterbridge-chip-tests.mjs                  Run the tests listed in chipTests.json inside the running container.
- *   node scripts/run-matterbridge-chip-tests.mjs --test NAME       Run only the tests whose "name" or "test" property includes NAME (case-insensitive).
+ *   node scripts/run-chip-test.mjs --start          Create and start the chip-test container.
+ *   node scripts/run-chip-test.mjs --start --local  Create and start the chip-test container from the local matterbridge:chip-test image (no pull).
+ *   node scripts/run-chip-test.mjs --start --plugin Copy and register the prepared plugin in cwd (also accepts --local).
+ *   node scripts/run-chip-test.mjs --stop           Stop the chip-test container.
+ *   node scripts/run-chip-test.mjs                  Run the tests listed in chipTests.json inside the running container.
+ *   node scripts/run-chip-test.mjs --test NAME       Run only the tests whose "name" or "test" property includes NAME (case-insensitive).
  *
  * A chipTests.json entry may set "resetBefore": true to clear persisted stateful cluster storage (matched
  * via "resetClusterGlobs", above) and restart the matterbridge process before that test runs, and/or
@@ -117,11 +120,11 @@
  */
 
 import { spawnSync } from 'node:child_process';
-import { appendFileSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { appendFileSync, cpSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-const scriptVersion = '1.1.0';
+const scriptVersion = '1.2.0';
 
 const root = process.cwd();
 const containerName = 'chip-test';
@@ -148,7 +151,7 @@ const matterstorageRoot = '/root/.matterbridge/matterstorage/Matterbridge';
 const chipTestAppPipePath = '/tmp/matterbridge-chip-test-app-pipe';
 // Printed once Matterbridge's root server node has finished coming online after a (re)start; polled from
 // `docker logs` so the next test doesn't race a not-yet-ready device.
-const readyLogMarker = 'Server node for Matterbridge is online';
+let readyLogMarker = 'Server node for Matterbridge is online';
 // The image bakes in two already-commissioned fabrics against fixed, reusable pairing credentials (see
 // docker/chip-test/pairing.json): chip-tool's own CLI ("alpha" commissioner identity) and the Python test
 // framework's default_controller (its own separate admin_storage.json-backed fabric). Both conventionally
@@ -160,6 +163,7 @@ const fixedDiscriminator = '3535';
 const commissioningWindowTimeoutSeconds = '300';
 const commissioningWindowPakeIterations = '10000';
 
+let pluginConfig;
 let resetClusterGlobs;
 let patches;
 let allTests;
@@ -211,22 +215,23 @@ function stripAnsi(text) {
 }
 
 function printHelp() {
-  console.log(`run-matterbridge-chip-tests.mjs v${scriptVersion}
+  console.log(`run-chip-test.mjs v${scriptVersion}
 
 Manage the luligu/matterbridge:chip-test docker container and run the Matter CHIP test suite defined in
 chipTests.json.
 
 Usage:
-  node scripts/run-matterbridge-chip-tests.mjs --start          Create and start the chip-test container.
-  node scripts/run-matterbridge-chip-tests.mjs --start --local  Create and start the chip-test container from the local matterbridge:chip-test image (no pull).
-  node scripts/run-matterbridge-chip-tests.mjs --stop           Stop the chip-test container.
-  node scripts/run-matterbridge-chip-tests.mjs                  Run the tests listed in chipTests.json inside the running container.
-  node scripts/run-matterbridge-chip-tests.mjs --test NAME      Run only the tests whose "name" or "test" property includes NAME (case-insensitive).
-  node scripts/run-matterbridge-chip-tests.mjs --help           Show this help.
-  node scripts/run-matterbridge-chip-tests.mjs --version        Show the script version.`);
+  node scripts/run-chip-test.mjs --start          Create and start the chip-test container.
+  node scripts/run-chip-test.mjs --start --local  Create and start the chip-test container from the local matterbridge:chip-test image (no pull).
+  node scripts/run-chip-test.mjs --start --plugin Copy and register the prepared plugin in cwd (also accepts --local).
+  node scripts/run-chip-test.mjs --stop           Stop the chip-test container.
+  node scripts/run-chip-test.mjs                  Run the tests listed in chipTests.json inside the running container.
+  node scripts/run-chip-test.mjs --test NAME      Run only the tests whose "name" or "test" property includes NAME (case-insensitive).
+  node scripts/run-chip-test.mjs --help           Show this help.
+  node scripts/run-chip-test.mjs --version        Show the script version.`);
 }
 
-function start(local = false) {
+function start(local = false, plugin = false) {
   console.log('Removing any existing chip-test container...');
   run('docker', ['rm', containerName, '-f']);
 
@@ -268,13 +273,14 @@ function start(local = false) {
     // Without this, the aggregator stays empty (Descriptor-only), as chipTests.md's Endpoint 1 section
     // previously documented.
     '-e',
-    'MATTERBRIDGE_DEMO_DEVICES=1',
+    `MATTERBRIDGE_DEMO_DEVICES=${plugin ? '' : '1'}`,
     startImage,
   ]);
 
   waitForContainerReady(startedAt);
   applyPatches();
   copyPicsFiles();
+  if (plugin) addPlugin();
   console.log('Chip-test container ready.');
 }
 
@@ -294,12 +300,38 @@ function applyPatches() {
 // freshly-started container always picks up local .pics edits without a separate manual `docker cp` step —
 // see the "patches" doc comment above.
 function copyPicsFiles() {
+  if (pluginConfig && !existsSync(picsDir)) return;
   const picsFiles = readdirSync(picsDir).filter((name) => name.endsWith('.pics'));
   for (const picsFile of picsFiles) {
     console.log(`Copying PICS file ${picsFile}...`);
     const localPath = join(picsDir, picsFile);
     runOrFail('docker', ['cp', localPath, `${containerName}:/root/${picsFile}`]);
   }
+}
+
+// Copies the already-built plugin and its test configuration, then registers it before restarting.
+function addPlugin() {
+  const pluginName = pluginConfig.name;
+  const remoteDir = `/root/Matterbridge/${pluginName}`;
+  console.log(`Copying plugin ${pluginName} into the container...`);
+  runOrFail('docker', ['exec', containerName, 'mkdir', '-p', remoteDir, '/root/.matterbridge']);
+  const configDir = mkdtempSync(join(tmpdir(), 'matterbridge-chip-plugin-'));
+  try {
+    const pluginDir = join(configDir, 'plugin');
+    const localMatterbridge = join(root, 'node_modules', 'matterbridge');
+    cpSync(root, pluginDir, { recursive: true, verbatimSymlinks: true, filter: (source) => source !== localMatterbridge });
+    runOrFail('docker', ['cp', `${pluginDir}/.`, `${containerName}:${remoteDir}`]);
+    const configPath = join(configDir, `${pluginName}.config.json`);
+    writeFileSync(configPath, `${JSON.stringify(pluginConfig, null, 2)}\n`);
+    runOrFail('docker', ['cp', configPath, `${containerName}:/root/.matterbridge/${pluginName}.config.json`]);
+  } finally {
+    rmSync(configDir, { recursive: true, force: true });
+  }
+  runOrFail('docker', ['exec', containerName, 'matterbridge', '--add', pluginName]);
+  readyLogMarker = `Configured plugin ${pluginName} type `;
+  const restartedAt = new Date().toISOString();
+  runOrFail('docker', ['restart', containerName]);
+  waitForContainerReady(restartedAt);
 }
 
 function stop() {
@@ -466,7 +498,7 @@ function revokeCommissioningWindow() {
 
 // Reads chipTests.json once, populating resetClusterGlobs/allTests. Must run before anything that
 // references those, so it's the first thing main() does.
-function loadChipTestsFile() {
+function loadChipTestsFile(plugin = false) {
   let raw;
   try {
     raw = readFileSync(testsFile, 'utf8');
@@ -476,6 +508,16 @@ function loadChipTestsFile() {
   }
 
   const parsed = JSON.parse(raw);
+  if (plugin) {
+    pluginConfig = parsed.config;
+    if (!pluginConfig || typeof pluginConfig.name !== 'string' || !/^[a-z0-9][a-z0-9._-]*$/.test(pluginConfig.name)) {
+      fail(`Expected a "config" object with a valid plugin "name" in ${testsFile}`);
+    }
+    const packageJson = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+    if (packageJson.name !== pluginConfig.name) {
+      fail(`Plugin package name must match config.name (${pluginConfig.name}) in ${testsFile}`);
+    }
+  }
 
   resetClusterGlobs = parsed.resetClusterGlobs ?? [];
   if (!Array.isArray(resetClusterGlobs)) {
@@ -685,10 +727,12 @@ function main() {
     return;
   }
 
-  loadChipTestsFile();
+  const plugin = args.includes('--plugin');
+  if (plugin && !args.includes('--start')) fail('--plugin requires --start');
+  loadChipTestsFile(plugin);
 
   if (args.includes('--start')) {
-    start(args.includes('--local'));
+    start(args.includes('--local'), plugin);
     return;
   }
 

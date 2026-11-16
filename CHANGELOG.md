@@ -37,6 +37,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [chip-test]: Add `--start --plugin` to copy and configure the plugin from the current repository inside the test container, excluding its local Matterbridge dependency.
+
 - [core]: Add `AnsiLoggerCache` global logger cache (`--loggerCache`) and replay cached log entries to newly connected frontend WebSocket clients.
 - [dgram]: Add `MdnsResponder`, `MdnsScanner`, `MatterAdvertise` and `MatterbridgeAdvertise` (ported from matterbridge-native).
 - [mb-mdns-scan]: Add `mb-mdns-scan` bin that runs the `MdnsScanner` CLI.
@@ -287,7 +289,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
 - [test-utils]: Add `addBridgedDevice()` to the test-utils helpers: it adds the Bridged Node device type and, when missing, the `BridgedDeviceBasicInformationServer` to a test device, like `registerDevice()` does in bridge mode.
 - [matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the `subscribeAttribute` listeners are lost. Closes [#657](https://github.com/Luligu/matterbridge/issues/657). Thanks Calvin Che.
-- [chip]: Add `--start --local` (`npm run chip:start:local`) to `run-matterbridge-chip-tests.mjs` to run the locally built `matterbridge:chip-test` image without pulling.
+- [chip]: Add `--start --local` (`npm run chip:start:local`) to `run-chip-test.mjs` to run the locally built `matterbridge:chip-test` image without pulling.
 
 ### Changed
 

@@ -9,20 +9,38 @@ from the `dev` branch, started with `--novirtual` — nothing local is installed
 - container test logs directory mapped on ./temp directory
 
 ```shell
-node scripts/run-matterbridge-chip-tests.mjs --start
+node scripts/run-chip-test.mjs --start
 ```
 
 To test an image built locally with `npm run docker:build:local:chip-test` (e.g. a new CHIP branch), start
 the local `matterbridge:chip-test` image instead; it is used as is, without pulling:
 
 ```shell
-node scripts/run-matterbridge-chip-tests.mjs --start --local
+node scripts/run-chip-test.mjs --start --local
 ```
+
+## Start with a local plugin
+
+From the plugin repository, use `--start --plugin` (optionally with `--local`):
+
+```shell
+node /path/to/matterbridge/scripts/run-chip-test.mjs --start --plugin
+```
+
+The current directory must contain the prepared plugin (built code and its dependencies), a
+`package.json`, and `chipTests.json` with a `config` object whose `name` matches the package name.
+The script copies the directory into the container's `~/Matterbridge/<name>`, writes `config` to
+`~/.matterbridge/<name>.config.json`, runs `matterbridge --add <name>`, and restarts the container,
+waiting for plugin configuration. Dependencies must be compatible with the Linux container;
+this switch does not install dependencies or build the plugin. The copy excludes
+`node_modules/matterbridge` (directory or symlink), allowing startup to link the container’s own
+Matterbridge package; other dependencies are retained. Demo devices are disabled in this mode.
+Plugin-local `docker/chip-test/*.pics` files are copied when present.
 
 ## Run all configured tests inside the container
 
 ```shell
-node scripts/run-matterbridge-chip-tests.mjs
+node scripts/run-chip-test.mjs
 ```
 
 ## Manually run the tests inside the container
@@ -52,7 +70,7 @@ python3 scripts/tests/chipyaml/chiptool.py tests Test_TC_I_2_1 --endpoint 7
 ## Stop the container
 
 ```shell
-node scripts/run-matterbridge-chip-tests.mjs --stop
+node scripts/run-chip-test.mjs --stop
 ```
 
 ## Bind a client cluster (Chime client on the Doorbell)

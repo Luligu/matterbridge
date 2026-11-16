@@ -232,7 +232,7 @@ let chipTestRestartPending = false;
 let chipTestRestartFlagWarned = false;
 let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
 // The endpoint chipTests.json's "endpoint" field names for whichever test is currently running, set via the
-// app-pipe "SetTestEndpoint" command (run-matterbridge-chip-tests.mjs writes it before every test, cleared —
+// app-pipe "SetTestEndpoint" command (run-chip-test.mjs writes it before every test, cleared —
 // EndpointId omitted — before a test with no "endpoint" set). GeneralDiagnostics.TestEventTrigger carries no
 // endpoint field on the wire, so this out-of-band pin is what lets handleSmokeCoAlarmTestEventTrigger()/
 // handleBooleanStateConfigurationTestEventTrigger()/handleElectricalEnergyTestEventTrigger() target the one
@@ -1620,7 +1620,7 @@ function buildChipTestDeviceEnergyManagementForecast(): {
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {
-  // Not a device command: run-matterbridge-chip-tests.mjs writes this before every test to pin
+  // Not a device command: run-chip-test.mjs writes this before every test to pin
   // chipTestActiveEndpointId to chipTests.json's "endpoint" for that test (EndpointId omitted clears the pin),
   // so GeneralDiagnostics.TestEventTrigger handlers (which have no endpoint field to work with) and the
   // EndpointId fallback below can target the right endpoint instead of guessing or broadcasting.
