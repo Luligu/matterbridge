@@ -38,8 +38,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [docs]: Document Matter 1.6.1 provisional elements and the unresolved Ambient Context Sensor reference.
-- [chip-test]: Add `--start --plugin` to copy and configure the plugin from the current repository inside the test container, excluding its local Matterbridge dependency.
-
+- [chip-test]: Add `--start --plugin` to copy and configure the plugin from the current repository inside the test container, excluding its local Matterbridge dependency. Available in all plugins.
 - [core]: Add `AnsiLoggerCache` global logger cache (`--loggerCache`) and replay cached log entries to newly connected frontend WebSocket clients.
 - [dgram]: Add `MdnsResponder`, `MdnsScanner`, `MatterAdvertise` and `MatterbridgeAdvertise` (ported from matterbridge-native).
 - [mb-mdns-scan]: Add `mb-mdns-scan` bin that runs the `MdnsScanner` CLI.
