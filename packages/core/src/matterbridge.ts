@@ -2342,8 +2342,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.warn(' *********************************************************************************');
       this.log.warn(' * MATTERBRIDGE_DEMO_DEVICES environment variable is set. Creating demo devices. *');
       this.log.warn(' *********************************************************************************');
-      const { createDemoDevices } = await import('./demoDevices.js');
-      await createDemoDevices(this);
+      const { registerDemoPlugin } = await import('./demo/module.js');
+      await registerDemoPlugin(this);
     }
     // v8 ignore next - No test cause is just chip test entry point for the app pipe
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {

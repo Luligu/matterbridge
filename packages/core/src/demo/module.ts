@@ -1,6 +1,6 @@
 /**
- * @file packages/core/src/demoDevices.ts
- * @description This file contains the demo device tree synthesized for the Matterbridge demo devices.
+ * @file packages/core/src/demo/module.ts
+ * @description This file contains the in-memory Matterbridge demo devices plugin (matterbridge --demo-devices).
  * @author Luca Liguori
  * @created 2026-08-17
  * @version 1.6.0
@@ -26,8 +26,9 @@
 
 /* v8 ignore start - No test cause is just a way to easily add new devices for testing purposes without using plugins */
 
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import {
   ClosureCoveringTag,
@@ -56,55 +57,56 @@ import { RvcCleanMode } from '@matter/types/clusters/rvc-clean-mode';
 import { RvcRunMode } from '@matter/types/clusters/rvc-run-mode';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { EndpointNumber } from '@matter/types/datatype';
-import type { PlatformConfig, PlatformSchema } from '@matterbridge/types';
+import type { PlatformConfig, PlatformMatterbridge, PlatformSchema } from '@matterbridge/types';
 import { getErrorMessage } from '@matterbridge/utils/error';
+import type { AnsiLogger } from 'node-ansi-logger';
 
-import { AirConditioner } from './devices/airConditioner.js';
-import { AudioDoorbell } from './devices/audioDoorbell.js';
-import { BasicVideoPlayer } from './devices/basicVideoPlayer.js';
-import { BatteryStorage } from './devices/batteryStorage.js';
-import { Camera } from './devices/camera.js';
-import { CameraController } from './devices/cameraController.js';
-import { CastingVideoClient } from './devices/castingVideoClient.js';
-import { CastingVideoPlayer } from './devices/castingVideoPlayer.js';
-import { Chime } from './devices/chime.js';
-import { Closure } from './devices/closure.js';
-import { ContentApp } from './devices/contentApp.js';
-import { Cooktop } from './devices/cooktop.js';
-import { DimmablePlugInUnit } from './devices/dimmablePlugInUnit.js';
-import { Dishwasher } from './devices/dishwasher.js';
-import { Doorbell } from './devices/doorbell.js';
-import { ElectricalUtilityMeter } from './devices/electricalUtilityMeter.js';
-import { Evse } from './devices/evse.js';
-import { ExtractorHood } from './devices/extractorHood.js';
-import { FloodlightCamera } from './devices/floodlightCamera.js';
-import { HeatPump } from './devices/heatPump.js';
-import { Intercom } from './devices/intercom.js';
-import { IrrigationSystem } from './devices/irrigationSystem.js';
-import { LaundryDryer } from './devices/laundryDryer.js';
-import { LaundryWasher } from './devices/laundryWasher.js';
-import { MicrowaveOven } from './devices/microwaveOven.js';
-import { MountedDimmableLoadControl } from './devices/mountedDimmableLoadControl.js';
-import { MountedOnOffControl } from './devices/mountedOnOffControl.js';
-import { OnOffPlugInUnit } from './devices/onOffPlugInUnit.js';
-import { Oven } from './devices/oven.js';
-import { Pump } from './devices/pump.js';
-import { Refrigerator } from './devices/refrigerator.js';
-import { RoboticVacuumCleaner } from './devices/roboticVacuumCleaner.js';
-import { SnapshotCamera } from './devices/snapshotCamera.js';
-import { SolarPower } from './devices/solarPower.js';
-import { Speaker } from './devices/speaker.js';
-import { VideoDoorbell } from './devices/videoDoorbell.js';
-import { VideoRemoteControl } from './devices/videoRemoteControl.js';
-import { WaterHeater } from './devices/waterHeater.js';
-import { WaterValve } from './devices/waterValve.js';
-import type { Matterbridge } from './matterbridge.js';
-import { getSupportedDeviceType } from './matterbridgeDeviceTypes.js';
-import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
-import { getSemtag } from './matterbridgeEndpointHelpers.js';
+import { AirConditioner } from '../devices/airConditioner.js';
+import { AudioDoorbell } from '../devices/audioDoorbell.js';
+import { BasicVideoPlayer } from '../devices/basicVideoPlayer.js';
+import { BatteryStorage } from '../devices/batteryStorage.js';
+import { Camera } from '../devices/camera.js';
+import { CameraController } from '../devices/cameraController.js';
+import { CastingVideoClient } from '../devices/castingVideoClient.js';
+import { CastingVideoPlayer } from '../devices/castingVideoPlayer.js';
+import { Chime } from '../devices/chime.js';
+import { Closure } from '../devices/closure.js';
+import { ContentApp } from '../devices/contentApp.js';
+import { Cooktop } from '../devices/cooktop.js';
+import { DimmablePlugInUnit } from '../devices/dimmablePlugInUnit.js';
+import { Dishwasher } from '../devices/dishwasher.js';
+import { Doorbell } from '../devices/doorbell.js';
+import { ElectricalUtilityMeter } from '../devices/electricalUtilityMeter.js';
+import { Evse } from '../devices/evse.js';
+import { ExtractorHood } from '../devices/extractorHood.js';
+import { FloodlightCamera } from '../devices/floodlightCamera.js';
+import { HeatPump } from '../devices/heatPump.js';
+import { Intercom } from '../devices/intercom.js';
+import { IrrigationSystem } from '../devices/irrigationSystem.js';
+import { LaundryDryer } from '../devices/laundryDryer.js';
+import { LaundryWasher } from '../devices/laundryWasher.js';
+import { MicrowaveOven } from '../devices/microwaveOven.js';
+import { MountedDimmableLoadControl } from '../devices/mountedDimmableLoadControl.js';
+import { MountedOnOffControl } from '../devices/mountedOnOffControl.js';
+import { OnOffPlugInUnit } from '../devices/onOffPlugInUnit.js';
+import { Oven } from '../devices/oven.js';
+import { Pump } from '../devices/pump.js';
+import { Refrigerator } from '../devices/refrigerator.js';
+import { RoboticVacuumCleaner } from '../devices/roboticVacuumCleaner.js';
+import { SnapshotCamera } from '../devices/snapshotCamera.js';
+import { SolarPower } from '../devices/solarPower.js';
+import { Speaker } from '../devices/speaker.js';
+import { VideoDoorbell } from '../devices/videoDoorbell.js';
+import { VideoRemoteControl } from '../devices/videoRemoteControl.js';
+import { WaterHeater } from '../devices/waterHeater.js';
+import { WaterValve } from '../devices/waterValve.js';
+import type { Matterbridge } from '../matterbridge.js';
+import { getSupportedDeviceType } from '../matterbridgeDeviceTypes.js';
+import { MatterbridgeDynamicPlatform } from '../matterbridgeDynamicPlatform.js';
+import { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
+import { getSemtag } from '../matterbridgeEndpointHelpers.js';
 
-const demoPluginName = 'matterbridge-demo-devices';
-const demoPluginType = 'DynamicPlatform';
+export const demoPluginName = 'matterbridge-demo-devices';
 const demoPluginVersion = '1.0.0';
 
 const demoPluginSchema: PlatformSchema = {
@@ -160,86 +162,115 @@ const demoPluginSchema: PlatformSchema = {
   },
 };
 
-let demoPluginConfig: PlatformConfig = {
-  name: demoPluginName,
-  type: demoPluginType,
-  version: demoPluginVersion,
-  debug: false,
-  unregisterOnShutdown: false,
-  whiteList: [],
-  blackList: [],
-};
-
-export async function createDemoDevices(matterbridge: Matterbridge): Promise<void> {
+/**
+ * Registers the demo devices plugin in memory only (never saved to the plugin storage).
+ * It writes a package.json pointing to this module and the schema in the demo plugin folder of the matterbridge directory,
+ * so the plugin manager loads and starts it like any other plugin.
+ *
+ * @param {Matterbridge} matterbridge - The Matterbridge instance.
+ * @returns {Promise<void>} A promise that resolves when the plugin is registered.
+ */
+export async function registerDemoPlugin(matterbridge: Matterbridge): Promise<void> {
   if (matterbridge.bridgeMode !== 'bridge') {
     matterbridge.log.error('Demo devices can only be created in bridge mode');
     return;
   }
-  const serverNode = matterbridge.serverNode;
-  const aggregator = matterbridge.aggregatorNode;
-  if (!serverNode || !aggregator) {
-    matterbridge.log.error('Demo devices can only be created when the server node and aggregator node are available');
+  const pluginDir = path.join(matterbridge.matterbridgeDirectory, demoPluginName);
+  const packageFile = path.join(pluginDir, 'package.json');
+  try {
+    await mkdir(pluginDir, { recursive: true });
+    const packageJson = {
+      name: demoPluginName,
+      version: demoPluginVersion,
+      description: 'Matterbridge demo devices',
+      author: 'https://github.com/Luligu',
+      type: 'module',
+      main: fileURLToPath(import.meta.url),
+    };
+    await writeFile(packageFile, JSON.stringify(packageJson, null, 2), 'utf8');
+    await writeFile(path.join(pluginDir, `${demoPluginName}.schema.json`), JSON.stringify(demoPluginSchema, null, 2), 'utf8');
+  } catch (error) {
+    matterbridge.log.error(`Failed to write demo devices plugin files: ${getErrorMessage(error)}`);
     return;
   }
-  const configFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.config.json`);
-  const schemaFile = path.join(matterbridge.matterbridgeDirectory, `${demoPluginName}.schema.json`);
-  try {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const storedConfig = JSON.parse(await readFile(configFile, 'utf8')) as PlatformConfig;
-    demoPluginConfig = {
-      ...demoPluginConfig,
-      ...storedConfig,
-      name: demoPluginName,
-      type: demoPluginType,
-      version: demoPluginVersion,
-      whiteList: Array.isArray(storedConfig.whiteList) ? storedConfig.whiteList : [],
-      blackList: Array.isArray(storedConfig.blackList) ? storedConfig.blackList : [],
-    };
-  } catch (error) {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') matterbridge.log.error(`Failed to read demo devices config ${configFile}: ${getErrorMessage(error)}`);
-  }
-  try {
-    await writeFile(configFile, JSON.stringify(demoPluginConfig, null, 2), 'utf8');
-    await writeFile(schemaFile, JSON.stringify(demoPluginSchema, null, 2), 'utf8');
-  } catch (error) {
-    matterbridge.log.error(`Failed to write demo devices config or schema: ${getErrorMessage(error)}`);
-  }
-  let ep: MatterbridgeEndpoint | undefined;
   matterbridge.plugins.set({
     name: demoPluginName,
-    path: '',
-    type: demoPluginType,
+    path: packageFile,
+    type: 'DynamicPlatform',
     version: demoPluginVersion,
     description: 'Matterbridge demo devices',
     author: 'https://github.com/Luligu',
-    enabled: false,
+    enabled: true,
     private: true,
     configurationVersion: 1,
-    registeredDevices: 0,
-    configJson: demoPluginConfig,
-    schemaJson: demoPluginSchema,
     hasWhiteList: true,
     hasBlackList: true,
   });
+}
+
+/**
+ * Initializes the demo devices plugin.
+ *
+ * @param {PlatformMatterbridge} matterbridge - The Matterbridge platform interface.
+ * @param {AnsiLogger} log - The plugin logger.
+ * @param {PlatformConfig} config - The plugin config.
+ * @returns {DemoPlatform} The demo devices platform.
+ */
+export default function initializePlugin(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig): DemoPlatform {
+  return new DemoPlatform(matterbridge, log, config);
+}
+
+/**
+ * The demo devices dynamic platform.
+ */
+export class DemoPlatform extends MatterbridgeDynamicPlatform {
+  /**
+   * Creates the demo devices platform.
+   *
+   * @param {PlatformMatterbridge} matterbridge - The Matterbridge platform interface.
+   * @param {AnsiLogger} log - The plugin logger.
+   * @param {PlatformConfig} config - The plugin config.
+   */
+  constructor(matterbridge: PlatformMatterbridge, log: AnsiLogger, config: PlatformConfig) {
+    super(matterbridge, log, config);
+    this.log.info('Initializing platform:', this.config.name);
+    this.config.whiteList = Array.isArray(this.config.whiteList) ? this.config.whiteList : [];
+    this.config.blackList = Array.isArray(this.config.blackList) ? this.config.blackList : [];
+  }
+
+  override async onStart(reason?: string): Promise<void> {
+    this.log.info(`Starting platform ${this.config.name}: ${reason ?? ''}`);
+    await this.ready;
+    await this.clearSelect();
+    await createDemoDevices(this);
+  }
+
+  override async onConfigure(): Promise<void> {
+    await super.onConfigure();
+    this.log.info(`Configuring platform ${this.config.name}`);
+  }
+
+  override async onShutdown(reason?: string): Promise<void> {
+    await super.onShutdown(reason);
+    this.log.info(`Shutting down platform ${this.config.name}: ${reason ?? ''}`);
+    if (this.config.unregisterOnShutdown) await this.unregisterAllDevices();
+  }
+}
+
+/**
+ * Creates and registers all the demo devices.
+ *
+ * @param {DemoPlatform} platform - The demo devices platform.
+ * @returns {Promise<void>} A promise that resolves when all the devices are registered.
+ */
+async function createDemoDevices(platform: DemoPlatform): Promise<void> {
+  let ep: MatterbridgeEndpoint | undefined;
 
   const registerDevice = async (device: MatterbridgeEndpoint, deviceName: string, serialNumber: string): Promise<void> => {
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const whiteList = demoPluginConfig.whiteList as string[];
-    // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-    const blackList = demoPluginConfig.blackList as string[];
-    if (blackList.includes(deviceName)) {
-      matterbridge.log.info(`Skipping demo device ${deviceName} because it is in the blacklist`);
-      return;
-    }
-    if (whiteList.length > 0 && !whiteList.includes(deviceName)) {
-      matterbridge.log.info(`Skipping demo device ${deviceName} because it is not in the whitelist`);
-      return;
-    }
+    if (!platform.validateDevice(deviceName)) return;
     device.createDefaultBridgedDeviceBasicInformationClusterServer(deviceName, serialNumber);
     device.addRequiredClusters();
-    device.plugin = demoPluginName;
-    await matterbridge.addBridgedEndpoint(demoPluginName, device);
+    await platform.registerDevice(device);
   };
 
   const bridgedNode = getSupportedDeviceType('BridgedNode')!;

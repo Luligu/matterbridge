@@ -161,7 +161,7 @@ describe('Server clusters and behaviors', () => {
 
   test('movementDuration simulates the Open/Close movement completing', async () => {
     // No plugin manages this endpoint's physical valve, so movementDuration/autoClose enable the built-in
-    // simulation directly (mirrors demoDevices.ts's WaterValve endpoint) instead of relying on
+    // simulation directly (mirrors demo/module.ts's WaterValve endpoint) instead of relying on
     // MATTERBRIDGE_CHIP_TEST's initialize() default.
     const timedValve = new MatterbridgeEndpoint(waterValve, { id: 'timedValve' });
     timedValve.createDefaultValveConfigurationAndControlClusterServer(undefined, undefined, 1000, false);
