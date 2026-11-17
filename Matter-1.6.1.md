@@ -82,3 +82,83 @@ No new semantic tag namespaces were added in Matter 1.6.1.
 ## Changed Semantic Tag Namespaces
 
 No semantic tag namespaces were changed in Matter 1.6.1.
+
+## Provisional Elements in Matter 1.6.1
+
+The feature, attribute, event and command lists below cover individually marked provisional elements outside wholly provisional clusters. Elements within the provisional clusters listed below are not repeated.
+
+### Device Types Provisional
+
+No device types are marked provisional in the Matter 1.6.1 XML definitions. The Device Library Specification's "List of Provisional Items" mentions Ambient Context Sensor as provisional, but provides no device-type definition or ID for it. It is also absent from the XML device-type definitions and ID map. This is an unresolved specification reference.
+
+The following device types have provisional cluster requirements:
+
+| Device Type                  | ID     | Cluster               | Cluster ID | Side   |
+| ---------------------------- | ------ | --------------------- | ---------- | ------ |
+| BasicVideoPlayer             | 0x0028 | ContentControl        | 0x050F     | server |
+| CastingVideoClient           | 0x0029 | ContentControl        | 0x050F     | client |
+| CastingVideoPlayer           | 0x0023 | ContentControl        | 0x050F     | server |
+| ElectricalMeter              | 0x0514 | CommodityMetering     | 0x0B07     | server |
+| TemperatureControlledCabinet | 0x0071 | TemperatureAlarm      | 0x0064     | server |
+| Thermostat                   | 0x0301 | AmbientContextSensing | 0x0431     | client |
+| VideoRemoteControl           | 0x002A | ContentControl        | 0x050F     | client |
+
+### Clusters Provisional
+
+| Cluster Type          | ID     | Revision |
+| --------------------- | ------ | -------- |
+| AmbientContextSensing | 0x0431 | 1        |
+| ContentControl        | 0x050F | 1        |
+| TemperatureAlarm      | 0x0064 | 1        |
+
+### Features Provisional (outside wholly provisional clusters)
+
+| Cluster                     | Cluster ID | Feature           | Code     | Bit |
+| --------------------------- | ---------- | ----------------- | -------- | --- |
+| DoorLock                    | 0x0101     | RFIDCredential    | RID      | 1   |
+| DoorLock                    | 0x0101     | FingerCredentials | FGP      | 2   |
+| DoorLock                    | 0x0101     | FaceCredentials   | FACE     | 6   |
+| ElectricalEnergyMeasurement | 0x0091     | ApparentEnergy    | APPE     | 4   |
+| ElectricalEnergyMeasurement | 0x0091     | ReactiveEnergy    | REAE     | 5   |
+| GeneralCommissioning        | 0x0030     | NetworkRecovery   | NR       | 1   |
+| GroupKeyManagement          | 0x003F     | CacheAndSync      | CS       | 0   |
+| GroupKeyManagement          | 0x003F     | Groupcast         | GCAST    | 1   |
+| LevelControl                | 0x0008     | Frequency         | FQ       | 2   |
+| MicrowaveOvenControl        | 0x005F     | PowerInWatts      | WATTS    | 1   |
+| PushAVStreamTransport       | 0x0555     | Metadata          | METADATA | 1   |
+| Thermostat                  | 0x0201     | Events            | TEVT     | 9   |
+| WebRTCTransportProvider     | 0x0553     | Metadata          | METADATA | 0   |
+
+### Attributes Provisional (outside wholly provisional clusters)
+
+| Cluster                  | Cluster ID | Attribute                   | Attribute ID |
+| ------------------------ | ---------- | --------------------------- | ------------ |
+| CameraAVStreamManagement | 0x0551     | ImageRotationDiscreteAngles | 0x0029       |
+| ThreadNetworkDiagnostics | 0x0035     | ExtAddress                  | 0x003F       |
+| ThreadNetworkDiagnostics | 0x0035     | Rloc16                      | 0x0040       |
+| GeneralCommissioning     | 0x0030     | RecoveryIdentifier          | 0x000A       |
+| GeneralCommissioning     | 0x0030     | NetworkRecoveryReason       | 0x000B       |
+| GroupKeyManagement       | 0x003F     | GroupcastAdoption           | 0x0004       |
+| MicrowaveOvenControl     | 0x005F     | SupportedWatts              | 0x0006       |
+| MicrowaveOvenControl     | 0x005F     | SelectedWattIndex           | 0x0007       |
+
+### Events Provisional (outside wholly provisional clusters)
+
+| Cluster    | Cluster ID | Event                  | Event ID |
+| ---------- | ---------- | ---------------------- | -------- |
+| Thermostat | 0x0201     | SystemModeChange       | 0x00     |
+| Thermostat | 0x0201     | LocalTemperatureChange | 0x01     |
+| Thermostat | 0x0201     | OccupancyChange        | 0x02     |
+| Thermostat | 0x0201     | SetpointChange         | 0x03     |
+| Thermostat | 0x0201     | RunningStateChange     | 0x04     |
+| Thermostat | 0x0201     | RunningModeChange      | 0x05     |
+| Thermostat | 0x0201     | ActiveScheduleChange   | 0x06     |
+| Thermostat | 0x0201     | ActivePresetChange     | 0x07     |
+
+### Commands Provisional (outside wholly provisional clusters)
+
+No commands are provisional in Matter 1.6.1.
+
+### Namespaces Provisional
+
+No semantic tag namespaces are provisional in Matter 1.6.1.

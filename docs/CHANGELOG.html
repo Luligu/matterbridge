@@ -159,11 +159,20 @@
 </ul>
 <h3 id="added">Added</h3>
 <ul>
-<li>[core]: Add <code>AnsiLoggerCache</code> global logger cache (<code>--loggerCache</code>) and replay cached log entries to newly connected frontend WebSocket clients.</li>
-<li>[dgram]: Add <code>MdnsResponder</code>, <code>MdnsScanner</code>, <code>MatterAdvertise</code> and <code>MatterbridgeAdvertise</code> (ported from matterbridge-native).</li>
-<li>[mb-mdns-scan]: Add <code>mb-mdns-scan</code> bin that runs the <code>MdnsScanner</code> CLI.</li>
-<li>[mb-mdns-advertise]: Add <code>mb-mdns-advertise</code> bin that runs the <code>MatterbridgeAdvertise</code> CLI.</li>
-<li>[dgram]: Add the <code>announceCount</code> option (2 to 8, RFC 6762 §8.3) to <code>MdnsResponder</code> and <code>MatterAdvertise</code>.</li>
+<li><p>[docs]: Document Matter 1.6.1 provisional elements and the unresolved Ambient Context Sensor reference.</p>
+</li>
+<li><p>[chip-test]: Add <code>--start --plugin</code> to copy and configure the plugin from the current repository inside the test container, excluding its local Matterbridge dependency.</p>
+</li>
+<li><p>[core]: Add <code>AnsiLoggerCache</code> global logger cache (<code>--loggerCache</code>) and replay cached log entries to newly connected frontend WebSocket clients.</p>
+</li>
+<li><p>[dgram]: Add <code>MdnsResponder</code>, <code>MdnsScanner</code>, <code>MatterAdvertise</code> and <code>MatterbridgeAdvertise</code> (ported from matterbridge-native).</p>
+</li>
+<li><p>[mb-mdns-scan]: Add <code>mb-mdns-scan</code> bin that runs the <code>MdnsScanner</code> CLI.</p>
+</li>
+<li><p>[mb-mdns-advertise]: Add <code>mb-mdns-advertise</code> bin that runs the <code>MatterbridgeAdvertise</code> CLI.</p>
+</li>
+<li><p>[dgram]: Add the <code>announceCount</code> option (2 to 8, RFC 6762 §8.3) to <code>MdnsResponder</code> and <code>MatterAdvertise</code>.</p>
+</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
@@ -401,7 +410,7 @@
 <li>[frontend]: Add the <code>Auto</code> frontend theme, which follows the OS or browser color scheme (dark or light). The default stays <code>Dark</code>.</li>
 <li>[test-utils]: Add <code>addBridgedDevice()</code> to the test-utils helpers: it adds the Bridged Node device type and, when missing, the <code>BridgedDeviceBasicInformationServer</code> to a test device, like <code>registerDevice()</code> does in bridge mode.</li>
 <li>[matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the <code>subscribeAttribute</code> listeners are lost. Closes <a href="https://github.com/Luligu/matterbridge/issues/657">#657</a>. Thanks Calvin Che.</li>
-<li>[chip]: Add <code>--start --local</code> (<code>npm run chip:start:local</code>) to <code>run-matterbridge-chip-tests.mjs</code> to run the locally built <code>matterbridge:chip-test</code> image without pulling.</li>
+<li>[chip]: Add <code>--start --local</code> (<code>npm run chip:start:local</code>) to <code>run-chip-test.mjs</code> to run the locally built <code>matterbridge:chip-test</code> image without pulling.</li>
 </ul>
 <h3 id="changed-4">Changed</h3>
 <ul>
