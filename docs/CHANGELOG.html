@@ -166,6 +166,8 @@
 <li>[mb-mdns-scan]: Add <code>mb-mdns-scan</code> bin that runs the <code>MdnsScanner</code> CLI.</li>
 <li>[mb-mdns-advertise]: Add <code>mb-mdns-advertise</code> bin that runs the <code>MatterbridgeAdvertise</code> CLI.</li>
 <li>[dgram]: Add the <code>announceCount</code> option (2 to 8, RFC 6762 §8.3) to <code>MdnsResponder</code> and <code>MatterAdvertise</code>.</li>
+<li>[dgram]: Add <code>Multicast.joinGroup()</code> and <code>Multicast.leaveGroup()</code> to join and leave additional multicast groups (ported from matterbridge-native).</li>
+<li>[demo]: Move the demo devices (<code>--demo-devices</code>) to the in-memory <code>matterbridge-demo-devices</code> plugin, which now acts like a normal plugin and is never saved to the plugin storage.</li>
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>

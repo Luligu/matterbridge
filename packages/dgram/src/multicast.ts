@@ -192,6 +192,46 @@ export class Multicast extends Dgram {
   }
 
   /**
+   * Joins an additional multicast group on the interfaces joined when the socket started listening.
+   *
+   * @param {string} multicastAddress - The additional multicast address to join.
+   * @returns {boolean} True when the group was joined on at least one interface.
+   */
+  joinGroup(multicastAddress: string): boolean {
+    let joined = false;
+    for (const membershipInterface of this.joinedInterfaces) {
+      try {
+        this.socket.addMembership(multicastAddress, membershipInterface);
+        joined = true;
+        this.log.debug(`Dgram multicast socket joined multicast group ${BLUE}${multicastAddress}${db} on interface ${YELLOW}${membershipInterface}${db}`);
+      } catch (error) {
+        this.log.debug(
+          `Dgram multicast socket failed to join multicast group ${BLUE}${multicastAddress}${db} on interface ${RED}${membershipInterface}${db}: ${getErrorMessage(error)}`,
+        );
+      }
+    }
+    return joined;
+  }
+
+  /**
+   * Leaves a multicast group joined with joinGroup.
+   *
+   * @param {string} multicastAddress - The multicast address to leave.
+   */
+  leaveGroup(multicastAddress: string): void {
+    for (const membershipInterface of this.joinedInterfaces) {
+      try {
+        this.socket.dropMembership(multicastAddress, membershipInterface);
+        this.log.debug(`Dgram multicast socket dropped multicast group ${BLUE}${multicastAddress}${db} on interface ${YELLOW}${membershipInterface}${db}`);
+      } catch (error) {
+        this.log.debug(
+          `Dgram multicast socket failed to drop multicast group ${BLUE}${multicastAddress}${db} on interface ${RED}${membershipInterface}${db}: ${getErrorMessage(error)}`,
+        );
+      }
+    }
+  }
+
+  /**
    * Stops the dgram multicast socket.
    */
   stop(): void {
