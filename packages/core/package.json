@@ -142,11 +142,11 @@
     "@matterbridge/utils": "3.11.5",
     "escape-html": "1.0.3",
     "express": "5.3.0",
-    "express-rate-limit": "8.7.4",
+    "express-rate-limit": "8.7.5",
     "multer": "2.5.0",
     "node-ansi-logger": "3.3.2",
     "node-persist-manager": "2.1.2",
-    "werift": "0.27.0",
+    "werift": "0.28.0",
     "ws": "8.23.0"
   },
   "devDependencies": {
@@ -156,6 +156,6 @@
     "@types/multer": "2.3.0",
     "@types/node": "26.6.6",
     "@types/ws": "8.18.2",
-    "vitest": "5.1.0"
+    "vitest": "5.1.1"
   }
 }

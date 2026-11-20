@@ -31,6 +31,19 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.5] - Dev branch
 
+### Changed
+
+- [matterbridge]: Bump `@types/bun` to v.1.4.5.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.1.
+- [matterbridge]: Bump `marked` to v.18.2.1.
+- [matterbridge]: Bump `oxfmt` to v.0.79.0.
+- [matterbridge]: Bump `oxlint` to v.1.94.0.
+- [matterbridge]: Bump `vitest` to v.5.1.1.
+- [frontend]: Bump `@testing-library/jest-dom` to v.8.0.0.
+- [frontend]: Bump `react-router` to v.8.5.2.
+- [core]: Bump `express-rate-limit` to v.8.7.5.
+- [core]: Bump `werift` to v.0.28.0.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.11.4] - 2026-11-20
