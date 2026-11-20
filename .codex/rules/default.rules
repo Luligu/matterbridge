@@ -1,11 +1,23 @@
-# Codex rules v.1.0.7
+# Codex rules v.1.0.8
 
 # Git mutations
+prefix_rule(pattern = ["git", "-C"], decision = "forbidden", justification = "Git directory overrides must be run manually outside Codex.")
+prefix_rule(pattern = ["git", "-c"], decision = "forbidden", justification = "Git configuration overrides must be run manually outside Codex.")
+prefix_rule(pattern = ["git", "--git-dir"], decision = "forbidden", justification = "Git directory overrides must be run manually outside Codex.")
+prefix_rule(pattern = ["git", "--work-tree"], decision = "forbidden", justification = "Git directory overrides must be run manually outside Codex.")
+prefix_rule(pattern = ["git", "add"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "restore"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "checkout"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "switch"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "clean"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "revert"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "cherry-pick"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
+prefix_rule(pattern = ["git", "tag"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
 prefix_rule(pattern = ["git", "pull"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
 prefix_rule(pattern = ["git", "merge"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
-prefix_rule(pattern = ["git", "push"], decision = "prompt", justification = "Ask before running git push.")
+prefix_rule(pattern = ["git", "push"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
 prefix_rule(pattern = ["git", "rebase"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
-prefix_rule(pattern = ["git", "commit"], decision = "prompt", justification = "Ask before running git commit.")
+prefix_rule(pattern = ["git", "commit"], decision = "prompt", justification = "Ask for authorization of the exact Git command.")
 prefix_rule(pattern = ["git", "reset"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
 prefix_rule(pattern = ["git", "filter-branch"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
 prefix_rule(pattern = ["git", "branch", "-D"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
@@ -16,6 +28,11 @@ prefix_rule(pattern = ["git", "reflog", "delete"], decision = "forbidden", justi
 prefix_rule(pattern = ["git", "stash"], decision = "forbidden", justification = "This command must be run manually outside Codex.")
 
 # Raw tool invocations: always use the matching npm script (AGENTS.md hard rule)
+prefix_rule(pattern = ["bun", "test"], decision = "forbidden", justification = "Use the matching package.json script instead.")
+prefix_rule(pattern = ["bunx", "tsc"], decision = "forbidden", justification = "Use the matching package.json script instead.")
+prefix_rule(pattern = ["bunx", "oxlint"], decision = "forbidden", justification = "Use the matching package.json script instead.")
+prefix_rule(pattern = ["bunx", "oxfmt"], decision = "forbidden", justification = "Use the matching package.json script instead.")
+prefix_rule(pattern = ["bunx", "vitest"], decision = "forbidden", justification = "Use the matching package.json script instead.")
 prefix_rule(pattern = ["npx", "tsc"], decision = "forbidden", justification = "Use the matching npm script instead.")
 prefix_rule(pattern = ["npx", "oxlint"], decision = "forbidden", justification = "Use the matching npm script instead.")
 prefix_rule(pattern = ["npx", "oxfmt"], decision = "forbidden", justification = "Use the matching npm script instead.")
@@ -24,7 +41,6 @@ prefix_rule(pattern = ["tsc"], decision = "forbidden", justification = "Use the 
 prefix_rule(pattern = ["oxlint"], decision = "forbidden", justification = "Use the matching npm script instead.")
 prefix_rule(pattern = ["oxfmt"], decision = "forbidden", justification = "Use the matching npm script instead.")
 prefix_rule(pattern = ["vitest"], decision = "forbidden", justification = "Use the matching npm script instead.")
-prefix_rule(pattern = ["bun", "test"], decision = "forbidden", justification = "Use the matching npm script instead.")
 
 # Dependency installs
 prefix_rule(pattern = ["npm", "install"], decision = "prompt", justification = "Ask before installing dependencies.")
@@ -37,6 +53,17 @@ prefix_rule(pattern = ["bun", "add"], decision = "prompt", justification = "Ask 
 prefix_rule(pattern = ["bun", "remove"], decision = "prompt", justification = "Ask before uninstalling dependencies.")
 
 # Validation scripts
+prefix_rule(pattern = ["bun", "run", "typecheck"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "build"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "test"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "test:watch"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "test:verbose"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "test:coverage"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "lint"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "lint:fix"], decision = "forbidden", justification = "Automatic lint fixes must be run manually outside Codex.")
+prefix_rule(pattern = ["bun", "run", "format"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "format:check"], decision = "allow")
+prefix_rule(pattern = ["bun", "run", "update-htmls"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "typecheck"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "build"], decision = "allow")
 prefix_rule(pattern = ["npm", "run", "test"], decision = "allow")

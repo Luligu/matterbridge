@@ -232,7 +232,7 @@ let chipTestRestartPending = false;
 let chipTestRestartFlagWarned = false;
 let electricalPowerMeasurementFakeLoadTimer: Timer | undefined;
 // The endpoint chipTests.json's "endpoint" field names for whichever test is currently running, set via the
-// app-pipe "SetTestEndpoint" command (run-matterbridge-chip-tests.mjs writes it before every test, cleared —
+// app-pipe "SetTestEndpoint" command (run-chip-test.mjs writes it before every test, cleared —
 // EndpointId omitted — before a test with no "endpoint" set). GeneralDiagnostics.TestEventTrigger carries no
 // endpoint field on the wire, so this out-of-band pin is what lets handleSmokeCoAlarmTestEventTrigger()/
 // handleBooleanStateConfigurationTestEventTrigger()/handleElectricalEnergyTestEventTrigger() target the one
@@ -1130,10 +1130,10 @@ async function handleElectricalEnergyTestEventTrigger(eventTrigger: bigint): Pro
 }
 
 // TC_MTRID_3_1's Attributes Value Set / Test Event Clear triggers (src/python_testing/TC_MTRIDTestBase.py).
-// createDemoDevices() registers only one MeterIdentification chip-test endpoint (1409, the
+// the demo devices plugin (demo/module.ts) registers only one MeterIdentification chip-test endpoint (1409, the
 // ElectricalUtilityMeter), and every TC_MTRID_2_1/3_1 chipTests.json entry pins "endpoint": 1409, so
 // chipTestActiveEndpointId is used directly. MeterType/PointOfDelivery/MeterSerialNumber/ProtocolVersion all
-// default to null (createDemoDevices() passes no MeterIdentification options), so the Attributes Value Set
+// default to null (the demo devices plugin passes no MeterIdentification options), so the Attributes Value Set
 // trigger swaps in distinct non-null fake values — required for TC_MTRID_3_1's subscription assertions, which
 // check that each reported value differs from the value read before the trigger fired — and the Test Event
 // Clear trigger restores the original null values.
@@ -1160,7 +1160,7 @@ async function handleMeterIdentificationTestEventTrigger(eventTrigger: bigint): 
 }
 
 // TC_COMMTR_3_1's Attributes Value Set / Test Event Clear triggers (src/python_testing/TC_COMMTR_TestBase.py).
-// createDemoDevices() registers CommodityMetering on the Electrical Meter child endpoints created by
+// the demo devices plugin (demo/module.ts) registers CommodityMetering on the Electrical Meter child endpoints created by
 // addElectricalMeter() (14091, 14101, 14103), and TC_COMMTR_2_1/3_1's chipTests.json entry pins
 // "endpoint": 14091, so chipTestActiveEndpointId is used directly. MeteredQuantity/MeteredQuantityTimestamp/
 // TariffUnit/MaximumMeteredQuantities all default to null (addElectricalMeter() is called with no
@@ -1187,7 +1187,7 @@ async function handleCommodityMeteringTestEventTrigger(eventTrigger: bigint): Pr
   return true;
 }
 
-// TC_SEPR_2_2's Price Update TestEventTrigger (src/python_testing/TC_SEPRTestBase.py). createDemoDevices()
+// TC_SEPR_2_2's Price Update TestEventTrigger (src/python_testing/TC_SEPRTestBase.py). The demo devices plugin
 // registers CommodityPrice on every Electrical Energy Tariff endpoint created by addElectricalEnergyTariff()/
 // addElectricalMeter()'s energyTariff option, and the TC_SEPR_2_1/2_2 chipTests.json entries pin
 // "endpoint": 14092 (the dedicated Electrical Energy Tariff Upcoming endpoint), so chipTestActiveEndpointId is
@@ -1221,7 +1221,7 @@ async function handleCommodityPriceTestEventTrigger(eventTrigger: bigint): Promi
 }
 
 // TC_SETRF_2_2/2_3/3_1's Attributes Value Set / Test Event Clear / Change Day / Change Time TestEventTriggers
-// (src/python_testing/TC_SETRF_TestBase.py). createDemoDevices() registers CommodityTariff (Pricing feature
+// (src/python_testing/TC_SETRF_TestBase.py). The demo devices plugin (demo/module.ts) registers CommodityTariff (Pricing feature
 // only — see MatterbridgeCommodityTariffServer) on the same Electrical Energy Tariff endpoints as CommodityPrice,
 // and the TC_SETRF_* chipTests.json entries pin "endpoint": 14092, so chipTestActiveEndpointId is used directly.
 // All 17 mandatory attributes default to null (configureElectricalEnergyTariffClusters() forces every
@@ -1404,7 +1404,7 @@ async function handleCommodityTariffTestEventTrigger(eventTrigger: bigint): Prom
 }
 
 // TC_EWATERHTR_2_2/TC_EWATERHTR_2_3's TestEventTriggers (src/python_testing/TC_EWATERHTRBase.py).
-// createDemoDevices() registers only one WaterHeater chip-test endpoint (1402), and every TC_EWATERHTR_*
+// the demo devices plugin (demo/module.ts) registers only one WaterHeater chip-test endpoint (1402), and every TC_EWATERHTR_*
 // chipTests.json entry pins "endpoint": 1402, so chipTestActiveEndpointId is used directly.
 // The triggers simulate a 100 L water heater tank with 20°C cold water and a 60°C Thermostat setpoint:
 // - 0x0094000000000000 (Basic installation): Off mode (11), 20°C water, 60°C setpoint, 0% tank, Inactive boost
@@ -1620,7 +1620,7 @@ function buildChipTestDeviceEnergyManagementForecast(): {
 }
 
 async function handleChipTestAppPipeCommand(matterbridge: Matterbridge, command: ChipTestAppPipeCommand): Promise<void> {
-  // Not a device command: run-matterbridge-chip-tests.mjs writes this before every test to pin
+  // Not a device command: run-chip-test.mjs writes this before every test to pin
   // chipTestActiveEndpointId to chipTests.json's "endpoint" for that test (EndpointId omitted clears the pin),
   // so GeneralDiagnostics.TestEventTrigger handlers (which have no endpoint field to work with) and the
   // EndpointId fallback below can target the right endpoint instead of guessing or broadcasting.

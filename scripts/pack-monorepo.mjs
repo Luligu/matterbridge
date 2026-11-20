@@ -95,7 +95,7 @@ const workspaces = await Promise.all(
 );
 // Only the workspaces with exports ship a dist (apps/frontend ships its prebuilt build folder from the root files).
 const codeWorkspaces = workspaces.filter(({ package: workspacePackage }) => workspacePackage.exports);
-const bins = ['bin/matterbridge.js', 'bin/mb_coap.js', 'bin/mb_health.js', 'bin/mb_mdns.js'].map((file) => path.join(root, file));
+const bins = ['bin/matterbridge.js', 'bin/mb_coap.js', 'bin/mb_health.js', 'bin/mb_mdns.js', 'bin/mb_mdns_advertise.js', 'bin/mb_mdns_scan.js'].map((file) => path.join(root, file));
 const backups = new Map(
   await Promise.all([rootPackagePath, ...workspaces.map(({ packagePath }) => packagePath), ...bins].map(async (file) => [file, await fs.readFile(file, 'utf8')])),
 );

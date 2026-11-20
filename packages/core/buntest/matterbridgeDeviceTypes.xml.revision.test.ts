@@ -125,7 +125,7 @@ import type { DeviceTypeDefinition } from '../src/matterbridgeDeviceTypes.js';
 // Setup the test environment
 await setupTest(NAME, false);
 
-const XML_DEVICE_TYPES_DIR = path.join('chip', '1.6.1', 'xml', 'device_types');
+const XML_DEVICE_TYPES_DIR = path.join('..', 'Matter', '1.6.1', 'xml', 'device_types');
 
 // Device type codes where the chip XML has an incorrect revision.
 // The override value is the correct revision per the Matter spec.

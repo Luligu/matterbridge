@@ -34,7 +34,7 @@ This affects metered quantities, tariff periods, days, day patterns, calendar pe
 
 The audited snapshot includes the inherited Base Binding requirement in device definitions. Matterbridge now includes Binding in the affected Simple device definitions with mandatory application clients.
 
-- Binding is required by Matter 1.6.1 Device Library §1.1.7 when `Simple & Client` is true; §1.1.6 defines Client as having an application client cluster. This is confirmed by `chip/1.6.1/xml/device_types/BaseDeviceType.xml`.
+- Binding is required by Matter 1.6.1 Device Library §1.1.7 when `Simple & Client` is true; §1.1.6 defines Client as having an application client cluster. This is confirmed by `~/GitHub/Matter/1.6.1/xml/device_types/BaseDeviceType.xml`.
 - On/Off Light Switch is Simple and requires Identify and On/Off clients (§6.1), so its mandatory server requirements include Identify and Binding. The server-behavior mapper now maps Binding to `MatterbridgeBindingServer`.
 - Descriptor appears in the matter.js mandatory server list only for device types that require a Descriptor feature: Closure, Closure Panel and Electrical Energy Tariff require TagList (`DescriptorServer.with("TagList")` in the generated device classes). Other device types get a plain Descriptor implicitly and do not list it. Matterbridge does not add Descriptor to any device definition, since every endpoint has a Descriptor; the requirements test accepts these three mismatches.
 - RootNode's intentionally empty cluster lists remain unchanged; the comparison expectation now includes the upstream optional Groupcast cluster (`0x0065`).

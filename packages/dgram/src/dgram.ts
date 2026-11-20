@@ -3,7 +3,7 @@
  * @description This file contains the class Dgram.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.7
+ * @version 1.0.8
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -51,7 +51,7 @@ export interface DgramEvents {
 
 /**
  * This class implements a dgram socket.
- * Socket lifecycle and traffic messages are logged at debug level.
+ * Socket lifecycle messages are logged at debug level; per-packet traffic messages only in verbose mode.
  */
 export class Dgram extends EventEmitter<DgramEvents> {
   verbose = hasParameter('v') || hasParameter('verbose');
@@ -111,7 +111,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     });
 
     this.socket.on('message', (msg, rinfo) => {
-      this.log.debug(`Socket received a message from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
+      if (this.verbose) this.log.debug(`Socket received ${BLUE}${msg.length}${db} bytes from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
       this.emit('message', msg, rinfo);
       this.onMessage(msg, rinfo);
     });
@@ -139,7 +139,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
         this.emit('error', error);
         this.onError(error);
       } else {
-        this.log.debug(`Socket sent a message to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
+        if (this.verbose) this.log.debug(`Socket sent ${BLUE}${msg.length}${db} bytes to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
         this.emit('sent', msg, serverAddress, serverPort);
         this.onSent(msg, serverAddress, serverPort);
       }
@@ -173,7 +173,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {number} serverPort - Destination port.
    */
   onSent(msg: Buffer, serverAddress: string, serverPort: number): void {
-    this.log.debug(`Socket sent a message to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
+    if (this.verbose) this.log.debug(`Socket sent ${BLUE}${msg.length}${db} bytes to ${BLUE}${serverAddress}${db}:${BLUE}${serverPort}${db}`);
   }
 
   /**
@@ -183,7 +183,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
    * @param {dgram.RemoteInfo} rinfo - Sender address information.
    */
   onMessage(msg: Buffer, rinfo: dgram.RemoteInfo): void {
-    this.log.debug(`Socket received a message from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
+    if (this.verbose) this.log.debug(`Socket received ${BLUE}${msg.length}${nf} bytes from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`);
   }
 
   /**

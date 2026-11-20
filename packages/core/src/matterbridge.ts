@@ -83,6 +83,7 @@ import { fireAndForget, wait } from '@matterbridge/utils/wait';
 // AnsiLogger module
 import {
   AnsiLogger,
+  AnsiLoggerCache,
   BLUE,
   BRIGHT,
   CYAN,
@@ -114,7 +115,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import { startController } from './matterController.js';
 import { matterToAnsiLogLevel } from './matterLogger.js';
-import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode } from './matterNodeHelpers.js';
+import { clearAdvertisingNodes, deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode, truncateUtf8 } from './matterNodeHelpers.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
 logModuleLoaded('Matterbridge');
@@ -242,6 +243,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   public logLevel: LogLevel = this.log.logLevel;
   /** Whether to log to a file */
   public fileLogger = false;
+  /** Cache for the logger to store and reuse log entries */
+  public loggerCache = new AnsiLoggerCache(getIntParameter('loggerCache'));
 
   /** Matter logger */
   public readonly matterLog = new AnsiLogger({
@@ -704,6 +707,9 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
   private async initialize(): Promise<void> {
     // Emit the initialize_started event
     this.emit('initialize_started');
+
+    // Set the logger global cache
+    AnsiLogger.setGlobalCache(this.loggerCache);
 
     // Set the restart mode
     if (hasParameter('service')) this.restartMode = 'service';
@@ -2336,8 +2342,8 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
       this.log.warn(' *********************************************************************************');
       this.log.warn(' * MATTERBRIDGE_DEMO_DEVICES environment variable is set. Creating demo devices. *');
       this.log.warn(' *********************************************************************************');
-      const { createDemoDevices } = await import('./demoDevices.js');
-      await createDemoDevices(this);
+      const { registerDemoPlugin } = await import('./demo/module.js');
+      await registerDemoPlugin(this);
     }
     // v8 ignore next - No test cause is just chip test entry point for the app pipe
     if (process.env.MATTERBRIDGE_CHIP_TEST && fs.existsSync(path.join(path.dirname(fileURLToPath(import.meta.url)), 'chipTests.js'))) {
@@ -2884,8 +2890,11 @@ export class Matterbridge extends EventEmitter<MatterbridgeEvents> {
 
       // Provide Node announcement settings
       productDescription: {
-        name: await storageContext.get<string>('deviceName'),
+        // Matter 1.6.1 Core § 4.3.1.9: the DN TXT key of the commissionable advertisement has a maximum length of 32 bytes
+        name: truncateUtf8(await storageContext.get<string>('deviceName'), 32),
         deviceType: DeviceTypeId(await storageContext.get<number>('deviceType')),
+        vendorId: VendorId(await storageContext.get<number>('vendorId')),
+        productId: await storageContext.get<number>('productId'),
       },
 
       // Provide defaults for the BasicInformation cluster on the Root endpoint

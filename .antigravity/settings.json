@@ -1,5 +1,5 @@
 {
-  "_comment": "Antigravity settings v.1.0.6",
+  "_comment": "Gemini only settings (Antigravity reads only the global config.json) v.1.0.6",
   "sandboxing": {
     "workspaceOnly": true,
     "subagentIsolation": "branch",

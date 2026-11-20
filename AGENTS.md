@@ -82,19 +82,66 @@ The following workflows are available as skills in [.agents/skills](./.agents/sk
 
 These specifications are taken from the Connectivity Standards Alliance specification site (https://csa-iot.org/developer-resource/specifications-download-request/), one copy per Matter release.
 
-- The full Matter 1.6.1 specifications are available locally under [chip/1.6.1/specs](./chip/1.6.1/specs/). Treat them as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
+- The full Matter 1.6.1 specifications are available locally under [~/GitHub/Matter/1.6.1/specs](../Matter/1.6.1/specs/). Treat them as the authoritative source when working on Matter behavior, revisions, qualities, device types, and cluster definitions.
   - Read and search the Markdown files (`Matter-1.6.1-<spec>.md`): UTF-8 text with the headings and tables of the spec, converted from the PDFs and cross-checked against the XML definitions.
   - For a figure (diagrams, device composition drawings), use the HTML files, since the Markdown has no images but keeps the captions (`Figure 2. Example of an Irrigation System`): find the caption in `Matter-1.6.1-<spec>.html`; the image is the `<img>` just before it, in the `Matter-1.6.1-<spec>_files/` folder (e.g. `image006.gif`).
   - The PDFs are the original documents the Markdown is converted from.
-- The full Matter 1.6.0 specifications are available locally under [chip/1.6.0/specs](./chip/1.6.0/specs/), with the same layout as 1.6.1: Markdown for reading and searching, HTML for the figures, PDF as the original. CSA names the files of this release `Matter-1.6-<spec>` (without `.0`). Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
-- The full Matter 1.5.1 specifications are available locally under [chip/1.5.1/specs](./chip/1.5.1/specs/), with the same layout as 1.6.1: Markdown for reading and searching, HTML for the figures, PDF as the original. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
-- The full Matter 1.5.0 specifications are available locally under [chip/1.5.0/specs](./chip/1.5.0/specs/) as Markdown for reading and searching, and PDF as the original; there is no HTML, so no separate figures. CSA names the files of this release `Matter-1.5-<spec>` (without `.0`). Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The full Matter 1.6.0 specifications are available locally under [~/GitHub/Matter/1.6.0/specs](../Matter/1.6.0/specs/), with the same layout as 1.6.1: Markdown for reading and searching, HTML for the figures, PDF as the original. CSA names the files of this release `Matter-1.6-<spec>` (without `.0`). Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The full Matter 1.5.1 specifications are available locally under [~/GitHub/Matter/1.5.1/specs](../Matter/1.5.1/specs/), with the same layout as 1.6.1: Markdown for reading and searching, HTML for the figures, PDF as the original. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The full Matter 1.5.0 specifications are available locally under [~/GitHub/Matter/1.5.0/specs](../Matter/1.5.0/specs/) as Markdown for reading and searching, and PDF as the original; there is no HTML, so no separate figures. CSA names the files of this release `Matter-1.5-<spec>` (without `.0`). Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
 
 ## Matter XML Definitions
 
 These XML files are taken from the [project-chip/connectedhomeip](https://github.com/project-chip/connectedhomeip) repository (`data_model/<version>`, e.g. [data_model/1.6.1](https://github.com/project-chip/connectedhomeip/tree/master/data_model/1.6.1)), one copy per Matter release.
 
-- The Matter 1.6.1 XML cluster, device type and namespace definitions are available locally under [chip/1.6.1/xml](./chip/1.6.1/xml/): clusters in [chip/1.6.1/xml/clusters](./chip/1.6.1/xml/clusters/), device types in [chip/1.6.1/xml/device_types](./chip/1.6.1/xml/device_types/), namespaces in [chip/1.6.1/xml/namespaces](./chip/1.6.1/xml/namespaces/), plus the id maps [cluster_ids.json](./chip/1.6.1/xml/cluster_ids.json) and [device_type_ids.json](./chip/1.6.1/xml/device_type_ids.json). Treat those XML files as the authoritative machine-readable source, together with the 1.6.1 HTML specs.
-- The Matter 1.6.0 XML definitions are available under [chip/1.6.0/xml](./chip/1.6.0/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
-- The Matter 1.5.1 XML definitions are available under [chip/1.5.1/xml](./chip/1.5.1/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
-- The Matter 1.5.0 XML definitions are available under [chip/1.5.0/xml](./chip/1.5.0/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The Matter 1.6.1 XML cluster, device type and namespace definitions are available locally under [~/GitHub/Matter/1.6.1/xml](../Matter/1.6.1/xml/): clusters in [~/GitHub/Matter/1.6.1/xml/clusters](../Matter/1.6.1/xml/clusters/), device types in [~/GitHub/Matter/1.6.1/xml/device_types](../Matter/1.6.1/xml/device_types/), namespaces in [~/GitHub/Matter/1.6.1/xml/namespaces](../Matter/1.6.1/xml/namespaces/), plus the id maps [cluster_ids.json](../Matter/1.6.1/xml/cluster_ids.json) and [device_type_ids.json](../Matter/1.6.1/xml/device_type_ids.json). Treat those XML files as the authoritative machine-readable source, together with the 1.6.1 HTML specs.
+- The Matter 1.6.0 XML definitions are available under [~/GitHub/Matter/1.6.0/xml](../Matter/1.6.0/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The Matter 1.5.1 XML definitions are available under [~/GitHub/Matter/1.5.1/xml](../Matter/1.5.1/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+- The Matter 1.5.0 XML definitions are available under [~/GitHub/Matter/1.5.0/xml](../Matter/1.5.0/xml/) with the same layout. Use them for historical comparisons and delta analysis against Matter 1.6.1, but keep 1.6.1 as the authoritative source.
+
+## RFCs
+
+The RFC texts are taken from the RFC Editor (https://www.rfc-editor.org/rfc/rfcNNNN.txt) and are available locally under [~/GitHub/Rfcs](../Rfcs/), shared by all the repositories. Treat them as the authoritative source for the `@matterbridge/dgram` package.
+
+### mDNS and DNS-SD
+
+- [RFC 6762 — Multicast DNS](../Rfcs/rfc6762.txt).
+- [RFC 6763 — DNS-Based Service Discovery](../Rfcs/rfc6763.txt).
+
+### UDP (`Dgram`, `Unicast`)
+
+- [RFC 768 — User Datagram Protocol](../Rfcs/rfc768.txt).
+- [RFC 8085 — UDP Usage Guidelines (BCP 145)](../Rfcs/rfc8085.txt): message size, fragmentation, rate limiting and multicast senders.
+
+### TCP
+
+- [RFC 9293 — Transmission Control Protocol (TCP)](../Rfcs/rfc9293.txt): the reference of Matter Core § 4.15; connection failures (§ 3.8.3), keep-alives (§ 3.8.4) and half-closed connections (§ 3.6.1).
+- [RFC 1122 — Requirements for Internet Hosts — Communication Layers](../Rfcs/rfc1122.txt): § 4.2 TCP host requirements, including keep-alives (§ 4.2.3.6).
+- [RFC 5482 — TCP User Timeout Option](../Rfcs/rfc5482.txt): the TCP User Timeout of Matter Core § 4.15.2.1.
+
+### IPv4 multicast (`Multicast`)
+
+- [RFC 1112 — Host Extensions for IP Multicasting](../Rfcs/rfc1112.txt): group membership, TTL and loopback.
+- [RFC 2236 — IGMP Version 2](../Rfcs/rfc2236.txt) and [RFC 3376 — IGMP Version 3](../Rfcs/rfc3376.txt): handled by the kernel, useful to debug lost joins.
+- [RFC 5771 — IANA Guidelines for IPv4 Multicast Address Assignments](../Rfcs/rfc5771.txt).
+
+### IPv6 addressing and multicast
+
+- [RFC 4291 — IP Version 6 Addressing Architecture](../Rfcs/rfc4291.txt): multicast scopes (e.g. `ff02::fb` is link-local).
+- [RFC 4007 — IPv6 Scoped Address Architecture](../Rfcs/rfc4007.txt): the `%zone` index and the scope id of link-local addresses.
+- [RFC 3810 — Multicast Listener Discovery Version 2 (MLDv2)](../Rfcs/rfc3810.txt): handled by the kernel, useful to debug lost joins.
+
+### Socket API
+
+- [RFC 3493 — Basic Socket Interface Extensions for IPv6](../Rfcs/rfc3493.txt): `IPV6_JOIN_GROUP`, `IPV6_MULTICAST_IF`, `IPV6_MULTICAST_HOPS` and `sin6_scope_id`, the base of the Node.js `dgram` IPv6 multicast options.
+- [RFC 3678 — Socket Interface Extensions for Multicast Source Filters](../Rfcs/rfc3678.txt): source-specific membership.
+
+### CoAP (`Coap`)
+
+- [RFC 7252 — The Constrained Application Protocol (CoAP)](../Rfcs/rfc7252.txt).
+- [RFC 7641 — Observing Resources in CoAP](../Rfcs/rfc7641.txt).
+- [RFC 7959 — Block-Wise Transfers in the Constrained Application Protocol (CoAP)](../Rfcs/rfc7959.txt).
+- [RFC 6690 — Constrained RESTful Environments (CoRE) Link Format](../Rfcs/rfc6690.txt): the `/.well-known/core` discovery format.
+- [RFC 8132 — PATCH and FETCH Methods for the Constrained Application Protocol (CoAP)](../Rfcs/rfc8132.txt).
+- [RFC 8323 — CoAP (Constrained Application Protocol) over TCP, TLS, and WebSockets](../Rfcs/rfc8323.txt).
+- [RFC 7390 — Group Communication for the Constrained Application Protocol (CoAP)](../Rfcs/rfc7390.txt): Experimental, multicast requests.

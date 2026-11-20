@@ -3,7 +3,7 @@
  * @description This file contains the class Unicast.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -22,7 +22,7 @@
  */
 
 // Node.js imports
-import type { RemoteInfo, SocketType } from 'node:dgram';
+import type { SocketType } from 'node:dgram';
 import type { AddressInfo } from 'node:net';
 
 // AnsiLogger imports
@@ -87,16 +87,6 @@ export class Unicast extends Dgram {
     this.socket.setBroadcast(true);
     this.log.debug(`Dgram unicast socket broadcast enabled`);
     this.emit('ready', address);
-  }
-
-  /**
-   * Event handler for the 'message' event. This event is emitted when a datagram message is received.
-   *
-   * @param {Buffer} msg - The message buffer.
-   * @param {RemoteInfo} rinfo - The remote info.
-   */
-  override onMessage(msg: Buffer, rinfo: RemoteInfo): void {
-    this.log.debug(`Socket received a message from ${BLUE}${rinfo.family}${db} ${BLUE}${rinfo.address}${db}:${BLUE}${rinfo.port}${db}`);
   }
 
   /**

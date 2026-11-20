@@ -693,7 +693,7 @@ export class PluginManager extends EventEmitter<PluginManagerEvents> {
     const plugins: StoragePlugin[] = [];
     for (const plugin of this.array()) {
       // v8 ignore next - Skip matterbridge-demo-devices plugin in demo mode
-      if (process.env.MATTERBRIDGE_DEMO_DEVICES && plugin.name === 'matterbridge-demo-devices') continue; // Skip matterbridge-demo-devices plugin in demo mode
+      if ((process.env.MATTERBRIDGE_DEMO_DEVICES || hasParameter('demo-devices')) && plugin.name === 'matterbridge-demo-devices') continue; // Skip matterbridge-demo-devices plugin in demo mode
       plugins.push({
         name: plugin.name,
         path: plugin.path,

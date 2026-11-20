@@ -81,6 +81,7 @@ import {
   toApiClusters,
   toApiDevice,
   toDevice,
+  truncateUtf8,
 } from '../src/matterNodeHelpers.js';
 
 const colorAttributes: Record<string, unknown> = { colorMode: 0 };
@@ -688,6 +689,18 @@ describe('matterNodeHelpers', () => {
     test('returns empty string for undefined or 0', () => {
       expect(getVendorIdName(undefined)).toBe('');
       expect(getVendorIdName(0)).toBe('');
+    });
+  });
+
+  describe('truncateUtf8', () => {
+    test('keeps the strings that fit and cuts the others at the last whole character', () => {
+      expect(truncateUtf8('Matterbridge', 32)).toBe('Matterbridge');
+      expect(truncateUtf8('Matterbridge example dynamic plugin', 32)).toBe('Matterbridge example dynamic plu');
+      expect(truncateUtf8('', 32)).toBe('');
+      expect(truncateUtf8('Caffè', 5)).toBe('Caff'); // è is 2 bytes
+      expect(truncateUtf8('Caffè', 6)).toBe('Caffè');
+      expect(truncateUtf8('ab😀', 5)).toBe('ab'); // 😀 is 4 bytes and one character
+      expect(truncateUtf8('ab😀', 6)).toBe('ab😀');
     });
   });
 

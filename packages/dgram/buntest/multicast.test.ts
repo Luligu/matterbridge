@@ -519,6 +519,39 @@ describe('Multicast', () => {
     expect(mcast.joinedInterfaces).toEqual([]);
   });
 
+  test('should join and leave an additional multicast group on the joined interfaces', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true);
+    const addMembership = spyOn(mcast.socket, 'addMembership').mockImplementation(() => {});
+    const dropMembership = spyOn(mcast.socket, 'dropMembership').mockImplementation(() => {});
+    // Nothing is joined before the socket joined its own group on an interface.
+    expect(mcast.joinGroup('ff05::fa')).toBe(false);
+    mcast.leaveGroup('ff05::fa');
+    expect(addMembership).not.toHaveBeenCalled();
+    expect(dropMembership).not.toHaveBeenCalled();
+    mcast.joinedInterfaces = ['fe80::1%en0', 'fe80::2%en1'];
+    expect(mcast.joinGroup('ff05::fa')).toBe(true);
+    expect(addMembership).toHaveBeenCalledWith('ff05::fa', 'fe80::1%en0');
+    expect(addMembership).toHaveBeenCalledWith('ff05::fa', 'fe80::2%en1');
+    mcast.leaveGroup('ff05::fa');
+    expect(dropMembership).toHaveBeenCalledWith('ff05::fa', 'fe80::1%en0');
+    expect(dropMembership).toHaveBeenCalledWith('ff05::fa', 'fe80::2%en1');
+    // A join or a leave that fails on every interface is logged.
+    addMembership.mockImplementation(() => {
+      throw new Error('join failed');
+    });
+    dropMembership.mockImplementation(() => {
+      throw new Error('leave failed');
+    });
+    expect(mcast.joinGroup('ff05::fa')).toBe(false);
+    mcast.leaveGroup('ff05::fa');
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('join failed'));
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining('leave failed'));
+    mcast.joinedInterfaces = [];
+    addMembership.mockRestore();
+    dropMembership.mockRestore();
+    mcast.socket.close();
+  });
+
   test('onListening uses the system default multicast interface when no outgoing address is resolved', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true);
     spyOn(os, 'networkInterfaces').mockReturnValue({});

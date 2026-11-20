@@ -23,11 +23,11 @@ jobs:
           cache: npm
 
       - name: Start the chip-test container
-        run: node scripts/run-matterbridge-chip-tests.mjs --start
+        run: node scripts/run-chip-test.mjs --start
 
       - name: Run the full CHIP test suite
-        run: node scripts/run-matterbridge-chip-tests.mjs
+        run: node scripts/run-chip-test.mjs
 
       - name: Stop the chip-test container
         if: always()
-        run: node scripts/run-matterbridge-chip-tests.mjs --stop
+        run: node scripts/run-chip-test.mjs --stop

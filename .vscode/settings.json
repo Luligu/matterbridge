@@ -1,4 +1,4 @@
-// VS Code settings v.1.0.19
+// VS Code settings v.1.0.21
 {
   "npm.packageManager": "npm",
   // Actually controls the runner used by "Run Script"/tasks; packageManager alone is not enough.
@@ -25,6 +25,7 @@
     "source.fixAll.oxc": "always"
   },
   "diffEditor.ignoreTrimWhitespace": false,
+  "vitest.configSearchPatternExclude": "{**/node_modules/**,**/vendor/**,**/.*/**,**/*.d.ts,**/template/**}",
   "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
@@ -51,10 +52,10 @@
   "github.copilot.chat.commitMessageGeneration.instructions": [{ "file": ".github/commit-message-instructions.md" }], // Conventional Commits for the Source Control "Generate Commit Message" button.
   "chat.tools.urls.autoApprove": {
     // Allow chat tools to access these domains without approval.
-    "github.com": true,
-    "matterbridge.io": true,
     "api.github.com": true,
+    "github.com": true,
     "registry.npmjs.org": true,
+    "matterbridge.io": true,
     "www.rfc-editor.org": true,
     "www.ietf.org": true
   },

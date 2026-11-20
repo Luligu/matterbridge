@@ -9,7 +9,7 @@ CHIP certification test suite — both the Python test scripts and the YAML cert
 CSA's own CI — running inside the `luligu/matterbridge:chip-test` Docker image. The image bakes in a full
 Matterbridge instance built from the `dev` branch at image-build time, so `--start` never installs, builds,
 or copies anything local into the container — it only brings the container up and waits for Matterbridge's
-root server node to come online. The harness is driven entirely by `scripts/run-matterbridge-chip-tests.mjs`
+root server node to come online. The harness is driven entirely by `scripts/run-chip-test.mjs`
 and configured by `chipTests.json`. This differs from the CHIP harness used in individual plugin repos (that
 variant bind-mounts the plugin, rebuilds it, and runs `matterbridge --add` on `--start`) — see §4 for how to
 get local code changes to this repo into a running container instead.
@@ -107,7 +107,7 @@ BooleanStateConfiguration endpoints) — since the trigger itself carries no end
 guess or broadcast). `chipTestActiveEndpointId` is not decoded from the trigger value itself (an earlier
 attempt at that broke real SmokeCOAlarm tests, since some of this file's own trigger constants — e.g.
 `smokeCoAlarmWarningCoAlarmTrigger = 0xffffffff00000091n` — already have non-zero bits in the range that looked
-like an endpoint encoding, but aren't one); it's set out-of-band by `run-matterbridge-chip-tests.mjs` from
+like an endpoint encoding, but aren't one); it's set out-of-band by `run-chip-test.mjs` from
 `chipTests.json`'s `"endpoint"` field for the currently running test, via the app-pipe (see below).
 
 To add a new trigger-backed CHIP test:
@@ -139,7 +139,7 @@ because "no real device can support this debug hook" — that exclusion does **n
 implements the app-pipe itself for exactly this purpose, so app-pipe-gated tests are runnable against this
 repo as long as the specific command the test sends is handled in `handleChipTestAppPipeCommand()`.
 
-`run-matterbridge-chip-tests.mjs` also writes its own synthetic `{"Name":"SetTestEndpoint","EndpointId":<n>}`
+`run-chip-test.mjs` also writes its own synthetic `{"Name":"SetTestEndpoint","EndpointId":<n>}`
 command into this same pipe before every test (`setActiveTestEndpoint()`), sourced from that test's
 `chipTests.json` `"endpoint"` field (omitting `EndpointId` clears it when a test has none). This isn't a real
 CHIP test command — `handleChipTestAppPipeCommand()` intercepts it first and stores it in the module-level
@@ -183,11 +183,11 @@ state, never device identity.
 ## 4. Lifecycle commands and syncing local code changes
 
 ```shell
-node scripts/run-matterbridge-chip-tests.mjs --start   # docker rm -f any old container, pull the image, create the docker network if missing, run the container, wait for Matterbridge's root server node to come online
-node scripts/run-matterbridge-chip-tests.mjs --start --local  # same as --start, but runs the locally built matterbridge:chip-test image (npm run docker:build:local:chip-test) without pulling
-node scripts/run-matterbridge-chip-tests.mjs           # run every test in chipTests.json's "tests" array against the running container
-node scripts/run-matterbridge-chip-tests.mjs --test X  # run only tests whose "name" or "test" (filename) includes X, case-insensitive substring match
-node scripts/run-matterbridge-chip-tests.mjs --stop    # docker stop the container (left in place, not removed — the next --start does the docker rm -f)
+node scripts/run-chip-test.mjs --start   # docker rm -f any old container, pull the image, create the docker network if missing, run the container, wait for Matterbridge's root server node to come online
+node scripts/run-chip-test.mjs --start --local  # same as --start, but runs the locally built matterbridge:chip-test image (npm run docker:build:local:chip-test) without pulling
+node scripts/run-chip-test.mjs           # run every test in chipTests.json's "tests" array against the running container
+node scripts/run-chip-test.mjs --test X  # run only tests whose "name" or "test" (filename) includes X, case-insensitive substring match
+node scripts/run-chip-test.mjs --stop    # docker stop the container (left in place, not removed — the next --start does the docker rm -f)
 ```
 
 Exposed as `npm run` shortcuts in `package.json`: `chip:start`, `chip:start:local`, `chip:test`, `chip:stop` (there is currently
@@ -214,7 +214,7 @@ docker restart chip-test
 
 Copy directory contents with `/.` so `docker cp` replaces the target directory's contents instead of nesting
 another `dist`/`build` folder inside it. After restarting, re-run the focused check through the repo script,
-e.g. `node scripts/run-matterbridge-chip-tests.mjs --test "SmokeCOAlarm"`.
+e.g. `node scripts/run-chip-test.mjs --test "SmokeCOAlarm"`.
 
 ## 5. `chipTests.json` shape
 
@@ -402,17 +402,17 @@ gets translated to a Windows path before reaching `docker`).
 
 ## 10. Verifying any change to this harness
 
-After editing `chipTests.json`, `chipTests.md`, `run-matterbridge-chip-tests.mjs`, `chipTests.ts`,
+After editing `chipTests.json`, `chipTests.md`, `run-chip-test.mjs`, `chipTests.ts`,
 `demoDevices.ts`, or any `docker/chip-test/*.pics` file, always re-verify end-to-end rather than trusting
 the edit alone:
 
-1. `node scripts/run-matterbridge-chip-tests.mjs --start` (or, for a `chipTests.ts`/`demoDevices.ts`/
+1. `node scripts/run-chip-test.mjs --start` (or, for a `chipTests.ts`/`demoDevices.ts`/
    `.pics` edit against an already-running container, the cheaper docker-cp-and-restart sync in §4) — a
    `demoDevices.ts` change also needs the container recreated with `--start` rather than a plain restart
    whenever it changes which env vars gate device creation, since `docker restart` doesn't refresh env vars
    baked in at `docker run` time.
-2. `node scripts/run-matterbridge-chip-tests.mjs --test <NAME>` for the affected test(s).
-3. `node scripts/run-matterbridge-chip-tests.mjs --stop`.
+2. `node scripts/run-chip-test.mjs --test <NAME>` for the affected test(s).
+3. `node scripts/run-chip-test.mjs --stop`.
 4. Run this repo's own formatter/linter/typecheck on the touched files.
 
 Keep `chipTests.md`'s prose (endpoint map, manual-run notes) in sync with
@@ -422,7 +422,7 @@ re-gated on a different PICS file/endpoint.
 ## 11. CI
 
 `.github/workflows/chip-tests.yml` runs the full CHIP conformance suite on a schedule (weekly, Monday 03:00
-UTC) and on `workflow_dispatch`, driving the same `scripts/run-matterbridge-chip-tests.mjs --start` /
+UTC) and on `workflow_dispatch`, driving the same `scripts/run-chip-test.mjs --start` /
 (no args) / `--stop` sequence §4 describes for a local run. It does **not** build this repo's checked-out
 code and sync it into the container first — it only exercises whatever is already baked into the
 currently-published `luligu/matterbridge:chip-test` image. That image is rebuilt separately, and only on

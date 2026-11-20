@@ -37,6 +37,10 @@ RUN \
   rm -rf .git \
   "
 
+# Collect the optional repo-root files needed at runtime (SPECIFICATION_VERSION exists only on newer branches).
+RUN mkdir -p /root/chip-root-files && \
+  if [ -f /root/connectedhomeip/SPECIFICATION_VERSION ]; then cp /root/connectedhomeip/SPECIFICATION_VERSION /root/chip-root-files/; fi
+
 # Prune/strip in a separate layer so connectedhomeip build stays cached.
 RUN bash -lc "\
   set -e; \
@@ -81,6 +85,8 @@ RUN \
 FROM ubuntu:24.04 AS release
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV BUN_INSTALL=/root/.bun
+ENV PATH="${BUN_INSTALL}/bin:${PATH}"
 ENV MATTERBRIDGE_CHIP_TEST=1
 ENV MATTERBRIDGE_START_CONFIGURE_TIMEOUT=5000
 ENV MATTERBRIDGE_START_REACHABILITY_TIMEOUT=10000
@@ -102,11 +108,11 @@ LABEL org.opencontainers.image.title="matterbridge:chip-test" \
   org.opencontainers.image.authors="Luligu <https://github.com/Luligu>" \
   org.opencontainers.image.created=$BUILD_DATE
 
-# Runtime deps only + Node.js
+# Runtime deps only + Node.js and latest Bun
 RUN \
   apt-get update && apt-get upgrade -y && \
   apt-get install -y --no-install-recommends \
-  bash ca-certificates curl gnupg \
+  bash ca-certificates curl gnupg unzip \
   python3 python3-venv python3-pip \
   libssl3 libglib2.0-0 libgobject-2.0-0 libgio-2.0-0 \
   libcairo2 \
@@ -120,6 +126,9 @@ RUN \
   echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_24.x nodistro main" > /etc/apt/sources.list.d/nodesource.list && \
   apt-get update && \
   apt-get install -y --no-install-recommends nodejs && \
+  node --version && npm --version && \
+  curl -fsSL https://bun.com/install | bash && \
+  bun --version && \
   rm -rf /var/lib/apt/lists/*
 
 ENV CHIP_ROOT=/root/connectedhomeip
@@ -150,10 +159,13 @@ COPY --from=builder /root/connectedhomeip/out/host/chip-tool /root/connectedhome
 COPY --from=builder /root/connectedhomeip/out/host/chip-cert /root/connectedhomeip/out/host/chip-cert
 COPY --from=builder /root/connectedhomeip/out/python_env /root/connectedhomeip/out/python_env
 COPY --from=builder /root/connectedhomeip/scripts /root/connectedhomeip/scripts
+# master's YAML runner (scripts/tests/chiptest) locates CHIP_ROOT via SPECIFICATION_VERSION (absent on older branches,
+# where the folder is empty and nothing is copied).
+COPY --from=builder /root/chip-root-files/ /root/connectedhomeip/
 
 # Replace connectedhomeip activator with a minimal one for YAML + Python tests.
 # This avoids Pigweed/CIPD bootstrap and keeps the familiar `. ./scripts/activate.sh` workflow.
-RUN cat > /root/connectedhomeip/scripts/activate.sh <<'SH'
+RUN cat >/root/connectedhomeip/scripts/activate.sh <<'SH'
 #!/usr/bin/env bash
 set -euo pipefail
 

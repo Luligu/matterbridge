@@ -7,7 +7,7 @@
  * It supports environment variables to customize the version and output paths.
  *
  * MATTER_DATA_MODEL_VERSION - The default version is 1.6.1.
- * MATTER_DATA_MODEL_XML_OUT - Where to store the downloaded XMLs (default: chip/<version>/xml).
+ * MATTER_DATA_MODEL_XML_OUT - Where to store the downloaded XMLs (default: ../Matter/<version>/xml).
  *
  * Namespaces have no id list in the repository, so the namespace files are hardcoded in `namespacesFiles`.
  * Always check the hardcoded list against the namespaces folder when changing version:
@@ -15,7 +15,7 @@
  * (for x.y.0 releases the remote folder is x.y, e.g. data_model/1.6/namespaces).
  */
 
-const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.6.1';
+const MATTER_DATA_MODEL_VERSION = process.env.MATTER_DATA_MODEL_VERSION || '1.7.0';
 const MATTER_DATA_MODEL_VERSION_REMOTE = MATTER_DATA_MODEL_VERSION.replace(/^(\d+\.\d+)\.0$/, '$1');
 const SRC_PATH = `https://raw.githubusercontent.com/project-chip/connectedhomeip/master/data_model/${MATTER_DATA_MODEL_VERSION_REMOTE}/`;
 const DATA_MODEL_PATHS = {
@@ -25,8 +25,8 @@ const DATA_MODEL_PATHS = {
   deviceTypesIds: `${SRC_PATH}device_types/device_type_ids.json`,
   namespaces: `${SRC_PATH}namespaces/`,
 };
-const DST_PATH = `chip/${MATTER_DATA_MODEL_VERSION}/`;
-const XML_DST_PATH = process.env.MATTER_DATA_MODEL_XML_OUT || `chip/${MATTER_DATA_MODEL_VERSION}/xml`;
+const DST_PATH = `../Matter/${MATTER_DATA_MODEL_VERSION}/`;
+const XML_DST_PATH = process.env.MATTER_DATA_MODEL_XML_OUT || `../Matter/${MATTER_DATA_MODEL_VERSION}/xml`;
 const OUTPUT_NAMESPACES = 'namespaces.json';
 const OUTPUT_DEVICE_TYPES = 'deviceTypes.json';
 const OUTPUT_CLUSTERS = 'clusters.json';

@@ -29,6 +29,54 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.4] - 2026-11-20
+
+### Development News
+
+- [matter.js]: See the [0.18.1 dev audit](Matter.js-0.18.1.md) for thermostat changes, initialization failures and the multi-ServerNode mDNS responder fix.
+
+### Added
+
+- [chip-test]: Add latest Bun via the official installer alongside Ubuntu and Node.js.
+- [docs]: Document Matter 1.6.1 provisional elements and the unresolved Ambient Context Sensor reference.
+- [chip-test]: Add `--start --plugin` to copy and configure the plugin from the current repository inside the test container, excluding its local Matterbridge dependency. Available in all plugins.
+- [core]: Add `AnsiLoggerCache` global logger cache (`--loggerCache`) and replay cached log entries to newly connected frontend WebSocket clients.
+- [dgram]: Add `MdnsResponder`, `MdnsScanner`, `MatterAdvertise` and `MatterbridgeAdvertise` (ported from matterbridge-native).
+- [mb-mdns-scan]: Add `mb-mdns-scan` bin that runs the `MdnsScanner` CLI.
+- [mb-mdns-advertise]: Add `mb-mdns-advertise` bin that runs the `MatterbridgeAdvertise` CLI.
+- [dgram]: Add the `announceCount` option (2 to 8, RFC 6762 §8.3) to `MdnsResponder` and `MatterAdvertise`.
+- [dgram]: Add `Multicast.joinGroup()` and `Multicast.leaveGroup()` to join and leave additional multicast groups (ported from matterbridge-native).
+- [demo]: Move the demo devices (`--demo-devices`) to the in-memory `matterbridge-demo-devices` plugin, which now acts like a normal plugin and is never saved to the plugin storage.
+
+### Changed
+
+- [docker]: Bump `s6-overlay` to v.3.2.3.2 in `Dockerfile.s6-rc` and `Dockerfile.s6-rc-legacy`, move `user` bundle to `user-bundles.d`, and add `docker/rootfs/README.md`.
+- [matterbridge]: Bump `jsdom` to v.31.0.1.
+- [matterbridge]: Bump `marked` to v.18.2.0.
+- [matterbridge]: Bump `node-ansi-logger` to v.3.3.2.
+- [matterbridge]: Bump `node-persist-manager` to v.2.1.2.
+- [matterbridge]: Bump `oxfmt` to v.0.78.0.
+- [matterbridge]: Bump `oxlint` to v.1.93.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2007.
+- [frontend]: Bump `@vitejs/plugin-react` to v.6.3.0.
+- [frontend]: Bump `vite` to v.8.3.8.
+- [thread]: Remove unused `@matter/main` dependency.
+- [thread]: Bump `@zip.js/zip.js` to v.2.25.0.
+- [core]: Bump `express-rate-limit` to v.8.7.4.
+- [core]: Bump `werift` to v.0.27.0.
+- [core]: Bump `ws` to v.8.23.0.
+- [dgram]: Log per-packet traffic only in verbose mode, with the byte count.
+- [dgram]: Send 8 mDNS announcements by default instead of 3, and log each one.
+
+### Fixed
+
+- [core]: Truncate the device name of the commissionable advertisement (DN TXT key) to 32 UTF-8 bytes (Matter 1.6.1 Core § 4.3.1.9).
+- [dgram]: Escape dots and backslashes in DNS labels and enforce label/name length limits (RFC 6763 §4.3); allow uncompressed rdata for legacy SRV replies (RFC 6762 §18.14).
+- [dgram]: Drop and log a unicast reply to an unreachable querier (EHOSTUNREACH) instead of failing the `MdnsResponder` socket (ported from matterbridge-native).
+- [thread]: Track pending `BroadcastServer.fetch()` requests in a map instead of one listener per call, avoiding `MaxListenersExceededWarning` on >10 concurrent fetches and rejecting pending fetches on `close()` and duplicate request ids.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.3] - 2026-11-13
 
 ### Development News
@@ -244,7 +292,7 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Add the `Auto` frontend theme, which follows the OS or browser color scheme (dark or light). The default stays `Dark`.
 - [test-utils]: Add `addBridgedDevice()` to the test-utils helpers: it adds the Bridged Node device type and, when missing, the `BridgedDeviceBasicInformationServer` to a test device, like `registerDevice()` does in bridge mode.
 - [matter]: Set restart required, with a log and a snackbar message, when the last fabric is removed and the server node is reset to factory defaults, since the `subscribeAttribute` listeners are lost. Closes [#657](https://github.com/Luligu/matterbridge/issues/657). Thanks Calvin Che.
-- [chip]: Add `--start --local` (`npm run chip:start:local`) to `run-matterbridge-chip-tests.mjs` to run the locally built `matterbridge:chip-test` image without pulling.
+- [chip]: Add `--start --local` (`npm run chip:start:local`) to `run-chip-test.mjs` to run the locally built `matterbridge:chip-test` image without pulling.
 
 ### Changed
 

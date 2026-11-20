@@ -79,9 +79,13 @@ describe('Dgram', () => {
 
     const message = Buffer.from('Hello');
     dgram.send(message, '127.0.0.1', 12345);
+    expect(loggerLogSpy).not.toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent ${BLUE}5${db} bytes to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
+
+    dgram.verbose = true;
+    dgram.send(message, '127.0.0.1', 12345);
 
     expect(sendSpy).toHaveBeenCalledWith(message, 0, message.length, 12345, '127.0.0.1', expect.any(Function));
-    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent a message to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, `Socket sent ${BLUE}5${db} bytes to ${BLUE}127.0.0.1${db}:${BLUE}12345${db}`);
 
     await new Promise<void>((resolve) => {
       dgram.on('close', resolve);

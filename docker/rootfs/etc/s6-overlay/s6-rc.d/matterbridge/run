@@ -48,6 +48,14 @@ echo "👤 User: $(whoami)"
 echo "📅 Date: $(date)"
 echo " "
 
+# Migration check: show the mounted folders and /config contents before proceeding.
+echo "🧪 Migration check"
+echo "🔍 Mounts:"
+grep -E " (/config|/addons|/data) " /proc/mounts || true
+echo "🔍 /config:"
+ls -la /config || true
+echo " "
+
 # Install matterbridge (first run only)
 INSTALL_MARKER="/home/node/.matterbridge_installed"
 if [ ! -f "${INSTALL_MARKER}" ]; then

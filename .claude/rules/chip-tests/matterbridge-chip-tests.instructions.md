@@ -5,7 +5,7 @@ paths:
   - 'chipTests.md'
   - 'chipTests.log'
   - 'chipTestsSummary.log'
-  - 'scripts/run-matterbridge-chip-tests.mjs'
+  - 'scripts/run-chip-test.mjs'
   - 'packages/core/src/chipTests.ts'
   - 'packages/core/src/demoDevices.ts'
   - 'packages/core/src/helpers.ts'

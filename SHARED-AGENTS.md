@@ -68,7 +68,7 @@ The testing pointers for both Claude Code and Copilot cover `**/*.test.ts`, `**/
 | `.claude/skills/verify-server-endpoint-context/SKILL.md`           | Skill invocable as `/verify-server-endpoint-context` — Verify server endpoint context, type narrowing, forwarding, observables and Matter comments |
 | `.claude/skills/verify-version-alignment/SKILL.md`                 | Skill invocable as `/verify-version-alignment` — Verify package, Docker, test helper, docs update and workflow versions                            |
 
-The CHIP pointers for both Claude Code and Copilot cover `chipTests.json`, `chipTests.md`, `chipTests.log`, `chipTestsSummary.log`, `scripts/run-matterbridge-chip-tests.mjs`, `packages/core/src/chipTests.ts`, `packages/core/src/demoDevices.ts`, `packages/core/src/helpers.ts`, `docker/Dockerfile.chip-test`, `docker/entrypoint.chip-test.sh`, `docker/chip-test/**`, `.github/workflows/docker-buildx-chip-test.yml`, and `.github/workflows/chip-tests.yml`.
+The CHIP pointers for both Claude Code and Copilot cover `chipTests.json`, `chipTests.md`, `chipTests.log`, `chipTestsSummary.log`, `scripts/run-chip-test.mjs`, `packages/core/src/chipTests.ts`, `packages/core/src/demoDevices.ts`, `packages/core/src/helpers.ts`, `docker/Dockerfile.chip-test`, `docker/entrypoint.chip-test.sh`, `docker/chip-test/**`, `.github/workflows/docker-buildx-chip-test.yml`, and `.github/workflows/chip-tests.yml`.
 
 ### Codex instructions
 

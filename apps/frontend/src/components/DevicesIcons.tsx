@@ -875,21 +875,19 @@ function DevicesIcons({ filterPlugins, filterDevices }: DevicesIconsProps): Reac
           if (filterDevices === '') return true;
           return device.deviceName.toLowerCase().includes(filterDevices.toLowerCase()) || device.serialNumber.toLowerCase().includes(filterDevices.toLowerCase());
         })
-        .map(
-          (device) =>
-            endpoints[device.serialNumber] &&
-            endpoints[device.serialNumber].map((endpoint) =>
-              endpoint.deviceTypes.map((deviceType) => (
-                <MemoizedDevice
-                  key={`${device.plugin}-${device.uniqueId}-${endpoint.endpoint}-${endpoint.id}-${deviceType.toString()}`}
-                  device={device}
-                  endpoint={endpoint.endpoint}
-                  id={endpoint.id}
-                  deviceType={deviceType}
-                  clusters={(clusters[device.serialNumber] ?? []).filter((c) => c.endpoint === endpoint.endpoint)}
-                />
-              )),
-            ),
+        .map((device) =>
+          endpoints[device.serialNumber]?.map((endpoint) =>
+            endpoint.deviceTypes.map((deviceType) => (
+              <MemoizedDevice
+                key={`${device.plugin}-${device.uniqueId}-${endpoint.endpoint}-${endpoint.id}-${deviceType.toString()}`}
+                device={device}
+                endpoint={endpoint.endpoint}
+                id={endpoint.id}
+                deviceType={deviceType}
+                clusters={(clusters[device.serialNumber] ?? []).filter((c) => c.endpoint === endpoint.endpoint)}
+              />
+            )),
+          ),
         )}
     </div>
   );

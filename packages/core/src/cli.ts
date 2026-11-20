@@ -328,6 +328,7 @@ function help(): void {
       --bind [address]:        bind the frontend to the given address (default all addresses)
       --logger:                set the matterbridge logger level: debug | info | notice | warn | error | fatal (default info)
       --filelogger:            enable the matterbridge file logger (matterbridge.log)
+      --loggerCache [size]:    set the number of cached log entries replayed to new frontend WebSocket clients (default 200)
       --matterlogger:          set the matter.js logger level: debug | info | notice | warn | error | fatal (default info)
       --matterfilelogger:      enable the matter.js file logger (matter.log)
       --sudo:                  force the use of sudo to install or update packages if the internal logic fails

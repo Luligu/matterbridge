@@ -65,7 +65,7 @@ import { bridge } from './matterbridgeDeviceTypes.js';
 import type { MatterbridgeEndpoint } from './matterbridgeEndpoint.js';
 import type { MatterbridgePlatform } from './matterbridgePlatform.js';
 import { setupLoggers } from './matterLogger.js';
-import { deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode, toDevice } from './matterNodeHelpers.js';
+import { deleteAdvertisingNode, getServerNodeData, rootCameraEndpoint, rootCameraOptions, setAdvertisingNode, toDevice, truncateUtf8 } from './matterNodeHelpers.js';
 import { startMatterStorage, stopMatterStorage } from './matterStorage.js';
 import { type Plugin, PluginManager } from './pluginManager.js';
 
@@ -735,7 +735,8 @@ export class MatterNode extends EventEmitter<MatterEvents> {
 
       // Provide Node announcement settings
       productDescription: {
-        name: await this.matterStorageContext.get<string>('deviceName'),
+        // Matter 1.6.1 Core § 4.3.1.9: the DN TXT key of the commissionable advertisement has a maximum length of 32 bytes
+        name: truncateUtf8(await this.matterStorageContext.get<string>('deviceName'), 32),
         deviceType: DeviceTypeId(await this.matterStorageContext.get<number>('deviceType')),
         vendorId: VendorId(await this.matterStorageContext.get<number>('vendorId')),
         productId: await this.matterStorageContext.get<number>('productId'),

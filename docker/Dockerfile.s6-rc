@@ -4,7 +4,7 @@ FROM node:24-trixie-slim AS downloader
 # 🛠️ Set noninteractive frontend
 ENV DEBIAN_FRONTEND=noninteractive
 
-ARG S6_OVERLAY_VERSION=3.2.2.0
+ARG S6_OVERLAY_VERSION=3.2.3.2
 ARG TARGETARCH
 
 RUN set -eux; \
