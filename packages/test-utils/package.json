@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/test-utils",
-  "version": "3.11.4",
+  "version": "3.11.5",
   "description": "Matterbridge common and framework-specific test utilities",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -108,7 +108,7 @@
   },
   "dependencies": {
     "@matter/main": "0.18.0",
-    "@matterbridge/types": "3.11.4",
+    "@matterbridge/types": "3.11.5",
     "node-ansi-logger": "3.3.2"
   },
   "devDependencies": {

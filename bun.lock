@@ -5,14 +5,14 @@
     "": {
       "name": "matterbridge",
       "dependencies": {
-        "@matterbridge/core": "3.11.4",
-        "@matterbridge/dgram": "3.11.4",
-        "@matterbridge/test-utils": "3.11.4",
-        "@matterbridge/thread": "3.11.4",
-        "@matterbridge/types": "3.11.4",
-        "@matterbridge/utils": "3.11.4",
-        "node-ansi-logger": "3.3.1",
-        "node-persist-manager": "2.1.1",
+        "@matterbridge/core": "3.11.5",
+        "@matterbridge/dgram": "3.11.5",
+        "@matterbridge/test-utils": "3.11.5",
+        "@matterbridge/thread": "3.11.5",
+        "@matterbridge/types": "3.11.5",
+        "@matterbridge/utils": "3.11.5",
+        "node-ansi-logger": "3.3.2",
+        "node-persist-manager": "2.1.2",
       },
       "devDependencies": {
         "@matter/main": "0.18.0",
@@ -31,7 +31,7 @@
     },
     "apps/frontend": {
       "name": "@matterbridge/frontend",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "devDependencies": {
         "@emotion/react": "11.14.0",
         "@emotion/styled": "11.14.1",
@@ -58,24 +58,24 @@
     },
     "packages/core": {
       "name": "@matterbridge/core",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "dependencies": {
         "@matter/main": "0.18.0",
-        "@matterbridge/dgram": "3.11.4",
-        "@matterbridge/thread": "3.11.4",
-        "@matterbridge/types": "3.11.4",
-        "@matterbridge/utils": "3.11.4",
+        "@matterbridge/dgram": "3.11.5",
+        "@matterbridge/thread": "3.11.5",
+        "@matterbridge/types": "3.11.5",
+        "@matterbridge/utils": "3.11.5",
         "escape-html": "1.0.3",
         "express": "5.3.0",
         "express-rate-limit": "8.7.4",
         "multer": "2.5.0",
-        "node-ansi-logger": "3.3.1",
-        "node-persist-manager": "2.1.1",
+        "node-ansi-logger": "3.3.2",
+        "node-persist-manager": "2.1.2",
         "werift": "0.27.0",
         "ws": "8.23.0",
       },
       "devDependencies": {
-        "@matterbridge/test-utils": "3.11.4",
+        "@matterbridge/test-utils": "3.11.5",
         "@types/escape-html": "1.0.4",
         "@types/express": "5.0.6",
         "@types/multer": "2.3.0",
@@ -86,24 +86,24 @@
     },
     "packages/dgram": {
       "name": "@matterbridge/dgram",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "dependencies": {
-        "@matterbridge/utils": "3.11.4",
-        "node-ansi-logger": "3.3.1",
+        "@matterbridge/utils": "3.11.5",
+        "node-ansi-logger": "3.3.2",
       },
       "devDependencies": {
-        "@matterbridge/test-utils": "3.11.4",
+        "@matterbridge/test-utils": "3.11.5",
         "@types/node": "26.6.6",
         "vitest": "5.1.0",
       },
     },
     "packages/test-utils": {
       "name": "@matterbridge/test-utils",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "dependencies": {
         "@matter/main": "0.18.0",
-        "@matterbridge/types": "3.11.4",
-        "node-ansi-logger": "3.3.1",
+        "@matterbridge/types": "3.11.5",
+        "node-ansi-logger": "3.3.2",
       },
       "devDependencies": {
         "@types/bun": "1.4.4",
@@ -114,25 +114,25 @@
     },
     "packages/thread": {
       "name": "@matterbridge/thread",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "dependencies": {
-        "@matterbridge/types": "3.11.4",
-        "@matterbridge/utils": "3.11.4",
+        "@matterbridge/types": "3.11.5",
+        "@matterbridge/utils": "3.11.5",
         "@zip.js/zip.js": "2.25.0",
-        "node-ansi-logger": "3.3.1",
+        "node-ansi-logger": "3.3.2",
       },
       "devDependencies": {
-        "@matterbridge/test-utils": "3.11.4",
+        "@matterbridge/test-utils": "3.11.5",
         "@types/node": "26.6.6",
         "vitest": "5.1.0",
       },
     },
     "packages/types": {
       "name": "@matterbridge/types",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "dependencies": {
         "@matter/main": "0.18.0",
-        "node-ansi-logger": "3.3.1",
+        "node-ansi-logger": "3.3.2",
       },
       "devDependencies": {
         "@types/node": "26.6.6",
@@ -141,12 +141,12 @@
     },
     "packages/utils": {
       "name": "@matterbridge/utils",
-      "version": "3.11.4",
+      "version": "3.11.5",
       "dependencies": {
-        "node-ansi-logger": "3.3.1",
+        "node-ansi-logger": "3.3.2",
       },
       "devDependencies": {
-        "@matterbridge/test-utils": "3.11.4",
+        "@matterbridge/test-utils": "3.11.5",
         "@types/bun": "1.4.4",
         "@types/node": "26.6.6",
         "vitest": "5.1.0",
@@ -852,11 +852,11 @@
 
     "negotiator": ["negotiator@1.1.0", "", { "dependencies": { "content-type": "^2.1.0" } }, "sha512-NMPBRMJgiQHjbd8phG3Vebdx4kZ1H121rbl5IkMqeOsahptB9BKo/d7oJ3zTXqTgagn2bWlNSXkh0QUGM31RYg=="],
 
-    "node-ansi-logger": ["node-ansi-logger@3.3.1", "", {}, "sha512-JjkQHtVKgyd5Ua4AkYCFsZZiUYMrPsj/S9k2VY8/FjYuFJFRjDawsuxMwaThhWu4oU7zwuqvDG2uoDnjUyApVw=="],
+    "node-ansi-logger": ["node-ansi-logger@3.3.2", "", {}, "sha512-rPTPkPTfyG7xgjbvCfjYh+H3UuxaM477Q+HtYbCxG20U51GHXYthCIOiDCROAd/DOmcYXL6jif6FeE6hCli22w=="],
 
     "node-persist": ["node-persist@4.0.4", "", { "dependencies": { "p-limit": "^3.1.0" } }, "sha512-8sPAz/7tw1mCCc8xBG4f0wi+flHkSSgQeX998iQ75Pu27evA6UUWCjSE7xnrYTg2q33oU5leJ061EKPDv6BocQ=="],
 
-    "node-persist-manager": ["node-persist-manager@2.1.1", "", { "dependencies": { "node-persist": "4.0.4" } }, "sha512-cAqF2spTnzDSAQeORHy/OYdD1VROGZ6UiLjmq/gVxQ4EglB0Ro0QX83U+xHEh2G6b7HTvGFqjS/R9LTOGkcayw=="],
+    "node-persist-manager": ["node-persist-manager@2.1.2", "", { "dependencies": { "node-persist": "4.0.4" } }, "sha512-NAWfk9eHUX2W3je2ik6yE6pMgIxV32sKDP2cmVCszX6blgYU4X++iLKEdjR31N/QVZU2EgDJeC5YAX99BheJcg=="],
 
     "notistack": ["notistack@3.0.2", "", { "dependencies": { "clsx": "^1.1.0", "goober": "^2.0.33" }, "peerDependencies": { "react": "^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0" } }, "sha512-0R+/arLYbK5Hh7mEfR2adt0tyXJcCC9KkA2hc56FeWik2QN6Bm/S4uW+BjzDARsJth5u06nTjelSw/VSnB1YEA=="],
 
