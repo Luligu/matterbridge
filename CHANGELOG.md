@@ -31,8 +31,19 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.5] - Dev branch
 
+### Breaking changes
+
+- [matterbridge]: `mb_mdns` and `mb_coap` run `MdnsMonitor` and `CoapMonitor` from `@matterbridge/dgram`: options are kebab-case (`--interface`, `--ipv4-address`, `--no-ipv4`, ...), intervals are in seconds and `mb_mdns --advertise` is replaced by `mb-mdns-advertise`.
+- [core]: Remove the `./mb_mdns` and `./mb_coap` exports.
+
+### Added
+
+- [dgram]: Add `MdnsMonitor`, `CoapMonitor` and `MdnsResolver`.
+- [dgram]: Add the outgoing multicast interface to `Coap` and `--outgoing-ipv4-address` / `--outgoing-ipv6-address` to `CoapMonitor`.
+
 ### Changed
 
+- [dgram]: Update mDNS record typing, packet validation, responder behavior and scanner resolution.
 - [matterbridge]: Bump `@types/bun` to v.1.4.5.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.1.
 - [matterbridge]: Bump `marked` to v.18.2.1.
@@ -43,6 +54,10 @@ If you like this project and find it useful, please consider giving it a star on
 - [frontend]: Bump `react-router` to v.8.5.2.
 - [core]: Bump `express-rate-limit` to v.8.7.5.
 - [core]: Bump `werift` to v.0.28.0.
+
+### Fixed
+
+- [dgram]: A multicast socket setup error, e.g. `setMulticastInterface()` rejecting the outgoing interface, is logged and emitted as `error` instead of being thrown as an uncaught exception.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

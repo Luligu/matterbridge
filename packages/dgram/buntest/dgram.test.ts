@@ -10,7 +10,7 @@ import os from 'node:os';
 import { loggerDebugSpy, loggerLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
 import { BLUE, db, LogLevel } from 'node-ansi-logger';
 
-import { Dgram } from '../src/dgram.js';
+import { Dgram, interfaceZone, isLinkLocalIpv6, onSubnet, receivingZone } from '../src/dgram.js';
 
 // Mocks AnsiLogger.prototype.log and the console methods, and sets process.argv to ['bun', NAME].
 await setupTest('DgramTest');
@@ -791,5 +791,110 @@ describe('Dgram', () => {
       dgram.on('close', resolve);
       dgram.socket.close();
     });
+  });
+});
+
+describe('Dgram address helpers', () => {
+  const platform = process.platform;
+  const ipv4Info = (address: string, cidr: string | null = `${address}/24`, internal = false): os.NetworkInterfaceInfo => ({
+    address,
+    netmask: '255.255.255.0',
+    family: 'IPv4',
+    mac: '00:00:00:00:00:00',
+    internal,
+    cidr,
+  });
+  const ipv6Info = (address: string, scopeid = 7): os.NetworkInterfaceInfo => ({
+    address,
+    netmask: 'ffff:ffff:ffff:ffff::',
+    family: 'IPv6',
+    mac: '00:00:00:00:00:00',
+    internal: false,
+    cidr: `${address.split('%')[0]}/64`,
+    scopeid,
+  });
+
+  /**
+   * Sets the platform and the local network interfaces until the end of the test.
+   *
+   * @param {NodeJS.Platform} value - The platform.
+   * @param {NodeJS.Dict<os.NetworkInterfaceInfo[]>} interfaces - The interfaces.
+   */
+  function mockHost(value: NodeJS.Platform, interfaces: NodeJS.Dict<os.NetworkInterfaceInfo[]>): void {
+    Object.defineProperty(process, 'platform', { value, configurable: true });
+    spyOn(os, 'networkInterfaces').mockReturnValue(interfaces);
+  }
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: platform, configurable: true });
+    vi.restoreAllMocks();
+  });
+
+  test('should tell the link-local addresses of fe80::/10 from the others', () => {
+    expect(isLinkLocalIpv6('fe80::1')).toBe(true);
+    expect(isLinkLocalIpv6('FEBF:0:0:0:0:0:0:1')).toBe(true);
+    expect(isLinkLocalIpv6('fec0::1')).toBe(false);
+    expect(isLinkLocalIpv6('fd00::1')).toBe(false);
+    expect(isLinkLocalIpv6('192.168.1.1')).toBe(false);
+  });
+
+  test('should format the zone of an interface with its name, or with its index on Windows', () => {
+    Object.defineProperty(process, 'platform', { value: 'linux', configurable: true });
+    expect(interfaceZone('eth7', 7)).toBe('%eth7');
+    Object.defineProperty(process, 'platform', { value: 'win32', configurable: true });
+    expect(interfaceZone('eth7', 7)).toBe('%7');
+  });
+
+  test('should match an address with the subnet of an interface address of the same family, with or without zone', () => {
+    expect(onSubnet('fe80::1234', ipv6Info('fe80::2%en0'))).toBe(true);
+    expect(onSubnet('2001:db8::5', ipv6Info('2001:db8::2'))).toBe(true);
+    expect(onSubnet('2001:db9::5', ipv6Info('2001:db8::2'))).toBe(false);
+    expect(onSubnet('192.168.1.99', ipv6Info('2001:db8::2'))).toBe(false);
+    expect(onSubnet('192.168.1.99', { ...ipv6Info('2001:db8::2'), cidr: null })).toBe(false);
+    expect(onSubnet('not:an:address', ipv6Info('2001:db8::2'))).toBe(false);
+  });
+
+  test('should return the zone of the sender when it has one', () => {
+    mockHost('linux', {});
+    expect(receivingZone('fe80::1234%en5')).toBe('%en5');
+    expect(receivingZone('fe80::1234%en5', 'eth0')).toBe('%en5');
+    expect(os.networkInterfaces).not.toHaveBeenCalled();
+  });
+
+  test('should return the bound interface when the sender has no zone', () => {
+    mockHost('linux', {});
+    expect(receivingZone('192.168.1.99', 'eth0')).toBe('%eth0');
+    expect(receivingZone('2001:db8::5', 'eth0')).toBe('%eth0');
+  });
+
+  test('should return the only interface whose subnet holds the sender when no interface is bound', () => {
+    mockHost('linux', {
+      lo0: [ipv4Info('192.168.1.1', '192.168.1.1/24', true)],
+      eth7: [ipv4Info('192.168.1.2'), ipv6Info('fe80::2', 7)],
+      eth8: [ipv4Info('10.0.0.2', null), ipv6Info('2001:db8::2', 8)],
+      eth9: [ipv4Info('172.16.5.2', '172.16.5.2/22')],
+      eth10: undefined,
+    });
+    expect(receivingZone('192.168.1.99')).toBe('%eth7');
+    expect(receivingZone('2001:db8::5')).toBe('%eth8');
+    expect(receivingZone('172.16.7.99')).toBe('%eth9');
+    expect(receivingZone('172.16.8.99')).toBeUndefined();
+    expect(receivingZone('10.0.0.99')).toBeUndefined();
+  });
+
+  test('should return undefined when no interface or more than one holds the sender', () => {
+    mockHost('linux', { eth7: [ipv4Info('192.168.1.2')], eth8: [ipv4Info('192.168.1.3')] });
+    expect(receivingZone('192.168.1.99')).toBeUndefined();
+    expect(receivingZone('10.0.0.99')).toBeUndefined();
+    expect(receivingZone('not an address')).toBeUndefined();
+  });
+
+  test('should return the interface index on Windows, and undefined without an IPv6 index', () => {
+    mockHost('win32', { eth7: [ipv4Info('192.168.1.2'), ipv6Info('fe80::2', 7)], eth8: [ipv4Info('10.0.0.2')] });
+    expect(receivingZone('192.168.1.99')).toBe('%7');
+    expect(receivingZone('192.168.1.99', 'eth7')).toBe('%7');
+    expect(receivingZone('10.0.0.99')).toBeUndefined();
+    expect(receivingZone('192.168.1.99', 'missing')).toBeUndefined();
+    expect(receivingZone('fe80::1234%7')).toBe('%7');
   });
 });

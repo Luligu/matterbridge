@@ -447,8 +447,9 @@ describe('MdnsResponder', () => {
       inject('ipv6', query, { address: 'fe80::1234%unrelated-interface' });
       expect(sent).toHaveLength(0);
       inject('ipv6', query, { address: `fe80::1234%${advertiser.interfaceName}` });
-      expect(sent).toHaveLength(1);
-      expect(sent[0].address).toBe('ff02::fb');
+      // The multicast answer and the unicast copy to the on-link querier
+      expect(sent).toHaveLength(2);
+      expect(sent.filter((packet) => packet.address === 'ff02::fb')).toHaveLength(1);
     });
 
     it('should preserve owned records when the host name provider returns an invalid label', async () => {
@@ -797,10 +798,10 @@ describe('MdnsResponder', () => {
         expect(ptr?.cacheFlush).toBe(false); // Shared record
         expect(answers.filter((record) => record.name === '_services._dns-sd._udp.local').map((record) => record.data)).toEqual(['_example._tcp.local', '_http._tcp.local']);
         const srv = answers.find((record) => record.type === DnsRecordType.SRV);
-        expect(JSON.parse(srv?.data ?? '{}')).toEqual({ priority: 0, weight: 0, port: 1234, target: advertiser.hostName });
+        expect(srv?.data).toEqual({ priority: 0, weight: 0, port: 1234, target: advertiser.hostName });
         expect(srv?.ttl).toBe(MDNS_HOST_RECORD_TTL);
         expect(srv?.cacheFlush).toBe(true); // Unique record
-        expect(answers.find((record) => record.type === DnsRecordType.TXT)?.data).toBe('txtvers=1, path=/');
+        expect(answers.find((record) => record.type === DnsRecordType.TXT)?.data).toEqual(['txtvers=1', 'path=/']);
         expect(answers.some((record) => record.type === DnsRecordType.NSEC)).toBe(false);
         const nsec = (announcement.additionals ?? []).filter((record) => record.type === DnsRecordType.NSEC);
         expect(nsec.map((record) => record.name)).toEqual([
@@ -809,7 +810,7 @@ describe('MdnsResponder', () => {
           `${advertiser.instanceName}._example._tcp.local`,
           `${advertiser.instanceName}._http._tcp.local`,
         ]);
-        expect(JSON.parse(nsec[2].data)).toEqual({ nextDomain: `${advertiser.instanceName}._example._tcp.local`, types: ['TXT', 'SRV'] });
+        expect(nsec[2].data).toEqual({ nextDomain: `${advertiser.instanceName}._example._tcp.local`, types: ['TXT', 'SRV'] });
       }
     });
 
@@ -832,9 +833,9 @@ describe('MdnsResponder', () => {
       const advertiser = await announcedAdvertiser();
       advertiser.update({ port: 9000, txt: [] });
       const srv = sentOn('ipv4')[0].message.answers?.find((record) => record.type === DnsRecordType.SRV);
-      expect(JSON.parse(srv?.data ?? '{}').port).toBe(9000);
+      expect(srv?.type === DnsRecordType.SRV ? srv.data.port : undefined).toBe(9000);
       const txt = sentOn('ipv4')[0].message.answers?.find((record) => record.type === DnsRecordType.TXT);
-      expect(txt?.data).toBe(''); // RFC 6763 §6.1: an empty TXT is a single zero byte
+      expect(txt?.data).toEqual(['']); // RFC 6763 §6.1: an empty TXT is a single zero byte
       expect(() => advertiser.update({ port: 70000 })).toThrow('invalid port');
       sent.length = 0;
       advertiser.update({ txt: ['version=1'] }); // The invalid port was not kept
@@ -842,7 +843,7 @@ describe('MdnsResponder', () => {
       const srvAfter = sentOn('ipv4')
         .flatMap((packet) => packet.message.answers ?? [])
         .find((record) => record.type === DnsRecordType.SRV);
-      expect(JSON.parse(srvAfter?.data ?? '{}').port).toBe(9000);
+      expect(srvAfter?.type === DnsRecordType.SRV ? srvAfter.data.port : undefined).toBe(9000);
     });
 
     it('should reannounce without probing when only addresses change (RFC 6762 §8.4)', async () => {
@@ -871,6 +872,81 @@ describe('MdnsResponder', () => {
   });
 
   describe('answering', () => {
+    it('should send a unicast copy of a QM answer to an on-link querier, even when the multicast answer is rate limited', async () => {
+      const advertiser = await announcedAdvertiser();
+      const instance = `${advertiser.instanceName}._example._tcp.local`;
+      const query = buildPacket({ questions: [{ name: instance, type: DnsRecordType.SRV }] });
+      inject('ipv6', query);
+      expect(sentOn('ipv6').map((packet) => packet.address.split('%')[0])).toEqual(['fe80::1234', 'ff02::fb']);
+      expect(sentOn('ipv6')[0].port).toBe(port);
+      expect(sentOn('ipv6')[0].message.answers?.map((record) => record.type)).toEqual([DnsRecordType.SRV]);
+      sent.length = 0;
+      // Within one second of the last multicast: the multicast answer is rate limited, the unicast copy is not
+      inject('ipv6', query);
+      vi.advanceTimersByTime(1000);
+      expect(sentOn('ipv6').map((packet) => packet.address.split('%')[0])).toEqual(['fe80::1234']);
+    });
+
+    it('should log the number of a question type that has no name', async () => {
+      const advertiser = await announcedAdvertiser();
+      const instance = `${advertiser.instanceName}._example._tcp.local`;
+      // oxlint-disable-next-line typescript/no-unsafe-enum-assignment -- a type number missing from the enum
+      const unnamed = 0xff00 as DnsRecordType;
+      inject(
+        'ipv4',
+        buildPacket({
+          questions: [
+            { name: instance, type: DnsRecordType.SRV },
+            { name: instance, type: unnamed },
+          ],
+        }),
+      );
+      expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.DEBUG, expect.stringContaining(`${instance} 65280 QM`));
+    });
+
+    it('should not send a unicast copy to a query from this host', async () => {
+      const advertiser = await announcedAdvertiser();
+      const own = ipv6.find((address) => address.startsWith('fe80'));
+      if (!own) return;
+      inject('ipv6', buildPacket({ questions: [{ name: `${advertiser.instanceName}._example._tcp.local`, type: DnsRecordType.SRV }] }), { address: own });
+      expect(sentOn('ipv6').map((packet) => packet.address)).toEqual(['ff02::fb']);
+    });
+
+    it('should answer by unicast, when probing succeeds, a query received while probing (RFC 6762 §8.1)', async () => {
+      const advertiser = await startAdvertiser();
+      const instance = `${advertiser.instanceName}._example._tcp.local`;
+      inject('ipv6', buildPacket({ questions: [{ name: instance, type: DnsRecordType.SRV, qu: true }] }));
+      expect(sent.filter((packet) => packet.message.qr === 1)).toHaveLength(0);
+      await completeProbing();
+      const unicast = sentOn('ipv6').filter((packet) => packet.address.split('%')[0] === 'fe80::1234');
+      expect(unicast).toHaveLength(1);
+      expect(unicast[0].message.answers?.map((record) => record.name)).toEqual([instance]);
+    });
+
+    it('should not queue a query for records that are already announced', async () => {
+      const advertiser = await announcedAdvertiser();
+      inject('ipv6', buildPacket({ questions: [{ name: '_example._tcp.local', type: DnsRecordType.PTR }] }));
+      inject('ipv6', buildPacket({ questions: [{ name: `${advertiser.instanceName}._example._tcp.local`, type: DnsRecordType.SRV }] }));
+      expect(advertiser['probingQueries']).toHaveLength(0);
+    });
+
+    it('should keep at most 16 queries received while probing and forget them on stop', async () => {
+      const advertiser = await startAdvertiser();
+      const query = buildPacket({ questions: [{ name: `${advertiser.instanceName}._example._tcp.local`, type: DnsRecordType.SRV, qu: true }] });
+      for (let i = 0; i < 20; i++) inject('ipv6', query, { address: `fe80::${i + 1}` });
+      expect(advertiser['probingQueries']).toHaveLength(16);
+      await completeProbing();
+      expect(advertiser['probingQueries']).toHaveLength(0);
+      expect(sentOn('ipv6').filter((packet) => packet.address.startsWith('fe80::') && packet.message.qr === 1)).toHaveLength(16);
+      await startAdvertiser();
+      inject('ipv6', query);
+      expect(adv?.['probingQueries']).toHaveLength(1);
+      const stopping = adv?.stop();
+      vi.advanceTimersByTime(1000);
+      await stopping;
+      expect(adv?.['probingQueries']).toHaveLength(0);
+    });
+
     it('should answer a PTR query after a random 20-120 ms delay with the SRV, TXT, addresses and NSEC as additionals', async () => {
       const advertiser = await announcedAdvertiser();
       inject('ipv4', buildPacket({ questions: [{ name: '_example._tcp.local', type: DnsRecordType.PTR }] }));
@@ -894,11 +970,12 @@ describe('MdnsResponder', () => {
     it('should answer an address query at once, with the other address family as additionals (RFC 6762 §6.2)', async () => {
       const advertiser = await announcedAdvertiser();
       inject('ipv6', buildPacket({ questions: [{ name: advertiser.hostName.toUpperCase(), type: DnsRecordType.A }] }));
-      expect(sentOn('ipv6')).toHaveLength(1);
-      const response = sentOn('ipv6')[0].message;
-      expect(response.answers?.map((record) => record.data)).toEqual(ipv4);
-      expect(response.additionals?.filter((record) => record.type === DnsRecordType.AAAA)).toHaveLength(ipv6.length);
-      expect(response.additionals?.at(-1)?.type).toBe(DnsRecordType.NSEC);
+      // The multicast answer and the unicast copy to the on-link querier
+      expect(sentOn('ipv6')).toHaveLength(2);
+      const response = sentOn('ipv6').find((packet) => packet.address === 'ff02::fb')?.message;
+      expect(response?.answers?.map((record) => record.data)).toEqual(ipv4);
+      expect(response?.additionals?.filter((record) => record.type === DnsRecordType.AAAA)).toHaveLength(ipv6.length);
+      expect(response?.additionals?.at(-1)?.type).toBe(DnsRecordType.NSEC);
     });
 
     it('should answer a query for a type that does not exist on an owned name with an NSEC record (RFC 6762 §6.1)', async () => {
@@ -906,7 +983,7 @@ describe('MdnsResponder', () => {
       inject('ipv4', buildPacket({ questions: [{ name: advertiser.hostName, type: DnsRecordType.TXT }] }));
       const answer = sentOn('ipv4')[0].message.answers?.[0];
       expect(answer?.type).toBe(DnsRecordType.NSEC);
-      expect(JSON.parse(answer?.data ?? '{}').types).toEqual([...(ipv4.length > 0 ? ['A'] : []), ...(ipv6.length > 0 ? ['AAAA'] : [])]);
+      expect(answer?.type === DnsRecordType.NSEC ? answer.data.types : undefined).toEqual([...(ipv4.length > 0 ? ['A'] : []), ...(ipv6.length > 0 ? ['AAAA'] : [])]);
     });
 
     it('should answer ANY with all the records of the name except NSEC (RFC 6762 §6.5)', async () => {
@@ -1151,6 +1228,16 @@ describe('MdnsResponder', () => {
       expect(sent[0].message.answers?.[0].name).toBe(advertiser.hostName);
     });
 
+    it('should log a socket error and emit it when there is a listener', async () => {
+      const advertiser = await announcedAdvertiser();
+      advertiser.sockets.ipv4?.socket.emit('error', new Error('first'));
+      const errors = vi.fn();
+      advertiser.on('error', errors);
+      advertiser.sockets.ipv6?.socket.emit('error', new Error('second'));
+      expect(errors).toHaveBeenCalledWith(expect.objectContaining({ message: 'second' }));
+      expect(errors).toHaveBeenCalledTimes(1);
+    });
+
     it('should drop the packet and keep advertising when a destination is unreachable', async () => {
       const advertiser = await announcedAdvertiser({ enableIpv6: false });
       const socket = advertiser.sockets.ipv4;
@@ -1175,16 +1262,6 @@ describe('MdnsResponder', () => {
       await transmitted;
       expect(errors).not.toHaveBeenCalled();
       warn.mockRestore();
-    });
-
-    it('should log a socket error and emit it when there is a listener', async () => {
-      const advertiser = await announcedAdvertiser();
-      advertiser.sockets.ipv4?.socket.emit('error', new Error('first'));
-      const errors = vi.fn();
-      advertiser.on('error', errors);
-      advertiser.sockets.ipv6?.socket.emit('error', new Error('second'));
-      expect(errors).toHaveBeenCalledWith(expect.objectContaining({ message: 'second' }));
-      expect(errors).toHaveBeenCalledTimes(1);
     });
 
     it('should reject start() when a socket fails to start', async () => {

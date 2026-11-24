@@ -3,7 +3,7 @@
  * @description This file contains the class Coap.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.2
+ * @version 1.0.3
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -176,6 +176,7 @@ export class Coap extends Multicast {
    * @param {boolean | undefined} [reuseAddr] - Whether to reuse the address. Defaults to true.
    * @param {string} [interfaceName] - Optional network interface name.
    * @param {string} [interfaceAddress] - Optional interface address.
+   * @param {string} [outgoingInterfaceAddress] - The outgoing multicast interface passed to setMulticastInterface(): a local IPv4 address for udp4, `::%<name>` (`::%<index>` on Windows) for udp6.
    */
   constructor(
     name: string,
@@ -185,8 +186,9 @@ export class Coap extends Multicast {
     reuseAddr: boolean | undefined = true,
     interfaceName?: string,
     interfaceAddress?: string,
+    outgoingInterfaceAddress?: string,
   ) {
-    super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress);
+    super(name, multicastAddress, multicastPort, socketType, reuseAddr, interfaceName, interfaceAddress, outgoingInterfaceAddress);
   }
 
   /**

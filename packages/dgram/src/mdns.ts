@@ -3,7 +3,7 @@
  * @description This file contains the class Mdns.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.2.0
+ * @version 1.3.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -32,7 +32,7 @@ import dgram, { type SocketType } from 'node:dgram';
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
 // AnsiLogger imports
-import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, MAGENTA, nf, rs } from 'node-ansi-logger';
+import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, LogLevel, MAGENTA, nf, rs } from 'node-ansi-logger';
 
 // matterbridge
 import { MDNS_MULTICAST_PORT, Multicast } from './multicast.js';
@@ -299,16 +299,54 @@ interface DnsQuestion {
   unicastResponse: boolean;
 }
 
-interface MdnsRecord {
+/** Decoded RDATA of an mDNS SRV record (RFC 2782). */
+export interface MdnsSrvData {
+  /** Target priority (lower is preferred). */
+  priority: number;
+  /** Relative weight for records with the same priority. */
+  weight: number;
+  /** TCP or UDP port of the service. */
+  port: number;
+  /** Canonical hostname of the target host. */
+  target: string;
+}
+
+/** Decoded RDATA of an mDNS NSEC record (RFC 6762 §6.1). */
+export interface MdnsNsecData {
+  /** Next domain name in the NSEC record. */
+  nextDomain: string;
+  /** DNS record type names present in the NSEC type bitmap. */
+  types: string[];
+}
+
+/** Common fields shared by every decoded mDNS resource record. */
+interface MdnsRecordBase {
+  /** Owner DNS name of the record. */
   name: string;
-  type: DnsRecordType;
-  /** The class, with the cache-flush bit split out into {@link MdnsRecord.cacheFlush}. */
+  /** The class, with the cache-flush bit split out into {@link MdnsRecordBase.cacheFlush}. */
   class: DnsClass;
   /** True when the record has the cache-flush bit set (RFC 6762 §10.2). */
   cacheFlush: boolean;
+  /** Time-to-live of the record in seconds (0 indicates a goodbye packet). */
   ttl: number;
-  data: string;
+  /** Friendly human-readable representation of {@link data} for logs and text filtering. */
+  text: string;
 }
+
+/** A decoded mDNS resource record with native typed {@link data} and friendly {@link text}. */
+export type MdnsRecord = MdnsRecordBase &
+  (
+    | { type: DnsRecordType.PTR; data: string }
+    | { type: DnsRecordType.TXT; data: string[] }
+    | { type: DnsRecordType.SRV; data: MdnsSrvData }
+    | { type: DnsRecordType.A; data: string }
+    | { type: DnsRecordType.AAAA; data: string }
+    | { type: DnsRecordType.NSEC; data: MdnsNsecData }
+    | {
+        type: Exclude<DnsRecordType, DnsRecordType.PTR | DnsRecordType.TXT | DnsRecordType.SRV | DnsRecordType.A | DnsRecordType.AAAA | DnsRecordType.NSEC>;
+        data: string;
+      }
+  );
 
 type IpAddress = string;
 
@@ -419,7 +457,7 @@ export class Mdns extends Multicast {
    * @param {boolean} [reuseAddr] - Whether to reuse the address. Defaults to true.
    * @param {string} [interfaceName] - The optional name of the network interface to use.
    * @param {string} [interfaceAddress] - The optional IP address of the network interface to use.
-   * @param {string} [outgoingInterfaceAddress] - The address of the outgoing network interface.
+   * @param {string} [outgoingInterfaceAddress] - The outgoing multicast interface passed to setMulticastInterface(): a local IPv4 address for udp4, `::%<name>` (`::%<index>` on Windows) for udp6.
    */
   constructor(
     name: string,
@@ -478,23 +516,22 @@ export class Mdns extends Multicast {
         this.onQuery(rinfo, result);
       } else {
         const ptr =
-          result.answers?.find((record) => record.name === '_shelly._tcp.local' && record.type === DnsRecordType.PTR) ||
-          result.answers?.find((record) => record.name === '_http._tcp.local' && record.type === DnsRecordType.PTR) ||
-          result.answers?.find((record) => record.type === DnsRecordType.PTR) ||
-          result.answers?.find((record) => record.type === DnsRecordType.TXT) ||
-          result.answers
-            ? result.answers[0]
-            : undefined; // Fallback to the first answer if no PTR or TXT found
-        this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.type === DnsRecordType.PTR ? ptr?.data : ptr?.name });
+          result.answers?.find((record) => record.name === '_shelly._tcp.local' && record.type === DnsRecordType.PTR) ??
+          result.answers?.find((record) => record.name === '_http._tcp.local' && record.type === DnsRecordType.PTR) ??
+          result.answers?.find((record) => record.type === DnsRecordType.PTR) ??
+          result.answers?.find((record) => record.type === DnsRecordType.TXT) ??
+          result.answers?.[0]; // Fallback to the first answer if no PTR or TXT found
+        this.deviceResponses.set(rinfo.address, { rinfo, response: result, dataPTR: ptr?.type === DnsRecordType.PTR ? ptr.data : ptr?.name });
         this.onResponse(rinfo, result);
       }
       // Apply filters if any
       if (this.filters.length > 0) {
         for (const filter of this.filters) {
           const foundInQuestions = result.questions?.some((q) => q.name.includes(filter));
-          const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.data.includes(filter));
-          const foundInAdditionals = result.additionals?.some((a) => a.name.includes(filter) || a.data.includes(filter));
-          if (foundInQuestions || foundInAnswers || foundInAdditionals) {
+          const foundInAnswers = result.answers?.some((a) => a.name.includes(filter) || a.text.includes(filter));
+          const foundInAuthorities = result.authorities?.some((a) => a.name.includes(filter) || a.text.includes(filter));
+          const foundInAdditionals = result.additionals?.some((a) => a.name.includes(filter) || a.text.includes(filter));
+          if (foundInQuestions || foundInAnswers || foundInAuthorities || foundInAdditionals) {
             this.log.info(
               `Dgram mDNS server received a mDNS message (${msg.length} bytes) from ${BLUE}${rinfo.family}${nf} ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf}`,
             );
@@ -568,6 +605,7 @@ export class Mdns extends Multicast {
       const qnameResult = this.decodeDnsName(msg, offset);
       const qname = qnameResult.name;
       offset = qnameResult.newOffset;
+      if (offset + 4 > msg.length) throw new Error('mDNS question header exceeds message bounds');
       const qtype = msg.readUInt16BE(offset);
       offset += 2;
       const qclass = msg.readUInt16BE(offset);
@@ -905,6 +943,8 @@ export class Mdns extends Multicast {
     const name = nameResult.name;
     offset = nameResult.newOffset;
 
+    if (offset + 10 > msg.length) throw new Error('mDNS record header exceeds message bounds');
+
     // Read TYPE (16 bits), CLASS (16 bits), TTL (32 bits), and RDLENGTH (16 bits)
     const type = msg.readUInt16BE(offset);
     offset += 2;
@@ -915,64 +955,68 @@ export class Mdns extends Multicast {
     const rdlength = msg.readUInt16BE(offset);
     offset += 2;
 
-    let data: string;
-    // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
-    if (type === DnsRecordType.PTR) {
+    const rdataEnd = offset + rdlength;
+    if (rdataEnd > msg.length) throw new Error('mDNS record data exceeds message bounds');
+
+    const recordType = wireToDnsRecordType(type);
+    const base = {
+      name,
+      class: wireToDnsClass(rrclass & 0x7fff),
+      cacheFlush: (rrclass & DnsClassFlag.FLUSH) !== 0,
+      ttl,
+    };
+
+    if (recordType === DnsRecordType.PTR) {
       // PTR record (type 12): decode its RDATA as a domain name.
       const ptrResult = this.decodeDnsName(msg, offset);
-      data = ptrResult.name;
-      offset += rdlength;
-      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
-    } else if (type === DnsRecordType.TXT) {
+      if (ptrResult.newOffset !== rdataEnd) throw new Error('Invalid PTR record length');
+      const data = ptrResult.name;
+      return { record: { ...base, type: DnsRecordType.PTR, data, text: data }, newOffset: rdataEnd };
+    } else if (recordType === DnsRecordType.TXT) {
       // TXT record: may consist of one or more length-prefixed strings.
       const txtStrings: string[] = [];
-      const end = offset + rdlength;
-      while (offset < end) {
-        const txtLen = msg[offset];
-        offset++;
-        const txt = msg.subarray(offset, offset + txtLen).toString('utf8');
-        txtStrings.push(txt);
+      while (offset < rdataEnd) {
+        const txtLen = msg[offset++];
+        if (offset + txtLen > rdataEnd) throw new Error('TXT string exceeds record bounds');
+        txtStrings.push(msg.subarray(offset, offset + txtLen).toString('utf8'));
         offset += txtLen;
       }
-      data = txtStrings.join(', ');
-      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
-    } else if (type === DnsRecordType.SRV) {
+      return { record: { ...base, type: DnsRecordType.TXT, data: txtStrings, text: txtStrings.join(', ') }, newOffset: rdataEnd };
+    } else if (recordType === DnsRecordType.SRV) {
       // SRV record (type === 33): consists of 2 bytes for priority, 2 for weight, 2 for port, followed by the target domain name.
+      if (rdlength < 6) throw new Error('Invalid SRV record length');
       const priority = msg.readUInt16BE(offset);
       const weight = msg.readUInt16BE(offset + 2);
       const port = msg.readUInt16BE(offset + 4);
       offset += 6;
       const srvTargetResult = this.decodeDnsName(msg, offset);
-      data = JSON.stringify({
-        priority,
-        weight,
-        port,
-        target: srvTargetResult.name,
-      });
-      offset = srvTargetResult.newOffset;
-      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
-    } else if (type === DnsRecordType.A) {
+      if (srvTargetResult.newOffset !== rdataEnd) throw new Error('Invalid SRV record length');
+      const data: MdnsSrvData = { priority, weight, port, target: srvTargetResult.name };
+      const text = `${data.target}:${data.port} (priority ${data.priority}, weight ${data.weight})`;
+      return { record: { ...base, type: DnsRecordType.SRV, data, text }, newOffset: rdataEnd };
+    } else if (recordType === DnsRecordType.A) {
       // A record (type 1): an IPv4 address stored in 4 bytes.
+      if (rdlength !== 4) throw new Error('Invalid A record length');
       const ipBytes = msg.subarray(offset, offset + 4);
-      data = Array.from(ipBytes).join('.');
-      offset += 4;
-      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
-    } else if (type === DnsRecordType.AAAA) {
+      const data = Array.from(ipBytes).join('.');
+      return { record: { ...base, type: DnsRecordType.A, data, text: data }, newOffset: rdataEnd };
+    } else if (recordType === DnsRecordType.AAAA) {
       // AAAA record (type 28): IPv6 address stored in 16 bytes.
+      if (rdlength !== 16) throw new Error('Invalid AAAA record length');
       const ipBytes = msg.subarray(offset, offset + 16);
       // Convert the 16 bytes into an IPv6 address string (colon-separated)
       const ipv6Parts: string[] = [];
       for (let i = 0; i < 16; i += 2) {
         ipv6Parts.push(ipBytes.readUInt16BE(i).toString(16));
       }
-      data = ipv6Parts.join(':');
-      offset += 16;
-      // oxlint-disable-next-line typescript/no-unsafe-enum-comparison
-    } else if (type === DnsRecordType.NSEC) {
+      const data = ipv6Parts.join(':');
+      return { record: { ...base, type: DnsRecordType.AAAA, data, text: data }, newOffset: rdataEnd };
+    } else if (recordType === DnsRecordType.NSEC) {
       // NSEC record: RDATA consists of:
       //   - Next Domain Name (in DNS label format)
       //   - Type Bit Maps (variable length)
       const { name: nextDomain, newOffset } = this.decodeDnsName(msg, offset);
+      if (newOffset > rdataEnd) throw new Error('Invalid NSEC record length');
       const nextDomainLength = newOffset - offset;
       offset = newOffset;
 
@@ -983,9 +1027,11 @@ export class Mdns extends Multicast {
       let bitmapOffset = 0;
 
       while (bitmapOffset < bitmapData.length) {
+        if (bitmapOffset + 2 > bitmapData.length) throw new Error('Invalid NSEC record length');
         const windowBlock = bitmapData[bitmapOffset];
         const windowLength = bitmapData[bitmapOffset + 1];
         bitmapOffset += 2;
+        if (windowLength > 32 || bitmapOffset + windowLength > bitmapData.length) throw new Error('Invalid NSEC record length');
         for (let i = 0; i < windowLength; i++) {
           const octet = bitmapData[bitmapOffset + i];
           for (let bit = 0; bit < 8; bit++) {
@@ -997,21 +1043,14 @@ export class Mdns extends Multicast {
         }
         bitmapOffset += windowLength;
       }
-      data = JSON.stringify({
-        nextDomain,
-        types,
-      });
-      offset += bitmapLength;
+      const data: MdnsNsecData = { nextDomain, types };
+      const text = `${nextDomain} [${types.join(', ')}]`;
+      return { record: { ...base, type: DnsRecordType.NSEC, data, text }, newOffset: rdataEnd };
     } else {
       // Fall back
-      data = msg.subarray(offset, offset + rdlength).toString('hex');
-      offset += rdlength;
+      const data = msg.subarray(offset, rdataEnd).toString('hex');
+      return { record: { ...base, type: recordType, data, text: data }, newOffset: rdataEnd };
     }
-
-    return {
-      record: { name, type: wireToDnsRecordType(type), class: wireToDnsClass(rrclass & 0x7fff), cacheFlush: (rrclass & DnsClassFlag.FLUSH) !== 0, ttl, data },
-      newOffset: offset,
-    };
   }
 
   /**
@@ -1078,7 +1117,15 @@ export class Mdns extends Multicast {
         this.log.error(`Dgram mDNS server failed to send query message: ${error instanceof Error ? error.message : error}`);
         this.emit('error', error);
       } else {
-        this.log.debug(`Dgram mDNS server sent query message`);
+        if (this.log.logLevel === LogLevel.DEBUG) {
+          const names = questions
+            .map(
+              (question) =>
+                `${BLUE}${question.name}${nf} ${BLUE}${DnsRecordType[question.type] ?? question.type}${nf} (${BLUE}${question.unicastResponse ? 'unicast' : 'multicast'} response${nf})`,
+            )
+            .join(', ');
+          this.log.debug(`Dgram mDNS server sent query message: ${names}`);
+        }
         this.emit('sent', query, this.multicastAddress, this.multicastPort);
       }
     });
@@ -1338,17 +1385,17 @@ export class Mdns extends Multicast {
     });
     msg.answers?.forEach((answer) => {
       log.info(
-        `Answer: ${CYAN}${answer.name}${nf} type ${idn}${this.dnsTypeToString(answer.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(answer.class, answer.cacheFlush)}${nf} ttl ${CYAN}${answer.ttl}${nf} data ${CYAN}${answer.data}${nf}`,
+        `Answer: ${CYAN}${answer.name}${nf} type ${idn}${this.dnsTypeToString(answer.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(answer.class, answer.cacheFlush)}${nf} ttl ${CYAN}${answer.ttl}${nf} data ${CYAN}${answer.text}${nf}`,
       );
     });
     msg.authorities?.forEach((authority) => {
       log.info(
-        `Authority: ${CYAN}${authority.name}${nf} type ${idn}${this.dnsTypeToString(authority.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(authority.class, authority.cacheFlush)}${nf} ttl ${CYAN}${authority.ttl}${nf} data ${CYAN}${authority.data}${nf}`,
+        `Authority: ${CYAN}${authority.name}${nf} type ${idn}${this.dnsTypeToString(authority.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(authority.class, authority.cacheFlush)}${nf} ttl ${CYAN}${authority.ttl}${nf} data ${CYAN}${authority.text}${nf}`,
       );
     });
     msg.additionals?.forEach((additional) => {
       log.info(
-        `Additional: ${CYAN}${additional.name}${nf} type ${idn}${this.dnsTypeToString(additional.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(additional.class, additional.cacheFlush)}${nf} ttl ${CYAN}${additional.ttl}${nf} data ${CYAN}${additional.data}${nf}`,
+        `Additional: ${CYAN}${additional.name}${nf} type ${idn}${this.dnsTypeToString(additional.type)}${rs}${nf} class ${CYAN}${this.dnsResponseClassToString(additional.class, additional.cacheFlush)}${nf} ttl ${CYAN}${additional.ttl}${nf} data ${CYAN}${additional.text}${nf}`,
       );
     });
     log.info(`---\n`);

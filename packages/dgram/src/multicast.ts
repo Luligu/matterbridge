@@ -3,7 +3,7 @@
  * @description This file contains the class Multicast.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.1
+ * @version 1.0.2
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -33,7 +33,7 @@ import { getErrorMessage } from '@matterbridge/utils/error';
 import { BLUE, CYAN, db, RED, YELLOW } from 'node-ansi-logger';
 
 // Dgram imports
-import { Dgram } from './dgram.js';
+import { Dgram, interfaceZone } from './dgram.js';
 
 export const MDNS_MULTICAST_IPV4_ADDRESS = '224.0.0.251';
 export const MDNS_MULTICAST_IPV6_ADDRESS = 'ff02::fb';
@@ -62,7 +62,7 @@ export class Multicast extends Dgram {
    * @param {boolean | undefined} reuseAddr - Whether to allow address reuse. Defaults to true.
    * @param {string} [interfaceName] - The name of the network interface to bind to. If provided, the interfaceAddress will be determined based on this name if not explicitly provided.
    * @param {string} [interfaceAddress] - The address of the network interface to bind to. If not provided, it will be determined based on the interfaceName.
-   * @param {string} [outgoingInterfaceAddress] - The address of the outgoing network interface. If not provided, it will use the interfaceAddress.
+   * @param {string} [outgoingInterfaceAddress] - The outgoing multicast interface passed to setMulticastInterface(): a local IPv4 address for udp4, `::%<name>` (`::%<index>` on Windows) for udp6. If not provided, it is derived from the interfaceAddress and interfaceName.
    */
   constructor(
     name: string,
@@ -102,10 +102,31 @@ export class Multicast extends Dgram {
 
   /**
    * Event handler for the 'listening' event. This event is emitted when the socket starts listening for datagram messages.
+   * A setup error, e.g. no external IPv4 address for the default outgoing interface or an outgoing interface that
+   * setMulticastInterface() rejects, is logged and emitted as 'error' when there is a listener, and 'ready' is not emitted:
+   * the error never escapes the 'listening' event as an uncaught exception.
    *
    * @param {AddressInfo} [address] - The address info.
    */
   override onListening(address: AddressInfo): void {
+    try {
+      this.setupMulticast(address);
+    } catch (error) {
+      const setupError = error instanceof Error ? error : new Error(getErrorMessage(error));
+      this.log.error(`Dgram multicast socket setup failed: ${setupError.message}`);
+      if (this.listenerCount('error') > 0) this.emit('error', setupError);
+      return;
+    }
+    this.emit('ready', address);
+  }
+
+  /**
+   * Enables broadcast and multicast on the listening socket, joins the multicast group on the interfaces and sets the outgoing multicast interface.
+   *
+   * @param {AddressInfo} address - The address info.
+   * @throws {Error} If the outgoing interface cannot be resolved or setMulticastInterface() rejects it.
+   */
+  private setupMulticast(address: AddressInfo): void {
     this.log.debug(`Dgram multicast socket listening on ${BLUE}${address.family}${db} ${BLUE}${address.address}${db}:${BLUE}${address.port}${db}`);
     this.socket.setBroadcast(true);
     this.log.debug(`Dgram multicast socket broadcast enabled`);
@@ -132,13 +153,13 @@ export class Multicast extends Dgram {
       const ifaceIpv6 = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6');
       if (ifaceIpv6) {
         iface = ifaceIpv6;
-        membershipInterface = ifaceIpv6.address + (ifaceIpv6.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceIpv6.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceIpv6.address + (ifaceIpv6.scopeid !== undefined ? interfaceZone(name, ifaceIpv6.scopeid) : '');
       }
       // Find the first Unique Local Address (ULA) IPv6
       const ifaceUla = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fd'));
       if (ifaceUla) {
         iface = ifaceUla;
-        membershipInterface = ifaceUla.address + (ifaceUla.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceUla.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceUla.address + (ifaceUla.scopeid !== undefined ? interfaceZone(name, ifaceUla.scopeid) : '');
       }
       // Find the first Unique Local Address (ULA) IPv6 with prefix length /64 (netmask ffff:ffff:ffff:ffff::)
       const ifaceUla64 = interfaces.find(
@@ -146,14 +167,13 @@ export class Multicast extends Dgram {
       );
       if (ifaceUla64) {
         iface = ifaceUla64;
-        membershipInterface = ifaceUla64.address + (ifaceUla64.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceUla64.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceUla64.address + (ifaceUla64.scopeid !== undefined ? interfaceZone(name, ifaceUla64.scopeid) : '');
       }
       // Find the first Link-local IPv6 Address
       const ifaceLinkLocal = interfaces.find((iface) => iface.family === 'IPv6' && this.socketType === 'udp6' && iface.address.startsWith('fe80'));
       if (ifaceLinkLocal) {
         iface = ifaceLinkLocal;
-        membershipInterface =
-          ifaceLinkLocal.address + (ifaceLinkLocal.scopeid !== undefined ? (process.platform === 'win32' ? '%' + String(ifaceLinkLocal.scopeid) : '%' + name) : '');
+        membershipInterface = ifaceLinkLocal.address + (ifaceLinkLocal.scopeid !== undefined ? interfaceZone(name, ifaceLinkLocal.scopeid) : '');
       }
       // Add the interface address to the multicast group
       if (iface && membershipInterface) {
@@ -188,7 +208,6 @@ export class Multicast extends Dgram {
     } else {
       this.log.debug(`Dgram multicast socket no outgoing interface address resolved; using system default multicast interface`);
     }
-    this.emit('ready', address);
   }
 
   /**

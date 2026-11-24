@@ -43,6 +43,24 @@ describe('MatterbridgeAdvertise', () => {
       advertiser.sockets.ipv4?.socket.close();
     });
 
+    it('should derive the id from the MAC address or, when it is missing or hidden, from a hash of the host name', () => {
+      const info = { address: '192.168.1.10', netmask: '255.255.255.0', family: 'IPv4', internal: false, cidr: '192.168.1.10/24' } as const;
+      const hostnameId = createHash('sha256').update(os.hostname()).digest('hex').slice(0, 12).toUpperCase();
+      const networkInterfaces = vi.spyOn(os, 'networkInterfaces');
+      for (const [mac, id] of [
+        ['aa:bb:cc:dd:ee:ff', 'AABBCCDDEEFF'],
+        ['00:00:00:00:00:00', hostnameId],
+        ['02:00:00:00:00:00', hostnameId],
+      ]) {
+        networkInterfaces.mockReturnValue({ eth9: [{ ...info, mac }] });
+        const advertiser = new MatterbridgeAdvertise({ alias: false, enableIpv6: false, addressCheckIntervalMs: 0 });
+        expect(advertiser.hostName).toBe(`matterbridge-${id}.local`);
+        expect(advertiser.instanceName).toBe(`Matterbridge ${id.slice(-6)}`);
+        advertiser.sockets.ipv4?.socket.close();
+      }
+      networkInterfaces.mockRestore();
+    });
+
     it('should throw when no external interface is found', () => {
       const networkInterfaces = vi.spyOn(os, 'networkInterfaces').mockReturnValue({});
       expect(() => new MatterbridgeAdvertise()).toThrow('network interface (none found) not available');

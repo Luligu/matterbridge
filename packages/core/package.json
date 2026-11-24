@@ -106,14 +106,6 @@
       "types": "./dist/cli.d.ts",
       "import": "./dist/cli.js"
     },
-    "./mb_mdns": {
-      "types": "./dist/mb_mdns.d.ts",
-      "import": "./dist/mb_mdns.js"
-    },
-    "./mb_coap": {
-      "types": "./dist/mb_coap.d.ts",
-      "import": "./dist/mb_coap.js"
-    },
     "./mb_health": {
       "types": "./dist/mb_health.d.ts",
       "import": "./dist/mb_health.js"

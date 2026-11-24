@@ -3,7 +3,7 @@
  * @description Shared RFC 6762 / RFC 6763 mDNS and DNS-SD responder.
  * @author Luca Liguori
  * @created 2026-09-28
- * @version 1.0.5
+ * @version 1.0.6
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -37,6 +37,7 @@ import { getErrorMessage } from '@matterbridge/utils/error';
 import { AnsiLogger, BLUE, CYAN, LogLevel, nf, TimestampFormat } from 'node-ansi-logger';
 
 // Dgram imports
+import { onSubnet } from './dgram.js';
 import { DnsClass, DnsClassFlag, DnsHeaderFlag, DnsRecordType, isFirstOnPort, Mdns, MDNS_MAX_MESSAGE_LENGTH } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 
@@ -63,6 +64,7 @@ const ANNOUNCE_MAX_COUNT = 8; // RFC 6762 §8.3
 const ANNOUNCE_FIRST_INTERVAL_MS = 1000; // RFC 6762 §8.3: one second, then doubling
 const RESPONSE_MIN_DELAY_MS = 20; // RFC 6762 §6
 const RESPONSE_MAX_DELAY_MS = 120; // RFC 6762 §6
+const MAX_PROBING_QUERIES = 16; // Queries kept while probing, answered when probing succeeds
 const TRUNCATED_MIN_DELAY_MS = 400; // RFC 6762 §6, §7.2
 const TRUNCATED_MAX_DELAY_MS = 500; // RFC 6762 §6, §7.2
 const MULTICAST_MIN_INTERVAL_MS = 1000; // RFC 6762 §6
@@ -313,6 +315,8 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
   };
   private readonly multicastTimers: Partial<Record<MdnsResponderFamily, NodeJS.Timeout>> = {};
   private readonly truncatedQueries = new Map<string, TruncatedQuery>();
+  /** Queries for records still being probed, answered by unicast as soon as probing succeeds. */
+  private readonly probingQueries: { family: MdnsResponderFamily; message: ParsedMessage; rinfo: dgram.RemoteInfo }[] = [];
   private announcedResolve: (() => void) | undefined;
   private readonly firstOnPort: Record<MdnsResponderFamily, boolean> = { ipv4: true, ipv6: true };
 
@@ -426,7 +430,9 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     if (this.stopped) return;
     await Promise.all(this.families().map(async (family) => this.startSocket(family)));
     if (this.stopped) return;
-    this.log.info(`Advertising ${CYAN}${this.instanceLabel}${nf} on ${CYAN}${this.hostName}${nf} port ${BLUE}${this.port}${nf} on interface ${CYAN}${this.interfaceName}${nf}`);
+    this.log.info(
+      `Advertising instance ${CYAN}${this.instanceLabel}${nf} service ${CYAN}${this.services.join(', ')}${nf} on host ${CYAN}${this.hostName}${nf} port ${CYAN}${this.port}${nf} on interface ${CYAN}${this.interfaceName}${nf}`,
+    );
     if (this.addressCheckIntervalMs > 0) {
       this.addressTimer = setInterval(() => this.checkAddresses(), this.addressCheckIntervalMs).unref();
     }
@@ -443,10 +449,11 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     if (!this.started || this.stopped) return;
     this.stopped = true;
     this.clearTimers();
+    this.probingQueries.length = 0;
     if (this.addressTimer) clearInterval(this.addressTimer);
     const goodbye = this.activeRecords();
     if (goodbye.length > 0) {
-      this.log.info(`Sending goodbye for ${CYAN}${this.hostName}${nf} and ${CYAN}${this.instanceLabel}${nf}`);
+      this.log.info(`Sending goodbye for host ${CYAN}${this.hostName}${nf} and instance ${CYAN}${this.instanceLabel}${nf} service ${CYAN}${this.services.join(', ')}${nf}`);
       for (const family of this.families()) this.sendMulticast(family, goodbye, [], 0);
     }
     this.announcedResolve?.();
@@ -792,8 +799,16 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     for (const [kind, state] of this.claims) if (state === 'probing') this.claims.set(kind, 'owned');
     this.firstConflictTime = undefined;
     this.probeFailureLogged = false;
-    this.log.info(`Probing succeeded: ${CYAN}${this.hostName}${nf}${this.aliasName ? ` (alias ${CYAN}${this.aliasName}${nf})` : ''} instance ${CYAN}${this.instanceLabel}${nf}`);
+    this.log.info(
+      `Probing succeeded: host ${CYAN}${this.hostName}${nf}${this.aliasName ? ` (alias ${CYAN}${this.aliasName}${nf})` : ''} instance ${CYAN}${this.instanceLabel}${nf} service ${CYAN}${this.services.join(', ')}${nf}`,
+    );
     this.startAnnouncing();
+    // Queries received while probing could not be answered (RFC 6762 §8.1): answer them now, by unicast to on-link queriers.
+    const queued = this.probingQueries.splice(0);
+    for (const { family, message, rinfo } of queued) {
+      this.log.debug(`Answering query from ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf} (${family}) received while probing`);
+      this.answerQuery(family, message, [], rinfo, true);
+    }
   }
 
   /**
@@ -859,7 +874,9 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
       const answers = records.filter((record) => record.type !== DnsRecordType.NSEC);
       const additionals = records.filter((record) => record.type === DnsRecordType.NSEC);
       for (const family of this.families()) this.sendMulticast(family, answers, additionals);
-      this.log.info(`Announced ${CYAN}${this.hostName}${nf} and ${CYAN}${this.instanceLabel}${nf} (${index + 1}/${this.announceCount})`);
+      this.log.info(
+        `Announced host ${CYAN}${this.hostName}${nf} and instance ${CYAN}${this.instanceLabel}${nf} service ${CYAN}${this.services.join(', ')}${nf} (${index + 1}/${this.announceCount})`,
+      );
       if (index === 0) {
         this.emit('announced');
         this.announcedResolve?.();
@@ -1080,6 +1097,18 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     const active = this.activeRecords();
     const answers = new Map<string, MdnsResponderRecord>();
     const unicastRequested = new Set<string>();
+    if (!delayed && !this.isOwnAddress(rinfo.address)) {
+      // buildRecords() returns new objects: compare by key, not by reference
+      const activeKeys = new Set(active.map(recordKey));
+      const probing = this.buildRecords().filter((record) => !activeKeys.has(recordKey(record)));
+      const asked = message.questions.filter((question) => probing.some((record) => sameName(record.name, question.name)));
+      if (asked.length > 0 && this.probingQueries.length < MAX_PROBING_QUERIES) {
+        this.probingQueries.push({ family, message: { ...message, questions: asked, answers: [] }, rinfo });
+        this.log.debug(
+          `Query from ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf} (${family}) for ${CYAN}${asked.map((question) => question.name).join(', ')}${nf} while probing: answering when probing succeeds`,
+        );
+      }
+    }
     for (const question of message.questions) {
       if (question.qclass !== DnsClass.IN && question.qclass !== DnsClass.ANY) continue;
       let matches = active.filter(
@@ -1096,7 +1125,17 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     }
     // RFC 6762 §7.1: known-answer suppression
     const isKnown = (record: MdnsResponderRecord): boolean => knownAnswers.some((known) => sameRecord(record, known) && known.ttl >= record.ttl / 2);
+    const matched = answers.size;
     for (const [key, record] of answers) if (isKnown(record)) answers.delete(key);
+    if (matched > 0) {
+      const questions = message.questions
+        .filter((question) => active.some((record) => sameName(record.name, question.name)))
+        .map((question) => `${question.name} ${DnsRecordType[question.type] ?? question.type}${question.qu ? ' QU' : ' QM'}`)
+        .join(', ');
+      this.log.debug(
+        `Query from ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf} (${family}): ${CYAN}${questions}${nf} -> ${matched} matching, ${matched - answers.size} suppressed by known answers`,
+      );
+    }
     if (answers.size === 0) return;
 
     const answerList = [...answers.values()];
@@ -1115,14 +1154,18 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
     const unicast: MdnsResponderRecord[] = [];
     const multicast: MdnsResponderRecord[] = [];
     const onLink = this.isOnLink(rinfo.address);
+    // Unicast copy to every on-link querier other than this host: multicast answers can be lost on Wi-Fi, and the querier
+    // accepts a unicast answer to an open question from an on-link source (RFC 6762 §6.7, §11). It bypasses the multicast rate limit.
+    const unicastCopy = onLink && !this.isOwnAddress(rinfo.address);
     for (const record of answerList) {
       const last = this.lastMulticast[family].get(recordKey(record));
       const recentlyMulticast = last !== undefined && now - last < (record.ttl * 1000) / 4;
       if (unicastRequested.has(recordKey(record)) && onLink) {
         // RFC 6762 §5.4: unicast reply, but multicast when not multicast within a quarter of the TTL (probe defenses get both)
-        if (recentlyMulticast || isDefense) unicast.push(record);
+        if (recentlyMulticast || isDefense || unicastCopy) unicast.push(record);
         if (!recentlyMulticast) multicast.push(record);
       } else {
+        if (unicastCopy) unicast.push(record);
         multicast.push(record);
       }
     }
@@ -1131,11 +1174,16 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
       delayed || isDefense || (allUnique && message.questions.every((question) => answerList.some((record) => sameName(record.name, question.name))))
         ? 0
         : randomInt(RESPONSE_MIN_DELAY_MS, RESPONSE_MAX_DELAY_MS);
+    this.log.debug(
+      `Answering ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf} (${family}): ${unicast.length} unicast, ${multicast.length} multicast, ${additionals.length} additional, delay ${delay} ms`,
+    );
     if (unicast.length > 0) {
       const send = (): void => {
         /* v8 ignore next - stop() clears the pending timers, so a delayed send never runs after stop */
         if (this.stopped) return;
-        for (const packet of this.buildPackets(0, [], unicast, additionals, false)) this.transmit(family, packet, this.unicastAddress(rinfo.address), rinfo.port);
+        const packets = this.buildPackets(0, [], unicast, additionals, false);
+        this.log.debug(`Unicast answer to ${BLUE}${rinfo.address}${nf}:${BLUE}${rinfo.port}${nf} (${family}): ${unicast.length} records in ${packets.length} packets`);
+        for (const packet of packets) this.transmit(family, packet, this.unicastAddress(rinfo.address), rinfo.port);
       };
       if (delay === 0) send();
       else this.setTimer(send, delay);
@@ -1225,6 +1273,8 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
       });
     };
     const answers = [...batch.answers.values()].filter((record) => batch.minInterval === PROBE_DEFENSE_MIN_INTERVAL_MS || eligible(record));
+    if (answers.length < batch.answers.size)
+      this.log.debug(`Multicast answers (${family}): ${answers.length} sent, ${batch.answers.size - answers.length} rate limited (RFC 6762 §6)`);
     if (answers.length === 0) return;
     const answerKeys = new Set(answers.map(recordKey));
     // RFC 6763 §12: additionals are an optimization; they must not hold up eligible answers.
@@ -1578,6 +1628,17 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
   }
 
   /**
+   * Returns true when an address belongs to this host (its own queries and probes).
+   *
+   * @param {string} address - The source address.
+   * @returns {boolean} True if the address is local.
+   */
+  private isOwnAddress(address: string): boolean {
+    const plain = address.split('%')[0].toLowerCase();
+    return Object.values(os.networkInterfaces()).some((infos) => infos?.some((info) => info.address.split('%')[0].toLowerCase() === plain));
+  }
+
+  /**
    * Returns true when an address is on the link of the interface (RFC 6762 §5.5, §11).
    *
    * @param {string} address - The source address.
@@ -1585,26 +1646,10 @@ export class MdnsResponder extends EventEmitter<MdnsResponderEvents> {
    */
   private isOnLink(address: string): boolean {
     const plain = address.split('%')[0].toLowerCase();
-    const infos = (os.networkInterfaces()[this.interfaceName] ?? []).filter(
-      (info) => !info.internal && (!this.options.address || info.address.split('%')[0] === this.options.address.split('%')[0]),
+    if (plain.includes(':') && plain.startsWith('fe80')) return true;
+    return (os.networkInterfaces()[this.interfaceName] ?? []).some(
+      (info) => !info.internal && (!this.options.address || info.address.split('%')[0] === this.options.address.split('%')[0]) && onSubnet(plain, info),
     );
-    if (plain.includes(':')) {
-      if (plain.startsWith('fe80')) return true;
-      let bytes: Buffer;
-      try {
-        bytes = this.codec.encodeAAAA(plain);
-      } catch {
-        return false;
-      }
-      return infos.some((info) => info.family === 'IPv6' && samePrefix(bytes, this.codec.encodeAAAA(info.address.split('%')[0]), this.codec.encodeAAAA(info.netmask)));
-    }
-    let bytes: Buffer;
-    try {
-      bytes = this.codec.encodeA(plain);
-    } catch {
-      return false;
-    }
-    return infos.some((info) => info.family === 'IPv4' && samePrefix(bytes, this.codec.encodeA(info.address), this.codec.encodeA(info.netmask)));
   }
 
   /**
@@ -1745,19 +1790,6 @@ function compareRecordSets(ours: MdnsResponderRecord[], theirs: ParsedRecord[]):
     if (result !== 0) return result;
   }
   return a.length - b.length;
-}
-
-/**
- * Returns true when two addresses have the same prefix under a netmask.
- *
- * @param {Buffer} address - An address.
- * @param {Buffer} other - Another address.
- * @param {Buffer} netmask - The netmask.
- * @returns {boolean} True if same prefix.
- */
-function samePrefix(address: Buffer, other: Buffer, netmask: Buffer): boolean {
-  for (let i = 0; i < netmask.length; i++) if ((address[i] & netmask[i]) !== (other[i] & netmask[i])) return false;
-  return true;
 }
 
 /**

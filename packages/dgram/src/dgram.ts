@@ -3,7 +3,7 @@
  * @description This file contains the class Dgram.
  * @author Luca Liguori
  * @created 2025-03-22
- * @version 1.0.8
+ * @version 1.1.0
  * @license Apache-2.0
  *
  * Copyright 2025, 2026, 2027 Luca Liguori.
@@ -26,7 +26,7 @@
 // Node.js imports
 import dgram, { type SocketType } from 'node:dgram';
 import EventEmitter from 'node:events';
-import type { AddressInfo } from 'node:net';
+import { type AddressInfo, BlockList } from 'node:net';
 import os from 'node:os';
 
 // @matterbridge
@@ -299,7 +299,7 @@ export class Dgram extends EventEmitter<DgramEvents> {
     const linkLocalAddress = addresses?.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.address.startsWith('fe80'));
     if (linkLocalAddress) {
       this.log.debug('Found IPv6 link-local address');
-      return linkLocalAddress.scopeid ? `${linkLocalAddress.address}%${process.platform === 'win32' ? linkLocalAddress.scopeid : networkInterface}` : linkLocalAddress.address;
+      return linkLocalAddress.scopeid ? linkLocalAddress.address + interfaceZone(networkInterface, linkLocalAddress.scopeid) : linkLocalAddress.address;
     }
     this.log.debug('No IPv6 link-local address found');
 
@@ -351,10 +351,8 @@ export class Dgram extends EventEmitter<DgramEvents> {
       if (!interfaceName && this.excludedInterfaceNamePattern.test(name)) continue;
       const iface = interfaces[name];
       if (iface) {
-        const ipv6Address = iface.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.scopeid);
-        if (ipv6Address) {
-          return process.platform === 'win32' ? '%' + String(ipv6Address.scopeid) : '%' + name; // Use the scope ID for Windows, or the interface name for non-Windows platforms
-        }
+        const scopeid = iface.find((addr) => addr.family === 'IPv6' && !addr.internal && addr.scopeid)?.scopeid;
+        if (scopeid) return interfaceZone(name, scopeid);
       }
     }
     return '';
@@ -447,4 +445,65 @@ export class Dgram extends EventEmitter<DgramEvents> {
       }
     }
   }
+}
+
+/**
+ * Returns true when an IPv6 address is link-local (`fe80::/10`).
+ *
+ * @param {string} address - The address.
+ * @returns {boolean} True if link-local.
+ */
+export function isLinkLocalIpv6(address: string): boolean {
+  return /^fe[89ab][0-9a-f]:/i.test(address);
+}
+
+/**
+ * Returns the zone of an interface for a scoped IPv6 address (RFC 4007 §11): the interface name, or the interface index on Windows.
+ *
+ * @param {string} name - The interface name.
+ * @param {number} scopeid - The scope id of an IPv6 address of the interface.
+ * @returns {string} The zone with its `%`, e.g. `%en0` or `%7`.
+ */
+export function interfaceZone(name: string, scopeid: number): string {
+  return `%${process.platform === 'win32' ? scopeid : name}`;
+}
+
+/**
+ * Returns the zone of the interface a packet was received on, for the link-local IPv6 addresses it carries (RFC 4007 §11):
+ * the zone of a link-local sender as Node.js reports it, else the given interface, else the only local interface whose subnet holds the sender.
+ * The zone is the interface name, or the interface index on Windows.
+ *
+ * @param {string} source - The sender address of the packet, e.g. `fe80::1%en0` or `192.168.1.10`.
+ * @param {string} [interfaceName] - The interface the socket is bound to, or undefined for all.
+ * @returns {string | undefined} The zone with its `%`, e.g. `%en0`, or undefined when the interface cannot be determined.
+ */
+export function receivingZone(source: string, interfaceName?: string): string | undefined {
+  const separator = source.indexOf('%');
+  if (separator !== -1) return source.slice(separator);
+  const interfaces = os.networkInterfaces();
+  const names =
+    interfaceName === undefined
+      ? Object.entries(interfaces)
+          .filter(([, infos]) => (infos ?? []).some((info) => !info.internal && onSubnet(source, info)))
+          .map(([name]) => name)
+      : [interfaceName];
+  if (names.length !== 1) return undefined; // No interface, or more than one: the link cannot be told
+  if (process.platform !== 'win32') return interfaceZone(names[0], 0); // The interface index is needed on Windows only
+  const scopeId = interfaces[names[0]]?.find((info) => info.family === 'IPv6' && info.scopeid)?.scopeid;
+  return scopeId === undefined ? undefined : interfaceZone(names[0], scopeId);
+}
+
+/**
+ * Returns true when an address is in the subnet of a local interface address of the same family.
+ *
+ * @param {string} address - The address, without zone.
+ * @param {os.NetworkInterfaceInfo} info - The local interface address.
+ * @returns {boolean} True if on the subnet, false also when the address is not valid.
+ */
+export function onSubnet(address: string, info: os.NetworkInterfaceInfo): boolean {
+  const family = address.includes(':') ? 'ipv6' : 'ipv4';
+  if (!info.cidr || family !== info.family.toLowerCase()) return false;
+  const subnet = new BlockList();
+  subnet.addSubnet(info.address.split('%')[0], Number(info.cidr.split('/')[1]), family);
+  return subnet.check(address, family);
 }
