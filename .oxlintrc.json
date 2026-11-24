@@ -1,4 +1,4 @@
-// .oxlintrc.json v.1.2.0
+// .oxlintrc.json v.1.2.1
 
 // This Oxlint configuration (shared between all matterbridge packages) is designed for a TypeScript project using ESM modules (Node.js) and a Vite/React/TypeScript frontend (browser).
 // Oxlint respects .gitignore.
@@ -107,6 +107,7 @@
     ],
     "typescript/only-throw-error": "warn",
     "typescript/ban-ts-comment": "warn",
+    "typescript/no-unsafe-class-instance-assignment": "off", // matter.js declares cluster structs as classes and they are built from object literals by design
     "typescript/prefer-nullish-coalescing": "warn",
     "typescript/prefer-optional-chain": "warn",
     "typescript/explicit-member-accessibility": "off", // Public is the TypeScript default; require modifiers only where visibility matters.

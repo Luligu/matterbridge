@@ -360,7 +360,7 @@
     "test:verbose": "vitest run --reporter verbose",
     "test:coverage": "vitest run --coverage",
     "test:bun": "bun test --parallel",
-    "test:bun:watch": "bun test --parallel --watch ",
+    "test:bun:watch": "bun test --parallel --watch",
     "test:bun:coverage": "bun test --parallel --coverage",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
@@ -594,10 +594,10 @@
     "@vitest/coverage-v8": "5.1.1",
     "cross-spawn": "7.0.6",
     "jsdom": "31.0.1",
-    "marked": "18.2.1",
-    "oxfmt": "0.79.0",
-    "oxlint": "1.94.0",
-    "oxlint-tsgolint": "7.0.2007",
+    "marked": "18.3.0",
+    "oxfmt": "0.80.0",
+    "oxlint": "1.95.0",
+    "oxlint-tsgolint": "7.0.2008",
     "typescript": "7.0.2",
     "vitest": "5.1.1"
   }

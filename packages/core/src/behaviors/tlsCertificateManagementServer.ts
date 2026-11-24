@@ -871,12 +871,12 @@ export namespace MatterbridgeTlsCertificateManagementServer {
       const state = this;
       return {
         // Matter 1.6.1 § 14.4.4.3 and § 14.4.5.2: Over a non Large Message capable transport the Certificate field SHALL NOT be included.
-        get provisionedRootCertificates() {
+        get provisionedRootCertificates(): TlsCertificateManagement.TlsCert[] {
           return state.provisionedRootCertificates.map(({ certificate: _certificate, ...entry }) => entry);
         },
         // Matter 1.6.1 § 14.4.4.5 and § 14.4.5.4: Over a non Large Message capable transport a non-null ClientCertificate and
         // non-empty IntermediateCertificates SHALL NOT be included.
-        get provisionedClientCertificates() {
+        get provisionedClientCertificates(): TlsCertificateManagement.TlsClientCertificateDetail[] {
           return state.provisionedClientCertificates.map(({ clientCertificate, intermediateCertificates, ...entry }) => ({
             ...entry,
             ...(clientCertificate === null ? { clientCertificate } : {}),

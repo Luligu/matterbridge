@@ -168,14 +168,22 @@
 <li>[dgram]: Update mDNS record typing, packet validation, responder behavior and scanner resolution.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.5.</li>
 <li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.5.1.1.</li>
-<li>[matterbridge]: Bump <code>marked</code> to v.18.2.1.</li>
-<li>[matterbridge]: Bump <code>oxfmt</code> to v.0.79.0.</li>
-<li>[matterbridge]: Bump <code>oxlint</code> to v.1.94.0.</li>
+<li>[matterbridge]: Bump <code>marked</code> to v.18.3.0.</li>
+<li>[matterbridge]: Bump <code>oxfmt</code> to v.0.80.0.</li>
+<li>[matterbridge]: Bump <code>oxlint</code> to v.1.95.0.</li>
+<li>[matterbridge]: Bump <code>oxlint-tsgolint</code> to v.7.0.2008.</li>
 <li>[matterbridge]: Bump <code>vitest</code> to v.5.1.1.</li>
+<li>[matterbridge]: Disable the <code>typescript/no-unsafe-class-instance-assignment</code> lint rule: matter.js cluster structs are classes built from object literals.</li>
+<li>[frontend]: Bump <code>@mui/material</code> and <code>@mui/icons-material</code> to v.9.6.0.</li>
+<li>[frontend]: Fix the React Compiler lint errors in <code>WebSocketProvider</code> reported by oxlint 1.95.0.</li>
 <li>[frontend]: Bump <code>@testing-library/jest-dom</code> to v.8.0.0.</li>
 <li>[frontend]: Bump <code>react-router</code> to v.8.5.2.</li>
 <li>[core]: Bump <code>express-rate-limit</code> to v.8.7.5.</li>
 <li>[core]: Bump <code>werift</code> to v.0.28.0.</li>
+<li>[scripts]: Update <code>bun-bundle.mjs</code> to v.2.1.1: resolve the types of subpath pattern exports and normalize the Windows glob paths.</li>
+<li>[scripts]: Update <code>downloads.mjs</code> and <code>prepublish-clean.mjs</code> to v.2.2.1: fix the type-aware lint errors.</li>
+<li>[scripts]: Update <code>run-chip-test.mjs</code> to v.1.5.0: add <code>--native</code>, the <code>pairs</code> pairing codes, string codes for <code>pairBefore</code>/<code>pairAfter</code> and <code>resetControllerBefore</code>.</li>
+<li>[chip]: Remove <code>vitest/chipPlugin.test.ts</code>: <code>run-chip-test.mjs</code> is now an ES module tested in matterbridge-native.</li>
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>

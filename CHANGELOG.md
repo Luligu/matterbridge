@@ -46,14 +46,22 @@ If you like this project and find it useful, please consider giving it a star on
 - [dgram]: Update mDNS record typing, packet validation, responder behavior and scanner resolution.
 - [matterbridge]: Bump `@types/bun` to v.1.4.5.
 - [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.1.
-- [matterbridge]: Bump `marked` to v.18.2.1.
-- [matterbridge]: Bump `oxfmt` to v.0.79.0.
-- [matterbridge]: Bump `oxlint` to v.1.94.0.
+- [matterbridge]: Bump `marked` to v.18.3.0.
+- [matterbridge]: Bump `oxfmt` to v.0.80.0.
+- [matterbridge]: Bump `oxlint` to v.1.95.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2008.
 - [matterbridge]: Bump `vitest` to v.5.1.1.
+- [matterbridge]: Disable the `typescript/no-unsafe-class-instance-assignment` lint rule: matter.js cluster structs are classes built from object literals.
+- [frontend]: Bump `@mui/material` and `@mui/icons-material` to v.9.6.0.
+- [frontend]: Fix the React Compiler lint errors in `WebSocketProvider` reported by oxlint 1.95.0.
 - [frontend]: Bump `@testing-library/jest-dom` to v.8.0.0.
 - [frontend]: Bump `react-router` to v.8.5.2.
 - [core]: Bump `express-rate-limit` to v.8.7.5.
 - [core]: Bump `werift` to v.0.28.0.
+- [scripts]: Update `bun-bundle.mjs` to v.2.1.1: resolve the types of subpath pattern exports and normalize the Windows glob paths.
+- [scripts]: Update `downloads.mjs` and `prepublish-clean.mjs` to v.2.2.1: fix the type-aware lint errors.
+- [scripts]: Update `run-chip-test.mjs` to v.1.5.0: add `--native`, the `pairs` pairing codes, string codes for `pairBefore`/`pairAfter` and `resetControllerBefore`.
+- [chip]: Remove `vitest/chipPlugin.test.ts`: `run-chip-test.mjs` is now an ES module tested in matterbridge-native.
 
 ### Fixed
 

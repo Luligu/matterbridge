@@ -256,7 +256,7 @@ npm run docker:log:localbun     # follow the container logs
 node storage, and brings up the server node and endpoints. The web frontend is
 built and served. See the TODO list below for the known limitations.</p>
 <hr>
-<h2 id="known-issues-checked-on-bun-144">Known issues (checked on Bun 1.4.4)</h2>
+<h2 id="known-issues-checked-on-bun-145">Known issues (checked on Bun 1.4.5)</h2>
 <ul>
 <li><input disabled="" type="checkbox"> <strong>Bun docker image cannot resolve the container user name.</strong> In the official Bun images,
 both <code>node:os</code> and <code>bun:os</code> return <code>username: &quot;unknown&quot;</code> and <code>shell: &quot;unknown&quot;</code>
@@ -264,9 +264,11 @@ from <code>os.userInfo()</code>, even though they correctly return the UID, GID,
 directory. Consequently, Matterbridge sends <code>User: unknown</code> to the frontend
 system-information view instead of the container account (for example, <code>root</code>).
 Reproduce with <code>bun -e &quot;import * as os from &#39;bun:os&#39;; console.log(os.userInfo())&quot;</code>.
-Still present in <code>oven/bun:1.4.4-slim</code>. Tracked upstream:
-<a href="https://github.com/oven-sh/bun/issues/39859">oven-sh/bun#39859</a> and
-<a href="https://github.com/oven-sh/bun/issues/25171">oven-sh/bun#25171</a> (both open).</li>
+Still present in <code>oven/bun:1.4.5-slim</code>. Tracked upstream by
+<a href="https://github.com/oven-sh/bun/issues/25171">oven-sh/bun#25171</a> (open;
+<a href="https://github.com/oven-sh/bun/issues/39859">oven-sh/bun#39859</a> was closed as its duplicate).
+Fix pending in <a href="https://github.com/oven-sh/bun/pull/33481">oven-sh/bun#33481</a> (open), which
+reads <code>username</code>, <code>homedir</code> and <code>shell</code> from the passwd database like Node does.</li>
 </ul>
 <h2 id="fixed-in-bun-144">Fixed in Bun 1.4.4</h2>
 <ul>
@@ -288,8 +290,7 @@ options object) still works on Node and on every Bun release; drop the <code>tls
 Bun 1.4.3 and older no longer need to be supported.
 Asserted by <a href="./packages/core/buntest/wssTest.test.ts">packages/core/buntest/wssTest.test.ts</a>.
 Reported upstream: <a href="https://github.com/oven-sh/bun/issues/31396">oven-sh/bun#31396</a>, fixed by
-<a href="https://github.com/oven-sh/bun/pull/44618">oven-sh/bun#44618</a>, released in Bun 1.4.4.
-</p>
+<a href="https://github.com/oven-sh/bun/pull/44618">oven-sh/bun#44618</a>, released in Bun 1.4.4.</p>
 </li>
 <li><p><input checked="" disabled="" type="checkbox"> <strong><code>bun test --coverage</code> never counted implicit class constructors as called (up to 1.4.3).</strong> A
 derived class without its own constructor gets the default
