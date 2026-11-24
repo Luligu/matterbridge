@@ -1,6 +1,6 @@
 /**
  * downloads.mjs
- * Version: 2.2.0
+ * Version: 2.2.1
  *
  * Prints daily npm downloads for the last 30 days and today for the package in ../package.json.
  * It queries an explicit date range because the npm `last-week` / `last-month` periods can return stale data.
@@ -24,7 +24,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const scriptVersion = '2.2.0';
+const scriptVersion = '2.2.1';
 
 /** Number of days before today to include in the range. */
 const rangeDays = 30;
@@ -293,7 +293,7 @@ async function printDownloads(pkgPath, dryRun) {
   console.log('');
   console.log(style.dim('Summary'));
   if (pendingDays.size > 0) {
-    console.log(style.dim(`Pending:  npm has not published the count of ${[...pendingDays].sort().join(', ')} yet`));
+    console.log(style.dim(`Pending:  npm has not published the count of ${[...pendingDays].toSorted((a, b) => a.localeCompare(b)).join(', ')} yet`));
   }
   console.log(`${style.dim('Total:   ')} ${style.bold(style.green(formatNumber(total)))}`);
   console.log(`${style.dim('Avg/day: ')} ${style.yellow(formatNumber(avg))}`);
