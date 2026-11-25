@@ -713,8 +713,9 @@ describe('MdnsScanner', () => {
       expect(addresses()).toEqual(['fe80:0:0:0:0:0:0:1%en0', '2001:db8:0:0:0:0:0:1', 'fe80:0:0:0:0:0:0:1%en1']);
     });
 
-    it('should take the interface whose subnet holds an IPv4 or a routable IPv6 sender', async () => {
+    it.each(['linux', 'win32'] as const)('should use the zone of the subnet matching the sender on %s', async (platform) => {
       const created = await startScanner();
+      mockPlatform(platform);
       mockInterfaces({
         lo0: [ipv4Info('192.168.1.1', '192.168.1.1/24', true)],
         eth7: [ipv4Info('192.168.1.2'), ipv6Info('fe80::2', 7)],
@@ -722,10 +723,10 @@ describe('MdnsScanner', () => {
         eth9: undefined,
       });
       inject(advertisement()); // From 192.168.1.99
-      expect(addresses()).toEqual(['fe80:0:0:0:0:0:0:1%eth7', '2001:db8:0:0:0:0:0:1']);
+      expect(addresses()).toEqual([`fe80:0:0:0:0:0:0:1%${platform === 'win32' ? '7' : 'eth7'}`, '2001:db8:0:0:0:0:0:1']);
       const packet = advertisement(OTHER);
       created.sockets.ipv6?.socket.emit('message', packet, { address: '2001:db8::5', family: 'IPv6', port: created.mdnsPort, size: packet.length });
-      expect(addresses(OTHER)).toEqual(['fe80:0:0:0:0:0:0:1%eth8', '2001:db8:0:0:0:0:0:1']);
+      expect(addresses(OTHER)).toEqual([`fe80:0:0:0:0:0:0:1%${platform === 'win32' ? '8' : 'eth8'}`, '2001:db8:0:0:0:0:0:1']);
     });
 
     it('should use the interface index as the zone on Windows, and no zone without an IPv6 index', async () => {
@@ -749,13 +750,14 @@ describe('MdnsScanner', () => {
       expect(addresses(OTHER)).toEqual(['fe80:0:0:0:0:0:0:1', '2001:db8:0:0:0:0:0:1']);
     });
 
-    it('should take the scanned interface when the scan is limited to one', async () => {
+    it.each(['linux', 'win32'] as const)('should use the zone of the selected interface on %s', async (platform) => {
       const interfaceName = Object.entries(os.networkInterfaces()).find(([, infos]) => infos?.some((info) => info.family === 'IPv4' && !info.internal))?.[0];
       if (!interfaceName) return; // No usable interface on this host
       await startScanner({ interfaceName, enableIpv6: false });
-      mockInterfaces({});
+      mockPlatform(platform);
+      mockInterfaces({ [interfaceName]: [ipv6Info('fe80::2', 7)] });
       inject(advertisement());
-      expect(addresses()).toEqual([`fe80:0:0:0:0:0:0:1%${interfaceName}`, '2001:db8:0:0:0:0:0:1']);
+      expect(addresses()).toEqual([`fe80:0:0:0:0:0:0:1%${platform === 'win32' ? '7' : interfaceName}`, '2001:db8:0:0:0:0:0:1']);
     });
   });
 

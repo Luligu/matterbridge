@@ -5,8 +5,10 @@
  */
 
 import dgram from 'node:dgram';
+import { once } from 'node:events';
 import os from 'node:os';
 
+import { getFreePort } from '@matterbridge/test-utils';
 import { loggerLogSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { LogLevel } from 'node-ansi-logger';
 
@@ -34,7 +36,7 @@ const defaults: MdnsResponderOptions = {
   txt: ['txtvers=1', 'path=/'],
 };
 
-// No module is mocked: the advertiser opens real sockets on a random high port (so no mDNS traffic from the LAN arrives),
+// No module is mocked: the advertiser opens real sockets on an OS-assigned UDP port (so no mDNS traffic from the LAN arrives),
 // every packet it sends is captured by a spy on transmit() (so nothing reaches the LAN), incoming packets are injected by
 // emitting 'message' on the real sockets, and fake timers drive probing, announcing and the response delays.
 
@@ -62,7 +64,6 @@ interface Record {
 }
 
 const codec = new Mdns('Codec', '224.0.0.251', 5353, 'udp4');
-let nextPort = 40000 + Math.floor(Math.random() * 20000);
 
 /**
  * Builds a DNS packet.
@@ -132,21 +133,34 @@ describe('MdnsResponder', () => {
    * @returns {Promise<MdnsResponder>} The advertiser, probing.
    */
   async function startAdvertiser(options: Partial<MdnsResponderOptions> = {}): Promise<MdnsResponder> {
-    port = nextPort++;
-    // Three announcements keep the sequences of these tests short; the default of 8 has its own test.
-    const advertiser = new MdnsResponder({ ...defaults, mdnsPort: port, addressCheckIntervalMs: 0, announceCount: 3, ...options });
-    adv = advertiser;
-    sent = [];
-    vi.spyOn(advertiser, 'transmit').mockImplementation((family, packet, address, destinationPort) => {
-      sent.push({ family, address, port: destinationPort, packet, message: codec.decodeMdnsMessage(packet) });
-    });
-    const families = (['ipv4', 'ipv6'] as const).filter((family) => advertiser.sockets[family]);
-    const ready = Promise.all(families.map(async (family) => new Promise((resolve) => advertiser.sockets[family]?.once('ready', resolve))));
-    started = advertiser.start();
-    await ready;
-    await flushMicrotasks();
-    ({ ipv4, ipv6 } = interfaceAddresses(advertiser.interfaceName));
-    return advertiser;
+    for (let attempt = 1; ; attempt++) {
+      port = options.mdnsPort ?? (await getFreePort(options.enableIpv4 === false ? 'udp6' : 'udp4'));
+      // Three announcements keep the sequences of these tests short; the default of 8 has its own test.
+      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: port, addressCheckIntervalMs: 0, announceCount: 3, ...options });
+      adv = advertiser;
+      sent = [];
+      vi.spyOn(advertiser, 'transmit').mockImplementation((family, packet, address, destinationPort) => {
+        sent.push({ family, address, port: destinationPort, packet, message: codec.decodeMdnsMessage(packet) });
+      });
+      const families = (['ipv4', 'ipv6'] as const).filter((family) => advertiser.sockets[family]);
+      const ready = Promise.all(families.map(async (family) => new Promise((resolve) => advertiser.sockets[family]?.once('ready', resolve))));
+      started = advertiser.start();
+      try {
+        await Promise.race([ready, started]);
+      } catch (error) {
+        const stopping = advertiser.stop();
+        vi.advanceTimersByTime(200);
+        await stopping;
+        adv = undefined;
+        if (options.mdnsPort !== undefined || attempt === 3 || !(error instanceof Error) || !('code' in error) || (error.code !== 'EADDRINUSE' && error.code !== 'EACCES')) {
+          throw error;
+        }
+        continue;
+      }
+      await flushMicrotasks();
+      ({ ipv4, ipv6 } = interfaceAddresses(advertiser.interfaceName));
+      return advertiser;
+    }
   }
 
   /**
@@ -599,25 +613,28 @@ describe('MdnsResponder', () => {
     });
 
     it('should probe with QM questions when another responder is bound first to the port (RFC 6762 §15.1)', async () => {
-      const blockedPort = nextPort; // The port the next advertiser uses
-      const blockers = await Promise.all(
-        (['udp4', 'udp6'] as const).map(
-          async (type) =>
-            new Promise<dgram.Socket>((resolve) => {
-              const blocker = dgram.createSocket({ type, reuseAddr: true });
-              blocker.bind(blockedPort, type === 'udp4' ? '0.0.0.0' : '::', () => resolve(blocker));
-            }),
-        ),
-      );
-      const advertiser = await startAdvertiser();
-      expect(port).toBe(blockedPort);
-      vi.advanceTimersByTime(250);
-      expect(sent).toHaveLength(2);
-      for (const probe of sent) {
-        for (const question of probe.message.questions ?? []) expect(advertiser.sockets.ipv4?.dnsQuestionClassToString(question.class, question.unicastResponse)).toBe('IN');
+      let blockedPort = 0;
+      const blockers: dgram.Socket[] = [];
+      try {
+        for (const type of ['udp4', 'udp6'] as const) {
+          const blocker = dgram.createSocket({ type, reuseAddr: true });
+          blockers.push(blocker);
+          const listening = once(blocker, 'listening');
+          blocker.bind(blockedPort, type === 'udp4' ? '0.0.0.0' : '::');
+          await listening;
+          blockedPort = blocker.address().port;
+        }
+        const advertiser = await startAdvertiser({ mdnsPort: blockedPort });
+        expect(port).toBe(blockedPort);
+        vi.advanceTimersByTime(250);
+        expect(sent).toHaveLength(2);
+        for (const probe of sent) {
+          for (const question of probe.message.questions ?? []) expect(advertiser.sockets.ipv4?.dnsQuestionClassToString(question.class, question.unicastResponse)).toBe('IN');
+        }
+        await completeProbing();
+      } finally {
+        await Promise.all(blockers.map(async (blocker) => new Promise<void>((resolve) => blocker.close(resolve))));
       }
-      await completeProbing();
-      for (const blocker of blockers) blocker.close();
     });
 
     it('should rename the host and probe again when a response conflicts with the host name', async () => {
@@ -1261,7 +1278,7 @@ describe('MdnsResponder', () => {
     });
 
     it('should reject start() when a socket fails to start', async () => {
-      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: nextPort++, addressCheckIntervalMs: 0, enableIpv6: false });
+      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: await getFreePort('udp4'), addressCheckIntervalMs: 0, enableIpv6: false });
       const socket = advertiser.sockets.ipv4;
       if (!socket) throw new Error('IPv4 socket not created');
       const start = vi.spyOn(socket, 'start').mockImplementation(() => {
@@ -1298,7 +1315,7 @@ describe('MdnsResponder', () => {
     });
 
     it('should not open the sockets or probe when stopped while starting', async () => {
-      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: nextPort++ });
+      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: await getFreePort('udp4') });
       const startSocket = vi.spyOn(advertiser as unknown as { startSocket: () => Promise<void> }, 'startSocket');
       const starting = advertiser.start();
       const stopping = advertiser.stop();
@@ -1311,7 +1328,7 @@ describe('MdnsResponder', () => {
     });
 
     it('should not probe when stopped while the sockets are starting', async () => {
-      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: nextPort++ });
+      const advertiser = new MdnsResponder({ ...defaults, mdnsPort: await getFreePort('udp4') });
       let stopping: Promise<void> | undefined;
       vi.spyOn(advertiser as unknown as { startSocket: () => Promise<void> }, 'startSocket').mockImplementation(async () => {
         stopping ??= advertiser.stop();
@@ -1366,7 +1383,7 @@ describe('MdnsResponder', () => {
      * @returns {MdnsResponder} The responder.
      */
     function fresh(options: Partial<MdnsResponderOptions> = {}): MdnsResponder {
-      const responder = new MdnsResponder({ ...defaults, mdnsPort: nextPort++, addressCheckIntervalMs: 0, ...options });
+      const responder = new MdnsResponder({ ...defaults, addressCheckIntervalMs: 0, ...options });
       responders.push(responder);
       return responder;
     }
@@ -1395,7 +1412,7 @@ describe('MdnsResponder', () => {
         scopeid: 0,
       }));
       const networkInterfaces = vi.spyOn(os, 'networkInterfaces').mockReturnValue({ [interfaceName]: infos });
-      expect(() => new MdnsResponder({ ...defaults, mdnsPort: nextPort++, enableIpv4: false })).toThrow('probe exceeds packet limit');
+      expect(() => new MdnsResponder({ ...defaults, enableIpv4: false })).toThrow('probe exceeds packet limit');
       networkInterfaces.mockRestore();
     });
 
