@@ -43,6 +43,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Added
 
 - [dgram]: Add `MdnsMonitor`, `CoapMonitor` and `MdnsResolver`.
+- [dgram]: Add targeted mDNS discovery to `MdnsScanner` through `queryInstance`.
 - [dgram]: Add the outgoing multicast interface to `Coap` and `--outgoing-ipv4-address` / `--outgoing-ipv6-address` to `CoapMonitor`.
 - [chip]: The [3.11.4 CHIP test results](3.11.4%20chipTestsSummary.log) are available.
 

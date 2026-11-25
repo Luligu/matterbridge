@@ -37,11 +37,11 @@ import { isLinkLocalIpv6, receivingZone } from './dgram.js';
 import { DnsClass, DnsRecordType, isFirstOnPort, Mdns, MDNS_MAX_MESSAGE_LENGTH, type MdnsMessage, type MdnsSrvData } from './mdns.js';
 import { MDNS_MULTICAST_IPV4_ADDRESS, MDNS_MULTICAST_IPV6_ADDRESS, MDNS_MULTICAST_PORT } from './multicast.js';
 
-/** DNS-SD service type of the Matter Commissionable Node Discovery (Matter Core §4.3.1). */
+/** DNS-SD service type of the Matter Commissionable Node Discovery (Matter 1.6.1 Core § 4.3.1). */
 export const MATTER_COMMISSIONABLE_SERVICE = '_matterc._udp';
-/** DNS-SD service type of the Matter Operational Discovery (Matter Core §4.3.2). */
+/** DNS-SD service type of the Matter Operational Discovery (Matter 1.6.1 Core § 4.3.2). */
 export const MATTER_OPERATIONAL_SERVICE = '_matter._tcp';
-/** DNS-SD service type of the Matter Commissioner Discovery (Matter Core §4.3.3). */
+/** DNS-SD service type of the Matter Commissioner Discovery (Matter 1.6.1 Core § 4.3.3). */
 export const MATTER_COMMISSIONER_SERVICE = '_matterd._udp';
 /** DNS-SD service type of the Matterbridge frontend, as advertised by {@link MatterbridgeAdvertise}. */
 export const MATTERBRIDGE_SERVICE = '_matterbridge._tcp';
@@ -81,6 +81,8 @@ export interface MdnsScannerOptions {
   services?: string[];
   /** Extra PTR owner names to query, as one of the `services` or one of its subtypes `_subtype._sub._service._tcp`/`_udp`. Defaults to no query names. */
   queryNames?: string[];
+  /** Resolve only this fully qualified service instance with SRV/TXT queries instead of browsing. */
+  queryInstance?: string;
   /** Send a PTR query for the query names on start, so the devices already advertised answer at once. Defaults to true. */
   query?: boolean;
   /** Interval in ms between two PTR queries for the query names after the one on start, 0 sends only the one on start. Needs `query`. Defaults to 0. */
@@ -273,6 +275,7 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
   readonly mdnsPort: number;
   readonly services: string[];
   readonly queryNames: string[];
+  private readonly queryInstance: string | undefined;
   readonly sockets: Partial<Record<MdnsScannerFamily, Mdns>> = {};
   /** The service instances keyed by the lower case instance name. The instances are replaced when a record changes: do not keep them. */
   readonly instances = new Map<string, MdnsScannerInstance>();
@@ -310,6 +313,7 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
     this.mdnsPort = options.mdnsPort ?? MDNS_MULTICAST_PORT;
     this.services = options.services ?? [...MDNS_SCANNER_DEFAULT_SERVICES];
     this.queryNames = options.queryNames ?? [];
+    this.queryInstance = options.queryInstance;
     this.query = options.query ?? true;
     this.queryIntervalMs = options.queryIntervalMs ?? 0;
     this.resolve = options.resolve ?? true;
@@ -328,6 +332,9 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
       if (service === undefined) throw new Error(`MdnsScanner: invalid query name ${name}`);
       // The answers are kept only for the scanned services and their subtypes (see isServicePtr)
       if (!this.services.some((candidate) => candidate.toLowerCase() === service.toLowerCase())) throw new Error(`MdnsScanner: query name ${name} is not of a scanned service`);
+    }
+    if (this.queryInstance !== undefined && (!this.serviceOf(this.queryInstance) || this.queryNames.length > 0)) {
+      throw new Error('MdnsScanner: queryInstance must name an instance of a scanned service and cannot be combined with PTR query names');
     }
     if (options.enableIpv4 !== false) {
       this.scannerSockets.ipv4 = new MdnsScannerSocket('MdnsScannerUdp4', MDNS_MULTICAST_IPV4_ADDRESS, this.mdnsPort, 'udp4', this.interfaceName, '0.0.0.0');
@@ -405,13 +412,25 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
   }
 
   /**
-   * Sends a PTR query for every service and configured query name on each socket, one question per query: some responders do not answer the queries with several questions.
+   * Queries a configured instance by SRV/TXT, or sends a PTR query for every service and configured query name on each socket.
+   * Some responders do not answer queries with several questions.
    * The first queries ask for unicast responses (QU) on the families where the scanner is the first socket bound to the mDNS port (RFC 6762 §5.4, §15.1),
    * so every responder answers even the records it multicast recently; the next ones ask for multicast responses (QM).
    * The fresh PTR records of the instances with their SRV and TXT records are sent as known answers (RFC 6762 §7.1), so the queries repeated with `queryIntervalMs`
    * are answered only by the instances not known yet.
    */
   sendQuery(): void {
+    if (this.queryInstance !== undefined) {
+      // Once SRV is cached, the lookup and refresh timers maintain its records.
+      if (this.resolve && this.instances.get(this.queryInstance.toLowerCase())?.srv) return;
+      for (const type of [DnsRecordType.SRV, DnsRecordType.TXT]) {
+        for (const family of this.families()) {
+          this.sockets[family]?.sendQuery([{ name: this.queryInstance, type, class: DnsClass.IN, unicastResponse: this.firstOnPort[family] && !this.queried }]);
+        }
+      }
+      this.queried = true;
+      return;
+    }
     const names = [...new Set([...this.services, ...this.queryNames])];
     this.log.info(
       `Querying ${CYAN}${names.map((name) => `${name}.local`).join(', ')}${nf} on ${CYAN}${this.interfaceName ?? 'all interfaces'}${nf} (${CYAN}${this.families().join(', ')}${nf})`,
@@ -710,6 +729,7 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
    * @returns {boolean} True if relevant.
    */
   private isServicePtr(name: string, data: string): boolean {
+    if (this.queryInstance !== undefined && !this.isServiceInstance(data)) return false;
     const service = this.serviceOf(data);
     if (service === undefined) return false;
     const serviceName = `${service}.local`;
@@ -723,7 +743,7 @@ export class MdnsScanner extends EventEmitter<MdnsScannerEvents> {
    * @returns {boolean} True if relevant.
    */
   private isServiceInstance(name: string): boolean {
-    return this.serviceOf(name) !== undefined;
+    return this.queryInstance === undefined ? this.serviceOf(name) !== undefined : name.toLowerCase() === this.queryInstance.toLowerCase();
   }
 
   /**

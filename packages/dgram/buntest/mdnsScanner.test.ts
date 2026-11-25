@@ -211,6 +211,10 @@ describe('MdnsScanner', () => {
       expect(() => new MdnsScanner({ services: ['_matterc._udp'], queryNames: ['_matter._tcp'] })).toThrow('not of a scanned service');
       expect(() => new MdnsScanner({ services: ['_matterc._udp'], queryNames: ['_L840._sub._MATTERC._udp', '_matterc._udp'] })).not.toThrow();
       expect(() => new MdnsScanner({ enableIpv4: false, enableIpv6: false })).toThrow('at least one of IPv4 and IPv6 must be enabled');
+      expect(() => new MdnsScanner({ services: ['_matter._tcp'], queryInstance: 'AB-42._matterc._udp.local' })).toThrow('queryInstance must name an instance of a scanned service');
+      expect(() => new MdnsScanner({ services: ['_matter._tcp'], queryInstance: 'AB-42._matter._tcp.local', queryNames: ['_matter._tcp'] })).toThrow(
+        'cannot be combined with PTR query names',
+      );
     });
 
     it('should reject an invalid port and the intervals setInterval() would turn into 1 ms', async () => {
@@ -241,6 +245,40 @@ describe('MdnsScanner', () => {
           [['_matterbridge._tcp.local', DnsRecordType.PTR]],
         ]);
       }
+    });
+
+    it('should query only the selected instance and ignore records for other instances', async () => {
+      const other = '0000000000000000-000000000000002A._matter._tcp.local';
+      const service = '_matter._tcp.local';
+      const created = await startScanner({ queryInstance: OPERATIONAL, query: true, queryIntervalMs: 1000, resolve: true, enableIpv6: false });
+      const questions = (): [string, number, boolean][] =>
+        sent.flatMap(({ msg }) => (codec.decodeMdnsMessage(msg).questions ?? []).map(({ name, type, unicastResponse }) => [name, type, unicastResponse]));
+
+      expect(questions()).toEqual([
+        [OPERATIONAL, DnsRecordType.SRV, true],
+        [OPERATIONAL, DnsRecordType.TXT, true],
+      ]);
+
+      inject(buildPacket([ptr(service, other), srv(other, HOST), txt(other, ['T=6']), a(HOST, '192.0.2.1')]));
+      expect(created.instances.size).toBe(0);
+      expect(created.hosts.size).toBe(0);
+
+      sent = [];
+      vi.advanceTimersByTime(1000);
+      expect(questions()).toEqual([
+        [OPERATIONAL, DnsRecordType.SRV, false],
+        [OPERATIONAL, DnsRecordType.TXT, false],
+      ]);
+
+      inject(buildPacket([ptr(service, OPERATIONAL), srv(OPERATIONAL.toLowerCase(), HOST), txt(OPERATIONAL, ['T=6']), a(HOST, '192.0.2.2'), aaaa(HOST, '2001:db8::1')]));
+      expect([...created.instances.keys()]).toEqual([OPERATIONAL.toLowerCase()]);
+      expect(instance()?.ptrExpires).toBeDefined();
+      expect(instance()?.txt?.strings).toEqual(['T=6']);
+      expect([...(host()?.a.keys() ?? [])]).toEqual(['192.0.2.2']);
+
+      sent = [];
+      vi.advanceTimersByTime(1000);
+      expect(sent).toHaveLength(0);
     });
 
     it('should ask for unicast responses only in the first queries, when it is the first socket bound to the port (RFC 6762 §5.4, §15.1)', async () => {
@@ -638,7 +676,7 @@ describe('MdnsScanner', () => {
           ],
           [
             srv(OPERATIONAL, HOST),
-            txt('_IC._sub._matter._tcp.local', ['IC=1']), // Matter Core §4.3.2.7: the TXT record of the subtype
+            txt('_IC._sub._matter._tcp.local', ['IC=1']), // Matter 1.6.1 Core § 4.3.2.7: the TXT record of the subtype
             srv('a.b._matter._tcp.local', HOST),
             srv('foo\\._matter._tcp.local', HOST), // The dot before the service is escaped: one label foo._matter
           ],

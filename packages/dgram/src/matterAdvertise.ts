@@ -1,6 +1,6 @@
 /**
  * @file packages/dgram/src/matterAdvertise.ts
- * @description Matter discovery advertisements using the local mDNS responder (Matter Core 1.6.1 §4.3).
+ * @description Matter discovery advertisements using the local mDNS responder (Matter 1.6.1 Core § 4.3).
  * @author Luca Liguori
  * @created 2026-11-11
  * @version 1.0.2
@@ -28,7 +28,7 @@ import os from 'node:os';
 
 import { MdnsResponder, type MdnsResponderRecord } from './mdnsResponder.js';
 
-/** Common Matter discovery options (Core §4.3.4). */
+/** Common Matter discovery options (Matter 1.6.1 Core § 4.3.4). */
 export interface MatterAdvertiseCommonOptions {
   /** Port accepting the advertised protocol, 1..65535. */
   port: number;
@@ -69,7 +69,7 @@ export interface MatterDiscoveryIdentity {
 }
 
 /**
- * Commissioning mode advertised in the CM key of the _matterc._udp TXT record (Core 1.6.1 §4.3.1.7).
+ * Commissioning mode advertised in the CM key of the _matterc._udp TXT record (Matter 1.6.1 Core § 4.3.1.7).
  * The values differ from the Administrator Commissioning WindowStatus attribute, where
  * EnhancedWindowOpen = 1 and BasicWindowOpen = 2: Basic and Enhanced are swapped.
  */
@@ -84,7 +84,7 @@ export enum CommissioningMode {
   JointFabric = 3,
 }
 
-/** Commissionable node discovery (Core §4.3.1). Create a new advertiser for each commissioning window. */
+/** Commissionable node discovery (Matter 1.6.1 Core § 4.3.1). Create a new advertiser for each commissioning window. */
 export interface MatterCommissionableOptions extends MatterAdvertiseCommonOptions, MatterDiscoveryIdentity {
   /** Advertise _matterc._udp. */
   mode: 'commissionable';
@@ -96,7 +96,7 @@ export interface MatterCommissionableOptions extends MatterAdvertiseCommonOption
   rotatingDeviceId?: string;
 }
 
-/** Operational discovery for one fabric (Core §4.3.2). Use one advertiser per fabric. */
+/** Operational discovery for one fabric (Matter 1.6.1 Core § 4.3.2). Use one advertiser per fabric. */
 export interface MatterOperationalOptions extends MatterAdvertiseCommonOptions {
   /** Advertise _matter._tcp; this service name also covers UDP Matter messaging. */
   mode: 'operational';
@@ -104,7 +104,7 @@ export interface MatterOperationalOptions extends MatterAdvertiseCommonOptions {
    * Already-derived compressed fabric identifier; not the uncompressed Fabric ID.
    *
    * @remarks
-   * Core §4.3.2.2: a 64-bit representation of the full Fabric Reference, derived with Crypto_KDF
+   * Matter 1.6.1 Core § 4.3.2.2: a 64-bit representation of the full Fabric Reference, derived with Crypto_KDF
    * from the operational root public key and Fabric ID, using "CompressedFabric" as the info string.
    * It identifies the fabric in operational DNS-SD instance names and fabric-specific _I subtypes.
    * Supply the derived value; this advertiser does not compute it from the fabric credentials.
@@ -114,11 +114,11 @@ export interface MatterOperationalOptions extends MatterAdvertiseCommonOptions {
   nodeId: bigint;
   /** Additional TCP capabilities: 0, 2 (client), 4 (server), or 6 (both). */
   tcpSupport?: 0 | 2 | 4 | 6;
-  /** Set only during the NFC incomplete-commissioning steps defined by Core §4.3.2.5. */
+  /** Set only during the NFC incomplete-commissioning steps defined by Matter 1.6.1 Core § 4.3.2.5. */
   incompleteCommissioning?: boolean;
 }
 
-/** Controller/commissioner discovery for User Directed Commissioning (Core §4.3.3). */
+/** Controller/commissioner discovery for User Directed Commissioning (Matter 1.6.1 Core § 4.3.3). */
 export interface MatterControllerOptions extends MatterAdvertiseCommonOptions, MatterDiscoveryIdentity {
   /** Advertise _matterd._udp on the UDC port, distinct from Matter messaging ports. */
   mode: 'controller';
@@ -154,7 +154,7 @@ const PLACEHOLDER_MAC = '020000000000';
 
 /**
  * Random locally administered unicast 48-bit identity, chosen once per process (boot), used as the Matter host name
- * when no real link-layer address is available (Core 1.6.1 §4.3.1.1).
+ * when no real link-layer address is available (Matter 1.6.1 Core § 4.3.1.1).
  */
 const randomLinkLayerId = ((): string => {
   const bytes = randomBytes(6);
@@ -190,10 +190,10 @@ export class MatterAdvertise extends EventEmitter<MatterAdvertiseEvents> {
     if (address !== undefined && !isIP(address)) throw new Error('MatterAdvertise: invalid address');
     if (options.family !== undefined && options.family !== 'ipv4' && options.family !== 'ipv6') throw new Error('MatterAdvertise: invalid family');
     const available = os.networkInterfaces();
-    // Core 1.6.1 §4.3.1.1 permits reusing another interface's link-layer identity for local uniqueness.
+    // Matter 1.6.1 Core § 4.3.1.1 permits reusing another interface's link-layer identity for local uniqueness.
     const fallbackMac = linkLayerId(Object.values(available).flatMap((infos) => infos ?? []));
     const networks = Object.entries(available).filter(([name]) => !options.interfaceName || options.interfaceName === name);
-    // Core §4.3.1: commissionable nodes advertise on all connected IP networks unless explicitly scoped.
+    // Matter 1.6.1 Core § 4.3.1: commissionable nodes advertise on all connected IP networks unless explicitly scoped.
     // RFC 6762 §14: each link has an independent name-ownership and address-record scope.
     for (const [name, infos] of networks) {
       const selected = (infos ?? []).filter(
@@ -212,7 +212,7 @@ export class MatterAdvertise extends EventEmitter<MatterAdvertiseEvents> {
         addressFamily: options.family,
         restrictInterfacePackets: true,
         hostName: mac,
-        // Core §4.3.1.1 / §4.3.2.4: rotate the target host name when its privacy MAC rotates.
+        // Matter 1.6.1 Core § 4.3.1.1 / § 4.3.2.4: rotate the target host name when its privacy MAC rotates.
         hostNameProvider: (): string | undefined => {
           const current = os.networkInterfaces();
           return linkLayerId(current[name] ?? []) ?? linkLayerId(Object.values(current).flatMap((entries) => entries ?? [])) ?? randomLinkLayerId;
@@ -227,8 +227,8 @@ export class MatterAdvertise extends EventEmitter<MatterAdvertiseEvents> {
         mdnsPort: options.mdnsPort,
         addressCheckIntervalMs: options.addressCheckIntervalMs,
         announceCount: options.announceCount,
-        // Core §4.3.1 and §4.3.3 require a fresh 64-bit temporary identifier on collision.
-        // Operational names (§4.3.2.1) and MAC-derived hosts cannot acquire arbitrary numeric suffixes.
+        // Matter 1.6.1 Core § 4.3.1 and § 4.3.3 require a fresh 64-bit temporary identifier on collision.
+        // Operational names (Matter 1.6.1 Core § 4.3.2.1) and MAC-derived hosts cannot acquire arbitrary numeric suffixes.
         // Stopping those claims is our failure policy, not an alternate Matter naming scheme.
         resolveConflict: (kind): string | undefined => (kind === 'instance' && options.mode !== 'operational' ? randomInstance() : undefined),
       });
@@ -263,7 +263,7 @@ export class MatterAdvertise extends EventEmitter<MatterAdvertiseEvents> {
     try {
       await Promise.all(this.responders.map(async (responder) => responder.start()));
       if (this.stopped) return;
-      // Core §4.3.1.2 / §4.3.3: applications must control extended/commissioner discovery lifetime.
+      // Matter 1.6.1 Core § 4.3.1.2 / § 4.3.3: applications must control extended/commissioner discovery lifetime.
       // This optional timer is an application convenience, not a duration mandated by Matter.
       if (this.options.durationMs !== undefined) this.durationTimer = setTimeout(() => void this.stop(), this.options.durationMs).unref();
       this.emit('announced');
@@ -300,7 +300,7 @@ export class MatterAdvertise extends EventEmitter<MatterAdvertiseEvents> {
  * @returns {string} Sixteen uppercase hexadecimal digits.
  */
 function randomInstance(): string {
-  // Core §4.3.1, reused by §4.3.3: exactly 64 random bits represented by 16 uppercase hex digits.
+  // Matter 1.6.1 Core § 4.3.1, reused by § 4.3.3: exactly 64 random bits represented by 16 uppercase hex digits.
   return randomBytes(8).toString('hex').toUpperCase();
 }
 
@@ -318,7 +318,7 @@ function integer(name: string, value: number, maximum: number, minimum = 0): voi
 }
 
 /**
- * Validates options and constructs the role-specific service records (Matter Core §4.3).
+ * Validates options and constructs the role-specific service records (Matter 1.6.1 Core § 4.3).
  *
  * @param {MatterAdvertiseOptions} options - Advertisement options.
  * @returns {MatterService} Validated service description.
@@ -331,7 +331,7 @@ function createService(options: MatterAdvertiseOptions): MatterService {
   if (options.addressCheckIntervalMs !== undefined) integer('addressCheckIntervalMs', options.addressCheckIntervalMs, 2147483647);
   if (options.announceCount !== undefined) integer('announceCount', options.announceCount, 8, 2);
   const result: MatterService = { service: '', instance: randomInstance(), subtypes: [], txt: [] };
-  // Core §4.3.4: decimal milliseconds, without leading zeros; these are upper bounds, not default intervals.
+  // Matter 1.6.1 Core § 4.3.4: decimal milliseconds, without leading zeros; these are upper bounds, not default intervals.
   for (const [key, value, maximum] of [
     ['SII', options.sessionIdleInterval, 3600000], // Idle MRP retry interval: at most 1 hour (3,600,000 ms).
     ['SAI', options.sessionActiveInterval, 3600000], // Active MRP retry interval: at most 1 hour (3,600,000 ms).
@@ -341,24 +341,24 @@ function createService(options: MatterAdvertiseOptions): MatterService {
     integer(key, value, maximum);
     result.txt.push(`${key}=${value}`);
   }
-  // Core §4.3.4: ICD is optional and only valid for nodes supporting Long Idle Time mode.
+  // Matter 1.6.1 Core § 4.3.4: ICD is optional and only valid for nodes supporting Long Idle Time mode.
   if (options.longIdleTime !== undefined) result.txt.push(`ICD=${options.longIdleTime ? 1 : 0}`);
   if (options.mode === 'operational') {
     if (typeof options.compressedFabricId !== 'bigint' || options.compressedFabricId < 0n || options.compressedFabricId > 0xffffffffffffffffn)
       throw new Error('MatterAdvertise: invalid compressedFabricId');
     if (typeof options.nodeId !== 'bigint' || options.nodeId < 1n || options.nodeId > 0xffffffefffffffffn) throw new Error('MatterAdvertise: invalid nodeId');
-    // Core §4.3.2.1: <compressed-fabric-id>-<node-id>, each fixed-width 16-digit uppercase hex.
+    // Matter 1.6.1 Core § 4.3.2.1: <compressed-fabric-id>-<node-id>, each fixed-width 16-digit uppercase hex.
     const fabric = options.compressedFabricId.toString(16).toUpperCase().padStart(16, '0');
     result.instance = `${fabric}-${options.nodeId.toString(16).toUpperCase().padStart(16, '0')}`;
-    // Core §4.3.2.3 / §4.3.2.5: _tcp is used even for UDP-only nodes; _I filters by fabric.
+    // Matter 1.6.1 Core § 4.3.2.3 / § 4.3.2.5: _tcp is used even for UDP-only nodes; _I filters by fabric.
     result.service = '_matter._tcp';
     result.subtypes.push(`_I${fabric}`);
-    // Core §4.3.4: T is operational-only; reserved bit 0 stays clear, bits 1/2 advertise TCP roles.
+    // Matter 1.6.1 Core § 4.3.4: T is operational-only; reserved bit 0 stays clear, bits 1/2 advertise TCP roles.
     if (options.tcpSupport !== undefined) {
       if (![0, 2, 4, 6].includes(options.tcpSupport)) throw new Error('MatterAdvertise: invalid tcpSupport');
       result.txt.push(`T=${options.tcpSupport}`);
     }
-    // Core §4.3.2.5 / §4.3.2.7: NFC incomplete commissioning pairs the _IC subtype with IC=1.
+    // Matter 1.6.1 Core § 4.3.2.5 / § 4.3.2.7: NFC incomplete commissioning pairs the _IC subtype with IC=1.
     if (options.incompleteCommissioning) {
       result.subtypes.push('_IC');
       result.txt.push('IC=1');
@@ -367,31 +367,31 @@ function createService(options: MatterAdvertiseOptions): MatterService {
   }
   if (options.mode !== 'commissionable' && options.mode !== 'controller') throw new Error('MatterAdvertise: invalid mode');
   if (options.productId !== undefined && options.vendorId === undefined) throw new Error('MatterAdvertise: productId requires vendorId');
-  // Core §4.3.1.6 and §4.3.3: VP is decimal vendor[+product]; optional _V enables filtering.
+  // Matter 1.6.1 Core § 4.3.1.6 and § 4.3.3: VP is decimal vendor[+product]; optional _V enables filtering.
   if (options.vendorId !== undefined) {
     integer('vendorId', options.vendorId, 65535);
     if (options.productId !== undefined) integer('productId', options.productId, 65535);
     result.txt.push(`VP=${options.vendorId}${options.productId === undefined ? '' : `+${options.productId}`}`);
     result.subtypes.push(`_V${options.vendorId}`);
   }
-  // Core §4.3.1.3 / §4.3.1.8 / §4.3.3: decimal DT and _T subtype describe the primary type.
+  // Matter 1.6.1 Core § 4.3.1.3 / § 4.3.1.8 / § 4.3.3: decimal DT and _T subtype describe the primary type.
   if (options.deviceType !== undefined) {
     integer('deviceType', options.deviceType, 0xffffffff);
     result.txt.push(`DT=${options.deviceType}`);
     result.subtypes.push(`_T${options.deviceType}`);
   }
-  // Core §4.3.1.9 / §4.3.3: DN is optional for privacy and limited to 32 UTF-8 bytes.
+  // Matter 1.6.1 Core § 4.3.1.9 / § 4.3.3: DN is optional for privacy and limited to 32 UTF-8 bytes.
   if (options.deviceName !== undefined) {
     if (Buffer.byteLength(options.deviceName) > 32) throw new Error('MatterAdvertise: deviceName exceeds 32 UTF-8 bytes');
     result.txt.push(`DN=${options.deviceName}`);
   }
-  // Core §4.3.3: commissioner discovery uses a separate UDC port and optional CP capability.
+  // Matter 1.6.1 Core § 4.3.3: commissioner discovery uses a separate UDC port and optional CP capability.
   if (options.mode === 'controller') {
     if (options.matterPorts?.includes(options.port)) throw new Error('MatterAdvertise: controller UDC port must differ from Matter messaging ports');
     result.service = '_matterd._udp';
     if (options.commissionerPasscode !== undefined) result.txt.push(`CP=${options.commissionerPasscode ? 1 : 0}`);
   } else {
-    // Core §4.3.1.3, §4.3.1.5, §4.3.1.7: D is 12 bits; _S uses its upper four bits.
+    // Matter 1.6.1 Core § 4.3.1.3, § 4.3.1.5, § 4.3.1.7: D is 12 bits; _S uses its upper four bits.
     // _CM is omitted for extended discovery (CM=0); Joint Fabric CM=3 is not exposed by this API.
     integer('discriminator', options.discriminator, 4095);
     const mode = options.commissioningMode ?? CommissioningMode.Basic;
@@ -400,7 +400,7 @@ function createService(options: MatterAdvertiseOptions): MatterService {
     result.txt.push(`D=${options.discriminator}`, `CM=${mode}`);
     result.subtypes.push(`_L${options.discriminator}`, `_S${Math.floor(options.discriminator / 256)}`);
     if (mode !== CommissioningMode.None) result.subtypes.push('_CM');
-    // Core §4.3.1.10: RI is up to 50 octets encoded as uppercase hexadecimal.
+    // Matter 1.6.1 Core § 4.3.1.10: RI is up to 50 octets encoded as uppercase hexadecimal.
     if (options.rotatingDeviceId !== undefined) {
       if (!/^(?:[0-9A-F]{2}){1,50}$/.test(options.rotatingDeviceId)) throw new Error('MatterAdvertise: invalid rotatingDeviceId');
       result.txt.push(`RI=${options.rotatingDeviceId}`);

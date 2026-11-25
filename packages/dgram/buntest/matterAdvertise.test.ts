@@ -317,4 +317,62 @@ describe('Matter discovery', () => {
     expect(advertiser.start()).rejects.toThrow('bind failed');
     expect(stop).toHaveBeenCalledTimes(2);
   });
+
+  describe('branch coverage', () => {
+    it('should reject an invalid family and an invalid mode', () => {
+      expect(() => create({ mode: 'controller', port: 5541, family: 'ipx' } as unknown as MatterAdvertiseOptions)).toThrow('invalid family');
+      expect(() => create({ mode: 'unknown', port: 5541 } as unknown as MatterAdvertiseOptions)).toThrow('invalid mode');
+    });
+
+    it('should reject an invalid operational tcpSupport', () => {
+      expect(() => create({ mode: 'operational', port: 5540, compressedFabricId: 1n, nodeId: 1n, tcpSupport: 3 } as unknown as MatterAdvertiseOptions)).toThrow(
+        'invalid tcpSupport',
+      );
+    });
+
+    it('should accept the optional mdnsPort, addressCheckIntervalMs, ICD=0 and CP=0', () => {
+      const advertiser = create({ mode: 'controller', port: 5541, mdnsPort: 15353, addressCheckIntervalMs: 0, longIdleTime: false, commissionerPasscode: false });
+      expect(txt(advertiser)).toEqual(expect.arrayContaining(['ICD=0', 'CP=0']));
+    });
+
+    it('should select only IPv6 addresses with family ipv6', () => {
+      const advertiser = create({ mode: 'controller', port: 5541, family: 'ipv6' });
+      expect(advertiser.interfaceNames).toEqual(['lan0']);
+    });
+
+    it('should skip undefined interface entries and fall back for the host name provider', () => {
+      spyOn(os, 'networkInterfaces').mockReturnValue({ ...networks, ghost: undefined });
+      const advertiser = create({ mode: 'controller', port: 5541, interfaceName: 'lan1' });
+      const provider = advertiser['responders'][0]['options'].hostNameProvider as () => string | undefined;
+      spyOn(os, 'networkInterfaces').mockReturnValue({ lan0: networks.lan0, ghost: undefined });
+      expect(provider()).toBe('B75AFB458ECD');
+    });
+
+    it('should skip undefined interface entries without an interface filter', () => {
+      spyOn(os, 'networkInterfaces').mockReturnValue({ ...networks, ghost: undefined });
+      expect(create({ mode: 'controller', port: 5541 }).interfaceNames).toEqual(['lan0', 'lan1']);
+    });
+
+    it('should start without a duration timer', async () => {
+      spyOn(MdnsResponder.prototype, 'start').mockResolvedValue();
+      spyOn(MdnsResponder.prototype, 'stop').mockResolvedValue();
+      const advertiser = create({ mode: 'controller', port: 5541 });
+      await advertiser.start();
+      expect(advertiser['durationTimer']).toBeUndefined();
+      await advertiser.stop();
+    });
+
+    it('should not announce when stopped while the responders are starting', async () => {
+      spyOn(MdnsResponder.prototype, 'stop').mockResolvedValue();
+      const advertiser = create({ mode: 'controller', port: 5541, durationMs: 1000 });
+      spyOn(MdnsResponder.prototype, 'start').mockImplementation(async () => {
+        await advertiser.stop();
+      });
+      const announced = vi.fn();
+      advertiser.on('announced', announced);
+      await advertiser.start();
+      expect(announced).not.toHaveBeenCalled();
+      expect(advertiser['durationTimer']).toBeUndefined();
+    });
+  });
 });
