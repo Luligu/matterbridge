@@ -156,6 +156,13 @@
 <h3 id="development-news">Development News</h3>
 <ul>
 <li>Add two GitHub Copilot agents, <strong>Matterbridge No Delegate</strong> and <strong>Matterbridge Orchestrator</strong>. The orchestrator runs three subagents per request and can consume tokens very quickly.</li>
+<li>[chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster with matter.js 0.18.1.</li>
+<li>[chip]: ThermostatHeating endpoint 9011 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster with matter.js 0.18.1.</li>
+<li>[chip]: ThermostatCooling endpoint 9012 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster with matter.js 0.18.1.</li>
+<li>[chip]: ThermostatPresets endpoint 9013 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster, including the <code>Presets</code> feature (<code>TC_TSTAT_4_2.py</code>), with matter.js 0.18.1.</li>
+<li>[chip]: ThermostatSchedules endpoint 9014 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster, including the <code>MatterScheduleConfiguration</code> feature, with matter.js 0.18.1.</li>
+<li>[chip]: ThermostatSuggestions endpoint 9015 CHIP conformance is green ✅ for all applicable automated harness tests covering the <code>Thermostat</code> cluster, including the <code>ThermostatSuggestions</code> feature (<code>TC_TSTAT_4_3.py</code>) now handled by matter.js 0.18.1.</li>
+<li>[matter.js]: See <a href="Matter.js-0.18.1.html">Matter.js 0.18.1</a> for the thermostat delegation, what it means for plugins and the open suggestion re-evaluation issue.</li>
 </ul>
 <h3 id="breaking-changes">Breaking changes</h3>
 <ul>
@@ -171,21 +178,26 @@
 </ul>
 <h3 id="changed">Changed</h3>
 <ul>
+<li>[matter]: Bump <code>matter.js</code> to v.0.18.1.</li>
 <li>[dgram]: Update mDNS record typing, packet validation, responder behavior and scanner resolution.</li>
 <li>[matterbridge]: Bump <code>@types/bun</code> to v.1.4.5.</li>
-<li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.5.1.1.</li>
+<li>[matterbridge]: Bump <code>@types/node</code> to v.26.6.10.</li>
+<li>[matterbridge]: Bump <code>@vitest/coverage-v8</code> to v.5.1.2.</li>
 <li>[matterbridge]: Bump <code>marked</code> to v.18.3.0.</li>
 <li>[matterbridge]: Bump <code>oxfmt</code> to v.0.80.0.</li>
 <li>[matterbridge]: Bump <code>oxlint</code> to v.1.95.0.</li>
 <li>[matterbridge]: Bump <code>oxlint-tsgolint</code> to v.7.0.2008.</li>
-<li>[matterbridge]: Bump <code>vitest</code> to v.5.1.1.</li>
+<li>[matterbridge]: Bump <code>vitest</code> to v.5.1.2.</li>
 <li>[matterbridge]: Disable the <code>typescript/no-unsafe-class-instance-assignment</code> lint rule: matter.js cluster structs are classes built from object literals.</li>
 <li>[frontend]: Bump <code>@mui/material</code> and <code>@mui/icons-material</code> to v.9.6.0.</li>
 <li>[frontend]: Fix the React Compiler lint errors in <code>WebSocketProvider</code> reported by oxlint 1.95.0.</li>
 <li>[frontend]: Bump <code>@testing-library/jest-dom</code> to v.8.0.0.</li>
-<li>[frontend]: Bump <code>react-router</code> to v.8.5.2.</li>
+<li>[frontend]: Bump <code>@types/react</code> to v.19.3.3.</li>
+<li>[frontend]: Bump <code>react-router</code> to v.8.5.3.</li>
 <li>[core]: Bump <code>express-rate-limit</code> to v.8.7.5.</li>
 <li>[core]: Bump <code>werift</code> to v.0.28.0.</li>
+<li>[core]: Use matter.js 0.18.1 for thermostat schedule validation and automatic suggestion handling while preserving plugin command forwarding.</li>
+<li>[core]: Thermostat suggestions now change <code>activePresetHandle</code> and the setpoints without calling the <code>setActivePresetRequest</code> handler: plugins must subscribe to these attributes.</li>
 <li>[scripts]: Update <code>bun-bundle.mjs</code> to v.2.1.1: resolve the types of subpath pattern exports and normalize the Windows glob paths.</li>
 <li>[scripts]: Update <code>downloads.mjs</code> and <code>prepublish-clean.mjs</code> to v.2.2.1: fix the type-aware lint errors.</li>
 <li>[scripts]: Update <code>run-chip-test.mjs</code> to v.1.5.0: add <code>--native</code>, the <code>pairs</code> pairing codes, string codes for <code>pairBefore</code>/<code>pairAfter</code> and <code>resetControllerBefore</code>.</li>

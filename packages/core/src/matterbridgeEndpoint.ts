@@ -3788,9 +3788,9 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * matter.js does not yet provide validation logic for the MatterScheduleConfiguration feature (the `schedules` attribute
-   * write validation described in the Matter specification is not enforced by `@matter/node`). Matterbridge only exposes the
-   * attributes and forwards `setActiveScheduleRequest` to the Matterbridge command handler.
+   * matter.js validates schedules and SetActiveScheduleRequest and stores ActiveScheduleHandle, but does not run the
+   * schedule. Plugins that run schedules must apply each transition themselves: its preset (ActivePresetHandle), system
+   * mode or setpoints.
    */
   createDefaultSchedulesThermostatClusterServer(
     localTemperature: number = 23,
@@ -3915,9 +3915,8 @@ export class MatterbridgeEndpoint extends Endpoint {
    * @returns {this} The current MatterbridgeEndpoint instance for chaining.
    *
    * @remarks
-   * matter.js does not yet provide a default implementation of the AddThermostatSuggestion and RemoveThermostatSuggestion
-   * commands for the ThermostatSuggestions feature (it is not implemented by `ThermostatServer` in `@matter/node`), so
-   * Matterbridge validates the requests and maintains the `thermostatSuggestions` list itself.
+   * matter.js evaluates suggestions automatically, including on startup and at their effective and expiration times.
+   * Plugins should use attribute subscriptions to observe automatic preset and setpoint changes; these are not commands.
    */
   createDefaultThermostatSuggestionsClusterServer(
     localTemperature: number = 23,

@@ -107,14 +107,14 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.18.0",
+    "@matter/main": "0.18.1",
     "@matterbridge/types": "3.11.5",
     "node-ansi-logger": "3.3.2"
   },
   "devDependencies": {
     "@types/bun": "1.4.5",
     "@types/jest": "30.0.0",
-    "@types/node": "26.6.6",
-    "vitest": "5.1.1"
+    "@types/node": "26.6.10",
+    "vitest": "5.1.2"
   }
 }

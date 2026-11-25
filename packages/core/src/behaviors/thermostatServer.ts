@@ -1,9 +1,9 @@
 /**
  * @file packages/core/src/behaviors/thermostatServer.ts
- * @description This file contains the MatterbridgeThermostatServer and MatterbridgePresetThermostatServer classes of Matterbridge.
+ * @description This file contains the MatterbridgeThermostatServer class.
  * @author Luca Liguori
  * @created 2026-03-28
- * @version 1.0.0
+ * @version 1.0.1
  * @license Apache-2.0
  *
  * Copyright 2026, 2027, 2028 Luca Liguori.
@@ -23,11 +23,8 @@
 
 /* oxlint-disable typescript/no-unsafe-type-assertion */
 
-import { Bytes } from '@matter/general';
 import { ThermostatServer } from '@matter/node/behaviors/thermostat';
 import { Thermostat } from '@matter/types/clusters/thermostat';
-import { StatusResponseError } from '@matter/types/common';
-import { Status } from '@matter/types/globals';
 
 import type { MatterbridgeEndpoint } from '../matterbridgeEndpoint.js';
 import type { ClusterAttributeValues } from '../matterbridgeEndpointCommandHandler.js';
@@ -46,78 +43,6 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
 ) {
   /** The endpoint that owns this behavior. Narrowed to MatterbridgeEndpoint: this server is only ever added to a Matterbridge endpoint. */
   declare readonly endpoint: MatterbridgeEndpoint;
-
-  /**
-   * Initializes the behavior and reacts to Presets attribute changes to keep ThermostatSuggestions consistent.
-   */
-  override async initialize(): Promise<void> {
-    await super.initialize();
-    // Pass an unbound method reference, matching matter.js's own reactor registrations (e.g. ThermostatServer's
-    // `this.reactTo(this.events.presets$AtomicChanged, this.#handlePresetsChanged)`): the Reactors system rebinds
-    // `this` to a fresh, correctly-scoped behavior instance for each reaction via `reactor.bind(behavior)`. Wrapping
-    // this in an arrow function would defeat that rebinding (arrow functions ignore `.bind()`), leaving `this.state`
-    // pointing at the stale instance from `initialize()` and failing at runtime with "its context has exited".
-    // oxlint-disable-next-line typescript/unbound-method
-    this.reactTo(this.events.presets$AtomicChanged, this.removeThermostatSuggestionsForRemovedPresets);
-  }
-
-  /**
-   * Removes ThermostatSuggestions entries referencing a Preset that was just removed by a Presets atomic write, and
-   * nulls CurrentThermostatSuggestion (clearing ThermostatSuggestionNotFollowingReason) when it referenced one of the
-   * removed presets.
-   *
-   * @param {Thermostat.Preset[]} newPresets - The committed Presets list after the atomic write.
-   * @param {Thermostat.Preset[]} oldPresets - The Presets list before the atomic write.
-   *
-   * @remarks
-   * matter.js does not yet provide a default implementation of the ThermostatSuggestions feature, so this cascade,
-   * required by the Presets attribute's "Effect on Receipt" (Matter 1.6.1 Application Cluster Spec § 4.3.11.50), is
-   * done here.
-   */
-  private removeThermostatSuggestionsForRemovedPresets(newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]): void {
-    const remainingPresetHandles = new Set<string>();
-    for (const preset of newPresets) {
-      if (preset.presetHandle !== null) remainingPresetHandles.add(Bytes.toHex(preset.presetHandle));
-    }
-    const removedPresetHandles = new Set<string>();
-    for (const preset of oldPresets) {
-      if (preset.presetHandle !== null && !remainingPresetHandles.has(Bytes.toHex(preset.presetHandle))) {
-        removedPresetHandles.add(Bytes.toHex(preset.presetHandle));
-      }
-    }
-    if (removedPresetHandles.size === 0) return;
-
-    // Read thermostatSuggestions and currentThermostatSuggestion into plain local values up front, and do the
-    // filtering off those local copies: re-reading `this.state` after mutating it within the same reactor call can
-    // fail at runtime ("its container was removed"), since matter.js's own Presets validation reactor, registered on
-    // the same synchronous event, already mutates state before this one runs.
-    const currentSuggestions = [...this.state.thermostatSuggestions];
-    const remainingSuggestions = currentSuggestions.filter((s) => !removedPresetHandles.has(Bytes.toHex(s.presetHandle)));
-    const currentSuggestion = this.state.currentThermostatSuggestion;
-    // Matter 1.6.1 § 4.3.11.50: on commit of a Presets removal, CurrentThermostatSuggestion is nulled whenever its own
-    // PresetHandle was removed, independently of whether any ThermostatSuggestions entry was removed (e.g. the list is
-    // already empty, or none of its entries reference the removed preset).
-    const clearCurrentSuggestion = currentSuggestion !== null && removedPresetHandles.has(Bytes.toHex(currentSuggestion.presetHandle));
-    if (remainingSuggestions.length === currentSuggestions.length && !clearCurrentSuggestion) return;
-
-    const device = this.endpoint.stateOf(MatterbridgeServer);
-    if (remainingSuggestions.length !== currentSuggestions.length) {
-      device.log.info(
-        `MatterbridgeThermostatServer: removing ${currentSuggestions.length - remainingSuggestions.length} thermostat suggestion(s) referencing removed preset(s) (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-      );
-      // Matter 1.6.1 § 4.3.11.50: on commit of a Presets removal, delete any ThermostatSuggestions entries whose PresetHandle matches the removed preset.
-      this.state.thermostatSuggestions = remainingSuggestions;
-    }
-    if (clearCurrentSuggestion) {
-      device.log.info(
-        `MatterbridgeThermostatServer: clearing current thermostat suggestion referencing a removed preset (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-      );
-      // Matter 1.6.1 § 4.3.11.50: on commit of a Presets removal, set CurrentThermostatSuggestion to null when its PresetHandle matches the removed preset.
-      this.state.currentThermostatSuggestion = null;
-      // Matter 1.6.1 § 4.3.11.55: ThermostatSuggestionNotFollowingReason is set to null when the server is no longer failing to follow a current thermostat suggestion.
-      this.state.thermostatSuggestionNotFollowingReason = null;
-    }
-  }
 
   /**
    * Forwards SetpointRaiseLower requests to the Matterbridge command handler and updates occupied setpoints.
@@ -174,13 +99,14 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   }
 
   /**
-   * Forwards SetActiveScheduleRequest requests to the Matterbridge command handler and updates the active schedule handle.
+   * Forwards SetActiveScheduleRequest requests to the Matterbridge command handler, then delegates to matter.js to validate
+   * the handle and set ActiveScheduleHandle.
    *
    * @param {Thermostat.SetActiveScheduleRequest} request - Set-active-schedule request payload.
    *
    * @remarks
-   * matter.js does not yet provide a default implementation of this command (the MatterScheduleConfiguration feature
-   * is not implemented by `ThermostatServer` in `@matter/node`), so validation and state handling are done here.
+   * matter.js only stores ActiveScheduleHandle: it does not run the schedule. Plugins that run schedules must apply each
+   * transition themselves: its preset (ActivePresetHandle), system mode or setpoints.
    */
   override async setActiveScheduleRequest(request: Thermostat.SetActiveScheduleRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -194,16 +120,8 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       endpoint: this.endpoint,
       context: this.context,
     });
-    const schedule = this.state.schedules.find((s) => s.scheduleHandle !== null && Bytes.areEqual(s.scheduleHandle, request.scheduleHandle));
-    // Matter 1.6.1 § 4.3.12.2.2: reject with INVALID_COMMAND if no Schedules entry has a ScheduleHandle matching the request.
-    if (schedule === undefined) {
-      throw new StatusResponseError(
-        `MatterbridgeThermostatServer: requested ScheduleHandle not found (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.InvalidCommand,
-      );
-    }
-    // Matter 1.6.1 § 4.3.12.2.2: set ActiveScheduleHandle to the value of the matching ScheduleHandle field.
-    this.state.activeScheduleHandle = Uint8Array.from(request.scheduleHandle);
+    // Matter 1.6.1 § 4.3.12.2.2: Reject an unknown schedule handle and store the matching handle as ActiveScheduleHandle.
+    await super.setActiveScheduleRequest(request);
     device.log.debug(
       `MatterbridgeThermostatServer: setActiveScheduleRequest completed with activeScheduleHandle: ${scheduleHandle} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );
@@ -211,50 +129,16 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
   }
 
   /**
-   * Removes expired entries (ExpirationTime at or before now) from ThermostatSuggestions, mirroring
-   * `RemoveExpiredSuggestions()` in connectedhomeip's `src/app/clusters/thermostat-server/ThermostatClusterSuggestions.cpp`.
-   */
-  private removeExpiredThermostatSuggestions(): void {
-    const now = Math.floor(Date.now() / 1000);
-    // Matter 1.6.1 § 4.3.7: When re-evaluating, remove every ThermostatSuggestions entry whose ExpirationTime is less than or equal to the current timestamp in UTC.
-    this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => s.expirationTime > now);
-  }
-
-  /**
-   * Re-evaluates CurrentThermostatSuggestion, mirroring `ReEvaluateCurrentSuggestion()` in connectedhomeip's
-   * `examples/thermostat/thermostat-common/src/thermostat-delegate-impl.cpp`: the suggestion with the earliest
-   * EffectiveTime among those already active (EffectiveTime <= now) becomes current. ThermostatSuggestionNotFollowingReason
-   * is cleared whenever CurrentThermostatSuggestion changes, including when it becomes null, so it never keeps
-   * describing a suggestion that is no longer current. When a new suggestion becomes current, ActivePresetHandle is
-   * synced to it; when no suggestion is active, ActivePresetHandle is left untouched.
-   */
-  private reEvaluateCurrentThermostatSuggestion(): void {
-    const now = Math.floor(Date.now() / 1000);
-    let current: Thermostat.ThermostatSuggestion | null = null;
-    for (const s of this.state.thermostatSuggestions) {
-      if (s.effectiveTime <= now && (current === null || s.effectiveTime < current.effectiveTime)) current = s;
-    }
-    if (this.state.currentThermostatSuggestion?.uniqueId === current?.uniqueId) return;
-    // Matter 1.6.1 § 4.3.7: Set CurrentThermostatSuggestion to one of the entries whose EffectiveTime is at or before the current timestamp in UTC, or to null when there is no such entry.
-    this.state.currentThermostatSuggestion = current;
-    // Matter 1.6.1 § 4.3.11.55: ThermostatSuggestionNotFollowingReason is set to null when the server follows the current thermostat suggestion, or when there is none to follow.
-    this.state.thermostatSuggestionNotFollowingReason = null;
-    if (current !== null) {
-      // Matter 1.6.1 § 4.3.11.55: While following the suggestion the server ensures ActivePresetHandle matches the PresetHandle of CurrentThermostatSuggestion.
-      this.state.activePresetHandle = Uint8Array.from(current.presetHandle);
-    }
-  }
-
-  /**
-   * Forwards AddThermostatSuggestion requests to the Matterbridge command handler and appends the new suggestion.
+   * Forwards AddThermostatSuggestion requests to the Matterbridge command handler, then delegates to matter.js to validate
+   * and append the suggestion and re-evaluate CurrentThermostatSuggestion.
    *
    * @param {Thermostat.AddThermostatSuggestionRequest} request - Add-thermostat-suggestion request payload.
    * @returns {Promise<Thermostat.AddThermostatSuggestionResponse>} The generated UniqueID of the added suggestion.
    *
    * @remarks
-   * matter.js does not yet provide a default implementation of this command (the ThermostatSuggestions feature
-   * is not implemented by `ThermostatServer` in `@matter/node`), so validation, list bookkeeping, and applying the
-   * suggestion (re-evaluating CurrentThermostatSuggestion / ActivePresetHandle) are done here.
+   * The plugin handler is a notification only: it runs before validation, and the suggestion may become effective later.
+   * Following a suggestion activates its preset without calling setActivePresetRequest, so plugins observe the resulting
+   * ActivePresetHandle and setpoint changes through attribute subscriptions.
    */
   override async addThermostatSuggestion(request: Thermostat.AddThermostatSuggestionRequest): Promise<Thermostat.AddThermostatSuggestionResponse> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -268,66 +152,25 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       endpoint: this.endpoint,
       context: this.context,
     });
-    // Matter 1.6.1 § 4.3.12.4.4: reject with NOT_FOUND if the PresetHandle does not match an entry in Presets.
-    if (this.state.presets.find((p) => p.presetHandle !== null && Bytes.areEqual(p.presetHandle, request.presetHandle)) === undefined) {
-      throw new StatusResponseError(
-        `MatterbridgeThermostatServer: requested PresetHandle not found (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.NotFound,
-      );
-    }
-    // Remove expired suggestions before checking capacity, so a list full of stale entries does not block a valid add.
-    // Re-evaluate immediately after pruning so CurrentThermostatSuggestion/ActivePresetHandle stay consistent even if a
-    // later validation (capacity, EffectiveTime) rejects this command.
-    // Matter 1.6.1 § 4.3.7: Remove the ThermostatSuggestions entries that have expired at the current timestamp in UTC.
-    this.removeExpiredThermostatSuggestions();
-    // Matter 1.6.1 § 4.3.7: Re-evaluate CurrentThermostatSuggestion, since the value of the ThermostatSuggestions attribute was updated.
-    this.reEvaluateCurrentThermostatSuggestion();
-    // Matter 1.6.1 § 4.3.12.4.4: reject with RESOURCE_EXHAUSTED if ThermostatSuggestions already holds MaxThermostatSuggestions entries.
-    if (this.state.thermostatSuggestions.length >= this.state.maxThermostatSuggestions) {
-      throw new StatusResponseError(
-        `MatterbridgeThermostatServer: maximum number of thermostat suggestions reached (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.ResourceExhausted,
-      );
-    }
-    const currentTime = Math.floor(Date.now() / 1000);
-    // Matter 1.6.1 § 4.3.12.4.4: default EffectiveTime to the current time in UTC when the request field is null.
-    const effectiveTime = request.effectiveTime ?? currentTime;
-    // Matter 1.6.1 § 4.3.12.4.4: reject with INVALID_COMMAND if EffectiveTime is more than 24 hours in the future.
-    if (effectiveTime > currentTime + 24 * 60 * 60) {
-      throw new StatusResponseError(
-        `MatterbridgeThermostatServer: requested EffectiveTime is more than 24 hours in the future (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
-        Status.InvalidCommand,
-      );
-    }
-    const usedUniqueIds = new Set(this.state.thermostatSuggestions.map((s) => s.uniqueId));
-    let uniqueId = 0;
-    // Matter 1.6.1 § 4.3.12.4.4: generate a UniqueID distinct from every existing ThermostatSuggestions entry.
-    while (usedUniqueIds.has(uniqueId)) uniqueId++;
-    const suggestion: Thermostat.ThermostatSuggestion = {
-      uniqueId,
-      presetHandle: Uint8Array.from(request.presetHandle),
-      effectiveTime,
-      // Matter 1.6.1 § 4.3.12.4.4: set ExpirationTime to EffectiveTime plus ExpirationInMinutes converted to seconds.
-      expirationTime: effectiveTime + request.expirationInMinutes * 60,
-    };
-    // Matter 1.6.1 § 4.3.12.4.4: append the new entry to the ThermostatSuggestions attribute.
-    this.state.thermostatSuggestions = [...this.state.thermostatSuggestions, suggestion];
-    // Matter 1.6.1 § 4.3.7: Re-evaluate CurrentThermostatSuggestion, since the value of the ThermostatSuggestions attribute was updated.
-    this.reEvaluateCurrentThermostatSuggestion();
-    device.log.debug(`MatterbridgeThermostatServer: addThermostatSuggestion completed with uniqueId: ${uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`);
+    // Matter 1.6.1 § 4.3.12.4.4: Validate and append the suggestion, then re-evaluate which suggestion to follow.
+    const response = await super.addThermostatSuggestion(request);
+    device.log.debug(
+      `MatterbridgeThermostatServer: addThermostatSuggestion completed with uniqueId: ${response.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
+    );
     this.endpoint.emitCommand(Thermostat, 'addThermostatSuggestion', request, this.context);
-    return { uniqueId };
+    return response;
   }
 
   /**
-   * Forwards RemoveThermostatSuggestion requests to the Matterbridge command handler and removes the suggestion.
+   * Forwards RemoveThermostatSuggestion requests to the Matterbridge command handler, then delegates to matter.js to
+   * remove the suggestion and re-evaluate CurrentThermostatSuggestion.
    *
    * @param {Thermostat.RemoveThermostatSuggestionRequest} request - Remove-thermostat-suggestion request payload.
    *
    * @remarks
-   * matter.js does not yet provide a default implementation of this command (the ThermostatSuggestions feature
-   * is not implemented by `ThermostatServer` in `@matter/node`), so validation, list bookkeeping, and applying the
-   * next suggestion (re-evaluating CurrentThermostatSuggestion / ActivePresetHandle) are done here.
+   * The plugin handler is a notification only: it runs before validation. Removing the current suggestion may activate
+   * the preset of another suggestion that becomes current; with none, ActivePresetHandle stays as it is. Plugins observe
+   * the resulting changes through attribute subscriptions.
    */
   override async removeThermostatSuggestion(request: Thermostat.RemoveThermostatSuggestionRequest): Promise<void> {
     const device = this.endpoint.stateOf(MatterbridgeServer);
@@ -340,17 +183,8 @@ export class MatterbridgeThermostatServer extends ThermostatServer.with(
       endpoint: this.endpoint,
       context: this.context,
     });
-    const suggestion = this.state.thermostatSuggestions.find((s) => s.uniqueId === request.uniqueId);
-    // Matter 1.6.1 § 4.3.12.6.2: reject with NOT_FOUND if no ThermostatSuggestions entry matches the requested UniqueID.
-    if (suggestion === undefined) {
-      throw new StatusResponseError(`MatterbridgeThermostatServer: requested UniqueID not found (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`, Status.NotFound);
-    }
-    // Matter 1.6.1 § 4.3.12.6.2: remove the matching entry from the ThermostatSuggestions attribute.
-    this.state.thermostatSuggestions = this.state.thermostatSuggestions.filter((s) => s.uniqueId !== request.uniqueId);
-    // Matter 1.6.1 § 4.3.7: Remove the ThermostatSuggestions entries that have expired at the current timestamp in UTC.
-    this.removeExpiredThermostatSuggestions();
-    // Matter 1.6.1 § 4.3.7: Re-evaluate CurrentThermostatSuggestion, since the value of the ThermostatSuggestions attribute was updated.
-    this.reEvaluateCurrentThermostatSuggestion();
+    // Matter 1.6.1 § 4.3.12.6.2: Reject an unknown UniqueID, otherwise remove the suggestion and re-evaluate.
+    await super.removeThermostatSuggestion(request);
     device.log.debug(
       `MatterbridgeThermostatServer: removeThermostatSuggestion completed for uniqueId: ${request.uniqueId} (endpoint ${this.endpoint.maybeId}.${this.endpoint.maybeNumber})`,
     );

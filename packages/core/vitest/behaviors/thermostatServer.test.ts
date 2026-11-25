@@ -10,7 +10,6 @@ const NAME = 'ThermostatServer';
 const MATTER_PORT = 13400;
 const MATTER_CREATE_ONLY = true;
 
-import { Bytes } from '@matter/general';
 import { Thermostat } from '@matter/types/clusters/thermostat';
 import { Status } from '@matter/types/globals';
 import {
@@ -38,7 +37,6 @@ describe('MatterbridgeThermostatServer', () => {
   let thermo: MatterbridgeEndpoint;
   let thermostatPreset: MatterbridgeEndpoint;
   let thermostatSchedule: MatterbridgeEndpoint;
-  let thermostatSuggestion: MatterbridgeEndpoint;
 
   const thermostatPresetTypes: Thermostat.PresetType[] = [
     { presetScenario: Thermostat.PresetScenario.Occupied, numberOfPresets: 2, presetTypeFeatures: { automatic: false, supportsNames: true } },
@@ -337,7 +335,7 @@ describe('MatterbridgeThermostatServer', () => {
       LogLevel.INFO,
       `MatterbridgeThermostatServer: setting preset to ${formatPresetHandleForLog(firstPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
     );
-    expectPresetThermostatAttributes(null, 2100, 2500);
+    expectPresetThermostatAttributes(firstPresetRequest.presetHandle, 2100, 2500);
 
     await thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', secondPresetRequest);
     expect(presetCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: secondPresetRequest });
@@ -345,7 +343,7 @@ describe('MatterbridgeThermostatServer', () => {
       LogLevel.INFO,
       `MatterbridgeThermostatServer: setting preset to ${formatPresetHandleForLog(secondPresetRequest.presetHandle)} (endpoint ${thermostatPreset.id}.${thermostatPreset.number})`,
     );
-    expectPresetThermostatAttributes(null, 1900, 2700);
+    expectPresetThermostatAttributes(secondPresetRequest.presetHandle, 1900, 2700);
 
     await thermostatPreset.invokeBehaviorCommand('Thermostat', 'setActivePresetRequest', clearPresetRequest);
     expect(presetCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: clearPresetRequest });
@@ -359,8 +357,62 @@ describe('MatterbridgeThermostatServer', () => {
     expect(presetCalls[3]).toEqual({ cluster: 'thermostat', endpoint: thermostatPreset, request: invalidPresetRequest });
     expect(presetCalls).toHaveLength(4);
     expectPresetThermostatAttributes(null, 1900, 2700);
-    expect(emitted).toContainEqual(firstPresetRequest);
-    expect(emitted).toContainEqual(clearPresetRequest);
+    expect(emitted).toEqual([firstPresetRequest, secondPresetRequest, clearPresetRequest]);
+  });
+
+  test('should forward suggestion commands and emit only accepted requests', async () => {
+    const device = createThermostatSuggestionEndpoint('thermostatSuggestionBehavior');
+    expect(await addBridgedDevice(aggregator, device)).toBeTruthy();
+    const add = vi.fn();
+    const remove = vi.fn();
+    const emittedAdd = vi.fn();
+    const emittedRemove = vi.fn();
+    const emittedPreset = vi.fn();
+    device.addCommandHandler('addThermostatSuggestion', (data) => add(data.request));
+    device.addCommandHandler('removeThermostatSuggestion', (data) => remove(data.request));
+    device.subscribeCommand(Thermostat, 'addThermostatSuggestion', (data) => emittedAdd(data.request));
+    device.subscribeCommand(Thermostat, 'removeThermostatSuggestion', (data) => emittedRemove(data.request));
+    device.subscribeCommand(Thermostat, 'setActivePresetRequest', emittedPreset);
+
+    vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+    try {
+      const now = Date.parse('2026-01-15T10:00:00Z');
+      vi.setSystemTime(now);
+      const request = { presetHandle: Uint8Array.from([1]), effectiveTime: null, expirationInMinutes: 1 };
+      const unknownPreset = { ...request, presetHandle: Uint8Array.from([9]) };
+      const tooLate = { ...request, effectiveTime: now / 1000 + 86_401 };
+      await expect(device.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', unknownPreset)).rejects.toMatchObject({ code: Status.NotFound });
+      await expect(device.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', tooLate)).rejects.toMatchObject({ code: Status.InvalidCommand });
+      expect(device.getAttribute(Thermostat.id, 'thermostatSuggestions')).toEqual([]);
+
+      await device.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', request);
+      const [suggestion] = device.getAttribute(Thermostat.id, 'thermostatSuggestions');
+      expect(suggestion).toMatchObject({ effectiveTime: now / 1000, expirationTime: now / 1000 + 60 });
+      expect(device.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: suggestion.uniqueId });
+      expect(device.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
+      expect(device.getAttribute(Thermostat.id, 'occupiedHeatingSetpoint')).toBe(1900);
+      expect(emittedPreset).not.toHaveBeenCalled();
+
+      const unknownId = { uniqueId: (suggestion.uniqueId + 1) % 256 };
+      const removeRequest = { uniqueId: suggestion.uniqueId };
+      await expect(device.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', unknownId)).rejects.toMatchObject({ code: Status.NotFound });
+      await device.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', removeRequest);
+      expect(device.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+      expect(add.mock.calls).toEqual([[unknownPreset], [tooLate], [request]]);
+      expect(remove.mock.calls).toEqual([[unknownId], [removeRequest]]);
+      expect(emittedAdd.mock.calls).toEqual([[request]]);
+      expect(emittedRemove.mock.calls).toEqual([[removeRequest]]);
+
+      await device.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', request);
+      await vi.advanceTimersByTimeAsync(60_000);
+      expect(device.getAttribute(Thermostat.id, 'thermostatSuggestions')).toEqual([]);
+      expect(device.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
+      expect(device.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
+      expect(device.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
+      expect(emittedRemove.mock.calls).toEqual([[removeRequest]]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   test('ScheduleThermostat server', async () => {
@@ -398,10 +450,6 @@ describe('MatterbridgeThermostatServer', () => {
     );
     expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
 
-    // The stored activeScheduleHandle must be a defensive copy, not a reference to the request payload.
-    secondScheduleRequest.scheduleHandle[0] = 0xff;
-    expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
-
     await expect(thermostatSchedule.invokeBehaviorCommand('Thermostat', 'setActiveScheduleRequest', invalidScheduleRequest)).rejects.toMatchObject({ code: Status.InvalidCommand });
     expect(scheduleCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSchedule, request: invalidScheduleRequest });
     expect(scheduleCalls).toHaveLength(2);
@@ -409,301 +457,5 @@ describe('MatterbridgeThermostatServer', () => {
     expect(thermostatSchedule.getAttribute(Thermostat.id, 'activeScheduleHandle')).toEqual(Uint8Array.from([1]));
     // Only the accepted schedule request is announced
     expect(emitted).toEqual([secondScheduleRequest]);
-  });
-
-  test('ThermostatSuggestion server', async () => {
-    thermostatSuggestion = createThermostatSuggestionEndpoint('thermostatSuggestionBehavior');
-    expect(await addBridgedDevice(aggregator, thermostatSuggestion)).toBeTruthy();
-    // Collect the requests announced to subscribeCommand() listeners
-    const emittedAdd: unknown[] = [];
-    const emittedRemove: unknown[] = [];
-    thermostatSuggestion.subscribeCommand(Thermostat, 'addThermostatSuggestion', (data) => emittedAdd.push(data.request));
-    thermostatSuggestion.subscribeCommand(Thermostat, 'removeThermostatSuggestion', (data) => emittedRemove.push(data.request));
-
-    const addCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-    const removeCalls: Array<{ cluster: string; endpoint: MatterbridgeEndpoint; request: object }> = [];
-
-    thermostatSuggestion.addCommandHandler('addThermostatSuggestion', (data) => {
-      addCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
-    });
-    thermostatSuggestion.addCommandHandler('removeThermostatSuggestion', (data) => {
-      removeCalls.push({ cluster: data.cluster, endpoint: data.endpoint, request: data.request });
-    });
-
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([0]));
-
-    // Freeze the clock so EffectiveTime/ExpirationTime comparisons below are deterministic.
-    const now = new Date('2026-01-15T10:00:00Z');
-    vi.useFakeTimers();
-    try {
-      vi.setSystemTime(now);
-      const nowSeconds = Math.floor(now.getTime() / 1000);
-
-      // A suggestion referencing an existing preset that is already effective (EffectiveTime in the past) is accepted
-      // and immediately applied: CurrentThermostatSuggestion, ActivePresetHandle and ThermostatSuggestionNotFollowingReason
-      // are updated, mirroring connectedhomeip's ReEvaluateCurrentSuggestion().
-      const explicitRequest = { presetHandle: Uint8Array.from([1]), effectiveTime: nowSeconds - 60, expirationInMinutes: 30 };
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', explicitRequest);
-      expect(addCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: explicitRequest });
-      let suggestions = thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions');
-      expect(suggestions).toHaveLength(1);
-      expect(suggestions[0]).toMatchObject({ uniqueId: 0, effectiveTime: nowSeconds - 60, expirationTime: nowSeconds - 60 + 1800 });
-      expect(JSON.stringify(Object.values(suggestions[0].presetHandle))).toBe(JSON.stringify([1]));
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
-
-      // A null effectiveTime means "immediately": the server fills in the current time. Since the first suggestion
-      // became effective earlier, it keeps being the earliest active one and stays current.
-      const immediateRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: null, expirationInMinutes: 60 };
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', immediateRequest);
-      expect(addCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: immediateRequest });
-      suggestions = thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions');
-      expect(suggestions).toHaveLength(2);
-      expect(suggestions[1].uniqueId).toBe(1);
-      expect(suggestions[1].effectiveTime).toBe(nowSeconds);
-      expect(suggestions[1].expirationTime).toBe(nowSeconds + 3600);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
-
-      // An EffectiveTime more than 24 hours in the future is rejected.
-      const futureRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: nowSeconds + 24 * 60 * 60 + 1, expirationInMinutes: 30 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', futureRequest)).rejects.toThrow(
-        'requested EffectiveTime is more than 24 hours in the future',
-      );
-      expect(addCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: futureRequest });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
-
-      // An unknown PresetHandle is rejected, but the command is still forwarded to the command handler first.
-      const invalidPresetRequest = { presetHandle: Uint8Array.from([9]), effectiveTime: nowSeconds, expirationInMinutes: 30 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', invalidPresetRequest)).rejects.toThrow('requested PresetHandle not found');
-      expect(addCalls[3]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidPresetRequest });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
-
-      // Fill the list up to MaxThermostatSuggestions (5) with suggestions that are not yet effective (2+ hours out),
-      // then the next add is rejected as ResourceExhausted. None of them preempt the already-active current one.
-      for (let i = 0; i < 3; i++) {
-        await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
-          presetHandle: Uint8Array.from([0]),
-          effectiveTime: nowSeconds + 7200 + i * 60,
-          expirationInMinutes: 30,
-        });
-      }
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(5);
-      const overflowRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: nowSeconds, expirationInMinutes: 30 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', overflowRequest)).rejects.toThrow(
-        'maximum number of thermostat suggestions reached',
-      );
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(5);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
-
-      // Removing a different, not-yet-effective suggestion (uniqueId 4) keeps CurrentThermostatSuggestion unchanged.
-      const removeOtherRequest = { uniqueId: 4 };
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', removeOtherRequest);
-      expect(removeCalls[0]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: removeOtherRequest });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(4);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
-
-      // Removing the current suggestion (uniqueId 0) re-evaluates and applies the next earliest already-active one
-      // (uniqueId 1), syncing ActivePresetHandle to it: the thermostat keeps following a suggestion automatically.
-      const removeCurrentRequest = { uniqueId: 0 };
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', removeCurrentRequest);
-      expect(removeCalls[1]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: removeCurrentRequest });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 1 });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([0]));
-
-      // An unknown UniqueID is rejected, but the command is still forwarded to the command handler first.
-      const invalidRemoveRequest = { uniqueId: 99 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', invalidRemoveRequest)).rejects.toThrow('requested UniqueID not found');
-      expect(removeCalls[2]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: invalidRemoveRequest });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
-
-      // Once the current suggestion's ExpirationTime elapses and no other suggestion is effective yet, the next
-      // add/remove call prunes the expired entry and clears CurrentThermostatSuggestion; ActivePresetHandle, which
-      // reflects the last-followed preset, is intentionally left untouched (mirrors the reference behavior).
-      // ThermostatSuggestionNotFollowingReason is set here to a non-null value beforehand to verify it is cleared
-      // alongside CurrentThermostatSuggestion rather than leaking a stale reason (Matter spec: "If the
-      // CurrentThermostatSuggestion attribute is null, this attribute shall be set to null").
-      await thermostatSuggestion.setAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason', { ongoingHold: true });
-      vi.setSystemTime(new Date((nowSeconds + 3601) * 1000));
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', { uniqueId: 3 });
-      expect(removeCalls[3]).toEqual({ cluster: 'thermostat', endpoint: thermostatSuggestion, request: { uniqueId: 3 } });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(1);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([0]));
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
-
-      // A suggestion that becomes current, then expires, is pruned and re-evaluated as part of the next add/remove
-      // call. If that call is itself rejected by a later validation (here EffectiveTime > 24h in the future), the
-      // prune/re-evaluate performed earlier in the same command must not leak out: matter.js runs each command in
-      // its own transaction and discards every mutation when the handler throws (LocalActorContext.act rejects the
-      // transaction on error), so CurrentThermostatSuggestion/ThermostatSuggestions/ActivePresetHandle/
-      // ThermostatSuggestionNotFollowingReason stay exactly as they were before the rejected command.
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
-        presetHandle: Uint8Array.from([1]),
-        effectiveTime: null,
-        expirationInMinutes: 1,
-      });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
-
-      await thermostatSuggestion.setAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason', { ongoingHold: true });
-      vi.setSystemTime(new Date(Date.now() + 61_000)); // past the uniqueId 0 suggestion's 1-minute ExpirationTime
-      const currentSeconds = Math.floor(Date.now() / 1000);
-      const rejectedRequest = { presetHandle: Uint8Array.from([0]), effectiveTime: currentSeconds + 25 * 60 * 60, expirationInMinutes: 30 };
-      await expect(thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', rejectedRequest)).rejects.toThrow(
-        'requested EffectiveTime is more than 24 hours in the future',
-      );
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(2);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toMatchObject({ ongoingHold: true });
-
-      // The next successful command finally prunes the now-expired suggestion and re-evaluates: CurrentThermostatSuggestion
-      // becomes null and ThermostatSuggestionNotFollowingReason is cleared; ActivePresetHandle is left untouched.
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'removeThermostatSuggestion', { uniqueId: 2 });
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'activePresetHandle')).toEqual(Uint8Array.from([1]));
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
-    } finally {
-      vi.useRealTimers();
-    }
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
-
-    // Seed 3 ThermostatSuggestions entries, all referencing preset 0, to set up the Presets removal cascade below (the
-    // scenario above already drains the list to empty, so it is reseeded here through real add commands, matching the
-    // earlier scenarios, rather than the try/finally-scoped flow above). The first, being immediately effective,
-    // becomes CurrentThermostatSuggestion as part of the add command's own re-evaluation. Removing preset 0 via a
-    // Presets atomic write deletes the referencing entries and, since CurrentThermostatSuggestion references that
-    // preset, nulls it (Matter 1.6.1 Application Cluster Spec § 4.3.11.50, points 1-2). matter.js only fires
-    // `presets$AtomicChanged` through a committed atomic write (AtomicWriteHandler), which local-actor/command-context
-    // test writes bypass entirely, so the event is emitted directly here, matching how AtomicWriteHandler.commitWrite()
-    // does it.
-    for (let i = 0; i < 3; i++) {
-      await thermostatSuggestion.invokeBehaviorCommand('Thermostat', 'addThermostatSuggestion', {
-        presetHandle: Uint8Array.from([0]),
-        effectiveTime: null,
-        expirationInMinutes: 30,
-      });
-    }
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(3);
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ presetHandle: Uint8Array.from([0]) });
-
-    const thermostatSuggestionBehavior = MatterbridgeThermostatServer.with(
-      Thermostat.Feature.Heating,
-      Thermostat.Feature.Cooling,
-      Thermostat.Feature.AutoMode,
-      Thermostat.Feature.Presets,
-      Thermostat.Feature.ThermostatSuggestions,
-    );
-    const presetsWithoutPreset0 = thermostatPresets.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([0])));
-    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset0, thermostatPresets, undefined as never);
-    // The reactor runs in its own dedicated, independently-committed transaction (matching production), so its
-    // effect is not necessarily visible synchronously after emit() returns.
-    await vi.waitFor(() => {
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
-    });
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
-
-    // Regression test: CurrentThermostatSuggestion must be nulled whenever its own PresetHandle was removed, even
-    // when the ThermostatSuggestions list itself is unaffected (already empty here, so its length doesn't change).
-    // Matter 1.6.1 Application Cluster Spec § 4.3.11.50 point 1 applies to CurrentThermostatSuggestion independently
-    // of point 2 (which only covers ThermostatSuggestions entries).
-    await thermostatSuggestion.setAttribute(Thermostat.id, 'currentThermostatSuggestion', {
-      uniqueId: 5,
-      presetHandle: Uint8Array.from([1]),
-      effectiveTime: 1700000000,
-      expirationTime: 1700001800,
-    });
-    const presetsWithoutPreset1 = presetsWithoutPreset0.filter((p) => p.presetHandle === null || !Bytes.areEqual(p.presetHandle, Uint8Array.from([1])));
-    thermostatSuggestion.eventsOf(thermostatSuggestionBehavior).presets$AtomicChanged?.emit(presetsWithoutPreset1, presetsWithoutPreset0, undefined as never);
-    await vi.waitFor(() => {
-      expect(thermostatSuggestion.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toBeNull();
-    });
-    expect(thermostatSuggestion.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(0);
-    // Accepted commands are announced, rejected ones are not
-    expect(emittedAdd).toContainEqual(expect.objectContaining({ presetHandle: Uint8Array.from([1]) }));
-    expect(emittedRemove).toContainEqual({ uniqueId: 4 });
-    expect(emittedRemove).not.toContainEqual({ uniqueId: 99 });
-  });
-
-  test('removeThermostatSuggestionsForRemovedPresets branch coverage', () => {
-    // Exercises MatterbridgeThermostatServer['removeThermostatSuggestionsForRemovedPresets'] directly against a stub
-    // state/endpoint, mirroring the private-method call pattern used for setpointRaiseLower above. This sidesteps
-    // matter.js's Presets struct validation on presets$AtomicChanged (which rejects a committed entry with a null
-    // PresetHandle), letting each branch be exercised with data that would not otherwise reach the reactor.
-    const info = vi.fn();
-    const debug = vi.fn();
-    const endpoint = {
-      maybeId: 'thermostatSuggestionBranches',
-      maybeNumber: 1,
-      stateOf: (): { log: { info: typeof info; debug: typeof debug } } => ({ log: { info, debug } }),
-    };
-    const callReactor = (state: Record<string, unknown>, newPresets: Thermostat.Preset[], oldPresets: Thermostat.Preset[]): void => {
-      const server = { state, endpoint } as unknown as MatterbridgeThermostatServer;
-      (
-        MatterbridgeThermostatServer.prototype as unknown as { removeThermostatSuggestionsForRemovedPresets: (n: Thermostat.Preset[], o: Thermostat.Preset[]) => void }
-      ).removeThermostatSuggestionsForRemovedPresets.call(server, newPresets, oldPresets);
-    };
-    const pendingPreset: Thermostat.Preset = {
-      presetHandle: null,
-      presetScenario: Thermostat.PresetScenario.Sleep,
-      name: 'Pending',
-      coolingSetpoint: 2600,
-      heatingSetpoint: 2000,
-      builtIn: null,
-    };
-    const preset2: Thermostat.Preset = {
-      presetHandle: Uint8Array.from([2]),
-      presetScenario: Thermostat.PresetScenario.Wake,
-      name: 'Preset2',
-      coolingSetpoint: 2600,
-      heatingSetpoint: 2000,
-      builtIn: null,
-    };
-    const preset3: Thermostat.Preset = {
-      presetHandle: Uint8Array.from([3]),
-      presetScenario: Thermostat.PresetScenario.Vacation,
-      name: 'Preset3',
-      coolingSetpoint: 2600,
-      heatingSetpoint: 2000,
-      builtIn: null,
-    };
-    const suggestionForPreset2: Thermostat.ThermostatSuggestion = { uniqueId: 10, presetHandle: Uint8Array.from([2]), effectiveTime: 1700000000, expirationTime: 1700003600 };
-    const suggestionForPreset3: Thermostat.ThermostatSuggestion = { uniqueId: 11, presetHandle: Uint8Array.from([3]), effectiveTime: 1700000000, expirationTime: 1700003600 };
-
-    // Line 76 false branch + line 84 true branch: a Preset with a null PresetHandle (skipped, not deduped through
-    // Bytes.toHex(null)) among presets that are only added, never removed, so the reactor returns early untouched.
-    const state1 = { thermostatSuggestions: [suggestionForPreset2], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: null };
-    callReactor(state1, [pendingPreset, preset2, preset3], [pendingPreset, preset2]);
-    expect(state1.thermostatSuggestions).toEqual([suggestionForPreset2]);
-    expect(state1.currentThermostatSuggestion).toBe(suggestionForPreset2);
-    expect(info).not.toHaveBeenCalled();
-
-    // Line 97 true branch: a Preset is removed, but neither ThermostatSuggestions nor CurrentThermostatSuggestion
-    // reference it, so the reactor returns early once it determines neither changed.
-    const state2 = { thermostatSuggestions: [suggestionForPreset2], currentThermostatSuggestion: suggestionForPreset2, thermostatSuggestionNotFollowingReason: null };
-    callReactor(state2, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
-    expect(state2.thermostatSuggestions).toEqual([suggestionForPreset2]);
-    expect(state2.currentThermostatSuggestion).toBe(suggestionForPreset2);
-    expect(info).not.toHaveBeenCalled();
-
-    // Line 106 false branch: the removed Preset is referenced by a ThermostatSuggestions entry (pruned) but not by
-    // CurrentThermostatSuggestion, which is left untouched.
-    const state3 = {
-      thermostatSuggestions: [suggestionForPreset2, suggestionForPreset3],
-      currentThermostatSuggestion: suggestionForPreset2,
-      thermostatSuggestionNotFollowingReason: { ongoingHold: true },
-    };
-    callReactor(state3, [pendingPreset, preset2], [pendingPreset, preset2, preset3]);
-    expect(state3.thermostatSuggestions).toEqual([suggestionForPreset2]);
-    expect(state3.currentThermostatSuggestion).toBe(suggestionForPreset2);
-    expect(state3.thermostatSuggestionNotFollowingReason).toEqual({ ongoingHold: true });
-    expect(info).toHaveBeenCalledTimes(1);
   });
 });
