@@ -4,8 +4,10 @@
  * @author Luca Liguori
  */
 
-import { afterEach, beforeEach, describe, expect, it, spyOn, vi } from 'bun:test';
+import { afterAll, afterEach, beforeEach, spyOn as bunSpyOn, describe, expect, it, vi } from 'bun:test';
 import os from 'node:os';
+
+import { resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
 
 import { DnsClass, DnsHeaderFlag, DnsRecordType, Mdns } from '../src/mdns.js';
 import { MdnsResolver } from '../src/mdnsResolver.js';
@@ -15,6 +17,23 @@ const HOST = 'B75AFB458ECD0000.local';
 const PORT = 5353;
 
 type Record = Parameters<Mdns['encodeResourceRecord']>[0];
+
+await setupTest('MdnsResolverTest');
+
+/** The spies of the current test, restored in afterEach: vi.restoreAllMocks() would also remove the spies of setupTest(). */
+const testSpies: { mockRestore: () => void }[] = [];
+
+/**
+ * Spy on a method and register the spy for the cleanup of the current test.
+ *
+ * @param {Parameters<typeof bunSpyOn>} args - The object and the method name.
+ * @returns {ReturnType<typeof bunSpyOn>} The spy.
+ */
+const spyOn = ((...args: Parameters<typeof bunSpyOn>): ReturnType<typeof bunSpyOn> => {
+  const spy = bunSpyOn(...args);
+  testSpies.push(spy);
+  return spy;
+}) as typeof bunSpyOn;
 
 /**
  * Delivers encoded records to a resolver socket.
@@ -70,7 +89,12 @@ describe('MdnsResolver', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    for (const spy of testSpies.splice(0)) spy.mockRestore();
+  });
+
+  afterAll(() => {
     vi.restoreAllMocks();
+    resetTest();
   });
 
   it('should collect split replies and return before the lookup timeout', async () => {

@@ -6,6 +6,8 @@
 
 import os from 'node:os';
 
+import { resetTest, setupTest } from '@matterbridge/test-utils/vitest/setup';
+
 import { DnsClass, DnsHeaderFlag, DnsRecordType, Mdns } from '../src/mdns.js';
 import { MdnsResolver } from '../src/mdnsResolver.js';
 
@@ -14,6 +16,24 @@ const HOST = 'B75AFB458ECD0000.local';
 const PORT = 5353;
 
 type Record = Parameters<Mdns['encodeResourceRecord']>[0];
+
+await setupTest('MdnsResolverTest');
+
+/** The spies of the current test, restored in afterEach: vi.restoreAllMocks() would also remove the spies of setupTest(). */
+const vitestSpyOn = vi.spyOn;
+const testSpies: { mockRestore: () => void }[] = [];
+
+/**
+ * Spy on a method and register the spy for the cleanup of the current test.
+ *
+ * @param {Parameters<typeof vitestSpyOn>} args - The object and the method name.
+ * @returns {ReturnType<typeof vitestSpyOn>} The spy.
+ */
+const spyOn = ((...args: Parameters<typeof vitestSpyOn>): ReturnType<typeof vitestSpyOn> => {
+  const spy = vitestSpyOn(...args);
+  testSpies.push(spy);
+  return spy;
+}) as typeof vitestSpyOn;
 
 /**
  * Delivers encoded records to a resolver socket.
@@ -57,11 +77,11 @@ describe('MdnsResolver', () => {
     vi.useFakeTimers();
     sockets = [];
     questions = [];
-    vi.spyOn(Mdns.prototype, 'start').mockImplementation(function (this: Mdns) {
+    spyOn(Mdns.prototype, 'start').mockImplementation(function (this: Mdns) {
       sockets.push(this);
       this.emit('ready', { address: this.interfaceAddress ?? '', family: this.socketType === 'udp4' ? 'IPv4' : 'IPv6', port: PORT });
     });
-    vi.spyOn(Mdns.prototype, 'sendQuery').mockImplementation((sent) => {
+    spyOn(Mdns.prototype, 'sendQuery').mockImplementation((sent) => {
       questions.push(...sent);
       return Buffer.alloc(0);
     });
@@ -69,7 +89,12 @@ describe('MdnsResolver', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    for (const spy of testSpies.splice(0)) spy.mockRestore();
+  });
+
+  afterAll(() => {
     vi.restoreAllMocks();
+    resetTest();
   });
 
   it('should collect split replies and return before the lookup timeout', async () => {
@@ -193,10 +218,10 @@ describe('MdnsResolver', () => {
   });
 
   it('should continue on the ready family when multicast setup fails on the other', async () => {
-    vi.spyOn(Mdns.prototype, 'start').mockImplementation(function (this: Mdns) {
+    spyOn(Mdns.prototype, 'start').mockImplementation(function (this: Mdns) {
       sockets.push(this);
       if (this.socketType === 'udp6')
-        vi.spyOn(this.socket, 'setBroadcast').mockImplementation(() => {
+        spyOn(this.socket, 'setBroadcast').mockImplementation(() => {
           throw new Error('Multicast unavailable for udp6');
         });
       if (this.socketType === 'udp6') this.onListening({ address: '::', family: 'IPv6', port: PORT });
@@ -219,7 +244,7 @@ describe('MdnsResolver', () => {
   });
 
   it('should leave a link-local address without zone when no interface holds the sender', async () => {
-    vi.spyOn(os, 'networkInterfaces').mockReturnValue({});
+    spyOn(os, 'networkInterfaces').mockReturnValue({});
     const resolution = new MdnsResolver({ enableIpv6: false }).resolve(INSTANCE);
     const [ipv4] = sockets;
     const [srv, txt, , aaaa] = completeReply(ipv4);
@@ -253,14 +278,14 @@ describe('MdnsResolver', () => {
   });
 
   it('should reject when no enabled socket can start', async () => {
-    vi.spyOn(Mdns.prototype, 'start').mockImplementation(() => {
+    spyOn(Mdns.prototype, 'start').mockImplementation(() => {
       throw new Error('bind failed');
     });
     await expect(new MdnsResolver().resolve(INSTANCE)).rejects.toThrow('bind failed');
   });
 
   it('should reject with an Error when the sockets fail to start with a value that is not an Error', async () => {
-    vi.spyOn(Mdns.prototype, 'start').mockImplementation(() => {
+    spyOn(Mdns.prototype, 'start').mockImplementation(() => {
       // oxlint-disable-next-line typescript/only-throw-error -- exercises the non-Error branch
       throw 'bind failed';
     });
@@ -268,7 +293,7 @@ describe('MdnsResolver', () => {
   });
 
   it('should reject at the deadline when no socket becomes ready', async () => {
-    vi.spyOn(Mdns.prototype, 'start').mockImplementation(() => {});
+    spyOn(Mdns.prototype, 'start').mockImplementation(() => {});
     const resolution = new MdnsResolver({ timeoutMs: 100 }).resolve(INSTANCE).catch((error: unknown) => error);
     vi.advanceTimersByTime(100);
     expect(await resolution).toMatchObject({ message: 'MdnsResolver: no mDNS socket became ready' });
@@ -294,7 +319,7 @@ describe('MdnsResolver', () => {
   });
 
   it('should query the known target on a socket that becomes ready later and ignore its errors once ready', async () => {
-    vi.spyOn(Mdns.prototype, 'start').mockImplementation(function (this: Mdns) {
+    spyOn(Mdns.prototype, 'start').mockImplementation(function (this: Mdns) {
       sockets.push(this);
       if (this.socketType === 'udp4') this.emit('ready', { address: '0.0.0.0', family: 'IPv4', port: PORT });
     });
@@ -344,7 +369,7 @@ describe('MdnsResolver', () => {
 
   it('should take the records of a response without the answer or the additional section', async () => {
     const decode = Mdns.prototype.decodeMdnsMessage;
-    vi.spyOn(Mdns.prototype, 'decodeMdnsMessage')
+    spyOn(Mdns.prototype, 'decodeMdnsMessage')
       .mockImplementationOnce(function (this: Mdns, packet: Buffer) {
         return { ...decode.call(this, packet), additionals: undefined };
       })
