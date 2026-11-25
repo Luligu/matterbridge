@@ -2545,9 +2545,7 @@
       "test": "Test_TC_CC_8_1",
       "endpoint": 4042,
       "note": "Exercises Stop (primary focus) across HS, CT and EHUE in-progress Move/MoveTo operations, plus the generic StopMoveStep command itself.",
-      "args": ["--PICS /root/color-control-enhanced.pics"],
-      "skip": true,
-      "comment": "Matter.js bug: StopMoveStep never stops EnhancedCurrentHue because stopMoveStepLogic()'s guard checks colorLoopActive === Inactive, but it's undefined (not 0) on every Matterbridge ColorControl endpoint (ColorLoop feature never enabled). Fixed by PR #4336 (https://github.com/matter-js/matter.js/pull/4336), not yet published — remove this skip once a release with the fix is adopted."
+      "args": ["--PICS /root/color-control-enhanced.pics"]
     },
     {
       "name": "ColorControl ColorLoopSet Validation on ExtendedColorLightEnhancedEHSXYCT",

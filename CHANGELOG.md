@@ -31,6 +31,10 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.5] - Dev branch
 
+### Development News
+
+- Add two GitHub Copilot agents, **Matterbridge No Delegate** and **Matterbridge Orchestrator**. The orchestrator runs three subagents per request and can consume tokens very quickly.
+
 ### Breaking changes
 
 - [matterbridge]: `mb_mdns` and `mb_coap` run `MdnsMonitor` and `CoapMonitor` from `@matterbridge/dgram`: options are kebab-case (`--interface`, `--ipv4-address`, `--no-ipv4`, ...), intervals are in seconds and `mb_mdns --advertise` is replaced by `mb-mdns-advertise`.
@@ -40,6 +44,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [dgram]: Add `MdnsMonitor`, `CoapMonitor` and `MdnsResolver`.
 - [dgram]: Add the outgoing multicast interface to `Coap` and `--outgoing-ipv4-address` / `--outgoing-ipv6-address` to `CoapMonitor`.
+- [chip]: The [3.11.4 CHIP test results](3.11.4%20chipTestsSummary.log) are available.
 
 ### Changed
 
@@ -66,6 +71,7 @@ If you like this project and find it useful, please consider giving it a star on
 ### Fixed
 
 - [dgram]: A multicast socket setup error, e.g. `setMulticastInterface()` rejecting the outgoing interface, is logged and emitted as `error` instead of being thrown as an uncaught exception.
+- [chip]: Re-enable the Color Control `StopMoveStep` certification test (`Test_TC_CC_8_1`) with the fix in matter.js 0.18.0.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
