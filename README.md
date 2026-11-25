@@ -444,6 +444,10 @@ Matterbridge dynamic platform plugin that exposes Elgato Key Light, Key Light Ai
 
 A Matterbridge plugin that exposes the outputs, shutters, thermostat zones and sensors of myIO smart home controllers to Matter over their local HTTP API.
 
+### [Ambientika](https://github.com/ambientika-eu/matterbridge-ambientika)
+
+A Matterbridge plugin by the manufacturer that exposes Ambientika ventilation units with heat recovery (fan, operating mode, temperature, humidity, air quality) to Matter via the Ambientika cloud account.
+
 ## How to install and add a plugin with the frontend (best option)
 
 Just open the frontend on the link provided in the log, select a plugin and click install.
