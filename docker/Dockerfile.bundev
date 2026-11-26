@@ -28,7 +28,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-somfy-tahoma
@@ -36,7 +38,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-shelly
@@ -44,7 +48,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-hass
@@ -52,7 +58,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-webhooks
@@ -60,7 +68,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-security
@@ -68,7 +78,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-irobot
@@ -76,7 +88,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-mqtt
@@ -84,7 +98,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-camera
@@ -92,7 +108,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-webcam
@@ -100,7 +118,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-host-health
@@ -108,7 +128,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags -b dev 
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-test
@@ -116,7 +138,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-example-accessory-platform
@@ -124,7 +148,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-example-dynamic-platform
@@ -132,15 +158,19 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
-  WORKDIR /matterbridge-example-camera
+WORKDIR /matterbridge-example-camera
 RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https://github.com/Luligu/matterbridge-example-camera.git . && \
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-door
@@ -148,7 +178,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-motion
@@ -156,7 +188,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-energy
@@ -164,7 +198,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-room
@@ -172,7 +208,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 WORKDIR /matterbridge-eve-weather
@@ -180,7 +218,9 @@ RUN GIT_SSL_NO_VERIFY=true git clone --depth 1 --single-branch --no-tags https:/
   SHA7=$(git rev-parse --short=7 HEAD) && \
   BASE_VERSION=$(bun -e "console.log(require('./package.json').version.split('-')[0])") && \
   bun pm pkg set version="${BASE_VERSION}-git-${SHA7}" && \
-  bun install && bun link matterbridge && bun run buildProduction && rm -rf node_modules && bun install --omit=dev && \
+  bun install && bun link matterbridge && bun run buildProduction && \
+  if [ -f apps/frontend/package.json ]; then (cd apps/frontend && bun install && bun run build) && find apps/frontend -mindepth 1 -maxdepth 1 ! -name "build" ! -name "package.json" -exec rm -rf {} +; fi && \
+  rm -rf node_modules && bun install --omit=dev && \
   rm -rf .agents .cache .claude .codex .devcontainer .git .github .vscode docs screenshots scripts src test vitest buntest .gitattributes .gitignore .localignore .ox*.json tsconfig*.json bun.lock package-lock.json npm-shrinkwrap.json
 
 # ─────────────── RUNTIME STAGE ───────────────

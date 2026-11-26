@@ -85,6 +85,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [dgram]: A multicast socket setup error, e.g. `setMulticastInterface()` rejecting the outgoing interface, is logged and emitted as `error` instead of being thrown as an uncaught exception.
 - [chip]: Re-enable the Color Control `StopMoveStep` certification test (`Test_TC_CC_8_1`) with the fix in matter.js 0.18.0.
+- [docker]: Build the plugin frontends (`apps/frontend`) in the `dev` and `bundev` images, restoring the plugin frontend button and the device pages.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
