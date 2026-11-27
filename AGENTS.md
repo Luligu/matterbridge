@@ -101,7 +101,7 @@ These XML files are taken from the [project-chip/connectedhomeip](https://github
 
 ## RFCs
 
-The RFC texts are taken from the RFC Editor (https://www.rfc-editor.org/rfc/rfcNNNN.txt) and are available locally under [~/GitHub/Rfcs](../Rfcs/), shared by all the repositories. Treat them as the authoritative source for the `@matterbridge/dgram` package.
+The RFC texts are taken from the RFC Editor (https://www.rfc-editor.org/rfc/rfcNNNN.txt) and are available locally under [~/GitHub/Rfcs](../Rfcs/), shared by all the repositories. Treat them as the authoritative source for the networking and cryptography protocols listed below.
 
 ### mDNS and DNS-SD
 
@@ -145,3 +145,11 @@ The RFC texts are taken from the RFC Editor (https://www.rfc-editor.org/rfc/rfcN
 - [RFC 8132 — PATCH and FETCH Methods for the Constrained Application Protocol (CoAP)](../Rfcs/rfc8132.txt).
 - [RFC 8323 — CoAP (Constrained Application Protocol) over TCP, TLS, and WebSockets](../Rfcs/rfc8323.txt).
 - [RFC 7390 — Group Communication for the Constrained Application Protocol (CoAP)](../Rfcs/rfc7390.txt): Experimental, multicast requests.
+
+### Cryptography and certificates
+
+- [RFC 2986 — PKCS #10 Certification Request Syntax](../Rfcs/rfc2986.txt).
+- [RFC 3610 — Counter with CBC-MAC (CCM)](../Rfcs/rfc3610.txt).
+- [RFC 5280 — Internet X.509 Public Key Infrastructure Certificate and CRL Profile](../Rfcs/rfc5280.txt).
+- [RFC 5758 — DSA and ECDSA with SHA-2 in X.509](../Rfcs/rfc5758.txt).
+- [RFC 5869 — HMAC-based Extract-and-Expand Key Derivation Function (HKDF)](../Rfcs/rfc5869.txt).
