@@ -1138,6 +1138,27 @@ describe('MdnsScanner', () => {
       expect([...(instance()?.host?.a.keys() ?? [])]).toEqual(['192.168.1.10']);
     });
 
+    it('should query only the SRV and TXT records of queryInstance, with QU the first time, until its SRV record is cached', async () => {
+      const created = await startScanner({ queryInstance: OPERATIONAL, resolve: true, enableIpv6: false });
+      created.sendQuery();
+      // The first query asks for a unicast response (RFC 6762 §5.4), the next ones for multicast responses
+      expect(questions()).toEqual([
+        [OPERATIONAL, DnsRecordType.SRV, true],
+        [OPERATIONAL, DnsRecordType.TXT, true],
+      ]);
+      created.sendQuery();
+      expect(questions()).toEqual([
+        [OPERATIONAL, DnsRecordType.SRV, false],
+        [OPERATIONAL, DnsRecordType.TXT, false],
+      ]);
+      inject(buildPacket([ptr('_matter._tcp.local', OPERATIONAL)], [srv(OPERATIONAL, HOST), txt(OPERATIONAL, ['T=1'])]));
+      expect(instance()?.srv).toBeDefined();
+      sent = [];
+      // Once SRV is cached, the lookup and refresh timers maintain its records
+      created.sendQuery();
+      expect(questions()).toEqual([]);
+    });
+
     it('should drop an instance whose SRV record is not answered (RFC 6762 §10.4)', async () => {
       const created = await startScanner({ resolve: true, enableIpv6: false, refresh: false });
       const removed = vi.fn();
