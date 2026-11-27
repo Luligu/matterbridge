@@ -8,13 +8,13 @@ import { afterAll, afterEach, describe, expect, it, spyOn, vi } from 'bun:test';
 import os from 'node:os';
 
 import { consoleErrorSpy, consoleLogSpy, loggerLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { getFreePort } from '@matterbridge/utils/port';
 import { LogLevel } from 'node-ansi-logger';
 
 import { Mdns } from '../src/mdns.js';
 import { MDNS_MONITOR_HELP, MdnsMonitor, runMdnsMonitor } from '../src/mdnsMonitor.js';
 
 await setupTest('MdnsMonitorTest');
-let nextPort = 40000 + Math.floor(Math.random() * 20000);
 
 describe('MdnsMonitor', () => {
   /** The 'close' events of the sockets closed by closeSockets(), awaited before the console spies are restored. */
@@ -52,11 +52,11 @@ describe('MdnsMonitor', () => {
   }
 
   describe('construction', () => {
-    it('should create both sockets and apply filters and ipFilters', () => {
+    it('should create both sockets and apply filters and ipFilters', async () => {
       const monitor = new MdnsMonitor({
         filters: ['_matterc._udp', '_matter._tcp'],
         ipFilters: ['192.168.1.10'],
-        mdnsPort: nextPort++,
+        mdnsPort: await getFreePort('udp'),
       });
       expect(monitor.sockets.ipv4).toBeInstanceOf(Mdns);
       expect(monitor.sockets.ipv6).toBeInstanceOf(Mdns);
@@ -67,8 +67,8 @@ describe('MdnsMonitor', () => {
       closeSockets(monitor);
     });
 
-    it('should create only the IPv4 socket when enableIpv6 is false', () => {
-      const monitor = new MdnsMonitor({ enableIpv6: false, mdnsPort: nextPort++ });
+    it('should create only the IPv4 socket when enableIpv6 is false', async () => {
+      const monitor = new MdnsMonitor({ enableIpv6: false, mdnsPort: await getFreePort('udp') });
       expect(monitor.sockets.ipv4).toBeInstanceOf(Mdns);
       expect(monitor.sockets.ipv6).toBeUndefined();
       closeSockets(monitor);
@@ -83,8 +83,8 @@ describe('MdnsMonitor', () => {
       closeSockets(monitor);
     });
 
-    it('should create only the IPv6 socket, verbose, and use it as the primary socket when enableIpv4 is false', () => {
-      const monitor = new MdnsMonitor({ enableIpv4: false, verbose: true, mdnsPort: nextPort++ });
+    it('should create only the IPv6 socket, verbose, and use it as the primary socket when enableIpv4 is false', async () => {
+      const monitor = new MdnsMonitor({ enableIpv4: false, verbose: true, mdnsPort: await getFreePort('udp') });
       expect(monitor.sockets.ipv4).toBeUndefined();
       expect(monitor.sockets.ipv6?.verbose).toBe(true);
       expect(monitor.log === monitor.sockets.ipv6?.log).toBe(true);
@@ -105,7 +105,7 @@ describe('MdnsMonitor', () => {
         queryIntervalMs: 0,
         loopback: false,
         timeoutMs: 0,
-        mdnsPort: nextPort++,
+        mdnsPort: await getFreePort('udp'),
       });
       const sendQuerySpy = spyOn(MdnsMonitor.prototype, 'sendQuery');
       const logDevicesSpy = spyOn(Mdns.prototype, 'logDevices');
@@ -142,7 +142,7 @@ describe('MdnsMonitor', () => {
     });
 
     it('should call stop automatically when timeoutMs elapses', async () => {
-      const monitor = new MdnsMonitor({ timeoutMs: 50, mdnsPort: nextPort++ });
+      const monitor = new MdnsMonitor({ timeoutMs: 50, mdnsPort: await getFreePort('udp') });
       const stopSpy = spyOn(monitor, 'stop');
       const sockets = [monitor.sockets.ipv4, monitor.sockets.ipv6].filter((socket): socket is Mdns => socket !== undefined);
       const closePromises = sockets.map(
@@ -161,8 +161,8 @@ describe('MdnsMonitor', () => {
       await Promise.all(closePromises);
     });
 
-    it('should log socket errors after start', () => {
-      const monitor = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, mdnsPort: nextPort++ });
+    it('should log socket errors after start', async () => {
+      const monitor = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, mdnsPort: await getFreePort('udp') });
       const ipv4 = monitor.sockets.ipv4;
       if (!ipv4) throw new Error('IPv4 socket not created');
       const start = spyOn(ipv4, 'start').mockImplementation(() => {}); // No real bind: only the handlers are registered
@@ -175,9 +175,9 @@ describe('MdnsMonitor', () => {
       closeSockets(monitor);
     });
 
-    it('should start the sockets only once and not after stop', () => {
-      const monitor = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, mdnsPort: nextPort++ });
-      const stopped = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, mdnsPort: nextPort++ });
+    it('should start the sockets only once and not after stop', async () => {
+      const monitor = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, mdnsPort: await getFreePort('udp') });
+      const stopped = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, mdnsPort: await getFreePort('udp') });
       const ipv4 = monitor.sockets.ipv4;
       const stoppedIpv4 = stopped.sockets.ipv4;
       if (!ipv4 || !stoppedIpv4) throw new Error('IPv4 socket not created');
@@ -197,8 +197,8 @@ describe('MdnsMonitor', () => {
       closeSockets(stopped);
     });
 
-    it('should list the network interfaces when verbose and ignore a socket ready after stop', () => {
-      const monitor = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, verbose: true, query: true, mdnsPort: nextPort++ });
+    it('should list the network interfaces when verbose and ignore a socket ready after stop', async () => {
+      const monitor = new MdnsMonitor({ timeoutMs: 0, enableIpv6: false, verbose: true, query: true, mdnsPort: await getFreePort('udp') });
       const ipv4 = monitor.sockets.ipv4;
       if (!ipv4) throw new Error('IPv4 socket not created');
       spyOn(ipv4, 'start').mockImplementation(() => {}); // No real bind
@@ -219,7 +219,7 @@ describe('MdnsMonitor', () => {
     it('should repeat the queries every queryIntervalMs', async () => {
       const sendQuerySpy = spyOn(MdnsMonitor.prototype, 'sendQuery');
       const mdnsSendQuerySpy = spyOn(Mdns.prototype, 'sendQuery').mockReturnValue(Buffer.alloc(0));
-      const monitor = new MdnsMonitor({ query: true, queryIntervalMs: 20, timeoutMs: 0, enableIpv6: false, mdnsPort: nextPort++ });
+      const monitor = new MdnsMonitor({ query: true, queryIntervalMs: 20, timeoutMs: 0, enableIpv6: false, mdnsPort: await getFreePort('udp') });
       const ipv4 = monitor.sockets.ipv4;
       if (!ipv4) throw new Error('IPv4 socket not created');
       const closed = new Promise<void>((resolve) => ipv4.once('close', () => resolve()));
@@ -237,11 +237,11 @@ describe('MdnsMonitor', () => {
       mdnsSendQuerySpy.mockRestore();
     });
 
-    it('should log an error when sending the query fails', () => {
+    it('should log an error when sending the query fails', async () => {
       const mdnsSendQuerySpy = spyOn(Mdns.prototype, 'sendQuery').mockImplementation(() => {
         throw new Error('send failed');
       });
-      const monitor = new MdnsMonitor({ enableIpv6: false, mdnsPort: nextPort++ });
+      const monitor = new MdnsMonitor({ enableIpv6: false, mdnsPort: await getFreePort('udp') });
       const ipv4 = monitor.sockets.ipv4;
       if (!ipv4) throw new Error('IPv4 socket not created');
 
@@ -281,12 +281,12 @@ describe('MdnsMonitor', () => {
      * Runs runMdnsMonitor with a command line that must fail, and restores the exit code.
      *
      * @param {string[]} argv - The command line.
-     * @returns {string} The error printed.
+     * @returns {Promise<string>} The error printed.
      */
-    function runWithError(argv: string[]): string {
+    async function runWithError(argv: string[]): Promise<string> {
       const exitCode = process.exitCode;
       const sigint = process.listenerCount('SIGINT');
-      const result = runMdnsMonitor(argv, { mdnsPort: nextPort++ });
+      const result = runMdnsMonitor(argv, { mdnsPort: await getFreePort('udp') });
       const code = process.exitCode;
       process.exitCode = exitCode ?? 0; // Bun ignores undefined, so the exit code of the test run would stay 2
       expect(result).toBeUndefined();
@@ -330,21 +330,21 @@ describe('MdnsMonitor', () => {
       expect(process.listenerCount('SIGINT')).toBe(sigint);
     });
 
-    it('should report command line errors', () => {
-      expect(runWithError(['--unknown'])).toContain('--unknown');
+    it('should report command line errors', async () => {
+      expect(await runWithError(['--unknown'])).toContain('--unknown');
       consoleErrorSpy.mockClear();
-      expect(runWithError(['--query=abc'])).toContain('invalid --query abc');
+      expect(await runWithError(['--query=abc'])).toContain('invalid --query abc');
       consoleErrorSpy.mockClear();
-      expect(runWithError(['--query', 'abc'])).toContain('invalid --query abc');
+      expect(await runWithError(['--query', 'abc'])).toContain('invalid --query abc');
       consoleErrorSpy.mockClear();
-      expect(runWithError(['--timeout=-1'])).toContain('invalid --timeout -1');
+      expect(await runWithError(['--timeout=-1'])).toContain('invalid --timeout -1');
       consoleErrorSpy.mockClear();
-      expect(runWithError(['--timeout', 'abc'])).toContain('invalid --timeout abc');
+      expect(await runWithError(['--timeout', 'abc'])).toContain('invalid --timeout abc');
       consoleErrorSpy.mockClear();
-      expect(runWithError(['--no-ipv4', '--no-ipv6'])).toContain('MdnsMonitor: IPv4 and IPv6 are both disabled');
+      expect(await runWithError(['--no-ipv4', '--no-ipv6'])).toContain('MdnsMonitor: IPv4 and IPv6 are both disabled');
     });
 
-    it('should map command line options and stop on SIGINT', () => {
+    it('should map command line options and stop on SIGINT', async () => {
       const interfaceName = Object.entries(os.networkInterfaces()).find(([, infos]) => infos?.some((info) => info.family === 'IPv4' && !info.internal))?.[0] ?? '';
       const start = spyOn(MdnsMonitor.prototype, 'start').mockImplementation(() => {});
       const stop = spyOn(MdnsMonitor.prototype, 'stop').mockImplementation(() => {});
@@ -368,7 +368,7 @@ describe('MdnsMonitor', () => {
           '30',
           '--debug',
         ],
-        { mdnsPort: nextPort++ },
+        { mdnsPort: await getFreePort('udp') },
       );
 
       expect(start).toHaveBeenCalledTimes(1);
@@ -394,24 +394,24 @@ describe('MdnsMonitor', () => {
       stop.mockRestore();
     });
 
-    it('should log at debug level with -v, at notice level with -s, disable the timeout with --no-timeout and keep the defaults without options', () => {
+    it('should log at debug level with -v, at notice level with -s, disable the timeout with --no-timeout and keep the defaults without options', async () => {
       const start = spyOn(MdnsMonitor.prototype, 'start').mockImplementation(() => {});
 
-      const verbose = runMdnsMonitor(['-v', '--no-timeout'], { mdnsPort: nextPort++ });
+      const verbose = runMdnsMonitor(['-v', '--no-timeout'], { mdnsPort: await getFreePort('udp') });
       expect((verbose as unknown as Internals).timeoutMs).toBe(0);
       expect(verbose?.log.logLevel).toBe(LogLevel.DEBUG);
       cleanup(verbose);
 
-      const silent = runMdnsMonitor(['-s'], { mdnsPort: nextPort++ });
+      const silent = runMdnsMonitor(['-s'], { mdnsPort: await getFreePort('udp') });
       expect(silent?.sockets.ipv4?.log.logLevel).toBe(LogLevel.NOTICE);
       expect(silent?.sockets.ipv6?.log.logLevel).toBe(LogLevel.NOTICE);
       cleanup(silent);
 
-      const debugWins = runMdnsMonitor(['-d', '--silent'], { mdnsPort: nextPort++ });
+      const debugWins = runMdnsMonitor(['-d', '--silent'], { mdnsPort: await getFreePort('udp') });
       expect(debugWins?.log.logLevel).toBe(LogLevel.DEBUG);
       cleanup(debugWins);
 
-      const defaults = runMdnsMonitor([], { mdnsPort: nextPort++ });
+      const defaults = runMdnsMonitor([], { mdnsPort: await getFreePort('udp') });
       expect((defaults as unknown as Internals).timeoutMs).toBeGreaterThan(0);
       expect(defaults?.log.logLevel).not.toBe(LogLevel.DEBUG);
       expect(defaults?.log.logLevel).not.toBe(LogLevel.NOTICE);

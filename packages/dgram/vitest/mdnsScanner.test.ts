@@ -8,6 +8,7 @@ import dgram from 'node:dgram';
 import os from 'node:os';
 
 import { consoleErrorSpy, consoleLogSpy, loggerLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { getFreePort } from '@matterbridge/utils/port';
 import { LogLevel } from 'node-ansi-logger';
 import type { MockInstance } from 'vitest';
 
@@ -40,7 +41,6 @@ interface Record {
 }
 
 const codec = new Mdns('Codec', '224.0.0.251', 5353, 'udp4');
-let nextPort = 40000 + Math.floor(Math.random() * 20000);
 
 const HOST = 'B75AFB458ECD0000.local';
 const OPERATIONAL = '87E1B004E235A130-8FC7772401CD0696._matter._tcp.local';
@@ -89,7 +89,7 @@ describe('MdnsScanner', () => {
    * @returns {Promise<MdnsScanner>} The started scanner.
    */
   async function startScanner(options: MdnsScannerOptions = {}): Promise<MdnsScanner> {
-    const created = new MdnsScanner({ mdnsPort: nextPort++, query: false, resolve: false, ...options });
+    const created = new MdnsScanner({ mdnsPort: await getFreePort('udp'), query: false, resolve: false, ...options });
     scanner = created;
     sent = [];
     for (const family of ['ipv4', 'ipv6'] as const) {
@@ -310,7 +310,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should ask for multicast responses when another mDNS responder is bound to the port first (RFC 6762 §15.1)', async () => {
-      const port = nextPort++;
+      const port = await getFreePort('udp');
       const responder = dgram.createSocket({ type: 'udp4', reuseAddr: true });
       await new Promise<void>((resolve) => responder.bind(port, '0.0.0.0', resolve));
       await startScanner({ query: true, mdnsPort: port, enableIpv6: false });
@@ -321,7 +321,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should not log another mDNS responder on the port when the start query is disabled', async () => {
-      const port = nextPort++;
+      const port = await getFreePort('udp');
       const responder = dgram.createSocket({ type: 'udp4', reuseAddr: true });
       await new Promise<void>((resolve) => responder.bind(port, '0.0.0.0', resolve));
       await startScanner({ mdnsPort: port, enableIpv6: false });
@@ -414,7 +414,7 @@ describe('MdnsScanner', () => {
     }
 
     it('should close the sockets when stopped before being started, and refuse to start after', async () => {
-      const created = new MdnsScanner({ mdnsPort: nextPort++ });
+      const created = new MdnsScanner({ mdnsPort: await getFreePort('udp') });
       const closed = trackClosed(created);
       await created.stop();
       expect(closed.toSorted()).toEqual(['ipv4', 'ipv6']);
@@ -422,7 +422,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should start nothing when stopped while start() checks the port', async () => {
-      const created = new MdnsScanner({ mdnsPort: nextPort++, query: true, queryIntervalMs: 1000 });
+      const created = new MdnsScanner({ mdnsPort: await getFreePort('udp'), query: true, queryIntervalMs: 1000 });
       const closed = trackClosed(created);
       const sockets = [created.sockets.ipv4, created.sockets.ipv6];
       const starts = sockets.map((socket) => (socket ? vi.spyOn(socket, 'start') : undefined));
@@ -436,7 +436,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should start nothing when stopped while the sockets are binding', async () => {
-      const created = new MdnsScanner({ mdnsPort: nextPort++, enableIpv6: false, query: true, queryIntervalMs: 1000 });
+      const created = new MdnsScanner({ mdnsPort: await getFreePort('udp'), enableIpv6: false, query: true, queryIntervalMs: 1000 });
       const socket = created.sockets.ipv4;
       if (!socket) throw new Error('IPv4 socket not created');
       const closed = trackClosed(created);
@@ -466,7 +466,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should reject start() and close the sockets, also the one already bound, when a socket fails to start', async () => {
-      const created = new MdnsScanner({ mdnsPort: nextPort++ });
+      const created = new MdnsScanner({ mdnsPort: await getFreePort('udp') });
       const socket = created.sockets.ipv6;
       if (!socket) throw new Error('IPv6 socket not created');
       const closed = trackClosed(created);
@@ -479,7 +479,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should reject start() instead of throwing an uncaught exception when there is no external IPv4 interface', async () => {
-      const created = new MdnsScanner({ mdnsPort: nextPort++, enableIpv6: false });
+      const created = new MdnsScanner({ mdnsPort: await getFreePort('udp'), enableIpv6: false });
       const socket = created.sockets.ipv4;
       if (!socket) throw new Error('IPv4 socket not created');
       const closed = trackClosed(created);
@@ -1230,8 +1230,8 @@ describe('MdnsScanner', () => {
       ]);
     });
 
-    it('should not query again before the scanner is started', () => {
-      const created = new MdnsScanner({ mdnsPort: nextPort++ });
+    it('should not query again before the scanner is started', async () => {
+      const created = new MdnsScanner({ mdnsPort: await getFreePort('udp') });
       expect(created.requery(OPERATIONAL)).toBe(false);
     });
 
@@ -1270,7 +1270,7 @@ describe('MdnsScanner', () => {
     async function runWithError(argv: string[]): Promise<string> {
       const exitCode = process.exitCode;
       const sigint = process.listenerCount('SIGINT');
-      const result = await runMdnsScanner(argv, { mdnsPort: nextPort++ });
+      const result = await runMdnsScanner(argv, { mdnsPort: await getFreePort('udp') });
       const code = process.exitCode;
       process.exitCode = exitCode ?? 0; // Bun ignores undefined, so the exit code of the test run would stay 2
       expect(result).toBeUndefined();
@@ -1286,7 +1286,7 @@ describe('MdnsScanner', () => {
       const interfaceName = Object.entries(os.networkInterfaces()).find(([, infos]) => infos?.some((info) => info.family === 'IPv4' && !info.internal))?.[0];
       const sendQuery = vi.spyOn(Mdns.prototype, 'sendQuery').mockReturnValue(Buffer.alloc(0));
       const sigint = process.listenerCount('SIGINT');
-      const created = await runMdnsScanner(['--interface', interfaceName ?? '', '--query'], { mdnsPort: nextPort++, enableIpv6: false });
+      const created = await runMdnsScanner(['--interface', interfaceName ?? '', '--query'], { mdnsPort: await getFreePort('udp'), enableIpv6: false });
       if (!created) throw new Error('scanner not created');
       expect(created.interfaceName).toBe(interfaceName);
       expect(sendQuery).toHaveBeenCalledTimes(4); // One query per service
@@ -1300,7 +1300,7 @@ describe('MdnsScanner', () => {
 
     it('should start a scanner on all the interfaces with the defaults and without the start query', async () => {
       const sendQuery = vi.spyOn(Mdns.prototype, 'sendQuery').mockReturnValue(Buffer.alloc(0));
-      scanner = await runMdnsScanner([], { mdnsPort: nextPort++ });
+      scanner = await runMdnsScanner([], { mdnsPort: await getFreePort('udp') });
       expect(scanner?.interfaceName).toBeUndefined();
       expect(scanner?.services).toEqual(MDNS_SCANNER_DEFAULT_SERVICES);
       expect(scanner?.sockets.ipv4).toBeInstanceOf(Mdns);
@@ -1313,7 +1313,7 @@ describe('MdnsScanner', () => {
 
     it('should apply every option of the command line', async () => {
       scanner = await runMdnsScanner(['--service', '_matter._tcp', '--service', '_http._tcp', '--no-resolve', '--no-refresh', '--log-interval', '0', '--no-ipv6', '--debug'], {
-        mdnsPort: nextPort++,
+        mdnsPort: await getFreePort('udp'),
       });
       expect(scanner?.services).toEqual(['_matter._tcp', '_http._tcp']);
       expect(scanner?.sockets.ipv4).toBeInstanceOf(Mdns);
@@ -1338,7 +1338,7 @@ describe('MdnsScanner', () => {
     });
 
     it('should log at debug level with --verbose and only on IPv6 with --no-ipv4', async () => {
-      scanner = await runMdnsScanner(['--verbose', '--no-ipv4', '--log-interval', '30'], { mdnsPort: nextPort++ });
+      scanner = await runMdnsScanner(['--verbose', '--no-ipv4', '--log-interval', '30'], { mdnsPort: await getFreePort('udp') });
       expect(scanner?.sockets.ipv4).toBeUndefined();
       expect(scanner?.sockets.ipv6).toBeInstanceOf(Mdns);
       expect(scanner?.log.logLevel).toBe(LogLevel.DEBUG);
@@ -1362,7 +1362,7 @@ describe('MdnsScanner', () => {
 
     it('should take the query interval of --query=<seconds>', async () => {
       const sendQuery = vi.spyOn(Mdns.prototype, 'sendQuery').mockReturnValue(Buffer.alloc(0));
-      scanner = await runMdnsScanner(['--query=5', '--no-ipv6'], { mdnsPort: nextPort++ });
+      scanner = await runMdnsScanner(['--query=5', '--no-ipv6'], { mdnsPort: await getFreePort('udp') });
       expect((scanner as unknown as { queryIntervalMs: number }).queryIntervalMs).toBe(5000);
       expect(sendQuery).toHaveBeenCalledTimes(4); // One query per service
       removeListeners();

@@ -78,7 +78,8 @@ describe('Mdns', () => {
     it.each(['udp4', 'udp6'] as const)('should release the probe socket and return true when %s binds successfully', async (socketType) => {
       const probe = Object.assign(new EventEmitter(), {
         bind: vi.fn((_port: number, _address: string, onBound: () => void) => onBound()),
-        close: vi.fn(),
+        address: vi.fn(() => ({ address: '0.0.0.0', family: 'IPv4', port: 5353 })),
+        close: vi.fn((onClosed?: () => void) => onClosed?.()),
       });
       const createSocket = vi.spyOn(dgram, 'createSocket').mockReturnValueOnce(probe as unknown as dgram.Socket);
       expect(await isFirstOnPort(socketType)).toBe(true);

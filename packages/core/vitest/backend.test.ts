@@ -14,10 +14,10 @@ import net from 'node:net';
 import path from 'node:path';
 import tls from 'node:tls';
 
-import { getFreePort } from '@matterbridge/test-utils';
 import { HOMEDIR, log, loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
 import { BroadcastServer } from '@matterbridge/thread/server';
 import { type ApiClusters, type ApiDevice, type ApiMatter, type Device, NODE_STORAGE_DIR, type SharedMatterbridge, type WorkerMessage } from '@matterbridge/types';
+import { getFreePort } from '@matterbridge/utils/port';
 import { wait } from '@matterbridge/utils/wait';
 import { LogLevel } from 'node-ansi-logger';
 import { NodeStorage, NodeStorageManager } from 'node-persist-manager';

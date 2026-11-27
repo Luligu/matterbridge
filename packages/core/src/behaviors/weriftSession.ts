@@ -23,9 +23,8 @@
  */
 
 import type { ChildProcess } from 'node:child_process';
-import { createSocket } from 'node:dgram';
 
-import { fireAndForget, getErrorMessage } from '@matterbridge/utils';
+import { fireAndForget, getErrorMessage, getFreePort } from '@matterbridge/utils';
 import { AnsiLogger, LogLevel, MAGENTA, TimestampFormat } from 'node-ansi-logger';
 import type { RTCDtlsTransport, RTCIceCandidatePairStats, RTCOutboundRtpStreamStats } from 'werift';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, useOPUS, usePCMU, useVP8 } from 'werift';
@@ -335,19 +334,15 @@ export class WeriftWebRtcSession {
 
   /**
    * Allocates an ephemeral local UDP port for ffmpeg to send the injected video track's RTP stream to.
+   * The probe binds `0.0.0.0`, the address werift's `getUdpMedia` binds the port on, so a port in use on any
+   * interface is not returned.
    *
-   * @returns {Promise<number>} The allocated port number on `127.0.0.1`.
+   * @returns {Promise<number>} The allocated port number, free on all interfaces.
    */
   private async getFreeUdpPort(): Promise<number> {
-    return await new Promise<number>((resolve, reject) => {
-      const socket = createSocket('udp4');
-      socket.once('error', reject);
-      socket.bind(0, '127.0.0.1', () => {
-        const port = socket.address().port;
-        this.log.debug(`Allocated free UDP port ${port}`);
-        socket.close(() => resolve(port));
-      });
-    });
+    const port = await getFreePort('udp4', '0.0.0.0');
+    this.log.debug(`Allocated free UDP port ${port}`);
+    return port;
   }
 
   /**

@@ -22,5 +22,4 @@
  */
 
 export * from './flushAsync.js';
-export * from './freePort.js';
 export * from './logKeepAlives.js';

@@ -6,8 +6,8 @@
 
 import dgram, { type SocketType } from 'node:dgram';
 
-import { getFreePort } from '@matterbridge/test-utils';
 import { setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { getFreePort } from '@matterbridge/utils/port';
 
 import { isFirstOnPort } from '../src/mdns.js';
 

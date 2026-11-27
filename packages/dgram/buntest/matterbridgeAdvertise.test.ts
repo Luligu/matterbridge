@@ -9,13 +9,13 @@ import { createHash } from 'node:crypto';
 import os from 'node:os';
 
 import { consoleErrorSpy, consoleLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { getFreePort } from '@matterbridge/utils/port';
 import { LogLevel } from 'node-ansi-logger';
 
 import { MATTERBRIDGE_ADVERTISE_HELP, MatterbridgeAdvertise, runMatterbridgeAdvertise } from '../src/matterbridgeAdvertise.js';
 import { Mdns } from '../src/mdns.js';
 
 await setupTest('MatterbridgeAdvertiseTest');
-let nextPort = 40000 + Math.floor(Math.random() * 20000);
 
 describe('MatterbridgeAdvertise', () => {
   afterEach(() => vi.clearAllMocks());
@@ -111,7 +111,7 @@ describe('MatterbridgeAdvertise', () => {
     async function runWithError(argv: string[]): Promise<string> {
       const exitCode = process.exitCode;
       const sigint = process.listenerCount('SIGINT');
-      const result = await runMatterbridgeAdvertise(argv, { mdnsPort: nextPort++, addressCheckIntervalMs: 0 });
+      const result = await runMatterbridgeAdvertise(argv, { mdnsPort: await getFreePort('udp'), addressCheckIntervalMs: 0 });
       const code = process.exitCode;
       process.exitCode = exitCode ?? 0; // Bun ignores undefined, so the exit code of the test run would stay 2
       expect(result).toBeUndefined();
@@ -129,7 +129,7 @@ describe('MatterbridgeAdvertise', () => {
       const stop = spyOn(MatterbridgeAdvertise.prototype, 'stop');
       const sigint = process.listenerCount('SIGINT');
       const advertiser = await runMatterbridgeAdvertise(['--interface', interfaceName, '--port', '5541', '--hostname', 'test-host', '--instance', 'Test Instance'], {
-        mdnsPort: nextPort++,
+        mdnsPort: await getFreePort('udp'),
         addressCheckIntervalMs: 0,
       });
       expect(start).toHaveBeenCalledTimes(1);
@@ -147,7 +147,7 @@ describe('MatterbridgeAdvertise', () => {
 
     it('should use the defaults when no arguments are given', async () => {
       const start = spyOn(MatterbridgeAdvertise.prototype, 'start').mockImplementation(async () => {});
-      const advertiser = await runMatterbridgeAdvertise([], { mdnsPort: nextPort++ });
+      const advertiser = await runMatterbridgeAdvertise([], { mdnsPort: await getFreePort('udp') });
       expect(advertiser?.hostName).toMatch(/^matterbridge-[0-9A-F]{12}\.local$/);
       expect(advertiser?.instanceName).toMatch(/^Matterbridge [0-9A-F]{6}$/);
       const internals = advertiser as unknown as Internals;
@@ -166,7 +166,7 @@ describe('MatterbridgeAdvertise', () => {
     it('should apply every option of the command line', async () => {
       const start = spyOn(MatterbridgeAdvertise.prototype, 'start').mockImplementation(async () => {});
       const argv = ['--alias', 'mb-test', '--service', '_http._tcp', '--service', '_test._udp', '--txt', 'a=1', '--txt', 'b=2', '--address-check', '5', '--no-ipv6', '--debug'];
-      const advertiser = await runMatterbridgeAdvertise(argv, { mdnsPort: nextPort++ });
+      const advertiser = await runMatterbridgeAdvertise(argv, { mdnsPort: await getFreePort('udp') });
       const internals = advertiser as unknown as Internals;
       expect(internals.aliasLabel).toBe('mb-test');
       expect(internals.services).toEqual(['_http._tcp', '_test._udp']);
@@ -181,7 +181,7 @@ describe('MatterbridgeAdvertise', () => {
 
     it('should not claim an alias with --no-alias and advertise only on IPv6 with --no-ipv4', async () => {
       const start = spyOn(MatterbridgeAdvertise.prototype, 'start').mockImplementation(async () => {});
-      const advertiser = await runMatterbridgeAdvertise(['--no-alias', '--no-ipv4'], { mdnsPort: nextPort++, addressCheckIntervalMs: 0 });
+      const advertiser = await runMatterbridgeAdvertise(['--no-alias', '--no-ipv4'], { mdnsPort: await getFreePort('udp'), addressCheckIntervalMs: 0 });
       expect((advertiser as unknown as Internals).aliasLabel).toBeUndefined();
       expect(advertiser?.sockets.ipv4).toBeUndefined();
       expect(advertiser?.sockets.ipv6).toBeInstanceOf(Mdns);

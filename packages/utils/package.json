@@ -98,6 +98,10 @@
       "types": "./dist/network.d.ts",
       "import": "./dist/network.js"
     },
+    "./port": {
+      "types": "./dist/port.d.ts",
+      "import": "./dist/port.js"
+    },
     "./enum": {
       "types": "./dist/enumDescription.d.ts",
       "import": "./dist/enumDescription.js"

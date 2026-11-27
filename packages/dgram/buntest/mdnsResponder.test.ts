@@ -9,8 +9,8 @@ import dgram from 'node:dgram';
 import { once } from 'node:events';
 import os from 'node:os';
 
-import { getFreePort } from '@matterbridge/test-utils';
 import { loggerLogSpy, resetTest, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { getFreePort } from '@matterbridge/utils/port';
 import { LogLevel } from 'node-ansi-logger';
 
 import { DnsClass, DnsClassFlag, DnsHeaderFlag, DnsRecordType, Mdns, MDNS_MAX_MESSAGE_LENGTH, type MdnsMessage } from '../src/mdns.js';

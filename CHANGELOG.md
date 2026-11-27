@@ -31,8 +31,19 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.6] - Dev branch
 
+### Breaking changes
+
+- [test-utils]: Remove `getFreePort`: use `getFreePort` from `@matterbridge/utils/port`.
+
+### Added
+
+- [utils]: Add `isPortFree`, `getFreePort` and `getFreePortRange` (`@matterbridge/utils/port`) for `tcp`, `udp4`, `udp6`, `udp` (both families) and `tcp+udp` ports.
+
 ### Changed
 
+- [dgram]: `isFirstOnPort` uses `isPortFree` from `@matterbridge/utils/port`.
+- [core]: The WebRTC media track port and the werift range tests use `getFreePort` and `getFreePortRange` from `@matterbridge/utils/port`.
+- [dgram]: The `MdnsScanner`, `MdnsMonitor`, `CoapMonitor` and `MatterbridgeAdvertise` tests get their ports from `getFreePort('udp')` instead of a random port.
 - [dgram]: Add the `queryInstance` SRV/TXT query test to the `MdnsScanner` tests, synced from matterbridge-native.
 - [utils]: Align the `measurementUtils` comments with the Matter 1.6.1 Application Cluster § 2.2.5.1 wording.
 - [core]: Remove the meaningless `void` markers flagged by `oxlint-tsgolint` 7.0.2009 (`no-meaningless-void-operator`); the intentional getter reads are disabled locally.
@@ -45,6 +56,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 - [dgram]: Fix the flaky `MdnsResponder` probe test: the random 0-250 ms first probe delay is pinned to 125 ms in the tests.
 - [dgram]: Await the socket close in the `MdnsMonitor` and `CoapMonitor` tests, so their `Socket closed` logs no longer leak after the test files.
+- [core]: Probe the free UDP port of the injected WebRTC media tracks on `0.0.0.0`, the address werift binds it on, instead of `127.0.0.1`.
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 

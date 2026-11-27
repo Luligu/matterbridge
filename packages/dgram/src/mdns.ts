@@ -26,11 +26,13 @@
 /* oxlint-disable typescript/no-duplicate-enum-values */
 
 // Node.js imports
-import dgram, { type SocketType } from 'node:dgram';
+import type dgram from 'node:dgram';
+import type { SocketType } from 'node:dgram';
 
 // @matterbridge
 import { hasParameter } from '@matterbridge/utils/cli';
 import { getErrorMessage } from '@matterbridge/utils/error';
+import { isPortFree } from '@matterbridge/utils/port';
 // AnsiLogger imports
 import { type AnsiLogger, BLUE, CYAN, db, GREEN, idn, LogLevel, MAGENTA, nf, rs } from 'node-ansi-logger';
 
@@ -425,17 +427,7 @@ export function isMdnsResponse(message: Buffer): boolean {
  * @returns {Promise<boolean>} True if the port is free.
  */
 export async function isFirstOnPort(socketType: SocketType, port: number = MDNS_MULTICAST_PORT): Promise<boolean> {
-  return new Promise<boolean>((resolve) => {
-    const probe = dgram.createSocket({ type: socketType, reuseAddr: false });
-    probe.once('error', () => {
-      probe.close();
-      resolve(false); // EADDRINUSE: someone is already on the port
-    });
-    probe.bind(port, socketType === 'udp4' ? '0.0.0.0' : '::', () => {
-      probe.close();
-      resolve(true);
-    });
-  });
+  return await isPortFree(port, socketType);
 }
 
 /**

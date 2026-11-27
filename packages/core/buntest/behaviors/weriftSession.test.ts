@@ -8,10 +8,10 @@ const NAME = 'WeriftSession';
 
 import { afterEach, beforeEach, describe, expect, mock, setDefaultTimeout, spyOn, test, vi } from 'bun:test';
 import { spawn, type ChildProcess } from 'node:child_process';
-import { createSocket } from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
 import { loggerDebugSpy, loggerErrorSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/buntest/setup';
+import { getFreePortRange } from '@matterbridge/utils/port';
 import { RTCPeerConnection, RTCRtpCodecParameters, useH264, usePCMU } from 'werift';
 
 import type { WeriftOfferOptions } from '../../src/behaviors/weriftSession.js';
@@ -349,37 +349,8 @@ describe('WeriftWebRtcSession', () => {
     const hostCandidates = (sdp: string): { address: string; port: number }[] =>
       [...sdp.matchAll(/^a=candidate:\S+ \d+ udp \d+ (\S+) (\d+) typ host/gm)].map((match) => ({ address: match[1], port: Number(match[2]) }));
 
-    /**
-     * Finds a range of free UDP ports.
-     *
-     * @param {number} size - The number of ports.
-     * @returns {Promise<[number, number]>} The first and last port of the range.
-     */
-    const findFreeUdpPortRange = async (size: number): Promise<[number, number]> => {
-      const canBind = async (port: number): Promise<boolean> =>
-        new Promise((resolve) => {
-          const socket = createSocket('udp4');
-          socket.once('error', () => {
-            try {
-              socket.close();
-            } catch {
-              // Already closed.
-            }
-            resolve(false);
-          });
-          socket.once('listening', () => socket.close(() => resolve(true)));
-          socket.bind(port);
-        });
-      for (let min = 49_152; min + size - 1 <= 65_535; min += size) {
-        let free = true;
-        for (let port = min; port < min + size && free; port++) free = await canBind(port);
-        if (free) return [min, min + size - 1];
-      }
-      throw new Error(`No free UDP port range of ${size} ports found`);
-    };
-
     test('MATTERBRIDGE_ICE_PORT_RANGE binds the host candidates inside the range', async () => {
-      const [min, max] = await findFreeUdpPortRange(11);
+      const [min, max] = await getFreePortRange(11, 'udp4');
       await withEnv({ MATTERBRIDGE_ICE_PORT_RANGE: `${min}-${max}` }, async () => {
         await withSession({ ...options }, async (session) => {
           const candidates = hostCandidates(await session.createOffer());
