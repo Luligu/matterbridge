@@ -622,6 +622,7 @@ export async function invokeBehaviorCommand(
 
     // Pre-warm the lazy state cache with the real context so datasource.sessions keeps a stable Map key.
     // Without this, overriding behavior.context with a Proxy causes the reactor to create a duplicate RootReference.
+    // oxlint-disable-next-line typescript/no-meaningless-void-operator -- the getter read is the point: it pre-warms the lazy state cache
     void behavior?.['state'];
 
     // Mirror the real invoke path (matter.js ProtocolService): a behavior that locks on invoke takes its lock

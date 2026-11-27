@@ -31,6 +31,21 @@ If you like this project and find it useful, please consider giving it a star on
 
 ## [3.11.6] - Dev branch
 
+### Changed
+
+- [dgram]: Add the `queryInstance` SRV/TXT query test to the `MdnsScanner` tests, synced from matterbridge-native.
+- [utils]: Align the `measurementUtils` comments with the Matter 1.6.1 Application Cluster § 2.2.5.1 wording.
+- [core]: Remove the meaningless `void` markers flagged by `oxlint-tsgolint` 7.0.2009 (`no-meaningless-void-operator`); the intentional getter reads are disabled locally.
+- [core]: Bump `werift` to v.0.29.0.
+- [frontend]: Bump `vite` to v.8.4.0.
+- [matterbridge]: Bump `@types/node` to v.26.6.11.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2009.
+
+### Fixed
+
+- [dgram]: Fix the flaky `MdnsResponder` probe test: the random 0-250 ms first probe delay is pinned to 125 ms in the tests.
+- [dgram]: Await the socket close in the `MdnsMonitor` and `CoapMonitor` tests, so their `Socket closed` logs no longer leak after the test files.
+
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
 
 ## [3.11.5] - 2026-11-27

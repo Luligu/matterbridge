@@ -42,6 +42,7 @@ async function withTimeSync<T>(action: (timeSync: MatterbridgeTimeSynchronizatio
   return await server.act(async (agent) => {
     const timeSync = agent.get(MatterbridgeTimeSynchronizationServer);
     // Pre-warm the state with the real context, then lock it as matter.js does before invoking a command
+    // oxlint-disable-next-line typescript/no-meaningless-void-operator -- the getter read is the point: it pre-warms the lazy state cache
     void timeSync.state;
     const transaction = agent.context.transaction;
     await transaction.addResources(timeSync);

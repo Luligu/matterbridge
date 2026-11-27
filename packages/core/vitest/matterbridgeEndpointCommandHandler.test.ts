@@ -221,12 +221,10 @@ describe('CommandHandler type bindings', () => {
     if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
       // @ts-expect-error intentional type-check guard for CommandHandlers
       const invalidCommand: CommandHandlers = 'OnOff.invalid';
-      void invalidCommand;
 
       commandHandler.addHandler('Identify.triggerEffect', async (data) => {
         // @ts-expect-error intentional type-check guard for command-specific cluster inference
         const wrongCluster: 'onOff' = data.cluster;
-        void wrongCluster;
       });
     }
   });

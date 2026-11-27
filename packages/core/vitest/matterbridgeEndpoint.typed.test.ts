@@ -99,9 +99,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
       const invalidServerStateType: string | undefined = device.getAttribute(BooleanStateServer, 'stateValue', device.log);
       // @ts-expect-error intentional type-check guard for typed cluster return value
       const invalidClusterStateType: string | undefined = device.getAttribute(BooleanState, 'stateValue', device.log);
-      void invalidStateType;
-      void invalidServerStateType;
-      void invalidClusterStateType;
     } finally {
       await deleteDevice(aggregator, device);
     }
@@ -127,15 +124,13 @@ describe('Matterbridge Endpoint Typed Checks', () => {
 
       if (await Promise.resolve(process.env.MATTERBRIDGE_TYPECHECK_NEGATIVE === '1')) {
         // @ts-expect-error intentional type-check guard for Behavior.Type option key
-        void device.getClusterServerOptions(MatterbridgeBindingServer)?.stateValue;
+        const invalidBehaviorOptionKey = device.getClusterServerOptions(MatterbridgeBindingServer)?.stateValue;
         // @ts-expect-error intentional type-check guard for ClusterType option key
-        void device.getClusterServerOptions(BooleanState)?.clientList;
+        const invalidClusterOptionKey = device.getClusterServerOptions(BooleanState)?.clientList;
         // @ts-expect-error intentional type-check guard for Behavior.Type typed return value
         const invalidBehaviorOptions: { clientList?: string[] } | undefined = device.getClusterServerOptions(MatterbridgeBindingServer);
         // @ts-expect-error intentional type-check guard for ClusterType typed return value
         const invalidClusterOptions: { stateValue?: string } | undefined = device.getClusterServerOptions(BooleanState);
-        void invalidBehaviorOptions;
-        void invalidClusterOptions;
       }
     } finally {
       await deleteDevice(aggregator, device);
@@ -343,9 +338,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         const invalidServerSubscribeType: string = device.subscribeAttribute(BooleanStateServer, 'stateValue', behaviorListener, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
         const invalidClusterSubscribeType: string = device.subscribeAttribute(BooleanState, 'stateValue', behaviorListener, device.log);
-        void invalidSubscribeType;
-        void invalidServerSubscribeType;
-        void invalidClusterSubscribeType;
       }
     } finally {
       await deleteDevice(aggregator, device);
@@ -378,9 +370,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         const invalidServerClusterType: { stateValue: string } | undefined = device.getCluster(BooleanStateServer, device.log);
         // @ts-expect-error intentional type-check guard for typed cluster return value
         const invalidTypedClusterType: { stateValue: string } | undefined = device.getCluster(BooleanState, device.log);
-        void invalidClusterType;
-        void invalidServerClusterType;
-        void invalidTypedClusterType;
       }
     } finally {
       await deleteDevice(aggregator, device);
@@ -531,8 +520,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         const invalidBehaviorInternal: { missing: true } | undefined = await internalFor(device, ThermostatServer);
         // @ts-expect-error intentional type-check guard for string overload return value
         const invalidStringInternal: { missing: true } | undefined = await internalFor<ThermostatInternal>(device, 'Thermostat');
-        void invalidBehaviorInternal;
-        void invalidStringInternal;
       }
     } finally {
       await deleteDevice(aggregator, device);
@@ -604,13 +591,11 @@ describe('Matterbridge Endpoint Typed Checks', () => {
     try {
       const subscribeFromBehavior: MatterbridgeEndpoint = device.subscribeCommand(IdentifyBehavior, 'identify', ({ request }) => {
         const identifyTime: number = request.identifyTime;
-        void identifyTime;
       });
       expect(subscribeFromBehavior).toBe(device);
 
       const subscribeFromServer: MatterbridgeEndpoint = device.subscribeCommand(IdentifyServer, 'triggerEffect', ({ request }) => {
         const effectIdentifier: Identify.EffectIdentifier = request.effectIdentifier;
-        void effectIdentifier;
       });
       expect(subscribeFromServer).toBe(device);
 
@@ -619,11 +604,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         const commandName: string = command;
         const clusterName: string = cluster;
         const commandEndpoint: MatterbridgeEndpoint = endpoint;
-        void identifyTime;
-        void commandName;
-        void clusterName;
-        void commandEndpoint;
-        void context;
       });
       expect(subscribeFromCluster).toBe(device);
 
@@ -633,9 +613,9 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         // @ts-expect-error intentional type-check guard for ClusterType command overload
         device.subscribeCommand(Identify, 'moveToLevel', () => {});
         // @ts-expect-error intentional type-check guard for Behavior.Type request type
-        device.subscribeCommand(IdentifyBehavior, 'identify', (data: { request: { effectIdentifier: number } }) => void data);
+        device.subscribeCommand(IdentifyBehavior, 'identify', (data: { request: { effectIdentifier: number } }) => {});
         // @ts-expect-error intentional type-check guard for ClusterType request type
-        device.subscribeCommand(Identify, 'identify', (data: { request: { effectIdentifier: number } }) => void data);
+        device.subscribeCommand(Identify, 'identify', (data: { request: { effectIdentifier: number } }) => {});
       }
     } finally {
       await deleteDevice(aggregator, device);
@@ -746,7 +726,6 @@ describe('Matterbridge Endpoint Typed Checks', () => {
         device.setCluster(batteryBehavior, { status: PowerSource.PowerSourceStatus.Active, order: 0, description: 'Battery power', endpointList: [] }, device.log);
         // @ts-expect-error intentional type-check guard for typed feature-gated cluster return value
         const invalidBatteryClusterType: { wiredCurrentType: PowerSource.WiredCurrentType } | undefined = device.getCluster(batteryBehavior, device.log);
-        void invalidBatteryClusterType;
       }
     } finally {
       await deleteDevice(aggregator, device);

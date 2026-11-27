@@ -138,7 +138,7 @@
     "multer": "2.5.0",
     "node-ansi-logger": "3.3.2",
     "node-persist-manager": "2.1.2",
-    "werift": "0.28.0",
+    "werift": "0.29.0",
     "ws": "8.23.0"
   },
   "devDependencies": {
@@ -146,7 +146,7 @@
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
     "@types/multer": "2.3.0",
-    "@types/node": "26.6.10",
+    "@types/node": "26.6.11",
     "@types/ws": "8.18.2",
     "vitest": "5.1.2"
   }

@@ -114,7 +114,7 @@
   "devDependencies": {
     "@types/bun": "1.4.5",
     "@types/jest": "30.0.0",
-    "@types/node": "26.6.10",
+    "@types/node": "26.6.11",
     "vitest": "5.1.2"
   }
 }

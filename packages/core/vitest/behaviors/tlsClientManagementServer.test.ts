@@ -50,6 +50,7 @@ async function withBehavior<B extends MatterbridgeTlsCertificateManagementServer
   return await server.act(async (agent) => {
     const behavior = agent.get(type as unknown as typeof MatterbridgeTlsClientManagementServer) as unknown as B;
     // Pre-warm the state with the real context, then lock it as matter.js does before invoking a command
+    // oxlint-disable-next-line typescript/no-meaningless-void-operator -- the getter read is the point: it pre-warms the lazy state cache
     void behavior.state;
     const transaction = agent.context.transaction;
     await transaction.addResources(behavior);
