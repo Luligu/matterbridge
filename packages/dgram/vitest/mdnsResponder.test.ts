@@ -144,10 +144,14 @@ describe('MdnsResponder', () => {
       });
       const families = (['ipv4', 'ipv6'] as const).filter((family) => advertiser.sockets[family]);
       const ready = Promise.all(families.map(async (family) => new Promise((resolve) => advertiser.sockets[family]?.once('ready', resolve))));
+      // Pin the random 0-250 ms first probe delay (RFC 6762 §8.1) to 125 ms: a delay of 0 or 250 would put two probes
+      // or none in the first 250 ms window the tests advance. No other random value is drawn before probing starts.
+      const random = vi.spyOn(Math, 'random').mockReturnValueOnce(0.5);
       started = advertiser.start();
       try {
         await Promise.race([ready, started]);
       } catch (error) {
+        random.mockRestore();
         const stopping = advertiser.stop();
         vi.advanceTimersByTime(200);
         await stopping;

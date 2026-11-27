@@ -17,8 +17,12 @@ await setupTest('MdnsMonitorTest');
 let nextPort = 40000 + Math.floor(Math.random() * 20000);
 
 describe('MdnsMonitor', () => {
+  /** The 'close' events of the sockets closed by closeSockets(), awaited before the console spies are restored. */
+  const pendingCloses: Promise<void>[] = [];
+
   afterEach(() => vi.clearAllMocks());
-  afterAll(() => {
+  afterAll(async () => {
+    await Promise.all(pendingCloses);
     vi.restoreAllMocks();
     resetTest();
   });
@@ -34,13 +38,17 @@ describe('MdnsMonitor', () => {
   }
 
   /**
-   * Closes any unstarted sockets held by a monitor.
+   * Closes any unstarted sockets held by a monitor. The 'close' event, and its debug log, arrives on a later tick:
+   * it is collected in pendingCloses so it cannot be printed after afterAll has restored the console spies.
    *
    * @param {MdnsMonitor | undefined} monitor - The monitor to clean up.
    */
   function closeSockets(monitor: MdnsMonitor | undefined): void {
-    monitor?.sockets.ipv4?.socket.close();
-    monitor?.sockets.ipv6?.socket.close();
+    for (const socket of [monitor?.sockets.ipv4?.socket, monitor?.sockets.ipv6?.socket]) {
+      if (!socket) continue;
+      socket.close();
+      pendingCloses.push(new Promise<void>((resolve) => socket.once('close', () => resolve())));
+    }
   }
 
   describe('construction', () => {
