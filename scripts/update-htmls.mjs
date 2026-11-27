@@ -92,6 +92,7 @@ const FILES_TO_RENDER = [
   { source: 'Matter-1.6.1.md', target: 'Matter-1.6.1.html' },
   { source: 'Matter.js-0.17.md', target: 'Matter.js-0.17.html' },
   { source: 'Matter.js-0.18.md', target: 'Matter.js-0.18.html' },
+  { source: 'Matter.js-0.18.1.md', target: 'Matter.js-0.18.1.html' },
   { source: 'packages/core/src/behaviors/Camera.md', target: 'Camera.html' },
   { source: 'reflector/MatterbridgeDevContainer.md', target: 'reflector/MatterbridgeDevContainer.html' },
   { source: 'reflector/Reflector.md', target: 'reflector/Reflector.html' },

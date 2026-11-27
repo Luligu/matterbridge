@@ -69,6 +69,12 @@ Matterbridge uses command-level `Supervision` to route `SetTargets` through mode
 
 CHIP `TC_EEVSE_2_3` passes on the base (1401) and complete (14011) EVSE endpoints with this workaround.
 
+## Closure Dimension `SetTarget.Speed` conformance
+
+[Matter.js #5012](https://github.com/matter-js/matter.js/pull/5012) rejects undefined command enum values before dispatch. Matter 1.6.1 Application Cluster § 5.5.8.1.3 requires Closure Dimension to ignore an invalid `SetTarget.Speed` value when the endpoint lacks the Speed feature. Without the override, CHIP `TC_CLDIM_3_3` step 10 receives `CONSTRAINT_ERROR` instead of `SUCCESS`.
+
+`MatterbridgeClosureDimensionServer` uses field-level `Supervision` to defer `SetTarget.Speed` validation to its handler. The handler ignores the field when Speed is unsupported and rejects undefined values with `CONSTRAINT_ERROR` when Speed is supported.
+
 ## mDNS multi-ServerNode responder fix (Matterbridge childbridge mode and bridge mode with ServerNode devices)
 
 0.18.1 fixes a long-standing bug: a record-identity collision that can suppress discovery responses for all but one ServerNode registered with a shared responder.

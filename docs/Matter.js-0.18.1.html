@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matterbridge</title>
+  <link rel="icon" type="image/svg+xml" href="https://matterbridge.io/assets/matterbridge.svg">
+  <style>
+    body {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      padding: 40px 20px;
+      max-width: 1100px;
+      word-wrap: break-word;
+    }
+    h1, h2, h3 {
+      font-family: 'Roboto Slab', Roboto, Arial, 'Helvetica Neue', sans-serif;
+      color: #263238;
+      scroll-margin-top: 90px;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      position: relative;
+      padding-bottom: 1.1rem;
+    }
+    h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      border-bottom: 2px solid #e0e0e0;
+      padding-bottom: 0.35rem;
+      color: #41535b;
+    }
+    h3 {
+      font-size: 1.10rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #455a64;
+    }
+    pre {
+      background: #e4e7ec;
+      color: #000000;
+      padding: 10px 56px 10px 10px;
+      border-radius: 0.5rem;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.875rem;
+      margin: 10px 20px 10px 0px;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    p code,
+    li code,
+    td code,
+    th code,
+    blockquote code {
+      font-family: Roboto, Arial, 'Helvetica Neue', sans-serif;
+      font-size: 1.0em !important;
+      color: #1e88e5;
+      font-weight: 600;
+    }
+    .copy-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      padding: 0;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background: #eee;
+      color: #333;
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      transition: color 0.2s ease;
+    }
+    .copy-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+    .copy-btn.copied {
+      color: #1b5e20;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin: 1rem 0;
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    th,
+    td {
+      border: 1px solid #e0e0e0;
+      padding: 0.4rem 0.6rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+      h1 {
+        font-size: 1.8rem;
+      }
+      h2 {
+        font-size: 1.45rem;
+      }
+      h3 {
+        font-size: 1rem;
+      }
+      pre {
+        margin-right: 0;
+        font-size: 0.8125rem;
+      }
+    }
+  </style>
+</head>
+<body>
+<h1 id="matterjs-0181">Matter.js 0.18.1</h1>
+<p>This file tracks the matter.js 0.18.1 changes compared with 0.18.0 that matter for Matterbridge.</p>
+<p>Audited on November 26, 2026, against the published <code>@matter/*</code> 0.18.1 packages that Matterbridge now depends on.</p>
+<h2 id="thermostat-behavior-changes">Thermostat behavior changes</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Change from 0.18.0</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Schedules</td>
+<td>Native persisted schedules, atomic writes, generated handles and SetActiveScheduleRequest handling. Validation covers total/per-mode capacities, transition counts, day masks, overlapping same-time transitions, preset references, supported names/modes, setpoint bounds and deadband. Built-in and active schedules are protected against removal.</td>
+</tr>
+<tr>
+<td>Schedule execution</td>
+<td>Activation only records the schedule handle. The application still supplies time synchronization, evaluates transitions against local time/day/DST, applies each transition&#39;s preset, system mode or setpoints, and reports schedule-originated setpoint changes.</td>
+</tr>
+<tr>
+<td>Suggestions</td>
+<td>Native add/remove commands, automatic expiration and current-suggestion selection/application. Timers and state reactions re-evaluate suggestions at activation/expiration, startup, node online, time synchronization changes and relevant attribute changes.</td>
+</tr>
+<tr>
+<td>Time synchronization</td>
+<td>Adding a suggestion rejects with INVALID_IN_STATE when time is unsynchronized. The default checks TimeSynchronization UTCTime when that cluster exists; otherwise it trusts the host clock once it reads 2025 or later.</td>
+</tr>
+<tr>
+<td>Holds and manual overrides</td>
+<td>Manual preset/setpoint changes can override the current suggestion. Hold handling determines when following resumes, and the override persists across restart while its suggestion remains current.</td>
+</tr>
+<tr>
+<td>Presets</td>
+<td>Activation retains the handle and clamps the preset&#39;s setpoints to limits. Direct writes to current-occupancy setpoints can clear the active handle; preset-activation transactions and internal reconciliation preserve it. Handle validation precedes capacity checks.</td>
+</tr>
+<tr>
+<td>Events</td>
+<td>Generates thermostat events after committed changes. Events require the separate <code>thermostat-events</code> forward feature and enabled event elements. LocalTemperatureChange uses a configurable threshold and a minimum 60-second interval.</td>
+</tr>
+<tr>
+<td>Control sequence</td>
+<td>Shared rules enforce allowed heating/cooling modes. CoolingWithReheat is treated as a sequence without heating.</td>
+</tr>
+<tr>
+<td>Initialization</td>
+<td>Clears active handles that reference no stored entry, validates configured schedules and raises certain capacity limits to cover already-stored entries. Legacy MinSetpointDeadBand values above 127 are reset to 20.</td>
+</tr>
+<tr>
+<td>Atomic-write errors</td>
+<td>A competing peer receives BUSY specifically for Presets; other affected attributes use INVALID_IN_STATE.</td>
+</tr>
+</tbody></table>
+<p>MatterScheduleConfiguration is no longer gated: the <code>thermostat-msch</code> forward feature of the dev source was removed before the release, so schedule endpoints initialize normally.</p>
+<p>Relevant upstream changes: <a href="https://github.com/matter-js/matter.js/pull/4467">matter-js/matter.js#4467</a> (schedules), <a href="https://github.com/matter-js/matter.js/pull/4993">matter-js/matter.js#4993</a> (suggestions), <a href="https://github.com/matter-js/matter.js/pull/4990">matter-js/matter.js#4990</a> (events), <a href="https://github.com/matter-js/matter.js/pull/4979">matter-js/matter.js#4979</a> (preset validation), and <a href="https://github.com/matter-js/matter.js/pull/5000">matter-js/matter.js#5000</a> (CoolingWithReheat).</p>
+<h2 id="matterbridge-integration">Matterbridge integration</h2>
+<p><code>MatterbridgeThermostatServer</code> now delegates schedules, presets and suggestions to matter.js. Each command override logs, forwards the request to the plugin command handler, calls the matching <code>super</code> method with the request unchanged, then emits the command observable. Matterbridge no longer keeps its own suggestion list, expiration, re-evaluation or Presets-removal cascade.</p>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Delegated validation and state (Matter 1.6.1)</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SetActivePresetRequest</td>
+<td>INVALID_COMMAND for an unknown handle (§ 4.3.12.3.2); sets ActivePresetHandle and moves the setpoints to the preset.</td>
+</tr>
+<tr>
+<td>SetActiveScheduleRequest</td>
+<td>INVALID_COMMAND for an unknown handle (§ 4.3.12.2.2); stores ActiveScheduleHandle only.</td>
+</tr>
+<tr>
+<td>AddThermostatSuggestion</td>
+<td>INVALID_IN_STATE, NOT_FOUND, RESOURCE_EXHAUSTED and INVALID_COMMAND in the order of § 4.3.12.4.4; appends the entry and re-evaluates CurrentThermostatSuggestion.</td>
+</tr>
+<tr>
+<td>RemoveThermostatSuggestion</td>
+<td>NOT_FOUND for an unknown UniqueID (§ 4.3.12.6.2); removes the entry and re-evaluates CurrentThermostatSuggestion.</td>
+</tr>
+</tbody></table>
+<p>What this means for plugins:</p>
+<ul>
+<li>The plugin command handler runs before validation, so it is a notification: it also runs for requests that matter.js then rejects.</li>
+<li>Following a suggestion activates its preset through <code>handleSetActivePresetRequest()</code>, not <code>setActivePresetRequest()</code>, so the plugin <code>Thermostat.setActivePresetRequest</code> handler is not called. This happens on add/remove, at each EffectiveTime and ExpirationTime, and at startup. Removing the current suggestion may activate the preset of another current suggestion; with none, ActivePresetHandle stays as it is.</li>
+<li>Plugins observe these changes by subscribing to <code>activePresetHandle</code>, <code>occupiedHeatingSetpoint</code> and <code>occupiedCoolingSetpoint</code>. <code>context.fabric === undefined</code> identifies a change matter.js made itself.</li>
+<li>Plugins that run schedules apply each transition themselves: its preset (ActivePresetHandle), system mode or setpoints.</li>
+<li>matter.js stores request byte arrays (handles) by reference, as it does internally. A caller that later mutates a request array it passed in also mutates the stored attribute.</li>
+</ul>
+<h2 id="verification">Verification</h2>
+<ul>
+<li>Vitest <code>thermostatServer.test.ts</code> and <code>matterbridgeEndpoint-default.test.ts</code>: 109 tests pass. Bun: 107 tests pass.</li>
+<li>CHIP conformance, with the local build and matter.js 0.18.1 synced into the <code>chip-test</code> container: all 15 runnable thermostat tests pass on endpoints 901, 9011, 9012, 9013, 9014 and 9015 (<code>Test_TC_TSTAT_2_1</code>, <code>TC_TSTAT_2_2.py</code>, <code>TC_TSTAT_4_2.py</code> on 9013 and 9015, <code>TC_TSTAT_4_3.py</code> on 9015). The <code>TC_TSTAT_4_3.py</code> rejections now come from matter.js.</li>
+<li>Demo devices: no drift. matter.js logs no thermostat warnings at startup, and the suggestions demo device meets the new MaxThermostatSuggestions minimum of 5.</li>
+</ul>
+<h2 id="open-issue-suggestion-re-evaluation-on-every-utctime-change">Open issue: suggestion re-evaluation on every UTCTime change</h2>
+<p>matter.js re-evaluates the suggestions on every <code>utcTime$Changed</code> of a TimeSynchronization cluster on the node, synchronously, in the transaction that changed UTCTime. <code>MatterbridgeTimeSynchronizationServer.updateClock()</code> writes UTCTime every second, so every ThermostatSuggestions endpoint is re-evaluated every second. When a client command holds the thermostat lock at that moment, the reaction fails:</p>
+<pre><code class="language-text">Error in Matterbridge.timeSynchronization.events.utcTime$Changed observer … [synchronous-transaction-conflict]
+reactor&lt;ThermostatSuggestions.thermostat.#reevaluateSuggestions&gt;: Cannot lock …thermostat.state synchronously
+</code></pre>
+<ul>
+<li>Scope: only nodes with the TimeSynchronization cluster on the root (<code>--root-camera</code> or <code>MATTERBRIDGE_CHIP_TEST</code>) and a ThermostatSuggestions endpoint.</li>
+<li>Impact: an occasional logged error and a skipped clock tick; no CHIP test failed. The per-second re-evaluation is redundant, since matter.js already runs a timer for each EffectiveTime and ExpirationTime.</li>
+<li>Proposed upstream fix: re-evaluate only when UTCTime switches between null and non-null, or run the reaction in its own transaction (<code>offline: true</code>).</li>
+</ul>
+<h2 id="energy-evse-settargets-conformance">Energy EVSE <code>SetTargets</code> conformance</h2>
+<p>Matter 1.6.1 Application Cluster § 9.3.9.5.2 requires <code>RESOURCE_EXHAUSTED</code> (<code>0x89</code>) when a <code>SetTargets</code> request exceeds the EVSE&#39;s charging-target capacity. Matter.js 0.18.1 rejects an 11-target daily list during TLV validation with <code>CONSTRAINT_ERROR</code> (<code>0x87</code>) before the server method runs, which fails CHIP <code>TC_EEVSE_2_3</code> step 19.</p>
+<p>Matterbridge uses command-level <code>Supervision</code> to route <code>SetTargets</code> through model validation and lets the EVSE server enforce the nested 10-target limit. The hook also maps the model validator&#39;s missing-<code>TargetSoC</code> error to <code>INVALID_COMMAND</code> (<code>0x85</code>) when SoC reporting is enabled, as required by § 9.3.7.6. Duplicate days still return <code>CONSTRAINT_ERROR</code>.</p>
+<p>CHIP <code>TC_EEVSE_2_3</code> passes on the base (1401) and complete (14011) EVSE endpoints with this workaround.</p>
+<h2 id="closure-dimension-settargetspeed-conformance">Closure Dimension <code>SetTarget.Speed</code> conformance</h2>
+<p><a href="https://github.com/matter-js/matter.js/pull/5012">Matter.js #5012</a> rejects undefined command enum values before dispatch. Matter 1.6.1 Application Cluster § 5.5.8.1.3 requires Closure Dimension to ignore an invalid <code>SetTarget.Speed</code> value when the endpoint lacks the Speed feature. Without the override, CHIP <code>TC_CLDIM_3_3</code> step 10 receives <code>CONSTRAINT_ERROR</code> instead of <code>SUCCESS</code>.</p>
+<p><code>MatterbridgeClosureDimensionServer</code> uses field-level <code>Supervision</code> to defer <code>SetTarget.Speed</code> validation to its handler. The handler ignores the field when Speed is unsupported and rejects undefined values with <code>CONSTRAINT_ERROR</code> when Speed is supported.</p>
+<h2 id="mdns-multi-servernode-responder-fix-matterbridge-childbridge-mode-and-bridge-mode-with-servernode-devices">mDNS multi-ServerNode responder fix (Matterbridge childbridge mode and bridge mode with ServerNode devices)</h2>
+<p>0.18.1 fixes a long-standing bug: a record-identity collision that can suppress discovery responses for all but one ServerNode registered with a shared responder.</p>
+<p>In 0.18.0, duplicate-response suppression identifies a record using its name, class, type and interface, but not its contents. Multiple service instances publish PTR records under the same service type, such as <code>_matter._tcp.local</code>, with different instance targets. After the first instance is answered, later instances can be mistaken for already-answered records.</p>
+<p>The new <code>InterfaceResponder</code> identifies records by name, type, class <strong>and record contents</strong>, including the PTR target, and processes all registered services. <code>MdnsServerTest.ts</code> includes the regression test <code>answers a pointer query with the pointer of every service of the type</code>, which asserts both registered service targets are returned.</p>
+<p>This implementation is present in <a href="https://github.com/matter-js/matter.js/pull/4842">matter-js/matter.js#4842</a>. The related <a href="https://github.com/matter-js/matter.js/pull/4844">matter-js/matter.js#4844</a> prevents withdrawal of shared host-address records while another registered service still publishes them. Together these address query suppression and one service&#39;s shutdown invalidating another service&#39;s discovery records.</p>
+<p>Verification here is source and regression-test inspection, not execution of the upstream mDNS tests or a live multi-ServerNode network test.</p>
+  <script>
+    const copyIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M11 1H3c-.6 0-1 .4-1 1v10h2V3h7V1zm2 3H6c-.6 0-1 .4-1 1v10c0 .6.4 1 1 1h7c.6 0 1-.4 1-1V5c0-.6-.4-1-1-1zm-1 10H7V6h5v8z"></path></svg>';
+    const successIcon = '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.5 10.7L4.3 8.5 3 9.8l3.5 3.5 6.5-6.5-1.3-1.3z"></path></svg>';
+
+    document.querySelectorAll('pre').forEach(block => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'copy-btn';
+      button.setAttribute('aria-label', 'Copy code snippet');
+      button.innerHTML = copyIcon;
+
+      let resetTimer;
+      button.addEventListener('click', async () => {
+        const code = block.querySelector('code')?.innerText ?? '';
+        try {
+          await navigator.clipboard.writeText(code);
+        } catch {
+          const textarea = document.createElement('textarea');
+          textarea.value = code;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.focus();
+          textarea.select();
+          document.execCommand('copy');
+          textarea.remove();
+        }
+
+        clearTimeout(resetTimer);
+        button.innerHTML = successIcon;
+        button.classList.add('copied');
+        resetTimer = setTimeout(() => {
+          button.innerHTML = copyIcon;
+          button.classList.remove('copied');
+        }, 2000);
+      });
+
+      block.appendChild(button);
+    });
+  </script>
+</body>
+</html>

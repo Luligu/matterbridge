@@ -177,6 +177,8 @@
 </ul>
 <h3 id="fixed">Fixed</h3>
 <ul>
+<li>[core]: Work around a matter.js 0.18.1 spec violation that returns <code>CONSTRAINT_ERROR</code> for an invalid Closure Dimension <code>SetTarget.Speed</code> value even when Matter requires the field to be ignored because Speed is unsupported. See <a href="Matter.js-0.18.1.html#closure-dimension-settargetspeed-conformance">Matter.js 0.18.1</a>.</li>
+<li>[core]: Work around a matter.js 0.18.1 spec violation that returns <code>CONSTRAINT_ERROR</code> when an EVSE <code>SetTargets</code> request exceeds charging-target capacity, where Matter requires <code>RESOURCE_EXHAUSTED</code>. See <a href="Matter.js-0.18.1.html#energy-evse-settargets-conformance">Matter.js 0.18.1</a>.</li>
 <li>[dgram]: Fix the flaky <code>MdnsResponder</code> probe test: the random 0-250 ms first probe delay is pinned to 125 ms in the tests.</li>
 <li>[dgram]: Await the socket close in the <code>MdnsMonitor</code> and <code>CoapMonitor</code> tests, so their <code>Socket closed</code> logs no longer leak after the test files.</li>
 <li>[core]: Probe the free UDP port of the injected WebRTC media tracks on <code>0.0.0.0</code>, the address werift binds it on, instead of <code>127.0.0.1</code>.</li>

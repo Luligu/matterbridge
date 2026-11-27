@@ -55,7 +55,8 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Fixed
 
-- [core]: Work around matter.js 0.18.1 returning `CONSTRAINT_ERROR` instead of `RESOURCE_EXHAUSTED` for EVSE `SetTargets` capacity overflow. See [Matter.js 0.18.1](Matter.js-0.18.1.md#energy-evse-settargets-conformance).
+- [core]: Work around a matter.js 0.18.1 spec violation that returns `CONSTRAINT_ERROR` for an invalid Closure Dimension `SetTarget.Speed` value even when Matter requires the field to be ignored because Speed is unsupported. See [Matter.js 0.18.1](Matter.js-0.18.1.md#closure-dimension-settargetspeed-conformance).
+- [core]: Work around a matter.js 0.18.1 spec violation that returns `CONSTRAINT_ERROR` when an EVSE `SetTargets` request exceeds charging-target capacity, where Matter requires `RESOURCE_EXHAUSTED`. See [Matter.js 0.18.1](Matter.js-0.18.1.md#energy-evse-settargets-conformance).
 - [dgram]: Fix the flaky `MdnsResponder` probe test: the random 0-250 ms first probe delay is pinned to 125 ms in the tests.
 - [dgram]: Await the socket close in the `MdnsMonitor` and `CoapMonitor` tests, so their `Socket closed` logs no longer leak after the test files.
 - [core]: Probe the free UDP port of the injected WebRTC media tracks on `0.0.0.0`, the address werift binds it on, instead of `127.0.0.1`.

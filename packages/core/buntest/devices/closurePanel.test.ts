@@ -126,6 +126,10 @@ describe('Matterbridge ' + NAME, () => {
     await basicPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { latch: true, speed: ThreeLevelAuto.High });
     expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0 });
 
+    // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+    await basicPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { speed: 4 as ThreeLevelAuto });
+    expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 0 });
+
     await basicPanel.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000 });
     expect(basicPanel.getAttribute(ClosureDimension.id, 'targetState')).toEqual({ position: 5000 });
   });
@@ -144,6 +148,11 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(ClosureDimension.id, 'targetState')).toMatchObject({ position: 0, latch: true, speed: ThreeLevelAuto.Auto });
     expect(device.getAttribute(ClosureDimension.id, 'currentState')).toMatchObject({ position: 0, latch: true, speed: ThreeLevelAuto.Auto });
     expect(device.getAttribute(ClosureDimension.id, 'latchControlModes')).toMatchObject({ remoteLatching: true, remoteUnlatching: true });
+
+    expect(
+      // oxlint-disable-next-line typescript/no-unsafe-enum-assignment
+      device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { speed: 4 as ThreeLevelAuto }),
+    ).rejects.toMatchObject({ code: Status.ConstraintError });
 
     // CurrentState.latch is true, so a position change must explicitly request latch: false (Matter spec §5.5.8.1.4).
     await device.invokeBehaviorCommand('closureDimension', 'ClosureDimension.setTarget', { position: 5000, latch: false });

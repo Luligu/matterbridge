@@ -28,6 +28,7 @@
 
 // @matter
 import { Millis, Time, type MaybePromise, type Timer } from '@matter/general';
+import { Supervision } from '@matter/node';
 import { ClosureControlServer } from '@matter/node/behaviors/closure-control';
 import { ClosureDimensionServer } from '@matter/node/behaviors/closure-dimension';
 import { ClosureControl } from '@matter/types/clusters/closure-control';
@@ -363,6 +364,9 @@ export class MatterbridgeClosureDimensionServer extends MatterbridgeClosureDimen
     await super[Symbol.asyncDispose]?.();
   }
 }
+
+// Matter 1.6.1 § 5.5.8.1.3: Let setTarget ignore unsupported Speed values or reject invalid values when Speed is supported.
+Supervision(MatterbridgeClosureDimensionServer, 'setTarget', 'speed').validate = false;
 
 /* v8 ignore start */
 export namespace MatterbridgeClosureDimensionServer {

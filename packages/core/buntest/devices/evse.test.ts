@@ -11,6 +11,8 @@ const MATTER_CREATE_ONLY = true;
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, jest, test, vi } from 'bun:test';
 
 import { Time } from '@matter/general';
+import { FieldModel } from '@matter/main/model';
+import { Supervision } from '@matter/node';
 import { DeviceEnergyManagementServer } from '@matter/node/behaviors/device-energy-management';
 import { DeviceEnergyManagementModeServer } from '@matter/node/behaviors/device-energy-management-mode';
 import { ElectricalEnergyMeasurementServer } from '@matter/node/behaviors/electrical-energy-measurement';
@@ -19,6 +21,7 @@ import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
 import { PowerSourceServer } from '@matter/node/behaviors/power-source';
 import { TemperatureMeasurementServer } from '@matter/node/behaviors/temperature-measurement';
+import { ConformanceError } from '@matter/protocol';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { DeviceEnergyManagementMode } from '@matter/types/clusters/device-energy-management-mode';
 import { ElectricalEnergyMeasurement } from '@matter/types/clusters/electrical-energy-measurement';
@@ -28,6 +31,7 @@ import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
 import { Identify } from '@matter/types/clusters/identify';
 import { ModeBase } from '@matter/types/clusters/mode-base';
 import { PowerSource } from '@matter/types/clusters/power-source';
+import { StatusResponse } from '@matter/types/common';
 import { EndpointNumber } from '@matter/types/datatype';
 import {
   addBridgedDevice,
@@ -588,6 +592,20 @@ describe('Matterbridge ' + NAME, () => {
     expect(device.getAttribute(EnergyEvse.id, 'nextChargeRequiredEnergy')).toBeNull();
     expect(device.getAttribute(EnergyEvse.id, 'nextChargeTargetSoC')).toBeNull();
     expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.INFO, expect.stringContaining(`clearTargets`));
+  });
+
+  test('should translate only the missing TargetSoC conformance error for SetTargets', () => {
+    const { onValidationError } = Supervision(MatterbridgeEnergyEvseServer, 'setTargets');
+    const schema = new FieldModel({ name: 'TargetSoC', conformance: 'SOC, O.a+' });
+    const path = 'EnergyEvse.setTargets.chargingTargetSchedules.0.chargingTargets.0.targetSoC';
+    const requiredField = 'Matter requires you to set this attribute';
+    const missingTargetSoC = new ConformanceError(schema, { path }, requiredField);
+    const missingOtherField = new ConformanceError(schema, { path: 'EnergyEvse.setTargets.chargingTargetSchedules' }, requiredField);
+    const otherError = new Error('Other validation failure');
+
+    expect(() => onValidationError?.(missingTargetSoC)).toThrow(StatusResponse.InvalidCommandError);
+    expect(() => onValidationError?.(missingOtherField)).toThrow(missingOtherField);
+    expect(() => onValidationError?.(otherError)).toThrow(otherError);
   });
 
   test('invoke MatterbridgeEnergyEvseServer startDiagnostics command', async () => {
