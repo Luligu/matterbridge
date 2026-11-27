@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-const { mbCoapMain } = await import('@matterbridge/core/mb_coap');
+const { runCoapMonitor } = await import('@matterbridge/dgram');
 
-mbCoapMain();
+runCoapMonitor(process.argv.slice(2));

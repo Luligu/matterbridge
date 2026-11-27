@@ -1,6 +1,6 @@
 /**
  * bun-bundle.mjs
- * Version: 2.0.0
+ * Version: 2.1.1
  *
  * Bundles the package with `Bun.build` and the type declarations with rollup + rollup-plugin-dts.
  *
@@ -18,8 +18,10 @@
  * otherwise be considered up to date and bundled as is.
  *
  * The packages listed in `bundledPackages` are bundled in, every other bare import (node builtins
- * and external dependencies) stays external in both bundles. That list is the workspace packages
- * plus any dependency named there explicitly.
+ * and external dependencies) stays external in both bundles. That list is the workspace packages,
+ * configured with the root package.json `automator.esbuild` fields shared with `mb-run --esbuild`:
+ * `bundle` adds dependencies to inline, `external` keeps packages as runtime imports and wins
+ * when both list the same package.
  *
  * Usage:
  *   bun scripts/bun-bundle.mjs                          Development bundle (sourcemaps, not minified)
@@ -45,7 +47,7 @@ import process from 'node:process';
 import { rollup } from 'rollup';
 import { dts } from 'rollup-plugin-dts';
 
-const scriptVersion = '2.0.0';
+const scriptVersion = '2.1.1';
 
 const require = createRequire(import.meta.url);
 
@@ -127,10 +129,28 @@ const resolveBundledDeclaration = (specifier) => {
   }
 
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  const target = manifest.exports?.[subpath];
+  const exportsMap = manifest.exports && typeof manifest.exports === 'object' ? manifest.exports : {};
+  let target = exportsMap[subpath];
+  let match;
+  if (target === undefined) {
+    // A subpath pattern like `./clusters/*`: the longest matching prefix wins, as in the Node resolution
+    const pattern = Object.keys(exportsMap)
+      .filter((key) => key.split('*').length === 2)
+      .filter((key) => {
+        const [prefix, suffix] = key.split('*');
+        return subpath.length >= key.length && subpath.startsWith(prefix) && subpath.endsWith(suffix);
+      })
+      .toSorted((a, b) => b.indexOf('*') - a.indexOf('*'))[0];
+    if (pattern) {
+      const [prefix, suffix] = pattern.split('*');
+      target = exportsMap[pattern];
+      match = subpath.slice(prefix.length, subpath.length - suffix.length);
+    }
+  }
   const fallback = subpath === '.' ? (manifest.types ?? manifest.typings ?? null) : null;
-  const types = typeof target === 'string' ? fallback : (target?.types ?? fallback);
+  let types = typeof target === 'string' ? fallback : (target?.types ?? fallback);
   if (!types) return null;
+  if (match !== undefined) types = types.replaceAll('*', match);
 
   const resolved = path.resolve(path.dirname(manifestPath), types);
   return existsSync(resolved) ? resolved : null;
@@ -158,7 +178,10 @@ const getEntries = (dir) => {
     /** @type {string} */
     const sourcePattern = source;
     const wildcard = sourcePattern.indexOf('*');
-    const sources = wildcard === -1 ? [sourcePattern] : [...new Bun.Glob(sourcePattern.replaceAll('*', '**/*')).scanSync({ cwd: dir, onlyFiles: true })].toSorted();
+    const sources =
+      wildcard === -1
+        ? [sourcePattern]
+        : [...new Bun.Glob(sourcePattern.replaceAll('*', '**/*')).scanSync({ cwd: dir, onlyFiles: true })].map((file) => file.replaceAll('\\', '/')).toSorted();
 
     for (const sourceFile of sources) {
       // A package export star can include nested paths; use the same match in every target.
@@ -197,6 +220,29 @@ const getWorkspaceDirs = () => {
     }
   }
   return [...dirs];
+};
+
+/**
+ * Reads the package names of the `automator.esbuild.bundle` and `automator.esbuild.external` fields
+ * of a package.json, the configuration shared with `mb-run --esbuild`.
+ *
+ * Each field is a list of package specifiers; a subpath specifier names its package. Entries that
+ * are not non-empty strings are ignored.
+ *
+ * @param {{ automator?: { esbuild?: { bundle?: unknown; external?: unknown } } }} manifest - The parsed root package.json.
+ * @returns {{ bundle: string[]; external: string[] }} The package names of each field.
+ */
+const automatorPackages = (manifest) => {
+  const esbuild = manifest.automator?.esbuild;
+  /**
+   * Reads the package names of one field.
+   *
+   * @param {unknown} list - The field value.
+   * @returns {string[]} The unique package names.
+   */
+  const names = (list) =>
+    Array.isArray(list) ? [...new Set(list.filter((entry) => typeof entry === 'string' && entry !== '').map((/** @type {string} */ entry) => parseSpecifier(entry).name))] : [];
+  return { bundle: names(esbuild?.bundle), external: names(esbuild?.external) };
 };
 
 /**
@@ -376,10 +422,16 @@ export const main = async (args = process.argv.slice(2), rootDir = path.resolve(
 
   root = rootDir;
   production = args.includes('--production');
-  // The packages inlined into the output instead of resolved at runtime by the consumer. The
-  // workspace packages are always bundled; every other name listed here is bundled as well, so its
-  // consumers do not have to install it. Everything not listed stays an external import.
-  bundledPackages = new Set([...getWorkspaceDirs().map((dir) => readManifest(dir).name), 'node-ansi-logger']);
+  // The packages inlined into the output instead of resolved at runtime by the consumer: the
+  // workspace packages, plus `automator.esbuild.bundle`, minus `automator.esbuild.external` (which
+  // wins). Everything else, external dependencies included, stays an external import.
+  bundledPackages = new Set(getWorkspaceDirs().map((dir) => readManifest(dir).name));
+  const { bundle, external } = automatorPackages(readManifest(root));
+  for (const name of bundle) bundledPackages.add(name);
+  for (const name of external) bundledPackages.delete(name);
+  if (bundle.length > 0 || external.length > 0) {
+    console.log(`Automator: bundle ${bundle.length > 0 ? bundle.join(', ') : 'none'}, external ${external.length > 0 ? external.join(', ') : 'none'}.`);
+  }
 
   const dirs = [root, ...(args.includes('--workspaces') ? getWorkspaceDirs() : [])];
 

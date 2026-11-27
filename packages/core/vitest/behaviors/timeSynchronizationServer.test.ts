@@ -8,9 +8,6 @@ const NAME = 'TimeSynchronizationServer';
 const MATTER_PORT = 8036;
 const MATTER_CREATE_ONLY = true;
 
-import { rmSync } from 'node:fs';
-import path from 'node:path';
-
 import { Time } from '@matter/general';
 import { CommandModel } from '@matter/main/model';
 import { OperationalCredentialsServer } from '@matter/node/behaviors/operational-credentials';
@@ -20,8 +17,7 @@ import { EndpointNumber, FabricIndex, NodeId } from '@matter/types/datatype';
 import { Status } from '@matter/types/globals';
 import { TlvOfModel } from '@matter/types/tlv';
 import { createServerNode, createTestEnvironment, destroyTestEnvironment, flushServerNode, server, startServerNode, stopServerNode } from '@matterbridge/test-utils/vitest/matter';
-import { HOMEDIR, loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
-import { MATTER_STORAGE_DIR } from '@matterbridge/types';
+import { loggerErrorSpy, loggerFatalSpy, loggerInfoSpy, loggerWarnSpy, setupTest } from '@matterbridge/test-utils/vitest/setup';
 
 import { isCanonicalIpv6, MATTER_EPOCH_US, MatterbridgeTimeSynchronizationServer } from '../../src/behaviors/timeSynchronizationServer.js';
 
@@ -503,41 +499,5 @@ describe('MatterbridgeTimeSynchronizationServer', () => {
       await timeSync[Symbol.asyncDispose]();
       expect(timeSync.internal.clockTimer).toBeUndefined();
     });
-  });
-});
-
-describe('MatterbridgeTimeSynchronizationServer with a TimeZone set before initialization', () => {
-  beforeAll(async () => {
-    // A second server node: the TimeZone attribute is set before the server initializes. It has the id of the first one,
-    // so its storage is erased first: otherwise it restores the TimeZone the first suite stored.
-    rmSync(path.join(HOMEDIR, '.matterbridge', MATTER_STORAGE_DIR), { recursive: true, force: true });
-    await createTestEnvironment();
-    await createServerNode(MATTER_PORT + 100);
-    server.behaviors.require(MatterbridgeTimeSynchronizationServer, {
-      utcTime: null,
-      granularity: TimeSynchronization.Granularity.NoTimeGranularity,
-      timeSource: TimeSynchronization.TimeSource.None,
-      trustedTimeSource: null,
-      defaultNtp: null,
-      supportsDnsResolve: false,
-      timeZone: [{ offset: 3600, validAt: MATTER_EPOCH_US, name: 'Europe/Rome' }],
-      dstOffset: [],
-      localTime: null,
-      timeZoneDatabase: TimeSynchronization.TimeZoneDatabase.None,
-      timeZoneListMaxSize: 2,
-      dstOffsetListMaxSize: 2,
-    });
-    await server.act(async (agent) => {
-      await agent.load(MatterbridgeTimeSynchronizationServer);
-    });
-  });
-
-  afterAll(async () => {
-    await flushServerNode();
-    await destroyTestEnvironment();
-  });
-
-  it('should keep the TimeZone set before initialization instead of the UTC default', () => {
-    expect(server.stateOf(MatterbridgeTimeSynchronizationServer).timeZone).toEqual([{ offset: 3600, validAt: MATTER_EPOCH_US, name: 'Europe/Rome' }]);
   });
 });

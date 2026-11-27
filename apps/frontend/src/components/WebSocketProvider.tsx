@@ -89,7 +89,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
   const listenersRef = useRef<{ listener: (msg: WsMessageApiResponse) => void; id: number }[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const retryCountRef = useRef(1);
-  const uniqueIdRef = useRef(Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000);
+  const [initialUniqueId] = useState(() => Math.floor(Math.random() * (999999 - 1000 + 1)) + 1000); // Lazy initializer: generated once, not on every render
+  const uniqueIdRef = useRef(initialUniqueId);
   const pingIntervalRef = useRef<IntervalHandle | null>(null);
   const offlineTimeoutRef = useRef<TimeoutHandle | null>(null);
   const startTimeoutRef = useRef<TimeoutHandle | null>(null);
@@ -234,192 +235,196 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     if (debug || localDebug) console.log(`WebSocket removeListener total listeners:`, listenersRef.current.length);
   }, []);
 
-  const connectWebSocket = useCallback(() => {
-    if (wssHost === '' || wssHost === null || wssHost === undefined) return;
-    logMessage('WebSocket', `Connecting ${wssPassword ? `with password` : ''} to WebSocket: ${wssHost}`);
-    if (debug || localDebug) console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
-    wsRef.current = new WebSocket(wssHost + (wssPassword ? `?password=${encodeURIComponent(wssPassword)}` : ''));
+  // Named function expression so the reconnect logic can call it recursively without reading the callback while it is being initialized
+  const connectWebSocket = useCallback(
+    function connect() {
+      if (wssHost === '' || wssHost === null || wssHost === undefined) return;
+      logMessage('WebSocket', `Connecting ${wssPassword ? `with password` : ''} to WebSocket: ${wssHost}`);
+      if (debug || localDebug) console.log(`WebSocket connecting to: ${wssHost}${wssPassword ? `?password=[redacted]` : ''}`);
+      wsRef.current = new WebSocket(wssHost + (wssPassword ? `?password=${encodeURIComponent(wssPassword)}` : ''));
 
-    wsRef.current.onmessage = (event) => {
-      if (!online) setOnline(true);
-      messagesCounterRef.current += 1;
-      try {
-        const msg: WsMessageApiResponse = JSON.parse(event.data);
-        if (msg.id === undefined || msg.src === undefined || msg.dst === undefined) {
-          if (debug || localDebug) console.error(`WebSocket undefined message id/src/dst:`, msg);
-          return;
-        }
-        if (msg.src !== 'Matterbridge' || msg.dst !== 'Frontend') {
-          if (debug || localDebug) console.error(`WebSocket invalid message src/dst:`, msg);
-          return;
-        }
-        // oxlint-disable-next-line typescript/no-unsafe-type-assertion
-        if ((msg as unknown as WsMessageErrorApiResponse).error) {
-          if (debug || localDebug) console.error(`WebSocket error message response:`, msg);
-          return;
-        }
-        if (msg.id === uniqueIdRef.current && msg.method === 'pong' && msg.response === 'pong') {
-          if (debug || localDebug) console.log(`WebSocket pong response message id ${msg.id}:`, msg);
-          if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
-          offlineTimeoutRef.current = null;
-          return;
-        } else if (msg.method === 'snackbar' && msg.response?.message) {
-          if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
-          showSnackbarMessage(msg.response.message, msg.response.timeout, msg.response.severity);
-          return;
-        } else if (msg.method === 'close_snackbar' && msg.response?.message) {
-          if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
-          closeSnackbarMessage(msg.response.message);
-          return;
-        } else if (msg.method === 'log') {
-          // Process only valid log messages
-          if (!msg.response?.level || !msg.response.time || !msg.response.name || !msg.response.message) return;
-
-          // Send to InstallProgressDialog if it's an install log
-          if (msg.response.level === 'spawn') {
-            if (msg.response.name === 'Matterbridge:spawn-init') showInstallProgress(msg.response.message, '', '');
-            else if (msg.response.name === 'Matterbridge:spawn-exit-success') exitInstallProgressSuccess();
-            else if (msg.response.name === 'Matterbridge:spawn-exit-error') exitInstallProgressError();
-            else addInstallProgress(msg.response.message + '\n');
-          }
-
-          // Process log filtering by level
-          const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
-          if (normalLevels.includes(msg.response.level)) {
-            if (logFilterLevelRef.current === 'info' && msg.response.level === 'debug') return;
-            if (logFilterLevelRef.current === 'notice' && (msg.response.level === 'debug' || msg.response.level === 'info')) return;
-            if (logFilterLevelRef.current === 'warn' && (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice')) return;
-            if (
-              logFilterLevelRef.current === 'error' &&
-              (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice' || msg.response.level === 'warn')
-            )
-              return;
-            if (
-              logFilterLevelRef.current === 'fatal' &&
-              (msg.response.level === 'debug' ||
-                msg.response.level === 'info' ||
-                msg.response.level === 'notice' ||
-                msg.response.level === 'warn' ||
-                msg.response.level === 'error')
-            )
-              return;
-          }
-
-          // Process log filtering by normal search
-          if (
-            logFilterSearchRef.current !== '*' &&
-            logFilterSearchRef.current !== '' &&
-            !logFilterSearchRef.current.startsWith('/') &&
-            !logFilterSearchRef.current.endsWith('/') &&
-            !msg.response.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) &&
-            !msg.response.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())
-          )
+      wsRef.current.onmessage = (event) => {
+        if (!online) setOnline(true);
+        messagesCounterRef.current += 1;
+        try {
+          const msg: WsMessageApiResponse = JSON.parse(event.data);
+          if (msg.id === undefined || msg.src === undefined || msg.dst === undefined) {
+            if (debug || localDebug) console.error(`WebSocket undefined message id/src/dst:`, msg);
             return;
+          }
+          if (msg.src !== 'Matterbridge' || msg.dst !== 'Frontend') {
+            if (debug || localDebug) console.error(`WebSocket invalid message src/dst:`, msg);
+            return;
+          }
+          // oxlint-disable-next-line typescript/no-unsafe-type-assertion
+          if ((msg as unknown as WsMessageErrorApiResponse).error) {
+            if (debug || localDebug) console.error(`WebSocket error message response:`, msg);
+            return;
+          }
+          if (msg.id === uniqueIdRef.current && msg.method === 'pong' && msg.response === 'pong') {
+            if (debug || localDebug) console.log(`WebSocket pong response message id ${msg.id}:`, msg);
+            if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
+            offlineTimeoutRef.current = null;
+            return;
+          } else if (msg.method === 'snackbar' && msg.response?.message) {
+            if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
+            showSnackbarMessage(msg.response.message, msg.response.timeout, msg.response.severity);
+            return;
+          } else if (msg.method === 'close_snackbar' && msg.response?.message) {
+            if (debug || localDebug) console.log('WebSocket message id %s method %s:', msg.id, msg.method, msg);
+            closeSnackbarMessage(msg.response.message);
+            return;
+          } else if (msg.method === 'log') {
+            // Process only valid log messages
+            if (!msg.response?.level || !msg.response.time || !msg.response.name || !msg.response.message) return;
 
-          // Process log filtering by regex search
-          if (
-            logFilterSearchRef.current.startsWith('/') &&
-            logFilterSearchRef.current.endsWith('/') &&
-            (() => {
-              try {
-                const regex = new RegExp(logFilterSearchRef.current.slice(1, -1), 'i');
-                return !regex.test(msg.response.message) && !regex.test(msg.response.name);
-              } catch (error) {
-                /*if (debug || localDebug)*/ console.error(`WebSocket log search invalid regex filter "${logFilterSearchRef.current}":`, error);
-                return false;
+            // Send to InstallProgressDialog if it's an install log
+            if (msg.response.level === 'spawn') {
+              if (msg.response.name === 'Matterbridge:spawn-init') showInstallProgress(msg.response.message, '', '');
+              else if (msg.response.name === 'Matterbridge:spawn-exit-success') exitInstallProgressSuccess();
+              else if (msg.response.name === 'Matterbridge:spawn-exit-error') exitInstallProgressError();
+              else addInstallProgress(msg.response.message + '\n');
+            }
+
+            // Process log filtering by level
+            const normalLevels = ['debug', 'info', 'notice', 'warn', 'error', 'fatal'];
+            if (normalLevels.includes(msg.response.level)) {
+              if (logFilterLevelRef.current === 'info' && msg.response.level === 'debug') return;
+              if (logFilterLevelRef.current === 'notice' && (msg.response.level === 'debug' || msg.response.level === 'info')) return;
+              if (logFilterLevelRef.current === 'warn' && (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice')) return;
+              if (
+                logFilterLevelRef.current === 'error' &&
+                (msg.response.level === 'debug' || msg.response.level === 'info' || msg.response.level === 'notice' || msg.response.level === 'warn')
+              )
+                return;
+              if (
+                logFilterLevelRef.current === 'fatal' &&
+                (msg.response.level === 'debug' ||
+                  msg.response.level === 'info' ||
+                  msg.response.level === 'notice' ||
+                  msg.response.level === 'warn' ||
+                  msg.response.level === 'error')
+              )
+                return;
+            }
+
+            // Process log filtering by normal search
+            if (
+              logFilterSearchRef.current !== '*' &&
+              logFilterSearchRef.current !== '' &&
+              !logFilterSearchRef.current.startsWith('/') &&
+              !logFilterSearchRef.current.endsWith('/') &&
+              !msg.response.message.toLowerCase().includes(logFilterSearchRef.current.toLowerCase()) &&
+              !msg.response.name.toLowerCase().includes(logFilterSearchRef.current.toLowerCase())
+            )
+              return;
+
+            // Process log filtering by regex search
+            if (
+              logFilterSearchRef.current.startsWith('/') &&
+              logFilterSearchRef.current.endsWith('/') &&
+              (() => {
+                try {
+                  const regex = new RegExp(logFilterSearchRef.current.slice(1, -1), 'i');
+                  return !regex.test(msg.response.message) && !regex.test(msg.response.name);
+                } catch (error) {
+                  /*if (debug || localDebug)*/ console.error(`WebSocket log search invalid regex filter "${logFilterSearchRef.current}":`, error);
+                  return false;
+                }
+              })()
+            )
+              return;
+
+            // Ignore uncommissioned messages to avoid the QR code spam
+            if (msg.response.name === 'Commissioning' && msg.response.message.includes('is uncommissioned')) return;
+
+            setMessages((prevMessages) => {
+              const newMessages = [...prevMessages, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
+              if (debug || localDebug) console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
+              // Check if the new array length exceeds the maximum allowed length plus 10%
+              if (newMessages.length > logLength.current + (logLength.current * 10) / 100) {
+                if (debug || localDebug) console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
+                return newMessages.slice(newMessages.length - logLength.current); // Keep only the last 'logLength' messages
               }
-            })()
-          )
-            return;
-
-          // Ignore uncommissioned messages to avoid the QR code spam
-          if (msg.response.name === 'Commissioning' && msg.response.message.includes('is uncommissioned')) return;
-
-          setMessages((prevMessages) => {
-            const newMessages = [...prevMessages, { level: msg.response.level, time: msg.response.time, name: msg.response.name, message: msg.response.message }];
-            if (debug || localDebug) console.log(`WebSocket new log message added (${newMessages.length}/${logLength.current}):`, newMessages[newMessages.length - 1]);
-            // Check if the new array length exceeds the maximum allowed length plus 10%
-            if (newMessages.length > logLength.current + (logLength.current * 10) / 100) {
-              if (debug || localDebug) console.log(`WebSocket sliced log messages to the last ${logLength.current} entries`);
-              return newMessages.slice(newMessages.length - logLength.current); // Keep only the last 'logLength' messages
-            }
-            return newMessages;
-          });
-        } else {
-          if (debug || localDebug) console.log('WebSocket received message id %s method %s:', msg.id, msg.method, msg);
-          if (msg.id === 0) {
-            listenersRef.current.forEach((listener) => listener.listener(msg)); // Notify all listeners for broadcast messages
+              return newMessages;
+            });
           } else {
-            const listener = listenersRef.current.find((l) => l.id === msg.id);
-            if (listener) {
-              listener.listener(msg); // Notify the specific listener
+            if (debug || localDebug) console.log('WebSocket received message id %s method %s:', msg.id, msg.method, msg);
+            if (msg.id === 0) {
+              listenersRef.current.forEach((listener) => listener.listener(msg)); // Notify all listeners for broadcast messages
             } else {
-              if (debug || localDebug) console.warn('WebSocket no listener found for message id %s:', msg.id, msg);
+              const listener = listenersRef.current.find((l) => l.id === msg.id);
+              if (listener) {
+                listener.listener(msg); // Notify the specific listener
+              } else {
+                if (debug || localDebug) console.warn('WebSocket no listener found for message id %s:', msg.id, msg);
+              }
             }
+            return;
           }
-          return;
+        } catch (error) {
+          console.error(`WebSocket error parsing message: ${String(error)}`, error instanceof Error ? error.stack : null);
         }
-      } catch (error) {
-        console.error(`WebSocket error parsing message: ${String(error)}`, error instanceof Error ? error.stack : null);
-      }
-    };
+      };
 
-    wsRef.current.onopen = () => {
-      if (debug || localDebug) console.log(`WebSocket: Connected to WebSocket: ${wssHost}`);
-      logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
-      setOnline(true);
-      closeSnackbar();
-      retryCountRef.current = 1;
-      setRetry(1);
+      wsRef.current.onopen = () => {
+        if (debug || localDebug) console.log(`WebSocket: Connected to WebSocket: ${wssHost}`);
+        logMessage('WebSocket', `Connected to WebSocket: ${wssHost}`);
+        setOnline(true);
+        closeSnackbar();
+        retryCountRef.current = 1;
+        setRetry(1);
 
-      startTimeoutRef.current = setTimeout(() => {
-        pingIntervalRef.current = setInterval(() => {
-          sendMessage({ id: uniqueIdRef.current, method: 'ping', src: 'Frontend', dst: 'Matterbridge', params: {} });
-          if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
-          offlineTimeoutRef.current = setTimeout(() => {
-            if (debug || localDebug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
-            logMessage('WebSocket', `No pong response received from WebSocket: ${wssHost}`);
-            setOnline(false);
-          }, 1000 * offlineTimeoutSeconds);
-        }, 1000 * pingIntervalSeconds);
-      }, 1000 * startTimeoutSeconds);
-    };
+        startTimeoutRef.current = setTimeout(() => {
+          pingIntervalRef.current = setInterval(() => {
+            sendMessage({ id: uniqueIdRef.current, method: 'ping', src: 'Frontend', dst: 'Matterbridge', params: {} });
+            if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
+            offlineTimeoutRef.current = setTimeout(() => {
+              if (debug || localDebug) console.error(`WebSocketUse: No pong response received from WebSocket: ${wssHost}`);
+              logMessage('WebSocket', `No pong response received from WebSocket: ${wssHost}`);
+              setOnline(false);
+            }, 1000 * offlineTimeoutSeconds);
+          }, 1000 * pingIntervalSeconds);
+        }, 1000 * startTimeoutSeconds);
+      };
 
-    wsRef.current.onclose = () => {
-      if (debug || localDebug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress ? 'with Ingress' : ''}: ${wssHost}`);
-      logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
-      setOnline(false);
-      closeSnackbar();
-      hideInstallProgress();
-      if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
-      if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
-      if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
-      logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress ? ' (Ingress)' : ''}: ${wssHost}`);
-      if (isIngress) {
-        setTimeout(attemptReconnect, 5000);
-      } else {
-        if (retryCountRef.current === 1) attemptReconnect();
-        else if (retryCountRef.current < maxRetries) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
-        else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
-      }
-      retryCountRef.current = retryCountRef.current + 1;
-      setRetry(retryCountRef.current);
-    };
+      wsRef.current.onclose = () => {
+        if (debug || localDebug) console.error(`WebSocket: Disconnected from WebSocket ${isIngress ? 'with Ingress' : ''}: ${wssHost}`);
+        logMessage('WebSocket', `Disconnected from WebSocket: ${wssHost}`);
+        setOnline(false);
+        closeSnackbar();
+        hideInstallProgress();
+        if (startTimeoutRef.current) clearTimeout(startTimeoutRef.current);
+        if (offlineTimeoutRef.current) clearTimeout(offlineTimeoutRef.current);
+        if (pingIntervalRef.current) clearInterval(pingIntervalRef.current);
+        logMessage('WebSocket', `Reconnecting (attempt ${retryCountRef.current} of ${maxRetries}) to WebSocket${isIngress ? ' (Ingress)' : ''}: ${wssHost}`);
+        const attemptReconnect = () => {
+          if (debug || localDebug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
+          connect();
+        };
+        if (isIngress) {
+          setTimeout(attemptReconnect, 5000);
+        } else {
+          if (retryCountRef.current === 1) attemptReconnect();
+          else if (retryCountRef.current < maxRetries) setTimeout(attemptReconnect, 1000 * retryCountRef.current);
+          else logMessage('WebSocket', `Reconnect attempts exceeded limit of ${maxRetries} retries, refresh the page to reconnect to: ${wssHost}`);
+        }
+        retryCountRef.current = retryCountRef.current + 1;
+        setRetry(retryCountRef.current);
+      };
 
-    wsRef.current.onerror = (error) => {
-      if (debug || localDebug) console.error('WebSocket: WebSocket error connecting to %s:', wssHost, error);
-      logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
-    };
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [wssHost]); // Intentionally left out dependencies to avoid reconnect loops
-
-  const attemptReconnect = useCallback(() => {
-    if (debug || localDebug) console.log(`WebSocket attemptReconnect ${retryCountRef.current}/${maxRetries} to:`, wssHost);
-    connectWebSocket();
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
-  }, [connectWebSocket]);
+      wsRef.current.onerror = (error) => {
+        if (debug || localDebug) console.error('WebSocket: WebSocket error connecting to %s:', wssHost, error);
+        logMessage('WebSocket', `WebSocket error connecting to ${wssHost}`);
+      };
+    },
+    // Intentionally left out dependencies to avoid reconnect loops
+    // oxlint-disable-next-line react-hooks/exhaustive-deps, react/memo-dependencies
+    [wssHost],
+  );
 
   useEffect(() => {
+    // oxlint-disable-next-line react/set-state-in-effect -- opening the WebSocket is the external synchronization; the "Connecting" log line it appends is a side record
     connectWebSocket();
     return () => {
       if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -465,7 +470,7 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
       sendMessage,
       logMessage,
     }),
-    // oxlint-disable-next-line react-hooks/exhaustive-deps
+    // oxlint-disable-next-line react-hooks/exhaustive-deps, react/memo-dependencies
     [
       logLength,
       logAutoScroll,

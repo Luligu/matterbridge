@@ -1,4 +1,4 @@
 #!/usr/bin/env node
-const { mbMdnsMain } = await import('@matterbridge/core/mb_mdns');
+const { runMdnsMonitor } = await import('@matterbridge/dgram');
 
-mbMdnsMain();
+runMdnsMonitor(process.argv.slice(2));

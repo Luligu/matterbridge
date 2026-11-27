@@ -1914,9 +1914,21 @@ describe('Matterbridge ' + NAME, () => {
     ];
     const presetsList: Thermostat.Preset[] = [
       { presetHandle: Uint8Array.from([0]), presetScenario: Thermostat.PresetScenario.Occupied, name: 'Occupied', coolingSetpoint: 2500, heatingSetpoint: 2100, builtIn: null },
-      { presetHandle: Uint8Array.from([1]), presetScenario: Thermostat.PresetScenario.Unoccupied, name: 'Unoccupied', coolingSetpoint: 2700, heatingSetpoint: 1900, builtIn: null },
+      {
+        presetHandle: Uint8Array.from([1]),
+        presetScenario: Thermostat.PresetScenario.Unoccupied,
+        name: 'Unoccupied',
+        coolingSetpoint: 2700,
+        heatingSetpoint: 1900,
+        builtIn: false,
+      },
     ];
-    const thermostatSuggestions: Thermostat.ThermostatSuggestion[] = [{ uniqueId: 0, presetHandle: Uint8Array.from([0]), effectiveTime: 1700000000, expirationTime: 1700003600 }];
+    const now = Math.floor(Date.now() / 1000);
+    const thermostatSuggestions: Thermostat.ThermostatSuggestion[] = [
+      { uniqueId: 0, presetHandle: Uint8Array.from([0]), effectiveTime: now - 1, expirationTime: now + 3600 },
+      { uniqueId: 1, presetHandle: Uint8Array.from([1]), effectiveTime: now - 3600, expirationTime: now - 1 },
+      { uniqueId: 2, presetHandle: Uint8Array.from([1]), effectiveTime: now + 1800, expirationTime: now + 3600 },
+    ];
     const device = new MatterbridgeEndpoint(thermostat, { id: 'ThermoSuggestions' });
     expect(device).toBeDefined();
     device.createDefaultIdentifyClusterServer();
@@ -1937,7 +1949,7 @@ describe('Matterbridge ' + NAME, () => {
       presetsList,
       presetTypes,
       thermostatSuggestions,
-      thermostatSuggestions[0],
+      thermostatSuggestions[1],
       null,
     );
     device.createDefaultThermostatUserInterfaceConfigurationClusterServer();
@@ -1960,15 +1972,19 @@ describe('Matterbridge ' + NAME, () => {
     await addBridgedDevice(aggregator, device);
     expect(device.getAttribute(Thermostat.id, 'maxThermostatSuggestions')).toBe(5);
     const retrievedThermostatSuggestions = device.getAttribute(Thermostat.id, 'thermostatSuggestions');
-    expect(retrievedThermostatSuggestions).toHaveLength(1);
+    expect(retrievedThermostatSuggestions.map((suggestion: Thermostat.ThermostatSuggestion) => suggestion.uniqueId)).toEqual([0, 2]);
     expect(JSON.stringify(Object.values(retrievedThermostatSuggestions[0].presetHandle))).toBe(JSON.stringify([0]));
     expect(retrievedThermostatSuggestions[0].uniqueId).toBe(0);
-    expect(retrievedThermostatSuggestions[0].effectiveTime).toBe(1700000000);
-    expect(retrievedThermostatSuggestions[0].expirationTime).toBe(1700003600);
+    expect(retrievedThermostatSuggestions[0].effectiveTime).toBe(now - 1);
+    expect(retrievedThermostatSuggestions[0].expirationTime).toBe(now + 3600);
     const retrievedCurrentThermostatSuggestion = device.getAttribute(Thermostat.id, 'currentThermostatSuggestion');
     expect(retrievedCurrentThermostatSuggestion.uniqueId).toBe(0);
     expect(JSON.stringify(Object.values(retrievedCurrentThermostatSuggestion.presetHandle))).toBe(JSON.stringify([0]));
     expect(device.getAttribute(Thermostat.id, 'thermostatSuggestionNotFollowingReason')).toBeNull();
+
+    expect(await device.setAttribute(Thermostat.id, 'presets', [presetsList[0]])).toBe(true);
+    expect(device.getAttribute(Thermostat.id, 'thermostatSuggestions')).toHaveLength(1);
+    expect(device.getAttribute(Thermostat.id, 'currentThermostatSuggestion')).toMatchObject({ uniqueId: 0 });
   });
 
   test('createDefaultThermostatSuggestionsClusterServer numberOfPresets reflects presetTypes capacity', async () => {

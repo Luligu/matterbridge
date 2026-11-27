@@ -373,6 +373,43 @@ describe('Multicast', () => {
     expect(setMulticastInterfaceSpy).toHaveBeenCalledWith('::');
   });
 
+  test('onListening emits the setup error instead of ready when setMulticastInterface rejects the outgoing interface', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::', 'fe80::1');
+    spyOn(os, 'networkInterfaces').mockReturnValue({});
+    for (const method of ['setBroadcast', 'setTTL', 'setMulticastTTL', 'setMulticastLoopback']) spyOn(mcast.socket as any, method).mockImplementation(() => {});
+    const setMulticastInterfaceSpy = spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {
+      throw new Error('setMulticastInterface EINVAL');
+    });
+    const errors: Error[] = [];
+    const ready = vi.fn();
+    mcast.on('error', (error: Error) => errors.push(error));
+    mcast.on('ready', ready);
+
+    mcast.onListening({ address: '::', family: 'IPv6', port: COAP_MULTICAST_PORT });
+
+    expect(setMulticastInterfaceSpy).toHaveBeenCalledWith('fe80::1');
+    expect(errors.map((error) => error.message)).toEqual(['setMulticastInterface EINVAL']);
+    expect(ready).not.toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'Dgram multicast socket setup failed: setMulticastInterface EINVAL');
+  });
+
+  test('onListening only logs a setup error that is not an Error when there is no error listener', () => {
+    mcast = new Multicast('Multicast', COAP_MULTICAST_IPV4_ADDRESS, COAP_MULTICAST_PORT, 'udp4', true, undefined, '0.0.0.0', '192.0.2.1');
+    spyOn(os, 'networkInterfaces').mockReturnValue({});
+    for (const method of ['setBroadcast', 'setTTL', 'setMulticastTTL', 'setMulticastLoopback']) spyOn(mcast.socket as any, method).mockImplementation(() => {});
+    spyOn(mcast.socket as any, 'setMulticastInterface').mockImplementation(() => {
+      // oxlint-disable-next-line typescript/only-throw-error -- exercises the non-Error branch
+      throw 'EADDRNOTAVAIL';
+    });
+    const ready = vi.fn();
+    mcast.on('ready', ready);
+
+    expect(() => mcast.onListening({ address: '0.0.0.0', family: 'IPv4', port: COAP_MULTICAST_PORT })).not.toThrow();
+
+    expect(ready).not.toHaveBeenCalled();
+    expect(loggerLogSpy).toHaveBeenCalledWith(LogLevel.ERROR, 'Dgram multicast socket setup failed: EADDRNOTAVAIL');
+  });
+
   test('onListening joins multicast using the first IPv6 address', () => {
     mcast = new Multicast('Multicast', COAP_MULTICAST_IPV6_ADDRESS, COAP_MULTICAST_PORT, 'udp6', true, undefined, '::');
     spyOn(os, 'networkInterfaces').mockReturnValue({

@@ -135,7 +135,7 @@ built and served. See the TODO list below for the known limitations.
 
 ---
 
-## Known issues (checked on Bun 1.4.4)
+## Known issues (checked on Bun 1.4.5)
 
 - [ ] **Bun docker image cannot resolve the container user name.** In the official Bun images,
       both `node:os` and `bun:os` return `username: "unknown"` and `shell: "unknown"`
@@ -143,9 +143,11 @@ built and served. See the TODO list below for the known limitations.
       directory. Consequently, Matterbridge sends `User: unknown` to the frontend
       system-information view instead of the container account (for example, `root`).
       Reproduce with `bun -e "import * as os from 'bun:os'; console.log(os.userInfo())"`.
-      Still present in `oven/bun:1.4.4-slim`. Tracked upstream:
-      [oven-sh/bun#39859](https://github.com/oven-sh/bun/issues/39859) and
-      [oven-sh/bun#25171](https://github.com/oven-sh/bun/issues/25171) (both open).
+      Still present in `oven/bun:1.4.5-slim`. Tracked upstream by
+      [oven-sh/bun#25171](https://github.com/oven-sh/bun/issues/25171) (open;
+      [oven-sh/bun#39859](https://github.com/oven-sh/bun/issues/39859) was closed as its duplicate).
+      Fix pending in [oven-sh/bun#33481](https://github.com/oven-sh/bun/pull/33481) (open), which
+      reads `username`, `homedir` and `shell` from the passwd database like Node does.
 
 ## Fixed in Bun 1.4.4
 

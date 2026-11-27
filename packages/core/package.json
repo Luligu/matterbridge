@@ -1,6 +1,6 @@
 {
   "name": "@matterbridge/core",
-  "version": "3.11.4",
+  "version": "3.11.5",
   "description": "Matterbridge core library",
   "author": "https://github.com/Luligu",
   "homepage": "https://matterbridge.io/",
@@ -106,14 +106,6 @@
       "types": "./dist/cli.d.ts",
       "import": "./dist/cli.js"
     },
-    "./mb_mdns": {
-      "types": "./dist/mb_mdns.d.ts",
-      "import": "./dist/mb_mdns.js"
-    },
-    "./mb_coap": {
-      "types": "./dist/mb_coap.d.ts",
-      "import": "./dist/mb_coap.js"
-    },
     "./mb_health": {
       "types": "./dist/mb_health.d.ts",
       "import": "./dist/mb_health.js"
@@ -135,27 +127,27 @@
     "skipTsconfig": true
   },
   "dependencies": {
-    "@matter/main": "0.18.0",
-    "@matterbridge/dgram": "3.11.4",
-    "@matterbridge/thread": "3.11.4",
-    "@matterbridge/types": "3.11.4",
-    "@matterbridge/utils": "3.11.4",
+    "@matter/main": "0.18.1",
+    "@matterbridge/dgram": "3.11.5",
+    "@matterbridge/thread": "3.11.5",
+    "@matterbridge/types": "3.11.5",
+    "@matterbridge/utils": "3.11.5",
     "escape-html": "1.0.3",
     "express": "5.3.0",
-    "express-rate-limit": "8.7.4",
+    "express-rate-limit": "8.7.5",
     "multer": "2.5.0",
     "node-ansi-logger": "3.3.2",
     "node-persist-manager": "2.1.2",
-    "werift": "0.27.0",
+    "werift": "0.28.0",
     "ws": "8.23.0"
   },
   "devDependencies": {
-    "@matterbridge/test-utils": "3.11.4",
+    "@matterbridge/test-utils": "3.11.5",
     "@types/escape-html": "1.0.4",
     "@types/express": "5.0.6",
     "@types/multer": "2.3.0",
-    "@types/node": "26.6.6",
+    "@types/node": "26.6.10",
     "@types/ws": "8.18.2",
-    "vitest": "5.1.0"
+    "vitest": "5.1.2"
   }
 }

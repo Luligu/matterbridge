@@ -7,9 +7,22 @@
 import dgram from 'node:dgram';
 import { EventEmitter } from 'node:events';
 
-import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, originalProcessArgv, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { loggerDebugSpy, loggerErrorSpy, loggerInfoSpy, resetTest, setupTest } from '@matterbridge/test-utils/vitest/setup';
+import { BLUE, LogLevel, nf } from 'node-ansi-logger';
 
-import { DnsClass, DnsClassFlag, DnsRecordType, isFirstOnPort, isMdns, isMdnsQuery, isMdnsResponse, Mdns, MDNS_MAX_MESSAGE_LENGTH } from '../src/mdns.js';
+import {
+  DnsClass,
+  DnsClassFlag,
+  DnsRecordType,
+  isFirstOnPort,
+  isMdns,
+  isMdnsQuery,
+  isMdnsResponse,
+  Mdns,
+  MDNS_MAX_MESSAGE_LENGTH,
+  type MdnsMessage,
+  type MdnsRecord,
+} from '../src/mdns.js';
 
 // Mock node:dgram so the Mdns constructor does not open a real socket. Unlike Jest's automock,
 // Vitest's bare automock returns undefined from createSocket, so provide a minimal fake socket
@@ -27,12 +40,13 @@ vi.mock('node:dgram', () => {
 
 const mockRinfo: dgram.RemoteInfo = { family: 'IPv4', address: '1.2.3.4', port: 5353, size: 32 };
 
-// Setup the test environment
-await setupTest('Mdns', false, ['--verbose']);
+// Mocks AnsiLogger.prototype.log and the console methods, and sets the Vitest process arguments.
+await setupTest('MdnsTest');
 
 describe('Mdns', () => {
   let mdns: Mdns;
   let mockSocket: any;
+  process.argv.push('--verbose');
 
   beforeEach(() => {
     mockSocket = {
@@ -52,6 +66,7 @@ describe('Mdns', () => {
 
   afterAll(() => {
     vi.restoreAllMocks();
+    resetTest();
   });
 
   it('should construct and initialize properties', () => {
@@ -145,6 +160,17 @@ describe('Mdns', () => {
     const { name: decoded, newOffset } = mdns.decodeDnsName(encoded, 0);
     expect(decoded).toBe('Küche.local');
     expect(newOffset).toBe(encoded.length);
+  });
+
+  it('should round-trip escaped DNS label boundaries and reject invalid lengths', () => {
+    const name = 'Office\\.Printer\\\\One._http._tcp.local';
+    const encoded = mdns.encodeDnsName(name);
+    expect(encoded[0]).toBe(Buffer.byteLength('Office.Printer\\One'));
+    expect(mdns.decodeDnsName(encoded, 0).name).toBe(name);
+    expect(() => mdns.encodeDnsName('x'.repeat(64) + '.local')).toThrow('label length');
+    expect(() => mdns.encodeDnsName('a..local')).toThrow('label length');
+    expect(() => mdns.encodeDnsName('trailing\\')).toThrow('escape');
+    expect(() => mdns.encodeDnsName(Array(5).fill('x'.repeat(63)).join('.'))).toThrow('255');
   });
 
   describe('encodeTxtRdata', () => {
@@ -319,11 +345,20 @@ describe('Mdns', () => {
     let { record } = mdns.decodeResourceRecord(rr, 0);
     expect(record.type).toBe(DnsRecordType.PTR);
     expect(record.data).toBe('service.local');
+    expect(record.text).toBe('service.local');
     // TXT
-    const txt = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([0, DnsRecordType.TXT, 0, DnsClass.IN, 0, 0, 0, 1, 0, 5]), Buffer.from([4]), Buffer.from('test')]);
+    const txt = Buffer.concat([
+      mdns.encodeDnsName('foo.local'),
+      Buffer.from([0, DnsRecordType.TXT, 0, DnsClass.IN, 0, 0, 0, 1, 0, 11]),
+      Buffer.from([4]),
+      Buffer.from('test'),
+      Buffer.from([5]),
+      Buffer.from('a=1,2'),
+    ]);
     record = mdns.decodeResourceRecord(txt, 0).record;
     expect(record.type).toBe(DnsRecordType.TXT);
-    expect(record.data).toContain('test');
+    expect(record.data).toEqual(['test', 'a=1,2']);
+    expect(record.text).toBe('test, a=1,2');
     // SRV
     const srvTarget = mdns.encodeDnsName('target.local');
     const srv = Buffer.concat([
@@ -334,17 +369,20 @@ describe('Mdns', () => {
     ]);
     record = mdns.decodeResourceRecord(srv, 0).record;
     expect(record.type).toBe(DnsRecordType.SRV);
-    expect(record.data).toContain('target.local');
+    expect(record.data).toEqual({ priority: 1, weight: 2, port: 80, target: 'target.local' });
+    expect(record.text).toBe('target.local:80 (priority 1, weight 2)');
     // A
     const a = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([0, DnsRecordType.A, 0, DnsClass.IN, 0, 0, 0, 1, 0, 4]), Buffer.from([192, 168, 1, 2])]);
     record = mdns.decodeResourceRecord(a, 0).record;
     expect(record.type).toBe(DnsRecordType.A);
     expect(record.data).toBe('192.168.1.2');
+    expect(record.text).toBe('192.168.1.2');
     // AAAA
     const aaaa = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([0, DnsRecordType.AAAA, 0, DnsClass.IN, 0, 0, 0, 1, 0, 16]), Buffer.alloc(16, 1)]);
     record = mdns.decodeResourceRecord(aaaa, 0).record;
     expect(record.type).toBe(DnsRecordType.AAAA);
     expect(record.data).toContain(':');
+    expect(record.text).toBe(record.data as string);
     // NSEC (minimal, with empty bitmap)
     const nsecDomain = mdns.encodeDnsName('next.local');
     const nsec = Buffer.concat([
@@ -355,18 +393,105 @@ describe('Mdns', () => {
     ]);
     record = mdns.decodeResourceRecord(nsec, 0).record;
     expect(record.type).toBe(DnsRecordType.NSEC);
-    expect(record.data).toContain('next.local');
+    expect(record.data).toEqual({ nextDomain: 'next.local', types: [] });
+    expect(record.text).toBe('next.local []');
     // Fallback (unknown type)
     const fallback = Buffer.concat([mdns.encodeDnsName('foo.local'), Buffer.from([0, 99, 0, DnsClass.IN, 0, 0, 0, 1, 0, 2]), Buffer.from([0xab, 0xcd])]);
     record = mdns.decodeResourceRecord(fallback, 0).record;
-    expect(record.type).toBe(99);
+    expect(record.type as number).toBe(99);
     expect(record.data).toBe('abcd');
+    expect(record.text).toBe('abcd');
+  });
+
+  it('should throw when resource record bounds or lengths are invalid', () => {
+    const owner = mdns.encodeDnsName('foo.local');
+    // Truncated question header after QNAME
+    const shortQuestionHeader = Buffer.alloc(12);
+    shortQuestionHeader.writeUInt16BE(1, 4); // QDCOUNT = 1
+    const shortQuestion = Buffer.concat([shortQuestionHeader, owner, Buffer.from([0, DnsRecordType.PTR])]);
+    expect(() => mdns.decodeMdnsMessage(shortQuestion)).toThrow('mDNS question header exceeds message bounds');
+    // Truncated record header (< 10 bytes after NAME)
+    const shortRecordHeader = Buffer.concat([owner, Buffer.from([0, DnsRecordType.A, 0, DnsClass.IN])]);
+    expect(() => mdns.decodeResourceRecord(shortRecordHeader, 0)).toThrow('mDNS record header exceeds message bounds');
+    // RDLENGTH exceeds packet buffer
+    const overBuffer = Buffer.concat([owner, Buffer.from([0, DnsRecordType.A, 0, DnsClass.IN, 0, 0, 0, 1, 0, 10]), Buffer.from([192, 168, 1, 2])]);
+    expect(() => mdns.decodeResourceRecord(overBuffer, 0)).toThrow('mDNS record data exceeds message bounds');
+    // PTR RDLENGTH does not match encoded domain name length
+    const ptrTarget = mdns.encodeDnsName('service.local');
+    const badPtr = Buffer.concat([owner, Buffer.from([0, DnsRecordType.PTR, 0, DnsClass.IN, 0, 0, 0, 1, 0, ptrTarget.length + 1]), ptrTarget, Buffer.from([0])]);
+    expect(() => mdns.decodeResourceRecord(badPtr, 0)).toThrow('Invalid PTR record length');
+    // TXT string exceeds RDLENGTH
+    const badTxt = Buffer.concat([owner, Buffer.from([0, DnsRecordType.TXT, 0, DnsClass.IN, 0, 0, 0, 1, 0, 3]), Buffer.from([5]), Buffer.from('ab')]);
+    expect(() => mdns.decodeResourceRecord(badTxt, 0)).toThrow('TXT string exceeds record bounds');
+    // SRV RDLENGTH < 6
+    const shortSrv = Buffer.concat([owner, Buffer.from([0, DnsRecordType.SRV, 0, DnsClass.IN, 0, 0, 0, 1, 0, 4]), Buffer.from([0, 0, 0, 0])]);
+    expect(() => mdns.decodeResourceRecord(shortSrv, 0)).toThrow('Invalid SRV record length');
+    // SRV trailing byte after target name
+    const srvTarget = mdns.encodeDnsName('target.local');
+    const badLenSrv = Buffer.concat([
+      owner,
+      Buffer.from([0, DnsRecordType.SRV, 0, DnsClass.IN, 0, 0, 0, 1, 0, srvTarget.length + 7]),
+      Buffer.from([0, 0, 0, 0, 0, 80]),
+      srvTarget,
+      Buffer.from([0]),
+    ]);
+    expect(() => mdns.decodeResourceRecord(badLenSrv, 0)).toThrow('Invalid SRV record length');
+    // A RDLENGTH !== 4
+    const badA = Buffer.concat([owner, Buffer.from([0, DnsRecordType.A, 0, DnsClass.IN, 0, 0, 0, 1, 0, 3]), Buffer.from([192, 168, 1])]);
+    expect(() => mdns.decodeResourceRecord(badA, 0)).toThrow('Invalid A record length');
+    // AAAA RDLENGTH !== 16
+    const badAaaa = Buffer.concat([owner, Buffer.from([0, DnsRecordType.AAAA, 0, DnsClass.IN, 0, 0, 0, 1, 0, 4]), Buffer.alloc(4)]);
+    expect(() => mdns.decodeResourceRecord(badAaaa, 0)).toThrow('Invalid AAAA record length');
+    // NSEC RDLENGTH shorter than nextDomain
+    const nsecDomain = mdns.encodeDnsName('next.local');
+    const badNsec = Buffer.concat([owner, Buffer.from([0, DnsRecordType.NSEC, 0, DnsClass.IN, 0, 0, 0, 1, 0, 2]), nsecDomain]);
+    expect(() => mdns.decodeResourceRecord(badNsec, 0)).toThrow('Invalid NSEC record length');
+    // NSEC truncated bitmap window header (1 byte remaining)
+    const badNsecWindowHeader = Buffer.concat([owner, Buffer.from([0, DnsRecordType.NSEC, 0, DnsClass.IN, 0, 0, 0, 1, 0, nsecDomain.length + 1]), nsecDomain, Buffer.from([0])]);
+    expect(() => mdns.decodeResourceRecord(badNsecWindowHeader, 0)).toThrow('Invalid NSEC record length');
+    // NSEC windowLength > 32
+    const badNsecWindowSize = Buffer.concat([
+      owner,
+      Buffer.from([0, DnsRecordType.NSEC, 0, DnsClass.IN, 0, 0, 0, 1, 0, nsecDomain.length + 35]),
+      nsecDomain,
+      Buffer.from([0, 33]),
+      Buffer.alloc(33),
+    ]);
+    expect(() => mdns.decodeResourceRecord(badNsecWindowSize, 0)).toThrow('Invalid NSEC record length');
+    // NSEC bitmap window payload exceeds RDLENGTH
+    const badNsecWindowBounds = Buffer.concat([
+      owner,
+      Buffer.from([0, DnsRecordType.NSEC, 0, DnsClass.IN, 0, 0, 0, 1, 0, nsecDomain.length + 3]),
+      nsecDomain,
+      Buffer.from([0, 4, 0x80]),
+    ]);
+    expect(() => mdns.decodeResourceRecord(badNsecWindowBounds, 0)).toThrow('Invalid NSEC record length');
   });
 
   it('should send a query and log', () => {
+    mdns.log.logLevel = LogLevel.DEBUG;
     mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
     expect(mockSocket.send).toHaveBeenCalled();
-    expect(loggerDebugSpy).toHaveBeenCalled();
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Dgram mDNS server sent query message: ${BLUE}foo.local${nf} ${BLUE}PTR${nf} (${BLUE}multicast response${nf})`);
+  });
+
+  it('should log when a query requests a unicast response', () => {
+    mdns.log.logLevel = LogLevel.DEBUG;
+    mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: true }]);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Dgram mDNS server sent query message: ${BLUE}foo.local${nf} ${BLUE}PTR${nf} (${BLUE}unicast response${nf})`);
+  });
+
+  it('should log the numeric type of a query for an unknown record type', () => {
+    mdns.log.logLevel = LogLevel.DEBUG;
+    mdns.sendQuery([{ name: 'foo.local', type: 65280, class: DnsClass.IN }]);
+    expect(loggerDebugSpy).toHaveBeenCalledWith(`Dgram mDNS server sent query message: ${BLUE}foo.local${nf} ${BLUE}65280${nf} (${BLUE}multicast response${nf})`);
+  });
+
+  it('should not build the sent query log below the debug level', () => {
+    mdns.log.logLevel = LogLevel.INFO;
+    mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
+    expect(mockSocket.send).toHaveBeenCalled();
+    expect(loggerDebugSpy).not.toHaveBeenCalledWith(expect.stringContaining('sent query message'));
   });
 
   it('should send a query with known answers, authorities and additionals when they are provided', () => {
@@ -389,12 +514,30 @@ describe('Mdns', () => {
     expect(query.readUInt16BE(10)).toBe(1); // ARCOUNT
     const decoded = mdns.decodeMdnsMessage(query);
     expect(decoded.questions).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, unicastResponse: false }]);
-    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, cacheFlush: false, ttl: 100, data: 'instance._http._tcp.local' }]);
+    expect(decoded.answers).toEqual([
+      {
+        name: '_http._tcp.local',
+        type: DnsRecordType.PTR,
+        class: DnsClass.IN,
+        cacheFlush: false,
+        ttl: 100,
+        data: 'instance._http._tcp.local',
+        text: 'instance._http._tcp.local',
+      },
+    ]);
     expect(decoded.authorities).toMatchObject([
-      { name: 'instance._http._tcp.local', type: DnsRecordType.SRV, ttl: 120, data: JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }) },
+      {
+        name: 'instance._http._tcp.local',
+        type: DnsRecordType.SRV,
+        ttl: 120,
+        data: { priority: 0, weight: 0, port: 8080, target: 'host.local' },
+        text: 'host.local:8080 (priority 0, weight 0)',
+      },
     ]);
     expect(mdns.dnsResponseClassToString(decoded.authorities?.[0].class ?? 0, decoded.authorities?.[0].cacheFlush)).toBe('IN|FLUSH');
-    expect(decoded.additionals).toEqual([{ name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10' }]);
+    expect(decoded.additionals).toEqual([
+      { name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10', text: '192.168.1.10' },
+    ]);
   });
 
   describe('encoding of resource records, queries and responses', () => {
@@ -480,8 +623,8 @@ describe('Mdns', () => {
 
     const recordA = { name: 'a.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: Buffer.from([192, 168, 1, 10]) };
     const recordB = { name: 'b.local', rtype: DnsRecordType.A, rclass: DnsClass.IN, ttl: 120, rdata: Buffer.from([192, 168, 1, 11]) };
-    const decodedA = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10' };
-    const decodedB = { name: 'b.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.11' };
+    const decodedA: MdnsRecord = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10', text: '192.168.1.10' };
+    const decodedB: MdnsRecord = { name: 'b.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.11', text: '192.168.1.11' };
     const question = { name: 'a.local', type: DnsRecordType.A, class: DnsClass.IN, unicastResponse: false };
 
     for (const section of ['answers', 'authorities', 'additionals'] as const) {
@@ -544,8 +687,18 @@ describe('Mdns', () => {
 
     it('should encode the empty name without compression', () => {
       const compression = new Map<string, number>();
-      expect(mdns.encodeDnsName('', compression, 12)).toEqual(mdns.encodeDnsName(''));
+      expect(mdns.encodeDnsName('')).toEqual(Buffer.from([0]));
+      expect(mdns.encodeDnsName('', compression, 12)).toEqual(Buffer.from([0]));
       expect(compression.size).toBe(0);
+    });
+
+    it('should accept one trailing root separator and reject empty interior labels', () => {
+      const wire = Buffer.from([7, ...Buffer.from('example'), 5, ...Buffer.from('local'), 0]);
+      expect(mdns.encodeDnsName('example.local')).toEqual(wire);
+      expect(mdns.encodeDnsName('example.local.')).toEqual(wire);
+      for (const name of ['.', '.example.local', 'example..local', 'example.local..']) {
+        expect(() => mdns.encodeDnsName(name)).toThrow('Invalid DNS label length');
+      }
     });
 
     it('should compress the domain name in the rdata of a PTR record', () => {
@@ -577,7 +730,9 @@ describe('Mdns', () => {
           '000000001f90c00c', // rdata: 0, 0, 8080 + pointer to 'host.local' at 12
         ),
       );
-      expect(mdns.decodeMdnsMessage(response).answers?.[1].data).toBe(JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }));
+      const srvAnswer = mdns.decodeMdnsMessage(response).answers?.[1];
+      expect(srvAnswer?.data).toEqual({ priority: 0, weight: 0, port: 8080, target: 'host.local' });
+      expect(srvAnswer?.text).toBe('host.local:8080 (priority 0, weight 0)');
     });
 
     it('should send the rdata unchanged when it is not exactly an uncompressed name', () => {
@@ -653,7 +808,17 @@ describe('Mdns', () => {
     expect(responseBuffer.readUInt16BE(8)).toBe(1); // NSCOUNT
     expect(responseBuffer.readUInt16BE(10)).toBe(2); // ARCOUNT
     const decoded = mdns.decodeMdnsMessage(responseBuffer);
-    expect(decoded.answers).toEqual([{ name: '_http._tcp.local', type: DnsRecordType.PTR, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: 'instance._http._tcp.local' }]);
+    expect(decoded.answers).toEqual([
+      {
+        name: '_http._tcp.local',
+        type: DnsRecordType.PTR,
+        class: DnsClass.IN,
+        cacheFlush: false,
+        ttl: 120,
+        data: 'instance._http._tcp.local',
+        text: 'instance._http._tcp.local',
+      },
+    ]);
     expect(decoded.authorities).toEqual([
       {
         name: 'instance._http._tcp.local',
@@ -661,12 +826,13 @@ describe('Mdns', () => {
         class: DnsClass.IN,
         cacheFlush: false,
         ttl: 120,
-        data: JSON.stringify({ priority: 0, weight: 0, port: 8080, target: 'host.local' }),
+        data: { priority: 0, weight: 0, port: 8080, target: 'host.local' },
+        text: 'host.local:8080 (priority 0, weight 0)',
       },
     ]);
     expect(decoded.additionals).toMatchObject([
-      { name: 'instance._http._tcp.local', type: DnsRecordType.TXT, ttl: 4500, data: 'path=/' },
-      { name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10' },
+      { name: 'instance._http._tcp.local', type: DnsRecordType.TXT, ttl: 4500, data: ['path=/'], text: 'path=/' },
+      { name: 'host.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 120, data: '192.168.1.10', text: '192.168.1.10' },
     ]);
     expect(mdns.dnsResponseClassToString(decoded.additionals?.[0].class ?? 0, decoded.additionals?.[0].cacheFlush)).toBe('IN|FLUSH');
     expect(mdns.dnsResponseClassToString(decoded.additionals?.[1].class ?? 0, decoded.additionals?.[1].cacheFlush)).toBe('IN');
@@ -862,9 +1028,9 @@ describe('Mdns', () => {
   });
 
   it('should skip verbose logging in sendQuery/sendResponse when no -v/--verbose flags are present', () => {
-    const savedArgv = process.argv;
+    const savedArgv = [...process.argv];
     try {
-      process.argv = originalProcessArgv.slice(0, 2);
+      process.argv = ['node', 'jest'];
 
       mdns.sendQuery([{ name: 'foo.local', type: DnsRecordType.PTR, class: DnsClass.IN }]);
       const rdata = mdns.encodeDnsName('foo.local');
@@ -948,6 +1114,24 @@ describe('Mdns', () => {
     expect(loggerInfoSpy).toHaveBeenCalled();
   });
 
+  it('should keep logDevices entries whose addresses compare as numerically equal', () => {
+    const dummyMsg: any = { questions: [], answers: [], authorities: [], additionals: [] };
+
+    // Distinct map keys that parse to the same numbers, so both sort comparators reach `return 0`.
+    mdns.deviceQueries.clear();
+    mdns.deviceQueries.set('10.0.0.1', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceQueries.set('10.0.0.01', { rinfo: mockRinfo, query: dummyMsg });
+    mdns.deviceResponses.clear();
+    mdns.deviceResponses.set('fe80::1', { rinfo: mockRinfo, response: dummyMsg, dataPTR: 'x' });
+    mdns.deviceResponses.set('fe80::01', { rinfo: mockRinfo, response: dummyMsg, dataPTR: 'y' });
+
+    mdns.logDevices();
+
+    for (const address of ['10.0.0.1', '10.0.0.01', 'fe80::1', 'fe80::01']) {
+      expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining(address));
+    }
+  });
+
   it('should handle response messages in onMessage', () => {
     // Create a response message (QR=1)
     const header = Buffer.alloc(12);
@@ -1007,8 +1191,8 @@ describe('Mdns', () => {
 
     const { record } = mdns.decodeResourceRecord(nsec, 0);
     expect(record.type).toBe(DnsRecordType.NSEC);
-    expect(record.data).toContain('next.local');
-    expect(record.data).toContain('A'); // Type 1 should be in the types array
+    expect(record.data).toEqual({ nextDomain: 'next.local', types: ['TYPE0', 'MR', 'AFSDB'] });
+    expect(record.text).toBe('next.local [TYPE0, MR, AFSDB]');
   });
 
   it('should decode IPv6 AAAA record correctly', () => {
@@ -1044,7 +1228,7 @@ describe('Mdns', () => {
   });
 
   it('should handle authorities and additionals in logMdnsMessage', () => {
-    const msg = {
+    const msg: MdnsMessage = {
       id: 0,
       qr: 1,
       opcode: 0,
@@ -1060,8 +1244,8 @@ describe('Mdns', () => {
       arCount: 1,
       questions: [],
       answers: [],
-      authorities: [{ name: 'auth.local', type: DnsRecordType.NS, class: DnsClass.IN, cacheFlush: false, ttl: 300, data: 'ns.local' }],
-      additionals: [{ name: 'add.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 60, data: '1.2.3.4' }],
+      authorities: [{ name: 'auth.local', type: DnsRecordType.NS, class: DnsClass.IN, cacheFlush: false, ttl: 300, data: 'ns.local', text: 'ns.local' }],
+      additionals: [{ name: 'add.local', type: DnsRecordType.A, class: DnsClass.IN, cacheFlush: false, ttl: 60, data: '1.2.3.4', text: '1.2.3.4' }],
     };
 
     mdns.logMdnsMessage(msg);
@@ -1154,6 +1338,28 @@ describe('Mdns', () => {
 
     const stored = mdns.deviceResponses.get('9.10.11.12');
     expect(stored?.dataPTR).toBe('example.local');
+
+    // Response with an A record followed by a PTR record should still pick the PTR record
+    const multiHeader = Buffer.alloc(12);
+    multiHeader.writeUInt16BE(0x8000, 2);
+    multiHeader.writeUInt16BE(2, 6); // ancount = 2
+    const ptrName = mdns.encodeDnsName('_matterc._udp.local');
+    const ptrData = mdns.encodeDnsName('node._matterc._udp.local');
+    const ptrAnswer = Buffer.concat([ptrName, Buffer.from([0, DnsRecordType.PTR, 0, DnsClass.IN, 0, 0, 0, 120, 0, ptrData.length]), ptrData]);
+    mdns.onMessage(Buffer.concat([multiHeader, answer, ptrAnswer]), { ...mockRinfo, address: '9.10.11.13' });
+    expect(mdns.deviceResponses.get('9.10.11.13')?.dataPTR).toBe('node._matterc._udp.local');
+
+    // Filter matching a record in authorities (e.g. probe query)
+    mdns.filters.push('probe-host.local');
+    loggerInfoSpy.mockClear();
+    const probeQuery = mdns.sendQuery(
+      [{ name: 'inst._matterc._udp.local', type: DnsRecordType.ANY, class: DnsClass.IN }],
+      [],
+      [{ name: 'inst._matterc._udp.local', rtype: DnsRecordType.SRV, rclass: DnsClass.IN, ttl: 120, rdata: mdns.encodeSrvRdata(0, 0, 5540, 'probe-host.local') }],
+    );
+    mdns.onMessage(probeQuery, { ...mockRinfo, address: '9.10.11.14' });
+    expect(loggerInfoSpy).toHaveBeenCalledWith(expect.stringContaining('Authority:'));
+    mdns.filters.length = 0;
   });
 
   it('should handle query messages in onMessage', () => {

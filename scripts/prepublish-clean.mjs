@@ -1,6 +1,6 @@
 /**
  * prepublish-clean.mjs
- * Version: 2.2.0
+ * Version: 2.2.1
  *
  * Dependency-free replacement for:
  *   npm pkg delete devDependencies scripts automator &&
@@ -42,7 +42,7 @@
 import { existsSync, lstatSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
-const scriptVersion = '2.2.0';
+const scriptVersion = '2.2.1';
 const scriptName = path.basename(import.meta.filename);
 
 /**
@@ -221,6 +221,7 @@ const strip = (state, dir, fields) => {
 const clean = (state, dir, fields) => {
   // Empty the contents (including dotfiles) of node_modules but keep the directory itself.
   // The contents are logged as one entry: a fresh node_modules holds hundreds of packages.
+  /** @type {string[]} */
   let entries = [];
   try {
     entries = readdirSync(path.resolve(dir, 'node_modules'));

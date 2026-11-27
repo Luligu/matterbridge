@@ -29,6 +29,66 @@ If you like this project and find it useful, please consider giving it a star on
 
 <a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="120"></a>
 
+## [3.11.5] - 2026-11-27
+
+### Development News
+
+- Add two GitHub Copilot agents, **Matterbridge No Delegate** and **Matterbridge Orchestrator**. The orchestrator runs three subagents per request and can consume tokens very quickly.
+- [chip]: ThermostatAuto endpoint 901 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster with matter.js 0.18.1.
+- [chip]: ThermostatHeating endpoint 9011 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster with matter.js 0.18.1.
+- [chip]: ThermostatCooling endpoint 9012 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster with matter.js 0.18.1.
+- [chip]: ThermostatPresets endpoint 9013 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `Presets` feature (`TC_TSTAT_4_2.py`), with matter.js 0.18.1.
+- [chip]: ThermostatSchedules endpoint 9014 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `MatterScheduleConfiguration` feature, with matter.js 0.18.1.
+- [chip]: ThermostatSuggestions endpoint 9015 CHIP conformance is green ✅ for all applicable automated harness tests covering the `Thermostat` cluster, including the `ThermostatSuggestions` feature (`TC_TSTAT_4_3.py`) now handled by matter.js 0.18.1.
+- [matter.js]: See [Matter.js 0.18.1](Matter.js-0.18.1.md) for the thermostat delegation, what it means for plugins and the open suggestion re-evaluation issue.
+
+### Breaking changes
+
+- [matterbridge]: `mb_mdns` and `mb_coap` run `MdnsMonitor` and `CoapMonitor` from `@matterbridge/dgram`: options are kebab-case (`--interface`, `--ipv4-address`, `--no-ipv4`, ...), intervals are in seconds and `mb_mdns --advertise` is replaced by `mb-mdns-advertise`.
+- [core]: Remove the `./mb_mdns` and `./mb_coap` exports.
+
+### Added
+
+- [dgram]: Add `MdnsMonitor`, `CoapMonitor` and `MdnsResolver`.
+- [dgram]: Add targeted mDNS discovery to `MdnsScanner` through `queryInstance`.
+- [dgram]: Add the outgoing multicast interface to `Coap` and `--outgoing-ipv4-address` / `--outgoing-ipv6-address` to `CoapMonitor`.
+- [chip]: The [3.11.4 CHIP test results](3.11.4%20chipTestsSummary.log) are available.
+
+### Changed
+
+- [matter]: Bump `matter.js` to v.0.18.1.
+- [dgram]: Update mDNS record typing, packet validation, responder behavior and scanner resolution.
+- [matterbridge]: Bump `@types/bun` to v.1.4.5.
+- [matterbridge]: Bump `@types/node` to v.26.6.10.
+- [matterbridge]: Bump `@vitest/coverage-v8` to v.5.1.2.
+- [matterbridge]: Bump `marked` to v.18.3.0.
+- [matterbridge]: Bump `oxfmt` to v.0.80.0.
+- [matterbridge]: Bump `oxlint` to v.1.95.0.
+- [matterbridge]: Bump `oxlint-tsgolint` to v.7.0.2008.
+- [matterbridge]: Bump `vitest` to v.5.1.2.
+- [matterbridge]: Disable the `typescript/no-unsafe-class-instance-assignment` lint rule: matter.js cluster structs are classes built from object literals.
+- [frontend]: Bump `@mui/material` and `@mui/icons-material` to v.9.6.0.
+- [frontend]: Fix the React Compiler lint errors in `WebSocketProvider` reported by oxlint 1.95.0.
+- [frontend]: Bump `@testing-library/jest-dom` to v.8.0.0.
+- [frontend]: Bump `@types/react` to v.19.3.3.
+- [frontend]: Bump `react-router` to v.8.5.3.
+- [core]: Bump `express-rate-limit` to v.8.7.5.
+- [core]: Bump `werift` to v.0.28.0.
+- [core]: Use matter.js 0.18.1 for thermostat schedule validation and automatic suggestion handling while preserving plugin command forwarding.
+- [core]: Thermostat suggestions now change `activePresetHandle` and the setpoints without calling the `setActivePresetRequest` handler: plugins must subscribe to these attributes.
+- [scripts]: Update `bun-bundle.mjs` to v.2.1.1: resolve the types of subpath pattern exports and normalize the Windows glob paths.
+- [scripts]: Update `downloads.mjs` and `prepublish-clean.mjs` to v.2.2.1: fix the type-aware lint errors.
+- [scripts]: Update `run-chip-test.mjs` to v.1.5.0: add `--native`, the `pairs` pairing codes, string codes for `pairBefore`/`pairAfter` and `resetControllerBefore`.
+- [chip]: Remove `vitest/chipPlugin.test.ts`: `run-chip-test.mjs` is now an ES module tested in matterbridge-native.
+
+### Fixed
+
+- [dgram]: A multicast socket setup error, e.g. `setMulticastInterface()` rejecting the outgoing interface, is logged and emitted as `error` instead of being thrown as an uncaught exception.
+- [chip]: Re-enable the Color Control `StopMoveStep` certification test (`Test_TC_CC_8_1`) with the fix in matter.js 0.18.0.
+- [docker]: Build the plugin frontends (`apps/frontend`) in the `dev` and `bundev` images, restoring the plugin frontend button and the device pages.
+
+<a href="https://www.buymeacoffee.com/luligugithub"><img src="https://matterbridge.io/assets/bmc-button.svg" alt="Buy me a coffee" width="80"></a>
+
 ## [3.11.4] - 2026-11-20
 
 ### Development News
