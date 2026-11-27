@@ -49,6 +49,54 @@
     ".": {
       "types": "./dist/export.d.ts",
       "import": "./dist/export.js"
+    },
+    "./coap": {
+      "types": "./dist/coap.d.ts",
+      "import": "./dist/coap.js"
+    },
+    "./coap-monitor": {
+      "types": "./dist/coapMonitor.d.ts",
+      "import": "./dist/coapMonitor.js"
+    },
+    "./dgram": {
+      "types": "./dist/dgram.d.ts",
+      "import": "./dist/dgram.js"
+    },
+    "./mdns": {
+      "types": "./dist/mdns.d.ts",
+      "import": "./dist/mdns.js"
+    },
+    "./matterbridge-advertise": {
+      "types": "./dist/matterbridgeAdvertise.d.ts",
+      "import": "./dist/matterbridgeAdvertise.js"
+    },
+    "./matter-advertise": {
+      "types": "./dist/matterAdvertise.d.ts",
+      "import": "./dist/matterAdvertise.js"
+    },
+    "./mdns-responder": {
+      "types": "./dist/mdnsResponder.d.ts",
+      "import": "./dist/mdnsResponder.js"
+    },
+    "./mdns-resolver": {
+      "types": "./dist/mdnsResolver.d.ts",
+      "import": "./dist/mdnsResolver.js"
+    },
+    "./mdns-monitor": {
+      "types": "./dist/mdnsMonitor.d.ts",
+      "import": "./dist/mdnsMonitor.js"
+    },
+    "./mdns-scanner": {
+      "types": "./dist/mdnsScanner.d.ts",
+      "import": "./dist/mdnsScanner.js"
+    },
+    "./multicast": {
+      "types": "./dist/multicast.d.ts",
+      "import": "./dist/multicast.js"
+    },
+    "./unicast": {
+      "types": "./dist/unicast.d.ts",
+      "import": "./dist/unicast.js"
     }
   },
   "engines": {

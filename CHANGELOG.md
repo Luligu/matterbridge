@@ -37,6 +37,7 @@ If you like this project and find it useful, please consider giving it a star on
 
 ### Added
 
+- [dgram]: Add subpath exports for each module, in kebab-case as in `@matterbridge/utils` (e.g. `@matterbridge/dgram/mdns-scanner`).
 - [utils]: Add `isPortFree`, `getFreePort` and `getFreePortRange` (`@matterbridge/utils/port`) for `tcp`, `udp4`, `udp6`, `udp` (both families) and `tcp+udp` ports.
 
 ### Changed
