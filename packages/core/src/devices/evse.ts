@@ -32,6 +32,7 @@ import { Seconds, Time, type Timer } from '@matter/general';
 import { Supervision } from '@matter/node';
 import { EnergyEvseServer } from '@matter/node/behaviors/energy-evse';
 import { EnergyEvseModeServer } from '@matter/node/behaviors/energy-evse-mode';
+import { ConformanceError } from '@matter/protocol';
 import { DeviceEnergyManagement } from '@matter/types/clusters/device-energy-management';
 import { EnergyEvse } from '@matter/types/clusters/energy-evse';
 import { EnergyEvseMode } from '@matter/types/clusters/energy-evse-mode';
@@ -842,8 +843,19 @@ export class MatterbridgeEnergyEvseServer extends EnergyEvseServer.with(EnergyEv
 }
 
 // Matter 1.6.1 § 9.3.9.5.2 mandates RESOURCE_EXHAUSTED when a command contains more targets than the EVSE
-// supports. Disable only the nested list-size constraint so setTargets can return that status; matter.js continues
-// to validate the outer schedule-list limit and every ChargingTargetStruct field.
+// supports. Register an error handler so matter.js uses model validation for this command. Let setTargets enforce
+// the nested list limit while the model validator continues to check the outer list and each target's fields.
+Supervision(MatterbridgeEnergyEvseServer, 'setTargets').onValidationError = (error): never => {
+  // Matter 1.6.1 § 9.3.7.6: A missing TargetSoC when SoC reporting is supported is an invalid command.
+  // ConformanceError exposes the field path and violation detail only in its message.
+  if (
+    error instanceof ConformanceError &&
+    /^Validating EnergyEvse\.setTargets\.chargingTargetSchedules\.\d+\.chargingTargets\.\d+\.targetSoC: .*Matter requires you to set this attribute/.test(error.message)
+  ) {
+    throw new StatusResponse.InvalidCommandError('MatterbridgeEnergyEvseServer: targetSoC is required when SoC reporting is available');
+  }
+  throw error;
+};
 Supervision(MatterbridgeEnergyEvseServer.prototype.constructor, 'setTargets', 'chargingTargetSchedules', 'entry', 'chargingTargets').constraint = false;
 
 /* v8 ignore start */

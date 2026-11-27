@@ -61,6 +61,14 @@ reactor<ThermostatSuggestions.thermostat.#reevaluateSuggestions>: Cannot lock �
 - Impact: an occasional logged error and a skipped clock tick; no CHIP test failed. The per-second re-evaluation is redundant, since matter.js already runs a timer for each EffectiveTime and ExpirationTime.
 - Proposed upstream fix: re-evaluate only when UTCTime switches between null and non-null, or run the reaction in its own transaction (`offline: true`).
 
+## Energy EVSE `SetTargets` conformance
+
+Matter 1.6.1 Application Cluster § 9.3.9.5.2 requires `RESOURCE_EXHAUSTED` (`0x89`) when a `SetTargets` request exceeds the EVSE's charging-target capacity. Matter.js 0.18.1 rejects an 11-target daily list during TLV validation with `CONSTRAINT_ERROR` (`0x87`) before the server method runs, which fails CHIP `TC_EEVSE_2_3` step 19.
+
+Matterbridge uses command-level `Supervision` to route `SetTargets` through model validation and lets the EVSE server enforce the nested 10-target limit. The hook also maps the model validator's missing-`TargetSoC` error to `INVALID_COMMAND` (`0x85`) when SoC reporting is enabled, as required by § 9.3.7.6. Duplicate days still return `CONSTRAINT_ERROR`.
+
+CHIP `TC_EEVSE_2_3` passes on the base (1401) and complete (14011) EVSE endpoints with this workaround.
+
 ## mDNS multi-ServerNode responder fix (Matterbridge childbridge mode and bridge mode with ServerNode devices)
 
 0.18.1 fixes a long-standing bug: a record-identity collision that can suppress discovery responses for all but one ServerNode registered with a shared responder.
